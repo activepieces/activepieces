@@ -34,7 +34,10 @@ import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
-import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
+import {
+  FolderFilterList,
+  folderIdParamName,
+} from '@/features/folders/component/folder-filter-list';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -42,6 +45,7 @@ import { formatUtils } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 
 const filters = [
   {
@@ -94,9 +98,12 @@ const FlowsPage = () => {
     void
   >({
     mutationFn: async () => {
+      const folderId = searchParams.get(folderIdParamName);
+      const folder = folderId ? await foldersApi.get(folderId) : undefined;
       const flow = await flowsApi.create({
         projectId: authenticationSession.getProjectId()!,
         displayName: t('Untitled'),
+        folderName: folder?.displayName,
       });
       return flow;
     },

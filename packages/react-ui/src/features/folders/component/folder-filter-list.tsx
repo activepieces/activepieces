@@ -187,7 +187,7 @@ const FolderFilterList = () => {
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FLOW);
   const [searchParams, setSearchParams] = useSearchParams(location.search);
-  const selectedFolderId = searchParams.get('folderId');
+  const selectedFolderId = searchParams.get(folderIdParamName);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const form = useForm<CreateFolderFormSchema>({
@@ -199,9 +199,9 @@ const FolderFilterList = () => {
       searchParams,
     );
     if (folderId) {
-      newQueryParameters.set('folderId', folderId);
+      newQueryParameters.set(folderIdParamName, folderId);
     } else {
-      newQueryParameters.delete('folderId');
+      newQueryParameters.delete(folderIdParamName);
     }
     newQueryParameters.delete('cursor');
 
@@ -258,55 +258,56 @@ const FolderFilterList = () => {
         <span className="flex">{t('Folders')}</span>
         <div className="grow"></div>
         <div className="flex items-center justify-center">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToUpdateFolders}
-              >
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFolders}
+          >
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
                 <Button
                   variant="ghost"
                   disabled={!userHasPermissionToUpdateFolders}
                 >
                   <PlusIcon size={18} />
                 </Button>
-              </PermissionNeededTooltip>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{t('New Folder')}</DialogTitle>
-              </DialogHeader>
-              <FormProvider {...form}>
-                <form onSubmit={form.handleSubmit((data) => mutate(data))}>
-                  <FormField
-                    control={form.control}
-                    name="displayName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Input
-                          {...field}
-                          required
-                          id="folder"
-                          placeholder={t('Folder Name')}
-                          className="rounded-sm"
-                        />
-                        <FormMessage />
-                      </FormItem>
+              </DialogTrigger>
+
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t('New Folder')}</DialogTitle>
+                </DialogHeader>
+                <FormProvider {...form}>
+                  <form onSubmit={form.handleSubmit((data) => mutate(data))}>
+                    <FormField
+                      control={form.control}
+                      name="displayName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <Input
+                            {...field}
+                            required
+                            id="folder"
+                            placeholder={t('Folder Name')}
+                            className="rounded-sm"
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {form?.formState?.errors?.root?.serverError && (
+                      <FormMessage>
+                        {form.formState.errors.root.serverError.message}
+                      </FormMessage>
                     )}
-                  />
-                  {form?.formState?.errors?.root?.serverError && (
-                    <FormMessage>
-                      {form.formState.errors.root.serverError.message}
-                    </FormMessage>
-                  )}
-                  <DialogFooter>
-                    <Button type="submit" loading={isPending}>
-                      {t('Confirm')}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </FormProvider>
-            </DialogContent>
-          </Dialog>
+                    <DialogFooter>
+                      <Button type="submit" loading={isPending}>
+                        {t('Confirm')}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </FormProvider>
+              </DialogContent>
+            </Dialog>
+          </PermissionNeededTooltip>
         </div>
       </div>
       <div className="flex w-[270px] h-full flex-col space-y-1">
@@ -368,4 +369,5 @@ const FolderFilterList = () => {
   );
 };
 
-export { FolderFilterList };
+const folderIdParamName = 'folderId';
+export { FolderFilterList, folderIdParamName };
