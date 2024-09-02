@@ -79,14 +79,14 @@ const CreateOrEditConnectionDialog = React.memo(
     const overrideSchema =
       piece.auth?.type === PropertyType.CUSTOM_AUTH
         ? Type.Object({
-          request: Type.Object({
-            value: Type.Object({
-              props: formUtils.buildSchema(
-                (piece.auth as CustomAuthProperty<any>).props,
-              )
+            request: Type.Object({
+              value: Type.Object({
+                props: formUtils.buildSchema(
+                  (piece.auth as CustomAuthProperty<any>).props,
+                ),
+              }),
             }),
-          }),
-        })
+          })
         : Type.Object({});
 
     const formSchema = Type.Composite([
@@ -173,11 +173,11 @@ const CreateOrEditConnectionDialog = React.memo(
             <DialogTitle>
               {reconnectConnection
                 ? t('Reconnect {displayName} Connection', {
-                  displayName: reconnectConnection.name,
-                })
+                    displayName: reconnectConnection.name,
+                  })
                 : t('Create {displayName} Connection', {
-                  displayName: piece.displayName,
-                })}
+                    displayName: piece.displayName,
+                  })}
             </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>

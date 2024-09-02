@@ -74,13 +74,13 @@ export default function GeneralPage() {
         <CardTitle>{t('General')}</CardTitle>
         <CardDescription>
           {t('Manage general settings for your project.')}
-          {role !== ProjectMemberRole.ADMIN && (
-            <p>
-              <span className="text-destructive">*</span>{' '}
-              {t('Only project admins can change this setting.')}
-            </p>
-          )}
         </CardDescription>
+        {role !== ProjectMemberRole.ADMIN && (
+          <p>
+            <span className="text-destructive">*</span>{' '}
+            {t('Only project admins can change this setting.')}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="grid gap-1 mt-4">
         <Form {...form}>

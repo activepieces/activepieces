@@ -63,14 +63,14 @@ const AlertFrequencyCard = React.memo(() => {
       <CardHeader className="pb-3">
         <CardTitle>{t('Alerts')}</CardTitle>
         <CardDescription>
-          <p>{t('Choose what you want to be notified about.')}</p>
-          {role !== ProjectMemberRole.ADMIN && (
-            <p>
-              <span className="text-destructive">*</span>{' '}
-              {t('Only project admins can change this setting.')}
-            </p>
-          )}
+          {t('Choose what you want to be notified about.')}
         </CardDescription>
+        {role !== ProjectMemberRole.ADMIN && (
+          <p>
+            <span className="text-destructive">*</span>{' '}
+            {t('Only project admins can change this setting.')}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="grid gap-1">
         <AlertOption

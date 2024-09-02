@@ -7,27 +7,20 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-export const PermissionNeededTooltip = React.forwardRef(
-  (
-    {
-      children,
-      hasPermission,
-    }: { children: React.ReactNode; hasPermission: boolean },
-    ref,
-  ) => {
-    return (
-      <Tooltip delayDuration={100}>
-        <TooltipTrigger asChild disabled={!hasPermission}>
-          <div>{children}</div>
-        </TooltipTrigger>
-        {!hasPermission && (
-          <TooltipContent side="bottom">
-            {t('Permission needed')}
-          </TooltipContent>
-        )}
-      </Tooltip>
-    );
-  },
-);
+export const PermissionNeededTooltip = React.forwardRef<
+  HTMLButtonElement,
+  { children: React.ReactNode; hasPermission: boolean }
+>(({ children, hasPermission }, ref) => {
+  return (
+    <Tooltip delayDuration={100}>
+      <TooltipTrigger ref={ref} asChild disabled={!hasPermission}>
+        <div>{children}</div>
+      </TooltipTrigger>
+      {!hasPermission && (
+        <TooltipContent side="bottom">{t('Permission needed')}</TooltipContent>
+      )}
+    </Tooltip>
+  );
+});
 
 PermissionNeededTooltip.displayName = 'PermissionNeededWrapper';
