@@ -14,9 +14,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { apiKeyApi } from '@/features/platform-admin-panel/lib/api-key-api';
 import {
@@ -91,15 +97,15 @@ export const NewApiKeyDialog = ({
                 name="displayName"
                 render={({ field }) => (
                   <FormItem className="grid space-y-4">
-                    <Label htmlFor="displayName">{t('API Key Name')}</Label>
-                    <Input
-                      {...field}
-                      required
-                      id="displayName"
-                      placeholder={t('API Key Name')}
-                      className="rounded-sm"
-                    />
-                    <FormMessage />
+                    <FormLabel>{t('API Key Name')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        required
+                        placeholder={t('API Key Name')}
+                        className="rounded-sm"
+                      />
+                    </FormControl>
                   </FormItem>
                 )}
               />

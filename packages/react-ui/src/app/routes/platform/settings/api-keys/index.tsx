@@ -66,7 +66,7 @@ const ApiKeysPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   return (
     <LockedFeatureGuard
-      featureKey="API_KEYS"
+      featureKey="API"
       locked={!platform.apiKeysEnabled}
       lockTitle={t('Enable API Keys')}
       lockDescription={t(
