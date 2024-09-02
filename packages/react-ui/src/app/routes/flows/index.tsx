@@ -216,10 +216,10 @@ const FlowsPage = () => {
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">{t('Flows')}</h1>
         <div className="ml-auto flex flex-row gap-2">
-          <ImportFlowDialog insideBuilder={false}>
-            <PermissionNeededTooltip
-              hasPermission={doesUserHavePermissionToWriteFlow}
-            >
+          <PermissionNeededTooltip
+            hasPermission={doesUserHavePermissionToWriteFlow}
+          >
+            <ImportFlowDialog insideBuilder={false}>
               <Button
                 disabled={!doesUserHavePermissionToWriteFlow}
                 variant="outline"
@@ -228,15 +228,16 @@ const FlowsPage = () => {
                 <Import className="w-4 h-4" />
                 {t('Import Flow')}
               </Button>
-            </PermissionNeededTooltip>
-          </ImportFlowDialog>
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger
-              disabled={!doesUserHavePermissionToWriteFlow}
-              asChild
-            >
-              <PermissionNeededTooltip
-                hasPermission={doesUserHavePermissionToWriteFlow}
+            </ImportFlowDialog>
+          </PermissionNeededTooltip>
+
+          <PermissionNeededTooltip
+            hasPermission={doesUserHavePermissionToWriteFlow}
+          >
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger
+                disabled={!doesUserHavePermissionToWriteFlow}
+                asChild
               >
                 <Button
                   disabled={!doesUserHavePermissionToWriteFlow}
@@ -247,30 +248,30 @@ const FlowsPage = () => {
                   <span>{t('New Flow')}</span>
                   <ChevronDown className="h-4 w-4 " />
                 </Button>
-              </PermissionNeededTooltip>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault();
-                  createFlow();
-                }}
-                disabled={isCreateFlowPending}
-              >
-                <Plus className="h-4 w-4 me-2" />
-                <span>{t('From scratch')}</span>
-              </DropdownMenuItem>
-              <SelectFlowTemplateDialog>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
                 <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    createFlow();
+                  }}
                   disabled={isCreateFlowPending}
                 >
-                  <Workflow className="h-4 w-4 me-2" />
-                  <span>{t('Use a template')}</span>
+                  <Plus className="h-4 w-4 me-2" />
+                  <span>{t('From scratch')}</span>
                 </DropdownMenuItem>
-              </SelectFlowTemplateDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <SelectFlowTemplateDialog>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    disabled={isCreateFlowPending}
+                  >
+                    <Workflow className="h-4 w-4 me-2" />
+                    <span>{t('Use a template')}</span>
+                  </DropdownMenuItem>
+                </SelectFlowTemplateDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </PermissionNeededTooltip>
         </div>
       </div>
       <div className="flex flex-row gap-4">

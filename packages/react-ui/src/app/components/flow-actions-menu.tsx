@@ -127,7 +127,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             hasPermission={userHasPermissionToUpdateFlow}
           >
             <RenameFlowDialog flowId={flow.id} onRename={onRename}>
-              <DropdownMenuItem disabled={!userHasPermissionToUpdateFlow}>
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                disabled={!userHasPermissionToUpdateFlow}
+              >
                 <div className="flex cursor-pointer flex-row gap-2 items-center">
                   <Pencil className="h-4 w-4" />
                   <span>{t('Rename')}</span>
@@ -136,8 +139,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </RenameFlowDialog>
           </PermissionNeededTooltip>
         )}
-        <PushToGitDialog flowId={flow.id}>
-          <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
+        <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
+          <PushToGitDialog flowId={flow.id}>
             <DropdownMenuItem
               disabled={!userHasPermissionToPushToGit}
               onSelect={(e) => e.preventDefault()}
@@ -147,16 +150,17 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 <span>{t('Push to Git')}</span>
               </div>
             </DropdownMenuItem>
-          </PermissionNeededTooltip>
-        </PushToGitDialog>
+          </PushToGitDialog>
+        </PermissionNeededTooltip>
+
         {!embedState.hideFolders && (
-          <MoveFlowDialog
-            flow={flow}
-            flowVersion={flowVersion}
-            onMoveTo={onMoveTo}
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFlow}
           >
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToUpdateFlow}
+            <MoveFlowDialog
+              flow={flow}
+              flowVersion={flowVersion}
+              onMoveTo={onMoveTo}
             >
               <DropdownMenuItem
                 disabled={!userHasPermissionToUpdateFlow}
@@ -167,8 +171,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   <span>{t('Move To')}</span>
                 </div>
               </DropdownMenuItem>
-            </PermissionNeededTooltip>
-          </MoveFlowDialog>
+            </MoveFlowDialog>
+          </PermissionNeededTooltip>
         )}
         <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFlow}>
           <DropdownMenuItem
@@ -189,10 +193,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         </PermissionNeededTooltip>
 
         {!readonly && (
-          <ImportFlowDialog insideBuilder={insideBuilder}>
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToUpdateFlow}
-            >
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFlow}
+          >
+            <ImportFlowDialog insideBuilder={insideBuilder}>
               <DropdownMenuItem
                 disabled={!userHasPermissionToUpdateFlow}
                 onSelect={(e) => e.preventDefault()}
@@ -202,8 +206,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   {t('Import')}
                 </div>
               </DropdownMenuItem>
-            </PermissionNeededTooltip>
-          </ImportFlowDialog>
+            </ImportFlowDialog>
+          </PermissionNeededTooltip>
         )}
         <DropdownMenuItem onClick={() => exportFlow()}>
           <div className="flex cursor-pointer  flex-row gap-2 items-center">
@@ -226,32 +230,32 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </ShareTemplateDialog>
         )}
         {!readonly && (
-          <ConfirmationDeleteDialog
-            title={`${t('Delete flow')} ${flowVersion.displayName}`}
-            message={
-              <>
-                <div>
-                  {t(
-                    'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
-                  )}
-                </div>
-                {isDevelopmentBranch && (
-                  <div className="font-bold mt-2">
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFlow}
+          >
+            <ConfirmationDeleteDialog
+              title={`${t('Delete')} ${flowVersion.displayName}`}
+              message={
+                <>
+                  <div>
                     {t(
-                      'You are on a development branch, this will not delete the flow from the remote repository.',
+                      'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
                     )}
                   </div>
-                )}
-              </>
-            }
-            mutationFn={async () => {
-              await flowsApi.delete(flow.id);
-              onDelete();
-            }}
-            entityName={t('flow')}
-          >
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToUpdateFlow}
+                  {isDevelopmentBranch && (
+                    <div className="font-bold mt-2">
+                      {t(
+                        'You are on a development branch, this will not delete the flow from the remote repository.',
+                      )}
+                    </div>
+                  )}
+                </>
+              }
+              mutationFn={async () => {
+                await flowsApi.delete(flow.id);
+                onDelete();
+              }}
+              entityName={t('flow')}
             >
               <DropdownMenuItem
                 disabled={!userHasPermissionToUpdateFlow}
@@ -262,8 +266,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                   <span className="text-destructive">{t('Delete')}</span>
                 </div>
               </DropdownMenuItem>
-            </PermissionNeededTooltip>
-          </ConfirmationDeleteDialog>
+            </ConfirmationDeleteDialog>
+          </PermissionNeededTooltip>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

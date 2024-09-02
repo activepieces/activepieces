@@ -57,8 +57,7 @@ const UseAsDraftDropdownMenuOption = ({
   onConfirm,
 }: UseAsDraftOptionProps) => {
   const { checkAccess } = useAuthorization();
-  const userHasPermissionToWriteFlow =
-    checkAccess(Permission.WRITE_FLOW) && false;
+  const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
 
   return (
     <Dialog>
