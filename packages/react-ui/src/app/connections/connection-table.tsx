@@ -4,7 +4,6 @@ import { CheckIcon, Trash } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { Authorization } from '@/components/authorization';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,16 +12,12 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -61,11 +56,17 @@ const DeleteConnectionColumn = ({
   row: RowDataWithActions<AppConnection>;
 }) => {
   const [, setSearchParams] = useSearchParams();
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToWriteAppConnection = checkAccess(
+    Permission.WRITE_APP_CONNECTION,
+  );
   return (
     <div className="flex items-end justify-end">
-      <Authorization permission={Permission.WRITE_APP_CONNECTION}>
+      <PermissionNeededTooltip
+        hasPermission={userHasPermissionToWriteAppConnection}
+      >
         <ConfirmationDeleteDialog
-          title={t('Delete {name} connection', { name: row.name })}
+          title={t('Delete {name}', { name: row.name })}
           message={t(
             'Are you sure you want to delete this connection? all steps using it will fail.',
           )}
@@ -79,11 +80,15 @@ const DeleteConnectionColumn = ({
           }
           entityName={row.name}
         >
-          <Button variant="ghost" className="size-8 p-0">
+          <Button
+            disabled={!userHasPermissionToWriteAppConnection}
+            variant="ghost"
+            className="size-8 p-0"
+          >
             <Trash className="size-4 stroke-destructive" />
           </Button>
         </ConfirmationDeleteDialog>
-      </Authorization>
+      </PermissionNeededTooltip>
     </div>
   );
 };
@@ -192,35 +197,29 @@ const fetchData = async (
 
 function AppConnectionsTable() {
   const [refresh, setRefresh] = useState(0);
-
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToWriteAppConnection = checkAccess(
+    Permission.WRITE_APP_CONNECTION,
+  );
   return (
     <div className="flex-col w-full">
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">{t('Connections')}</h1>
         <div className="ml-auto">
-          <Authorization
-            permission={Permission.WRITE_APP_CONNECTION}
-            forbiddenFallback={
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Button variant="default" disabled>
-                      {t('New Connection')}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <span>{t('Permission Needed')}</span>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            }
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToWriteAppConnection}
           >
             <NewConnectionTypeDialog
               onConnectionCreated={() => setRefresh(refresh + 1)}
             >
-              <Button variant="default">{t('New Connection')}</Button>
+              <Button
+                variant="default"
+                disabled={!userHasPermissionToWriteAppConnection}
+              >
+                {t('New Connection')}
+              </Button>
             </NewConnectionTypeDialog>
-          </Authorization>
+          </PermissionNeededTooltip>
         </div>
       </div>
       <DataTable

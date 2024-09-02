@@ -24,9 +24,6 @@ export const insertRowAction = createAction({
         'Inserted values that are dates and formulas will be entered strings and have no effect',
       required: false,
     }),
-    value: Property.MarkDown({
-      value: 'Hello asd asd  as asd',
-    }),
     first_row_headers: Property.Checkbox({
       displayName: 'Does the first row contain headers?',
       description: 'If the first row is headers',

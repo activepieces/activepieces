@@ -9,6 +9,7 @@ import { ReportBugsButton } from '@/components/ui/report-bugs-button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
+import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
@@ -18,7 +19,7 @@ import { FlagGuard } from './flag-guard';
 export const Header = () => {
   const history = useLocation();
   const isInPlatformAdmin = history.pathname.startsWith('/platform');
-
+  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   return (
     <div className="flex h-[60px]">
       {isInPlatformAdmin ? (
@@ -30,22 +31,27 @@ export const Header = () => {
       <div className="flex items-center justify-center gap-4">
         <ReportBugsButton variant="outline"></ReportBugsButton>
         <InviteUserDialog></InviteUserDialog>
-        <Link to={isInPlatformAdmin ? '/' : '/platform'}>
-          <Button
-            variant={'outline'}
-            size="sm"
-            className="flex items-center justify-center gap-2"
-          >
-            {isInPlatformAdmin ? (
-              <LogOut className="size-4" />
-            ) : (
-              <Shield className="size-4" />
-            )}
-            <span>
-              {t(isInPlatformAdmin ? 'Exit Platform Admin' : 'Platform Admin')}
-            </span>
-          </Button>
-        </Link>
+        {showPlatformAdminDashboard && (
+          <Link to={isInPlatformAdmin ? '/' : '/platform'}>
+            <Button
+              variant={'outline'}
+              size="sm"
+              className="flex items-center justify-center gap-2"
+            >
+              {isInPlatformAdmin ? (
+                <LogOut className="size-4" />
+              ) : (
+                <Shield className="size-4" />
+              )}
+              <span>
+                {t(
+                  isInPlatformAdmin ? 'Exit Platform Admin' : 'Platform Admin',
+                )}
+              </span>
+            </Button>
+          </Link>
+        )}
+
         <TaskLimitButton />
         <UserAvatar />
       </div>

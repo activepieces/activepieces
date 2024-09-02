@@ -250,6 +250,10 @@ const routes = [
     ),
   },
   {
+    path: '/team',
+    element: <Navigate to="/settings/team" replace></Navigate>,
+  },
+  {
     path: '/settings/team',
     element: (
       <DashboardContainer>

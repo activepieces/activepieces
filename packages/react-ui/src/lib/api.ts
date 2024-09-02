@@ -11,7 +11,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 export const API_BASE_URL =
   import.meta.env.MODE === 'cloud'
     ? 'https://cloud.activepieces.com'
-    : 'http://localhost:4200';
+    : window.location.origin;
 export const API_URL = `${API_BASE_URL}/api`;
 
 const disallowedRoutes = [

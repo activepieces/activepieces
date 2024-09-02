@@ -13,7 +13,7 @@ const FlowStepInputOutput = React.memo(
   ({ stepDetails }: { stepDetails: StepOutput | undefined }) => {
     const loopStepOut = stepDetails
       ? formatUtils.formatStepInputAndOutput(
-          stepDetails.output,
+          stepDetails.output ?? stepDetails.errorMessage,
           stepDetails.type,
         )
       : {};

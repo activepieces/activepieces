@@ -80,9 +80,11 @@ const CreateOrEditConnectionDialog = React.memo(
       piece.auth?.type === PropertyType.CUSTOM_AUTH
         ? Type.Object({
             request: Type.Object({
-              value: formUtils.buildSchema(
-                (piece.auth as CustomAuthProperty<any>).props,
-              ),
+              value: Type.Object({
+                props: formUtils.buildSchema(
+                  (piece.auth as CustomAuthProperty<any>).props,
+                ),
+              }),
             }),
           })
         : Type.Object({});

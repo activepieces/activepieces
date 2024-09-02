@@ -18,7 +18,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
 
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -107,7 +106,6 @@ export const SearchableSelect = <T extends React.Key>({
     const option = options[optionIndex];
     onChange(option.value);
   };
-
   return (
     <Popover modal={true} open={open} onOpenChange={setOpen}>
       <PopoverTrigger
@@ -128,8 +126,8 @@ export const SearchableSelect = <T extends React.Key>({
             className="w-full justify-between w-full"
           >
             <span className="flex w-full truncate select-none">
-              {!isNil(value)
-                ? options.find((option) => option.value === value)?.label
+              {selectedIndex > -1 && options[selectedIndex]
+                ? options[selectedIndex].label
                 : placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

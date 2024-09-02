@@ -33,10 +33,12 @@ const RenameFolderDialog = ({
   children,
   folderId,
   onRename,
+  name,
 }: {
   children: React.ReactNode;
   folderId: string;
   onRename: () => void;
+  name: string;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const form = useForm<RenameFolderSchema>({
@@ -60,10 +62,14 @@ const RenameFolderDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger className="w-full">{children}</DialogTrigger>
+      <DialogTrigger className="w-full" asChild>
+        {children}
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Rename Folder')}</DialogTitle>
+          <DialogTitle>
+            {t('Rename')} {name}
+          </DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
