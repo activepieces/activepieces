@@ -119,7 +119,7 @@ export const askAi = createAction({
       }
 
       const response = await ai.chat.text({
-        model: context.propsValue.model as unknown as string,
+        model: (context.propsValue.model as unknown as { model: string }).model,
         messages: conversation?.messages ? [
           ...conversation.messages,
           {
