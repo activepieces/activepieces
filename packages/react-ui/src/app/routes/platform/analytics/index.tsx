@@ -16,20 +16,10 @@ export default function AnalyticsPage() {
     queryKey: ['analytics'],
     queryFn: analyticsApi.get,
     staleTime: 60 * 1000,
+    enabled: platform.analyticsEnabled,
   });
 
   const isEnabled = platform.analyticsEnabled;
-
-  if (isLoading || !data) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <span className="text-xl font-semibold">
-          {t('Hold on, this may take a little longer')}
-        </span>
-      </div>
-    );
-  }
-
   return (
     <LockedFeatureGuard
       featureKey="ANALYTICS"
@@ -44,11 +34,12 @@ export default function AnalyticsPage() {
           <span className="text-3xl font-bold">{t('Platform Overview')}</span>
         </div>
         <div className="mt-8 flex gap-8 flex-col">
-          <Metrics report={data} />
+          <Metrics report={isLoading ? undefined : data} />
           <Separator />
-          <TaskUsage report={data} />
+          <TaskUsage report={isLoading ? undefined : data} />
           <Separator />
-          <Reports report={data} />
+          <Separator />
+          <Reports report={isLoading ? undefined : data} />
         </div>
       </div>
     </LockedFeatureGuard>

@@ -12,10 +12,11 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { DatePickerWithRange } from '@/components/ui/date-picker-range';
+import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsReportResponse } from '@activepieces/shared';
 
 type TaskUsageProps = {
-  report: AnalyticsReportResponse;
+  report?: AnalyticsReportResponse;
 };
 
 export function TaskUsage({ report }: TaskUsageProps) {
@@ -26,14 +27,15 @@ export function TaskUsage({ report }: TaskUsageProps) {
     to: dayjs().toDate(),
   });
 
-  const chartData = report.tasksUsage.map((data) => ({
-    date: data.day,
-    tasks: data.totalTasks,
-  }));
+  const chartData =
+    report?.tasksUsage.map((data) => ({
+      date: data.day,
+      tasks: data.totalTasks,
+    })) || [];
 
   const chartConfig = {
     views: {
-      label: 'Executed Tasks',
+      label: 'Task Executions',
     },
     tasks: {
       color: 'hsl(var(--chart-2))',
@@ -60,54 +62,59 @@ export function TaskUsage({ report }: TaskUsageProps) {
           from={selectedDateRange?.from?.toISOString()}
           to={selectedDateRange?.to?.toISOString()}
           maxDate={new Date()}
+          presetType="past"
         />
       </div>
       <div className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
-          <BarChart
-            accessibilityLayer
-            data={filteredData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
+        {report ? (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-[250px] w-full"
           >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value);
-                return date.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                });
+            <BarChart
+              accessibilityLayer
+              data={filteredData}
+              margin={{
+                left: 12,
+                right: 12,
               }}
-            />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  className="w-[150px]"
-                  nameKey="views"
-                  labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    });
-                  }}
-                />
-              }
-            />
-            <Bar dataKey={'tasks'} fill={`var(--color-tasks)`} />
-          </BarChart>
-        </ChartContainer>
+            >
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) => {
+                  const date = new Date(value);
+                  return date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  });
+                }}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    className="w-[150px]"
+                    nameKey="views"
+                    labelFormatter={(value) => {
+                      return new Date(value).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      });
+                    }}
+                  />
+                }
+              />
+              <Bar dataKey={'tasks'} fill={`var(--color-tasks)`} />
+            </BarChart>
+          </ChartContainer>
+        ) : (
+          <Skeleton className="h-[250px] w-full" />
+        )}
       </div>
     </>
   );

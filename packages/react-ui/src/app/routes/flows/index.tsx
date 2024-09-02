@@ -38,6 +38,7 @@ import {
   FolderFilterList,
   folderIdParamName,
 } from '@/features/folders/component/folder-filter-list';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -45,7 +46,6 @@ import { formatUtils } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
-import { foldersApi } from '@/features/folders/lib/folders-api';
 
 const filters = [
   {
