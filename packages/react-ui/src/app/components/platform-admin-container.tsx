@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import {
   LayoutGrid,
+  LineChart,
   LogsIcon,
   Puzzle,
   UserCog,
@@ -34,6 +35,12 @@ export function PlatformAdminContainer({
   const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
 
   const links: SidebarLink[] = [
+    {
+      to: '/platform/analytics',
+      label: t('Overview'),
+      icon: LineChart,
+      locked: isLocked(false),
+    },
     {
       to: '/platform/projects',
       label: t('Projects'),

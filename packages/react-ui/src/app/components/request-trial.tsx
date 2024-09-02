@@ -58,6 +58,7 @@ export type FeatureKey =
   | 'AUDIT_LOGS'
   | 'GIT_SYNC'
   | 'ISSUES'
+  | 'ANALYTICS'
   | 'ALERTS'
   | 'ENTERPRISE_PIECES';
 
@@ -83,6 +84,10 @@ const features = [
   {
     label: t('Alerts on Failed Runs'),
     key: `ISSUES`,
+  },
+  {
+    label: t('Analytics'),
+    key: `ANALYTICS`,
   },
 ];
 
