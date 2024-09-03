@@ -26,6 +26,7 @@ import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './select';
 
 export type DataWithId = {
   id?: string;
@@ -35,9 +36,9 @@ export type RowDataWithActions<TData extends DataWithId> = TData & {
 };
 
 type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>[]> = {
-  [K in F[number] as K['accessorKey']]: K['type'] extends 'select'
-    ? K['options'][number]['value'][]
-    : K['options'][number]['value'];
+  [K in F[number]as K['accessorKey']]: K['type'] extends 'select'
+  ? K['options'][number]['value'][]
+  : K['options'][number]['value'];
 };
 
 export type DataTableFilter<Keys extends string> = {
@@ -122,6 +123,7 @@ export function DataTable<
 
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
+  const startingLimit = searchParams.get('limit') || '10';
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
     startingCursor,
   );
@@ -179,6 +181,11 @@ export function DataTable<
     columns,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: parseInt(startingLimit),
+      },
+    },
   });
 
   useEffect(() => {
@@ -204,11 +211,12 @@ export function DataTable<
         if (currentCursor) {
           newParams.set('cursor', currentCursor);
         }
+        newParams.set('limit', `${table.getState().pagination.pageSize}`);
         return newParams;
       },
       { replace: true },
     );
-  }, [currentCursor]);
+  }, [currentCursor, table.getState().pagination.pageSize]);
 
   useEffect(() => {
     fetchDataAndUpdateState(searchParams);
@@ -247,9 +255,9 @@ export function DataTable<
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}
@@ -298,6 +306,24 @@ export function DataTable<
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
+        <p className="text-sm font-medium">Rows per page</p>
+        <Select
+          value={`${table.getState().pagination.pageSize}`}
+          onValueChange={(value) => {
+            table.setPageSize(Number(value));
+          }}
+        >
+          <SelectTrigger className="h-8 w-[70px]">
+            <SelectValue placeholder={table.getState().pagination.pageSize} />
+          </SelectTrigger>
+          <SelectContent side="top">
+            {[10, 30, 50].map((pageSize) => (
+              <SelectItem key={pageSize} value={`${pageSize}`}>
+                {pageSize}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button
           variant="outline"
           size="sm"
