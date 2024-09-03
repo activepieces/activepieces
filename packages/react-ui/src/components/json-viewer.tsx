@@ -169,7 +169,7 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
               }}
               theme={viewerTheme}
               enableClipboard={false}
-              groupArraysAfterLength={100}
+              groupArraysAfterLength={20}
               displayDataTypes={false}
               name={false}
               quotesOnKeys={false}
