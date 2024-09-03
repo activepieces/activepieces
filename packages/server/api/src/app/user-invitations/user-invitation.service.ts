@@ -1,7 +1,7 @@
 
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { IsNull, MoreThanOrEqual } from 'typeorm'
+import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
@@ -15,7 +15,6 @@ import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
 
 const repo = repoFactory(UserInvitationEntity)
-const INVITATION_EXPIREY_DAYS = 1
 
 export const userInvitationsService = {
     async countByProjectId(projectId: string): Promise<number> {
@@ -32,16 +31,21 @@ export const userInvitationsService = {
             return
         }
         const platform = await platformService.getOneOrThrow(platformId)
-        const ONE_DAY_AGO = dayjs().subtract(INVITATION_EXPIREY_DAYS, 'day').toISOString()
         const invitations = await repo().findBy([
             {
                 email,
                 platformId,
                 status: InvitationStatus.ACCEPTED,
-                created: MoreThanOrEqual(ONE_DAY_AGO),
             },
         ])
         for (const invitation of invitations) {
+            const expiryDate = dayjs(invitation.created).add(invitation.invitationExpirySeconds, 'seconds')
+            if (expiryDate.isBefore(dayjs())) {
+                await repo().delete({
+                    id: invitation.id,
+                })
+                continue
+            }
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
                     assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
@@ -65,9 +69,6 @@ export const userInvitationsService = {
                     break
                 }
             }
-            await repo().delete({
-                id: invitation.id,
-            })
         }
     },
     async create({
@@ -77,6 +78,7 @@ export const userInvitationsService = {
         type,
         projectRole,
         platformRole,
+        invitationExpirySeconds,
     }: CreateParams): Promise<UserInvitationWithLink> {
         const invitation = await repo().findOneBy({
             email,
@@ -98,6 +100,7 @@ export const userInvitationsService = {
             projectRole: type === InvitationType.PLATFORM ? undefined : projectRole!,
             platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
             projectId: type === InvitationType.PLATFORM ? undefined : projectId!,
+            invitationExpirySeconds: invitationExpirySeconds ?? 24 * 60 * 60,
         }, ['email', 'platformId', 'projectId'])
 
         const userInvitation = await this.getOneOrThrow({
@@ -199,7 +202,7 @@ async function generateInvitationLink(userInvitation: UserInvitation): Promise<s
         payload: {
             id: userInvitation.id,
         },
-        expiresInSeconds: INVITATION_EXPIREY_DAYS * 24 * 60 * 60,
+        expiresInSeconds: userInvitation.invitationExpirySeconds,
         key: await jwtUtils.getJwtSecret(),
     })
 
@@ -278,6 +281,7 @@ export type CreateParams = {
     projectId: string | null
     type: InvitationType
     projectRole: ProjectMemberRole | null
+    invitationExpirySeconds: number | null
 }
 
 export type DeleteParams = {

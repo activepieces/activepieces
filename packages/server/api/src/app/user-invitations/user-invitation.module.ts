@@ -35,7 +35,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
 
     app.post('/', CreateUserInvitationRequestParams, async (request, reply) => {
         await assertPermission(app, request, reply, request.body.projectId ?? undefined, request.body.type)
-        const { email, platformRole, projectRole, type } = request.body
+        const { email, platformRole, projectRole, type, invitationExpirySeconds } = request.body
         if (type === InvitationType.PROJECT) {
             await projectMembersLimit.limit({
                 projectId: request.principal.projectId,
@@ -51,6 +51,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
             platformRole: type === InvitationType.PROJECT ? null : platformRole ?? null,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId ?? null,
             projectRole: type === InvitationType.PLATFORM ? null : projectRole ?? null,
+            invitationExpirySeconds: invitationExpirySeconds ?? 24 * 60 * 60,
         })
         await reply.status(StatusCodes.CREATED).send(invitation)
     })
@@ -122,6 +123,7 @@ const ListUserInvitationsRequestParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         permission: Permission.READ_INVITATION,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         tags: ['user-invitations'],
@@ -136,6 +138,7 @@ const ListUserInvitationsRequestParams = {
 const AcceptUserInvitationRequestParams = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         body: AcceptUserInvitationRequest,
@@ -145,6 +148,7 @@ const AcceptUserInvitationRequestParams = {
 const DeleteInvitationRequestParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         tags: ['user-invitations'],
