@@ -4,6 +4,7 @@ import {
   RouterProvider,
   createBrowserRouter,
   createMemoryRouter,
+  useLocation,
 } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
@@ -54,6 +55,15 @@ import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
 
+const SettingsRerouter = () => {
+  const { hash } = useLocation();
+  const fragmentWithoutHash = hash.slice(1).toLowerCase();
+  return fragmentWithoutHash ? (
+    <Navigate to={`/settings/${fragmentWithoutHash}`} replace />
+  ) : (
+    <Navigate to="/settings/general" replace />
+  );
+};
 const routes = [
   {
     path: '/embed',
@@ -156,7 +166,7 @@ const routes = [
     path: '/settings',
     element: (
       <DashboardContainer>
-        <Navigate to="/settings/general" replace />
+        <SettingsRerouter></SettingsRerouter>
       </DashboardContainer>
     ),
   },
@@ -248,10 +258,7 @@ const routes = [
       </DashboardContainer>
     ),
   },
-  {
-    path: '/team',
-    element: <Navigate to="/settings/team" replace></Navigate>,
-  },
+
   {
     path: '/settings/team',
     element: (
@@ -265,6 +272,10 @@ const routes = [
     ),
   },
   {
+    path: '/team',
+    element: <Navigate to="/settings/team" replace></Navigate>,
+  },
+  {
     path: '/settings/git-sync',
     element: (
       <DashboardContainer>
@@ -276,6 +287,7 @@ const routes = [
       </DashboardContainer>
     ),
   },
+
   {
     path: '/invitation',
     element: (
