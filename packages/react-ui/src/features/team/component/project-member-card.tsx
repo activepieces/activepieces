@@ -2,13 +2,9 @@ import { AvatarFallback } from '@radix-ui/react-avatar';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { Authorization } from '@/components/authorization';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { Permission } from '@activepieces/shared';
 
@@ -24,11 +20,15 @@ export function ProjectMemberCard({
   member: ProjectMemberWithUser;
 }) {
   const { refetch } = projectMembersHooks.useProjectMembers();
-
-  async function deleteMember() {
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToRemoveMember = checkAccess(
+    Permission.WRITE_PROJECT_MEMBER,
+  );
+  const { project } = projectHooks.useCurrentProject();
+  const deleteMember = async () => {
     await projectMembersApi.delete(member.id);
     refetch();
-  }
+  };
 
   return (
     <div
@@ -52,36 +52,28 @@ export function ProjectMemberCard({
         </div>
       </div>
       <div className="flex gap-2">
-        <Authorization
-          permission={Permission.WRITE_INVITATION}
-          forbiddenFallback={
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Button disabled variant="ghost" className="size-8 p-0">
-                    <Trash className="bg-destructive-500 size-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span>{t('Permission Needed')}</span>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          }
-        >
-          <ConfirmationDeleteDialog
-            title={`${t('Remove')} ${member.user.firstName} ${
-              member.user.lastName
-            }`}
-            message={t('Are you sure you want to remove this member?')}
-            mutationFn={() => deleteMember()}
-            entityName={`${member.user.firstName} ${member.user.lastName}`}
+        {project.ownerId !== member.userId && (
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToRemoveMember}
           >
-            <Button variant="ghost" className="size-8 p-0">
-              <Trash className="bg-destructive-500 size-4" />
-            </Button>
-          </ConfirmationDeleteDialog>
-        </Authorization>
+            <ConfirmationDeleteDialog
+              title={`${t('Remove')} ${member.user.firstName} ${
+                member.user.lastName
+              }`}
+              message={t('Are you sure you want to remove this member?')}
+              mutationFn={() => deleteMember()}
+              entityName={`${member.user.firstName} ${member.user.lastName}`}
+            >
+              <Button
+                disabled={!userHasPermissionToRemoveMember}
+                variant="ghost"
+                className="size-8 p-0"
+              >
+                <Trash className="text-destructive size-4" />
+              </Button>
+            </ConfirmationDeleteDialog>
+          </PermissionNeededTooltip>
+        )}
       </div>
     </div>
   );

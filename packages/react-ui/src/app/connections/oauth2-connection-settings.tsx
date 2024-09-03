@@ -3,7 +3,14 @@ import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -192,8 +199,14 @@ const OAuth2ConnectionSettings = ({
               control={form.control}
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <div className="text-md font-medium">{t('Client ID')}</div>
-                  <Input {...field} type="text" placeholder={t('Client ID')} />
+                  <FormLabel>{t('Client ID')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="text"
+                      placeholder={t('Client ID')}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -203,14 +216,14 @@ const OAuth2ConnectionSettings = ({
               control={form.control}
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <div className="text-md font-medium">
-                    {t('Client Secret')}
-                  </div>
-                  <Input
-                    {...field}
-                    type="text"
-                    placeholder={t('Client Secret')}
-                  />
+                  <FormLabel>{t('Client Secret')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="text"
+                      placeholder={t('Client Secret')}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -226,7 +239,7 @@ const OAuth2ConnectionSettings = ({
           />
         )}
 
-        <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-ful">
+        <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
           <div className="rounded-full border border-solid p-1 flex items-center justify-center">
             <img src={piece.logoUrl} className="w-5 h-5"></img>
           </div>

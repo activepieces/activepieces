@@ -1,10 +1,11 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
-import { Static, Type } from '@sinclair/typebox';
+import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useEffectOnce } from 'react-use';
 
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -19,10 +20,10 @@ import {
 } from '@/components/ui/dialog';
 import {
   Form,
+  FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/seperator';
@@ -42,13 +43,17 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   ApErrorParams,
-  AppConnection,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   assertNotNullOrUndefined,
   ErrorCode,
   isNil,
   UpsertAppConnectionRequestBody,
+  UpsertBasicAuthRequest,
+  UpsertCloudOAuth2Request,
+  UpsertCustomAuthRequest,
+  UpsertOAuth2Request,
+  UpsertSecretTextRequest,
 } from '@activepieces/shared';
 
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
@@ -66,6 +71,73 @@ type ConnectionDialogProps = {
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
 };
 
+function buildConnectionSchema(
+  piece: PieceMetadataModelSummary | PieceMetadataModel,
+) {
+  const auth = piece.auth;
+  if (isNil(auth)) {
+    return Type.Object({
+      request: Type.Composite([
+        Type.Omit(UpsertAppConnectionRequestBody, ['name']),
+      ]),
+    });
+  }
+  const connectionSchema = Type.Object({
+    name: Type.String({
+      pattern: '^[A-Za-z0-9_\\-@\\+\\.]*$',
+      minLength: 1,
+      errorMessage: t('Name can only contain letters, numbers and underscores'),
+    }),
+  });
+
+  switch (auth.type) {
+    case PropertyType.SECRET_TEXT:
+      return Type.Object({
+        request: Type.Composite([
+          Type.Omit(UpsertSecretTextRequest, ['name']),
+          connectionSchema,
+        ]),
+      });
+    case PropertyType.BASIC_AUTH:
+      return Type.Object({
+        request: Type.Composite([
+          Type.Omit(UpsertBasicAuthRequest, ['name']),
+          connectionSchema,
+        ]),
+      });
+    case PropertyType.CUSTOM_AUTH:
+      return Type.Object({
+        request: Type.Composite([
+          Type.Omit(UpsertCustomAuthRequest, ['name']),
+          connectionSchema,
+          Type.Object({
+            value: Type.Object({
+              props: formUtils.buildSchema(
+                (piece.auth as CustomAuthProperty<any>).props,
+              ),
+            }),
+          }),
+        ]),
+      });
+    case PropertyType.OAUTH2:
+      return Type.Object({
+        request: Type.Composite([
+          Type.Omit(
+            Type.Union([UpsertOAuth2Request, UpsertCloudOAuth2Request]),
+            ['name'],
+          ),
+          connectionSchema,
+        ]),
+      });
+    default:
+      return Type.Object({
+        request: Type.Composite([
+          Type.Omit(UpsertAppConnectionRequestBody, ['name']),
+          connectionSchema,
+        ]),
+      });
+  }
+}
 const CreateOrEditConnectionDialog = React.memo(
   ({
     piece,
@@ -76,35 +148,11 @@ const CreateOrEditConnectionDialog = React.memo(
   }: ConnectionDialogProps) => {
     const { auth } = piece;
 
-    const overrideSchema =
-      piece.auth?.type === PropertyType.CUSTOM_AUTH
-        ? Type.Object({
-            request: Type.Object({
-              value: formUtils.buildSchema(
-                (piece.auth as CustomAuthProperty<any>).props,
-              ),
-            }),
-          })
-        : Type.Object({});
+    const formSchema = buildConnectionSchema(piece);
 
-    const formSchema = Type.Composite([
-      Type.Object({
-        request: Type.Intersect([
-          UpsertAppConnectionRequestBody,
-          Type.Object({
-            name: Type.String({
-              pattern: '^[A-Za-z0-9_\\-@\\+\\.]*$',
-              errorMessage: t(
-                ' Name can only contain letters, numbers and underscores',
-              ),
-            }),
-          }),
-        ]),
-      }),
-      overrideSchema,
-    ]);
-
-    const form = useForm<Static<typeof formSchema>>({
+    const form = useForm<{
+      request: UpsertAppConnectionRequestBody;
+    }>({
       defaultValues: {
         request: createDefaultValues(
           piece,
@@ -113,16 +161,17 @@ const CreateOrEditConnectionDialog = React.memo(
             : appConnectionUtils.findName(piece.name),
         ),
       },
+      mode: 'onChange',
+      reValidateMode: 'onChange',
       resolver: typeboxResolver(formSchema),
     });
 
+    useEffectOnce(() => {
+      form.trigger();
+    });
     const [errorMessage, setErrorMessage] = useState('');
 
-    const { mutate, isPending } = useMutation<
-      AppConnection | null,
-      Error,
-      void
-    >({
+    const { mutate, isPending } = useMutation({
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
@@ -195,16 +244,16 @@ const CreateOrEditConnectionDialog = React.memo(
                       <FormLabel htmlFor="name">
                         {t('Connection Name')}
                       </FormLabel>
-                      <Input
-                        disabled={!isNil(reconnectConnection)}
-                        {...field}
-                        required
-                        id="name"
-                        type="text"
-                        placeholder={t('Connection name')}
-                      />
-
-                      <FormMessage />
+                      <FormControl>
+                        <Input
+                          disabled={!isNil(reconnectConnection)}
+                          {...field}
+                          required
+                          id="name"
+                          type="text"
+                          placeholder={t('Connection name')}
+                        />
+                      </FormControl>
                     </FormItem>
                   )}
                 ></FormField>

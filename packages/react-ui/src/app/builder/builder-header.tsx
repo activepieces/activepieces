@@ -34,7 +34,9 @@ import { BuilderPublishButton } from './builder-publish-button';
 export const BuilderHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const showSupport = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY);
+  const { data: showSupport } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COMMUNITY,
+  );
   const isInRunsPage = useMemo(
     () => location.pathname.startsWith('/runs'),
     [location.pathname],

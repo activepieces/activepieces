@@ -17,6 +17,7 @@ import {
   ApplicationEventName,
   summarizeApplicationEvent,
 } from '@activepieces/ee-shared';
+import { isNil } from '@activepieces/shared';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -44,6 +45,9 @@ export default function AuditLogsPage() {
               ),
               cell: ({ row }) => {
                 const icon = convertToIcon(row.original);
+                if (isNil(icon?.icon)) {
+                  return <div className="text-left"></div>;
+                }
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -182,6 +186,8 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Key className="size-4" />,
         tooltip: t('Signing Key'),
       };
+    default:
+      return undefined;
   }
 }
 

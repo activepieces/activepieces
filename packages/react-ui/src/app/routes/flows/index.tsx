@@ -27,17 +27,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
-import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
+import {
+  FolderFilterList,
+  folderIdParamName,
+} from '@/features/folders/component/folder-filter-list';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
+import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
 
@@ -64,6 +70,8 @@ const filters = [
 ];
 
 const FlowsPage = () => {
+  const { checkAccess } = useAuthorization();
+  const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
@@ -90,9 +98,12 @@ const FlowsPage = () => {
     void
   >({
     mutationFn: async () => {
+      const folderId = searchParams.get(folderIdParamName);
+      const folder = folderId ? await foldersApi.get(folderId) : undefined;
       const flow = await flowsApi.create({
         projectId: authenticationSession.getProjectId()!,
         displayName: t('Untitled'),
+        folderName: folder?.displayName,
       });
       return flow;
     },
@@ -212,45 +223,62 @@ const FlowsPage = () => {
       <div className="mb-4 flex">
         <h1 className="text-3xl font-bold">{t('Flows')}</h1>
         <div className="ml-auto flex flex-row gap-2">
-          <ImportFlowDialog insideBuilder={false}>
-            <Button variant="outline" className="flex gap-2 items-center">
-              <Import className="w-4 h-4" />
-              {t('Import Flow')}
-            </Button>
-          </ImportFlowDialog>
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
+          <PermissionNeededTooltip
+            hasPermission={doesUserHavePermissionToWriteFlow}
+          >
+            <ImportFlowDialog insideBuilder={false}>
               <Button
-                variant="default"
+                disabled={!doesUserHavePermissionToWriteFlow}
+                variant="outline"
                 className="flex gap-2 items-center"
-                loading={isCreateFlowPending}
               >
-                <span>{t('New Flow')}</span>
-                <ChevronDown className="h-4 w-4 " />
+                <Import className="w-4 h-4" />
+                {t('Import Flow')}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onSelect={(e) => {
-                  e.preventDefault();
-                  createFlow();
-                }}
-                disabled={isCreateFlowPending}
+            </ImportFlowDialog>
+          </PermissionNeededTooltip>
+
+          <PermissionNeededTooltip
+            hasPermission={doesUserHavePermissionToWriteFlow}
+          >
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger
+                disabled={!doesUserHavePermissionToWriteFlow}
+                asChild
               >
-                <Plus className="h-4 w-4 me-2" />
-                <span>{t('From scratch')}</span>
-              </DropdownMenuItem>
-              <SelectFlowTemplateDialog>
+                <Button
+                  disabled={!doesUserHavePermissionToWriteFlow}
+                  variant="default"
+                  className="flex gap-2 items-center"
+                  loading={isCreateFlowPending}
+                >
+                  <span>{t('New Flow')}</span>
+                  <ChevronDown className="h-4 w-4 " />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
                 <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    createFlow();
+                  }}
                   disabled={isCreateFlowPending}
                 >
-                  <Workflow className="h-4 w-4 me-2" />
-                  <span>{t('Use a template')}</span>
+                  <Plus className="h-4 w-4 me-2" />
+                  <span>{t('From scratch')}</span>
                 </DropdownMenuItem>
-              </SelectFlowTemplateDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <SelectFlowTemplateDialog>
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    disabled={isCreateFlowPending}
+                  >
+                    <Workflow className="h-4 w-4 me-2" />
+                    <span>{t('Use a template')}</span>
+                  </DropdownMenuItem>
+                </SelectFlowTemplateDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </PermissionNeededTooltip>
         </div>
       </div>
       <div className="flex flex-row gap-4">

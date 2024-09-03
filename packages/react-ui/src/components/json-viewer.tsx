@@ -150,7 +150,7 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
         </div>
       </div>
 
-      {(
+      {
         <>
           {typeof json !== 'string' && typeof json !== 'object' && (
             <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
@@ -169,7 +169,7 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
               }}
               theme={viewerTheme}
               enableClipboard={false}
-              groupArraysAfterLength={100}
+              groupArraysAfterLength={20}
               displayDataTypes={false}
               name={false}
               quotesOnKeys={false}
@@ -177,7 +177,7 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
             />
           )}
         </>
-      )}
+      }
     </div>
   );
 });

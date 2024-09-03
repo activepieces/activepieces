@@ -3,7 +3,7 @@ import { ApMention, BLOT_NAME } from '@activepieces/ui/common';
 import { customCodeMentionDisplayName, fixSelection } from './utils';
 
 export function init() {
-  const Embed = Quill.import('blots/embed');
+  const Embed = Quill.import('blots/embed') as any;
 
   class MentionBlot extends Embed {
     static blotName: string;

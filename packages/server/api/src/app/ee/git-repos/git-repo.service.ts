@@ -82,7 +82,7 @@ export const gitRepoService = {
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
         }
-        const gitRepo = await repo().findOneByOrFail({ projectId })
+        const gitRepo = await repo().findOneBy({ projectId })
         if (isNil(gitRepo) || gitRepo.branchType === GitBranchType.PRODUCTION) {
             return
         }

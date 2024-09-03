@@ -4,12 +4,14 @@ import {
   RouterProvider,
   createBrowserRouter,
   createMemoryRouter,
+  useLocation,
 } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { EmbedPage } from '@/app/routes/embed';
+import AnalyticsPage from '@/app/routes/platform/analytics';
 import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
 import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
 import { BrandingPage } from '@/app/routes/platform/settings/branding';
@@ -53,7 +55,17 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { RedirectPage } from '@/app/routes/redirect';
 
+const SettingsRerouter = () => {
+  const { hash } = useLocation();
+  const fragmentWithoutHash = hash.slice(1).toLowerCase();
+  return fragmentWithoutHash ? (
+    <Navigate to={`/settings/${fragmentWithoutHash}`} replace />
+  ) : (
+    <Navigate to="/settings/general" replace />
+  );
+};
 const routes = [
   {
     path: '/embed',
@@ -156,7 +168,7 @@ const routes = [
     path: '/settings',
     element: (
       <DashboardContainer>
-        <Navigate to="/settings/general" replace />
+        <SettingsRerouter></SettingsRerouter>
       </DashboardContainer>
     ),
   },
@@ -248,6 +260,7 @@ const routes = [
       </DashboardContainer>
     ),
   },
+
   {
     path: '/settings/team',
     element: (
@@ -261,6 +274,10 @@ const routes = [
     ),
   },
   {
+    path: '/team',
+    element: <Navigate to="/settings/team" replace></Navigate>,
+  },
+  {
     path: '/settings/git-sync',
     element: (
       <DashboardContainer>
@@ -272,6 +289,7 @@ const routes = [
       </DashboardContainer>
     ),
   },
+
   {
     path: '/invitation',
     element: (
@@ -320,6 +338,16 @@ const routes = [
     ),
   },
   {
+    path: '/platform/analytics',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Analytics">
+          <AnalyticsPage />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/templates',
     element: (
       <PlatformAdminContainer>
@@ -344,7 +372,7 @@ const routes = [
     element: (
       <PlatformAdminContainer>
         <PageTitle title="Platform">
-          <Navigate to="/platform/projects" />
+          <Navigate to="/platform/analytics" />
         </PageTitle>
       </PlatformAdminContainer>
     ),
@@ -406,6 +434,10 @@ const routes = [
         </PageTitle>
       </PlatformAdminContainer>
     ),
+  },
+  {
+    path: '/redirect',
+    element: <RedirectPage></RedirectPage>,
   },
   {
     path: '/*',

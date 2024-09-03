@@ -24,6 +24,9 @@ module.exports = {
       },
     },
     extend: {
+      transitionDuration: {
+        1500: '1500ms',
+      },
       colors: {
         warning: {
           DEFAULT: 'hsl(var(--warning))',

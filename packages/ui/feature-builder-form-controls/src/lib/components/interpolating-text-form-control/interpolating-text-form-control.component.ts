@@ -236,7 +236,7 @@ export class InterpolatingTextFormControlComponent
   }
 
   private removeDefaultTabKeyBinding() {
-    const module = this.editor.quillEditor.getModule('keyboard');
+    const module = this.editor.quillEditor.getModule('keyboard') as any;
     delete module.bindings['9'];
   }
 
@@ -381,7 +381,8 @@ export class InterpolatingTextFormControlComponent
       if (this.onlyAllowOneMentionToBeAdded) {
         this.editorFormControl.setValue({ ops: [mentionOp] });
       } else {
-        this.editor.quillEditor
+        const quillEditor = this.editor.quillEditor as any;
+        quillEditor
           .getModule('mention')
           .insertItem(mentionOp.insert.apMention, true);
       }

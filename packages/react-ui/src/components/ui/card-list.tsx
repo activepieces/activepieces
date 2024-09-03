@@ -11,7 +11,10 @@ const CardList = forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ children, ...props }, ref) => (
-  <ScrollArea className="h-full overflow-y-auto">
+  <ScrollArea
+    className="h-full overflow-y-auto"
+    viewPortClassName="[&>div]:h-full"
+  >
     <div ref={ref} className="flex flex-col gap-4 h-full" {...props}>
       {children}
     </div>

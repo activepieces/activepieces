@@ -19,7 +19,7 @@ export const formatUtils = {
     sampleData: unknown,
     type: ActionType | TriggerType | null,
   ) {
-    const cleanedSampleData = sampleData
+    const cleanedSampleData = sampleData;
     const shouldRemoveIterations =
       type === ActionType.LOOP_ON_ITEMS &&
       cleanedSampleData &&

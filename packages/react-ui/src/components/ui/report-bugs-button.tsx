@@ -11,7 +11,9 @@ export const ReportBugsButton = ({
   variant: 'outline' | 'ghost';
 }) => {
   const reportBugsUrl = `https://community.activepieces.com/t/new-ui-open-beta-testing/5743?u=abdul`;
-  const showSupport = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY);
+  const { data: showSupport } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COMMUNITY,
+  );
   return (
     showSupport && (
       <Button

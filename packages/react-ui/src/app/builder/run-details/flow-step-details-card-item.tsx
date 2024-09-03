@@ -72,12 +72,20 @@ function findChildrenPaths(
 }
 
 const FlowStepDetailsCardItem = ({ path }: FlowStepDetailsCardProps) => {
-  const [selectStepByPath, step, selectedStep, run] = useBuilderStateContext(
-    (state) => {
+  const [selectStepByPath, step, selectedStep, run, stepIndex] =
+    useBuilderStateContext((state) => {
       const step = flowHelper.getStep(state.flowVersion, path.stepName);
-      return [state.selectStepByPath, step, state.selectedStep, state.run];
-    },
-  );
+      const stepIndex = flowHelper
+        .getAllSteps(state.flowVersion.trigger)
+        .findIndex((s) => s.name === path.stepName);
+      return [
+        state.selectStepByPath,
+        step,
+        state.selectedStep,
+        state.run,
+        stepIndex,
+      ];
+    });
 
   const isStepSelected = selectedStep?.stepName === path.stepName;
 
@@ -165,7 +173,9 @@ const FlowStepDetailsCardItem = ({ path }: FlowStepDetailsCardProps) => {
               </Button>
             )}
             <img className="w-6 h-6" src={stepMetadata?.logoUrl} />
-            <div className="break-all truncate">{step?.displayName}</div>
+            <div className="break-all truncate">{`${stepIndex + 1}. ${
+              step?.displayName
+            }`}</div>
             <div className="w-2"></div>
             <div className="flex gap-1 justify-end  items-center flex-grow">
               {isLoopStep && isStepSelected && isInPath && (

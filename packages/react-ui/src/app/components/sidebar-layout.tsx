@@ -37,7 +37,7 @@ function SidebarItem({ className, items, ...props }: SidebarNavProps) {
           to={item.href}
           className={cn(
             buttonVariants({ variant: 'ghost' }),
-            location.pathname === item.href
+            location.pathname.toLowerCase() === item.href.toLowerCase()
               ? 'bg-muted hover:bg-muted'
               : 'hover:bg-transparent hover:underline',
             'justify-start',

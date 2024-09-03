@@ -141,7 +141,8 @@ import { AddUserInvitation1717960689650 } from './migration/postgres/17179606896
 import { ModifyProjectMembers1717961669938 } from './migration/postgres/1717961669938-ModifyProjectMembers'
 import { AddWorkerMachine1720101280025 } from './migration/postgres/1720101280025-AddWorkerMachine'
 import { MigrateAuditEventSchema1723489038729 } from './migration/postgres/1723489038729-MigrateAuditEventSchema'
-import { CreateProxyConfig1724777988812 } from './migration/common/1724777988812-CreateProxyConfig'
+import { CreateProxyConfig1724777988812 } from './migration/postgres/1724777988812-CreateProxyConfig'
+import { AddAnalyticsToPlatform1725113652923 } from './migration/postgres/1725113652923-AddAnalyticsToPlatform'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -233,7 +234,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPremiumPiecesColumnPostgres1717370717678,
         AddWorkerMachine1720101280025,
         ChangeEventRoutingConstraint1723549873495,
-        CreateProxyConfig1724777988812
+        CreateProxyConfig1724777988812,
+        AddAnalyticsToPlatform1725113652923,
     ]
 
     const edition = system.getEdition()

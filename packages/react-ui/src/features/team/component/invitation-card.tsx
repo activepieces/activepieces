@@ -2,7 +2,9 @@ import { AvatarFallback } from '@radix-ui/react-avatar';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 
-import { UserInvitation } from '@activepieces/shared';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { Permission, UserInvitation } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
 import { Avatar, AvatarImage } from '../../../components/ui/avatar';
@@ -12,6 +14,10 @@ import { userInvitationsHooks } from '../lib/user-invitations-hooks';
 
 export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
   const { refetch } = userInvitationsHooks.useInvitations();
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToRemoveInvitation = checkAccess(
+    Permission.WRITE_INVITATION,
+  );
   async function deleteInvitation() {
     await userInvitationApi.delete(invitation.id);
     refetch();
@@ -35,16 +41,24 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
         </div>
       </div>
       <div className="flex gap-2">
-        <ConfirmationDeleteDialog
-          mutationFn={() => deleteInvitation()}
-          entityName={invitation.email}
-          title={t('Remove {email}', { email: invitation.email })}
-          message={t('Are you sure you want to remove this invitation?')}
+        <PermissionNeededTooltip
+          hasPermission={userHasPermissionToRemoveInvitation}
         >
-          <Button variant="ghost" className="size-8 p-0">
-            <Trash className="bg-destructive-500 size-4" />
-          </Button>
-        </ConfirmationDeleteDialog>
+          <ConfirmationDeleteDialog
+            mutationFn={() => deleteInvitation()}
+            entityName={invitation.email}
+            title={t('Remove {email}', { email: invitation.email })}
+            message={t('Are you sure you want to remove this invitation?')}
+          >
+            <Button
+              disabled={!userHasPermissionToRemoveInvitation}
+              variant="ghost"
+              className="size-8 p-0"
+            >
+              <Trash className="text-destructive size-4" />
+            </Button>
+          </ConfirmationDeleteDialog>
+        </PermissionNeededTooltip>
       </div>
     </div>
   );
