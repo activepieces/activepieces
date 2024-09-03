@@ -17,6 +17,7 @@ import {
   ApplicationEventName,
   summarizeApplicationEvent,
 } from '@activepieces/ee-shared';
+import { isNil } from '@activepieces/shared';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -44,6 +45,9 @@ export default function AuditLogsPage() {
               ),
               cell: ({ row }) => {
                 const icon = convertToIcon(row.original);
+                if (isNil(icon)) {
+                  return <div></div>
+                }
                 return (
                   <Tooltip>
                     <TooltipTrigger asChild>
