@@ -59,10 +59,7 @@ export const SearchableSelect = <T extends React.Key>({
   const [selectedIndex, setSelectedIndex] = useState(
     options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
   );
-  const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
+
   useEffect(() => {
     setSelectedIndex(
       options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
@@ -113,7 +110,12 @@ export const SearchableSelect = <T extends React.Key>({
         className={cn('', {
           'cursor-not-allowed opacity-80 ': disabled,
         })}
-        onClick={disabled ? PreventClick : undefined}
+        onClick={(e) => {
+          if (disabled) {
+            e.preventDefault();
+          }
+          e.stopPropagation();
+        }}
       >
         <div className="relative">
           <Button
@@ -124,6 +126,10 @@ export const SearchableSelect = <T extends React.Key>({
             loading={loading}
             aria-expanded={open}
             className="w-full justify-between w-full"
+            onClick={(e) => {
+              setOpen((prev) => !prev); 
+              e.preventDefault(); 
+            }}
           >
             <span className="flex w-full truncate select-none">
               {selectedIndex > -1 && options[selectedIndex]
