@@ -33,10 +33,6 @@ export const UserInvitationEntity = new EntitySchema<UserInvitation>({
             type: String,
             nullable: false,
         },
-        invitationExpirySeconds: {
-            type: Number,
-            nullable: true,
-        },
     },
     indices: [
         {
