@@ -34,7 +34,7 @@ export class AddReferral1690459469381 implements MigrationInterface {
             'ALTER TABLE "referal" DROP CONSTRAINT "fk_referral_referred_user_id"',
         )
         await queryRunner.query(
-            'DROP INDEX "public"."idx_referral_referring_user_id"',
+            'DROP INDEX "idx_referral_referring_user_id"',
         )
         await queryRunner.query('DROP TABLE "referal"')
     }

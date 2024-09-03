@@ -38,7 +38,7 @@ export class AddOAuth2AppEntiity1699221414907 implements MigrationInterface {
             ALTER TABLE "oauth_app" DROP CONSTRAINT "fk_oauth_app_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_oauth_app_platformId_pieceName"
+            DROP INDEX "idx_oauth_app_platformId_pieceName"
         `)
         await queryRunner.query(`
             DROP TABLE "oauth_app"

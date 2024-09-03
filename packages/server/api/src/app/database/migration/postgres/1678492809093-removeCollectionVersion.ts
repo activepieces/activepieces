@@ -26,13 +26,13 @@ implements MigrationInterface {
             'ALTER TABLE "collection" ADD "displayName" character varying',
         )
         const collections = await queryRunner.query(
-            'SELECT * FROM public.collection',
+            'SELECT * FROM collection',
         )
 
         for (let i = 0; i < collections.length; ++i) {
             let currentCollection = collections[i]
             const latestCollectionVersionQuery = `
-                SELECT * FROM public.collection_version
+                SELECT * FROM collection_version
                 WHERE "collectionId" = '${currentCollection.id}'
                 ORDER BY created DESC
                 LIMIT 1
@@ -52,7 +52,7 @@ implements MigrationInterface {
             }
 
             const updateCollectionQuery = `
-                UPDATE public.collection
+                UPDATE collection
                 SET displayName = '${displayName}'
                 WHERE id = '${currentCollection.id}'
             `

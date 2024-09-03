@@ -24,8 +24,8 @@ export class AddTemplates1685538145476 implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
         }
-        await queryRunner.query('DROP INDEX "public"."idx_flow_template_pieces"')
-        await queryRunner.query('DROP INDEX "public"."idx_flow_template_tags"')
+        await queryRunner.query('DROP INDEX "idx_flow_template_pieces"')
+        await queryRunner.query('DROP INDEX "idx_flow_template_tags"')
         await queryRunner.query('DROP TABLE "flow_template"')
     }
 }

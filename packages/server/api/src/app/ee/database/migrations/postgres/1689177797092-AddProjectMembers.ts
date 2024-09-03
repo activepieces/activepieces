@@ -22,7 +22,7 @@ export class AddProjectMembers1689177797092 implements MigrationInterface {
             return
         }
         await queryRunner.query(
-            'DROP INDEX "public"."idx_project_member_project_id_user_id"',
+            'DROP INDEX "idx_project_member_project_id_user_id"',
         )
         await queryRunner.query('DROP TABLE "project_member"')
     }
