@@ -227,7 +227,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     startSaving: () => set({ saving: true }),
     applyOperation: (operation: FlowOperationRequest, onError: () => void) =>
       set((state) => {
-        if(state.readonly){
+        if (state.readonly) {
           console.warn('Cannot apply operation while readonly');
           return state;
         }
