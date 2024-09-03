@@ -197,7 +197,7 @@ const BuilderPage = () => {
               disabled={rightSidebar === RightSideBarType.NONE}
               withHandle={rightSidebar !== RightSideBarType.NONE}
               onDragging={setIsDraggingHandle}
-              className="z-10 "
+              className="z-50"
             />
 
             <ResizablePanel

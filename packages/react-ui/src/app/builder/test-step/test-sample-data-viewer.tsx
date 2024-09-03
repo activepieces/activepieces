@@ -63,7 +63,9 @@ const TestSampleDataViewer = React.memo(
               )}
             </div>
             <div className="text-muted-foreground text-xs">
-              {lastTestDate && formatUtils.formatDate(new Date(lastTestDate))}
+              {lastTestDate &&
+                !errorMessage &&
+                formatUtils.formatDate(new Date(lastTestDate))}
             </div>
           </div>
           <TestButtonTooltip disabled={!isValid}>
