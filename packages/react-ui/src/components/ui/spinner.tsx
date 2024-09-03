@@ -1,4 +1,4 @@
-import { LoaderIcon } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -10,8 +10,8 @@ export interface ISVGProps extends React.SVGProps<SVGSVGElement> {
 
 const LoadingSpinner = React.memo(({ size = 24, className }: ISVGProps) => {
   return (
-    <LoaderIcon
-      className={cn('animate-spin stroke-foreground', className)}
+    <LoaderCircle
+      className={cn('animate-spin  duration-1500 stroke-foreground', className)}
       height={size}
       width={size}
     />
