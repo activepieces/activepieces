@@ -214,37 +214,7 @@ const TestTriggerSection = React.memo(
 
     return (
       <>
-        {isTestedBefore && (
-          <>
-            <Select
-              value={currentSelectedId}
-              onValueChange={(value) => {
-                const triggerEvent = pollResults.data.find(
-                  (triggerEvent) => triggerEvent.id === value,
-                );
-                if (triggerEvent) {
-                  updateCurrentSelectedData(triggerEvent);
-                }
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('Select a sample data')} />
-              </SelectTrigger>
-              <SelectContent>
-                {pollResults &&
-                  pollResults.data.map((triggerEvent, index) => (
-                    <SelectItem key={triggerEvent.id} value={triggerEvent.id}>
-                      {t('Result #') + (index + 1)}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            <span className="text-sm text-muted-foreground">
-              {t('The sample data can be used in the next steps.')}
-            </span>
-          </>
-        )}
-        <div className="flex-grow flex justify-center items-center w-full h-full">
+        <div>
           {sampleDataSelected && !isSimulating && (
             <TestSampleDataViewer
               onRetest={isSimulation ? simulateTrigger : pollTrigger}
@@ -255,7 +225,41 @@ const TestTriggerSection = React.memo(
               errorMessage={errorMessage}
               lastTestDate={lastTestDate}
               type={formValues.type}
-            ></TestSampleDataViewer>
+            >
+              {isTestedBefore && (
+                <div className="mb-3">
+                  <Select
+                    value={currentSelectedId}
+                    onValueChange={(value) => {
+                      const triggerEvent = pollResults.data.find(
+                        (triggerEvent) => triggerEvent.id === value,
+                      );
+                      if (triggerEvent) {
+                        updateCurrentSelectedData(triggerEvent);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={t('Select a sample data')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pollResults &&
+                        pollResults.data.map((triggerEvent, index) => (
+                          <SelectItem
+                            key={triggerEvent.id}
+                            value={triggerEvent.id}
+                          >
+                            {t('Result #') + (index + 1)}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm mt-2 text-muted-foreground">
+                    {t('The sample data can be used in the next steps.')}
+                  </span>
+                </div>
+              )}
+            </TestSampleDataViewer>
           )}
 
           {isSimulation && isSimulating && (

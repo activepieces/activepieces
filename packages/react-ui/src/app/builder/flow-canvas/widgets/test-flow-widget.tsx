@@ -80,7 +80,7 @@ const TestFlowWidget = ({ flowVersion, setRun }: TestFlowWidgetProps) => {
             <div className="flex justify-center items-center gap-2">
               {t('Test Flow')}
               <span className="text-[10px] tracking-widest whitespace-nowrap">
-                {isMac ? '⌘ D' : 'Ctrl D'}
+                {isMac ? '⌘ + D' : 'Ctrl + D'}
               </span>
             </div>
           </Button>
