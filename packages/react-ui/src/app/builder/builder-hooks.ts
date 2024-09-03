@@ -110,9 +110,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     saving: false,
     selectedStep: initialState.run
       ? {
-        path: [],
-        stepName: initialState.flowVersion.trigger.name,
-      }
+          path: [],
+          stepName: initialState.flowVersion.trigger.name,
+        }
       : null,
     canExitRun: initialState.canExitRun,
     activeDraggingStep: null,
@@ -162,7 +162,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           },
           rightSidebar:
             stepName === 'trigger' &&
-              state.flowVersion.trigger.type === TriggerType.EMPTY
+            state.flowVersion.trigger.type === TriggerType.EMPTY
               ? RightSideBarType.NONE
               : RightSideBarType.PIECE_SETTINGS,
           leftSidebar: !isNil(state.run)

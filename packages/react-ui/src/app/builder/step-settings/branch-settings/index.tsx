@@ -2,13 +2,12 @@ import { t } from 'i18next';
 import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 
+import { BranchConditionGroup } from '@/app/builder/step-settings/branch-settings/branch-condition-group';
 import {
   BranchAction,
   BranchOperator,
   ValidBranchCondition,
 } from '@activepieces/shared';
-import { BranchConditionGroup } from '@/app/builder/step-settings/branch-settings/branch-condition-group';
-
 
 const emptyCondition: ValidBranchCondition = {
   firstValue: '',
@@ -66,7 +65,9 @@ const BranchSettings = React.memo(({ readonly }: BranchSettingsProps) => {
           groupIndex={groupIndex}
           onAnd={() => handleAnd(groupIndex)}
           onOr={handleOr}
-          handleDelete={(conditionIndex: number) => handleDelete(groupIndex, conditionIndex)}
+          handleDelete={(conditionIndex: number) =>
+            handleDelete(groupIndex, conditionIndex)
+          }
         />
       ))}
     </div>
