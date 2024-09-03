@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { ChevronLeft, Info } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import {
   LeftSideBarType,
@@ -16,13 +16,13 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { isNil, RunEnvironment } from '@activepieces/shared';
 
 import { SidebarHeader } from '../sidebar-header';
 
 import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
 import { FlowStepInputOutput } from './flow-step-input-output';
-import { LoadingSpinner } from '@/components/ui/spinner';
 
 const FlowRunDetails = React.memo(() => {
   const [setLeftSidebar, run, steps, stepDetails] = useBuilderStateContext(

@@ -25,8 +25,14 @@ import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from './select';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './select';
 
 export type DataWithId = {
   id?: string;
@@ -36,9 +42,9 @@ export type RowDataWithActions<TData extends DataWithId> = TData & {
 };
 
 type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>[]> = {
-  [K in F[number]as K['accessorKey']]: K['type'] extends 'select'
-  ? K['options'][number]['value'][]
-  : K['options'][number]['value'];
+  [K in F[number] as K['accessorKey']]: K['type'] extends 'select'
+    ? K['options'][number]['value'][]
+    : K['options'][number]['value'];
 };
 
 export type DataTableFilter<Keys extends string> = {
@@ -255,9 +261,9 @@ export function DataTable<
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   );
                 })}

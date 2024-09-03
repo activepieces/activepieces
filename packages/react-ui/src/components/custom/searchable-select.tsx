@@ -127,8 +127,8 @@ export const SearchableSelect = <T extends React.Key>({
             aria-expanded={open}
             className="w-full justify-between w-full"
             onClick={(e) => {
-              setOpen((prev) => !prev); 
-              e.preventDefault(); 
+              setOpen((prev) => !prev);
+              e.preventDefault();
             }}
           >
             <span className="flex w-full truncate select-none">

@@ -209,89 +209,89 @@ const TestTriggerSection = React.memo(
     }, [watchSelectedData]);
 
     if (isPieceLoading) {
-      return <></>;
+      return null;
     }
 
     return (
-      <>
-        <div>
-          {sampleDataSelected && !isSimulating && (
-            <TestSampleDataViewer
-              onRetest={isSimulation ? simulateTrigger : pollTrigger}
-              isValid={isValid}
-              isSaving={isSaving}
-              isTesting={isPollingTesting}
-              currentSelectedData={currentSelectedData}
-              errorMessage={errorMessage}
-              lastTestDate={lastTestDate}
-              type={formValues.type}
-            >
-              {isTestedBefore && (
-                <div className="mb-3">
-                  <Select
-                    value={currentSelectedId}
-                    onValueChange={(value) => {
-                      const triggerEvent = pollResults.data.find(
-                        (triggerEvent) => triggerEvent.id === value,
-                      );
-                      if (triggerEvent) {
-                        updateCurrentSelectedData(triggerEvent);
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={t('Select a sample data')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pollResults &&
-                        pollResults.data.map((triggerEvent, index) => (
-                          <SelectItem
-                            key={triggerEvent.id}
-                            value={triggerEvent.id}
-                          >
-                            {t('Result #') + (index + 1)}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <span className="text-sm mt-2 text-muted-foreground">
-                    {t('The sample data can be used in the next steps.')}
-                  </span>
-                </div>
-              )}
-            </TestSampleDataViewer>
-          )}
-
-          {isSimulation && isSimulating && (
-            <div className="flex flex-col gap-4 w-full">
-              <div className="flex gap-2 items-center justify-center w-full">
-                <LoadingSpinner className="w-4 h-4"></LoadingSpinner>
-                <div>{t('Testing Trigger')}</div>
-                <div className="flex-grow"></div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    resetSimulation();
+      <div>
+        {sampleDataSelected && !isSimulating && (
+          <TestSampleDataViewer
+            onRetest={isSimulation ? simulateTrigger : pollTrigger}
+            isValid={isValid}
+            isSaving={isSaving}
+            isTesting={isPollingTesting}
+            currentSelectedData={currentSelectedData}
+            errorMessage={errorMessage}
+            lastTestDate={lastTestDate}
+            type={formValues.type}
+          >
+            {isTestedBefore && (
+              <div className="mb-3">
+                <Select
+                  value={currentSelectedId}
+                  onValueChange={(value) => {
+                    const triggerEvent = pollResults.data.find(
+                      (triggerEvent) => triggerEvent.id === value,
+                    );
+                    if (triggerEvent) {
+                      updateCurrentSelectedData(triggerEvent);
+                    }
                   }}
                 >
-                  {' '}
-                  {t('Cancel')}{' '}
-                </Button>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('Select a sample data')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pollResults &&
+                      pollResults.data.map((triggerEvent, index) => (
+                        <SelectItem
+                          key={triggerEvent.id}
+                          value={triggerEvent.id}
+                        >
+                          {t('Result #') + (index + 1)}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-sm mt-2 text-muted-foreground">
+                  {t('The sample data can be used in the next steps.')}
+                </span>
               </div>
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{t('Action Required!')}</AlertTitle>
-                <AlertDescription>
-                  {t('Perform the action you want to test.')}
-                </AlertDescription>
-              </Alert>
+            )}
+          </TestSampleDataViewer>
+        )}
+
+        {isSimulation && isSimulating && (
+          <div className="flex flex-col gap-4 w-full">
+            <div className="flex gap-2 items-center justify-center w-full">
+              <LoadingSpinner className="w-4 h-4"></LoadingSpinner>
+              <div>{t('Testing Trigger')}</div>
+              <div className="flex-grow"></div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  resetSimulation();
+                }}
+              >
+                {' '}
+                {t('Cancel')}{' '}
+              </Button>
             </div>
-          )}
-          {!isTestedBefore &&
-            !sampleDataSelected &&
-            isSimulation &&
-            !isSimulating && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>{t('Action Required!')}</AlertTitle>
+              <AlertDescription>
+                {t('Perform the action you want to test.')}
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        {!isTestedBefore &&
+          !sampleDataSelected &&
+          isSimulation &&
+          !isSimulating && (
+            <div className="flex justify-center">
               <TestButtonTooltip disabled={!isValid}>
                 <Button
                   variant="outline"
@@ -305,8 +305,10 @@ const TestTriggerSection = React.memo(
                   {t('Test Trigger')}
                 </Button>
               </TestButtonTooltip>
-            )}
-          {!isTestedBefore && !sampleDataSelected && !isSimulation && (
+            </div>
+          )}
+        {!isTestedBefore && !sampleDataSelected && !isSimulation && (
+          <div className="flex justify-center">
             <TestButtonTooltip disabled={!isValid}>
               <Button
                 variant="outline"
@@ -321,9 +323,9 @@ const TestTriggerSection = React.memo(
                 {t('Load Sample Data')}
               </Button>
             </TestButtonTooltip>
-          )}
-        </div>
-      </>
+          </div>
+        )}
+      </div>
     );
   },
 );
