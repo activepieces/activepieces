@@ -285,6 +285,7 @@ const PieceSelector = ({
               setSearchQuery(e.target.value);
               setSelectedTag(PieceTagEnum.ALL);
               setSelectedSubItems(undefined);
+              setSelectedMetadata(undefined);
             }}
           />
         </div>
@@ -298,6 +299,7 @@ const PieceSelector = ({
           onSelectTag={(value) => {
             setSelectedTag(value);
             setSelectedSubItems(undefined);
+            setSelectedMetadata(undefined);
           }}
         />
         <Separator orientation="horizontal" />
