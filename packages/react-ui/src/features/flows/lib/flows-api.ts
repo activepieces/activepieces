@@ -51,12 +51,13 @@ export const flowsApi = {
 
     onUpdate(run);
     return new Promise<void>((resolve, reject) => {
+ 
       const handleProgress = (response: FlowRun) => {
         if (run.id !== response.id) {
           return;
         }
         onUpdate(response);
-        if (response.status !== FlowRunStatus.RUNNING) {
+        if (response.status !== FlowRunStatus.RUNNING  && response.status !== FlowRunStatus.PAUSED) {
           socket.off(
             WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS,
             handleProgress,
