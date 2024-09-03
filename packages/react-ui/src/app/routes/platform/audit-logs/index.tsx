@@ -45,8 +45,8 @@ export default function AuditLogsPage() {
               ),
               cell: ({ row }) => {
                 const icon = convertToIcon(row.original);
-                if (isNil(icon)) {
-                  return <div></div>
+                if (isNil(icon?.icon)) {
+                  return <div className="text-left"></div>;
                 }
                 return (
                   <Tooltip>
@@ -186,6 +186,8 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Key className="size-4" />,
         tooltip: t('Signing Key'),
       };
+    default:
+      return undefined;
   }
 }
 
