@@ -55,6 +55,7 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { RedirectPage } from '@/app/routes/redirect';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -433,6 +434,10 @@ const routes = [
         </PageTitle>
       </PlatformAdminContainer>
     ),
+  },
+  {
+    path: '/redirect',
+    element: <RedirectPage></RedirectPage>,
   },
   {
     path: '/*',
