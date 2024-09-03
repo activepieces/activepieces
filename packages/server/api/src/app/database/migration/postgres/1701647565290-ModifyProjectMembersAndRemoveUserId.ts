@@ -26,7 +26,7 @@ implements MigrationInterface {
             UPDATE "project_member" SET "email" = "user"."email", "platformId" = "user"."platformId" FROM "user" WHERE "project_member"."userId" = "user"."id"
         `)
         await queryRunner.query(`
-            UPDATE public.user SET "email" = CONCAT("email", 'deleted') WHERE "status" = 'INVITED';
+            UPDATE "user" SET "email" = CONCAT("email", 'deleted') WHERE "status" = 'INVITED';
         `)
         await queryRunner.query(`
             ALTER TABLE "project_member"
@@ -37,7 +37,7 @@ implements MigrationInterface {
             ALTER TABLE "project_member" DROP CONSTRAINT "fk_project_member_user_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_member_project_id_user_id"
+            DROP INDEX "idx_project_member_project_id_user_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "project_member" DROP COLUMN "userId"
@@ -49,7 +49,7 @@ implements MigrationInterface {
             return
         }
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_member_project_id_email_platform_id"
+            DROP INDEX "idx_project_member_project_id_email_platform_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "project_member" DROP COLUMN "platformId"

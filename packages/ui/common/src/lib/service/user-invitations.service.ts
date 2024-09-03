@@ -23,10 +23,25 @@ export class UserInvitationService {
   }
 
   list(request: ListUserInvitationsRequest) {
+    const params: Record<string, string | number | boolean> = {
+      type: request.type,
+    };
+    if (request.projectId) {
+      params['projectId'] = request.projectId;
+    }
+    if (request.limit) {
+      params['limit'] = request.limit;
+    }
+    if (request.status) {
+      params['status'] = request.status;
+    }
+    if (request.limit) {
+      params['limit'] = request.limit;
+    }
     return this.http.get<SeekPage<UserInvitation>>(
       `${environment.apiUrl}/user-invitations`,
       {
-        params: request,
+        params,
       }
     );
   }

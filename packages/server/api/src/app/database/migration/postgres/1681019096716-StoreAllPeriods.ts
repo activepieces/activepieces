@@ -10,7 +10,7 @@ export class StoreAllPeriods1681019096716 implements MigrationInterface {
             'ALTER TABLE "project_usage" DROP CONSTRAINT "REL_c407fc9b2bfb44515af69d575a"',
         )
         await queryRunner.query(
-            'DROP INDEX "public"."idx_project_usage_project_id"',
+            'DROP INDEX "idx_project_usage_project_id"',
         )
         await queryRunner.query(
             'CREATE INDEX "idx_project_usage_project_id" ON "project_usage" ("projectId") ',
@@ -23,7 +23,7 @@ export class StoreAllPeriods1681019096716 implements MigrationInterface {
             'ALTER TABLE "project_usage" ADD CONSTRAINT "REL_c407fc9b2bfb44515af69d575a" UNIQUE ("projectId")',
         )
         await queryRunner.query(
-            'DROP INDEX "public"."idx_project_usage_project_id"',
+            'DROP INDEX "idx_project_usage_project_id"',
         )
         await queryRunner.query(
             'CREATE UNIQUE INDEX "idx_project_usage_project_id" ON "project_usage" ("projectId") ',

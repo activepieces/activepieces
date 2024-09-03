@@ -13,7 +13,7 @@ export class MakePlatformNotNullable1705969874745 implements MigrationInterface 
             ALTER TABLE "project" DROP COLUMN "type"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_platform_id_external_id"
+            DROP INDEX "idx_project_platform_id_external_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "project"
@@ -37,7 +37,7 @@ export class MakePlatformNotNullable1705969874745 implements MigrationInterface 
             ALTER TABLE "project" DROP CONSTRAINT "fk_project_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_platform_id_external_id"
+            DROP INDEX "idx_project_platform_id_external_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "project"

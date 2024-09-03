@@ -40,7 +40,7 @@ export class AddOtpEntity1700396157624 implements MigrationInterface {
             ALTER TABLE "otp" DROP CONSTRAINT "fk_otp_user_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_otp_user_id_type"
+            DROP INDEX "idx_otp_user_id_type"
         `)
         await queryRunner.query(`
             DROP TABLE "otp"

@@ -61,7 +61,7 @@ export class AddAuditEvents1707614902283 implements MigrationInterface {
             ALTER TABLE "audit_event" DROP CONSTRAINT "FK_8188cdbf5c16c58d431efddd451"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."audit_event_platform_id_project_id_user_id_idx"
+            DROP INDEX "audit_event_platform_id_project_id_user_id_idx"
         `)
         await queryRunner.query(`
             DROP TABLE "audit_event"
