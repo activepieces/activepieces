@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowUp, LoaderCircle } from 'lucide-react';
 import { nanoid } from 'nanoid';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 
 import { useSocket } from '@/components/socket-provider';
@@ -80,14 +80,13 @@ export const CopilotSidebar = () => {
   ]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const socket = useSocket();
-  const scrollToLastMessage = ()=>{
-    setTimeout(()=>{
-      debugger;
+  const scrollToLastMessage = () => {
+    setTimeout(() => {
       lastMessageRef.current?.scrollIntoView({
-        behavior:'smooth'
-      })
-    },1)
-  }
+        behavior: 'smooth',
+      });
+    }, 1);
+  };
   const { isPending, mutate } = useMutation({
     mutationFn: (request: GenerateCodeRequest) =>
       getCodeResponse(socket, request),
@@ -104,7 +103,7 @@ export const CopilotSidebar = () => {
           userType: 'bot',
         },
       ]);
-     scrollToLastMessage();
+      scrollToLastMessage();
     },
     onError: (error: any) => {
       toast({
@@ -202,13 +201,13 @@ export const CopilotSidebar = () => {
         {t('AI Copilot')}
       </SidebarHeader>
       <div className="flex flex-col flex-grow overflow-hidden">
-        <ScrollArea  className="flex-grow overflow-auto">
+        <ScrollArea className="flex-grow overflow-auto">
           <CardList>
             {messages.map((message, index) => (
               <ChatMessage
                 key={index}
                 message={message}
-                ref={index===messages.length -1? lastMessageRef: null}
+                ref={index === messages.length - 1 ? lastMessageRef : null}
                 onApplyCode={(message) => applyCodeToCurrentStep(message)}
               />
             ))}

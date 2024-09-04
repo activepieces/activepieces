@@ -48,7 +48,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
             </div>
 
             <div className="flex items-center justify-between">
-              <FormLabel >{t('Inputs')}</FormLabel>
+              <FormLabel>{t('Inputs')}</FormLabel>
               <Button
                 variant="ghost"
                 onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}

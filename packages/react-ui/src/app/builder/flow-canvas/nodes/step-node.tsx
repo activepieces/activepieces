@@ -255,11 +255,16 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                     </div>
 
                     {!readonly && (
-                      <div onClick={(e) => {e.stopPropagation(); e.preventDefault()}}>
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
+                      >
                         <DropdownMenu
                           open={openStepActionsMenu}
                           onOpenChange={(open) => {
-                            setOpenStepActionsMenu(open); 
+                            setOpenStepActionsMenu(open);
                           }}
                           modal={true}
                         >

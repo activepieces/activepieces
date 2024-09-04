@@ -101,7 +101,10 @@ const FlowsPage = () => {
   >({
     mutationFn: async () => {
       const folderId = searchParams.get(folderIdParamName);
-      const folder = folderId ? await foldersApi.get(folderId) : undefined;
+      const folder =
+        folderId && folderId !== 'NULL'
+          ? await foldersApi.get(folderId)
+          : undefined;
       const flow = await flowsApi.create({
         projectId: authenticationSession.getProjectId()!,
         displayName: t('Untitled'),
