@@ -90,7 +90,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
 
   return pathToTargetStep.map((step) => {
     const stepNeedsTesting = isNil(
-      step.settings.inputUiInfo?.currentSelectedData,
+      step.settings.inputUiInfo?.lastTestDate,
     );
     const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
     if (stepNeedsTesting) {
