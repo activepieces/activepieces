@@ -30,6 +30,11 @@ export const cropImage = createAction({
       description: 'Determines the vertical size of the cropped area.',
       required: true,
     }),
+    resultFileName: Property.ShortText({
+      displayName: 'Result File Name',
+      description: 'Specifies the output file name for the cropped image (without extension).',
+      required: true,
+    }),
   },
   async run(context) {
     const image = await jimp.read(context.propsValue.image.data);
@@ -37,8 +42,10 @@ export const cropImage = createAction({
     
     const imageBuffer = await image.getBufferAsync(image.getMIME());
 
+    const fileName = context.propsValue.resultFileName + '.' + image.getExtension();
+
     const imageReference = await context.files.write({
-      fileName: 'image.' + image.getExtension(),
+      fileName: fileName,
       data: imageBuffer
     });
 
