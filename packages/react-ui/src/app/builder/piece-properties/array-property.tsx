@@ -48,18 +48,24 @@ const ArrayPieceProperty = React.memo(
       }));
     });
 
+    const updateFormValue = (newFields: ArrayField[]) => {
+      form.setValue(
+        inputName,
+        newFields.map((f) => f.value),
+        { shouldValidate: true },
+      );
+    };
+
     const append = (value: string | Record<string, unknown>) => {
-      setFields([...fields, { id: nanoid(), value }]);
-      form.setValue(inputName, [...fields.map((f) => f.value), value]);
+      const newFields = [...fields, { id: nanoid(), value }];
+      setFields(newFields);
+      updateFormValue(newFields);
     };
 
     const remove = (index: number) => {
       const newFields = fields.filter((_, i) => i !== index);
       setFields(newFields);
-      form.setValue(
-        inputName,
-        newFields.map((f) => f.value),
-      );
+      updateFormValue(newFields);
     };
 
     const move = (from: number, to: number) => {
@@ -67,10 +73,18 @@ const ArrayPieceProperty = React.memo(
       const [removed] = newFields.splice(from, 1);
       newFields.splice(to, 0, removed);
       setFields(newFields);
-      form.setValue(
-        inputName,
-        newFields.map((f) => f.value),
+      updateFormValue(newFields);
+    };
+
+    const updateFieldValue = (
+      index: number,
+      newValue: string | Record<string, unknown>,
+    ) => {
+      const newFields = fields.map((field, i) =>
+        i === index ? { ...field, value: newValue } : field,
       );
+      setFields(newFields);
+      updateFormValue(newFields);
     };
 
     const isComplexArray = arrayProperty.properties !== undefined;
@@ -156,19 +170,23 @@ const ArrayPieceProperty = React.memo(
                       <FormField
                         control={form.control}
                         name={`${inputName}.${index}`}
-                        render={({ field }) => (
+                        render={() => (
                           <FormItem className="grow">
                             <FormControl>
                               {useMentionTextInput ? (
                                 <TextInputWithMentions
-                                  initialValue={field.value}
-                                  onChange={field.onChange}
+                                  initialValue={field.value as string}
+                                  onChange={(value) =>
+                                    updateFieldValue(index, value)
+                                  }
                                   disabled={disabled}
                                 />
                               ) : (
                                 <Input
-                                  value={field.value}
-                                  onChange={field.onChange}
+                                  value={field.value as string}
+                                  onChange={(e) =>
+                                    updateFieldValue(index, e.target.value)
+                                  }
                                   disabled={disabled}
                                   className="grow"
                                 />
