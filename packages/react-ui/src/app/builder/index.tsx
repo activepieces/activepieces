@@ -36,6 +36,7 @@ import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { FlowRecentRunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -67,6 +68,9 @@ const constructContainerKey = (
   return flowVersionId + stepName + (triggerOrActionName ?? '');
 };
 const BuilderPage = () => {
+
+  const { platform } = platformHooks.useCurrentPlatform();
+
   const [leftSidebar, rightSidebar, run, canExitRun] = useBuilderStateContext(
     (state) => [
       state.leftSidebar,
@@ -184,7 +188,7 @@ const BuilderPage = () => {
           <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
             <div ref={middlePanelRef} className="relative h-full w-full">
               <CanvasControls></CanvasControls>
-              <ShowPoweredBy />
+              <ShowPoweredBy show={platform?.showPoweredBy} />
               <DataSelector
                 parentHeight={middlePanelSize.height}
                 parentWidth={middlePanelSize.width}

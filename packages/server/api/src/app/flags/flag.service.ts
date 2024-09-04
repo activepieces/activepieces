@@ -37,6 +37,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.IS_CLOUD_PLATFORM,
                 value: false,
                 created,
