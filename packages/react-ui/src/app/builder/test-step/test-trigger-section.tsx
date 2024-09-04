@@ -188,7 +188,9 @@ const TestTriggerSection = React.memo(
 
     const sampleDataSelected =
       !isNil(currentSelectedData) || !isNil(errorMessage);
-    const isTestedBefore = pollResults && pollResults.data.length > 0;
+    const isTestedBefore = !isNil(
+      form.getValues().settings.inputUiInfo?.lastTestDate,
+    );
 
     const watchSelectedData = useWatch({
       name: 'settings.inputUiInfo.currentSelectedData',
@@ -225,12 +227,12 @@ const TestTriggerSection = React.memo(
             lastTestDate={lastTestDate}
             type={formValues.type}
           >
-            {isTestedBefore && (
+            {pollResults?.data && (
               <div className="mb-3">
                 <Select
                   value={currentSelectedId}
                   onValueChange={(value) => {
-                    const triggerEvent = pollResults.data.find(
+                    const triggerEvent = pollResults?.data.find(
                       (triggerEvent) => triggerEvent.id === value,
                     );
                     if (triggerEvent) {

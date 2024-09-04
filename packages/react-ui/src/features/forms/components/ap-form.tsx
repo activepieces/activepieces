@@ -22,6 +22,7 @@ import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import {
   ApFlagId,
@@ -32,7 +33,6 @@ import {
 } from '@activepieces/shared';
 
 import { FormResult, FormResultTypes, formsApi } from '../lib/forms-api';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 type ApFormProps = {
   form: FormResponse;

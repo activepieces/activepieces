@@ -31,7 +31,6 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
       setIsStepInsideDropzone(event.over?.id === id);
-      console.log(event.over?.id === id);
     },
     onDragEnd() {
       setIsStepInsideDropzone(false);

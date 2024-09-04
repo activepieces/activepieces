@@ -41,12 +41,12 @@ import {
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 const filters = [
   {
