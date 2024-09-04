@@ -169,13 +169,14 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
           : '';
       }
       case TipTapNodeTypes.paragraph: {
-        return `${isNil(node.content) ? '' : convertTiptapJsonToText(node.content)}${index < nodes.length - 1 ? '\n' : ''}`
+        return `${
+          isNil(node.content) ? '' : convertTiptapJsonToText(node.content)
+        }${index < nodes.length - 1 ? '\n' : ''}`;
       }
       default:
         return '';
     }
   });
-  console.log('jsonToText', res);
   return res.join('');
 }
 
