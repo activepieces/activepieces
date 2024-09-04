@@ -1,10 +1,9 @@
-import { PrincipalType } from '@activepieces/shared'
+import { isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import axios, { AxiosRequestConfig } from 'axios'
-import { StatusCodes } from 'http-status-codes'
+import { projectLimitsService } from 'packages/server/api/src/app/ee/project-plan/project-plan.service'
 import { projectService } from 'packages/server/api/src/app/project/project-service'
+import { projectUsageService } from 'packages/server/api/src/app/project/usage/project-usage-service'
 import { proxyConfigService } from './proxy-config-service'
-import https from 'https'
 
 export const proxyModule: FastifyPluginAsyncTypebox = async (app) => {
   await app.register(projectProxyController, { prefix: '/v1/proxy' })
@@ -33,6 +32,10 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
     try {
       const projectId = request.principal.projectId
 
+      const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
+
+      const planTokens = projectPlan?.aiTokens
+
       const platformId = await projectService.getPlatformId(projectId)
 
       const provider = request.params.provider
@@ -47,6 +50,10 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
       const targetUrl = new URL(`${config.baseUrl}/${request.params['*']}`);
 
       const requestHeaders = structuredClone({ ...request.headers })
+
+      const tokensUsagePath = requestHeaders['x-ap-total-usage-body-path']
+
+      console.log('XXXXXXXXXX Request Headers', requestHeaders)
 
       delete requestHeaders['authorization']
       delete requestHeaders['Authorization']
@@ -74,6 +81,18 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
 
       const data = await response.json()
 
+      const usage = projectPlan && tokensUsagePath ? calculateUsage(data, tokensUsagePath) : null
+
+      const totalTokensUsage = usage ? await projectUsageService.increaseAITokens(projectId, usage) : null
+
+      if (isNil(totalTokensUsage)) {
+        throw new Error(`Failed to calculate usage from response headers ${tokensUsagePath}`)
+      }
+
+      if (!isNil(planTokens) && totalTokensUsage > planTokens) {
+        throw new Error(`You have exceeded your plan limit of ${planTokens} tokens`)
+      }
+
       await reply
         .code(response.status)
         .send(data);
@@ -84,4 +103,17 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
   })
 
   done()
+}
+
+const calculateUsage = (body: any, usagePath: string | string[]): number => {
+  const fields = typeof usagePath === "string" ? usagePath.split('+').map(field => field.trim()) : usagePath
+
+  return fields.reduce((acc, field) => {
+    const fieldPath = field.split('.')
+    const value = fieldPath.reduce((acc, field) => acc[field], body)
+    if (typeof value !== 'number') {
+      return acc
+    }
+    return acc + value
+  }, 0)
 }

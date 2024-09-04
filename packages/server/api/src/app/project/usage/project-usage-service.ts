@@ -18,6 +18,8 @@ export const projectUsageService = {
     increaseTasks,
     getCurrentingStartPeriod,
     getCurrentingEndPeriod,
+    increaseAITokens,
+    getAITokensUsage,
 }
 
 function getCurrentingStartPeriod(datetime: string): string {
@@ -57,6 +59,36 @@ async function getTasksUsage(projectId: string, startBillingPeriod: string): Pro
     return Number(value) || 0
 }
 
+
+async function increaseAITokens(projectId: string, incrementBy: number): Promise<number> {
+    const project = await projectService.getOneOrThrow(projectId)
+    const startBillingPeriod = getCurrentingStartPeriod(project.created)
+    return incrementOrCreateAITokensRedisRecord(projectId, startBillingPeriod, incrementBy)
+}
+
+async function incrementOrCreateAITokensRedisRecord(projectId: string, startBillingPeriod: string, incrementBy: number): Promise<number> {
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return 0
+    }
+    const key = constructAITokensUsageKey(projectId, startBillingPeriod)
+    return getRedisConnection().incrby(key, incrementBy)
+}
+
+async function getAITokensUsage(projectId: string, startBillingPeriod: string): Promise<number> {
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return 0
+    }
+    const key = constructAITokensUsageKey(projectId, startBillingPeriod)
+    const value = await getRedisConnection().get(key)
+    return Number(value) || 0
+}
+
 function constructUsageKey(projectId: string, startBillingPeriod: string): string {
     return `project-usage:${projectId}:${startBillingPeriod}`
+}
+
+function constructAITokensUsageKey(projectId: string, startBillingPeriod: string): string {
+    return `project-ai-tokens-usage:${projectId}:${startBillingPeriod}`
 }

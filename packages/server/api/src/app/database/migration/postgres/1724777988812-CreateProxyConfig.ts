@@ -21,6 +21,7 @@ export class CreateProxyConfig1724777988812 implements MigrationInterface {
             ALTER TABLE "proxy_config"
             ADD CONSTRAINT "fk_proxy_config_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `);
+        await queryRunner.query(`ALTER TABLE "project_plan" ADD COLUMN "aiTokens" integer DEFAULT 1000;`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -33,6 +34,7 @@ export class CreateProxyConfig1724777988812 implements MigrationInterface {
         await queryRunner.query(`
             DROP TABLE "proxy_config"
         `);
+        await queryRunner.query(`ALTER TABLE "project_plan" DROP COLUMN "aiTokens";`);
     }
 
 }

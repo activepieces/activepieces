@@ -10,9 +10,6 @@ export const proxyConfigService = {
     platformId,
     provider,
   }: GetParams): Promise<ProxyConfig> {
-    console.log("XXXXXXXXXX provider", provider)
-    console.log("XXXXXXXXXX provider", provider)
-    console.log("XXXXXXXXXX platformId", platformId)
     const config = await repo().findOneBy({
       platformId,
       provider,
