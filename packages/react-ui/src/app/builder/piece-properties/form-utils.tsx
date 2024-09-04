@@ -347,19 +347,23 @@ function getDefaultValueForStep(
   const entries = Object.entries(props);
   for (const [name, property] of entries) {
     switch (property.type) {
+      case PropertyType.CHECKBOX:
+        defaultValues[name] = input[name] ?? property.defaultValue ?? false;
+        break;
+      case PropertyType.ARRAY:
+        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
+        break;
       case PropertyType.MARKDOWN:
       case PropertyType.DATE_TIME:
       case PropertyType.SHORT_TEXT:
       case PropertyType.LONG_TEXT:
       case PropertyType.FILE:
-      case PropertyType.CHECKBOX:
       case PropertyType.STATIC_DROPDOWN:
       case PropertyType.DROPDOWN:
       case PropertyType.BASIC_AUTH:
       case PropertyType.CUSTOM_AUTH:
       case PropertyType.SECRET_TEXT:
-      case PropertyType.OAUTH2:
-      case PropertyType.ARRAY: {
+      case PropertyType.OAUTH2: {
         defaultValues[name] = input[name] ?? property.defaultValue;
         break;
       }

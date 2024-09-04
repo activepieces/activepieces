@@ -34,11 +34,15 @@ type ConnectionSelectProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
 };
 const addBrackets = (str: string) => `{{connections['${str}']}}`;
-const removeBrackets = (str: string) =>
-  str.replace(
+const removeBrackets = (str: string | undefined) => {
+  if (isNil(str)) {
+    return undefined;
+  }
+  return str.replace(
     /\{\{connections\['(.*?)'\]\}\}/g,
     (_, connectionName) => connectionName,
   );
+};
 const ConnectionSelect = memo((params: ConnectionSelectProps) => {
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
