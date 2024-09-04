@@ -6,6 +6,7 @@ import {
   Action,
   Trigger,
   assertNotNullOrUndefined,
+  isNil,
 } from '@activepieces/shared';
 
 const removeIntroplationBrackets = (text: string) => {
@@ -77,19 +78,6 @@ function parseMentionNodeFromText(request: ParseMentionNodeFromText) {
   };
 }
 
-const parseTextAndHardBreakNodes = (item: string) => {
-  const endlineRegex = new RegExp(`(\n)`);
-  const hardBreak: JSONContent = {
-    type: TipTapNodeTypes.hardBreak,
-  };
-  return item
-    .split(endlineRegex)
-    .filter((item) => !!item)
-    .map((text) => {
-      if (text !== '\n') return { type: TipTapNodeTypes.text, text };
-      return hardBreak;
-    });
-};
 type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
 const getStepMetadataFromPath = (
   path: string,
@@ -112,54 +100,83 @@ function convertTextToTipTapJsonContent(
 ): {
   type: TipTapNodeTypes.paragraph;
   content: JSONContent[];
-} {
+}[] {
   const inputSplitToNodesContent = userInputText
     .split(/(\{\{.*?\}\})/)
+    .map((el) => el.split(new RegExp(`(\n)`)))
+    .flat(1)
     .filter((el) => el);
-  const contentNodes: JSONContent[] = inputSplitToNodesContent.map((node) => {
-    const { stepMetadata, dfsIndex } = getStepMetadataFromPath(
-      node,
-      steps,
-      stepsMetadata,
-    );
-    const includeNewLine = node.includes('\n');
-    if (includeNewLine) {
-      return parseTextAndHardBreakNodes(node);
-    }
-    if (isMentionNodeText(node)) {
-      return parseMentionNodeFromText({
-        path: node,
-        stepDisplayName: stepMetadata?.stepDisplayName ?? '',
-        stepLogoUrl: stepMetadata?.logoUrl ?? '',
-        stepDfsIndex: dfsIndex + 1,
-      });
-    }
-    return { type: TipTapNodeTypes.text, text: node };
-  });
-  return { type: TipTapNodeTypes.paragraph, content: contentNodes.flat(1) };
+  return inputSplitToNodesContent.reduce(
+    (result, node) => {
+      if (node === '\n') {
+        result.push({
+          type: TipTapNodeTypes.paragraph,
+          content: [],
+        });
+      } else if (isMentionNodeText(node)) {
+        result[result.length - 1].content.push(
+          createMentionNodeFromText(node, steps, stepsMetadata),
+        );
+      } else {
+        result[result.length - 1].content.push({
+          type: TipTapNodeTypes.text,
+          text: node,
+        });
+      }
+      return result;
+    },
+    [
+      {
+        content: [],
+        type: TipTapNodeTypes.paragraph,
+      },
+    ] as {
+      type: TipTapNodeTypes.paragraph;
+      content: JSONContent[];
+    }[],
+  );
 }
 
-function convertTiptapJsonToText({ content }: JSONContent): string {
-  const nodes = content ?? [];
-  return nodes
-    .map((node) => {
-      switch (node.type) {
-        case TipTapNodeTypes.hardBreak:
-          return '\n';
-        case TipTapNodeTypes.text: {
-          return node.text ?? '';
-        }
-        case TipTapNodeTypes.mention:
-          return node.attrs?.label
-            ? JSON.parse(node.attrs.label).serverValue
-            : '';
-        case TipTapNodeTypes.paragraph:
-          return convertTiptapJsonToText(node);
-        default:
-          return '';
+function createMentionNodeFromText(
+  mention: string,
+  steps: (Action | Trigger)[],
+  stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
+) {
+  const { stepMetadata, dfsIndex } = getStepMetadataFromPath(
+    mention,
+    steps,
+    stepsMetadata,
+  );
+  return parseMentionNodeFromText({
+    path: mention,
+    stepDisplayName: stepMetadata?.stepDisplayName ?? '',
+    stepLogoUrl: stepMetadata?.logoUrl ?? '',
+    stepDfsIndex: dfsIndex + 1,
+  });
+}
+
+function convertTiptapJsonToText(nodes: JSONContent[]): string {
+  const res = nodes.map((node, index) => {
+    switch (node.type) {
+      case TipTapNodeTypes.hardBreak:
+        return '\n';
+      case TipTapNodeTypes.text: {
+        return node.text ?? '';
       }
-    })
-    .join('');
+      case TipTapNodeTypes.mention: {
+        return node.attrs?.label
+          ? JSON.parse(node.attrs.label).serverValue
+          : '';
+      }
+      case TipTapNodeTypes.paragraph: {
+        return `${isNil(node.content) ? '' : convertTiptapJsonToText(node.content)}${index < nodes.length - 1 ? '\n' : ''}`
+      }
+      default:
+        return '';
+    }
+  });
+  console.log('jsonToText', res);
+  return res.join('');
 }
 
 const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
@@ -200,8 +217,16 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
 const inputThatUsesMentionClass = 'ap-text-with-mentions';
 export const textMentionUtils = {
   convertTextToTipTapJsonContent,
-  convertTiptapJsonToText,
+  convertTiptapJsonToText: ({ content }: JSONContent) => {
+    const nodes = content ?? [];
+    const res =
+      nodes.length === 1 && isNil(nodes[0].content)
+        ? ''
+        : convertTiptapJsonToText(nodes);
+    return res;
+  },
   generateMentionHtmlElement,
   keysWithinPath,
+  createMentionNodeFromText,
   inputThatUsesMentionClass,
 };

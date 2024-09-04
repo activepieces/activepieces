@@ -89,27 +89,23 @@ export const TextInputWithMentions = ({
   );
 
   const insertMention = (propertyPath: string) => {
-    const jsonContent = textMentionUtils.convertTextToTipTapJsonContent(
+    const mentionNode = textMentionUtils.createMentionNodeFromText(
       `{{${propertyPath}}}`,
       steps,
       stepsMetadata,
     );
-    editor?.chain().focus().insertContent(jsonContent.content).run();
+    editor?.chain().focus().insertContent(mentionNode).run();
   };
-
-  const parentContent = [
-    textMentionUtils.convertTextToTipTapJsonContent(
-      convertToText(initialValue),
-      steps,
-      stepsMetadata,
-    ),
-  ];
   const editor = useEditor({
     editable: !disabled,
     extensions: extensions(placeholder),
     content: {
       type: 'doc',
-      content: parentContent,
+      content: textMentionUtils.convertTextToTipTapJsonContent(
+        convertToText(initialValue),
+        steps,
+        stepsMetadata,
+      ),
     },
     editorProps: {
       attributes: {
