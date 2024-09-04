@@ -57,7 +57,6 @@ const AutoFormFieldWrapper = ({
       },
     );
   }
-
   return (
     <FormItem className="flex flex-col gap-1">
       <FormLabel className="flex items-center gap-1">
@@ -88,11 +87,11 @@ const AutoFormFieldWrapper = ({
         )}
       </FormLabel>
 
-      {allowDynamicValues && toggled && (
+      {toggled && (
         <TextInputWithMentions
           disabled={disabled}
           onChange={field.onChange}
-          initialValue={property.defaultValue}
+          initialValue={field.value?? property.defaultValue}
         ></TextInputWithMentions>
       )}
       {!placeBeforeLabelText && !toggled && <div>{children}</div>}
