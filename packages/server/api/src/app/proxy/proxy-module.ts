@@ -123,6 +123,12 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
 
       const config = await proxyConfigService.getOrThrow({ platformId, provider: provider })
 
+      const tokensUsage = await projectUsageService.getAITokensUsage(projectId)
+
+      if (!isNil(planTokens) && tokensUsage > planTokens) {
+        throw new Error(`You have exceeded your plan limit of ${planTokens} tokens`)
+      }
+
       if (!config) {
         reply.code(400).send({ error: `Proxy config not found for provider ${provider} and platform ${platformId}` });
         return
@@ -162,17 +168,11 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
 
       const data = await response.json()
 
-      const usage = projectPlan && tokensUsagePath ? calculateUsage(data, tokensUsagePath) : null
-
-      const totalTokensUsage = usage ? await projectUsageService.increaseAITokens(projectId, usage) : null
-
-      if (isNil(totalTokensUsage)) {
+      if (isNil(tokensUsagePath)) {
         throw new Error(`Failed to calculate usage from response headers ${tokensUsagePath}`)
       }
 
-      if (!isNil(planTokens) && totalTokensUsage > planTokens) {
-        throw new Error(`You have exceeded your plan limit of ${planTokens} tokens`)
-      }
+      await projectUsageService.increaseAITokens(projectId, calculateUsage(data, tokensUsagePath))
 
       await reply
         .code(response.status)

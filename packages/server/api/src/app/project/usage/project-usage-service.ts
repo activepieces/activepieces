@@ -77,12 +77,14 @@ async function incrementOrCreateAITokensRedisRecord(projectId: string, startBill
     return getRedisConnection().incrby(key, incrementBy)
 }
 
-async function getAITokensUsage(projectId: string, startBillingPeriod: string): Promise<number> {
+async function getAITokensUsage(projectId: string, startBillingPeriod?: string): Promise<number> {
     const environment = system.get(SharedSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return 0
     }
-    const key = constructAITokensUsageKey(projectId, startBillingPeriod)
+    const project = await projectService.getOneOrThrow(projectId)
+    const period = startBillingPeriod ?? getCurrentingStartPeriod(project.created)
+    const key = constructAITokensUsageKey(projectId, period)
     const value = await getRedisConnection().get(key)
     return Number(value) || 0
 }
