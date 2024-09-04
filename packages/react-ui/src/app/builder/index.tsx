@@ -31,7 +31,7 @@ import {
 import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header';
-import { ChatSidebar } from './copilot';
+import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
@@ -174,7 +174,7 @@ const BuilderPage = () => {
                 <FlowRunDetails />
               )}
               {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
-              {leftSidebar === LeftSideBarType.AI_COPILOT && <ChatSidebar />}
+              {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
             </ResizablePanel>
             <ResizableHandle
               disabled={leftSidebar === LeftSideBarType.NONE}

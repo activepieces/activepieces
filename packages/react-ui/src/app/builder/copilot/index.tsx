@@ -62,7 +62,7 @@ async function getCodeResponse(
   });
 }
 
-export const ChatSidebar = () => {
+export const CopilotSidebar = () => {
   const [messages, setMessages] = useState<CopilotMessage[]>(initialMessages);
   const [inputMessage, setInputMessage] = useState('');
   const [
@@ -78,9 +78,16 @@ export const ChatSidebar = () => {
     state.applyOperation,
     state.setLeftSidebar,
   ]);
-  const latestMessageRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
   const socket = useSocket();
-
+  const scrollToLastMessage = ()=>{
+    setTimeout(()=>{
+      debugger;
+      lastMessageRef.current?.scrollIntoView({
+        behavior:'smooth'
+      })
+    },1)
+  }
   const { isPending, mutate } = useMutation({
     mutationFn: (request: GenerateCodeRequest) =>
       getCodeResponse(socket, request),
@@ -97,6 +104,7 @@ export const ChatSidebar = () => {
           userType: 'bot',
         },
       ]);
+     scrollToLastMessage();
     },
     onError: (error: any) => {
       toast({
@@ -125,6 +133,7 @@ export const ChatSidebar = () => {
       { content: inputMessage, userType: 'user', messageType: 'text' },
     ]);
     setInputMessage('');
+    scrollToLastMessage();
   };
 
   const updateAction = (newAction: Action): void => {
@@ -187,28 +196,20 @@ export const ChatSidebar = () => {
     }
   };
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      latestMessageRef.current?.scrollIntoView({
-        behavior: 'smooth',
-      });
-    }
-  }, [isPending, messages]);
-
   return (
     <div className="flex flex-col h-full">
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
         {t('AI Copilot')}
       </SidebarHeader>
       <div className="flex flex-col flex-grow overflow-hidden">
-        <ScrollArea className="flex-grow overflow-auto">
+        <ScrollArea  className="flex-grow overflow-auto">
           <CardList>
             {messages.map((message, index) => (
               <ChatMessage
                 key={index}
                 message={message}
+                ref={index===messages.length -1? lastMessageRef: null}
                 onApplyCode={(message) => applyCodeToCurrentStep(message)}
-                ref={latestMessageRef}
               />
             ))}
             <ScrollBar />
@@ -218,7 +219,7 @@ export const ChatSidebar = () => {
           <input
             value={inputMessage}
             type="text"
-            className="w-full p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12"
+            className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12"
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -244,4 +245,4 @@ export const ChatSidebar = () => {
   );
 };
 
-ChatSidebar.displayName = 'ChatSidebar';
+CopilotSidebar.displayName = 'ChatSidebar';

@@ -47,8 +47,8 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
               <ApMarkdown markdown={markdown} />
             </div>
 
-            <div className="flex align-center justify-between">
-              <FormLabel className="pt-4">{t('Inputs')}</FormLabel>
+            <div className="flex items-center justify-between">
+              <FormLabel >{t('Inputs')}</FormLabel>
               <Button
                 variant="ghost"
                 onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
