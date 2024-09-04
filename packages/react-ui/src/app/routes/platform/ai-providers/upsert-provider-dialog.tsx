@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { proxyConfigApi } from '@/lib/proxy-config-api';
 import { Type } from '@sinclair/typebox';
-import { ProxyConfig } from '../../../../../../shared/src';
+import { AiProviders, ProxyConfig } from '../../../../../../shared/src';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -100,8 +100,7 @@ export const UpsertAIProviderDialog = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="openai">OpenAI</SelectItem>
-                        <SelectItem value="anthropic">Anthropic</SelectItem>
+                        {AiProviders.map(p => <SelectItem value={p.value}>{p.label}</SelectItem>)}
                       </SelectGroup>
                     </SelectContent>
                   </Select>

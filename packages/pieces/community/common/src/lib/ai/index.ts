@@ -1,6 +1,7 @@
 import { ServerContext } from '@activepieces/pieces-framework';
 import { anthropic } from './providers/anthropic';
 import { openai } from './providers/openai';
+import { AiProvider } from '@activepieces/shared';
 
 export type AI<SDK> = {
   provider: string;
@@ -45,16 +46,33 @@ export enum AIChatRole {
   ASSISTANT = 'assistant',
 }
 
+const factories = {
+  openai,
+  anthropic
+}
+
 export const AI = ({
   provider,
   server
-}: { provider: "openai" | "anthropic", server: ServerContext }) => {
-  switch (provider) {
-    case 'openai':
-      return openai({ serverUrl: server.apiUrl, engineToken: server.token })
-    case 'anthropic':
-      return anthropic({ serverUrl: server.apiUrl, engineToken: server.token })
-    default:
-      throw new Error(`AI provider ${provider} not supported`)
+}: { provider: AiProvider, server: ServerContext }): AI<unknown> => {
+
+  const impl = factories[provider]({ serverUrl: server.apiUrl, engineToken: server.token })
+  
+  return {
+    provider,
+    chat: {
+      text: async (params) => {
+        try {
+          const response = await impl.chat.text(params)
+          return response
+        } catch (e: any) {
+          if (e?.error?.error) {
+            throw e.error.error
+          }
+          throw e
+        }
+      }
+    },
+    underlying: impl,
   }
 }

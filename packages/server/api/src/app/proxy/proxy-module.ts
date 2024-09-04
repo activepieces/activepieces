@@ -5,6 +5,7 @@ import { projectService } from 'packages/server/api/src/app/project/project-serv
 import { projectUsageService } from 'packages/server/api/src/app/project/usage/project-usage-service'
 import { proxyConfigService } from './proxy-config-service'
 import { StatusCodes } from 'http-status-codes'
+import { logger } from '@activepieces/server-shared'
 
 export const proxyModule: FastifyPluginAsyncTypebox = async (app) => {
   await app.register(projectProxyController, { prefix: '/v1/proxy' })
@@ -126,11 +127,12 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
       const tokensUsage = await projectUsageService.getAITokensUsage(projectId)
 
       if (!isNil(planTokens) && tokensUsage > planTokens) {
-        throw new Error(`You have exceeded your plan limit of ${planTokens} tokens`)
+        reply.code(StatusCodes.TOO_MANY_REQUESTS).send({ error: "YOU_HAVE_EXCEEDED_YOUR_AI_TOKENS_PLAN_LIMIT" });
+        return
       }
 
       if (!config) {
-        reply.code(400).send({ error: `Proxy config not found for provider ${provider} and platform ${platformId}` });
+        reply.code(StatusCodes.NOT_IMPLEMENTED).send({ error: "PROVIDER_PROXY_CONFIG_NOT_FOUND" });
         return
       }
 
@@ -164,12 +166,17 @@ export const projectProxyController: FastifyPluginCallbackTypebox = (
         body: JSON.stringify(request.body),
       }
 
+      logger.debug({ req }, '[PROXY] Request')
+
       const response = await fetch(targetUrl, req)
 
       const data = await response.json()
 
+      logger.debug({ data }, '[PROXY] Response')
+
       if (isNil(tokensUsagePath)) {
-        throw new Error(`Failed to calculate usage from response headers ${tokensUsagePath}`)
+        reply.code(StatusCodes.BAD_REQUEST).send({ error: "FAILED_TO_CALCULATE_USAGE" });
+        return
       }
 
       await projectUsageService.increaseAITokens(projectId, calculateUsage(data, tokensUsagePath))
