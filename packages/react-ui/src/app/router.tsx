@@ -56,6 +56,7 @@ import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
 import { RedirectPage } from '@/app/routes/redirect';
+import AIProvidersPage from '@/app/routes/platform/ai-providers';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -333,6 +334,16 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="Projects">
           <ProjectsPage />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/proxy-configs',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="AI Providers">
+          <AIProvidersPage />
         </PageTitle>
       </PlatformAdminContainer>
     ),

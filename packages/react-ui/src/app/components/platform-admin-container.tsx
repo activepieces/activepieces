@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import {
+  BrainCog,
   LayoutGrid,
   LineChart,
   LogsIcon,
@@ -40,6 +41,11 @@ export function PlatformAdminContainer({
       label: t('Overview'),
       icon: LineChart,
       locked: isLocked(false),
+    },
+    {
+      to: '/platform/proxy-configs',
+      label: t('AI'),
+      icon: BrainCog,
     },
     {
       to: '/platform/projects',

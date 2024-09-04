@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, ProxyConfig } from "@activepieces/shared";
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, ProxyConfig, SeekPage } from "@activepieces/shared";
 import { repoFactory } from "../core/db/repo-factory";
 import { ProxyConfigEntity } from "./proxy-config-entity";
 
@@ -25,20 +25,25 @@ export const proxyConfigService = {
     }
     return config
   },
-  async upsert(proxyConfig: ProxyConfig): Promise<ProxyConfig> {
-    await repo().upsert({ ...proxyConfig }, ['platformId', 'provider'])
-    return this.getOrThrow(proxyConfig)
+  async update(id: string, proxyConfig: Partial<ProxyConfig>): Promise<void> {
+    await repo().update({ id }, proxyConfig)
   },
-  async delete(platformId: PlatformId, provider: string): Promise<void> {
-    await repo().delete({
-      platformId,
-      provider,
-    })
+  async create(proxyConfig: Omit<ProxyConfig, 'id' | 'created' | 'updated'>): Promise<ProxyConfig> {
+    return await repo().save({...proxyConfig, id: apId()})
   },
-  async list(platformId: PlatformId): Promise<ProxyConfig[]> {
-    return repo().findBy({
+  async delete(id: string): Promise<void> {
+    await repo().delete({ id })
+  },
+  async list(platformId: PlatformId): Promise<SeekPage<ProxyConfig>> {
+    const configs = await repo().findBy({
       platformId,
     })
+
+    return {
+      data: configs,
+      next: null,
+      previous: null,
+    }
   },
 }
 
