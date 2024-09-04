@@ -1,19 +1,11 @@
 import { useState } from 'react';
 
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { ApFlagId } from '@activepieces/shared';
-
 type ShowPoweredByProps = {
-  showOnCloud?: boolean;
+  show: boolean;
 };
 const ShowPoweredBy = (props: ShowPoweredByProps) => {
   const [hover, setHover] = useState(false);
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
-    ApFlagId.IS_CLOUD_PLATFORM,
-  );
-  if (!platform?.showPoweredBy && !(props.showOnCloud && isCloudPlatform)) {
+  if (!props.show) {
     return null;
   }
 

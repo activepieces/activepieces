@@ -46,6 +46,7 @@ import { formatUtils } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 const filters = [
   {
@@ -92,6 +93,7 @@ const FlowsPage = () => {
     });
   }
 
+  const { platform } = platformHooks.useCurrentPlatform();
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
     PopulatedFlow,
     Error,
@@ -302,7 +304,7 @@ const FlowsPage = () => {
           />
         </div>
       </div>
-      <ShowPoweredBy />
+      <ShowPoweredBy show={platform?.showPoweredBy} />
     </div>
   );
 };

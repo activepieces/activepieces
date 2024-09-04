@@ -30,6 +30,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         const isCustomerPlatform = !flagService.isCloudPlatform(platformId)
         modifiedFlags[ApFlagId.IS_CLOUD_PLATFORM] = !isCustomerPlatform
         if (isCustomerPlatform) {
+            modifiedFlags[ApFlagId.SHOW_POWERED_BY_IN_FORM] = platform.showPoweredBy
             modifiedFlags[ApFlagId.SHOW_PLATFORM_DEMO] = false
             modifiedFlags[ApFlagId.THEME] = await appearanceHelper.getTheme({
                 platformId,
