@@ -3,6 +3,7 @@ import { TSchema, Type } from '@sinclair/typebox';
 import {
   CONNECTION_REGEX,
   OAuth2Props,
+  PieceAuthProperty,
   PieceMetadata,
   PieceMetadataModel,
   PiecePropertyMap,
@@ -23,7 +24,59 @@ import {
   TriggerType,
   ValidBranchCondition,
   isNil,
+  spreadIfDefined,
 } from '@activepieces/shared';
+
+function addAuthToPieceProps(
+  props: PiecePropertyMap,
+  auth: PieceAuthProperty | undefined,
+): PiecePropertyMap {
+  return {
+    ...props,
+    ...spreadIfDefined('auth', auth),
+  };
+}
+
+function buildInputSchemaForStep(
+  type: ActionType | TriggerType,
+  piece: PieceMetadata | null,
+  actionNameOrTriggerName: string,
+): TSchema {
+  switch (type) {
+    case ActionType.PIECE: {
+      if (
+        piece &&
+        actionNameOrTriggerName &&
+        piece.actions[actionNameOrTriggerName]
+      ) {
+        return formUtils.buildSchema(
+          addAuthToPieceProps(
+            piece.actions[actionNameOrTriggerName].props,
+            piece.auth,
+          ),
+        );
+      }
+      return Type.Object({});
+    }
+    case TriggerType.PIECE: {
+      if (
+        piece &&
+        actionNameOrTriggerName &&
+        piece.triggers[actionNameOrTriggerName]
+      ) {
+        return formUtils.buildSchema(
+          addAuthToPieceProps(
+            piece.triggers[actionNameOrTriggerName].props,
+            piece.auth,
+          ),
+        );
+      }
+      return Type.Object({});
+    }
+    default:
+      throw new Error('Unsupported type: ' + type);
+  }
+}
 
 export const formUtils = {
   buildPieceDefaultValue: (
@@ -89,8 +142,11 @@ export const formUtils = {
       }
       case ActionType.PIECE: {
         const actionName = selectedStep?.settings?.actionName;
-        const props =
-          actionName !== undefined ? piece?.actions?.[actionName]?.props : {};
+        const actionPropsWithoutAuth =
+          actionName !== undefined
+            ? piece?.actions?.[actionName]?.props ?? {}
+            : {};
+        const props = addAuthToPieceProps(actionPropsWithoutAuth, piece?.auth);
         const input = (selectedStep?.settings?.input ?? {}) as Record<
           string,
           unknown
@@ -110,10 +166,11 @@ export const formUtils = {
       }
       case TriggerType.PIECE: {
         const triggerName = selectedStep?.settings?.triggerName;
-        const props =
+        const triggerPropsWithoutAuth =
           triggerName !== undefined
-            ? piece?.triggers?.[triggerName]?.props
+            ? piece?.triggers?.[triggerName]?.props ?? {}
             : {};
+        const props = addAuthToPieceProps(triggerPropsWithoutAuth, piece?.auth);
         const input = (selectedStep?.settings?.input ?? {}) as Record<
           string,
           unknown
@@ -164,14 +221,6 @@ export const formUtils = {
       case ActionType.CODE:
         return CodeActionSchema;
       case ActionType.PIECE: {
-        const inputSchema =
-          piece &&
-          actionNameOrTriggerName &&
-          piece.actions[actionNameOrTriggerName]
-            ? formUtils.buildSchema(
-                piece.actions[actionNameOrTriggerName].props,
-              )
-            : Type.Object({});
         return Type.Composite([
           Type.Omit(PieceActionSchema, ['settings']),
           Type.Object({
@@ -181,21 +230,17 @@ export const formUtils = {
                 actionName: Type.String({
                   minLength: 1,
                 }),
-                input: inputSchema,
+                input: buildInputSchemaForStep(
+                  type,
+                  piece,
+                  actionNameOrTriggerName,
+                ),
               }),
             ]),
           }),
         ]);
       }
       case TriggerType.PIECE: {
-        const formSchema =
-          piece &&
-          actionNameOrTriggerName &&
-          piece.triggers[actionNameOrTriggerName]
-            ? formUtils.buildSchema(
-                piece.triggers[actionNameOrTriggerName].props,
-              )
-            : Type.Object({});
         return Type.Composite([
           Type.Omit(PieceTrigger, ['settings']),
           Type.Object({
@@ -205,7 +250,11 @@ export const formUtils = {
                 triggerName: Type.String({
                   minLength: 1,
                 }),
-                input: formSchema,
+                input: buildInputSchemaForStep(
+                  type,
+                  piece,
+                  actionNameOrTriggerName,
+                ),
               }),
             ]),
           }),
