@@ -10,7 +10,7 @@ const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
 
 export const projectLimitsService = {
     async upsert(
-        planLimits: Partial<FlowPlanLimits>,
+        planLimits: Partial<FlowPlanLimits & { aiTokens?: number }>,
         projectId: string,
     ): Promise<ProjectPlan> {
         const existingPlan = await projectPlanRepo().findOneBy({ projectId })
@@ -23,6 +23,7 @@ export const projectLimitsService = {
                 piecesFilterType: planLimits.piecesFilterType,
                 minimumPollingInterval: planLimits.minimumPollingInterval,
                 connections: planLimits.connections,
+                aiTokens: planLimits.aiTokens,
             })
         }
         else {

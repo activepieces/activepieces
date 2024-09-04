@@ -26,6 +26,7 @@ export enum NotificationStatus {
 export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
     teamMembers: Type.Number(),
+    aiTokensUsage: Type.Number(),
 })
 
 export const SwitchProjectResponse = Type.Object({

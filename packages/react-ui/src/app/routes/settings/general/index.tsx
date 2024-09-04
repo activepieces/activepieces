@@ -37,6 +37,7 @@ export default function GeneralPage() {
       displayName: project?.displayName,
       plan: {
         tasks: project?.plan?.tasks,
+        aiTokens: project?.plan?.aiTokens,
       },
     },
     disabled: role !== ProjectMemberRole.ADMIN,
@@ -48,7 +49,7 @@ export default function GeneralPage() {
     Error,
     {
       displayName: string;
-      plan: { tasks: number };
+      plan: { tasks: number, aiTokens?: number };
     }
   >({
     mutationFn: (request) => {
@@ -113,6 +114,25 @@ export default function GeneralPage() {
                       required
                       id="plan.tasks"
                       placeholder={t('Tasks')}
+                      className="rounded-sm"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </FlagGuard>
+            <FlagGuard flag={ApFlagId.PROJECT_LIMITS_ENABLED}>
+              <FormField
+                name="plan.aiTokens"
+                render={({ field }) => (
+                  <FormItem className="grid space-y-2">
+                    <Label htmlFor="plan.aiTokens">{t('AI Tokens')}</Label>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                      id="plan.aiTokens"
+                      placeholder={t('AI Tokens')}
                       className="rounded-sm"
                     />
                     <FormMessage />
