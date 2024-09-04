@@ -12,10 +12,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { isStepFileUrl } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
 
 import { Button } from './ui/button';
 import { toast } from './ui/use-toast';
-import { isNil } from '../../../shared/src';
 
 type JsonViewerProps = {
   json: any;
@@ -153,7 +153,7 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
 
       {
         <>
-          {(isNil(json)) ? (
+          {isNil(json) ? (
             <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
               {json === null ? 'null' : 'undefined'}
             </pre>
