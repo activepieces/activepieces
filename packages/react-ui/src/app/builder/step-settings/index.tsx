@@ -196,19 +196,9 @@ const StepSettingsContainer = React.memo(
       }
     }, [actionName, triggerName]);
 
-    const previousStep = useRef<Action | Trigger | null>(null);
 
     useUpdateEffect(() => {
       const currentStep = form.getValues();
-
-      if (previousStep.current === null) {
-        previousStep.current = currentStep;
-        return;
-      }
-      if (deepEqual(currentStep, previousStep.current)) {
-        return;
-      }
-      previousStep.current = currentStep;
 
       if (currentStep.type === TriggerType.PIECE) {
         debouncedTrigger(currentStep as Trigger);
