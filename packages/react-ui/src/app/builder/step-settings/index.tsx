@@ -61,6 +61,9 @@ const StepSettingsContainer = React.memo(
       state.refreshPieceFormSettings,
     ]);
 
+    const previousSavedStep = useRef<Action | Trigger | null>(null);
+
+
     const defaultValues = useMemo(() => {
       return formUtils.buildPieceDefaultValue(selectedStep, pieceModel!, true);
     }, [selectedStep, pieceModel]);
@@ -196,20 +199,18 @@ const StepSettingsContainer = React.memo(
       }
     }, [actionName, triggerName]);
 
-    const previousStep = useRef<Action | Trigger | null>(null);
 
-    useUpdateEffect(() => {
+    useEffect(() => {
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
-      /* 
-      if (previousStep.current === null) {
-        previousStep.current = currentStep;
+      if (previousSavedStep.current === null) {
+        previousSavedStep.current = currentStep;
         return;
       }
-      if (deepEqual(currentStep, previousStep.current)) {
+      if (deepEqual(currentStep, previousSavedStep.current)) {
         return;
       }
-      previousStep.current = currentStep;
-*/
+      previousSavedStep.current = currentStep;
+
       if (currentStep.type === TriggerType.PIECE) {
         debouncedTrigger(currentStep as Trigger);
       } else {
