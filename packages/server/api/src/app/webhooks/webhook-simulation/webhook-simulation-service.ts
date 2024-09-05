@@ -8,7 +8,7 @@ import {
     isNil,
     ProjectId, WebhookSimulation } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
-import { acquireLock } from '../../helper/lock'
+import { distributedLock } from '../../helper/lock'
 import { WebhookSimulationEntity } from './webhook-simulation-entity'
 import { webhookSideEffects } from './webhook-simulation-side-effects'
 
@@ -31,7 +31,7 @@ type AcquireLockParams = {
 
 const createLock = async ({ flowId }: AcquireLockParams): Promise<ApLock> => {
     const key = `${flowId}-webhook-simulation`
-    return acquireLock({ key, timeout: 5000 })
+    return distributedLock.acquireLock({ key, timeout: 5000 })
 }
 
 const webhookSimulationRepo = repoFactory(

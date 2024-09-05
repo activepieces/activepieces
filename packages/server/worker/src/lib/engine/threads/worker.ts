@@ -101,7 +101,7 @@ export class EngineWorker {
         }
         finally {
             if (environment === ApEnvironment.DEVELOPMENT) {
-                logger.debug({
+                logger.trace({
                     workerIndex,
                 }, 'Removing worker in development mode to avoid caching issues')
                 rejectedPromiseHandler(worker.terminate())

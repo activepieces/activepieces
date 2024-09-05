@@ -1,5 +1,6 @@
 import {
     ConfigureRepoRequest,
+    GitBranchType,
     GitPushOperationType,
     GitRepo,
     ProjectOperationType,
@@ -7,8 +8,10 @@ import {
     ProjectSyncPlan,
     ProjectSyncPlanOperation, PushGitRepoRequest,
 } from '@activepieces/ee-shared'
+import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    ApEdition,
     apId,
     ErrorCode,
     FlowStatus,
@@ -74,6 +77,25 @@ export const gitRepoService = {
         const repos = await repo().findBy({ projectId })
         return paginationHelper.createPage<GitRepo>(repos, null)
     },
+    async onFlowDeleted({ flowId, userId, projectId }: { flowId: string, userId: string, projectId: string }): Promise<void> {
+        const edition = system.getEdition()
+        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+            return
+        }
+        const gitRepo = await repo().findOneBy({ projectId })
+        if (isNil(gitRepo) || gitRepo.branchType === GitBranchType.PRODUCTION) {
+            return
+        }
+        await this.push({
+            id: gitRepo.id,
+            userId,
+            request: {
+                type: GitPushOperationType.DELETE_FLOW,
+                commitMessage: `chore: deleted flow ${flowId}`,
+                flowId,
+            },
+        })
+    },
     async push({ id, userId, request }: PushParams): Promise<void> {
         const gitRepo = await gitRepoService.getOrThrow({ id })
         const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
@@ -103,8 +125,15 @@ export const gitRepoService = {
                 await repo().update({ id: gitRepo.id }, {
                     mapping: mappingState.deleteFlow(request.flowId),
                 })
-                await gitSyncHelper.deleteFlowFromGit(request.flowId, flowFolderPath)
-                await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowId} from user interface`)
+
+                const sourceFlowId = mappingState.findSourceId(request.flowId)
+                if (isNil(sourceFlowId)) {
+                    break
+                }
+                const deleted = await gitSyncHelper.deleteFlowFromGit(sourceFlowId, flowFolderPath)
+                if (deleted) {
+                    await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowId} from user interface`)
+                }
                 break
             }
         }

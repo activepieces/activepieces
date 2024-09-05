@@ -49,8 +49,8 @@ COPY . .
 COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
-RUN npx nx run-many --target=build --projects=ui-core --configuration production --skip-nx-cache
+RUN npx nx run-many --target=build --projects=server-api --configuration production
+RUN npx nx run-many --target=build --projects=react-ui 
 
 # Install backend production dependencies
 RUN cd dist/packages/server/api && npm install --production --force
@@ -67,7 +67,7 @@ COPY packages/server/api/src/assets/default.cf /usr/local/etc/isolate
 RUN apt-get update && apt-get install -y nginx gettext
 
 # Copy Nginx configuration template
-COPY packages/ui/core/nginx.standard.conf /etc/nginx/nginx.conf
+COPY nginx.react.conf /etc/nginx/nginx.conf
 
 COPY --from=build /usr/src/app/LICENSE .
 
@@ -85,11 +85,10 @@ RUN cd /usr/src/app/dist/packages/server/api/ && npm install --production --forc
 # 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
+# Copy frontend files to Nginx document root directory from build stage
+COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
 
 LABEL service=activepieces
-
-# Copy frontend files to Nginx document root directory from build stage
-COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh .

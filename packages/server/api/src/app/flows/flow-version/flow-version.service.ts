@@ -17,7 +17,7 @@ import {
     FlowVersionState,
     ImportFlowRequest,
     isNil,
-    LoopOnItemsActionSettingsWithValidation,
+    LoopOnItemsActionSettings,
     PieceActionSettings,
     PieceCategory,
     PieceTriggerSettings,
@@ -41,7 +41,7 @@ const branchSettingsValidator = TypeCompiler.Compile(
     BranchActionSettingsWithValidation,
 )
 const loopSettingsValidator = TypeCompiler.Compile(
-    LoopOnItemsActionSettingsWithValidation,
+    LoopOnItemsActionSettings,
 )
 const flowVersionRepo = repoFactory(FlowVersionEntity)
 
