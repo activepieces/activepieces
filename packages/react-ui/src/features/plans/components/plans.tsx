@@ -103,10 +103,9 @@ const Plans: React.FC = () => {
       const { paymentLink } = await billingApi.upgrade();
       window.open(paymentLink, '_blank');
     },
-    onSuccess: () => { },
+    onSuccess: () => {},
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
-
 
   const { mutate: updateLimitsData, isPending: isUpdateLimitsPending } =
     useMutation<ProjectWithLimits, HttpError, UpdateProjectPlatformRequest>({

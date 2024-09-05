@@ -5,14 +5,12 @@ import {
   DragOverlay,
   DragStartEvent,
   KeyboardSensor,
-  MouseSensor,
   PointerSensor,
   TouchSensor,
   rectIntersection,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { snapCenterToCursor } from '@dnd-kit/modifiers';
 import { t } from 'i18next';
 
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
@@ -116,7 +114,7 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance:10
+        distance: 10,
       },
     }),
     useSensor(KeyboardSensor),
@@ -125,19 +123,18 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
 
   return (
     <>
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-      sensors={sensors}
-      collisionDetection={fixCursorSnapOffset}
-    >
-      {children}
-      <DragOverlay dropAnimation={{duration:0}}></DragOverlay>
-    </DndContext>
-    {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
+      <DndContext
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+        sensors={sensors}
+        collisionDetection={fixCursorSnapOffset}
+      >
+        {children}
+        <DragOverlay dropAnimation={{ duration: 0 }}></DragOverlay>
+      </DndContext>
+      {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
     </>
-    
   );
 };
 

@@ -1,32 +1,27 @@
 import { t } from 'i18next';
+import { useEffect, useRef } from 'react';
 
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { Action, Trigger } from '@activepieces/shared';
-import { useEffect, useRef } from 'react';
 
 type StepDragTemplateProps = {
   step: Action | Trigger;
 };
 
 const StepDragOverlay = ({ step }: StepDragTemplateProps) => {
-  
-
   const shadowRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
-      if(shadowRef.current)
-      {
-        shadowRef.current.style.left = `${event.clientX -50}px`;
-        shadowRef.current.style.top = `${event.clientY -125}px`;
+      if (shadowRef.current) {
+        shadowRef.current.style.left = `${event.clientX - 50}px`;
+        shadowRef.current.style.top = `${event.clientY - 125}px`;
       }
-     
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
-
 
   const { stepMetadata } = piecesHooks.useStepMetadata({
     step: step!,
@@ -37,7 +32,7 @@ const StepDragOverlay = ({ step }: StepDragTemplateProps) => {
       className={
         'p-4 absolute left-0 top-0 h-[100px] opacity-75 w-[100px] flex items-center justify-center rounded-lg border border-solid border bg-white'
       }
-   ref={shadowRef}
+      ref={shadowRef}
     >
       <img
         id={t('logo')}
