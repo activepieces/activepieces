@@ -5,6 +5,7 @@ import { googleSheetsAuth } from '../..';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+import { isString } from '@activepieces/shared';
 
 export const updateRowAction = createAction({
   auth: googleSheetsAuth,
@@ -46,16 +47,21 @@ export const updateRowAction = createAction({
       sheetId
     );
 
-    let formattedValues = (
+    // replace empty string with null to skip the cell value
+    const formattedValues = (
       idFirstRowHeaders
         ? objectToArray(rowValuesInput)
         : rowValuesInput['values']
-    ) as (string | null)[];
+    ).map((value: string | null | undefined) => {
+      if (value === '' || value === null || value === undefined) {
+        return null;
+      }
+      if (isString(value)) {
+        return value;
+      }
+      return JSON.stringify(value, null, 2);
+    });
 
-    // replace empty string with null to skip the cell value
-    formattedValues = formattedValues.map((value) =>
-      value === '' ? null : value
-    );
 
     if (formattedValues.length > 0) {
       const response = await sheets.spreadsheets.values.update({
@@ -71,10 +77,10 @@ export const updateRowAction = createAction({
       //Split the updatedRange string to extract the row number
       const updatedRangeParts = response.data.updatedRange?.split(
         '!'
-      ) as string[];
-      const updatedRowRange = updatedRangeParts[1];
+      );
+      const updatedRowRange = updatedRangeParts?.[1];
       const updatedRowNumber = parseInt(
-        updatedRowRange.split(':')[0].substring(1),
+        updatedRowRange?.split(':')[0].substring(1) ?? '0',
         10
       );
 
@@ -82,7 +88,7 @@ export const updateRowAction = createAction({
     } else {
       throw Error(
         'Values passed are empty or not array ' +
-          JSON.stringify(formattedValues)
+        JSON.stringify(formattedValues)
       );
     }
   },
