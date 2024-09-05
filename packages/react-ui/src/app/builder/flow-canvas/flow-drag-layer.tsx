@@ -56,11 +56,13 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
     applyOperation,
     flowVersion,
     activeDraggingStep,
+    setAllowCanvasPanning,
   ] = useBuilderStateContext((state) => [
     state.setActiveDraggingStep,
     state.applyOperation,
     state.flowVersion,
     state.activeDraggingStep,
+    state.setAllowCanvasPanning,
   ]);
 
   const draggedStep = activeDraggingStep
@@ -76,6 +78,7 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
   };
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveDraggingStep(null);
+    setAllowCanvasPanning(true);
     if (
       e.over &&
       e.over.data.current &&
