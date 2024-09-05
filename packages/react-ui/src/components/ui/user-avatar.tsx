@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { LogOut, SunMoon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -15,7 +16,6 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
-import { useEmbedding } from '@/components/embed-provider';
 
 export function UserAvatar() {
   const { reset } = useTelemetry();

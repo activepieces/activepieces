@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { t } from 'i18next';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
@@ -33,7 +34,6 @@ import {
   SelectItem,
 } from './select';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
-import { t } from 'i18next';
 
 export type DataWithId = {
   id?: string;
@@ -180,7 +180,6 @@ export function DataTable<
           });
         },
       }));
-      debugger;
       setTableData(newData);
       setNextPageCursor(response.next ?? undefined);
       setPreviousPageCursor(response.previous ?? undefined);

@@ -2,7 +2,6 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
 import { Dispatch, SetStateAction, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -57,7 +56,6 @@ const DeleteConnectionColumn = ({
   row: RowDataWithActions<AppConnection>;
   setRefresh: Dispatch<SetStateAction<number>>;
 }) => {
-  const [, setSearchParams] = useSearchParams();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
