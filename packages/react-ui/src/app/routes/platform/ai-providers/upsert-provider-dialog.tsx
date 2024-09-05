@@ -162,7 +162,7 @@ export const UpsertAIProviderDialog = ({
                                   })
                                   return
                                 }
-                                form.setValue(`defaultHeaders`, { [field.value]: '' })
+                                form.setValue(`defaultHeaders.${field.value}`, '')
                                 newHeaderForm.resetField('name')
                                 setIsNewHeaderFormOpen(false)
                               }}>
