@@ -1,5 +1,6 @@
 import { ApFile, PieceAuth, Property, Validators } from '@activepieces/pieces-framework'
 import { ActionType, GenericStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
+import { StepExecutionPath } from 'packages/engine/src/lib/handler/context/step-execution-path'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { VariableService } from '../../src/lib/variables/variable-service'
 
@@ -43,6 +44,71 @@ const executionState = FlowExecutorContext.empty()
 
 
 describe('Variable Service', () => {
+    test("Test resolve inside nested loops", async () => {
+
+        const modifiedExecutionState = executionState.upsertStep('step_3', GenericStepOutput.create({
+            type: ActionType.LOOP_ON_ITEMS,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                iterations: [
+                    {
+                        "step_8": GenericStepOutput.create({
+                            type: ActionType.PIECE,
+                            status: StepOutputStatus.SUCCEEDED,
+                            input: {},
+                            output: {
+                                delayForInMs: 20000,
+                                success: true
+                            },
+                        }),
+                        "step_4": GenericStepOutput.create({
+                            type: ActionType.LOOP_ON_ITEMS,
+                            status: StepOutputStatus.SUCCEEDED,
+                            input: {},
+                            output: {
+                                iterations: [
+                                    {
+                                        "step_7": GenericStepOutput.create({
+                                            "type": ActionType.PIECE,
+                                            "status": StepOutputStatus.SUCCEEDED,
+                                            "input": {
+                                                "unit": "seconds",
+                                                "delayFor": "20"
+                                            },
+                                            "output": {
+                                                "delayForInMs": 20000,
+                                                "success": true
+                                            },
+                                        }),
+                                    },
+                                ],
+                                item: 1,
+                                index: 0
+                            },
+                        }),
+                    },
+                ],
+                item: 1,
+                index: 0
+            },
+        })).setCurrentPath(StepExecutionPath.empty()
+            .loopIteration({
+                loopName: 'step_3',
+                iteration: 0,
+            })
+            .loopIteration({
+                loopName: 'step_4',
+                iteration: 0,
+            })
+        )
+
+        const { resolvedInput: secondLevelResolvedInput } = await variableService.resolve({ unresolvedInput: '{{step_7.output.delayForInMs}}', executionState: modifiedExecutionState })
+        expect(secondLevelResolvedInput).toEqual(20000)
+        const { resolvedInput: firstLevelResolvedInput } = await variableService.resolve({ unresolvedInput: '{{step_8.output.delayForInMs}}', executionState: modifiedExecutionState })
+        expect(firstLevelResolvedInput).toEqual(20000)
+
+    })
     test('Test resolve text with no variables', async () => {
         const { resolvedInput } = await variableService.resolve({ unresolvedInput: 'Hello world!', executionState })
         expect(resolvedInput).toEqual(
