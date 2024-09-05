@@ -75,7 +75,8 @@ const FlowRunsPage = () => {
     Error,
     { row: RowDataWithActions<FlowRun>; strategy: FlowRetryStrategy }
   >({
-    mutationFn: (data) => flowRunsApi.retry(data.row.id, { strategy: data.strategy }),
+    mutationFn: (data) =>
+      flowRunsApi.retry(data.row.id, { strategy: data.strategy }),
     onSuccess: (updatedRun, { row }) => {
       row.update(updatedRun);
     },

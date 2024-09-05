@@ -24,7 +24,7 @@ type AutoFormFieldWrapperProps = {
   hideDescription?: boolean;
   placeBeforeLabelText?: boolean;
   disabled: boolean;
-  field: ControllerRenderProps<Record<string, any>, string>;
+  field: ControllerRenderProps;
 };
 
 const AutoFormFieldWrapper = ({
