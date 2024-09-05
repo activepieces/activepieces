@@ -58,7 +58,7 @@ jobs:
         run: |
           ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/react.yml --skip-push; exit"'
 
-#      - name: Deploy Workers
-#        run: |
-#          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }} --config-file=config/workers.yml --skip-push; exit"'
+      - name: Deploy Workers
+        run: |
+          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }} --config-file=config/workers.yml --skip-push; exit"'
 
