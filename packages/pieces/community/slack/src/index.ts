@@ -23,6 +23,8 @@ import { createChannelAction } from './lib/actions/create-channel';
 import { channelCreated } from './lib/triggers/new-channel';
 import { addRectionToMessageAction } from './lib/actions/add-reaction-to-message';
 import { getChannelHistory } from './lib/actions/get-channel-history';
+import { findUserByHandleAction } from './lib/actions/find-user-by-handle';
+import { setUserStatusAction } from './lib/actions/set-user-status';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -104,10 +106,12 @@ export const slack = createPiece({
     uploadFile,
     searchMessages,
     findUserByEmailAction,
+    findUserByHandleAction,
     updateMessage,
     createChannelAction,
     updateProfileAction,
     getChannelHistory,
+    setUserStatusAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';

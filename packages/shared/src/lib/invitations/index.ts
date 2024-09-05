@@ -38,6 +38,7 @@ export const SendUserInvitationRequest = Type.Object({
     platformRole: Type.Optional(Type.Enum(PlatformRole)),
     projectId: Nullable(Type.String()),
     projectRole: Type.Optional(Type.Enum(ProjectMemberRole)),
+    expireyInSeconds: Type.Optional(Type.Number()),
 })
 
 export type SendUserInvitationRequest = Static<typeof SendUserInvitationRequest>
@@ -52,6 +53,7 @@ export const ListUserInvitationsRequest = Type.Object({
     limit: Type.Optional(Type.Number()),
     cursor: Type.Optional(Type.String()),
     type: Type.Enum(InvitationType),
+    projectId: Nullable(Type.String()),
     status: Type.Optional(Type.Enum(InvitationStatus)),
 })
 

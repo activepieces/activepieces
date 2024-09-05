@@ -8,7 +8,7 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
         const projectMembers = await queryRunner.query('SELECT * FROM project_member WHERE status = \'ACTIVE\'')
         await queryRunner.query('TRUNCATE TABLE project_member CASCADE')
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_member_project_id_email_platform_id"
+            DROP INDEX "idx_project_member_project_id_email_platform_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "project_member" DROP COLUMN "status"
@@ -38,7 +38,7 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
             if (projectMember.role === 'EXTERNAL_CUSTOMER') {
                 projectMember.role = 'OPERATOR'
             }
-            const user = await queryRunner.query(`SELECT * FROM "public"."user" WHERE email = '${projectMember.email}' AND "platformId" = '${projectMember.platformId}'`)
+            const user = await queryRunner.query(`SELECT * FROM "user" WHERE email = '${projectMember.email}' AND "platformId" = '${projectMember.platformId}'`)
             if (user.length === 0) {
                 // Skip if user not found
                 continue
@@ -58,7 +58,7 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
             ALTER TABLE "project_member" DROP CONSTRAINT "fk_project_member_user_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_member_project_id_user_id_platform_id"
+            DROP INDEX "idx_project_member_project_id_user_id_platform_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "project_member" DROP COLUMN "platformId"
@@ -82,7 +82,7 @@ export class ModifyProjectMembers1717961669938 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_project_member_project_id_email_platform_id" ON "project_member" ("projectId", "email", "platformId")
         `)
         for (const projectMember of projectMembers) {
-            const user = await queryRunner.query(`SELECT * FROM "public.user" WHERE id = '${projectMember.userId}'`)
+            const user = await queryRunner.query(`SELECT * FROM "user" WHERE id = '${projectMember.userId}'`)
             await queryRunner.query(`
             INSERT INTO "project_member" ("id", "created", "updated", "projectId", "platformId", "email", "status", "role")
             VALUES ('${projectMember.id}','${dayjs(projectMember.created).toISOString()}', '${dayjs(projectMember.updated).toISOString()}', '${projectMember.projectId}', '${projectMember.platformId}', '${user.email}', '${projectMember.status}', '${projectMember.role}')

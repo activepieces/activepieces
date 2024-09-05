@@ -25,10 +25,10 @@ export class ManagedAuthnInitial1698700720482 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_user_external_id"
+            DROP INDEX "idx_user_external_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_platform_id_external_id"
+            DROP INDEX "idx_project_platform_id_external_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "user" DROP COLUMN "externalId"

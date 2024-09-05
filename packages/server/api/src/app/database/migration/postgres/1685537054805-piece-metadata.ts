@@ -21,7 +21,7 @@ export class PieceMetadata1685537054805 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('DROP COLLATION en_natural')
         await queryRunner.query(
-            'DROP INDEX "public"."idx_piece_metadata_name_version"',
+            'DROP INDEX "idx_piece_metadata_name_version"',
         )
         await queryRunner.query('DROP TABLE "piece_metadata"')
 

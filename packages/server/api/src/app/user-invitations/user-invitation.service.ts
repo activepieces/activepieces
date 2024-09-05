@@ -1,7 +1,6 @@
 
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
-import dayjs from 'dayjs'
-import { IsNull, MoreThanOrEqual } from 'typeorm'
+import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
@@ -15,7 +14,6 @@ import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
 
 const repo = repoFactory(UserInvitationEntity)
-const INVITATION_EXPIREY_DAYS = 1
 
 export const userInvitationsService = {
     async countByProjectId(projectId: string): Promise<number> {
@@ -32,13 +30,11 @@ export const userInvitationsService = {
             return
         }
         const platform = await platformService.getOneOrThrow(platformId)
-        const ONE_DAY_AGO = dayjs().subtract(INVITATION_EXPIREY_DAYS, 'day').toISOString()
         const invitations = await repo().findBy([
             {
                 email,
                 platformId,
                 status: InvitationStatus.ACCEPTED,
-                created: MoreThanOrEqual(ONE_DAY_AGO),
             },
         ])
         for (const invitation of invitations) {
@@ -77,6 +73,7 @@ export const userInvitationsService = {
         type,
         projectRole,
         platformRole,
+        invitationExpirySeconds,
     }: CreateParams): Promise<UserInvitationWithLink> {
         const invitation = await repo().findOneBy({
             email,
@@ -86,7 +83,7 @@ export const userInvitationsService = {
         const platform = await platformService.getOneOrThrow(platformId)
 
         if (!isNil(invitation)) {
-            return enrichWithInvitationLink( platform, invitation )
+            return enrichWithInvitationLink(platform, invitation, invitationExpirySeconds)
         }
         const id = apId()
         await repo().upsert({
@@ -104,8 +101,7 @@ export const userInvitationsService = {
             id,
             platformId,
         })
-        
-        return enrichWithInvitationLink( platform, userInvitation )
+        return enrichWithInvitationLink(platform, userInvitation, invitationExpirySeconds)
     },
     async list(params: ListUserParams): Promise<SeekPage<UserInvitation>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor ?? null)
@@ -194,12 +190,12 @@ export const userInvitationsService = {
 }
 
 
-async function generateInvitationLink(userInvitation: UserInvitation): Promise<string> {
+async function generateInvitationLink(userInvitation: UserInvitation, expireyInSeconds: number): Promise<string> {
     const token = await jwtUtils.sign({
         payload: {
             id: userInvitation.id,
         },
-        expiresInSeconds: INVITATION_EXPIREY_DAYS * 24 * 60 * 60,
+        expiresInSeconds: expireyInSeconds,
         key: await jwtUtils.getJwtSecret(),
     })
 
@@ -208,8 +204,8 @@ async function generateInvitationLink(userInvitation: UserInvitation): Promise<s
         path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
     })
 }
-const enrichWithInvitationLink = async (  platform: Platform, userInvitation: UserInvitation ) => {
-    const invitationLink = await generateInvitationLink(userInvitation)
+const enrichWithInvitationLink = async (platform: Platform, userInvitation: UserInvitation, expireyInSeconds: number) => {
+    const invitationLink = await generateInvitationLink(userInvitation, expireyInSeconds)
     if (!smtpEmailSender.isSmtpConfigured(platform)) {
         return {
             ...userInvitation,
@@ -278,6 +274,7 @@ export type CreateParams = {
     projectId: string | null
     type: InvitationType
     projectRole: ProjectMemberRole | null
+    invitationExpirySeconds: number
 }
 
 export type DeleteParams = {

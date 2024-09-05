@@ -5,7 +5,7 @@ export class RemoveUniqueEmailOnUser1713221809186 implements MigrationInterface 
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_user_partial_unique_email_platform_id_is_null"
+            DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
         `)
     }
 
