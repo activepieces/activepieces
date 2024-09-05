@@ -23,6 +23,21 @@ type MarkdownProps = {
   withBorder?: boolean;
 };
 
+const Container = ({
+  withBorder,
+  children,
+}: {
+  withBorder: boolean;
+  children: React.ReactNode;
+}) =>
+  withBorder ? (
+    <Alert className="rounded">
+      <AlertDescription>{children}</AlertDescription>
+    </Alert>
+  ) : (
+    children
+  );
+
 const ApMarkdown = React.memo(
   ({ markdown, variables, withBorder = true }: MarkdownProps) => {
     const [copiedText, setCopiedText] = useState<string | null>(null);
@@ -43,22 +58,13 @@ const ApMarkdown = React.memo(
       },
     });
 
-    const Container = ({ children }: { children: React.ReactNode }) =>
-      withBorder ? (
-        <Alert className="rounded">
-          <AlertDescription>{children}</AlertDescription>
-        </Alert>
-      ) : (
-        children
-      );
-
     if (!markdown) {
       return null;
     }
 
     const markdownProcessed = applyVariables(markdown, variables ?? {});
     return (
-      <Container>
+      <Container withBorder={withBorder}>
         <ReactMarkdown
           components={{
             code(props) {
