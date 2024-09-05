@@ -33,6 +33,7 @@ import {
   SelectItem,
 } from './select';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
+import { t } from 'i18next';
 
 export type DataWithId = {
   id?: string;
@@ -179,6 +180,7 @@ export function DataTable<
           });
         },
       }));
+      debugger;
       setTableData(newData);
       setNextPageCursor(response.next ?? undefined);
       setPreviousPageCursor(response.previous ?? undefined);
@@ -327,7 +329,7 @@ export function DataTable<
             table.setPageSize(Number(value));
           }}
         >
-          <SelectTrigger className="h-8 w-[70px]">
+          <SelectTrigger className="h-9 min-w-[70px] w-auto">
             <SelectValue placeholder={table.getState().pagination.pageSize} />
           </SelectTrigger>
           <SelectContent side="top">
@@ -344,15 +346,18 @@ export function DataTable<
           onClick={() => setCurrentCursor(previousPageCursor)}
           disabled={!previousPageCursor}
         >
-          Previous
+          {t('Previous')}
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setCurrentCursor(nextPageCursor)}
+          onClick={() => {
+            console.log('setCurrentCursor', nextPageCursor);
+            setCurrentCursor(nextPageCursor);
+          }}
           disabled={!nextPageCursor}
         >
-          Next
+          {t('Next')}
         </Button>
       </div>
     </div>
