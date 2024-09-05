@@ -1208,6 +1208,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "sany2407",
+      "name": "Sany A",
+      "avatar_url": "https://avatars.githubusercontent.com/u/179091674?v=4",
+      "profile": "https://github.com/sany2407",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
