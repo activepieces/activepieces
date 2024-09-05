@@ -5,6 +5,7 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   ApFlagId,
+  isNil,
   PieceAction,
   PieceActionSettings,
   PieceTrigger,
@@ -76,6 +77,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
           {pieceModel.auth &&
             (selectedAction?.requireAuth || selectedTrigger) && (
               <ConnectionSelect
+                isTrigger={!isNil(selectedTrigger)}
                 piece={pieceModel}
                 disabled={props.readonly}
               ></ConnectionSelect>

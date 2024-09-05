@@ -172,7 +172,7 @@ export function DataTable<
           setDeletedRows([...deletedRows, row]);
         },
         update: (payload: Partial<TData>) => {
-          setTableData(prevData => {
+          setTableData((prevData) => {
             const newData = [...prevData];
             newData[index] = { ...newData[index], ...payload };
             return newData;
