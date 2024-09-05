@@ -51,7 +51,7 @@ export default function IssuesTable() {
     refetch();
     toast({
       title: t('Success'),
-      description: t('Issues in {{flowDisplayName} is marked as resolved.', {
+      description: t('Issues in {flowDisplayName} is marked as resolved.', {
         flowDisplayName,
       }),
       duration: 3000,
