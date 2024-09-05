@@ -19,7 +19,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 <a href="/LICENSE" target="_blank"><img src='https://img.shields.io/badge/license-MIT-green?style=for-the-badge' /></a>&nbsp;<img src='https://img.shields.io/github/commit-activity/w/activepieces/activepieces/main?style=for-the-badge' />&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
 <p align="center">
-   An open source replacement for Zapier
+   Assignment Project for SCC!
 </p>
 
 <p align="center">
@@ -301,8 +301,6 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://raamyy.netlify.app"><img src="https://avatars.githubusercontent.com/u/29176293?v=4?s=100" width="100px;" alt="Ramy Gamal"/><br /><sub><b>Ramy Gamal</b></sub></a><br /><a href="#plugin-Raamyy" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://alexandrudanpop.dev/"><img src="https://avatars.githubusercontent.com/u/15979292?v=4?s=100" width="100px;" alt="Alexandru-Dan Pop"/><br /><sub><b>Alexandru-Dan Pop</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=alexandrudanpop" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Trayshmhirk"><img src="https://avatars.githubusercontent.com/u/112286458?v=4?s=100" width="100px;" alt="Frank Micheal "/><br /><sub><b>Frank Micheal </b></sub></a><br /><a href="#plugin-Trayshmhirk" title="Plugin/utility libraries">🔌</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/emmanuel-ferdman"><img src="https://avatars.githubusercontent.com/u/35470921?v=4?s=100" width="100px;" alt="Emmanuel Ferdman"/><br /><sub><b>Emmanuel Ferdman</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=emmanuel-ferdman" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/sany2407"><img src="https://avatars.githubusercontent.com/u/179091674?v=4?s=100" width="100px;" alt="Sany A"/><br /><sub><b>Sany A</b></sub></a><br /><a href="#plugin-sany2407" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
