@@ -39,6 +39,7 @@ export type DataWithId = {
 };
 export type RowDataWithActions<TData extends DataWithId> = TData & {
   delete: () => void;
+  update: (payload: Partial<TData>) => void;
 };
 
 type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>[]> = {
@@ -165,10 +166,17 @@ export function DataTable<
         createdAfter: params.get('createdAfter') ?? undefined,
         createdBefore: params.get('createdBefore') ?? undefined,
       });
-      const newData = response.data.map((row) => ({
+      const newData = response.data.map((row, index) => ({
         ...row,
         delete: () => {
           setDeletedRows([...deletedRows, row]);
+        },
+        update: (payload: Partial<TData>) => {
+          setTableData(prevData => {
+            const newData = [...prevData];
+            newData[index] = { ...newData[index], ...payload };
+            return newData;
+          });
         },
       }));
       setTableData(newData);

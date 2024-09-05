@@ -152,24 +152,24 @@ export const flowRunService = {
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-    async retry({ flowRunId, strategy }: RetryParams): Promise<void> {
+    async retry({ flowRunId, strategy }: RetryParams): Promise<FlowRun | null> {
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
-                await flowRunService.addToQueue({
+                return flowRunService.addToQueue({
                     flowRunId,
                     executionType: ExecutionType.RESUME,
                     progressUpdateType: ProgressUpdateType.NONE,
+                    checkRequestId: false,
                 })
-                break
             case FlowRetryStrategy.ON_LATEST_VERSION: {
                 const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(flowRunId)
-                await flowRunService.addToQueue({
+                return flowRunService.addToQueue({
                     payload,
                     flowRunId,
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
+                    checkRequestId: false,
                 })
-                break
             }
         }
     },
@@ -179,13 +179,15 @@ export const flowRunService = {
         requestId,
         progressUpdateType,
         executionType,
+        checkRequestId
     }: {
         flowRunId: FlowRunId
         requestId?: string
         progressUpdateType: ProgressUpdateType
         payload?: unknown
-        executionType: ExecutionType
-    }): Promise<void> {
+        executionType: ExecutionType,
+        checkRequestId: boolean
+    }): Promise<FlowRun | null> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
 
         const flowRunToResume = await flowRunRepo().findOneBy({
@@ -202,8 +204,8 @@ export const flowRunService = {
         }
         const pauseMetadata = flowRunToResume.pauseMetadata
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
-        if (matchRequestId) {
-            await flowRunService.start({
+        if (matchRequestId || !checkRequestId) {
+            return flowRunService.start({
                 payload,
                 flowRunId: flowRunToResume.id,
                 projectId: flowRunToResume.projectId,
@@ -215,6 +217,7 @@ export const flowRunService = {
                 environment: RunEnvironment.PRODUCTION,
             })
         }
+        return null;
     },
     async updateStatus({
         flowRunId,
