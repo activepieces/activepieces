@@ -12,12 +12,14 @@ export const cropImage = createAction({
     }),
     left: Property.Number({
       displayName: 'Left',
-      description: 'Specifies the horizontal position, indicating where the cropping starts from the left side of the image.',
+      description:
+        'Specifies the horizontal position, indicating where the cropping starts from the left side of the image.',
       required: true,
     }),
     top: Property.Number({
       displayName: 'Top',
-      description: 'Represents the vertical position, indicating the starting point from the top of the image.',
+      description:
+        'Represents the vertical position, indicating the starting point from the top of the image.',
       required: true,
     }),
     width: Property.Number({
@@ -32,21 +34,30 @@ export const cropImage = createAction({
     }),
     resultFileName: Property.ShortText({
       displayName: 'Result File Name',
-      description: 'Specifies the output file name for the cropped image (without extension).',
-      required: true,
+      description:
+        'Specifies the output file name for the cropped image (without extension).',
+      required: false,
     }),
   },
   async run(context) {
     const image = await jimp.read(context.propsValue.image.data);
-    await image.crop(context.propsValue.left, context.propsValue.top, context.propsValue.width, context.propsValue.height);
-    
+    await image.crop(
+      context.propsValue.left,
+      context.propsValue.top,
+      context.propsValue.width,
+      context.propsValue.height
+    );
+
     const imageBuffer = await image.getBufferAsync(image.getMIME());
 
-    const fileName = context.propsValue.resultFileName + '.' + image.getExtension();
+    const fileName =
+      (context.propsValue.resultFileName ?? 'image') +
+      '.' +
+      image.getExtension();
 
     const imageReference = await context.files.write({
       fileName: fileName,
-      data: imageBuffer
+      data: imageBuffer,
     });
 
     return imageReference;
