@@ -122,7 +122,7 @@ export const BuilderHeader = () => {
             }}
             onRename={(newName) => renameFlowClientSide(newName)}
             onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-            onDuplicate={() => {}}
+            onDuplicate={() => { }}
           >
             <ChevronDown className="h-8 w-8" />
           </FlowActionMenu>
@@ -174,7 +174,7 @@ export const BuilderHeader = () => {
           </Tooltip>
 
           <BuilderPublishButton></BuilderPublishButton>
-          <UserAvatar></UserAvatar>
+          {!embedState.isEmbedded && <UserAvatar></UserAvatar>}
         </div>
       </div>
     </div>
