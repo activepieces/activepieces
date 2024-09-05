@@ -69,7 +69,9 @@ export const updateRowAction = createAction({
       });
 
       //Split the updatedRange string to extract the row number
-      const updatedRangeParts = response.data.updatedRange?.split('!')!;
+      const updatedRangeParts = response.data.updatedRange?.split(
+        '!'
+      ) as string[];
       const updatedRowRange = updatedRangeParts[1];
       const updatedRowNumber = parseInt(
         updatedRowRange.split(':')[0].substring(1),
