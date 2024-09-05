@@ -179,13 +179,13 @@ export const flowRunService = {
         requestId,
         progressUpdateType,
         executionType,
-        checkRequestId
+        checkRequestId,
     }: {
         flowRunId: FlowRunId
         requestId?: string
         progressUpdateType: ProgressUpdateType
         payload?: unknown
-        executionType: ExecutionType,
+        executionType: ExecutionType
         checkRequestId: boolean
     }): Promise<FlowRun | null> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
@@ -217,7 +217,7 @@ export const flowRunService = {
                 environment: RunEnvironment.PRODUCTION,
             })
         }
-        return null;
+        return null
     },
     async updateStatus({
         flowRunId,
