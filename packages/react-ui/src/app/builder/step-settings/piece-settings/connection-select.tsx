@@ -81,6 +81,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               propertyName="auth"
               field={field as unknown as ControllerRenderProps}
               disabled={params.disabled}
+              hideDescription={true}
               allowDynamicValues={!params.isTrigger}
             >
               <CreateOrEditConnectionDialog
