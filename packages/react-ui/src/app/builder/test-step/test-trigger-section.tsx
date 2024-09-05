@@ -71,7 +71,8 @@ const TestTriggerSection = React.memo(
     const isSimulation =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.testStrategy ===
       TriggerTestStrategy.SIMULATION;
-
+    const mockData =
+      pieceModel?.triggers?.[formValues.settings.triggerName].sampleData;
     useEffect(() => {
       setIsValid(form.formState.isValid);
     }, [form.formState.isValid]);
@@ -86,7 +87,16 @@ const TestTriggerSection = React.memo(
     const [currentSelectedId, setCurrentSelectedId] = useState<
       string | undefined
     >(undefined);
-
+    const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
+      useMutation({
+        mutationFn: () => {
+          return triggerEventsApi.saveTriggerMockdata(flowId, mockData);
+        },
+        onSuccess: async (result) => {
+          updateCurrentSelectedData(result);
+          refetch();
+        },
+      });
     const {
       mutate: simulateTrigger,
       isPending: isSimulating,
@@ -100,7 +110,7 @@ const TestTriggerSection = React.memo(
         await triggerEventsApi.startWebhookSimulation(flowId);
         // TODO REFACTOR: replace this with a websocket
         let attempt = 0;
-        while (attempt < 30) {
+        while (attempt < 1000) {
           const newData = await triggerEventsApi.list({
             flowId,
             cursor: undefined,
@@ -113,17 +123,18 @@ const TestTriggerSection = React.memo(
           await new Promise((resolve) => setTimeout(resolve, 2000));
           attempt++;
         }
-        await triggerEventsApi.deleteWebhookSimulation(flowId);
         return [];
       },
-      onSuccess: (results) => {
+      onSuccess: async (results) => {
         if (results.length > 0) {
           updateCurrentSelectedData(results[0]);
           refetch();
+          await triggerEventsApi.deleteWebhookSimulation(flowId);
         }
       },
-      onError: (error) => {
+      onError: async (error) => {
         console.error(error);
+        await triggerEventsApi.deleteWebhookSimulation(flowId);
         setErrorMessage(
           testStepUtils.formatErrorMessage(
             t('There is no sample data available found for this trigger.'),
@@ -216,7 +227,7 @@ const TestTriggerSection = React.memo(
 
     return (
       <div>
-        {sampleDataSelected && !isSimulating && (
+        {sampleDataSelected && !isSimulating && !isSavingMockdata && (
           <TestSampleDataViewer
             onRetest={isSimulation ? simulateTrigger : pollTrigger}
             isValid={isValid}
@@ -280,12 +291,19 @@ const TestTriggerSection = React.memo(
                 {t('Cancel')}{' '}
               </Button>
             </div>
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>{t('Action Required!')}</AlertTitle>
-              <AlertDescription>
-                {t('Perform the action you want to test.')}
-              </AlertDescription>
+            <Alert className="bg-warning/5 border-warning/5 ">
+              <AlertCircle className="h-4 w-4 text-warning" />
+              <div className="flex flex-col gap-1">
+                <AlertTitle>{t('Action Required')}:</AlertTitle>
+                <AlertDescription>
+                  {t('testPieceWebhookTriggerNote', {
+                    pieceName: pieceModel.displayName,
+                    triggerName:
+                      pieceModel.triggers[formValues.settings.triggerName]
+                        .displayName,
+                  })}
+                </AlertDescription>
+              </div>
             </Alert>
           </div>
         )}
@@ -293,7 +311,7 @@ const TestTriggerSection = React.memo(
           !sampleDataSelected &&
           isSimulation &&
           !isSimulating && (
-            <div className="flex justify-center">
+            <div className="flex justify-center flex-col gap-2 items-center">
               <TestButtonTooltip disabled={!isValid}>
                 <Button
                   variant="outline"
@@ -307,6 +325,17 @@ const TestTriggerSection = React.memo(
                   {t('Test Trigger')}
                 </Button>
               </TestButtonTooltip>
+              {t('Or')}
+              {!isNil(mockData) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => saveMockAsSampleData()}
+                  loading={isSavingMockdata}
+                >
+                  {t('Use Mock Data')}
+                </Button>
+              )}
             </div>
           )}
         {!isTestedBefore && !sampleDataSelected && !isSimulation && (
