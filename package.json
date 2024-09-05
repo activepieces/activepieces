@@ -17,7 +17,10 @@
     "create-action": "npx ts-node packages/cli/src/index.ts actions create",
     "create-trigger": "npx ts-node packages/cli/src/index.ts triggers create",
     "sync-pieces": "npx ts-node packages/cli/src/index.ts pieces sync",
-    "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts"
+    "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts",
+    "build": "npx nx run-many --target=build --all",
+    "build:report": "npx nx run-many --target=build --all --verbose",
+    "build:complete": "npm install && npm run build && npm run build:report"
   },
   "private": true,
   "dependencies": {
