@@ -8,7 +8,6 @@ import {
     AppConnectionStatus,
     AppConnectionType,
     AppConnectionValue,
-    connectionNameRegex,
     Cursor,
     EngineResponseStatus,
     ErrorCode,
@@ -17,8 +16,6 @@ import {
     ProjectId,
     SeekPage,
     UpsertAppConnectionRequestBody,
-    ValidateConnectionNameRequestBody,
-    ValidateConnectionNameResponse,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { engineRunner } from 'server-worker'
@@ -43,22 +40,6 @@ import { oauth2Util } from './oauth2/oauth2-util'
 const repo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = {
-    async validateConnectionName({ connectionName, projectId }: ValidateConnectionNameRequestBody & { projectId: ProjectId }): Promise<ValidateConnectionNameResponse> {
-        //test regex on connection name
-        const regex = new RegExp(`^${connectionNameRegex}$`)
-        if (!regex.test(connectionName)) {
-            return {
-                isValid: false,
-                error: 'Connection name is invalid',
-            }
-        }
-        const connection = await repo().findOneBy({ name: connectionName, projectId })
-        const isValid = isNil(connection)
-        return {
-            isValid,
-            error: isValid ? undefined : 'Connection name already exists',
-        }
-    },
     async upsert(params: UpsertParams): Promise<AppConnection> {
         const { projectId, request } = params
 

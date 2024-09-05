@@ -1645,6 +1645,33 @@
           "data"
         ]
       },
+      "folder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "projectId",
+          "displayName"
+        ]
+      },
       "user-invitation": {
         "type": "object",
         "properties": {
@@ -2786,7 +2813,9 @@
                   },
                   "extra": {
                     "type": "object",
-                    "additionalProperties": {}
+                    "additionalProperties": {
+                      "type": "string"
+                    }
                   },
                   "type": {
                     "type": "string",
@@ -3591,6 +3620,7 @@
                             },
                             "required": [
                               "displayName",
+                              "properties",
                               "type",
                               "required"
                             ]
@@ -4128,7 +4158,9 @@
                               },
                               "extra": {
                                 "type": "object",
-                                "additionalProperties": {}
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
                               },
                               "type": {
                                 "type": "string",
@@ -4868,6 +4900,7 @@
                             },
                             "required": [
                               "displayName",
+                              "properties",
                               "type",
                               "required"
                             ]
@@ -5405,7 +5438,9 @@
                               },
                               "extra": {
                                 "type": "object",
-                                "additionalProperties": {}
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
                               },
                               "type": {
                                 "type": "string",
@@ -5704,6 +5739,190 @@
     }
   },
   "paths": {
+    "/v1/folders/": {
+      "post": {
+        "tags": [
+          "folders"
+        ],
+        "description": "Create a new folder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "displayName",
+                  "projectId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "description": "List folders",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/folders/{id}": {
+      "post": {
+        "tags": [
+          "folders"
+        ],
+        "description": "Update an existing folder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "displayName",
+                  "projectId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "description": "Get a folder by id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "folders"
+        ],
+        "description": "Delete a folder",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/v1/flows/": {
       "post": {
         "tags": [
@@ -8883,6 +9102,7 @@
                             ]
                           },
                           "secret_text": {
+                            "minLength": 1,
                             "type": "string"
                           }
                         },
@@ -8924,9 +9144,37 @@
                         "type": "object",
                         "properties": {
                           "client_id": {
+                            "minLength": 1,
                             "type": "string"
                           },
+                          "code": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code_challenge": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "type": "string"
+                          },
+                          "authorization_method": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "HEADER"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "BODY"
+                                ]
+                              }
+                            ]
+                          },
                           "client_secret": {
+                            "minLength": 1,
                             "type": "string"
                           },
                           "grant_type": {
@@ -8949,32 +9197,8 @@
                             "type": "object",
                             "additionalProperties": {}
                           },
-                          "scope": {
-                            "type": "string"
-                          },
-                          "code": {
-                            "type": "string"
-                          },
-                          "authorization_method": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "HEADER"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "BODY"
-                                ]
-                              }
-                            ]
-                          },
-                          "code_challenge": {
-                            "type": "string"
-                          },
                           "redirect_url": {
+                            "minLength": 1,
                             "type": "string"
                           },
                           "type": {
@@ -8986,9 +9210,9 @@
                         },
                         "required": [
                           "client_id",
-                          "client_secret",
-                          "scope",
                           "code",
+                          "scope",
+                          "client_secret",
                           "redirect_url",
                           "type"
                         ]
@@ -9026,6 +9250,17 @@
                         "type": "object",
                         "properties": {
                           "client_id": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code_challenge": {
+                            "type": "string"
+                          },
+                          "scope": {
                             "type": "string"
                           },
                           "authorization_method": {
@@ -9044,20 +9279,11 @@
                               }
                             ]
                           },
-                          "code": {
-                            "type": "string"
-                          },
-                          "code_challenge": {
-                            "type": "string"
-                          },
                           "props": {
                             "type": "object",
                             "additionalProperties": {
                               "type": "string"
                             }
-                          },
-                          "scope": {
-                            "type": "string"
                           },
                           "type": {
                             "type": "string",
@@ -9106,6 +9332,17 @@
                         "type": "object",
                         "properties": {
                           "client_id": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code_challenge": {
+                            "type": "string"
+                          },
+                          "scope": {
                             "type": "string"
                           },
                           "authorization_method": {
@@ -9124,20 +9361,11 @@
                               }
                             ]
                           },
-                          "code": {
-                            "type": "string"
-                          },
-                          "code_challenge": {
-                            "type": "string"
-                          },
                           "props": {
                             "type": "object",
                             "additionalProperties": {
                               "type": "string"
                             }
-                          },
-                          "scope": {
-                            "type": "string"
                           },
                           "type": {
                             "type": "string",
@@ -9146,6 +9374,7 @@
                             ]
                           },
                           "redirect_url": {
+                            "minLength": 1,
                             "type": "string"
                           }
                         },
@@ -9190,9 +9419,11 @@
                         "type": "object",
                         "properties": {
                           "username": {
+                            "minLength": 1,
                             "type": "string"
                           },
                           "password": {
+                            "minLength": 1,
                             "type": "string"
                           },
                           "type": {
@@ -9472,85 +9703,6 @@
                   },
                   "required": [
                     "data"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/app-connections/validate-connection-name": {
-      "post": {
-        "tags": [
-          "app-connections"
-        ],
-        "description": "Validate app connection name",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "description": "Request for validating connection name",
-                "type": "object",
-                "properties": {
-                  "connectionName": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "connectionName"
-                ]
-              }
-            }
-          },
-          "required": true,
-          "description": "Request for validating connection name"
-        },
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Response for validating connection name",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "description": "Response for validating connection name",
-                  "type": "object",
-                  "properties": {
-                    "isValid": {
-                      "type": "boolean"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "isValid"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Response for validating connection name",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "description": "Response for validating connection name",
-                  "type": "object",
-                  "properties": {
-                    "isValid": {
-                      "type": "boolean"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "isValid"
                   ]
                 }
               }
@@ -11064,6 +11216,7 @@
                         ]
                       },
                       "pieceName": {
+                        "minLength": 1,
                         "type": "string"
                       },
                       "pieceVersion": {
@@ -11107,6 +11260,7 @@
                         ]
                       },
                       "pieceName": {
+                        "minLength": 1,
                         "type": "string"
                       },
                       "pieceVersion": {

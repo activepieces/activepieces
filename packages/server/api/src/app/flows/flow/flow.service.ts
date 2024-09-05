@@ -43,6 +43,7 @@ export const flowService = {
         const folderId = isNil(request.folderName) ? null : (await flowFolderService.upsert({
             projectId,
             request: {
+                projectId,
                 displayName: request.folderName,
             },
         })).id
