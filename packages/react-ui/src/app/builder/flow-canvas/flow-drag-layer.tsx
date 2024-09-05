@@ -114,16 +114,9 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
   };
 
   const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: {
-        delay: 50,
-        tolerance: 1,
-      },
-    }),
     useSensor(PointerSensor, {
       activationConstraint: {
-        delay: 150,
-        tolerance: 5,
+        distance:10
       },
     }),
     useSensor(KeyboardSensor),
@@ -131,6 +124,7 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
   );
 
   return (
+    <>
     <DndContext
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -139,13 +133,11 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
       collisionDetection={fixCursorSnapOffset}
     >
       {children}
-      <DragOverlay
-        dropAnimation={{ duration: 0 }}
-        modifiers={[snapCenterToCursor]}
-      >
-        {draggedStep && <StepDragOverlay step={draggedStep} />}
-      </DragOverlay>
+      <DragOverlay dropAnimation={{duration:0}}></DragOverlay>
     </DndContext>
+    {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
+    </>
+    
   );
 };
 
