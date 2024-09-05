@@ -1,4 +1,0 @@
-export enum SdkEvent {
-  CONNECTION = 'CONNECTION',
-  DISCONNECTION = 'DISCONNECTION',
-}
