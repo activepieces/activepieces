@@ -71,16 +71,16 @@ const FlowRunsPage = () => {
   const { checkAccess } = useAuthorization();
   const userHasPermissionToRetryRun = checkAccess(Permission.RETRY_RUN);
   const { mutate } = useMutation<
-    void,
+    FlowRun,
     Error,
-    { runId: string; strategy: FlowRetryStrategy }
+    { row: RowDataWithActions<FlowRun>; strategy: FlowRetryStrategy }
   >({
-    mutationFn: (data) => flowRunsApi.retry(data.runId, data),
-    onSuccess: () => {
-      // TODO This should auto refresh the table when there is run with success tatus
-      setRefresh(refresh + 1);
+    mutationFn: (data) => flowRunsApi.retry(data.row.id, { strategy: data.strategy }),
+    onSuccess: (updatedRun, { row }) => {
+      row.update(updatedRun);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error(error);
       toast(INTERNAL_ERROR_TOAST);
     },
   });
@@ -169,7 +169,7 @@ const FlowRunsPage = () => {
                       disabled={!userHasPermissionToRetryRun}
                       onClick={() =>
                         mutate({
-                          runId: row.original.id,
+                          row: row.original,
                           strategy: FlowRetryStrategy.ON_LATEST_VERSION,
                         })
                       }
@@ -189,7 +189,7 @@ const FlowRunsPage = () => {
                         disabled={!userHasPermissionToRetryRun}
                         onClick={() =>
                           mutate({
-                            runId: row.original.id,
+                            row: row.original,
                             strategy: FlowRetryStrategy.FROM_FAILED_STEP,
                           })
                         }
