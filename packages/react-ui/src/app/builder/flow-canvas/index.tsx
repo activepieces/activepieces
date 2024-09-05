@@ -67,7 +67,7 @@ const FlowCanvas = React.memo(() => {
   );
 
   return (
-    <div className="size-full relative ">
+    <div className="size-full relative overflow-hidden">
       <FlowDragLayer>
         <ReactFlow
           nodeTypes={nodeTypes}
