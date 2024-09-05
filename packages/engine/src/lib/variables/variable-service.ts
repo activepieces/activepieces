@@ -44,41 +44,6 @@ export class VariableService {
         valuesMap: Record<string, unknown>,
         logs: boolean,
     ): Promise<unknown> {
-        function flattenIterations(iterations: any[], output: Record<string, unknown>): Record<string, unknown> {
-            let flattenedValuesMap: Record<string, unknown> = output
-            for (const iter of iterations) {
-                for (const [key, value] of Object.entries(iter)) {
-                    flattenedValuesMap = {
-                        ...flattenedValuesMap,
-                        [key]: value,
-                    }
-                    if (value instanceof GenericStepOutput && value.type === ActionType.LOOP_ON_ITEMS) {
-                        flattenedValuesMap = {
-                            ...flattenedValuesMap,
-                            ...flattenIterations(value.output.iterations, flattenedValuesMap)
-                        }
-                    }
-                }
-            }
-            return flattenedValuesMap
-        }
-
-        function flattenLoopOutput(output: Record<string, unknown>): Record<string, unknown> {
-            let flattenedValuesMap: Record<string, unknown> = {}
-            for (const [key, value] of Object.entries(output)) {
-                if (typeof value === 'object' && !isNil(value) && !Array.isArray(value) && "iterations" in value && Array.isArray(value.iterations)) {
-                    const iterations = value.iterations
-                    flattenedValuesMap = { ...flattenedValuesMap, ...flattenIterations(iterations, flattenedValuesMap) }
-                } else {
-                    flattenedValuesMap[key] = value
-                }
-            }
-
-            return flattenedValuesMap
-        }
-
-        const flattenedValuesMap = flattenLoopOutput(valuesMap)
-
         // If input contains only a variable token, return the value of the variable while maintaining the variable type.
         const matchedTokens = input.match(VariableService.VARIABLE_PATTERN)
         if (
@@ -90,11 +55,11 @@ export class VariableService {
             if (variableName.startsWith(VariableService.CONNECTIONS)) {
                 return this.handleTypeAndResolving(variableName, logs)
             }
-            return this.evalInScope(variableName, flattenedValuesMap)
+            return this.evalInScope(variableName, valuesMap)
         }
 
         return replaceAsync(input, VariableService.VARIABLE_PATTERN, async (_fullMatch, variableName) => {
-            const result = await this.evalInScope(variableName, flattenedValuesMap)
+            const result = await this.evalInScope(variableName, valuesMap)
 
             if (!isString(result)) {
                 return JSON.stringify(result)
@@ -225,12 +190,12 @@ export class VariableService {
 
         const resolvedInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
-            executionState.currentState,
+            executionState.flattenLoopOutput(executionState.currentState),
             false,
         )
         const censoredInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
-            executionState.currentState,
+            executionState.flattenLoopOutput(executionState.currentState),
             true,
         )
         return {

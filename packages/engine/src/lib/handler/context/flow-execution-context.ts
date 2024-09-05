@@ -245,6 +245,39 @@ export class FlowExecutorContext {
             }
         }
     }
+
+    private flattenIterations(iterations: any[], output: Record<string, unknown>): Record<string, unknown> {
+        let flattenedValuesMap: Record<string, unknown> = output
+        for (const iter of iterations) {
+            for (const [key, value] of Object.entries(iter)) {
+                flattenedValuesMap = {
+                    ...flattenedValuesMap,
+                    [key]: value,
+                }
+                if (value instanceof GenericStepOutput && value.type === ActionType.LOOP_ON_ITEMS) {
+                    flattenedValuesMap = {
+                        ...flattenedValuesMap,
+                        ...this.flattenIterations(value.output.iterations, flattenedValuesMap)
+                    }
+                }
+            }
+        }
+        return flattenedValuesMap
+    }
+
+    public flattenLoopOutput(output: Record<string, unknown>): Record<string, unknown> {
+        let flattenedValuesMap: Record<string, unknown> = {}
+        for (const [key, value] of Object.entries(output)) {
+            if (typeof value === 'object' && !isNil(value) && !Array.isArray(value) && "iterations" in value && Array.isArray(value.iterations)) {
+                const iterations = value.iterations
+                flattenedValuesMap = { ...flattenedValuesMap, ...this.flattenIterations(iterations, flattenedValuesMap) }
+            } else {
+                flattenedValuesMap[key] = value
+            }
+        }
+
+        return flattenedValuesMap
+    }
 }
 
 function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput> }): Record<string, StepOutput> {
