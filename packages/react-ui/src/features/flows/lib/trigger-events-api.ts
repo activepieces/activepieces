@@ -20,12 +20,13 @@ export const triggerEventsApi = {
   },
   deleteWebhookSimulation(flowId: string) {
     return api.delete<void>('/v1/trigger-events', {
-     flowId
+      flowId,
     });
   },
-  saveTriggerMockdata(flowId:string, mockData: unknown) {
-   return api.post<TriggerEvent>(`/v1/trigger-events?flowId=${flowId}`, mockData);
-  }
-
-
+  saveTriggerMockdata(flowId: string, mockData: unknown) {
+    return api.post<TriggerEvent>(
+      `/v1/trigger-events?flowId=${flowId}`,
+      mockData,
+    );
+  },
 };

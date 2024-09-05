@@ -87,7 +87,16 @@ const TestTriggerSection = React.memo(
     const [currentSelectedId, setCurrentSelectedId] = useState<
       string | undefined
     >(undefined);
-
+    const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
+      useMutation({
+        mutationFn: () => {
+          return triggerEventsApi.saveTriggerMockdata(flowId, mockData);
+        },
+        onSuccess: async (result) => {
+          updateCurrentSelectedData(result);
+          refetch();
+        },
+      });
     const {
       mutate: simulateTrigger,
       isPending: isSimulating,
@@ -133,15 +142,7 @@ const TestTriggerSection = React.memo(
         );
       },
     });
-    const { mutate: useMockData, isPending: isSavingMockdata } = useMutation({
-      mutationFn: () => {
-        return triggerEventsApi.saveTriggerMockdata(flowId, mockData);
-      },
-      onSuccess: async (result) => {
-        updateCurrentSelectedData(result);
-        refetch();
-      },
-    });
+
     const { mutate: pollTrigger, isPending: isPollingTesting } = useMutation<
       SeekPage<TriggerEvent>,
       Error,
@@ -329,7 +330,7 @@ const TestTriggerSection = React.memo(
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => useMockData()}
+                  onClick={() => saveMockAsSampleData()}
                   loading={isSavingMockdata}
                 >
                   {t('Use Mock Data')}
