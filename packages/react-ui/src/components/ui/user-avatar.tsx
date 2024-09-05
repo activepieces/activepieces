@@ -15,11 +15,13 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
+import { useEmbedding } from '@/components/embed-provider';
 
 export function UserAvatar() {
   const { reset } = useTelemetry();
+  const { embedState } = useEmbedding();
   const user = authenticationSession.getCurrentUser();
-  if (!user) {
+  if (!user || embedState.isEmbedded) {
     return null;
   }
   return (
