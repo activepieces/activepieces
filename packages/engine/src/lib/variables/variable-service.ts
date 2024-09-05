@@ -9,11 +9,9 @@ import {
     StaticPropsValue,
 } from '@activepieces/pieces-framework'
 import {
-    ActionType,
     AUTHENTICATION_PROPERTY_NAME,
-    GenericStepOutput,
     isNil,
-    isString
+    isString,
 } from '@activepieces/shared'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
@@ -176,9 +174,9 @@ export class VariableService {
         unresolvedInput: unknown
         executionState: FlowExecutorContext
     }): Promise<{
-        resolvedInput: T
-        censoredInput: unknown
-    }> {
+            resolvedInput: T
+            censoredInput: unknown
+        }> {
         const { unresolvedInput, executionState } = params
 
         if (isNil(unresolvedInput)) {
@@ -188,14 +186,15 @@ export class VariableService {
             }
         }
 
+        const flattenedSteps = executionState.currentState()
         const resolvedInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
-            executionState.flattenLoopOutput(executionState.currentState),
+            flattenedSteps,
             false,
         )
         const censoredInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
-            executionState.flattenLoopOutput(executionState.currentState),
+            flattenedSteps,
             true,
         )
         return {
