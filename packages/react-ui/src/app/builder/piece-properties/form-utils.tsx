@@ -30,7 +30,11 @@ import {
 function addAuthToPieceProps(
   props: PiecePropertyMap,
   auth: PieceAuthProperty | undefined,
+  requireAuth: boolean,
 ): PiecePropertyMap {
+  if (!requireAuth) {
+    return props;
+  }
   return {
     ...props,
     ...spreadIfDefined('auth', auth),
@@ -53,6 +57,7 @@ function buildInputSchemaForStep(
           addAuthToPieceProps(
             piece.actions[actionNameOrTriggerName].props,
             piece.auth,
+            piece.actions[actionNameOrTriggerName].requireAuth,
           ),
         );
       }
@@ -142,11 +147,18 @@ export const formUtils = {
       }
       case ActionType.PIECE: {
         const actionName = selectedStep?.settings?.actionName;
+        const requireAuth = isNil(actionName)
+          ? false
+          : piece?.actions?.[actionName]?.requireAuth ?? false;
         const actionPropsWithoutAuth =
           actionName !== undefined
             ? piece?.actions?.[actionName]?.props ?? {}
             : {};
-        const props = addAuthToPieceProps(actionPropsWithoutAuth, piece?.auth);
+        const props = addAuthToPieceProps(
+          actionPropsWithoutAuth,
+          piece?.auth,
+          requireAuth,
+        );
         const input = (selectedStep?.settings?.input ?? {}) as Record<
           string,
           unknown
@@ -170,7 +182,11 @@ export const formUtils = {
           triggerName !== undefined
             ? piece?.triggers?.[triggerName]?.props ?? {}
             : {};
-        const props = addAuthToPieceProps(triggerPropsWithoutAuth, piece?.auth);
+        const props = addAuthToPieceProps(
+          triggerPropsWithoutAuth,
+          piece?.auth,
+          true,
+        );
         const input = (selectedStep?.settings?.input ?? {}) as Record<
           string,
           unknown
