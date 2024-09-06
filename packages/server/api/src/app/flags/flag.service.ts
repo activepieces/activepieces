@@ -55,6 +55,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+                value: system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SHOW_PLATFORM_DEMO,
                 value: [ApEdition.CLOUD].includes(system.getEdition()),
                 created,
