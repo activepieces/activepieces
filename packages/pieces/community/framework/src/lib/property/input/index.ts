@@ -1,19 +1,18 @@
 import { Type } from "@sinclair/typebox";
-import { LongTextProperty, ShortTextProperty } from "./text-property";
-import { NumberProperty } from "./number-property";
-import { ArrayProperty } from "./array-property";
-import { ObjectProperty } from "./object-property";
-import { JsonProperty } from "./json-property";
-import { DateTimeProperty } from "./date-time-property";
-import { FileProperty } from "./file-property";
-import { PropertyType } from "./property-type";
-import { MarkDownProperty } from "./markdown-property";
-import { CheckboxProperty } from "./checkbox-property";
-import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
-import { Processors } from "../../processors/processors";
 import { Validators } from "../../validators/validators";
-import { DynamicProperties } from "./dynamic-prop";
+import { ArrayProperty } from "./array-property";
+import { CheckboxProperty } from "./checkbox-property";
+import { DateTimeProperty } from "./date-time-property";
 import { DropdownProperty, MultiSelectDropdownProperty } from "./dropdown/dropdown-prop";
+import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
+import { DynamicProperties } from "./dynamic-prop";
+import { FileProperty } from "./file-property";
+import { JsonProperty } from "./json-property";
+import { MarkDownProperty } from "./markdown-property";
+import { NumberProperty } from "./number-property";
+import { ObjectProperty } from "./object-property";
+import { PropertyType } from "./property-type";
+import { LongTextProperty, ShortTextProperty } from "./text-property";
 
 export const InputProperty = Type.Union([
   ShortTextProperty,
@@ -64,7 +63,6 @@ export const Property = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.SHORT_TEXT,
-      defaultProcessors: [Processors.string],
       defaultValidators: [Validators.string],
     } as unknown as R extends true
       ? ShortTextProperty<true>
@@ -106,7 +104,6 @@ export const Property = {
   ): R extends true ? NumberProperty<true> : NumberProperty<false> {
     return {
       ...request,
-      defaultProcessors: [Processors.number],
       defaultValidators: [Validators.number],
       valueSchema: undefined,
       type: PropertyType.NUMBER,
@@ -122,7 +119,6 @@ export const Property = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.JSON,
-      defaultProcessors: [Processors.json],
     } as unknown as R extends true ? JsonProperty<true> : JsonProperty<false>;
   },
   Array<R extends boolean>(
@@ -211,7 +207,6 @@ export const Property = {
   ): R extends true ? DateTimeProperty<true> : DateTimeProperty<false> {
     return {
       ...request,
-      defaultProcessors: [Processors.datetime],
       defaultValidators: [Validators.datetimeIso],
       valueSchema: undefined,
       type: PropertyType.DATE_TIME,
@@ -224,7 +219,6 @@ export const Property = {
   ): R extends true ? FileProperty<true> : FileProperty<false> {
     return {
       ...request,
-      defaultProcessors: [Processors.file],
       defaultValidators: [Validators.file],
       valueSchema: undefined,
       type: PropertyType.FILE,

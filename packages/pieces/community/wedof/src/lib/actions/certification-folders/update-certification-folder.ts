@@ -37,6 +37,24 @@ export const updateCertificationFolder = createAction({
             description: "Lieu de l'examen de certification (ou lien https)",
             required: false,
         }),
+        tiersTemps: Property.StaticDropdown({
+            displayName: "Tiers temps",
+            description: "Indique si le candidat a besoin d'un tiers temps",
+            required: true,
+            options: {
+                disabled: false,
+                options: [
+                  {
+                    label: "Non",
+                    value: 'false',
+                  },
+                  {
+                    label: 'Oui',
+                    value: 'true',
+                  },
+                ],
+              },
+        }),
         comment: Property.LongText({
             displayName: 'Commentaire',
             description: "Commentaire (non-visible par l'apprenant)",
@@ -70,6 +88,7 @@ export const updateCertificationFolder = createAction({
             verbatim: context.propsValue.verbatim,
             amountHt: context.propsValue.amountHt,
             tags: context.propsValue.tags as string[],
+            tiersTemps: context.propsValue.tiersTemps,
         };
         return (
             await httpClient.sendRequest({

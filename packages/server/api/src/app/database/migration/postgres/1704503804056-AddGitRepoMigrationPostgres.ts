@@ -40,7 +40,7 @@ implements MigrationInterface {
             ALTER TABLE "git_repo" DROP CONSTRAINT "fk_git_repo_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_git_repo_project_id"
+            DROP INDEX "idx_git_repo_project_id"
         `)
         await queryRunner.query(`
             DROP TABLE "git_repo"

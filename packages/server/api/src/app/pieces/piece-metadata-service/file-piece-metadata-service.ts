@@ -1,14 +1,11 @@
-import { join, resolve } from 'node:path'
-import { cwd } from 'node:process'
-import importFresh from '@activepieces/import-fresh-webpack'
-import { Piece, PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { exceptionHandler, filePiecesUtils, logger, system } from '@activepieces/server-shared'
+
+import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { filePiecesUtils } from '@activepieces/server-shared'
+
 import {
     ActivepiecesError,
-    ApEdition,
     ErrorCode,
     EXACT_VERSION_REGEX,
-    extractPieceFromModule,
     isNil,
     ListVersionsResponse,
     PackageType,
@@ -24,60 +21,10 @@ import { PieceMetadataService } from './piece-metadata-service'
 import { toPieceMetadataModelSummary } from '.'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
-    const pieces = await findAllPieces()
+    const pieces = await filePiecesUtils.findAllPieces()
     return pieces.sort((a, b) =>
         a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()),
     )
-}
-async function findAllPieces(): Promise<PieceMetadata[]> {
-    const pieces = await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
-    const enterprisePieces = system.getEdition() === ApEdition.ENTERPRISE ? await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'ee', 'pieces')) : []
-    return [...pieces, ...enterprisePieces]
-}
-
-async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
-    try {
-        const paths = await filePiecesUtils.findAllPiecesFolder(folderPath)
-        const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
-        return pieces.filter((p): p is PieceMetadata => p !== null)
-    }
-    catch (e) {
-        const err = e as Error
-        logger.warn({ name: 'FilePieceMetadataService#loadPiecesFromFolder', message: err.message, stack: err.stack })
-        return []
-    }
-}
-
-async function loadPieceFromFolder(
-    folderPath: string,
-): Promise<PieceMetadata | null> {
-    try {
-        const packageJson = importFresh<Record<string, string>>(
-            join(folderPath, 'package.json'),
-        )
-        const module = importFresh<Record<string, unknown>>(
-            join(folderPath, 'src', 'index'),
-        )
-
-        const { name: pieceName, version: pieceVersion } = packageJson
-        const piece = extractPieceFromModule<Piece>({
-            module,
-            pieceName,
-            pieceVersion,
-        })
-        return {
-            ...piece.metadata(),
-            name: pieceName,
-            version: pieceVersion,
-            authors: piece.authors,
-            directoryPath: folderPath,
-        }
-    }
-    catch (ex) {
-        logger.warn({ name: 'FilePieceMetadataService#loadPieceFromFolder', message: ex }, 'Failed to load piece from folder')
-        exceptionHandler.handle(ex)
-    }
-    return null
 }
 export const FilePieceMetadataService = (): PieceMetadataService => {
     return {

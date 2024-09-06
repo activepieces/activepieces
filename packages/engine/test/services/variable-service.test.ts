@@ -1,7 +1,8 @@
 import { ApFile, PieceAuth, Property, Validators } from '@activepieces/pieces-framework'
 import { ActionType, GenericStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
-import { VariableService } from '../../src/lib/services/variable-service'
+import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
+import { VariableService } from '../../src/lib/variables/variable-service'
 
 const variableService = new VariableService({
     projectId: 'PROJECT_ID',
@@ -43,6 +44,71 @@ const executionState = FlowExecutorContext.empty()
 
 
 describe('Variable Service', () => {
+    test('Test resolve inside nested loops', async () => {
+
+        const modifiedExecutionState = executionState.upsertStep('step_3', GenericStepOutput.create({
+            type: ActionType.LOOP_ON_ITEMS,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                iterations: [
+                    {
+                        'step_8': GenericStepOutput.create({
+                            type: ActionType.PIECE,
+                            status: StepOutputStatus.SUCCEEDED,
+                            input: {},
+                            output: {
+                                delayForInMs: 20000,
+                                success: true,
+                            },
+                        }),
+                        'step_4': GenericStepOutput.create({
+                            type: ActionType.LOOP_ON_ITEMS,
+                            status: StepOutputStatus.SUCCEEDED,
+                            input: {},
+                            output: {
+                                iterations: [
+                                    {
+                                        'step_7': GenericStepOutput.create({
+                                            'type': ActionType.PIECE,
+                                            'status': StepOutputStatus.SUCCEEDED,
+                                            'input': {
+                                                'unit': 'seconds',
+                                                'delayFor': '20',
+                                            },
+                                            'output': {
+                                                'delayForInMs': 20000,
+                                                'success': true,
+                                            },
+                                        }),
+                                    },
+                                ],
+                                item: 1,
+                                index: 0,
+                            },
+                        }),
+                    },
+                ],
+                item: 1,
+                index: 0,
+            },
+        })).setCurrentPath(StepExecutionPath.empty()
+            .loopIteration({
+                loopName: 'step_3',
+                iteration: 0,
+            })
+            .loopIteration({
+                loopName: 'step_4',
+                iteration: 0,
+            }),
+        )
+
+        const { resolvedInput: secondLevelResolvedInput } = await variableService.resolve({ unresolvedInput: '{{step_7.delayForInMs}}', executionState: modifiedExecutionState })
+        expect(secondLevelResolvedInput).toEqual(20000)
+        const { resolvedInput: firstLevelResolvedInput } = await variableService.resolve({ unresolvedInput: '{{step_8.delayForInMs}}', executionState: modifiedExecutionState })
+        expect(firstLevelResolvedInput).toEqual(20000)
+
+    })
     test('Test resolve text with no variables', async () => {
         const { resolvedInput } = await variableService.resolve({ unresolvedInput: 'Hello world!', executionState })
         expect(resolvedInput).toEqual(
@@ -246,6 +312,23 @@ describe('Variable Service', () => {
         })
     })
 
+    it('should return images for image url', async () => {
+        const input = {
+            file: 'https://cdn.activepieces.com/brand/logo.svg?token=123',
+        }
+        const props = {
+            file: Property.File({
+                displayName: 'File',
+                required: true,
+            }),
+        }
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        expect(processedInput.file).toBeDefined()
+        expect(processedInput.file.extension).toBe('svg')
+        expect(processedInput.file.filename).toBe('logo.svg')
+        expect(errors).toEqual({})
+    })
+
     // Test with invalid url
     it('should return error for invalid data', async () => {
         const input = {
@@ -268,13 +351,14 @@ describe('Variable Service', () => {
             }),
         }
         const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
-        expect(processedInput).toEqual({
-            file: null,
-            nullFile: null,
-            nullOptionalFile: null,
-        })
+
+        expect(processedInput.file).toBeDefined()
+        expect(processedInput.file.extension).toBe('html')
+        expect(processedInput.file.filename).toBe('unknown.html')
+        expect(processedInput.nullFile).toBeNull()
+        expect(processedInput.nullOptionalFile).toBeNull()
+
         expect(errors).toEqual({
-            'file': ['Expected file url or base64 with mimeType, but found value: https://google.com'],
             'nullFile': [
                 'Expected value, but found value: null',
             ],

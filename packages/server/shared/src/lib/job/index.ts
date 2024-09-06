@@ -100,7 +100,6 @@ export type ResumeRunRequest = Static<typeof ResumeRunRequest>
 
 export const flowTimeoutSandbox =
   system.getNumber(SharedSystemProp.FLOW_TIMEOUT_SECONDS) ??
-  system.getNumber(SharedSystemProp.SANDBOX_RUN_TIME_SECONDS) ??
   600
 export const triggerTimeoutSandbox =
   system.getNumber(SharedSystemProp.TRIGGER_TIMEOUT_SECONDS) ?? 60

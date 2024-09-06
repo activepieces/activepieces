@@ -21,10 +21,10 @@ export class addEventRouting1678382946390 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         logger.info('Rolling Back migration addEventRouting1678382946390')
         await queryRunner.query(
-            'DROP INDEX "public"."idx_app_event_project_id_appName_identifier_value_event"',
+            'DROP INDEX "idx_app_event_project_id_appName_identifier_value_event"',
         )
         await queryRunner.query(
-            'DROP INDEX "public"."idx_app_event_routing_flow_id"',
+            'DROP INDEX "idx_app_event_routing_flow_id"',
         )
         await queryRunner.query('DROP TABLE "app_event_routing"')
         logger.info('Finished Rolling Back migration addEventRouting1678382946390')

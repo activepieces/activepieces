@@ -69,7 +69,7 @@ export class PiecesProjectLimits1712279318440 implements MigrationInterface {
             ALTER TABLE "project_plan" DROP COLUMN "piecesFilterType"
         `)
         await queryRunner.query(`
-            DROP TYPE "public"."project_plan_piecesfiltertype_enum"
+            DROP TYPE "project_plan_piecesfiltertype_enum"
         `)
         await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "pieces"

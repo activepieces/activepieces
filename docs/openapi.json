@@ -1645,6 +1645,33 @@
           "data"
         ]
       },
+      "folder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "projectId",
+          "displayName"
+        ]
+      },
       "user-invitation": {
         "type": "object",
         "properties": {
@@ -2786,7 +2813,9 @@
                   },
                   "extra": {
                     "type": "object",
-                    "additionalProperties": {}
+                    "additionalProperties": {
+                      "type": "string"
+                    }
                   },
                   "type": {
                     "type": "string",
@@ -3591,6 +3620,7 @@
                             },
                             "required": [
                               "displayName",
+                              "properties",
                               "type",
                               "required"
                             ]
@@ -4128,7 +4158,9 @@
                               },
                               "extra": {
                                 "type": "object",
-                                "additionalProperties": {}
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
                               },
                               "type": {
                                 "type": "string",
@@ -4868,6 +4900,7 @@
                             },
                             "required": [
                               "displayName",
+                              "properties",
                               "type",
                               "required"
                             ]
@@ -5405,7 +5438,9 @@
                               },
                               "extra": {
                                 "type": "object",
-                                "additionalProperties": {}
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
                               },
                               "type": {
                                 "type": "string",
@@ -5704,6 +5739,190 @@
     }
   },
   "paths": {
+    "/v1/folders/": {
+      "post": {
+        "tags": [
+          "folders"
+        ],
+        "description": "Create a new folder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "displayName",
+                  "projectId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "description": "List folders",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/folders/{id}": {
+      "post": {
+        "tags": [
+          "folders"
+        ],
+        "description": "Update an existing folder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "displayName",
+                  "projectId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "description": "Get a folder by id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "folders"
+        ],
+        "description": "Delete a folder",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/v1/flows/": {
       "post": {
         "tags": [
@@ -5918,7 +6137,6 @@
                                     "pieceVersion",
                                     "pieceType",
                                     "packageType",
-                                    "triggerName",
                                     "input",
                                     "inputUiInfo"
                                   ]
@@ -6272,7 +6490,6 @@
                                           "pieceVersion",
                                           "pieceType",
                                           "packageType",
-                                          "triggerName",
                                           "input",
                                           "inputUiInfo"
                                         ]
@@ -6667,7 +6884,6 @@
                                       "pieceVersion",
                                       "pieceType",
                                       "packageType",
-                                      "triggerName",
                                       "input",
                                       "inputUiInfo"
                                     ]
@@ -7951,7 +8167,6 @@
                                   "pieceVersion",
                                   "pieceType",
                                   "packageType",
-                                  "triggerName",
                                   "input",
                                   "inputUiInfo"
                                 ]
@@ -8259,7 +8474,6 @@
                                     "pieceVersion",
                                     "pieceType",
                                     "packageType",
-                                    "triggerName",
                                     "input",
                                     "inputUiInfo"
                                   ]
@@ -8888,6 +9102,7 @@
                             ]
                           },
                           "secret_text": {
+                            "minLength": 1,
                             "type": "string"
                           }
                         },
@@ -8929,9 +9144,37 @@
                         "type": "object",
                         "properties": {
                           "client_id": {
+                            "minLength": 1,
                             "type": "string"
                           },
+                          "code": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code_challenge": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "type": "string"
+                          },
+                          "authorization_method": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "HEADER"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "BODY"
+                                ]
+                              }
+                            ]
+                          },
                           "client_secret": {
+                            "minLength": 1,
                             "type": "string"
                           },
                           "grant_type": {
@@ -8954,32 +9197,8 @@
                             "type": "object",
                             "additionalProperties": {}
                           },
-                          "scope": {
-                            "type": "string"
-                          },
-                          "code": {
-                            "type": "string"
-                          },
-                          "authorization_method": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "HEADER"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "BODY"
-                                ]
-                              }
-                            ]
-                          },
-                          "code_challenge": {
-                            "type": "string"
-                          },
                           "redirect_url": {
+                            "minLength": 1,
                             "type": "string"
                           },
                           "type": {
@@ -8991,9 +9210,9 @@
                         },
                         "required": [
                           "client_id",
-                          "client_secret",
-                          "scope",
                           "code",
+                          "scope",
+                          "client_secret",
                           "redirect_url",
                           "type"
                         ]
@@ -9031,6 +9250,17 @@
                         "type": "object",
                         "properties": {
                           "client_id": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code_challenge": {
+                            "type": "string"
+                          },
+                          "scope": {
                             "type": "string"
                           },
                           "authorization_method": {
@@ -9049,20 +9279,11 @@
                               }
                             ]
                           },
-                          "code": {
-                            "type": "string"
-                          },
-                          "code_challenge": {
-                            "type": "string"
-                          },
                           "props": {
                             "type": "object",
                             "additionalProperties": {
                               "type": "string"
                             }
-                          },
-                          "scope": {
-                            "type": "string"
                           },
                           "type": {
                             "type": "string",
@@ -9111,6 +9332,17 @@
                         "type": "object",
                         "properties": {
                           "client_id": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code_challenge": {
+                            "type": "string"
+                          },
+                          "scope": {
                             "type": "string"
                           },
                           "authorization_method": {
@@ -9129,20 +9361,11 @@
                               }
                             ]
                           },
-                          "code": {
-                            "type": "string"
-                          },
-                          "code_challenge": {
-                            "type": "string"
-                          },
                           "props": {
                             "type": "object",
                             "additionalProperties": {
                               "type": "string"
                             }
-                          },
-                          "scope": {
-                            "type": "string"
                           },
                           "type": {
                             "type": "string",
@@ -9151,6 +9374,7 @@
                             ]
                           },
                           "redirect_url": {
+                            "minLength": 1,
                             "type": "string"
                           }
                         },
@@ -9195,9 +9419,11 @@
                         "type": "object",
                         "properties": {
                           "username": {
+                            "minLength": 1,
                             "type": "string"
                           },
                           "password": {
+                            "minLength": 1,
                             "type": "string"
                           },
                           "type": {
@@ -9485,85 +9711,6 @@
         }
       }
     },
-    "/v1/app-connections/validate-connection-name": {
-      "post": {
-        "tags": [
-          "app-connections"
-        ],
-        "description": "Validate app connection name",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "description": "Request for validating connection name",
-                "type": "object",
-                "properties": {
-                  "connectionName": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "connectionName"
-                ]
-              }
-            }
-          },
-          "required": true,
-          "description": "Request for validating connection name"
-        },
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Response for validating connection name",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "description": "Response for validating connection name",
-                  "type": "object",
-                  "properties": {
-                    "isValid": {
-                      "type": "boolean"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "isValid"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Response for validating connection name",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "description": "Response for validating connection name",
-                  "type": "object",
-                  "properties": {
-                    "isValid": {
-                      "type": "boolean"
-                    },
-                    "error": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "isValid"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/app-connections/{id}": {
       "delete": {
         "tags": [
@@ -9745,6 +9892,9 @@
                     "gitSyncEnabled": {
                       "type": "boolean"
                     },
+                    "analyticsEnabled": {
+                      "type": "boolean"
+                    },
                     "showPoweredBy": {
                       "type": "boolean"
                     },
@@ -9818,6 +9968,7 @@
                     "filteredPieceBehavior",
                     "cloudAuthEnabled",
                     "gitSyncEnabled",
+                    "analyticsEnabled",
                     "showPoweredBy",
                     "auditLogEnabled",
                     "embeddingEnabled",
@@ -9920,6 +10071,9 @@
                         ]
                       }
                     ]
+                  },
+                  "expireyInSeconds": {
+                    "type": "number"
                   }
                 },
                 "required": [
@@ -10076,6 +10230,15 @@
           },
           {
             "schema": {
+              "type": "string",
+              "nullable": true
+            },
+            "in": "query",
+            "name": "projectId",
+            "required": false
+          },
+          {
+            "schema": {
               "anyOf": [
                 {
                   "type": "string",
@@ -10145,7 +10308,7 @@
         }
       }
     },
-    "/v1/projects/{id}": {
+    "/v1/projects/": {
       "post": {
         "tags": [
           "projects"
@@ -10156,48 +10319,28 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "notifyStatus": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "NEVER"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "ALWAYS"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "NEW_ISSUE"
-                        ]
-                      }
-                    ]
-                  },
                   "displayName": {
                     "type": "string"
+                  },
+                  "externalId": {
+                    "type": "string"
                   }
-                }
+                },
+                "required": [
+                  "displayName"
+                ]
               }
             }
-          }
+          },
+          "required": true
         },
-        "parameters": [
+        "security": [
           {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
+            "apiKey": []
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "description": "Default Response",
             "content": {
               "application/json": {
@@ -10212,10 +10355,6 @@
                     },
                     "updated": {
                       "type": "string"
-                    },
-                    "deleted": {
-                      "type": "string",
-                      "nullable": true
                     },
                     "ownerId": {
                       "type": "string"
@@ -10251,6 +10390,88 @@
                     },
                     "externalId": {
                       "type": "string"
+                    },
+                    "usage": {
+                      "type": "object",
+                      "properties": {
+                        "tasks": {
+                          "type": "number"
+                        },
+                        "teamMembers": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "tasks",
+                        "teamMembers"
+                      ]
+                    },
+                    "plan": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "minimumPollingInterval": {
+                          "type": "number"
+                        },
+                        "piecesFilterType": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NONE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ALLOWED"
+                              ]
+                            }
+                          ]
+                        },
+                        "pieces": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "connections": {
+                          "type": "number"
+                        },
+                        "teamMembers": {
+                          "type": "number"
+                        },
+                        "tasks": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created",
+                        "updated",
+                        "projectId",
+                        "name",
+                        "minimumPollingInterval",
+                        "piecesFilterType",
+                        "pieces",
+                        "connections",
+                        "teamMembers",
+                        "tasks"
+                      ]
                     }
                   },
                   "required": [
@@ -10260,8 +10481,862 @@
                     "ownerId",
                     "displayName",
                     "notifyStatus",
-                    "platformId"
+                    "platformId",
+                    "usage",
+                    "plan"
                   ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "externalId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "ownerId": {
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "notifyStatus": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NEVER"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ALWAYS"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "NEW_ISSUE"
+                                ]
+                              }
+                            ]
+                          },
+                          "platformId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "externalId": {
+                            "type": "string"
+                          },
+                          "usage": {
+                            "type": "object",
+                            "properties": {
+                              "tasks": {
+                                "type": "number"
+                              },
+                              "teamMembers": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "tasks",
+                              "teamMembers"
+                            ]
+                          },
+                          "plan": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "projectId": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "minimumPollingInterval": {
+                                "type": "number"
+                              },
+                              "piecesFilterType": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "NONE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ALLOWED"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "pieces": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "connections": {
+                                "type": "number"
+                              },
+                              "teamMembers": {
+                                "type": "number"
+                              },
+                              "tasks": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "projectId",
+                              "name",
+                              "minimumPollingInterval",
+                              "piecesFilterType",
+                              "pieces",
+                              "connections",
+                              "teamMembers",
+                              "tasks"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "ownerId",
+                          "displayName",
+                          "notifyStatus",
+                          "platformId",
+                          "usage",
+                          "plan"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/projects/{id}": {
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "notifyStatus": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "NEVER"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ALWAYS"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "NEW_ISSUE"
+                        ]
+                      }
+                    ]
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "plan": {
+                    "type": "object",
+                    "properties": {
+                      "tasks": {
+                        "type": "number"
+                      },
+                      "pieces": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "piecesFilterType": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "NONE"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "ALLOWED"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "ownerId": {
+                      "type": "string"
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "notifyStatus": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "NEVER"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ALWAYS"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "NEW_ISSUE"
+                          ]
+                        }
+                      ]
+                    },
+                    "platformId": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    },
+                    "externalId": {
+                      "type": "string"
+                    },
+                    "usage": {
+                      "type": "object",
+                      "properties": {
+                        "tasks": {
+                          "type": "number"
+                        },
+                        "teamMembers": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "tasks",
+                        "teamMembers"
+                      ]
+                    },
+                    "plan": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "minimumPollingInterval": {
+                          "type": "number"
+                        },
+                        "piecesFilterType": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NONE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ALLOWED"
+                              ]
+                            }
+                          ]
+                        },
+                        "pieces": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "connections": {
+                          "type": "number"
+                        },
+                        "teamMembers": {
+                          "type": "number"
+                        },
+                        "tasks": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created",
+                        "updated",
+                        "projectId",
+                        "name",
+                        "minimumPollingInterval",
+                        "piecesFilterType",
+                        "pieces",
+                        "connections",
+                        "teamMembers",
+                        "tasks"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "ownerId",
+                    "displayName",
+                    "notifyStatus",
+                    "platformId",
+                    "usage",
+                    "plan"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "projects"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/project-members/": {
+      "post": {
+        "tags": [
+          "project-members"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "projectId": {
+                    "type": "string"
+                  },
+                  "userId": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ADMIN"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "EDITOR"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "OPERATOR"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "VIEWER"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "projectId",
+                  "userId",
+                  "role"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Project member is which user is assigned to a project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Project member is which user is assigned to a project.",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "platformId": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    },
+                    "userId": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ADMIN"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "EDITOR"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "OPERATOR"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "VIEWER"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "platformId",
+                    "userId",
+                    "projectId",
+                    "role"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "project-members"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/project-members/{id}": {
+      "delete": {
+        "tags": [
+          "project-members"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "not": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/pieces/": {
+      "post": {
+        "summary": "Add a piece to a platform",
+        "tags": [
+          "pieces"
+        ],
+        "description": "Add a piece to a platform",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "title": "Private Piece",
+                    "type": "object",
+                    "properties": {
+                      "packageType": {
+                        "type": "string",
+                        "enum": [
+                          "ARCHIVE"
+                        ]
+                      },
+                      "scope": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "PROJECT"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "PLATFORM"
+                            ]
+                          }
+                        ]
+                      },
+                      "pieceName": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "pieceVersion": {
+                        "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+                        "type": "string"
+                      },
+                      "pieceArchive": {}
+                    },
+                    "required": [
+                      "packageType",
+                      "scope",
+                      "pieceName",
+                      "pieceVersion",
+                      "pieceArchive"
+                    ]
+                  },
+                  {
+                    "title": "NPM Piece",
+                    "type": "object",
+                    "properties": {
+                      "packageType": {
+                        "type": "string",
+                        "enum": [
+                          "REGISTRY"
+                        ]
+                      },
+                      "scope": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "PROJECT"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "PLATFORM"
+                            ]
+                          }
+                        ]
+                      },
+                      "pieceName": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "pieceVersion": {
+                        "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "packageType",
+                      "scope",
+                      "pieceName",
+                      "pieceVersion"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/git-repos/pull": {
+      "post": {
+        "tags": [
+          "git-repo"
+        ],
+        "description": "Pull all changes from the git repository and overwrite any conflicting changes in the project.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "projectId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "projectId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
                 }
               }
             }

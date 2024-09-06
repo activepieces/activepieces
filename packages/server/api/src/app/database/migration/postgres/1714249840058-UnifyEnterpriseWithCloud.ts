@@ -16,7 +16,7 @@ export class UnifyEnterpriseWithCloud1714249840058 implements MigrationInterface
             ALTER TABLE "app_credential" DROP CONSTRAINT "FK_d82bfb4c7432a69dc2419083a0e"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_app_credentials_projectId_appName"
+            DROP INDEX "idx_app_credentials_projectId_appName"
         `)
         await queryRunner.query(`
             ALTER TABLE "connection_key"

@@ -33,6 +33,7 @@ export const LicenseKeyEntity = Type.Object({
     flowIssuesEnabled: Type.Boolean(),
     alertsEnabled: Type.Boolean(),
     premiumPieces: Type.Array(Type.String()),
+    analyticsEnabled: Type.Boolean(),
 })
 
 export type LicenseKeyEntity = Static<typeof LicenseKeyEntity>

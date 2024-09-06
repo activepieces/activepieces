@@ -1,5 +1,5 @@
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ExecutionMode, logger, SharedSystemProp, system } from '@activepieces/server-shared'
+import { logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
@@ -7,6 +7,7 @@ import {
     EngineResponseStatus,
     ErrorCode,
     ExecuteExtractPieceMetadata,
+    ExecutionMode,
     FileCompression,
     FileId,
     FileType,

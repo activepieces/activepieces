@@ -94,7 +94,6 @@ export const APITableCommon = {
             AITableFieldType.LAST_MODIEFIED_TIME,
             AITableFieldType.LAST_MODIFIED_BY,
             AITableFieldType.MAGIC_LOOKUP,
-            AITableFieldType.MEMBER,
             AITableFieldType.ONE_WAY_LINK,
           ].includes(field.type)
         ) {
@@ -166,6 +165,21 @@ export const APITableCommon = {
                 },
               });
               break;
+            case AITableFieldType.MEMBER:
+              props[field.name] = Property.StaticMultiSelectDropdown({
+                displayName: field.name,
+                required: false,
+                options: {
+                  options:
+                    field.property?.options?.map((option) => {
+                      return {
+                        label: option.name,
+                        value: option.id,
+                      };
+                    }) || [],
+                },
+              });
+              break;
             case AITableFieldType.TWO_WAY_LINK:
               props[field.name] = Property.Array({
                 displayName: field.name,
@@ -206,12 +220,12 @@ export async function createNewFields(
         AITableFieldType.LAST_MODIEFIED_TIME,
         AITableFieldType.LAST_MODIFIED_BY,
         AITableFieldType.MAGIC_LOOKUP,
-        AITableFieldType.MEMBER,
         AITableFieldType.ONE_WAY_LINK,
       ].includes(field.type) &&
       field.name in fields
     ) {
       const key = field.name;
+
       if (
         [
           AITableFieldType.NUMBER,
@@ -222,6 +236,10 @@ export async function createNewFields(
         ].includes(field.type)
       ) {
         newFields[key] = Number(fields[key]);
+      } else if (field.type === AITableFieldType.MEMBER) {
+        newFields[key] = field.property?.options?.filter(
+          (member) => member.id === `${fields[key]}`
+        );
       } else {
         newFields[key] = fields[key];
       }

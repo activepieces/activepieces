@@ -37,6 +37,7 @@ export const Platform = Type.Object({
     termsOfServiceUrl: Type.Optional(Type.String()),
     cloudAuthEnabled: Type.Boolean(),
     gitSyncEnabled: Type.Boolean(),
+    analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),

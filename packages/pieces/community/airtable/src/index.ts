@@ -12,6 +12,7 @@ import { airtableFindRecordAction } from './lib/actions/find-record';
 import { airtableUpdateRecordAction } from './lib/actions/update-record';
 import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
 import { airtableUpdatedRecordTrigger } from './lib/trigger/update-record.trigger';
+import { airtableUploadFileToColumnAction } from './lib/actions/upload-file-to-column';
 
 export const airtableAuth = PieceAuth.SecretText({
   displayName: 'Personal Access Token',
@@ -49,12 +50,20 @@ export const airtableAuth = PieceAuth.SecretText({
 
 export const airtable = createPiece({
   displayName: 'Airtable',
-  description:
-    'Low‒code platform to build apps.',
+  description: 'Low‒code platform to build apps.',
 
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
-  authors: ["kanarelo","TaskMagicKyle","Salem-Alaa","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'kanarelo',
+    'TaskMagicKyle',
+    'Salem-Alaa',
+    'kishanprmr',
+    'MoShizzle',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   categories: [PieceCategory.PRODUCTIVITY],
   auth: airtableAuth,
   actions: [
@@ -62,6 +71,7 @@ export const airtable = createPiece({
     airtableFindRecordAction,
     airtableUpdateRecordAction,
     airtableDeleteRecordAction,
+    airtableUploadFileToColumnAction,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://api.airtable.com/v0';

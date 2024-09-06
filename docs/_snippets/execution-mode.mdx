@@ -1,0 +1,5 @@
+| Name                          | Supports NPM in Code Piece | Requires Docker to be Privileged | Performance           | Secure for Multi Tenant | Environment Variable                      |
+|-------------------------------|----------------------------|----------------------------------|-----------------------|-------------------------|-------------------------------------------|
+| V8/Code Sandboxing  | ❌                         | No                               | Fast & Lightweight    | ✅                       | Set `AP_EXECUTION_MODE` to `SANDBOX_CODE_ONLY` |
+| No Sandboxin | ✅                         | No                               | Fast & Lightweight    | ❌                       | Set `AP_EXECUTION_MODE` to `UNSANDBOXED`       |
+| Kernel Namespaces Sandboxing  | ✅                         | Yes                              | Slow & CPU Intensive  | ✅                       | Set `AP_EXECUTION_MODE` to `SANDBOXED`         |

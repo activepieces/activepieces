@@ -1,7 +1,17 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
+import importFresh from '@activepieces/import-fresh-webpack'
+import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { ApEdition, extractPieceFromModule } from '@activepieces/shared'
+import clearModule from 'clear-module'
+import { exceptionHandler } from '../exception-handler'
 import { logger } from '../logger'
+import { system } from '../system/system'
+import { AppSystemProp } from '../system/system-prop'
+
+const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
+
 
 async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     const paths = []
@@ -26,7 +36,7 @@ async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     return paths
 }
 
-async function findDirectoryByPackageName(packageName: string) {
+async function findDirectoryByPackageName(packageName: string): Promise<string | null> {
     const paths = await findAllPiecesFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
     for (const path of paths) {
         try {
@@ -44,8 +54,80 @@ async function findDirectoryByPackageName(packageName: string) {
     }
     return null
 }
+
+async function findAllPiecesDirectoryInSource(): Promise<string[]> {
+    const piecesPath = resolve(cwd(), 'packages', 'pieces')
+    const paths = await findAllPiecesFolder(piecesPath)
+    const enterprisePiecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
+    const enterprisePiecesPaths = await findAllPiecesFolder(enterprisePiecesPath)
+    return [...paths, ...enterprisePiecesPaths]
+}
+
+
+async function findPieceDirectoryByFolderName(pieceName: string): Promise<string | null> {
+    const piecesPath = await findAllPiecesDirectoryInSource()
+    const piecePath = piecesPath.find((p) => p.includes(pieceName))
+    return piecePath ?? null
+}
+
+
+async function findAllPieces(): Promise<PieceMetadata[]> {
+    const pieces = await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
+    const enterprisePieces = system.getEdition() === ApEdition.ENTERPRISE ? await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'ee', 'pieces')) : []
+    return [...pieces, ...enterprisePieces]
+}
+
+
+async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
+    try {
+        const paths = (await filePiecesUtils.findAllPiecesFolder(folderPath)).filter(p => packages.some(packageName => p.includes(packageName)))
+        const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
+        return pieces.filter((p): p is PieceMetadata => p !== null)
+    }
+    catch (e) {
+        const err = e as Error
+        logger.warn({ name: 'FilePieceMetadataService#loadPiecesFromFolder', message: err.message, stack: err.stack })
+        return []
+    }
+}
+
+async function loadPieceFromFolder(
+    folderPath: string,
+): Promise<PieceMetadata | null> {
+    try {
+        const indexPath = join(folderPath, 'src', 'index')
+        clearModule(indexPath)
+        const packageJson = importFresh<Record<string, string>>(
+            join(folderPath, 'package.json'),
+        )
+        const module = importFresh<Record<string, unknown>>(
+            indexPath,
+        )
+
+        const { name: pieceName, version: pieceVersion } = packageJson
+        const piece = extractPieceFromModule<Piece>({
+            module,
+            pieceName,
+            pieceVersion,
+        })
+        return {
+            ...piece.metadata(),
+            name: pieceName,
+            version: pieceVersion,
+            authors: piece.authors,
+            directoryPath: folderPath,
+        }
+    }
+    catch (ex) {
+        logger.warn({ name: 'FilePieceMetadataService#loadPieceFromFolder', message: ex }, 'Failed to load piece from folder')
+        exceptionHandler.handle(ex)
+    }
+    return null
+}
+
 export const filePiecesUtils = {
     findAllPiecesFolder,
     findDirectoryByPackageName,
-
+    findPieceDirectoryByFolderName,
+    findAllPieces,
 }

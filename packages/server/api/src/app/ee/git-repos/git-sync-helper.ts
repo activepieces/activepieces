@@ -1,6 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { ProjectSyncError } from '@activepieces/ee-shared'
+import { fileExists } from '@activepieces/server-shared'
 import { Flow, flowHelper, FlowOperationType, PopulatedFlow } from '@activepieces/shared'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
@@ -126,9 +127,13 @@ async function upsertFlowToGit(fileName: string, flow: Flow, flowFolderPath: str
     await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
 }
 
-async function deleteFlowFromGit(flowId: string, flowFolderPath: string): Promise<void> {
+async function deleteFlowFromGit(flowId: string, flowFolderPath: string): Promise<boolean> {
     const flowJsonPath = path.join(flowFolderPath, `${flowId}.json`)
-    await fs.unlink(flowJsonPath)
+    const exists = await fileExists(flowJsonPath)
+    if (exists) {
+        await fs.unlink(flowJsonPath)
+    }
+    return exists
 }
 
 async function deleteFlowFromProject(flowId: string, projectId: string): Promise<void> {

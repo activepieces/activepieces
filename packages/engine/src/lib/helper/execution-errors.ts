@@ -50,7 +50,7 @@ export class StorageLimitError extends ExecutionError {
 
 export class StorageError extends ExecutionError {
     constructor(key: string, cause?: unknown) {
-        super('StorageError', formatMessage(`Failed to read/write key (${key})`), ExecutionErrorType.ENGINE, cause)
+        super('StorageError', formatMessage(`Failed to read/write key "${key}" due to ${JSON.stringify(cause)}`), ExecutionErrorType.ENGINE, cause)
     }
 }
 

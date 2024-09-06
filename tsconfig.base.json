@@ -426,6 +426,9 @@
         "packages/pieces/community/pastefy/src/index.ts"
       ],
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-perplexity-ai": [
+        "packages/pieces/community/perplexity-ai/src/index.ts"
+      ],
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
       ],
@@ -659,68 +662,11 @@
       ],
       "@activepieces/server-shared": ["packages/server/shared/src/index.ts"],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
-      "@activepieces/ui-canvas-utils": [
-        "packages/ui/canvas-utils/src/index.ts"
-      ],
-      "@activepieces/ui-feature-builder-header": [
-        "packages/ui/feature-builder-header/src/index.ts"
-      ],
-      "@activepieces/ui-feature-flow-actions-list": [
-        "packages/ui/feature-flow-actions-list/src/index.ts"
-      ],
-      "@activepieces/ui-feature-git-sync": [
-        "packages/ui/feature-git-sync/src/index.ts"
-      ],
-      "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
-      "@activepieces/ui/feature-authentication": [
-        "packages/ui/feature-authentication/src/index.ts"
-      ],
-      "@activepieces/ui/feature-builder-canvas": [
-        "packages/ui/feature-builder-canvas/src/index.ts"
-      ],
-      "@activepieces/ui/feature-builder-form-controls": [
-        "packages/ui/feature-builder-form-controls/src/index.ts"
-      ],
-      "@activepieces/ui/feature-builder-left-sidebar": [
-        "packages/ui/feature-builder-left-sidebar/src/index.ts"
-      ],
-      "@activepieces/ui/feature-builder-right-sidebar": [
-        "packages/ui/feature-builder-right-sidebar/src/index.ts"
-      ],
-      "@activepieces/ui/feature-builder-store": [
-        "packages/ui/feature-builder-store/src/index.ts"
-      ],
-      "@activepieces/ui/feature-builder-test-steps": [
-        "packages/ui/feature-builder-test-steps/src/index.ts"
-      ],
-      "@activepieces/ui/feature-connections": [
-        "packages/ui/feature-connections/src/index.ts"
-      ],
-      "@activepieces/ui/feature-dashboard": [
-        "packages/ui/feature-dashboard/src/index.ts"
-      ],
-      "@activepieces/ui/feature-folders-store": [
-        "packages/ui/feature-folders-store/src/index.ts"
-      ],
-      "@activepieces/ui/feature-pieces": [
-        "packages/ui/feature-pieces/src/index.ts"
-      ],
-      "@activepieces/ui/feature-templates": [
-        "packages/ui/feature-templates/src/index.ts"
-      ],
       "@ee/*": ["packages/ee/*"],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
-      "ee-billing-ui": ["packages/ee/ui/billing/src/index.ts"],
-      "ee-components": ["packages/ee/ui/components/src/index.ts"],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
-      "ee-project-members": ["packages/ee/ui/project-members/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
-      "ui-ee-platform": ["packages/ee/ui/platform/src/index.ts"],
-      "ui-feature-flow-builder": [
-        "packages/ui/feature-flow-builder/src/index.ts"
-      ],
-      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"],
-      "ui-feature-tags": ["packages/ui/feature-tags/src/index.ts"]
+      "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
     },
     "resolveJsonModule": true
   },

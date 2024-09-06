@@ -7,7 +7,6 @@ import { flowWorkerController } from '../workers/worker-controller'
 import { flowVersionController } from './flow/flow-version.controller'
 import { flowController } from './flow/flow.controller'
 import { flowRunService } from './flow-run/flow-run-service'
-import { folderController } from './folder/folder.controller'
 import { stepRunService } from './step-run/step-run-service'
 import { testTriggerController } from './test-trigger/test-trigger-controller'
 
@@ -15,7 +14,6 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowWorkerController, { prefix: '/v1/worker/flows' })
     await app.register(flowVersionController, { prefix: '/v1/flows' })
     await app.register(flowController, { prefix: '/v1/flows' })
-    await app.register(folderController, { prefix: '/v1/folders' })
     await app.register(testTriggerController, { prefix: '/v1/test-trigger' })
     websocketService.addListener(WebsocketServerEvent.TEST_FLOW_RUN, (socket) => {
         return async (data: TestFlowRunRequestBody) => {

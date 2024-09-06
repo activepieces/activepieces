@@ -1,4 +1,5 @@
 import {
+    File,
     Flow,
     FlowRun,
     Project,
@@ -16,6 +17,7 @@ import {
 type FlowRunSchema = FlowRun & {
     project: Project
     flow: Flow
+    logsFile: File
 }
 
 export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
@@ -32,7 +34,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         flowDisplayName: {
             type: String,
         },
-        logsFileId: { ...ApIdSchema, nullable: true },
+        logsFileId: { 
+            ...ApIdSchema, 
+            nullable: true,
+        },
         status: {
             type: String,
         },
@@ -102,6 +107,16 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             joinColumn: {
                 name: 'flowId',
                 foreignKeyConstraintName: 'fk_flow_run_flow_id',
+            },
+        },
+        logsFile: {
+            type: 'many-to-one',
+            target: 'file',
+            cascade: true,
+            onDelete: 'SET NULL',
+            joinColumn: {
+                name: 'logsFileId',
+                foreignKeyConstraintName: 'fk_flow_run_logs_file_id',
             },
         },
     },

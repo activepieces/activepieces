@@ -5,7 +5,7 @@ export class MigrateAuditEventSchema1723489038729 implements MigrationInterface 
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."audit_event_platform_id_project_id_user_id_idx"
+            DROP INDEX "audit_event_platform_id_project_id_user_id_idx"
         `)
         await queryRunner.query(`
             ALTER TABLE "audit_event"
@@ -22,7 +22,7 @@ export class MigrateAuditEventSchema1723489038729 implements MigrationInterface 
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."audit_event_platform_id_project_id_user_id_idx"
+            DROP INDEX "audit_event_platform_id_project_id_user_id_idx"
         `)
         await queryRunner.query(`
             ALTER TABLE "audit_event"

@@ -31,24 +31,18 @@ export const stepFileService = {
     }): Promise<StepFile | null> {
         const fileId = apId()
         const bufferFile = request.file as Buffer
-        await stepFileRepo().upsert(
-            {
-                id: fileId,
-                flowId: request.flowId,
-                projectId,
-                stepName: request.stepName,
-                size: bufferFile.byteLength,
-                data: bufferFile,
-                name: request.name,
-            },
-            ['flowId', 'projectId', 'stepName', 'name'],
-        )
+        const savedFile = await stepFileRepo().save({
+            id: fileId,
+            flowId: request.flowId,
+            projectId,
+            stepName: request.stepName,
+            size: bufferFile.byteLength,
+            name: request.name,
+            data: bufferFile,
+        })
         return encrichWithUrl(
             hostname,
-            await stepFileRepo().findOneByOrFail({
-                id: fileId,
-                projectId,
-            }),
+            savedFile,
         )
     },
     async getByToken(token: string): Promise<StepFile | null> {

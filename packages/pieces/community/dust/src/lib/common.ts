@@ -62,9 +62,15 @@ export const timezoneProp = Property.ShortText({
   required: true,
   defaultValue: 'Europe/Paris',
 });
+export const timeoutProp = Property.Number({
+  displayName: 'Timeout (seconds)',
+  required: true,
+  defaultValue: 120,
+});
 
 export async function getConversationContent(
   conversationId: string,
+  timeout: number,
   auth: DustAuthType
 ) {
   const getConversation = async (conversationId: string) => {
@@ -81,11 +87,12 @@ export async function getConversationContent(
   let conversation = await getConversation(conversationId);
 
   let retries = 0;
+  const maxRetries = timeout / 10;
   while (
     !['succeeded', 'errored'].includes(
       getConversationStatus(conversation.body)
     ) &&
-    retries < 12 // 2mn
+    retries < maxRetries
   ) {
     await new Promise((f) => setTimeout(f, 10000));
 
@@ -94,7 +101,17 @@ export async function getConversationContent(
   }
 
   if (getConversationStatus(conversation.body) != 'succeeded') {
-    throw new Error('Could not load conversation');
+    if (retries >= maxRetries) {
+      throw new Error(
+        `Could not load conversation after ${timeout}s - consider increasing timeout value`
+      );
+    } else {
+      throw new Error(
+        `Could not load conversation: ${
+          conversation.body['conversation']['content']?.at(-1)?.at(0)?.error
+        }`
+      );
+    }
   }
 
   return conversation.body;
