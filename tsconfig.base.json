@@ -426,6 +426,9 @@
         "packages/pieces/community/pastefy/src/index.ts"
       ],
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
+      "@activepieces/piece-perplexity-ai": [
+        "packages/pieces/community/perplexity-ai/src/index.ts"
+      ],
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
       ],
