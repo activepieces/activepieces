@@ -3,8 +3,8 @@ import path from 'path'
 import {
     ActivepiecesError,
     ApEdition,
-    CodeSandboxType,
     ErrorCode,
+    ExecutionMode,
     isNil,
     PieceSyncMode,
 } from '@activepieces/shared'
@@ -25,7 +25,7 @@ export enum PiecesSource {
     FILE = 'FILE',
 }
 
-export enum ContainerType  {
+export enum ContainerType {
     WORKER = 'WORKER',
     APP = 'APP',
     WORKER_AND_APP = 'WORKER_AND_APP',
@@ -47,7 +47,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: '1 minute',
     [AppSystemProp.CLIENT_REAL_IP_HEADER]: 'x-real-ip',
     [AppSystemProp.CLOUD_AUTH_ENABLED]: 'true',
-    [SharedSystemProp.CODE_SANDBOX_TYPE]: CodeSandboxType.NO_OP,
     [AppSystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
     [AppSystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
@@ -59,7 +58,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TRIGGER_FAILURES_THRESHOLD]: '576',
     [SharedSystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
     [SharedSystemProp.ENVIRONMENT]: 'prod',
-    [SharedSystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
+    [SharedSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
     [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: '10',
     [WorkerSystemProps.POLLING_POOL_SIZE]: '5',
     [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: '10',
@@ -69,10 +68,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SharedSystemProp.PIECES_SOURCE]: PiecesSource.CLOUD_AND_DB,
     [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SharedSystemProp.SANDBOX_MEMORY_LIMIT]: '524288',
-    /*
-     @deprecated, replease with FLOW_TIMEOUT_SECONDS
-    */
-    [SharedSystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
+    [SharedSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [SharedSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
@@ -174,10 +170,4 @@ export const system = {
 
 const getEnvVar = (prop: SystemProp): string | undefined => {
     return process.env[`AP_${prop}`] ?? systemPropDefaultValues[prop]
-}
-
-
-export enum ExecutionMode {
-    SANDBOXED = 'SANDBOXED',
-    UNSANDBOXED = 'UNSANDBOXED',
 }
