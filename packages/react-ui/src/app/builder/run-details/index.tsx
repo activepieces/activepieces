@@ -45,7 +45,7 @@ const FlowRunDetails = React.memo(() => {
     },
   );
 
-  if (isNil(run))
+  if (isNil(run?.logsFileId))
     return (
       <div className="flex flex-col justify-center items-center gap-4 w-full h-full">
         <Info size={36} className="text-muted-foreground" />

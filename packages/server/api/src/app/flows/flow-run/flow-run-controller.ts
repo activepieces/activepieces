@@ -95,8 +95,8 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
     done()
 }
 
-const FlowRunFiltered = Type.Omit(FlowRun, ['logsFileId', 'terminationReason', 'pauseMetadata'])
-const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['logsFileId', 'terminationReason', 'pauseMetadata', 'steps'])
+const FlowRunFiltered = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata'])
+const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata', 'steps'])
 
 const ListRequest = {
     config: {
