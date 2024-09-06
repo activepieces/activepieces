@@ -9,6 +9,7 @@ export class LogFileRelationWithFlowRun1725639666232 implements MigrationInterfa
             ADD CONSTRAINT "fk_flow_run_logs_file_id" FOREIGN KEY ("logsFileId") REFERENCES "file"("id") ON DELETE
             SET NULL ON UPDATE NO ACTION
         `)
+        await queryRunner.query(`DELETE FROM "file" WHERE "type" = 'UNKNOWN' OR "type" = 'CODE_SOURCE'`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
