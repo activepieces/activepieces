@@ -85,7 +85,6 @@
             "handbook/engineering/pre-releases",
             "handbook/engineering/team",
             "handbook/engineering/how-we-work",
-            "handbook/engineering/stack",
             "handbook/engineering/hiring"
           ]
         }
@@ -164,6 +163,18 @@
           "group": "Git Sync",
           "icon": "git",
           "pages": ["endpoints/git-repos/schema", "endpoints/git-repos/pull"]
+        },
+        {
+          "group": "Folders",
+          "icon": "folder",
+          "pages": [
+            "endpoints/folders/schema",
+            "endpoints/folders/create",
+            "endpoints/folders/update",
+            "endpoints/folders/get",
+            "endpoints/folders/list",
+            "endpoints/folders/delete"
+          ]
         }
       ]
     },
