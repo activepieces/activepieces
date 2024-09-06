@@ -9,8 +9,8 @@ export enum SystemJobName {
     PIECES_SYNC = 'pieces-sync',
     TRIAL_TRACKER = 'trial-tracker',
     TRIGGER_DATA_CLEANER = 'trigger-data-cleaner',
-    ISSUES_REMINDER = 'ISSUES_REMINDER',
-    LOGS_CLEANUP_TRIGGER = 'LOGS_CLEANUP_TRIGGER',
+    ISSUES_REMINDER = 'issue-reminder',
+    LOGS_CLEANUP_TRIGGER = 'logs-cleanup-trigger',
 }
 
 type HardDeleteProjectSystemJobData = {
