@@ -13,9 +13,10 @@ import {
 
 export const createChatCompletionAction = createAction({
   auth: perplexityAiAuth,
-  name: 'create-chat-completion',
-  displayName: 'Create Chat Completion',
-  description: 'Creates a chat completions using specific model.',
+  name: 'ask-ai',
+  displayName: 'Ask AI',
+  description:
+    'Enables users to generate prompt completion based on a specified model.',
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
