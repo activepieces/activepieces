@@ -4,6 +4,7 @@ export class LogFileRelationWithFlowRunSqlite1725637505836 implements MigrationI
     name = 'LogFileRelationWithFlowRunSqlite1725637505836'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`DELETE FROM "file" WHERE "type" = 'UNKNOWN' OR "type" = 'CODE_SOURCE'`)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
         `)
