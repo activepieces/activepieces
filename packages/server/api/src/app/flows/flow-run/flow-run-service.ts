@@ -1,5 +1,4 @@
-import { assert } from 'node:console'
-import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -27,8 +26,7 @@ import {
     spreadIfDefined,
     TelemetryEventName,
 } from '@activepieces/shared'
-import dayjs from 'dayjs'
-import { In, IsNull, LessThanOrEqual, Not } from 'typeorm'
+import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
     APArrayContains,
@@ -47,7 +45,6 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { logSerializer } from './log-serializer'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
-const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
 const getFlowRunOrCreate = async (
     params: GetOrCreateParams,
@@ -381,30 +378,6 @@ export const flowRunService = {
         return {
             ...flowRun,
             steps,
-        }
-    },
-    async deleteLogsFilesOlderThanRetentionDate(): Promise<void> {
-        const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').format('YYYY-MM-DDTHH:mm:ssZ')
-        const logsFileIds = await flowRunRepo().find({
-            select: ['logsFileId', 'id', 'projectId', 'created'],
-            where: {
-                created: LessThanOrEqual(retentionDateBoundary),
-                logsFileId: Not(IsNull()),
-            },
-            take: 5000,
-        })
-        for (const log of logsFileIds) {
-            const assertValue = dayjs(log.created).isBefore(retentionDateBoundary) || dayjs(log.created).isSame(retentionDateBoundary)
-            assert(assertValue, 'Logs file is not older than retention date')
-            if (!isNil(log.logsFileId)) {
-                await fileService.delete({
-                    fileId: log.logsFileId,
-                    projectId: log.projectId,
-                })
-                await flowRunRepo().update(log.id, {
-                    logsFileId: null,
-                })
-            }
         }
     },
 }
