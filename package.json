@@ -103,6 +103,7 @@
     "airtable": "0.11.6",
     "ajv": "8.12.0",
     "amqplib": "0.10.4",
+    "assemblyai": "4.7.0",
     "async-mutex": "0.4.0",
     "aws-sdk": "2.1642.0",
     "axios": "1.7.4",
@@ -388,8 +389,8 @@
     "@nx/nx-darwin-x64": "18.0.4",
     "@nx/nx-linux-x64-gnu": "18.0.4",
     "@nx/nx-win32-x64-msvc": "18.0.4",
-    "@rollup/rollup-linux-arm64-gnu": "4.20.0",
-    "@rollup/rollup-darwin-arm64": "4.20.0"
+    "@rollup/rollup-darwin-arm64": "4.20.0",
+    "@rollup/rollup-linux-arm64-gnu": "4.20.0"
   },
   "nx": {
     "includedScripts": []
