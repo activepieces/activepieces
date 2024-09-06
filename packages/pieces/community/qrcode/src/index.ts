@@ -1,0 +1,16 @@
+
+    import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+    import { outputQrcodeAction } from './lib/actions/output-qrcode-action'
+    
+    export const qrcode = createPiece({
+      displayName: 'QR Code',
+      auth: PieceAuth.None(),
+      minimumSupportedRelease: '0.20.0',
+      logoUrl: "https://cdn.activepieces.com/pieces/qrcode.png",
+      authors: ['Meng-Yuan Huang'],
+      actions: [
+        outputQrcodeAction,
+      ],
+      triggers: [],
+    });
+    

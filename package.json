@@ -208,6 +208,7 @@
     "prismjs": "1.29.0",
     "product-fruits": "1.0.23",
     "promise-mysql": "5.2.0",
+    "qrcode": "1.5.4",
     "qs": "6.11.2",
     "react": "18.3.1",
     "react-colorful": "5.6.1",
@@ -256,6 +257,7 @@
     "use-debounce": "10.0.1",
     "use-ripple-hook": "1.0.24",
     "usehooks-ts": "3.1.0",
+    "uuid": "10.0.0",
     "vaul": "0.9.1",
     "write-file-atomic": "5.0.1",
     "xml2js": "0.6.2",
@@ -309,6 +311,7 @@
     "@types/papaparse": "5.3.8",
     "@types/pg": "8.10.2",
     "@types/prismjs": "1.26.0",
+    "@types/qrcode": "1.5.5",
     "@types/qs": "6.9.7",
     "@types/react": "18.3.1",
     "@types/react-dom": "18.3.0",
@@ -388,8 +391,8 @@
     "@nx/nx-darwin-x64": "18.0.4",
     "@nx/nx-linux-x64-gnu": "18.0.4",
     "@nx/nx-win32-x64-msvc": "18.0.4",
-    "@rollup/rollup-linux-arm64-gnu": "4.20.0",
-    "@rollup/rollup-darwin-arm64": "4.20.0"
+    "@rollup/rollup-darwin-arm64": "4.20.0",
+    "@rollup/rollup-linux-arm64-gnu": "4.20.0"
   },
   "nx": {
     "includedScripts": []
