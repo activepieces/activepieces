@@ -349,10 +349,10 @@ const validateEnvPropsOnStartup = async (): Promise<void> => {
     }
     const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
     const encryptionKey = await encryptUtils.loadEncryptionKey(queueMode)
-    const isValidHexKey = encryptionKey && /^[a-f0-9]{32}$/.test(encryptionKey)
+    const isValidHexKey = encryptionKey && /^[A-Fa-z0-9]{32}$/.test(encryptionKey)
     if (!isValidHexKey) {
         throw new Error(JSON.stringify({
-            message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32-byte hex string.',
+            message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',
             docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
         }))
     }
@@ -366,7 +366,8 @@ const validateEnvPropsOnStartup = async (): Promise<void> => {
     }
 
     const edition = system.getEdition()
-    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+    const test = system.get(SharedSystemProp.ENVIRONMENT)
+    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && test !== ApEnvironment.TESTING) {
         const executionMode = system.getOrThrow<ExecutionMode>(SharedSystemProp.EXECUTION_MODE)
         if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode)) {
             throw new Error(JSON.stringify({
