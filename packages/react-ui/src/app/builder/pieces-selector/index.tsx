@@ -226,7 +226,7 @@ const PieceSelector = ({
               name: 'branch',
               displayName: t('Branch'),
               description: t(
-                'Split your flow into branches depedning on condition(s)',
+                'Split your flow into branches depending on condition(s)',
               ),
             },
           ];
