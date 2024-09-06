@@ -1,5 +1,5 @@
 import { AppSystemProp, flowTimeoutSandbox, SharedSystemProp, system, webhookSecretsUtils } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, CodeSandboxType, Flag, isNil } from '@activepieces/shared'
+import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
 import { webhookUtils } from 'server-worker'
 import { repoFactory } from '../core/db/repo-factory'
@@ -232,7 +232,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
-                value: system.get(SharedSystemProp.CODE_SANDBOX_TYPE) === CodeSandboxType.NO_OP,
+                value: system.get(SharedSystemProp.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY,
                 created,
                 updated,
             },

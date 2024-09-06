@@ -1,9 +1,7 @@
-import { CodeSandboxType } from '@activepieces/shared'
+import { assertNotNullOrUndefined, ExecutionMode } from '@activepieces/shared'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
-const CODE_SANDBOX_TYPE =
-    (process.env.AP_CODE_SANDBOX_TYPE as CodeSandboxType | undefined)
-    ?? CodeSandboxType.NO_OP
+const EXECUTION_MODE = (process.env.AP_EXECUTION_MODE as ExecutionMode)
 
 const loadNoOpCodeSandbox = async (): Promise<CodeSandbox> => {
     const noOpCodeSandboxModule = await import('./no-op-code-sandbox')
@@ -16,12 +14,13 @@ const loadV8IsolateSandbox = async (): Promise<CodeSandbox> => {
 }
 
 const loadCodeSandbox = async (): Promise<CodeSandbox> => {
-    const loaders = new Map([
-        [CodeSandboxType.NO_OP, loadNoOpCodeSandbox],
-        [CodeSandboxType.V8_ISOLATE, loadV8IsolateSandbox],
-    ])
-
-    const loader = loaders.get(CODE_SANDBOX_TYPE) ?? loadNoOpCodeSandbox
+    const loaders = {
+        [ExecutionMode.UNSANDBOXED]: loadNoOpCodeSandbox,
+        [ExecutionMode.SANDBOXED]: loadNoOpCodeSandbox,
+        [ExecutionMode.SANDBOX_CODE_ONLY]: loadV8IsolateSandbox,
+    }
+    assertNotNullOrUndefined(EXECUTION_MODE, 'AP_EXECUTION_MODE')
+    const loader = loaders[EXECUTION_MODE]
     return loader()
 }
 

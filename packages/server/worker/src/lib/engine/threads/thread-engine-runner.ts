@@ -231,7 +231,7 @@ function getEnvironmentVariables(): Record<string, string | undefined> {
     return {
         ...propagatedEnvVars,
         NODE_OPTIONS: '--enable-source-maps',
-        AP_CODE_SANDBOX_TYPE: system.get(SharedSystemProp.CODE_SANDBOX_TYPE),
+        AP_EXECUTION_MODE: system.getOrThrow(SharedSystemProp.EXECUTION_MODE),
         AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
         AP_BASE_CODE_DIRECTORY: `${sandboxPath}/codes`,
     }

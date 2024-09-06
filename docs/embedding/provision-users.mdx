@@ -24,7 +24,7 @@ To achieve this, the backend will generate a signed token that contains all the 
   </Step>
 
   <Step title="Step 2: Generate a JWT">
-    The signing key will be used to generate JWT tokens for the currently logged-in user on your website, which will then be sent to the Activepieces Iframe as a query parameter to authenticate the user.
+    The signing key will be used to generate JWT tokens for the currently logged-in user on your website, which will then be sent to the Activepieces Iframe as a query parameter to authenticate the user and exchange the token for a longer lived token.
 
     To generate these tokens, you will need to add code in your backend to generate the token using the RS256 algorithm, so the JWT header would look like this:
 
@@ -41,7 +41,6 @@ To achieve this, the backend will generate a signed token that contains all the 
     ```
 
     The signed tokens must include these claims in the payload:
-
     ```json
     {
       "externalUserId": "user_id",
@@ -72,7 +71,11 @@ To achieve this, the backend will generate a signed token that contains all the 
     You can use any JWT library to generate the token. Here is an example using the jsonwebtoken library in Node.js:
 
     <Tip>
-      You can also use this [tool](https://dinochiesa.github.io/jwt/) to generate a quick example.
+      **Friendly Tip #1**: You can also use this [tool](https://dinochiesa.github.io/jwt/) to generate a quick example.
+    </Tip>
+
+    <Tip>
+      **Friendly Tip #2**: Make sure the expiry time is very short, as it's a temporary token and will be exchanged for a longer-lived token.
     </Tip>
 
     ```javascript Node.js
@@ -91,7 +94,7 @@ To achieve this, the backend will generate a signed token that contains all the 
         pieces: {
           filterType: "NONE"
         },
-        exp: currentTime + (24 * 60 * 60), // 1 day from now
+        exp: currentTime + (5 * 60), // 5 minutes from now
       },
       process.env.ACTIVEPIECES_SIGNING_KEY,
       {
