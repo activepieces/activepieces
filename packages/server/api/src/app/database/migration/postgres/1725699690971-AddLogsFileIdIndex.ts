@@ -6,13 +6,13 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY "idx_file_project_id" ON "file" ("projectId")
+            CREATE INDEX "idx_file_project_id" ON "file" ("projectId")
         `)
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY "idx_file_type_created_desc" ON "file" ("type", "created")
+            CREATE INDEX "idx_file_type_created_desc" ON "file" ("type", "created")
         `)
         await queryRunner.query(`
-            CREATE INDEX CONCURRENTLY "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
+            CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
         `)
         logger.info({
             name: this.name,
