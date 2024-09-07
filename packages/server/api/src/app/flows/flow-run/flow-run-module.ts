@@ -22,17 +22,17 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
             name: SystemJobName.LOGS_CLEANUP_TRIGGER,
         }, 'Logs cleanup started')
         const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
-        const maxmiumFilesToDeletePerIteration = 4000
+        const maximumFilesToDeletePerIteration = 4000
         let affected: undefined | number = undefined
         let totalAffected = 0
-        while (isNil(affected) || affected === maxmiumFilesToDeletePerIteration) {
+        while (isNil(affected) || affected === maximumFilesToDeletePerIteration) {
             const logsFileIds = await fileRepo().find({
                 select: ['id', 'created'],
                 where: {
                     type: FileType.FLOW_RUN_LOG,
                     created: LessThanOrEqual(retentionDateBoundary),
                 },
-                take: maxmiumFilesToDeletePerIteration,
+                take: maximumFilesToDeletePerIteration,
             })
             const result = await fileRepo().delete({
                 type: FileType.FLOW_RUN_LOG,
