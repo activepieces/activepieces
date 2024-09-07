@@ -31,6 +31,16 @@ export const FileEntity = new EntitySchema<FileSchema>({
             nullable: false,
         },
     },
+    indices: [
+        {
+            name: 'idx_file_project_id',
+            columns: ['projectId'],
+        },
+        {
+            name: 'idx_file_type_created_desc',
+            columns: ['type', 'created'],
+        },
+    ],
     relations: {
         project: {
             type: 'many-to-one',
