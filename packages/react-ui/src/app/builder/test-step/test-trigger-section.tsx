@@ -32,6 +32,8 @@ import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
 
+const waitFor2Seconds = () =>
+  new Promise((resolve) => setTimeout(resolve, 2000));
 type TestTriggerSectionProps = {
   isSaving: boolean;
   flowVersionId: string;
@@ -120,7 +122,7 @@ const TestTriggerSection = React.memo(
           if (!deepEqual(ids, newIds)) {
             return newData.data;
           }
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          await waitFor2Seconds();
           attempt++;
         }
         return [];
@@ -251,8 +253,17 @@ const TestTriggerSection = React.memo(
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('Select a sample data')} />
+                  <SelectTrigger
+                    className="w-full"
+                    disabled={pollResults && pollResults.data.length === 0}
+                  >
+                    {pollResults && pollResults.data.length > 0 ? (
+                      <SelectValue
+                        placeholder={t('No sample data available')}
+                      ></SelectValue>
+                    ) : (
+                      t('Old results were removed, retest for new sample data')
+                    )}
                   </SelectTrigger>
                   <SelectContent>
                     {pollResults &&
