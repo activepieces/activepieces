@@ -325,16 +325,19 @@ const TestTriggerSection = React.memo(
                   {t('Test Trigger')}
                 </Button>
               </TestButtonTooltip>
-              {t('Or')}
+
               {!isNil(mockData) && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => saveMockAsSampleData()}
-                  loading={isSavingMockdata}
-                >
-                  {t('Use Mock Data')}
-                </Button>
+                <>
+                  {t('Or')}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => saveMockAsSampleData()}
+                    loading={isSavingMockdata}
+                  >
+                    {t('Use Mock Data')}
+                  </Button>
+                </>
               )}
             </div>
           )}

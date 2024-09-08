@@ -13,13 +13,14 @@ import { FlowOperationType, FlowTemplate } from '@activepieces/shared';
 import { LoadingSpinner } from '../../../components/ui/spinner';
 import { PieceIconList } from '../../pieces/components/piece-icon-list';
 import { templatesApi } from '../lib/templates-api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
   const navigate = useNavigate();
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       const flow = await flowsApi.create({
-        projectId: template.projectId,
+        projectId: authenticationSession.getProjectId()!,
         displayName: template.name,
       });
       const updatedFlow = await flowsApi.update(flow.id, {
@@ -40,7 +41,7 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
   });
 
   return (
-    <Card className="w-1/4">
+    <Card className="min-w-[500px]">
       <>
         <CardHeader>
           <span className="font-semibold">{template.name}</span>
@@ -66,12 +67,8 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
                 </>
               )}
             </div>
-            <div className="ml-auto">
-              <Button
-                variant={'secondary'}
-                className="mr-2"
-                onClick={() => navigate('/flows')}
-              >
+            <div className="ml-auto flex items-center gap-2">
+              <Button variant={'secondary'} onClick={() => navigate('/flows')}>
                 {t('Cancel')}
               </Button>
               <Button loading={isPending} onClick={() => mutate()}>
