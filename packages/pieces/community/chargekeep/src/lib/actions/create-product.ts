@@ -120,10 +120,64 @@ export const createProduct = createAction({
         ],
       },
     }),
-    unit: Property.ShortText({
+    unit: Property.StaticDropdown({
       displayName: 'Unit',
       required: false,
       description: 'Required for General and Digital Product Type',
+      defaultValue: 'Day',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Day',
+            value: 'Day',
+          },
+          {
+            label: 'Feet',
+            value: 'Feet',
+          },
+          {
+            label: 'Hour',
+            value: 'Hour',
+          },
+          {
+            label: 'Kilogram',
+            value: 'Kilogram',
+          },
+          {
+            label: 'Pound',
+            value: 'Pound',
+          },
+          {
+            label: 'Month',
+            value: 'Month',
+          },
+          {
+            label: 'Package',
+            value: 'Package',
+          },
+          {
+            label: 'Piece',
+            value: 'Piece',
+          },
+          {
+            label: 'Unit',
+            value: 'Unit',
+          },
+          {
+            label: 'Year',
+            value: 'Year',
+          },
+          {
+            label: 'Zone',
+            value: 'Zone',
+          },
+          {
+            label: 'Custom',
+            value: 'Custom',
+          },
+        ],
+      },
     }),
     frequency: Property.StaticDropdown({
       displayName: 'Payment Cycle',
