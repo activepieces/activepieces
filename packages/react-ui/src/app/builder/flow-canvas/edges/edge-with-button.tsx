@@ -122,6 +122,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
         interactionWidth={0}
         path={edgePath}
         style={{ strokeWidth: `${LINE_WIDTH}px` }}
+        className="cursor-default"
       />
       {(props.data.stepLocationRelativeToParent ===
         StepLocationRelativeToParent.INSIDE_FALSE_BRANCH ||
@@ -208,13 +209,13 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
             height={18}
             x={buttonPosition.x - LINE_WIDTH / 2}
             y={buttonPosition.y}
-            className={cn('rounded-xss transition-all', {
+            className={cn('rounded-xss cursor-pointer transition-all', {
               'shadow-add-button': actionMenuOpen,
             })}
           >
             <div
               className={cn(
-                'bg-[#a6b1bf] w-[18px] h-[18px] flex items-center justify-center  transition-all duration-300 ease-in-out',
+                'bg-[#a6b1bf] cursor-pointer w-[18px] h-[18px] flex items-center justify-center  transition-all duration-300 ease-in-out',
                 {
                   'bg-primary ': actionMenuOpen,
                 },
