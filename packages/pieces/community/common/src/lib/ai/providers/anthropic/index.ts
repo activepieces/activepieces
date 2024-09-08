@@ -1,8 +1,8 @@
-import { AI, AIChatRole } from "../..";
+import { AI, AIChatRole, AIFactory } from "../..";
 import Anthropic from '@anthropic-ai/sdk';
 
 
-export const anthropic = ({
+export const anthropic: AIFactory = ({
   serverUrl,
   engineToken,
 }: { serverUrl: string, engineToken: string }): AI<Anthropic> => {

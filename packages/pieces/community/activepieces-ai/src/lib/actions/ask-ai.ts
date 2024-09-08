@@ -1,6 +1,6 @@
-import { createAction, PiecePropValueSchema, Property, Validators } from '@activepieces/pieces-framework';
 import { AI, AIChatMessage, AIChatRole } from '@activepieces/pieces-common';
-import { AiProvider, AiProviders, isNil } from '@activepieces/shared';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { AiProviders, isNil } from '@activepieces/shared';
 
 export const askAi = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,

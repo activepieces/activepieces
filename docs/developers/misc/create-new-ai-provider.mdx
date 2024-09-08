@@ -1,0 +1,85 @@
+---
+title: 'Create New AI Provider'
+icon: 'brain'
+---
+
+ActivePieces currently supports the following AI providers:
+
+- OpenAI
+- Anthropic
+
+To create a new AI provider, you need to follow these steps:
+
+## Implement the AI Interface
+
+Create a new factory that returns an instance of the `AI` interface in the `packages/pieces/community/common/src/lib/ai/providers/your-ai-provider.ts` file.
+
+```typescript
+export const yourAiProvider = ({
+  serverUrl,
+  engineToken,
+}: { serverUrl: string, engineToken: string }): AI<YourAiProviderSDK> => {
+  const impl = new YourAiProviderSDK(serverUrl, engineToken);
+  return {
+    provider: "YOUR_AI_PROVIDER" as const,
+    chat: {
+      text: async (params) => {
+        try {
+          const response = await impl.chat.text(params);
+          return response;
+        } catch (e: any) {
+          if (e?.error?.error) {
+            throw e.error.error;
+          }
+          throw e;
+        }
+      }
+    },
+    underlying: impl,
+  };
+};
+```
+
+## Define the AI Provider
+
+Add the new AI provider to the `AiProviders` enum in `packages/shared/src/lib/proxy/index.ts` file.
+
+```diff
+export const AiProviders = [
++  {
++    label: 'Your AI Provider' as const,
++    value: 'your-ai-provider' as const, 
++    models: [
++      { label: 'your-gpt', value: 'your-gpt' },
++      { label: 'your-gpt-5', value: 'your-gpt-5' }, 
++    ]
++  },
+...
+]
+```
+
+## Register a Factory for the AI Provider
+
+Add your implementation of the `AI` interface to the `factories` objects in `packages/pieces/community/common/src/lib/ai/index.ts`
+
+```diff
+import { yourAiProvider } from './providers/your-ai-provider';
+
+export const factories = {
+  openai,
+  anthropic,
++  "your-ai-provider": yourAiProvider,
+};
+```
+
+## Test the AI Provider
+
+To test the AI provider, you can use the **AI** piece in a flow. Follow these steps:
+
+- Add the required headers from the admin console for the newly created AI provider. These headers will be used to authenticate the requests to the AI provider.
+
+![Configure AI Provider](/resources/screenshots/configure-ai-provider.png)
+
+- Create a flow that uses the **AI** piece. And select **"Your AI Provider"** as the AI provider in the **Ask AI** action settings.
+
+![Configure AI Provider](/resources/screenshots/use-ai-provider.png)

@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
-import { AI, AIChatRole } from "../..";
+import { AI, AIChatRole, AIFactory } from "../..";
 
-export const openai = ({
+export const openai: AIFactory = ({
   serverUrl,
   engineToken,
 }: { serverUrl: string, engineToken: string }): AI<OpenAI> => {

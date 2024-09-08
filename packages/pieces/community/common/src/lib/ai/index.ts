@@ -46,9 +46,11 @@ export enum AIChatRole {
   ASSISTANT = 'assistant',
 }
 
-const factories = {
+export type AIFactory = (params: { serverUrl: string, engineToken: string }) => AI<unknown>
+
+const factories: Record<AiProvider, AIFactory> = {
   openai,
-  anthropic
+  anthropic,
 }
 
 export const AI = ({
