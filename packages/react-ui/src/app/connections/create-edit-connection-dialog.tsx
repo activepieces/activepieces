@@ -24,6 +24,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/seperator';
@@ -138,6 +139,13 @@ function buildConnectionSchema(
       });
   }
 }
+class ConnectionNameAlreadyExists extends Error {
+  constructor() {
+    super('Connection name already exists');
+    this.name = 'ConnectionNameAlreadyExists';
+  }
+}
+
 const CreateOrEditConnectionDialog = React.memo(
   ({
     piece,
@@ -175,7 +183,21 @@ const CreateOrEditConnectionDialog = React.memo(
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
-        return appConnectionsApi.upsert(formValues);
+        const connections = await appConnectionsApi.list({
+          projectId: authenticationSession.getProjectId()!,
+          limit: 10000,
+        });
+        const existingConnection = connections.data.find(
+          (connection) => connection.name === formValues.name,
+        );
+        if (!isNil(existingConnection)) {
+          form.setError('request.name', {
+            message: t('Name is already used'),
+          });
+          throw new ConnectionNameAlreadyExists();
+        } else {
+          return appConnectionsApi.upsert(formValues);
+        }
       },
       onSuccess: () => {
         setOpen(false);
@@ -183,9 +205,9 @@ const CreateOrEditConnectionDialog = React.memo(
         onConnectionCreated(name);
         setErrorMessage('');
       },
-      onError: (response) => {
-        if (api.isError(response)) {
-          const apError = response.response?.data as ApErrorParams;
+      onError: (err) => {
+        if (api.isError(err)) {
+          const apError = err.response?.data as ApErrorParams;
           console.log(apError);
           if (apError.code === ErrorCode.INVALID_CLOUD_CLAIM) {
             setErrorMessage(
@@ -200,9 +222,9 @@ const CreateOrEditConnectionDialog = React.memo(
               }),
             );
           }
-        } else {
+        } else if (!(err instanceof ConnectionNameAlreadyExists)) {
           toast(INTERNAL_ERROR_TOAST);
-          console.error(response);
+          console.error(err);
         }
       },
     });
@@ -254,6 +276,7 @@ const CreateOrEditConnectionDialog = React.memo(
                           placeholder={t('Connection name')}
                         />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 ></FormField>
