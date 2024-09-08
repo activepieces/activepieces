@@ -39,11 +39,6 @@
       "icon": "rocket"
     },
     {
-      "name": "AI Pieces",
-      "url": "/",
-      "icon": "brain"
-    },
-    {
       "name": "Develop Pieces",
       "url": "developers",
       "icon": "code"
@@ -265,7 +260,7 @@
       "group": "Piece Reference",
       "pages": [
         "developers/piece-reference/authentication",
-        "developers/building-pieces/use-ai",
+        "developers/piece-reference/use-ai",
         {
           "group": "Triggers",
           "icon": "bolt",
