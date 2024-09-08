@@ -4,9 +4,7 @@ import { promisify } from 'util'
 
 import { AppSystemProp, QueueMode, system } from '@activepieces/server-shared'
 import {
-    ActivepiecesError,
     assertNotNullOrUndefined,
-    ErrorCode,
     isNil,
 } from '@activepieces/shared'
 import { localFileStore } from './local-store'
@@ -20,7 +18,7 @@ export type EncryptedObject = {
     data: string
 }
 
-const loadEncryptionKey = async (queueMode: QueueMode): Promise<void> => {
+const loadEncryptionKey = async (queueMode: QueueMode): Promise<string | null> => {
     secret = system.get(AppSystemProp.ENCRYPTION_KEY) ?? null
     if (queueMode === QueueMode.MEMORY) {
         if (isNil(secret)) {
@@ -30,17 +28,7 @@ const loadEncryptionKey = async (queueMode: QueueMode): Promise<void> => {
             secret = await generateAndStoreSecret()
         }
     }
-    if (isNil(secret)) {
-        throw new ActivepiecesError(
-            {
-                code: ErrorCode.SYSTEM_PROP_INVALID,
-                params: {
-                    prop: AppSystemProp.ENCRYPTION_KEY,
-                },
-            },
-            `System property AP_${AppSystemProp.ENCRYPTION_KEY} must be defined`,
-        )
-    }
+    return secret
 }
 
 const generateAndStoreSecret = async (): Promise<string> => {

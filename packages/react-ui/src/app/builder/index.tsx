@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ActionType,
   PieceTrigger,
@@ -30,7 +31,7 @@ import {
 import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header';
-import { ChatSidebar } from './copilot';
+import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
@@ -67,6 +68,8 @@ const constructContainerKey = (
   return flowVersionId + stepName + (triggerOrActionName ?? '');
 };
 const BuilderPage = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
+
   const [leftSidebar, rightSidebar, run, canExitRun] = useBuilderStateContext(
     (state) => [
       state.leftSidebar,
@@ -171,7 +174,7 @@ const BuilderPage = () => {
                 <FlowRunDetails />
               )}
               {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
-              {leftSidebar === LeftSideBarType.AI_COPILOT && <ChatSidebar />}
+              {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
             </ResizablePanel>
             <ResizableHandle
               disabled={leftSidebar === LeftSideBarType.NONE}
@@ -184,7 +187,7 @@ const BuilderPage = () => {
           <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
             <div ref={middlePanelRef} className="relative h-full w-full">
               <CanvasControls></CanvasControls>
-              <ShowPoweredBy />
+              <ShowPoweredBy show={platform?.showPoweredBy} />
               <DataSelector
                 parentHeight={middlePanelSize.height}
                 parentWidth={middlePanelSize.width}
@@ -197,7 +200,7 @@ const BuilderPage = () => {
               disabled={rightSidebar === RightSideBarType.NONE}
               withHandle={rightSidebar !== RightSideBarType.NONE}
               onDragging={setIsDraggingHandle}
-              className="z-10 "
+              className="z-50"
             />
 
             <ResizablePanel

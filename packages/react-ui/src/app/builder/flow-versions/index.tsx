@@ -48,7 +48,7 @@ const FlowVersionsList = () => {
                 selected={flowVersion.id === selectedFlowVersion?.id}
                 published={flow.publishedVersionId === flowVersion.id}
                 flowVersion={flowVersion}
-                index={index}
+                flowVersionNumber={flowVersionPage.data.length - index}
                 key={flowVersion.id}
               />
             ))}

@@ -41,6 +41,7 @@ import {
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
@@ -92,6 +93,7 @@ const FlowsPage = () => {
     });
   }
 
+  const { platform } = platformHooks.useCurrentPlatform();
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
     PopulatedFlow,
     Error,
@@ -99,7 +101,10 @@ const FlowsPage = () => {
   >({
     mutationFn: async () => {
       const folderId = searchParams.get(folderIdParamName);
-      const folder = folderId ? await foldersApi.get(folderId) : undefined;
+      const folder =
+        folderId && folderId !== 'NULL'
+          ? await foldersApi.get(folderId)
+          : undefined;
       const flow = await flowsApi.create({
         projectId: authenticationSession.getProjectId()!,
         displayName: t('Untitled'),
@@ -302,7 +307,7 @@ const FlowsPage = () => {
           />
         </div>
       </div>
-      <ShowPoweredBy />
+      <ShowPoweredBy show={platform?.showPoweredBy} />
     </div>
   );
 };

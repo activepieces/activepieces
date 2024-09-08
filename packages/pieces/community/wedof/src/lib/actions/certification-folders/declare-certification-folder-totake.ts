@@ -37,6 +37,24 @@ export const declareCertificationFolderToTake = createAction({
       displayName: "Lieu de passage de l'examen",
       required: false,
     }),
+    tiersTemps: Property.StaticDropdown({
+      displayName: "Tiers temps",
+      description: "Indique si le candidat a besoin d'un tiers temps",
+      required: true,
+      options: {
+          disabled: false,
+          options: [
+            {
+              label: "Non",
+              value: 'false',
+            },
+            {
+              label: 'Oui',
+              value: 'true',
+            },
+          ],
+        },
+    }),
     comment: Property.LongText({
       displayName: 'Commentaire',
       required: false,
@@ -55,6 +73,7 @@ export const declareCertificationFolderToTake = createAction({
         : null,
       examinationType: context.propsValue.examinationType,
       examinationPlace: context.propsValue.examinationPlace,
+      tiersTemps: context.propsValue.tiersTemps,
       comment: context.propsValue.comment,
     };
     return (

@@ -49,11 +49,11 @@ import {
 } from '@activepieces/shared';
 
 type UseAsDraftOptionProps = {
-  versionIndex: number;
+  versionNumber: number;
   onConfirm: () => void;
 };
 const UseAsDraftDropdownMenuOption = ({
-  versionIndex,
+  versionNumber,
   onConfirm,
 }: UseAsDraftOptionProps) => {
   const { checkAccess } = useAuthorization();
@@ -85,7 +85,7 @@ const UseAsDraftDropdownMenuOption = ({
             {t('Your current draft version will be overwritten with')}{' '}
             <span className="font-semibold">
               {t('version #')}
-              {versionIndex + 1}
+              {versionNumber}
             </span>
           </DialogDescription>
         </DialogHeader>
@@ -107,12 +107,12 @@ type FlowVersionDetailsCardProps = {
   flowVersion: FlowVersionMetadata;
   selected: boolean;
   published: boolean;
-  index: number;
+  flowVersionNumber: number;
 };
 const FlowVersionDetailsCard = React.memo(
   ({
     flowVersion,
-    index,
+    flowVersionNumber,
     selected,
     published,
   }: FlowVersionDetailsCardProps) => {
@@ -187,7 +187,7 @@ const FlowVersionDetailsCard = React.memo(
             {formatUtils.formatDate(new Date(flowVersion.created))}
           </p>
           <p className="flex gap-1 text-xs text-muted-foreground">
-            {t('Version')} {index + 1}
+            {t('Version')} {flowVersionNumber}
           </p>
         </div>
         <div className="flex-grow"></div>
@@ -243,7 +243,7 @@ const FlowVersionDetailsCard = React.memo(
               </DropdownMenuItem>
               {flowVersion.state !== FlowVersionState.DRAFT && (
                 <UseAsDraftDropdownMenuOption
-                  versionIndex={index}
+                  versionNumber={flowVersionNumber}
                   onConfirm={handleOverwriteDraft}
                 ></UseAsDraftDropdownMenuOption>
               )}

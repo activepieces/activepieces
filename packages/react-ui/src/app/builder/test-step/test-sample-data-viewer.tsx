@@ -22,6 +22,7 @@ type TestSampleDataViewerProps = {
   errorMessage: string | undefined;
   lastTestDate: string | undefined;
   type: ActionType | TriggerType;
+  children?: React.ReactNode;
 };
 
 const TestSampleDataViewer = React.memo(
@@ -34,57 +35,63 @@ const TestSampleDataViewer = React.memo(
     errorMessage,
     lastTestDate,
     type,
+    children,
   }: TestSampleDataViewerProps) => {
     const formattedData = useMemo(
       () => formatUtils.formatStepInputAndOutput(currentSelectedData, type),
       [currentSelectedData, type],
     );
     return (
-      <div className="flex-grow flex flex-col w-full text-start gap-4">
-        <div className="flex justify-center items-center">
-          <div className="flex flex-col flex-grow gap-2">
-            <div className="text-md flex gap-2 justyf-center items-center">
-              {errorMessage ? (
-                <>
-                  <StepStatusIcon
-                    status={StepOutputStatus.FAILED}
-                    size="5"
-                  ></StepStatusIcon>
-                  <span>{t('Testing Failed')}</span>
-                </>
-              ) : (
-                <>
-                  <StepStatusIcon
-                    status={StepOutputStatus.SUCCEEDED}
-                    size="5"
-                  ></StepStatusIcon>
-                  <span>{t('Tested Successfully')}</span>
-                </>
-              )}
+      <>
+        {!isTesting && children}
+        <div className="flex-grow flex flex-col w-full text-start gap-4">
+          <div className="flex justify-center items-center">
+            <div className="flex flex-col flex-grow gap-1">
+              <div className="text-md flex gap-1 justyf-center items-center">
+                {errorMessage ? (
+                  <>
+                    <StepStatusIcon
+                      status={StepOutputStatus.FAILED}
+                      size="5"
+                    ></StepStatusIcon>
+                    <span>{t('Testing Failed')}</span>
+                  </>
+                ) : (
+                  <>
+                    <StepStatusIcon
+                      status={StepOutputStatus.SUCCEEDED}
+                      size="5"
+                    ></StepStatusIcon>
+                    <span>{t('Tested Successfully')}</span>
+                  </>
+                )}
+              </div>
+              <div className="text-muted-foreground text-xs">
+                {lastTestDate &&
+                  !errorMessage &&
+                  formatUtils.formatDate(new Date(lastTestDate))}
+              </div>
             </div>
-            <div className="text-muted-foreground text-xs">
-              {lastTestDate && formatUtils.formatDate(new Date(lastTestDate))}
-            </div>
+            <TestButtonTooltip disabled={!isValid}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!isValid || isSaving}
+                keyboardShortcut="G"
+                onKeyboardShortcut={onRetest}
+                onClick={onRetest}
+                loading={isTesting}
+              >
+                {t('Retest')}
+              </Button>
+            </TestButtonTooltip>
           </div>
-          <TestButtonTooltip disabled={!isValid}>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!isValid || isSaving}
-              keyboardShortcut="G"
-              onKeyboardShortcut={onRetest}
-              onClick={onRetest}
-              loading={isTesting}
-            >
-              {t('Retest')}
-            </Button>
-          </TestButtonTooltip>
+          <JsonViewer
+            json={errorMessage ?? formattedData}
+            title={t('Output')}
+          ></JsonViewer>
         </div>
-        <JsonViewer
-          json={errorMessage ?? formattedData}
-          title={t('Output')}
-        ></JsonViewer>
-      </div>
+      </>
     );
   },
 );

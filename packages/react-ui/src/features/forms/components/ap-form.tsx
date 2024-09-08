@@ -22,8 +22,10 @@ import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import {
+  ApFlagId,
   FileResponseInterface,
   FormInput,
   FormInputType,
@@ -85,6 +87,9 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
   const schema = buildSchema(form.props.inputs);
 
   const [markdownResponse, setMarkdownResponse] = useState<string | null>(null);
+  const { data: showPoweredBy } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_POWERED_BY_IN_FORM,
+  );
 
   const reactForm = useForm<Static<typeof schema>>({
     defaultValues: {},
@@ -239,7 +244,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                 )}
               </CardContent>
             </Card>
-            <ShowPoweredBy showOnCloud={true} />
+            <ShowPoweredBy show={showPoweredBy ?? false} />
           </form>
         </Form>
       </div>

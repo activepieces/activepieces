@@ -45,15 +45,15 @@ export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
 
     return (
       <div
-        className={`flex ${isUser ? 'justify-end' : 'justify-start'} m-4`}
+        className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-2 m-2`}
         ref={ref}
       >
         {isBot && (
           <>
-            <div className="w-7 h-7 border rounded-full border-gray-300 dark:border-gray-600 flex items-center justify-center">
-              <Bot className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <div className="min-w-8 min-h-8 max-h-8 max-w-8 border rounded-full border-gray-300 dark:border-gray-600 flex items-center justify-center">
+              <Bot className="h-6 w-6 text-gray-500 dark:text-gray-400" />
             </div>
-            <div className={`w-full pl-7 pr-7 mb-6`}>
+            <div className={`w-full mb-6 min-w-0`}>
               {!isCode ? (
                 <ChatBox>
                   <p>{message.content}</p>

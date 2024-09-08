@@ -71,7 +71,8 @@ const TestTriggerSection = React.memo(
     const isSimulation =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.testStrategy ===
       TriggerTestStrategy.SIMULATION;
-
+    const mockData =
+      pieceModel?.triggers?.[formValues.settings.triggerName].sampleData;
     useEffect(() => {
       setIsValid(form.formState.isValid);
     }, [form.formState.isValid]);
@@ -86,7 +87,16 @@ const TestTriggerSection = React.memo(
     const [currentSelectedId, setCurrentSelectedId] = useState<
       string | undefined
     >(undefined);
-
+    const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
+      useMutation({
+        mutationFn: () => {
+          return triggerEventsApi.saveTriggerMockdata(flowId, mockData);
+        },
+        onSuccess: async (result) => {
+          updateCurrentSelectedData(result);
+          refetch();
+        },
+      });
     const {
       mutate: simulateTrigger,
       isPending: isSimulating,
@@ -100,7 +110,7 @@ const TestTriggerSection = React.memo(
         await triggerEventsApi.startWebhookSimulation(flowId);
         // TODO REFACTOR: replace this with a websocket
         let attempt = 0;
-        while (attempt < 30) {
+        while (attempt < 1000) {
           const newData = await triggerEventsApi.list({
             flowId,
             cursor: undefined,
@@ -113,17 +123,18 @@ const TestTriggerSection = React.memo(
           await new Promise((resolve) => setTimeout(resolve, 2000));
           attempt++;
         }
-        await triggerEventsApi.deleteWebhookSimulation(flowId);
         return [];
       },
-      onSuccess: (results) => {
+      onSuccess: async (results) => {
         if (results.length > 0) {
           updateCurrentSelectedData(results[0]);
           refetch();
+          await triggerEventsApi.deleteWebhookSimulation(flowId);
         }
       },
-      onError: (error) => {
+      onError: async (error) => {
         console.error(error);
+        await triggerEventsApi.deleteWebhookSimulation(flowId);
         setErrorMessage(
           testStepUtils.formatErrorMessage(
             t('There is no sample data available found for this trigger.'),
@@ -188,7 +199,9 @@ const TestTriggerSection = React.memo(
 
     const sampleDataSelected =
       !isNil(currentSelectedData) || !isNil(errorMessage);
-    const isTestedBefore = pollResults && pollResults.data.length > 0;
+    const isTestedBefore = !isNil(
+      form.getValues().settings.inputUiInfo?.lastTestDate,
+    );
 
     const watchSelectedData = useWatch({
       name: 'settings.inputUiInfo.currentSelectedData',
@@ -209,85 +222,96 @@ const TestTriggerSection = React.memo(
     }, [watchSelectedData]);
 
     if (isPieceLoading) {
-      return <></>;
+      return null;
     }
 
     return (
-      <>
-        {isTestedBefore && (
-          <>
-            <Select
-              value={currentSelectedId}
-              onValueChange={(value) => {
-                const triggerEvent = pollResults.data.find(
-                  (triggerEvent) => triggerEvent.id === value,
-                );
-                if (triggerEvent) {
-                  updateCurrentSelectedData(triggerEvent);
-                }
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={t('Select a sample data')} />
-              </SelectTrigger>
-              <SelectContent>
-                {pollResults &&
-                  pollResults.data.map((triggerEvent, index) => (
-                    <SelectItem key={triggerEvent.id} value={triggerEvent.id}>
-                      {t('Result #') + (index + 1)}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            <span className="text-sm text-muted-foreground">
-              {t('The sample data can be used in the next steps.')}
-            </span>
-          </>
-        )}
-        <div className="flex-grow flex justify-center items-center w-full h-full">
-          {sampleDataSelected && !isSimulating && (
-            <TestSampleDataViewer
-              onRetest={isSimulation ? simulateTrigger : pollTrigger}
-              isValid={isValid}
-              isSaving={isSaving}
-              isTesting={isPollingTesting}
-              currentSelectedData={currentSelectedData}
-              errorMessage={errorMessage}
-              lastTestDate={lastTestDate}
-              type={formValues.type}
-            ></TestSampleDataViewer>
-          )}
-
-          {isSimulation && isSimulating && (
-            <div className="flex flex-col gap-4 w-full">
-              <div className="flex gap-2 items-center justify-center w-full">
-                <LoadingSpinner className="w-4 h-4"></LoadingSpinner>
-                <div>{t('Testing Trigger')}</div>
-                <div className="flex-grow"></div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    resetSimulation();
+      <div>
+        {sampleDataSelected && !isSimulating && !isSavingMockdata && (
+          <TestSampleDataViewer
+            onRetest={isSimulation ? simulateTrigger : pollTrigger}
+            isValid={isValid}
+            isSaving={isSaving}
+            isTesting={isPollingTesting}
+            currentSelectedData={currentSelectedData}
+            errorMessage={errorMessage}
+            lastTestDate={lastTestDate}
+            type={formValues.type}
+          >
+            {pollResults?.data && (
+              <div className="mb-3">
+                <Select
+                  value={currentSelectedId}
+                  onValueChange={(value) => {
+                    const triggerEvent = pollResults?.data.find(
+                      (triggerEvent) => triggerEvent.id === value,
+                    );
+                    if (triggerEvent) {
+                      updateCurrentSelectedData(triggerEvent);
+                    }
                   }}
                 >
-                  {' '}
-                  {t('Cancel')}{' '}
-                </Button>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('Select a sample data')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pollResults &&
+                      pollResults.data.map((triggerEvent, index) => (
+                        <SelectItem
+                          key={triggerEvent.id}
+                          value={triggerEvent.id}
+                        >
+                          {t('Result #') + (index + 1)}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-sm mt-2 text-muted-foreground">
+                  {t('The sample data can be used in the next steps.')}
+                </span>
               </div>
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{t('Action Required!')}</AlertTitle>
-                <AlertDescription>
-                  {t('Perform the action you want to test.')}
-                </AlertDescription>
-              </Alert>
+            )}
+          </TestSampleDataViewer>
+        )}
+
+        {isSimulation && isSimulating && (
+          <div className="flex flex-col gap-4 w-full">
+            <div className="flex gap-2 items-center justify-center w-full">
+              <LoadingSpinner className="w-4 h-4"></LoadingSpinner>
+              <div>{t('Testing Trigger')}</div>
+              <div className="flex-grow"></div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  resetSimulation();
+                }}
+              >
+                {' '}
+                {t('Cancel')}{' '}
+              </Button>
             </div>
-          )}
-          {!isTestedBefore &&
-            !sampleDataSelected &&
-            isSimulation &&
-            !isSimulating && (
+            <Alert className="bg-warning/5 border-warning/5 ">
+              <AlertCircle className="h-4 w-4 text-warning" />
+              <div className="flex flex-col gap-1">
+                <AlertTitle>{t('Action Required')}:</AlertTitle>
+                <AlertDescription>
+                  {t('testPieceWebhookTriggerNote', {
+                    pieceName: pieceModel.displayName,
+                    triggerName:
+                      pieceModel.triggers[formValues.settings.triggerName]
+                        .displayName,
+                  })}
+                </AlertDescription>
+              </div>
+            </Alert>
+          </div>
+        )}
+        {!isTestedBefore &&
+          !sampleDataSelected &&
+          isSimulation &&
+          !isSimulating && (
+            <div className="flex justify-center flex-col gap-2 items-center">
               <TestButtonTooltip disabled={!isValid}>
                 <Button
                   variant="outline"
@@ -301,8 +325,24 @@ const TestTriggerSection = React.memo(
                   {t('Test Trigger')}
                 </Button>
               </TestButtonTooltip>
-            )}
-          {!isTestedBefore && !sampleDataSelected && !isSimulation && (
+
+              {!isNil(mockData) && (
+                <>
+                  {t('Or')}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => saveMockAsSampleData()}
+                    loading={isSavingMockdata}
+                  >
+                    {t('Use Mock Data')}
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        {!isTestedBefore && !sampleDataSelected && !isSimulation && (
+          <div className="flex justify-center">
             <TestButtonTooltip disabled={!isValid}>
               <Button
                 variant="outline"
@@ -317,9 +357,9 @@ const TestTriggerSection = React.memo(
                 {t('Load Sample Data')}
               </Button>
             </TestButtonTooltip>
-          )}
-        </div>
-      </>
+          </div>
+        )}
+      </div>
     );
   },
 );

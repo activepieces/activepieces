@@ -24,7 +24,6 @@ export class FlowExecutorContext {
     tasks: number
     tags: readonly string[]
     steps: Readonly<Record<string, StepOutput>>
-    currentState: Record<string, unknown>
     pauseRequestId: string
     verdict: ExecutionVerdict
     verdictResponse: VerdictResponse | undefined
@@ -42,7 +41,6 @@ export class FlowExecutorContext {
         this.steps = copyFrom?.steps ?? {}
         this.pauseRequestId = copyFrom?.pauseRequestId ?? nanoid()
         this.duration = copyFrom?.duration ?? -1
-        this.currentState = copyFrom?.currentState ?? {}
         this.verdict = copyFrom?.verdict ?? ExecutionVerdict.RUNNING
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
         this.error = copyFrom?.error ?? undefined
@@ -128,10 +126,6 @@ export class FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
             tasks: this.tasks,
-            currentState: {
-                ...this.currentState,
-                [stepName]: stepOutput.output,
-            },
             ...spreadIfDefined('error', error),
             steps,
         })
@@ -245,6 +239,31 @@ export class FlowExecutorContext {
             }
         }
     }
+    public currentState(): Record<string, unknown> {
+        let flattenedSteps: Record<string, unknown> = extractOutput(this.steps)
+        let targetMap = this.steps
+        this.currentPath.path.forEach(([stepName, iteration]) => {
+            const stepOutput = targetMap[stepName]
+            if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
+                throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
+            }
+            targetMap = stepOutput.output.iterations[iteration]
+            flattenedSteps = {
+                ...flattenedSteps,
+                ...extractOutput(targetMap),
+            }
+        })
+        return flattenedSteps
+    }
+
+
+}
+
+function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
+    return Object.entries(steps).reduce((acc: Record<string, unknown>, [stepName, step]) => {
+        acc[stepName] = step.output
+        return acc
+    }, {} as Record<string, unknown>)
 }
 
 function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput> }): Record<string, StepOutput> {

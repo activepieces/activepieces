@@ -27,6 +27,7 @@ const ReturnLoopedgeButton = React.memo((props: ReturnLoopedgeButtonProps) => {
       path={edgePath}
       interactionWidth={0}
       style={{ strokeWidth: 1.5 }}
+      className="cursor-default"
     />
   );
 });

@@ -255,7 +255,12 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                     </div>
 
                     {!readonly && (
-                      <div onClick={(e) => e.stopPropagation()} className=" ">
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
+                      >
                         <DropdownMenu
                           open={openStepActionsMenu}
                           onOpenChange={(open) => {
@@ -321,6 +326,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                                     e.preventDefault();
                                     deleteStep();
                                     setOpenStepActionsMenu(false);
+                                    setAllowCanvasPanning(true);
                                   }}
                                 >
                                   <StepActionWrapper>

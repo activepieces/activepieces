@@ -116,7 +116,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               <div className="flex justify-center items-center gap-2">
                 {children}
                 <span className="flex-grow text-xs tracking-widest text-muted-foreground">
-                  {!isEscape && (isMac ? '⌘' : 'Ctrl')}{' '}
+                  {!isEscape && (isMac ? '⌘' : 'Ctrl')}
+                  {' + '}
                   {keyboardShortcut.toString().toLocaleUpperCase()}
                 </span>
               </div>

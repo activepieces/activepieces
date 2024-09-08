@@ -223,6 +223,7 @@ const FolderFilterList = () => {
     mutationFn: async (data) => {
       return await foldersApi.create({
         displayName: data.displayName,
+        projectId: authenticationSession.getProjectId()!,
       });
     },
     onSuccess: (folder) => {

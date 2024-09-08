@@ -14,4 +14,6 @@ export enum Permission {
     RETRY_RUN = 'RETRY_RUN',
     READ_ISSUES = 'READ_ISSUES',
     WRITE_ISSUES = 'WRITE_ISSUES',
+    READ_FOLDER = 'READ_FOLDER',
+    WRITE_FOLDER = 'WRITE_FOLDER',
 }

@@ -50,8 +50,7 @@ const BranchSettings = React.memo(({ readonly }: BranchSettingsProps) => {
   };
 
   const handleOr = () => {
-    append([]);
-    handleAnd(fields.length - 1);
+    append([[emptyCondition]]);
   };
 
   return (

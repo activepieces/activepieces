@@ -85,7 +85,6 @@
             "handbook/engineering/pre-releases",
             "handbook/engineering/team",
             "handbook/engineering/how-we-work",
-            "handbook/engineering/stack",
             "handbook/engineering/hiring"
           ]
         }
@@ -164,6 +163,18 @@
           "group": "Git Sync",
           "icon": "git",
           "pages": ["endpoints/git-repos/schema", "endpoints/git-repos/pull"]
+        },
+        {
+          "group": "Folders",
+          "icon": "folder",
+          "pages": [
+            "endpoints/folders/schema",
+            "endpoints/folders/create",
+            "endpoints/folders/update",
+            "endpoints/folders/get",
+            "endpoints/folders/list",
+            "endpoints/folders/delete"
+          ]
         }
       ]
     },
@@ -184,25 +195,24 @@
         "install/overview",
         "install/options/docker",
         "install/options/docker-compose",
-        "install/options/easypanel",
-        "install/options/aws",
-        "install/options/gcp"
+        {
+          "group": "Others Options",
+          "pages": [
+            "install/options/easypanel",
+            "install/options/aws",
+            "install/options/gcp"
+          ]
+        }
       ]
     },
     {
-      "group": "Reference",
+      "group": "Configuration",
       "pages": [
-        {
-          "group": "Configurations",
-          "icon": "gear",
-          "pages": [
-            "install/configurations/environment-variables",
-            "install/configurations/setup-app-webhooks"
-          ]
-        },
-        "install/setup-ssl",
-        "install/enterprise",
-        "install/troubleshooting"
+        "install/configuration/overview",
+        "install/configuration/environment-variables",
+        "install/configuration/setup-app-webhooks",
+        "install/configuration/setup-ssl",
+        "install/configuration/troubleshooting"
       ]
     },
     {

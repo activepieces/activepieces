@@ -39,7 +39,7 @@ export const newMessage = createTrigger({
   description: 'Triggers when a new message is received',
   props: {
     info: slackInfo,
-    channel: slackChannel(true),
+    channel: slackChannel(false),
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: sampleData,
@@ -57,6 +57,9 @@ export const newMessage = createTrigger({
   },
 
   test: async (context) => {
+    if (!context.propsValue.channel) {
+      return [sampleData];
+    }
     const client = new WebClient(context.auth.access_token);
     const response = await client.conversations.history({
       channel: context.propsValue.channel,
@@ -77,7 +80,10 @@ export const newMessage = createTrigger({
 
   run: async (context) => {
     const payloadBody = context.payload.body as PayloadBody;
-    if (payloadBody.event.channel === context.propsValue.channel) {
+    if (
+      !context.propsValue.channel ||
+      payloadBody.event.channel === context.propsValue.channel
+    ) {
       return [payloadBody.event];
     }
 

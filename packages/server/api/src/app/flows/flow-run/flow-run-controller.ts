@@ -1,9 +1,12 @@
 import {
+    ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApId,
     assertNotNullOrUndefined,
+    ErrorCode,
     ExecutionType,
     FlowRun,
+    isNil,
     ListFlowRunsRequestQuery,
     Permission,
     PrincipalType,
@@ -11,7 +14,8 @@ import {
     RetryFlowRequestBody,
     SeekPage,
 
-    SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+    SERVICE_KEY_SECURITY_OPENAPI,
+} from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
     Type,
@@ -65,23 +69,34 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
                 headers,
                 queryParams,
             },
+            checkRequestId: true,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             executionType: ExecutionType.RESUME,
         })
     })
 
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
-        await flowRunService.retry({
+        const flowRun = await flowRunService.retry({
             flowRunId: req.params.id,
-            strategy: req.query.strategy,
+            strategy: req.body.strategy,
         })
+
+        if (isNil(flowRun)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                params: {
+                    id: req.params.id,
+                },
+            })
+        }
+        return flowRun
     })
 
     done()
 }
 
-const FlowRunFiltered = Type.Omit(FlowRun, ['logsFileId', 'terminationReason', 'pauseMetadata'])
-const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['logsFileId', 'terminationReason', 'pauseMetadata', 'steps'])
+const FlowRunFiltered = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata'])
+const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata', 'steps'])
 
 const ListRequest = {
     config: {
@@ -135,7 +150,6 @@ const RetryFlowRequest = {
         params: Type.Object({
             id: ApId,
         }),
-        querystring: RetryFlowRequestBody,
-         
+        body: RetryFlowRequestBody,
     },
 }

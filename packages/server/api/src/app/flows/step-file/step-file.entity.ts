@@ -37,7 +37,7 @@ export const StepFileEntity = new EntitySchema<StepFileSchema>({
     indices: [
         {
             name: 'step_file_project_id_flow_id_step_name_name',
-            unique: true,
+            unique: false,
             columns: ['projectId', 'flowId', 'stepName', 'name'],
         },
     ],

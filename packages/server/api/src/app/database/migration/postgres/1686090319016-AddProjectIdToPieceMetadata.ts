@@ -8,7 +8,7 @@ implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info('[AddProjectIdToPieceMetadata1686090319016] up')
         await queryRunner.query(
-            'DROP INDEX "public"."idx_piece_metadata_name_version"',
+            'DROP INDEX "idx_piece_metadata_name_version"',
         )
         await queryRunner.query(
             'ALTER TABLE "piece_metadata" ADD "projectId" character varying',
@@ -27,7 +27,7 @@ implements MigrationInterface {
             'ALTER TABLE "piece_metadata" DROP CONSTRAINT "fk_piece_metadata_project_id"',
         )
         await queryRunner.query(
-            'DROP INDEX "public"."idx_piece_metadata_name_project_id_version"',
+            'DROP INDEX "idx_piece_metadata_name_project_id_version"',
         )
         await queryRunner.query(
             'ALTER TABLE "piece_metadata" DROP COLUMN "projectId"',

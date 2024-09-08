@@ -1,11 +1,12 @@
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { memo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
+import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { Button } from '@/components/ui/button';
-import { FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { FormField } from '@/components/ui/form';
 import {
   Select,
   SelectAction,
@@ -32,13 +33,18 @@ import { appConnectionsHooks } from '../../../../features/connections/lib/app-co
 type ConnectionSelectProps = {
   disabled: boolean;
   piece: PieceMetadataModelSummary | PieceMetadataModel;
+  isTrigger: boolean;
 };
 const addBrackets = (str: string) => `{{connections['${str}']}}`;
-const removeBrackets = (str: string) =>
-  str.replace(
+const removeBrackets = (str: string | undefined) => {
+  if (isNil(str)) {
+    return undefined;
+  }
+  return str.replace(
     /\{\{connections\['(.*?)'\]\}\}/g,
     (_, connectionName) => connectionName,
   );
+};
 const ConnectionSelect = memo((params: ConnectionSelectProps) => {
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
@@ -70,7 +76,14 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
             </Select>
           )}
           {!isLoading && (
-            <FormItem key={field.value}>
+            <AutoFormFieldWrapper
+              property={params.piece.auth!}
+              propertyName="auth"
+              field={field as unknown as ControllerRenderProps}
+              disabled={params.disabled}
+              hideDescription={true}
+              allowDynamicValues={!params.isTrigger}
+            >
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
                 key={reconnectConnection?.name || 'newConnection'}
@@ -82,7 +95,6 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 open={connectionDialogOpen}
                 setOpen={setConnectionDialogOpen}
               ></CreateOrEditConnectionDialog>
-              <FormLabel>{t('Connection')}</FormLabel>
               <Select
                 open={selectConnectionOpen}
                 onOpenChange={setSelectConnectionOpen}
@@ -173,7 +185,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     })}
                 </SelectContent>
               </Select>
-            </FormItem>
+            </AutoFormFieldWrapper>
           )}
         </>
       )}

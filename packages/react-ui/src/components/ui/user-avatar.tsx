@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { LogOut, SunMoon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 
@@ -18,8 +19,9 @@ import { TextWithIcon } from './text-with-icon';
 
 export function UserAvatar() {
   const { reset } = useTelemetry();
+  const { embedState } = useEmbedding();
   const user = authenticationSession.getCurrentUser();
-  if (!user) {
+  if (!user || embedState.isEmbedded) {
     return null;
   }
   return (

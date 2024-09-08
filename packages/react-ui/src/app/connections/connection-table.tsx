@@ -1,8 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Dispatch, SetStateAction, useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -52,10 +51,11 @@ const PieceIconWithPieceName = ({ pieceName }: PieceIconWithPieceNameProps) => {
 
 const DeleteConnectionColumn = ({
   row,
+  setRefresh,
 }: {
   row: RowDataWithActions<AppConnection>;
+  setRefresh: Dispatch<SetStateAction<number>>;
 }) => {
-  const [, setSearchParams] = useSearchParams();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
@@ -72,9 +72,7 @@ const DeleteConnectionColumn = ({
           )}
           mutationFn={() =>
             appConnectionsApi.delete(row.id).then((data) => {
-              const newQueryParameters: URLSearchParams = new URLSearchParams();
-              newQueryParameters.set('current', new Date().toISOString());
-              setSearchParams(newQueryParameters);
+              setRefresh((prev) => prev + 1);
               return data;
             })
           }
@@ -92,82 +90,91 @@ const DeleteConnectionColumn = ({
     </div>
   );
 };
-const columns: ColumnDef<RowDataWithActions<AppConnection>>[] = [
-  {
-    accessorKey: 'pieceName',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('App')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          <PieceIconWithPieceName pieceName={row.original.pieceName} />
-        </div>
-      );
+const columns: (
+  setRefresh: Dispatch<SetStateAction<number>>,
+) => ColumnDef<RowDataWithActions<AppConnection>>[] = (setRefresh) => {
+  return [
+    {
+      accessorKey: 'pieceName',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('App')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            <PieceIconWithPieceName pieceName={row.original.pieceName} />
+          </div>
+        );
+      },
     },
-  },
-  {
-    accessorKey: 'name',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Name')} />
-    ),
-    cell: ({ row }) => {
-      return <div className="text-left">{row.original.name}</div>;
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Name')} />
+      ),
+      cell: ({ row }) => {
+        return <div className="text-left">{row.original.name}</div>;
+      },
     },
-  },
-  {
-    accessorKey: 'status',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Status')} />
-    ),
-    cell: ({ row }) => {
-      const status = row.original.status;
-      const { variant, icon: Icon } = appConnectionUtils.getStatusIcon(status);
-      return (
-        <div className="text-left">
-          <StatusIconWithText
-            icon={Icon}
-            text={formatUtils.convertEnumToHumanReadable(status)}
-            variant={variant}
-          />
-        </div>
-      );
+    {
+      accessorKey: 'status',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Status')} />
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const { variant, icon: Icon } =
+          appConnectionUtils.getStatusIcon(status);
+        return (
+          <div className="text-left">
+            <StatusIconWithText
+              icon={Icon}
+              text={formatUtils.convertEnumToHumanReadable(status)}
+              variant={variant}
+            />
+          </div>
+        );
+      },
     },
-  },
-  {
-    accessorKey: 'created',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Created')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
-        </div>
-      );
+    {
+      accessorKey: 'created',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Created')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {formatUtils.formatDate(new Date(row.original.created))}
+          </div>
+        );
+      },
     },
-  },
-  {
-    accessorKey: 'updated',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Updated')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.updated))}
-        </div>
-      );
+    {
+      accessorKey: 'updated',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Updated')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {formatUtils.formatDate(new Date(row.original.updated))}
+          </div>
+        );
+      },
     },
-  },
-  {
-    accessorKey: 'actions',
-    header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
-    cell: ({ row }) => {
-      return <DeleteConnectionColumn row={row.original} />;
+    {
+      accessorKey: 'actions',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="" />
+      ),
+      cell: ({ row }) => {
+        return (
+          <DeleteConnectionColumn row={row.original} setRefresh={setRefresh} />
+        );
+      },
     },
-  },
-];
+  ];
+};
 
 const filters = [
   {
@@ -223,7 +230,7 @@ function AppConnectionsTable() {
         </div>
       </div>
       <DataTable
-        columns={columns}
+        columns={columns(setRefresh)}
         fetchData={fetchData}
         refresh={refresh}
         filters={filters}

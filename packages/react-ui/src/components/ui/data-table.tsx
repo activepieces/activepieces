@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { t } from 'i18next';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
@@ -25,6 +26,13 @@ import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from './select';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
 
 export type DataWithId = {
@@ -32,6 +40,7 @@ export type DataWithId = {
 };
 export type RowDataWithActions<TData extends DataWithId> = TData & {
   delete: () => void;
+  update: (payload: Partial<TData>) => void;
 };
 
 type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>[]> = {
@@ -122,6 +131,7 @@ export function DataTable<
 
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;
+  const startingLimit = searchParams.get('limit') || '10';
   const [currentCursor, setCurrentCursor] = useState<string | undefined>(
     startingCursor,
   );
@@ -157,10 +167,17 @@ export function DataTable<
         createdAfter: params.get('createdAfter') ?? undefined,
         createdBefore: params.get('createdBefore') ?? undefined,
       });
-      const newData = response.data.map((row) => ({
+      const newData = response.data.map((row, index) => ({
         ...row,
         delete: () => {
           setDeletedRows([...deletedRows, row]);
+        },
+        update: (payload: Partial<TData>) => {
+          setTableData((prevData) => {
+            const newData = [...prevData];
+            newData[index] = { ...newData[index], ...payload };
+            return newData;
+          });
         },
       }));
       setTableData(newData);
@@ -179,6 +196,11 @@ export function DataTable<
     columns,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: parseInt(startingLimit),
+      },
+    },
   });
 
   useEffect(() => {
@@ -204,11 +226,12 @@ export function DataTable<
         if (currentCursor) {
           newParams.set('cursor', currentCursor);
         }
+        newParams.set('limit', `${table.getState().pagination.pageSize}`);
         return newParams;
       },
       { replace: true },
     );
-  }, [currentCursor]);
+  }, [currentCursor, table.getState().pagination.pageSize]);
 
   useEffect(() => {
     fetchDataAndUpdateState(searchParams);
@@ -298,21 +321,42 @@ export function DataTable<
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
+        <p className="text-sm font-medium">Rows per page</p>
+        <Select
+          value={`${table.getState().pagination.pageSize}`}
+          onValueChange={(value) => {
+            table.setPageSize(Number(value));
+          }}
+        >
+          <SelectTrigger className="h-9 min-w-[70px] w-auto">
+            <SelectValue placeholder={table.getState().pagination.pageSize} />
+          </SelectTrigger>
+          <SelectContent side="top">
+            {[10, 30, 50].map((pageSize) => (
+              <SelectItem key={pageSize} value={`${pageSize}`}>
+                {pageSize}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button
           variant="outline"
           size="sm"
           onClick={() => setCurrentCursor(previousPageCursor)}
           disabled={!previousPageCursor}
         >
-          Previous
+          {t('Previous')}
         </Button>
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setCurrentCursor(nextPageCursor)}
+          onClick={() => {
+            console.log('setCurrentCursor', nextPageCursor);
+            setCurrentCursor(nextPageCursor);
+          }}
           disabled={!nextPageCursor}
         >
-          Next
+          {t('Next')}
         </Button>
       </div>
     </div>

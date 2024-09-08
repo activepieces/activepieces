@@ -1,4 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
+import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -23,7 +24,6 @@ import {
   Trigger,
   TriggerType,
   debounce,
-  isNil,
 } from '@activepieces/shared';
 
 import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
@@ -142,15 +142,6 @@ const StepSettingsContainer = React.memo(
       name: 'settings.sourceCode',
       control: form.control,
     });
-    const actionName = useWatch({
-      name: 'settings.actionName',
-      control: form.control,
-    });
-    const triggerName = useWatch({
-      name: 'settings.triggerName',
-      control: form.control,
-    });
-
     const inputUIInfo = useWatch({
       name: 'settings.inputUiInfo',
       control: form.control,
@@ -165,38 +156,19 @@ const StepSettingsContainer = React.memo(
       control: form.control,
     });
 
-    const getDefaultName = (
-      step: Action | Trigger,
-      pieceModel: PieceMetadataModel | undefined,
-    ) => {
-      const name =
-        step.type === TriggerType.PIECE
-          ? step.settings.triggerName
-          : step.settings.actionName;
-      const item =
-        step.type === TriggerType.PIECE
-          ? pieceModel?.triggers[name]
-          : pieceModel?.actions[name];
-      return isNil(name) || isNil(item) ? step.displayName : item.displayName;
-    };
+    const previousSavedStep = useRef<Action | Trigger | null>(null);
 
-    useUpdateEffect(() => {
+    useEffect(() => {
       const currentStep = JSON.parse(JSON.stringify(form.getValues()));
-      const defaultValues = formUtils.buildPieceDefaultValue(
-        currentStep,
-        pieceModel!,
-        false,
-      );
-      defaultValues.displayName = getDefaultName(defaultValues, pieceModel);
-      if (defaultValues.type === TriggerType.PIECE) {
-        debouncedTrigger(defaultValues);
-      } else {
-        debouncedAction(defaultValues as Action);
+      if (previousSavedStep.current === null) {
+        previousSavedStep.current = currentStep;
+        return;
       }
-    }, [actionName, triggerName]);
+      if (deepEqual(currentStep, previousSavedStep.current)) {
+        return;
+      }
+      previousSavedStep.current = currentStep;
 
-    useUpdateEffect(() => {
-      const currentStep = form.getValues();
       if (currentStep.type === TriggerType.PIECE) {
         debouncedTrigger(currentStep as Trigger);
       } else {

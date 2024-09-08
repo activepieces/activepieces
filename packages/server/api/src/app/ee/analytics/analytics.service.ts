@@ -1,12 +1,12 @@
-import { AnalyticsReportResponse, flowHelper, FlowStatus, PieceCategory, PlatformId, PopulatedFlow, ProjectId, AnalyticsPieceReportItem, AnalyticsProjectReportItem } from '@activepieces/shared'
+import { ApplicationEventName } from '@activepieces/ee-shared'
+import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsReportResponse, flowHelper, FlowStatus, PieceCategory, PlatformId, PopulatedFlow, ProjectId } from '@activepieces/shared'
+import { auditLogRepo } from '../../ee/audit-logs/audit-event-service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
-import { auditLogRepo } from 'packages/server/api/src/app/ee/audit-logs/audit-event-service'
-import { ApplicationEventName } from '@activepieces/ee-shared'
 
 export const analyticsService = {
     generateReport: async (platformId: PlatformId, projectId?: ProjectId): Promise<AnalyticsReportResponse> => {

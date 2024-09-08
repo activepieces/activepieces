@@ -6,7 +6,7 @@ export class AddPlatformIdToUser1699901161457 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_user_external_id"
+            DROP INDEX "idx_user_external_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "user"
@@ -27,10 +27,10 @@ export class AddPlatformIdToUser1699901161457 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_user_platform_id_external_id"
+            DROP INDEX "idx_user_platform_id_external_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_user_platform_id_email"
+            DROP INDEX "idx_user_platform_id_email"
         `)
         await queryRunner.query(`
             ALTER TABLE "user"

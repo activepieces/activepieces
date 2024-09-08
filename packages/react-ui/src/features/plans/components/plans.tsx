@@ -93,19 +93,24 @@ const Plans: React.FC = () => {
       form.reset({ tasks: project.plan.tasks });
     }
   }, [project, form]);
-
   const { mutate: manageBilling, isPending: isBillingPending } = useMutation({
-    mutationFn: billingApi.portalLink,
-    onSuccess: ({ portalLink }) => (window.location.href = portalLink),
+    mutationFn: async () => {
+      if (subscriptionData?.subscription.subscriptionStatus === 'active') {
+        const { portalLink } = await billingApi.portalLink();
+        window.open(portalLink, '_blank');
+        return;
+      }
+      const { paymentLink } = await billingApi.upgrade();
+      window.open(paymentLink, '_blank');
+    },
+    onSuccess: () => {},
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
-
-  const onManageBillingClick = () => manageBilling();
 
   const { mutate: updateLimitsData, isPending: isUpdateLimitsPending } =
     useMutation<ProjectWithLimits, HttpError, UpdateProjectPlatformRequest>({
       mutationFn: (request) =>
-        projectApi.update(authenticationSession.getProjectId(), request),
+        projectApi.update(authenticationSession.getProjectId()!, request),
       onSuccess: () =>
         toast({
           title: t('Success'),
@@ -153,7 +158,7 @@ const Plans: React.FC = () => {
             <div className="flex flex-col items-center justify-center">
               <Button
                 loading={isBillingPending}
-                onClick={onManageBillingClick}
+                onClick={() => manageBilling()}
                 variant={
                   subscriptionData.subscription.subscriptionStatus === 'active'
                     ? 'default'

@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { isStepFileUrl } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
 
 import { Button } from './ui/button';
 import { toast } from './ui/use-toast';
@@ -152,29 +153,37 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
 
       {
         <>
-          {typeof json !== 'string' && typeof json !== 'object' && (
+          {isNil(json) ? (
             <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
-              {JSON.stringify(json)}
+              {json === null ? 'null' : 'undefined'}
             </pre>
-          )}
-          {typeof json === 'string' && (
-            <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
-              {json}
-            </pre>
-          )}
-          {typeof json === 'object' && (
-            <ReactJson
-              style={{
-                overflowX: 'auto',
-              }}
-              theme={viewerTheme}
-              enableClipboard={false}
-              groupArraysAfterLength={20}
-              displayDataTypes={false}
-              name={false}
-              quotesOnKeys={false}
-              src={json}
-            />
+          ) : (
+            <>
+              {typeof json !== 'string' && typeof json !== 'object' && (
+                <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
+                  {JSON.stringify(json)}
+                </pre>
+              )}
+              {typeof json === 'string' && (
+                <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
+                  {json}
+                </pre>
+              )}
+              {typeof json === 'object' && (
+                <ReactJson
+                  style={{
+                    overflowX: 'auto',
+                  }}
+                  theme={viewerTheme}
+                  enableClipboard={false}
+                  groupArraysAfterLength={20}
+                  displayDataTypes={false}
+                  name={false}
+                  quotesOnKeys={false}
+                  src={json}
+                />
+              )}
+            </>
           )}
         </>
       }

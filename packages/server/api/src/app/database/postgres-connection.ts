@@ -32,6 +32,7 @@ import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-mi
 import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
 import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
 import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/1723549873495-ChangeEventRoutingConstraint'
+import { RemoveUniqueConstraintOnStepFile1725570317713 } from './migration/common/1725570317713-RemoveUniqueConstraintOnStepFile'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -143,6 +144,8 @@ import { AddWorkerMachine1720101280025 } from './migration/postgres/172010128002
 import { MigrateAuditEventSchema1723489038729 } from './migration/postgres/1723489038729-MigrateAuditEventSchema'
 import { CreateProxyConfig1724777988812 } from './migration/postgres/1724777988812-CreateProxyConfig'
 import { AddAnalyticsToPlatform1725113652923 } from './migration/postgres/1725113652923-AddAnalyticsToPlatform'
+import { LogFileRelationWithFlowRun1725639666232 } from './migration/postgres/1725639666232-LogFileRelationWithFlowRun'
+import { AddLogsFileIdIndex1725699690971 } from './migration/postgres/1725699690971-AddLogsFileIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -236,6 +239,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeEventRoutingConstraint1723549873495,
         CreateProxyConfig1724777988812,
         AddAnalyticsToPlatform1725113652923,
+        RemoveUniqueConstraintOnStepFile1725570317713,
+        LogFileRelationWithFlowRun1725639666232,
+        AddLogsFileIdIndex1725699690971,
     ]
 
     const edition = system.getEdition()

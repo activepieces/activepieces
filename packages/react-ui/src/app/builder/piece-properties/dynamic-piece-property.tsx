@@ -74,6 +74,17 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
       !isFirstRender.current &&
       !deepEqual(previousValues.current, refresherValues)
     ) {
+      // the field state won't be cleared if you only unset the parent prop value
+      if (propertyMap)
+        Object.keys(propertyMap).forEach((childPropName) => {
+          form.setValue(
+            `settings.input.${props.propertyName}.${childPropName}` as const,
+            null,
+            {
+              shouldValidate: true,
+            },
+          );
+        });
       form.setValue(`settings.input.${props.propertyName}` as const, null, {
         shouldValidate: true,
       });

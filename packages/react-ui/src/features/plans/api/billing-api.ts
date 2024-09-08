@@ -8,4 +8,7 @@ export const billingApi = {
   portalLink() {
     return api.post<{ portalLink: string }>('/v1/project-billing/portal');
   },
+  upgrade() {
+    return api.post<{ paymentLink: string }>('/v1/project-billing/upgrade');
+  },
 };

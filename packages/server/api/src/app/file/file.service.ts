@@ -31,7 +31,7 @@ type DeleteOneParams = {
     projectId: ProjectId
 }
 
-const fileRepo = repoFactory<File>(FileEntity)
+export const fileRepo = repoFactory<File>(FileEntity)
 
 export const fileService = {
     async save({

@@ -28,7 +28,7 @@ export class addtriggerevents1678621361185 implements MigrationInterface {
         await queryRunner.query(
             'ALTER TABLE "trigger_event" DROP CONSTRAINT "fk_trigger_event_project_id"',
         )
-        await queryRunner.query('DROP INDEX "public"."idx_trigger_event_flow_id"')
+        await queryRunner.query('DROP INDEX "idx_trigger_event_flow_id"')
         await queryRunner.query('DROP TABLE "trigger_event"')
     }
 }

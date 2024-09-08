@@ -13,6 +13,7 @@ import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-mi
 import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
 import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
 import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/1723549873495-ChangeEventRoutingConstraint'
+import { RemoveUniqueConstraintOnStepFile1725570317713 } from './migration/common/1725570317713-RemoveUniqueConstraintOnStepFile'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -52,6 +53,8 @@ import { AddPremiumPiecesColumnSqlite1717443603235 } from './migration/sqlite/17
 import { AddUserInvitationSqlite1717943564437 } from './migration/sqlite/1717943564437-AddUserInvitationSqlite'
 import { AddWorkerMachineSqlite1720100928449 } from './migration/sqlite/1720100928449-AddWorkerMachineSqlite'
 import { AddAnalyticsToPlatformSqlite1725151368300 } from './migration/sqlite/1725151368300-AddAnalyticsToPlatformSqlite'
+import { LogFileRelationWithFlowRunSqlite1725637505836 } from './migration/sqlite/1725637505836-LogFileRelationWithFlowRunSqlite'
+import { AddLogsFileIdIndexSqlite1725699920020 } from './migration/sqlite/1725699920020-AddLogsFileIdIndexSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -122,6 +125,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddWorkerMachineSqlite1720100928449,
         ChangeEventRoutingConstraint1723549873495,
         AddAnalyticsToPlatformSqlite1725151368300,
+        RemoveUniqueConstraintOnStepFile1725570317713,
+        LogFileRelationWithFlowRunSqlite1725637505836,
+        AddLogsFileIdIndexSqlite1725699920020,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
