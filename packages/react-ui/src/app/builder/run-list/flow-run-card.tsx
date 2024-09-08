@@ -16,7 +16,7 @@ import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { cn, formatUtils } from '@/lib/utils';
-import { FlowRun, PopulatedFlow } from '@activepieces/shared';
+import { FlowRun, isNil, PopulatedFlow } from '@activepieces/shared';
 
 type FlowRunCardProps = {
   run: FlowRun;
@@ -81,12 +81,18 @@ const FlowRunCard = React.memo((params: FlowRunCardProps) => {
         <p className="text-sm font-medium leading-none">
           {formatUtils.formatDate(new Date(run.startTime))}
         </p>
-        {run.duration && (
+        {run.finishTime && (
           <p className="flex gap-1 text-xs text-muted-foreground">
             <StopwatchIcon />
             {t('Took')} {formatUtils.formatDuration(run.duration, false)}
           </p>
         )}
+        {isNil(run.finishTime) ||
+          (!run.finishTime && (
+            <p className="flex gap-1 text-xs text-muted-foreground">
+              {t('Running')}...
+            </p>
+          ))}
       </div>
       <div className="ml-auto font-medium">
         <Button variant="ghost" disabled={isPending}>

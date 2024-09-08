@@ -139,7 +139,8 @@ const FlowRunsPage = () => {
         cell: ({ row }) => {
           return (
             <div className="text-left">
-              {formatUtils.formatDuration(row.original.duration)}
+              {row.original.finishTime &&
+                formatUtils.formatDuration(row.original.duration)}
             </div>
           );
         },
