@@ -242,11 +242,11 @@ const CreateOrEditConnectionDialog = React.memo(
             <DialogTitle>
               {reconnectConnection
                 ? t('Reconnect {displayName} Connection', {
-                  displayName: reconnectConnection.name,
-                })
+                    displayName: reconnectConnection.name,
+                  })
                 : t('Create {displayName} Connection', {
-                  displayName: piece.displayName,
-                })}
+                    displayName: piece.displayName,
+                  })}
             </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>

@@ -1,5 +1,5 @@
 
-process.env.AP_EXECUTION_MODE = 'UNSANDBOXED';
+process.env.AP_EXECUTION_MODE = 'UNSANDBOXED'
 
 /* eslint-disable */
 export default {
