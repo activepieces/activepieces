@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import dotenv from 'dotenv';
 dotenv.config({
-  path: '../assemblyai.env',
+  path: './assemblyai.env',
 });
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
@@ -10,7 +10,7 @@ import OpenAPIParser from '@readme/openapi-parser';
 import { mergician } from 'mergician';
 import { titleCase } from 'title-case';
 
-const generatedPath = '../src/lib/actions/generated/';
+const generatedPath = './src/lib/actions/generated/';
 
 type Generators = {
   props?: (schemas: any) => any;
@@ -35,7 +35,7 @@ const merge = mergician({ appendArrays: true, dedupArrays: true });
 
   let spec: any = merge(
     await OpenAPIParser.parse(specLocation),
-    await OpenAPIParser.parse('./openapi.overrides.yml', {
+    await OpenAPIParser.parse('./scripts/openapi.overrides.yml', {
       validate: {
         schema: false,
         spec: false,
@@ -49,7 +49,6 @@ const merge = mergician({ appendArrays: true, dedupArrays: true });
     const parametersPath = join(generatedPath, paramsName, 'props.ts');
     if (props) {
       let propsJson = createPropsFromSchema(props(spec.components.schemas));
-      console.log(propsJson);
       let propsTs = createTs(propsJson);
 
       const dir = dirname(parametersPath);

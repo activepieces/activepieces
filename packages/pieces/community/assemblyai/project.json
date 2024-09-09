@@ -34,6 +34,28 @@
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
+    },
+    "_generate-params": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx ./scripts/generateFromSpec.ts",
+        "cwd": "packages/pieces/community/assemblyai"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx format:write --files packages/pieces/community/assemblyai/**/*"
+      }
+    },
+    "generate-params": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "nx _generate-params pieces-assemblyai",
+          "nx format pieces-assemblyai"
+        ]
+      }
     }
   }
 }
