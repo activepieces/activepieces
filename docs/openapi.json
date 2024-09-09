@@ -1645,6 +1645,226 @@
           "data"
         ]
       },
+      "flow-template": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "PLATFORM"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "PROJECT"
+                ]
+              }
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pieces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blogUrl": {
+            "type": "string"
+          },
+          "template": {
+            "type": "object",
+            "properties": {
+              "displayName": {
+                "type": "string"
+              },
+              "trigger": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "valid": {
+                        "type": "boolean"
+                      },
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "nextAction": {},
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "PIECE_TRIGGER"
+                        ]
+                      },
+                      "settings": {
+                        "type": "object",
+                        "properties": {
+                          "pieceName": {
+                            "type": "string"
+                          },
+                          "pieceVersion": {
+                            "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
+                            "type": "string"
+                          },
+                          "pieceType": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CUSTOM"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OFFICIAL"
+                                ]
+                              }
+                            ]
+                          },
+                          "packageType": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ARCHIVE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "REGISTRY"
+                                ]
+                              }
+                            ]
+                          },
+                          "triggerName": {
+                            "type": "string"
+                          },
+                          "input": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "inputUiInfo": {
+                            "additionalProperties": true,
+                            "type": "object",
+                            "properties": {
+                              "currentSelectedData": {},
+                              "customizedInputs": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              },
+                              "lastTestDate": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "required": [
+                          "pieceName",
+                          "pieceVersion",
+                          "pieceType",
+                          "packageType",
+                          "input",
+                          "inputUiInfo"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "valid",
+                      "displayName",
+                      "type",
+                      "settings"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "valid": {
+                        "type": "boolean"
+                      },
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "nextAction": {},
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "EMPTY"
+                        ]
+                      },
+                      "settings": {}
+                    },
+                    "required": [
+                      "name",
+                      "valid",
+                      "displayName",
+                      "type",
+                      "settings"
+                    ]
+                  }
+                ]
+              },
+              "valid": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "displayName",
+              "trigger",
+              "valid"
+            ]
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "platformId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "name",
+          "description",
+          "type",
+          "tags",
+          "pieces",
+          "template",
+          "projectId",
+          "platformId"
+        ]
+      },
       "folder": {
         "type": "object",
         "properties": {
@@ -5835,14 +6055,10 @@
                 "properties": {
                   "displayName": {
                     "type": "string"
-                  },
-                  "projectId": {
-                    "type": "string"
                   }
                 },
                 "required": [
-                  "displayName",
-                  "projectId"
+                  "displayName"
                 ]
               }
             }
@@ -8783,6 +8999,10 @@
                           "flowDisplayName": {
                             "type": "string"
                           },
+                          "logsFileId": {
+                            "type": "string",
+                            "nullable": true
+                          },
                           "tasks": {
                             "type": "number"
                           },
@@ -8955,6 +9175,10 @@
                     },
                     "flowDisplayName": {
                       "type": "string"
+                    },
+                    "logsFileId": {
+                      "type": "string",
+                      "nullable": true
                     },
                     "tasks": {
                       "type": "number"
@@ -11296,6 +11520,323 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/flow-templates/{id}": {
+      "get": {
+        "tags": [
+          "flow-templates"
+        ],
+        "description": "Get a flow template",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "flow-templates"
+        ],
+        "description": "Delete a flow template",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/flow-templates/": {
+      "get": {
+        "tags": [
+          "flow-templates"
+        ],
+        "description": "List flow templates",
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "pieces",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "tags",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "search",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "flow-templates"
+        ],
+        "description": "Create a flow template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "template": {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "trigger": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "valid": {
+                                "type": "boolean"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "nextAction": {},
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "PIECE_TRIGGER"
+                                ]
+                              },
+                              "settings": {
+                                "type": "object",
+                                "properties": {
+                                  "pieceName": {
+                                    "type": "string"
+                                  },
+                                  "pieceVersion": {
+                                    "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
+                                    "type": "string"
+                                  },
+                                  "pieceType": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "CUSTOM"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "OFFICIAL"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "packageType": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "ARCHIVE"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "REGISTRY"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "triggerName": {
+                                    "type": "string"
+                                  },
+                                  "input": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                  },
+                                  "inputUiInfo": {
+                                    "additionalProperties": true,
+                                    "type": "object",
+                                    "properties": {
+                                      "currentSelectedData": {},
+                                      "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "lastTestDate": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "pieceName",
+                                  "pieceVersion",
+                                  "pieceType",
+                                  "packageType",
+                                  "input",
+                                  "inputUiInfo"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "valid",
+                              "displayName",
+                              "type",
+                              "settings"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "valid": {
+                                "type": "boolean"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "nextAction": {},
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "EMPTY"
+                                ]
+                              },
+                              "settings": {}
+                            },
+                            "required": [
+                              "name",
+                              "valid",
+                              "displayName",
+                              "type",
+                              "settings"
+                            ]
+                          }
+                        ]
+                      },
+                      "valid": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "displayName",
+                      "trigger",
+                      "valid"
+                    ]
+                  },
+                  "blogUrl": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PROJECT"
+                        ]
+                      }
+                    ]
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "template",
+                  "type"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
           }
         }
       }
