@@ -1,8 +1,5 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { assemblyaiAuth } from '../auth';
 import { getAssemblyAIClient } from '../client';
 import { SubtitleFormat } from 'assemblyai';
 
@@ -19,25 +16,25 @@ export const getSubtitles = createAction({
     format: Property.StaticDropdown({
       displayName: 'Subtitles Format',
       required: true,
-      defaultValue: "srt",
+      defaultValue: 'srt',
       options: {
         options: [
           {
             label: 'SRT',
-            value: 'srt'
+            value: 'srt',
           },
           {
             label: 'VTT',
-            value: 'vtt'
-          }
-        ]
-      }
+            value: 'vtt',
+          },
+        ],
+      },
     }),
     chars_per_caption: Property.Number({
       displayName: 'Number of Characters per Caption',
-      description: "The maximum number of characters per caption",
+      description: 'The maximum number of characters per caption',
       required: false,
-    })
+    }),
   },
   async run(context) {
     const client = getAssemblyAIClient(context);

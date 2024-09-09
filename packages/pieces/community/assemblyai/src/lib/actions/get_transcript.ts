@@ -1,8 +1,5 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { assemblyaiAuth } from '../auth';
 import { getAssemblyAIClient } from '../client';
 
 export const getTranscript = createAction({
@@ -14,7 +11,7 @@ export const getTranscript = createAction({
     id: Property.ShortText({
       displayName: 'Transcript ID',
       required: true,
-    })
+    }),
   },
   async run(context) {
     const client = getAssemblyAIClient(context);

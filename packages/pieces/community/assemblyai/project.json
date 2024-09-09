@@ -15,17 +15,13 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/assemblyai",
         "tsConfig": "packages/pieces/community/assemblyai/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/assemblyai/package.json",
         "main": "packages/pieces/community/assemblyai/src/index.ts",
-        "assets": [
-          "packages/pieces/community/assemblyai/*.md"
-        ],
+        "assets": ["packages/pieces/community/assemblyai/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
@@ -37,9 +33,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     }
   }
 }

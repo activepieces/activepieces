@@ -1,8 +1,5 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../..';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { assemblyaiAuth } from '../auth';
 import { getAssemblyAIClient } from '../client';
 
 export const getSentences = createAction({
@@ -14,11 +11,13 @@ export const getSentences = createAction({
     id: Property.ShortText({
       displayName: 'Transcript ID',
       required: true,
-    })
+    }),
   },
   async run(context) {
     const client = getAssemblyAIClient(context);
-    const sentencesResponse = await client.transcripts.sentences(context.propsValue.id);
+    const sentencesResponse = await client.transcripts.sentences(
+      context.propsValue.id
+    );
     return sentencesResponse;
   },
 });

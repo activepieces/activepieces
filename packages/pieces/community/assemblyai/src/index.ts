@@ -1,18 +1,17 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece } from '@activepieces/pieces-framework';
 import * as actions from './lib/actions';
-
-export const assemblyaiAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  required: true,
-  description: 'You can retrieve your API Key within your AssemblyAI [Account Settings](https://www.assemblyai.com/app/account?utm_source=activepieces).',
-});
+import { assemblyaiAuth } from './lib/auth';
+import { PieceCategory } from '@activepieces/shared';
 
 export const assemblyai = createPiece({
-  displayName: "AssemblyAI",
+  displayName: 'AssemblyAI',
   auth: assemblyaiAuth,
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  description:
+    "Transcribe and extract data from audio using AssemblyAI's Speech AI.",
   minimumSupportedRelease: '0.20.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/assemblyai.png",
-  authors: [],
+  logoUrl: 'https://cdn.activepieces.com/pieces/assemblyai.png',
+  authors: ['AssemblyAI'],
   actions: Object.values(actions),
   triggers: [],
 });
