@@ -25,6 +25,7 @@ const disallowedRoutes = [
   '/v1/otp',
   '/v1/forms/',
   '/v1/authn/local/reset-password',
+  '/v1/user-invitations/accept'
 ];
 
 function isUrlRelative(url: string) {
