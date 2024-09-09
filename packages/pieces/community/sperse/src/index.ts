@@ -4,6 +4,12 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { addOrUpdateContactExtended } from './lib/actions/add-or-update-contact-extended';
+import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
+import { addOrUpdateSubscription } from './lib/actions/add-or-update-subscription';
+import { createInvoice } from './lib/actions/create-invoice';
+import { createProduct } from './lib/actions/create-product';
+import { getContactDetails } from './lib/actions/get-contact-details';
 
 const markdownDescription = `
   Follow these instructions to get your Sperse API Key:
@@ -54,6 +60,13 @@ export const sperse = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/sperse.png',
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
   authors: ['Trayshmhirk'],
-  actions: [],
+  actions: [
+    addOrUpdateContact,
+    addOrUpdateContactExtended,
+    addOrUpdateSubscription,
+    createInvoice,
+    createProduct,
+    getContactDetails,
+  ],
   triggers: [],
 });
