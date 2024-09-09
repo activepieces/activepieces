@@ -148,7 +148,7 @@ export const flagService = {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
                 value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
                     ? this.getThirdPartyRedirectUrl(undefined, undefined)
-                    : undefined,
+                    :`${system.get(SharedSystemProp.FRONTEND_URL)}/redirect` ,
                 created,
                 updated,
             },
