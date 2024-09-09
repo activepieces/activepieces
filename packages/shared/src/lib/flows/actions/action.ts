@@ -92,6 +92,11 @@ export enum BranchOperator {
     NUMBER_IS_EQUAL_TO = 'NUMBER_IS_EQUAL_TO',
     BOOLEAN_IS_TRUE = 'BOOLEAN_IS_TRUE',
     BOOLEAN_IS_FALSE = 'BOOLEAN_IS_FALSE',
+    DATE_IS_BEFORE = 'DATE_IS_BEFORE',
+    DATE_IS_EQUAL = 'DATE_IS_EQUAL',
+    DATE_IS_AFTER = 'DATE_IS_AFTER',
+    LIST_IS_EMPTY = 'LIST_IS_EMPTY',
+    LIST_IS_NOT_EMPTY = 'LIST_IS_NOT_EMPTY',
     EXISTS = 'EXISTS',
     DOES_NOT_EXIST = 'DOES_NOT_EXIST',
 }
@@ -101,6 +106,8 @@ export const singleValueConditions = [
     BranchOperator.DOES_NOT_EXIST,
     BranchOperator.BOOLEAN_IS_TRUE,
     BranchOperator.BOOLEAN_IS_FALSE,
+    BranchOperator.LIST_IS_EMPTY,
+    BranchOperator.LIST_IS_NOT_EMPTY,
 ]
 
 export const textConditions = [
@@ -131,11 +138,19 @@ const BranchOperatorNumberLiterals = [
     Type.Literal(BranchOperator.NUMBER_IS_EQUAL_TO),
 ]
 
+const BranchOperatorDateLiterals = [
+    Type.Literal(BranchOperator.DATE_IS_BEFORE),
+    Type.Literal(BranchOperator.DATE_IS_EQUAL),
+    Type.Literal(BranchOperator.DATE_IS_AFTER),
+]
+
 const BranchOperatorSingleValueLiterals = [
     Type.Literal(BranchOperator.EXISTS),
     Type.Literal(BranchOperator.DOES_NOT_EXIST),
     Type.Literal(BranchOperator.BOOLEAN_IS_TRUE),
     Type.Literal(BranchOperator.BOOLEAN_IS_FALSE),
+    Type.Literal(BranchOperator.LIST_IS_EMPTY),
+    Type.Literal(BranchOperator.LIST_IS_NOT_EMPTY),
 ]
 
 const BranchTextConditionValid = (addMinLength: boolean) => Type.Object({
@@ -151,6 +166,12 @@ const BranchNumberConditionValid = (addMinLength: boolean) => Type.Object({
     operator: Type.Optional(Type.Union(BranchOperatorNumberLiterals)),
 })
 
+const BranchDateConditionValid = (addMinLength: boolean) => Type.Object({
+    firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    operator: Type.Optional(Type.Union(BranchOperatorDateLiterals)),
+})
+
 const BranchSingleValueConditionValid = (addMinLength: boolean) => Type.Object({
     firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
     operator: Type.Optional(Type.Union(BranchOperatorSingleValueLiterals)),
@@ -159,6 +180,7 @@ const BranchSingleValueConditionValid = (addMinLength: boolean) => Type.Object({
 const BranchConditionValid = (addMinLength: boolean) => Type.Union([
     BranchTextConditionValid(addMinLength),
     BranchNumberConditionValid(addMinLength),
+    BranchDateConditionValid(addMinLength),
     BranchSingleValueConditionValid(addMinLength),
 ])
 
@@ -179,6 +201,9 @@ export type BranchTextCondition = Static<typeof BranchTextCondition>
 
 export const BranchNumberCondition = BranchNumberConditionValid(false)
 export type BranchNumberCondition = Static<typeof BranchNumberCondition>
+
+export const BranchDateCondition = BranchDateConditionValid(false)
+export type BranchDateCondition = Static<typeof BranchDateCondition>
 
 export const BranchSingleValueCondition = BranchSingleValueConditionValid(false)
 export type BranchSingleValueCondition = Static<typeof BranchSingleValueCondition>

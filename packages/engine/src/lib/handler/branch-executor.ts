@@ -55,7 +55,7 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
 }
 
 
-function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
+export function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     let orOperator = false
     for (const conditionGroup of conditionGroups) {
         let andGroup = true
@@ -141,6 +141,25 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
                 case BranchOperator.BOOLEAN_IS_FALSE:
                     andGroup = andGroup && !castedCondition.firstValue
                     break
+                case BranchOperator.DATE_IS_AFTER:
+                    andGroup = andGroup && compareDates(castedCondition.firstValue, castedCondition.secondValue, (d1, d2) => d1 > d2)
+                    break
+                case BranchOperator.DATE_IS_EQUAL:
+                    andGroup = andGroup && compareDates(castedCondition.firstValue, castedCondition.secondValue, (d1, d2) => d1.getTime() == d2.getTime())
+                    break
+                case BranchOperator.DATE_IS_BEFORE:
+                    andGroup = andGroup && compareDates(castedCondition.firstValue, castedCondition.secondValue, (d1, d2) => d1 < d2)
+                    break
+                case BranchOperator.LIST_IS_EMPTY: {
+                    const list = parseToList(castedCondition.firstValue)
+                    andGroup = andGroup && Array.isArray(list) && list?.length === 0
+                    break
+                }
+                case BranchOperator.LIST_IS_NOT_EMPTY: {
+                    const list = parseToList(castedCondition.firstValue)
+                    andGroup = andGroup && Array.isArray(list) && list?.length !== 0
+                    break
+                }
                 case BranchOperator.EXISTS:
                     andGroup = andGroup && castedCondition.firstValue !== undefined && castedCondition.firstValue !== null && castedCondition.firstValue !== ''
                     break
@@ -166,4 +185,30 @@ function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean | un
 function parseStringToNumber(str: string): number | string {
     const num = Number(str)
     return isNaN(num) ? str : num
+}
+
+function parseToList(input: unknown): [] | undefined {
+    if (typeof input === 'string') {
+        try {
+            return JSON.parse(input)
+        }
+        catch (e) {
+            return undefined
+        }
+    }
+    return input as []
+}
+
+function compareDates(date1: string, date2: string, compareFunc: (d1: Date, d2: Date) => boolean): boolean {
+    if (!date1 || !date2) {
+        return false
+    }
+
+    const parsedDate1 = new Date(date1)
+    const parsedDate2 = new Date(date2)
+
+    if (!isNaN(parsedDate1.getTime()) && !isNaN(parsedDate2.getTime())) {
+        return compareFunc(parsedDate1, parsedDate2)
+    }
+    return false
 }
