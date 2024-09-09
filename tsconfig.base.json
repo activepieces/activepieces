@@ -27,9 +27,6 @@
       "@activepieces/piece-activepieces": [
         "packages/pieces/community/activepieces/src/index.ts"
       ],
-      "@activepieces/piece-activepieces-ai": [
-        "packages/pieces/community/activepieces-ai/src/index.ts"
-      ],
       "@activepieces/piece-actualbudget": [
         "packages/pieces/community/actualbudget/src/index.ts"
       ],
@@ -577,6 +574,9 @@
       ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
+      ],
+      "@activepieces/piece-text-ai": [
+        "packages/pieces/community/text-ai/src/index.ts"
       ],
       "@activepieces/piece-text-helper": [
         "packages/pieces/community/text-helper/src/index.ts"

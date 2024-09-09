@@ -3,7 +3,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { AiProviders, isNil } from '@activepieces/shared';
 
 export const askAi = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'askAi',
   displayName: 'Ask AI',
   description: '',
@@ -21,12 +20,12 @@ export const askAi = createAction({
       required: true,
       refreshers: ['provider'],
       async options(propsValue, ctx) {
-        const provider = propsValue['provider']
-        const models = AiProviders.find(p => p.value === provider)?.models
+        const provider = propsValue['provider'];
+        const models = AiProviders.find((p) => p.value === provider)?.models;
         return {
           disabled: isNil(models),
-          options: models ?? []
-        }
+          options: models ?? [],
+        };
       },
     }),
     prompt: Property.LongText({
@@ -41,7 +40,8 @@ export const askAi = createAction({
       displayName: 'Creativity',
       required: false,
       defaultValue: 100,
-      description: 'Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.',
+      description:
+        'Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.',
     }),
     maxTokens: Property.Number({
       displayName: 'Max Tokens',
@@ -50,50 +50,55 @@ export const askAi = createAction({
     }),
   },
   async run(context) {
-    const provider = context.propsValue.provider
+    const provider = context.propsValue.provider;
 
+    const ai = AI({ provider, server: context.server });
 
-    const ai = AI({ provider, server: context.server })
+    const storage = context.store;
 
-    const storage = context.store
+    const conversationKey = context.propsValue.conversationKey
+      ? `ask-ai-conversation:${context.propsValue.conversationKey}`
+      : null;
 
-    const conversationKey = context.propsValue.conversationKey ? `ask-ai-conversation:${context.propsValue.conversationKey}` : null
-
-    let conversation: { messages: AIChatMessage[] } | undefined = undefined
+    let conversation: { messages: AIChatMessage[] } | undefined = undefined;
     if (conversationKey) {
-      conversation = await storage.get<{ messages: AIChatMessage[] }>(conversationKey) ?? { messages: [] }
+      conversation = (await storage.get<{ messages: AIChatMessage[] }>(
+        conversationKey
+      )) ?? { messages: [] };
       if (!conversation) {
-        await storage.put(conversationKey, { messages: [] })
+        await storage.put(conversationKey, { messages: [] });
       }
     }
 
     const response = await ai.chat.text({
       model: context.propsValue.model,
-      messages: conversation?.messages ? [
-        ...conversation.messages,
-        {
-          role: AIChatRole.USER,
-          content: context.propsValue.prompt,
-        },
-      ] : [{ role: AIChatRole.USER, content: context.propsValue.prompt }],
+      messages: conversation?.messages
+        ? [
+            ...conversation.messages,
+            {
+              role: AIChatRole.USER,
+              content: context.propsValue.prompt,
+            },
+          ]
+        : [{ role: AIChatRole.USER, content: context.propsValue.prompt }],
       creativity: context.propsValue.creativity,
       maxTokens: context.propsValue.maxTokens,
-    })
+    });
 
     conversation?.messages.push({
       role: AIChatRole.USER,
       content: context.propsValue.prompt,
-    })
+    });
 
     conversation?.messages.push({
       role: AIChatRole.ASSISTANT,
       content: response.choices[0].content,
-    })
+    });
 
     if (conversationKey) {
-      await storage.put(conversationKey, conversation)
+      await storage.put(conversationKey, conversation);
     }
 
-    return response
+    return response;
   },
 });

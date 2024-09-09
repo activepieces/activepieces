@@ -1,7 +1,7 @@
 {
-  "name": "pieces-activepieces-ai",
+  "name": "pieces-text-ai",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/activepieces-ai/src",
+  "sourceRoot": "packages/pieces/community/text-ai/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -15,17 +15,13 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/pieces/community/activepieces-ai",
-        "tsConfig": "packages/pieces/community/activepieces-ai/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/activepieces-ai/package.json",
-        "main": "packages/pieces/community/activepieces-ai/src/index.ts",
-        "assets": [
-          "packages/pieces/community/activepieces-ai/*.md"
-        ],
+        "outputPath": "dist/packages/pieces/community/text-ai",
+        "tsConfig": "packages/pieces/community/text-ai/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/text-ai/package.json",
+        "main": "packages/pieces/community/text-ai/src/index.ts",
+        "assets": ["packages/pieces/community/text-ai/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
@@ -37,9 +33,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     }
   }
 }

@@ -43,7 +43,7 @@ const ProviderCard = ({
           <div className="text-sm text-muted-foreground">
             {providerDescription ??
               t(
-                "Allow logins through {{providerName}}'s single sign-on functionality.",
+                "Allow logins through {providerName}'s single sign-on functionality.",
                 { providerName: providerName.toLowerCase() },
               )}
           </div>

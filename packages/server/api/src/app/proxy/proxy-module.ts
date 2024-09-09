@@ -1,116 +1,44 @@
 import { isNil, PrincipalType, ProxyConfig, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { projectLimitsService } from 'packages/server/api/src/app/ee/project-plan/project-plan.service'
-import { projectService } from 'packages/server/api/src/app/project/project-service'
-import { projectUsageService } from 'packages/server/api/src/app/project/usage/project-usage-service'
+import { projectLimitsService } from '../ee/project-plan/project-plan.service'
+import { projectService } from '../project/project-service'
+import { projectUsageService } from '../project/usage/project-usage-service'
 import { proxyConfigService } from './proxy-config-service'
 import { StatusCodes } from 'http-status-codes'
 import { logger } from '@activepieces/server-shared'
+import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 
-export const proxyModule: FastifyPluginAsyncTypebox = async (app) => {
-  await app.register(projectProxyController, { prefix: '/v1/proxy' })
+export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
+  app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
+  await app.register(aiProviderController, { prefix: '/v1/ai-providers' })
 }
 
-const ProxyRequest = {
-  config: {
-    allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
-  },
-  schema: {
-    tags: ['proxy'],
-    description: 'Proxy a request to a third party service',
-    params: Type.Object({
-      provider: Type.String(),
-      '*': Type.String(),
-    }),
-  },
-}
-
-const ListProxyConfigRequest = {
-  config: {
-    allowedPrincipals: [PrincipalType.USER],
-  },
-  schema: {
-    tags: ['proxy'],
-    description: 'List proxy configs',
-    response: {
-      [StatusCodes.OK]: SeekPage(ProxyConfig),
-    },
-  },
-}
-
-const UpdateProxyConfigRequest = {
-  config: {
-    allowedPrincipals: [PrincipalType.USER],
-  },
-  schema: {
-    params: Type.Object({
-      id: Type.String(),
-    }),
-    tags: ['proxy'],
-    description: 'Upsert proxy config',
-    body: Type.Partial(ProxyConfig),
-  },
-}
-
-const CreateProxyConfigRequest = {
-  config: {
-    allowedPrincipals: [PrincipalType.USER],
-  },
-  schema: {
-    tags: ['proxy'],
-    description: 'Create proxy config',
-    body: Type.Omit(ProxyConfig, ['id', 'created', 'updated', 'platformId']),
-  },
-}
-
-const DeleteProxyConfigRequest = {
-  config: {
-    allowedPrincipals: [PrincipalType.USER],
-  },
-  schema: {
-    params: Type.Object({
-      id: Type.String(),
-    }),
-    tags: ['proxy'],
-    description: 'Delete proxy config',
-  },
-}
-
-export const projectProxyController: FastifyPluginCallbackTypebox = (
+const aiProviderController: FastifyPluginCallbackTypebox = (
   fastify,
   _opts,
   done,
 ) => {
 
-  fastify.post('/config', CreateProxyConfigRequest, async (request, reply) => {
-    let platformId = request.principal.platform.id
-    if (isNil(platformId)) {
-      platformId = await projectService.getPlatformId(request.principal.projectId)
-    }
-    const proxyConfig = await proxyConfigService.create({ ...request.body, platformId })
-    await reply.status(StatusCodes.OK).send(proxyConfig)
+  fastify.post('/configs', CreateProxyConfigRequest, async (request, reply) => {
+    const platformId = request.principal.platform.id
+    return proxyConfigService.create({ ...request.body, platformId });
   })
 
-  fastify.delete('/config/:id', DeleteProxyConfigRequest, async (request, reply) => {
-    await proxyConfigService.delete(request.params.id)
-    await reply.status(StatusCodes.OK).send()
+  fastify.delete('/configs/:id', DeleteProxyConfigRequest, async (request, reply) => {
+    await proxyConfigService.delete({ id: request.params.id, platformId: request.principal.platform.id })
+    await reply.status(StatusCodes.NO_CONTENT).send()
   })
 
-  fastify.patch('/config/:id', UpdateProxyConfigRequest, async (request, reply) => {
-    await proxyConfigService.update(request.params.id, request.body)
-    await reply.status(StatusCodes.OK).send()
+  fastify.post('/configs/:id', UpdateProxyConfigRequest, async (request) => {
+    return proxyConfigService.update({ id: request.params.id, platformId: request.principal.platform.id, proxyConfig: request.body })
   })
 
-  fastify.get('/config', ListProxyConfigRequest, async (request, reply) => {
-    let platformId = request.principal.platform.id
-    if (isNil(platformId)) {
-      platformId = await projectService.getPlatformId(request.principal.projectId)
-    }
-    const page = await proxyConfigService.list(platformId)
+  fastify.get('/configs', ListProxyConfigRequest, async (request, reply) => {
+    const page = await proxyConfigService.list(request.principal.platform.id)
     await reply.status(StatusCodes.OK).send(page)
   })
 
-  fastify.all('/:provider/*', ProxyRequest, async (request, reply) => {
+  fastify.all('/proxy/:provider/*', ProxyRequest, async (request, reply) => {
     try {
       const projectId = request.principal.projectId
 
@@ -204,4 +132,69 @@ const calculateUsage = (body: any, usagePath: string | string[]): number => {
     }
     return acc + value
   }, 0)
+}
+
+const ProxyRequest = {
+  config: {
+    allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
+  },
+  schema: {
+    tags: ['ai-providers'],
+    description: 'Proxy a request to a third party service',
+    params: Type.Object({
+      provider: Type.String(),
+      '*': Type.String(),
+    }),
+  },
+}
+
+const ListProxyConfigRequest = {
+  config: {
+    allowedPrincipals: [PrincipalType.USER],
+  },
+  schema: {
+    tags: ['ai-providers'],
+    description: 'List ai provider configs',
+    response: {
+      [StatusCodes.OK]: SeekPage(ProxyConfig),
+    },
+  },
+}
+
+const UpdateProxyConfigRequest = {
+  config: {
+    allowedPrincipals: [PrincipalType.USER],
+  },
+  schema: {
+    params: Type.Object({
+      id: Type.String(),
+    }),
+    tags: ['ai-providers'],
+    description: 'Upsert proxy config',
+    body: Type.Partial(ProxyConfig),
+  },
+}
+
+const CreateProxyConfigRequest = {
+  config: {
+    allowedPrincipals: [PrincipalType.USER],
+  },
+  schema: {
+      tags: ['ai-providers'],
+    description: 'Create ai provider config',
+    body: Type.Omit(ProxyConfig, ['id', 'created', 'updated', 'platformId']),
+  },
+}
+
+const DeleteProxyConfigRequest = {
+  config: {
+    allowedPrincipals: [PrincipalType.USER],
+  },
+  schema: {
+    params: Type.Object({
+      id: Type.String(),
+    }),
+    tags: ['ai-providers'],
+    description: 'Delete ai provider config',
+  },
 }

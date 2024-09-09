@@ -25,14 +25,14 @@ export const proxyConfigService = {
     }
     return config
   },
-  async update(id: string, proxyConfig: Partial<ProxyConfig>): Promise<void> {
-    await repo().update({ id }, proxyConfig)
+  async update({ id, platformId, proxyConfig }: UpdateParams): Promise<void> {
+    await repo().update({ id, platformId }, proxyConfig)
   },
   async create(proxyConfig: Omit<ProxyConfig, 'id' | 'created' | 'updated'>): Promise<ProxyConfig> {
-    return await repo().save({...proxyConfig, id: apId()})
+    return await repo().save({ ...proxyConfig, id: apId() })
   },
-  async delete(id: string): Promise<void> {
-    await repo().delete({ id })
+  async delete({ id, platformId }: DeleteParams): Promise<void> {
+    await repo().delete({ id, platformId })
   },
   async list(platformId: PlatformId): Promise<SeekPage<ProxyConfig>> {
     const configs = await repo().findBy({
@@ -47,6 +47,11 @@ export const proxyConfigService = {
   },
 }
 
+type UpdateParams = { id: string, platformId: PlatformId, proxyConfig: Partial<ProxyConfig> }
+type DeleteParams = {
+  id: string
+  platformId: PlatformId
+}
 type GetParams = {
   platformId: PlatformId
   provider: string

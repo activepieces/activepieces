@@ -10,11 +10,11 @@ export const projectUsageService = {
     async getUsageForBillingPeriod(projectId: string, startBillingPeriod: string): Promise<ProjectUsage> {
         const flowTasks = await getTasksUsage(projectId, getCurrentingStartPeriod(startBillingPeriod))
         const teamMembers = await projectMemberService.countTeamMembers(projectId) + await userInvitationsService.countByProjectId(projectId)
-        const aiTokensUsage = await getAITokensUsage(projectId, getCurrentingStartPeriod(startBillingPeriod))
+        const aiTokens = await getAITokensUsage(projectId, getCurrentingStartPeriod(startBillingPeriod))
         return {
             tasks: flowTasks,
             teamMembers,
-            aiTokensUsage
+            aiTokens
         }
     },
     increaseTasks,
