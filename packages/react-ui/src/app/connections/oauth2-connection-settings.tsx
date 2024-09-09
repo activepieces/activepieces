@@ -26,6 +26,7 @@ import {
   ApFlagId,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
+  OAuth2GrantType,
   UpsertCloudOAuth2Request,
   UpsertOAuth2Request,
   UpsertPlatformOAuth2Request,
@@ -41,6 +42,25 @@ type OAuth2ConnectionSettingsProps = {
   authProperty: OAuth2Property<OAuth2Props>;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
 };
+function replaceVariables(
+  authUrl: string,
+  scope: string,
+  props: Record<string, unknown>,
+) {
+  let newAuthUrl = authUrl;
+  Object.entries(props).forEach(([key, value]) => {
+    newAuthUrl = newAuthUrl.replace(`{${key}}`, value as string);
+  });
+
+  let newScope = scope;
+  Object.entries(props).forEach(([key, value]) => {
+    newScope = newScope.replace(`{${key}}`, value as string);
+  });
+  return {
+    authUrl: newAuthUrl,
+    scope: newScope,
+  };
+}
 
 const OAuth2ConnectionSettings = ({
   authProperty,
@@ -87,7 +107,6 @@ const OAuth2ConnectionSettings = ({
   }>();
 
   const hasCode = form.getValues().request.value.code;
-
   const predefinedClientId = pieceToClientIdMap?.[piece.name]?.clientId;
   useEffect(() => {
     if (isNil(currentOAuth2Type) && !isNil(pieceToClientIdMap)) {
@@ -119,7 +138,18 @@ const OAuth2ConnectionSettings = ({
         : predefinedClientId ?? '',
       { shouldValidate: true },
     );
-    form.setValue('request.value.code', '', { shouldValidate: true });
+    form.setValue('request.value.grant_type', authProperty.grantType, {
+      shouldValidate: true,
+    });
+    form.setValue(
+      'request.value.code',
+      `${
+        authProperty.grantType === OAuth2GrantType.CLIENT_CREDENTIALS
+          ? 'FAKE_CODE'
+          : ''
+      }`,
+      { shouldValidate: true },
+    );
     form.setValue('request.value.code_challenge', '', { shouldValidate: true });
     form.setValue('request.value.type', currentOAuth2Type!, {
       shouldValidate: true,
@@ -140,26 +170,6 @@ const OAuth2ConnectionSettings = ({
         (currentOAuth2Type !== AppConnectionType.OAUTH2 || hasClientSecret),
     );
   }, [watchedForm]);
-
-  function replaceVariables(
-    authUrl: string,
-    scope: string,
-    props: Record<string, unknown>,
-  ) {
-    let newAuthUrl = authUrl;
-    Object.entries(props).forEach(([key, value]) => {
-      newAuthUrl = newAuthUrl.replace(`{${key}}`, value as string);
-    });
-
-    let newScope = scope;
-    Object.entries(props).forEach(([key, value]) => {
-      newScope = newScope.replace(`{${key}}`, value as string);
-    });
-    return {
-      authUrl: newAuthUrl,
-      scope: newScope,
-    };
-  }
 
   async function openPopup(
     redirectUrl: string,
@@ -192,6 +202,17 @@ const OAuth2ConnectionSettings = ({
         className="flex flex-col gap-4"
         onSubmit={(e) => e.preventDefault()}
       >
+        {currentOAuth2Type === AppConnectionType.OAUTH2 &&
+          authProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
+            <div className="flex flex-col gap-2">
+              <FormLabel>{t('Redirect URL')}</FormLabel>
+              <FormControl>
+                <Input disabled type="text" value={redirectUrl ?? ''} />
+              </FormControl>
+              <FormMessage />
+            </div>
+          )}
+
         {currentOAuth2Type === AppConnectionType.OAUTH2 && (
           <>
             <FormField
@@ -220,7 +241,7 @@ const OAuth2ConnectionSettings = ({
                   <FormControl>
                     <Input
                       {...field}
-                      type="text"
+                      type="password"
                       placeholder={t('Client Secret')}
                     />
                   </FormControl>
@@ -239,47 +260,49 @@ const OAuth2ConnectionSettings = ({
           />
         )}
 
-        <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
-          <div className="rounded-full border border-solid p-1 flex items-center justify-center">
-            <img src={piece.logoUrl} className="w-5 h-5"></img>
+        {authProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
+          <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
+            <div className="rounded-full border border-solid p-1 flex items-center justify-center">
+              <img src={piece.logoUrl} className="w-5 h-5"></img>
+            </div>
+            <div className="text-sm">{piece.displayName}</div>
+            <div className="flex-grow"></div>
+            {!hasCode && (
+              <Button
+                size={'sm'}
+                variant={'basic'}
+                disabled={!readyToConnect}
+                type="button"
+                onClick={async () =>
+                  openPopup(
+                    redirectUrl!,
+                    form.getValues().request.value.client_id,
+                    form.getValues().request.value.props,
+                  )
+                }
+              >
+                {t('Connect')}
+              </Button>
+            )}
+            {hasCode && (
+              <Button
+                size={'sm'}
+                variant={'basic'}
+                className="text-destructive"
+                onClick={() => {
+                  form.setValue('request.value.code', '', {
+                    shouldValidate: true,
+                  });
+                  form.setValue('request.value.code_challenge', '', {
+                    shouldValidate: true,
+                  });
+                }}
+              >
+                {t('Disconnect')}
+              </Button>
+            )}
           </div>
-          <div className="text-sm">{piece.displayName}</div>
-          <div className="flex-grow"></div>
-          {!hasCode && (
-            <Button
-              size={'sm'}
-              variant={'basic'}
-              disabled={!readyToConnect}
-              type="button"
-              onClick={async () =>
-                openPopup(
-                  redirectUrl!,
-                  form.getValues().request.value.client_id,
-                  form.getValues().request.value.props,
-                )
-              }
-            >
-              {t('Connect')}
-            </Button>
-          )}
-          {hasCode && (
-            <Button
-              size={'sm'}
-              variant={'basic'}
-              className="text-destructive"
-              onClick={() => {
-                form.setValue('request.value.code', '', {
-                  shouldValidate: true,
-                });
-                form.setValue('request.value.code_challenge', '', {
-                  shouldValidate: true,
-                });
-              }}
-            >
-              {t('Disconnect')}
-            </Button>
-          )}
-        </div>
+        )}
 
         {ownAuthEnabled &&
           isNil(reconnectConnection) &&

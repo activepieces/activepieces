@@ -42,10 +42,14 @@ const ArrayPieceProperty = React.memo(
 
     const [fields, setFields] = useState<ArrayField[]>(() => {
       const formValues = form.getValues(inputName);
-      return formValues.map((value: string | Record<string, unknown>) => ({
-        id: nanoid(),
-        value,
-      }));
+      if (formValues) {
+        return formValues.map((value: string | Record<string, unknown>) => ({
+          id: nanoid(),
+          value,
+        }));
+      } else {
+        return [];
+      }
     });
 
     const updateFormValue = (newFields: ArrayField[]) => {
