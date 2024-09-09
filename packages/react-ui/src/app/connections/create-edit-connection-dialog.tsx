@@ -191,13 +191,9 @@ const CreateOrEditConnectionDialog = React.memo(
           (connection) => connection.name === formValues.name,
         );
         if (!isNil(existingConnection)) {
-          form.setError('request.name', {
-            message: t('Name is already used'),
-          });
           throw new ConnectionNameAlreadyExists();
-        } else {
-          return appConnectionsApi.upsert(formValues);
         }
+        return appConnectionsApi.upsert(formValues);
       },
       onSuccess: () => {
         setOpen(false);
@@ -206,7 +202,11 @@ const CreateOrEditConnectionDialog = React.memo(
         setErrorMessage('');
       },
       onError: (err) => {
-        if (api.isError(err)) {
+        if (err instanceof ConnectionNameAlreadyExists) {
+          form.setError('request.name', {
+            message: t('Name is already used'),
+          });
+        } else if (api.isError(err)) {
           const apError = err.response?.data as ApErrorParams;
           console.log(apError);
           if (apError.code === ErrorCode.INVALID_CLOUD_CLAIM) {
@@ -222,7 +222,7 @@ const CreateOrEditConnectionDialog = React.memo(
               }),
             );
           }
-        } else if (!(err instanceof ConnectionNameAlreadyExists)) {
+        } else {
           toast(INTERNAL_ERROR_TOAST);
           console.error(err);
         }
@@ -242,11 +242,11 @@ const CreateOrEditConnectionDialog = React.memo(
             <DialogTitle>
               {reconnectConnection
                 ? t('Reconnect {displayName} Connection', {
-                    displayName: reconnectConnection.name,
-                  })
+                  displayName: reconnectConnection.name,
+                })
                 : t('Create {displayName} Connection', {
-                    displayName: piece.displayName,
-                  })}
+                  displayName: piece.displayName,
+                })}
             </DialogTitle>
             <DialogDescription></DialogDescription>
           </DialogHeader>
