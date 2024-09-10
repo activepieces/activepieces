@@ -10,7 +10,7 @@ import OpenAPIParser from '@readme/openapi-parser';
 import { mergician } from 'mergician';
 import { titleCase } from 'title-case';
 
-const generatedPath = './src/lib/actions/generated/';
+const generatedPath = './src/lib/generated/';
 
 type Generators = {
   props?: (schemas: any) => any;
@@ -155,6 +155,19 @@ function createPropsFromSchema(schema: any): Record<string, any> {
         type: 'Array',
         required,
         properties: { ...createPropsFromSchema(value.items) },
+      };
+    } else if (
+      value.items &&
+      value.items.type === 'string' &&
+      value.items.enum
+    ) {
+      console.log(value.items);
+      properties[key] = {
+        ...createField(key, label, value.items, required),
+        displayName: label,
+        description: value.description,
+        type: 'StaticMultiSelectDropdown',
+        required,
       };
     } else {
       // default field

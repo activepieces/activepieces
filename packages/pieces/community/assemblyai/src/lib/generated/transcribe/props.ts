@@ -582,11 +582,191 @@ export const props = {
       ],
     },
   }),
-  redact_pii_policies: Property.Array({
+  redact_pii_policies: Property.StaticMultiSelectDropdown({
     displayName: 'Redact PII Policies',
     required: false,
     description:
       'The list of PII Redaction policies to enable. See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.',
+    options: {
+      options: [
+        {
+          label: 'Account Number',
+          value: 'account_number',
+        },
+        {
+          label: 'Banking Information',
+          value: 'banking_information',
+        },
+        {
+          label: 'Blood Type',
+          value: 'blood_type',
+        },
+        {
+          label: 'Credit Card CVV',
+          value: 'credit_card_cvv',
+        },
+        {
+          label: 'Credit Card Expiration',
+          value: 'credit_card_expiration',
+        },
+        {
+          label: 'Credit Card Number',
+          value: 'credit_card_number',
+        },
+        {
+          label: 'Date',
+          value: 'date',
+        },
+        {
+          label: 'Date Interval',
+          value: 'date_interval',
+        },
+        {
+          label: 'Date of Birth',
+          value: 'date_of_birth',
+        },
+        {
+          label: "Driver's License",
+          value: 'drivers_license',
+        },
+        {
+          label: 'Drug',
+          value: 'drug',
+        },
+        {
+          label: 'Duration',
+          value: 'duration',
+        },
+        {
+          label: 'Email Address',
+          value: 'email_address',
+        },
+        {
+          label: 'Event',
+          value: 'event',
+        },
+        {
+          label: 'Filename',
+          value: 'filename',
+        },
+        {
+          label: 'Gender Sexuality',
+          value: 'gender_sexuality',
+        },
+        {
+          label: 'Healthcare Number',
+          value: 'healthcare_number',
+        },
+        {
+          label: 'Injury',
+          value: 'injury',
+        },
+        {
+          label: 'IP Address',
+          value: 'ip_address',
+        },
+        {
+          label: 'Language',
+          value: 'language',
+        },
+        {
+          label: 'Location',
+          value: 'location',
+        },
+        {
+          label: 'Marital Status',
+          value: 'marital_status',
+        },
+        {
+          label: 'Medical Condition',
+          value: 'medical_condition',
+        },
+        {
+          label: 'Medical Process',
+          value: 'medical_process',
+        },
+        {
+          label: 'Money Amount',
+          value: 'money_amount',
+        },
+        {
+          label: 'Nationality',
+          value: 'nationality',
+        },
+        {
+          label: 'Number Sequence',
+          value: 'number_sequence',
+        },
+        {
+          label: 'Occupation',
+          value: 'occupation',
+        },
+        {
+          label: 'Organization',
+          value: 'organization',
+        },
+        {
+          label: 'Passport Number',
+          value: 'passport_number',
+        },
+        {
+          label: 'Password',
+          value: 'password',
+        },
+        {
+          label: 'Person Age',
+          value: 'person_age',
+        },
+        {
+          label: 'Person Name',
+          value: 'person_name',
+        },
+        {
+          label: 'Phone Number',
+          value: 'phone_number',
+        },
+        {
+          label: 'Physical Attribute',
+          value: 'physical_attribute',
+        },
+        {
+          label: 'Political Affiliation',
+          value: 'political_affiliation',
+        },
+        {
+          label: 'Religion',
+          value: 'religion',
+        },
+        {
+          label: 'Statistics',
+          value: 'statistics',
+        },
+        {
+          label: 'Time',
+          value: 'time',
+        },
+        {
+          label: 'URL',
+          value: 'url',
+        },
+        {
+          label: 'US Social Security Number',
+          value: 'us_social_security_number',
+        },
+        {
+          label: 'Username',
+          value: 'username',
+        },
+        {
+          label: 'Vehicle ID',
+          value: 'vehicle_id',
+        },
+        {
+          label: 'Zodiac Sign',
+          value: 'zodiac_sign',
+        },
+      ],
+    },
   }),
   redact_pii_sub: Property.StaticDropdown({
     displayName: 'Redact PII Substitution',

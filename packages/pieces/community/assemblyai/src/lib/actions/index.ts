@@ -1,8 +1,14 @@
-export { upload } from './upload';
-export { transcribe } from './transcribe';
-export { getTranscript } from './get_transcript';
-export { getSentences } from './get_sentences';
-export { getParagraphs } from './get_paragraphs';
-export { getSubtitles } from './get_subtitles';
-export { getRedactedAudio } from './get_redacted_audio';
-export { lemurTask } from './lemur_task';
+export { uploadFile } from './files';
+export {
+  transcribe,
+  getTranscript,
+  getSentences,
+  getParagraphs,
+  getSubtitles,
+  getRedactedAudio,
+  wordSearch,
+  listTranscripts,
+  deleteTranscript,
+} from './transcripts';
+export { lemurTask, getLemurResponse, purgeLemurRequestData } from './lemur';
+export { customApiCall } from './custom-api-call';

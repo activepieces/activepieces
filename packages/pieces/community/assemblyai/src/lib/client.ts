@@ -9,5 +9,7 @@ export const getAssemblyAIClient = (
 ): AssemblyAI => {
   return new AssemblyAI({
     apiKey: context.auth,
+    // Proxyman proxy
+    // baseUrl: 'http://localhost:10000',
   });
 };

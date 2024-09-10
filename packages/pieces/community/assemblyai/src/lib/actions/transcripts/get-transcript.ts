@@ -1,17 +1,15 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../auth';
-import { getAssemblyAIClient } from '../client';
+import { createAction } from '@activepieces/pieces-framework';
+import { assemblyaiAuth } from '../../auth';
+import { getAssemblyAIClient } from '../../client';
+import { transcriptIdProp } from './shared-props';
 
 export const getTranscript = createAction({
-  name: 'get_transcript',
+  name: 'getTranscript',
   auth: assemblyaiAuth,
   displayName: 'Get Transcript',
   description: 'Retrieves a transcript by its ID.',
   props: {
-    id: Property.ShortText({
-      displayName: 'Transcript ID',
-      required: true,
-    }),
+    id: transcriptIdProp,
   },
   async run(context) {
     const client = getAssemblyAIClient(context);

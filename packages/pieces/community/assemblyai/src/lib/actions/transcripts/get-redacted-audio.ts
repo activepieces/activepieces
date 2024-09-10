@@ -1,17 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../auth';
-import { getAssemblyAIClient } from '../client';
+import { assemblyaiAuth } from '../../auth';
+import { getAssemblyAIClient } from '../../client';
+import { transcriptIdProp } from './shared-props';
 
 export const getRedactedAudio = createAction({
-  name: 'get_transcript_redacted_audio',
+  name: 'getRedactedAudio',
   auth: assemblyaiAuth,
   displayName: 'Get Transcript Redacted Audio',
   description: 'Get the result of the redacted audio model.',
   props: {
-    id: Property.ShortText({
-      displayName: 'Transcript ID',
-      required: true,
-    }),
+    id: transcriptIdProp,
     download_file: Property.Checkbox({
       displayName: 'Download file?',
       required: true,

@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import * as actions from './lib/actions';
+import * as actions from './lib/actions/index';
 import { assemblyaiAuth } from './lib/auth';
 import { PieceCategory } from '@activepieces/shared';
 
@@ -12,6 +12,21 @@ export const assemblyai = createPiece({
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/assemblyai.png',
   authors: ['AssemblyAI'],
-  actions: Object.values(actions),
+  actions: [
+    actions.uploadFile,
+    actions.transcribe,
+    actions.getTranscript,
+    actions.getSentences,
+    actions.getParagraphs,
+    actions.getSubtitles,
+    actions.getRedactedAudio,
+    actions.wordSearch,
+    actions.listTranscripts,
+    actions.deleteTranscript,
+    actions.lemurTask,
+    actions.getLemurResponse,
+    actions.purgeLemurRequestData,
+    actions.customApiCall,
+  ],
   triggers: [],
 });

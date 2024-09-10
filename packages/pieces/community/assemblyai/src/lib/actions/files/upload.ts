@@ -1,9 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../auth';
-import { getAssemblyAIClient } from '../client';
+import { assemblyaiAuth } from '../../auth';
+import { getAssemblyAIClient } from '../../client';
 
-export const upload = createAction({
-  name: 'upload',
+export const uploadFile = createAction({
+  name: 'uploadFile',
   auth: assemblyaiAuth,
   displayName: 'Upload File',
   description: "Upload a media file to AssemblyAI's servers.",

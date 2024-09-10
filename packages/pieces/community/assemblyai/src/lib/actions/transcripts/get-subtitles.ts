@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../auth';
-import { getAssemblyAIClient } from '../client';
 import { SubtitleFormat } from 'assemblyai';
+import { assemblyaiAuth } from '../../auth';
+import { getAssemblyAIClient } from '../../client';
 
 export const getSubtitles = createAction({
-  name: 'get_transcript_subtitles',
+  name: 'getSubtitles',
   auth: assemblyaiAuth,
   displayName: 'Get Transcript Subtitles',
   description: 'Export the transcript as SRT or VTT subtitles.',
