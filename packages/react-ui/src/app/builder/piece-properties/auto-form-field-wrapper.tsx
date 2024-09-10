@@ -16,6 +16,13 @@ import { Action, Trigger } from '@activepieces/shared';
 
 import { TextInputWithMentions } from './text-input-with-mentions';
 
+type inputNameLiteral = `settings.input.${string}`;
+
+const isInputNameLiteral = (
+  inputName: string,
+): inputName is inputNameLiteral => {
+  return inputName.match(/settings\.input\./) !== null;
+};
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
   allowDynamicValues: boolean;
@@ -25,6 +32,7 @@ type AutoFormFieldWrapperProps = {
   placeBeforeLabelText?: boolean;
   disabled: boolean;
   field: ControllerRenderProps;
+  inputName: string;
 };
 
 const AutoFormFieldWrapper = ({
@@ -33,6 +41,7 @@ const AutoFormFieldWrapper = ({
   hideDescription,
   allowDynamicValues,
   propertyName,
+  inputName,
   property,
   disabled,
   field,
@@ -49,14 +58,17 @@ const AutoFormFieldWrapper = ({
         shouldValidate: true,
       },
     );
-    form.setValue(
-      `settings.input.${propertyName}` as const,
-      property.defaultValue,
-      {
+    if (isInputNameLiteral(inputName)) {
+      form.setValue(inputName, property.defaultValue ?? null, {
         shouldValidate: true,
-      },
-    );
+      });
+    } else {
+      throw new Error(
+        'inputName is not a member of step settings input, you might be using dynamic properties where you should not',
+      );
+    }
   }
+
   return (
     <FormItem className="flex flex-col gap-1">
       <FormLabel className="flex items-center gap-1">

@@ -175,6 +175,17 @@
             "endpoints/folders/list",
             "endpoints/folders/delete"
           ]
+        },
+        {
+          "group": "Flow Templates",
+          "icon": "copy",
+          "pages": [
+            "endpoints/flow-templates/schema",
+            "endpoints/flow-templates/create",
+            "endpoints/flow-templates/delete",
+            "endpoints/flow-templates/get",
+            "endpoints/flow-templates/list"
+          ]
         }
       ]
     },

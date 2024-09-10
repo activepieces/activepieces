@@ -17,14 +17,40 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { isNil, RunEnvironment } from '@activepieces/shared';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import {
+  ApFlagId,
+  FlowRun,
+  FlowRunStatus,
+  isNil,
+  RunEnvironment,
+} from '@activepieces/shared';
 
 import { SidebarHeader } from '../sidebar-header';
 
 import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
 import { FlowStepInputOutput } from './flow-step-input-output';
 
+function getMessage(run: FlowRun | null, retentionDays: number | null) {
+  if (!run || run.status === FlowRunStatus.RUNNING) return null;
+  if (
+    [FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT].includes(run.status)
+  ) {
+    return t('There are no logs captured for this run.');
+  }
+  if (isNil(run.logsFileId)) {
+    return t(
+      'Logs are kept for {days} days after execution and then deleted.',
+      { days: retentionDays },
+    );
+  }
+  return null;
+}
 const FlowRunDetails = React.memo(() => {
+  const { data: rententionDays } = flagsHooks.useFlag<number>(
+    ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+  );
+
   const [setLeftSidebar, run, steps, stepDetails] = useBuilderStateContext(
     (state) => {
       const paths: StepPathWithName[] = state.run?.steps
@@ -45,12 +71,14 @@ const FlowRunDetails = React.memo(() => {
     },
   );
 
-  if (isNil(run))
+  const message = getMessage(run, rententionDays);
+
+  if (!isNil(message))
     return (
       <div className="flex flex-col justify-center items-center gap-4 w-full h-full">
         <Info size={36} className="text-muted-foreground" />
         <h4 className="px-6 text-sm text-center text-muted-foreground ">
-          Logs are kept for 14 days after execution and then deleted.
+          {message}
         </h4>
       </div>
     );
@@ -59,7 +87,7 @@ const FlowRunDetails = React.memo(() => {
     <ResizablePanelGroup direction="vertical">
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
         <div className="flex gap-2 items-center">
-          {run.environment !== RunEnvironment.TESTING && (
+          {run && run.environment !== RunEnvironment.TESTING && (
             <Button
               variant="ghost"
               size={'sm'}

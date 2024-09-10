@@ -143,6 +143,8 @@ import { ModifyProjectMembers1717961669938 } from './migration/postgres/17179616
 import { AddWorkerMachine1720101280025 } from './migration/postgres/1720101280025-AddWorkerMachine'
 import { MigrateAuditEventSchema1723489038729 } from './migration/postgres/1723489038729-MigrateAuditEventSchema'
 import { AddAnalyticsToPlatform1725113652923 } from './migration/postgres/1725113652923-AddAnalyticsToPlatform'
+import { LogFileRelationWithFlowRun1725639666232 } from './migration/postgres/1725639666232-LogFileRelationWithFlowRun'
+import { AddLogsFileIdIndex1725699690971 } from './migration/postgres/1725699690971-AddLogsFileIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -236,6 +238,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeEventRoutingConstraint1723549873495,
         AddAnalyticsToPlatform1725113652923,
         RemoveUniqueConstraintOnStepFile1725570317713,
+        LogFileRelationWithFlowRun1725639666232,
+        AddLogsFileIdIndex1725699690971,
     ]
 
     const edition = system.getEdition()

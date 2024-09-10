@@ -55,6 +55,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+                value: system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SHOW_PLATFORM_DEMO,
                 value: [ApEdition.CLOUD].includes(system.getEdition()),
                 created,
@@ -142,7 +148,7 @@ export const flagService = {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
                 value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
                     ? this.getThirdPartyRedirectUrl(undefined, undefined)
-                    : undefined,
+                    : `${system.get(SharedSystemProp.FRONTEND_URL)}/redirect`,
                 created,
                 updated,
             },

@@ -2,9 +2,11 @@ import { AppSystemProp, system } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { analyticsService } from './analytics.service'
+import { piecesAnalyticsService } from './pieces-analytics.service'
 
 export const analyticsModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
+    await piecesAnalyticsService.init()
     await app.register(analyticsController, { prefix: '/v1/analytics' })
 }
 
