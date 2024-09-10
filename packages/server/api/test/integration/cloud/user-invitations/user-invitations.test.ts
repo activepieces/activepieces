@@ -102,9 +102,40 @@ describe('User Invitation API', () => {
             })
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
-            expect(responseBody?.link).toBeDefined()
+            expect(responseBody?.link).toBeUndefined()
+
+            const invitationId = responseBody?.id
+            const invitation = await databaseConnection().getRepository('user_invitation').findOneBy({ id: invitationId })
+            expect(invitation?.status).toBe(InvitationStatus.ACCEPTED)
         })
 
+        it('should have status pending when inviting a user', async () => {
+            const { mockOwnerToken, mockProject } = await createBasicEnvironment({})
+
+            const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
+                projectRole: ProjectMemberRole.ADMIN,
+                email: faker.internet.email(),
+                projectId: null,
+                type: InvitationType.PLATFORM,
+                platformRole: PlatformRole.ADMIN,
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/user-invitations',
+                headers: {
+                    authorization: `Bearer ${mockOwnerToken}`,
+                },
+                query: {
+                    projectId: mockProject.id,
+                },
+                body: mockInviteProjectMemberRequest,
+            })
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json()
+            const invitationId = responseBody?.id
+            const invitation = await databaseConnection().getRepository('user_invitation').findOneBy({ id: invitationId })
+            expect(invitation?.status).toBe(InvitationStatus.PENDING)
+        })
 
         it('Invite user to Platform Member', async () => {
             const { mockApiKey, mockProject } = await createBasicEnvironment({})

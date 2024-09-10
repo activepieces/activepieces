@@ -1,9 +1,9 @@
 import {
-    AcceptUserInvitationRequest,
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     EndpointScope,
     ErrorCode,
+    InvitationStatus,
     InvitationType,
     isNil,
     ListUserInvitationsRequest,
@@ -25,7 +25,6 @@ import { projectMembersLimit } from '../ee/project-plan/members-limit'
 import { projectService } from '../project/project-service'
 import { userInvitationsService } from './user-invitation.service'
 
-
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
 }
@@ -36,6 +35,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
 
     app.post('/', CreateUserInvitationRequestParams, async (request, reply) => {
         const projectId = request.body.projectId ?? request.principal.projectId
+        const status = request.principal.type === PrincipalType.SERVICE ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
         await assertPrincipalHasPermission(app, request, reply, projectId ?? undefined, request.body.type, Permission.WRITE_INVITATION)
         const { email, platformRole, projectRole, type, expireyInSeconds } = request.body
         if (type === InvitationType.PROJECT) {
@@ -54,6 +54,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
             projectId: type === InvitationType.PLATFORM ? null : projectId ?? null,
             projectRole: type === InvitationType.PLATFORM ? null : projectRole ?? null,
             invitationExpirySeconds: expireyInSeconds ?? dayjs.duration(1, 'day').asSeconds(),
+            status,
         })
         await reply.status(StatusCodes.CREATED).send(invitation)
     })
@@ -72,8 +73,8 @@ const invitationController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
-        const result = await userInvitationsService.accept(request.body)
-        await reply.status(StatusCodes.OK).send(result)
+        const invitation = await userInvitationsService.getOneByInvitationTokenOrThrow(request.body.invitationToken)
+        await reply.status(StatusCodes.OK).send(invitation)
     })
 
     app.delete('/:id', DeleteInvitationRequestParams, async (request, reply) => {
@@ -151,7 +152,9 @@ const AcceptUserInvitationRequestParams = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
-        body: AcceptUserInvitationRequest,
+        body: Type.Object({
+            invitationToken: Type.String(),
+        }),
     },
 }
 
