@@ -1,58 +1,43 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleSearchConsoleAuth, createAuthClient } from '../../';
-import axios from "axios";
+import { googleSearchConsoleAuth } from '../../';
+import {
+  AuthenticationType,
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
+import { commonProps } from '../common';
 
 export const urlInspection = createAction({
-    auth: googleSearchConsoleAuth,
-    name: 'urlInspection',
-    displayName: 'URL Inspection',
-    description: "Use the URL Inspection action to check the status and presence of a specific page within Google's index.",
-    props: {
-        siteUrl: Property.Dropdown({
-            displayName: 'Site URL',
-            required: true,
-            refreshers: ['auth'],
-            refreshOnSearch: false,
-            options: async ({ auth }) => {
-                // @ts-ignore
-                const webmasters = createAuthClient(auth.access_token);
-                const res = await webmasters.sites.list();
-                const sites = res.data.siteEntry || [];
+  auth: googleSearchConsoleAuth,
+  name: 'urlInspection',
+  displayName: 'URL Inspection',
+  description:
+    "Use the URL Inspection action to check the status and presence of a specific page within Google's index.",
+  props: {
+    siteUrl: commonProps.siteUrl,
+    url: Property.ShortText({
+      displayName: 'URL to Inspect',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url: 'hhttps://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth.access_token,
+      },
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        inspectionUrl: context.propsValue.url,
+        siteUrl: context.propsValue.siteUrl,
+      },
+    };
 
-                return {
-                    options : sites.map((site: any) => ({
-                        label: site.siteUrl,
-                        value: site.siteUrl,
-                    }))
-                }
-            },
-        }),
-        url: Property.ShortText({
-            displayName: 'URL to Inspect',
-            required: true,
-        }),
-    },
-    async run(context) {
-        const accessToken = context.auth.access_token;
-        const apiUrl = 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect';
+    const response = await httpClient.sendRequest(request);
 
-        const data = {
-            inspectionUrl: context.propsValue.url,
-            siteUrl: context.propsValue.siteUrl,
-        };
-
-        try {
-            const response = await axios.post(apiUrl, data, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            return response.data;
-        } catch (error) {
-            // @ts-ignore
-            return { error: error.response?.data || error.message };
-        }
-    },
+    return response.body;
+  },
 });
