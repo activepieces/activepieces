@@ -1,4 +1,5 @@
 import { assertNotNullOrUndefined, BranchAction, BranchActionSettings, BranchCondition, BranchOperator, BranchStepOutput, StepOutputStatus } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
@@ -142,21 +143,21 @@ export function evaluateConditions(conditionGroups: BranchCondition[][]): boolea
                     andGroup = andGroup && !castedCondition.firstValue
                     break
                 case BranchOperator.DATE_IS_AFTER:
-                    andGroup = andGroup && compareDates(castedCondition.firstValue, castedCondition.secondValue, (d1, d2) => d1 > d2)
+                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isAfter(dayjs(castedCondition.secondValue))
                     break
                 case BranchOperator.DATE_IS_EQUAL:
-                    andGroup = andGroup && compareDates(castedCondition.firstValue, castedCondition.secondValue, (d1, d2) => d1.getTime() == d2.getTime())
+                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isSame(dayjs(castedCondition.secondValue))
                     break
                 case BranchOperator.DATE_IS_BEFORE:
-                    andGroup = andGroup && compareDates(castedCondition.firstValue, castedCondition.secondValue, (d1, d2) => d1 < d2)
+                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isBefore(dayjs(castedCondition.secondValue))
                     break
                 case BranchOperator.LIST_IS_EMPTY: {
-                    const list = parseToList(castedCondition.firstValue)
+                    const list = parseListAsArray(castedCondition.firstValue)
                     andGroup = andGroup && Array.isArray(list) && list?.length === 0
                     break
                 }
                 case BranchOperator.LIST_IS_NOT_EMPTY: {
-                    const list = parseToList(castedCondition.firstValue)
+                    const list = parseListAsArray(castedCondition.firstValue)
                     andGroup = andGroup && Array.isArray(list) && list?.length !== 0
                     break
                 }
@@ -187,28 +188,22 @@ function parseStringToNumber(str: string): number | string {
     return isNaN(num) ? str : num
 }
 
-function parseToList(input: unknown): [] | undefined {
+function parseListAsArray(input: unknown): unknown[] | undefined {
     if (typeof input === 'string') {
         try {
-            return JSON.parse(input)
+            const parsed = JSON.parse(input)
+            return Array.isArray(parsed) ? parsed : undefined
         }
         catch (e) {
             return undefined
         }
     }
-    return input as []
+    return Array.isArray(input) ? input : undefined
 }
 
-function compareDates(date1: string, date2: string, compareFunc: (d1: Date, d2: Date) => boolean): boolean {
-    if (!date1 || !date2) {
-        return false
-    }
-
-    const parsedDate1 = new Date(date1)
-    const parsedDate2 = new Date(date2)
-
-    if (!isNaN(parsedDate1.getTime()) && !isNaN(parsedDate2.getTime())) {
-        return compareFunc(parsedDate1, parsedDate2)
+function isValidDate(date: unknown): boolean {
+    if (typeof date === 'string' || typeof date === 'number' || date instanceof Date) {
+        return dayjs(date).isValid()
     }
     return false
 }
