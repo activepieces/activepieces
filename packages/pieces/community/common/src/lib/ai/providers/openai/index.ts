@@ -15,7 +15,6 @@ export const openai: AIFactory = ({
     },
   });
   return {
-    underlying: sdk,
     provider: "OPENAI",
     chat: {
       text: async (params) => {

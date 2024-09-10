@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { t } from "i18next";
-import { UpsertAIProviderDialog } from "./upsert-provider-dialog";
 import { Button } from "@/components/ui/button";
-import { AiProviderConfig, AuthHeader } from "@activepieces/shared";
+import { Card } from "@/components/ui/card";
 import { platformHooks } from "@/hooks/platform-hooks";
-import { Edit, Pencil, Trash } from "lucide-react";
+import { AuthHeader } from "@activepieces/pieces-common";
+import { AiProviderConfig } from "@activepieces/shared";
+import { t } from "i18next";
+import { Pencil, Trash } from "lucide-react";
+import { UpsertAIProviderDialog } from "./upsert-provider-dialog";
 
 type AIProviderCardProps = {
     providerName: string;

@@ -16,7 +16,6 @@ export const anthropic: AIFactory = ({
     },
   })
   return {
-    underlying: sdk,
     provider: "ANTHROPIC" as const,
     chat: {
       text: async (params) => {

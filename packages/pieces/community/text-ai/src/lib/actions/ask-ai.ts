@@ -1,6 +1,6 @@
-import { AI, AIChatMessage, AIChatRole } from '@activepieces/pieces-common';
+import { AI, AIChatMessage, AIChatRole, AiProviders } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AiProviders, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 export const askAi = createAction({
   name: 'askAi',

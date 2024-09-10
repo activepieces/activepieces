@@ -18,11 +18,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
-import { AiProviderConfig, AuthHeader } from '@activepieces/shared';
-import { Type } from '@sinclair/typebox';
+import { AiProviderConfig } from '@activepieces/shared';
+import { AuthHeader } from '@activepieces/pieces-common';
+import { Static, Type } from '@sinclair/typebox';
+
+const UpsertAiProviderConfigInput = Type.Composite([
+  Type.Omit(AiProviderConfig, ['id', 'created', 'updated', 'platformId']),
+  Type.Object({
+    id: Type.Optional(Type.String()),
+  }),
+])
+
+export type UpsertAiProviderConfigInput = Static<typeof UpsertAiProviderConfigInput>
 
 type UpsertAIProviderDialogProps = {
-  provider: Omit<AiProviderConfig, "id"> & { id?: string };
+  provider: UpsertAiProviderConfigInput;
   children: React.ReactNode;
   onSave: () => void;
   auth: AuthHeader;
@@ -35,26 +45,24 @@ export const UpsertAIProviderDialog = ({
   auth
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<AiProviderConfig>({
-    resolver: typeboxResolver(AiProviderConfig),
+  const form = useForm<UpsertAiProviderConfigInput>({
+    resolver: typeboxResolver(UpsertAiProviderConfigInput),
     defaultValues: provider,
   });
-
-  const formState = form.watch()
-
-  const newHeaderForm = useForm({
-    resolver: typeboxResolver(Type.Object({
-      apiKey: Type.String({ minLength: 1 }),
-    })),
-  })
-
-  const [isNewHeaderFormOpen, setIsNewHeaderFormOpen] = useState(false);
 
   const { toast } = useToast();
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['upsert-proxy-config'],
-    mutationFn: () => aiProviderApi.upsert(form.getValues()),
+    mutationFn: () => aiProviderApi.upsert({
+      ...form.getValues(),
+      config: {
+        ...form.getValues().config,
+        defaultHeaders: {
+          [auth.name]: auth.mapper(form.getValues().config.defaultHeaders[auth.name])
+        }
+      }
+    }), 
     onSuccess: () => {
       form.reset();
       setOpen(false);
@@ -133,7 +141,7 @@ export const UpsertAIProviderDialog = ({
             {t('Cancel')}
           </Button>
           <Button
-            disabled={isPending || !form.formState.isValid}
+            disabled={!form.formState.isValid}
             loading={isPending}
             onClick={(e) => {
               e.stopPropagation();

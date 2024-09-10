@@ -70,8 +70,6 @@ const aiProviderController: FastifyPluginCallbackTypebox = (
 
             const tokensUsagePath = requestHeaders['x-ap-total-usage-body-path']
 
-            console.log('XXXXXXXXXX Request Headers', requestHeaders)
-
             delete requestHeaders.authorization
             delete requestHeaders.Authorization
             delete requestHeaders['content-length']

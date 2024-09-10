@@ -1,4 +1,4 @@
-import { AiProviders } from '@activepieces/shared';
+import { AiProviders } from '@activepieces/pieces-common';
 import { t } from 'i18next';
 import { AIProviderCard } from './ai-provider-card';
 import { useMutation, useQuery } from '@tanstack/react-query';
