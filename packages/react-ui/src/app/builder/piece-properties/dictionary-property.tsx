@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,28 @@ export const DictionaryProperty = ({
       id: nanoid(),
     }));
   });
+
+  useEffect(() => {
+    const newFormValue = Object.entries(values ?? {}).map(([key, value]) => ({
+      key,
+      value,
+      id: nanoid(),
+    }));
+
+    const areEqual = (a: DictionaryInputItem[], b: DictionaryInputItem[]) => {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (a[i].key !== b[i].key || a[i].value !== b[i].value) {
+          return false;
+        }
+      }
+      return true;
+    };
+
+    if (!areEqual(newFormValue, formValue)) {
+      setFormValue(newFormValue);
+    }
+  }, [values]);
 
   const remove = (index: number) => {
     const newValues = formValue.filter((_, i) => i !== index);
