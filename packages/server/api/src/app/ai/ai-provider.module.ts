@@ -1,5 +1,5 @@
 import { logger } from '@activepieces/server-shared'
-import { AiProviderConfig, isNil, PrincipalType, SeekPage } from '@activepieces/shared'
+import { AiProviderConfig, AiProviderWithoutSensitiveData, isNil, PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
@@ -18,7 +18,7 @@ const aiProviderController: FastifyPluginCallbackTypebox = (
     _opts,
     done,
 ) => {
-    fastify.post('/:provider', CreateProxyConfigRequest, async (request) => {
+    fastify.post('/', CreateProxyConfigRequest, async (request) => {
         return aiProviderService.upsert(request.principal.platform.id, {
             config: request.body.config,
             baseUrl: request.body.baseUrl,
@@ -157,7 +157,7 @@ const ListProxyConfigRequest = {
         tags: ['ai-providers'],
         description: 'List ai provider configs',
         response: {
-            [StatusCodes.OK]: SeekPage(AiProviderConfig),
+            [StatusCodes.OK]: SeekPage(AiProviderWithoutSensitiveData),
         },
     },
 }

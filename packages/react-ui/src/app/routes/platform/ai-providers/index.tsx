@@ -1,8 +1,26 @@
+import { AiProviders } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Button } from '@/components/ui/button';
 import { AIProviderCard } from './ai-provider-card';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 
 export default function AIProvidersPage() {
+
+  const { data: providers, refetch } = useQuery({
+    queryKey: ['ai-providers'],
+    queryFn: () => aiProviderApi.list(),
+  })
+
+  const { mutate: deleteProvider, isPending: isDeleting } = useMutation({
+    mutationFn: (provider: string) => aiProviderApi.delete(provider),
+    onSuccess: () => {
+      refetch()
+    },
+    onError: () => {
+      toast(INTERNAL_ERROR_TOAST)
+    }
+  })
 
   return (
     <div className="flex flex-col w-full">
@@ -17,12 +35,22 @@ export default function AIProvidersPage() {
       </div>
       <div className="flex flex-col gap-4">
 
-        <AIProviderCard providerName="OpenAI" providerIcon={
-          <img src="https://cdn.activepieces.com/pieces/openai.png" alt="icon" width={32} height={32} />
-        } ></AIProviderCard>
-        <AIProviderCard providerName="Anthropic" providerIcon={
-          <img src="https://cdn.activepieces.com/pieces/claude.png" alt="icon" width={32} height={32} />
-        } ></AIProviderCard>
+        {
+          AiProviders.map(p => {
+            const config = providers?.data.find(c => c.provider === p.value)
+            return <AIProviderCard
+              auth={p.auth}
+              providerName={p.value}
+              label={p.label}
+              logoUrl={p.logoUrl}
+              defaultBaseUrl={config?.baseUrl ?? p.defaultBaseUrl}
+              provider={config ? { ...config, config: { defaultHeaders: {} } } : undefined}
+              isDeleting={isDeleting}
+              onDelete={() => deleteProvider(p.value)}
+              onSave={() => refetch()}
+            />
+          })
+        }
       </div>
     </div>
   );

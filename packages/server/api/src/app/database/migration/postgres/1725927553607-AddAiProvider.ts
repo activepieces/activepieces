@@ -13,7 +13,7 @@ export class AddAiProvider1725927553607 implements MigrationInterface {
                 "config" json NOT NULL,
                 "baseUrl" character varying NOT NULL,
                 "provider" character varying NOT NULL,
-                CONSTRAINT "REL_04619a92ba6ba054cd41335a67" UNIQUE ("platformId"),
+                CONSTRAINT "REL_04619a92ba6ba054cd41335a67" UNIQUE ("platformId", "provider"),
                 CONSTRAINT "PK_1046c2cb42f99614e1c7873744b" PRIMARY KEY ("id")
             )
         `)
@@ -24,6 +24,7 @@ export class AddAiProvider1725927553607 implements MigrationInterface {
             ALTER TABLE "ai_provider"
             ADD CONSTRAINT "fk_ai_provider_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
+        await queryRunner.query(`ALTER TABLE "project_plan" ADD COLUMN "aiTokens" integer DEFAULT 1000;`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -36,6 +37,7 @@ export class AddAiProvider1725927553607 implements MigrationInterface {
         await queryRunner.query(`
             DROP TABLE "ai_provider"
         `)
+        await queryRunner.query(`ALTER TABLE "project_plan" DROP COLUMN "aiTokens";`);
     }
 
 }

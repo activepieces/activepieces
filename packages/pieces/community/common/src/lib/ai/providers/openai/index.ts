@@ -6,7 +6,7 @@ export const openai: AIFactory = ({
   engineToken,
 }: { serverUrl: string, engineToken: string }): AI<OpenAI> => {
   const openaiEndpoint = '/v1';
-  const proxyUrl = `${serverUrl}v1/proxy/openai`
+  const proxyUrl = `${serverUrl}v1/ai-providers/proxy/openai`
   const sdk = new OpenAI({
     apiKey: engineToken,
     baseURL: `${proxyUrl}${openaiEndpoint}`,

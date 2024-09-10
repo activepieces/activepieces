@@ -1,12 +1,13 @@
 import { api } from '@/lib/api';
 import {
   AiProviderConfig,
+  AiProviderWithoutSensitiveData,
   SeekPage
 } from '@activepieces/shared';
 
 export const aiProviderApi = {
   list() {
-    return api.get<SeekPage<AiProviderConfig>>('/v1/ai-providers');
+    return api.get<SeekPage<AiProviderWithoutSensitiveData>>('/v1/ai-providers');
   },
   upsert(request: AiProviderConfig) { 
     return api.post<AiProviderConfig>('/v1/ai-providers', request);

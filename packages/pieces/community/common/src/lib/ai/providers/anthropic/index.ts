@@ -6,7 +6,7 @@ export const anthropic: AIFactory = ({
   serverUrl,
   engineToken,
 }: { serverUrl: string, engineToken: string }): AI<Anthropic> => {
-  const proxyUrl = `${serverUrl}v1/proxy/anthropic`
+  const proxyUrl = `${serverUrl}v1/ai-providers/proxy/anthropic`
   const sdk = new Anthropic({
     apiKey: engineToken,
     baseURL: proxyUrl,

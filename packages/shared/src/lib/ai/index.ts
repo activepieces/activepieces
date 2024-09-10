@@ -19,17 +19,43 @@ export type AiProviderConfig = Static<typeof AiProviderConfig>;
 export const AiProviderWithoutSensitiveData = Type.Omit(AiProviderConfig, ['config'])
 export type AiProviderWithoutSensitiveData = Static<typeof AiProviderWithoutSensitiveData>
 
+type HeaderValueMapper = (value: string) => string
+
+export type AuthHeader = {
+  name: string
+  mapper: HeaderValueMapper
+}
+
+type AuthHeaderOptions =
+  | { bearer: true }
+  | { bearer: false, name: string, mapper?: HeaderValueMapper }
+
+const headerValueMappers = {
+  bearer: (value: string) => `Bearer ${value}`,
+  default: (value: string) => value
+}
+
+const authHeader = (options: AuthHeaderOptions): AuthHeader => ({
+  name: options.bearer ? 'Authorization' as const : options.name,
+  mapper: options.bearer ? headerValueMappers.bearer : options.mapper ?? headerValueMappers.default,
+})
+
 export const AiProviders = [
   {
+    logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+    defaultBaseUrl: 'https://api.openai.com',
     label: 'OpenAI' as const, value: 'openai' as const,
     models: [
       { label: 'gpt-4o', value: 'gpt-4o' },
       { label: 'gpt-4o-mini', value: 'gpt-4o-mini' },
       { label: 'gpt-4-turbo', value: 'gpt-4-turbo' },
       { label: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo' },
-    ]
+    ],
+    auth: authHeader({ bearer: true })
   },
   {
+    logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
+    defaultBaseUrl: 'https://api.anthropic.com',
     label: 'Anthropic' as const,
     value: 'anthropic' as const,
     models: [
@@ -49,7 +75,8 @@ export const AiProviders = [
         label: 'claude-3-haiku-20240307',
         value: 'claude-3-haiku-20240307',
       },
-    ]
+    ],
+    auth: authHeader({ name: "x-api-key", bearer: false })
   },
 ]
 
