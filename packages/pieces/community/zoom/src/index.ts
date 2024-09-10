@@ -10,11 +10,11 @@ import { zoomCreateMeetingRegistrant } from './lib/actions/create-meeting-regist
 
 export const zoomAuth = PieceAuth.OAuth2({
   description: `
-  1. Go to marketplace.zoom.us and log in to your account.
+  1. Go to [marketplace.zoom.us](https://marketplace.zoom.us/) and log in to your account.
   2. In the upper-right corner, click **Develop** then **Build App**.
   3. Select **General App**.
   4. Copy the Client ID and Client Secret.Add Redirect URL and press continue.
-  5. Go to **Scopes** from left side bar and add **meeting:write:meeting** as scopes.`,
+  5. Go to **Scopes** from left side bar and add **meeting:write:meeting** and **meeting:write:registrant** as scopes.`,
   authUrl: 'https://zoom.us/oauth/authorize',
   tokenUrl: 'https://zoom.us/oauth/token',
   required: true,
