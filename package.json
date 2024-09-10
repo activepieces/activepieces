@@ -386,6 +386,7 @@
   "optionalDependencies": {
     "@nx/nx-darwin-arm64": "18.0.4",
     "@nx/nx-darwin-x64": "18.0.4",
+    "@nx/nx-linux-arm-gnueabihf": "18.0.4",
     "@nx/nx-linux-x64-gnu": "18.0.4",
     "@nx/nx-win32-x64-msvc": "18.0.4",
     "@rollup/rollup-darwin-arm64": "4.20.0",
