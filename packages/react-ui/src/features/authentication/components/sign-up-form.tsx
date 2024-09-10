@@ -301,34 +301,36 @@ const SignUpForm = ({
         </form>
       </Form>
 
-      <div
-        className={cn('text-center text-sm', {
-          'mt-4': termsOfServiceUrl || privacyPolicyUrl,
-        })}
-      >
-        {(termsOfServiceUrl || privacyPolicyUrl) &&
-          t('By creating an account, you agree to our')}
-        {termsOfServiceUrl && (
-          <Link
-            to={termsOfServiceUrl || ''}
-            target="_blank"
-            className="px-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
-          >
-            {t('terms of service')}
-          </Link>
-        )}
-        {termsOfServiceUrl && privacyPolicyUrl && t('and')}
-        {privacyPolicyUrl && (
-          <Link
-            to={privacyPolicyUrl || ''}
-            target="_blank"
-            className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
-          >
-            {t('privacy policy')}
-          </Link>
-        )}
-        .
-      </div>
+      {edition === ApEdition.CLOUD && (
+        <div
+          className={cn('text-center text-sm', {
+            'mt-4': termsOfServiceUrl || privacyPolicyUrl,
+          })}
+        >
+          {(termsOfServiceUrl || privacyPolicyUrl) &&
+            t('By creating an account, you agree to our')}
+          {termsOfServiceUrl && (
+            <Link
+              to={termsOfServiceUrl || ''}
+              target="_blank"
+              className="px-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
+            >
+              {t('terms of service')}
+            </Link>
+          )}
+          {termsOfServiceUrl && privacyPolicyUrl && t('and')}
+          {privacyPolicyUrl && (
+            <Link
+              to={privacyPolicyUrl || ''}
+              target="_blank"
+              className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
+            >
+              {t('privacy policy')}
+            </Link>
+          )}
+          .
+        </div>
+      )}
       <div className="mt-4 text-center text-sm">
         {t('Already have an account?')}
         <Link
