@@ -14,7 +14,7 @@ import { getContactDetails } from './lib/actions/get-contact-details';
 const markdownDescription = `
   Follow these instructions to get your Sperse API Key:
 
-  1. Visit the following website: https://app.sperse.com/ or the beta website: https://beta.sperse.com
+  1. Visit the following website: https://app.sperse.com/, or the beta website: https://beta.sperse.com, or the test website: https://testadmin.sperse.com 
   2. Once on the website, locate and click on the admin to obtain your sperse API Key.
 `;
 
@@ -38,8 +38,8 @@ export const sperseAuth = PieceAuth.CustomAuth({
             value: 'https://beta.sperse.com',
           },
           {
-            label: 'Sperse Test (test.sperse.com)',
-            value: 'https://test.sperse.com',
+            label: 'Sperse Test (testadmin.sperse.com)',
+            value: 'https://testadmin.sperse.com',
           },
         ],
       },
