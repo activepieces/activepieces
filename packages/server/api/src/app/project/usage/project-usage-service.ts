@@ -14,7 +14,7 @@ export const projectUsageService = {
         return {
             tasks: flowTasks,
             teamMembers,
-            aiTokens
+            aiTokens,
         }
     },
     increaseTasks,

@@ -43,11 +43,6 @@ export function PlatformAdminContainer({
       locked: isLocked(false),
     },
     {
-      to: '/platform/proxy-configs',
-      label: t('AI'),
-      icon: BrainCog,
-    },
-    {
       to: '/platform/projects',
       label: t('Projects'),
       icon: LayoutGrid,

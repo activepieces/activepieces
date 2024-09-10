@@ -4,6 +4,7 @@ import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-sh
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { commonProperties } from './database-connection'
+import { AddAiProviderSqlite1725930375719 } from './migration/sqlite/1725930375719-AddAiProviderSqlite'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
@@ -128,6 +129,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveUniqueConstraintOnStepFile1725570317713,
         LogFileRelationWithFlowRunSqlite1725637505836,
         AddLogsFileIdIndexSqlite1725699920020,
+        AddAiProviderSqlite1725930375719,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

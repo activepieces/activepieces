@@ -1,12 +1,11 @@
 import { ServerContext } from '@activepieces/pieces-framework';
 import { anthropic } from './providers/anthropic';
 import { openai } from './providers/openai';
-import { AiProvider } from '@activepieces/shared';
+import { AiProvider, AiProviders } from './providers';
 
 export type AI<SDK> = {
   provider: string;
   chat: AIChat;
-  underlying: SDK;
 }
 
 export type AIChat = {
@@ -48,18 +47,18 @@ export enum AIChatRole {
 
 export type AIFactory = (params: { serverUrl: string, engineToken: string }) => AI<unknown>
 
-const factories: Record<AiProvider, AIFactory> = {
-  openai,
-  anthropic,
-}
-
 export const AI = ({
   provider,
   server
 }: { provider: AiProvider, server: ServerContext }): AI<unknown> => {
 
-  const impl = factories[provider]({ serverUrl: server.apiUrl, engineToken: server.token })
-  
+  const factory = AiProviders.find(p => p.value === provider)?.factory
+  const impl = factory?.({ serverUrl: server.apiUrl, engineToken: server.token })
+
+  if (!impl) {
+    throw new Error(`AI provider ${provider} is not registered`)
+  }
+
   return {
     provider,
     chat: {
@@ -75,6 +74,7 @@ export const AI = ({
         }
       }
     },
-    underlying: impl,
   }
 }
+
+export * from './providers'

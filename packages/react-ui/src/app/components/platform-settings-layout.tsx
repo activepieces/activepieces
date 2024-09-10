@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Key, Lock, Palette, ShieldPlus } from 'lucide-react';
+import { Brain, Key, Lock, Palette, ShieldPlus } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
 
@@ -25,6 +25,11 @@ const sidebarNavItems = [
     title: 'Single Sign On',
     href: '/platform/settings/sso',
     icon: <ShieldPlus size={iconSize} />,
+  },
+  {
+    title: 'AI Providers',
+    href: '/platform/settings/ai',
+    icon: <Brain size={iconSize} />,
   },
 ];
 

@@ -339,16 +339,6 @@ const routes = [
     ),
   },
   {
-    path: '/platform/proxy-configs',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="AI Providers">
-          <AIProvidersPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
     path: '/platform/analytics',
     element: (
       <PlatformAdminContainer>
@@ -395,6 +385,18 @@ const routes = [
         <PlatformSettingsLayout>
           <PageTitle title="Branding">
             <BrandingPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/ai',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="AI Providers">
+            <AIProvidersPage />
           </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>
@@ -465,8 +467,8 @@ const ApRouter = () => {
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
-          initialEntries: [window.location.pathname],
-        })
+        initialEntries: [window.location.pathname],
+      })
       : createBrowserRouter(routes);
   }, [embedState.isEmbedded]);
 
