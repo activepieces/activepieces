@@ -6,7 +6,8 @@ export const deleteSite = createAction({
   auth: googleSearchConsoleAuth,
   name: 'delete_site',
   displayName: 'Delete a Site',
-  description: 'Delete a property from your Google Search Console account',
+  description:
+    "Removes a site from the set of the user's Search Console sites.",
   props: {
     siteUrl: commonProps.siteUrl,
   },

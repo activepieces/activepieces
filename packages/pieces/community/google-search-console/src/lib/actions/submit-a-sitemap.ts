@@ -6,7 +6,7 @@ export const submitSitemap = createAction({
   auth: googleSearchConsoleAuth,
   name: 'submit_sitemap',
   displayName: 'Submit a Sitemap',
-  description: 'Submit a sitemap to Google',
+  description: 'Submits a sitemap for a site.',
   props: {
     siteUrl: commonProps.siteUrl,
     feedpath: Property.ShortText({
