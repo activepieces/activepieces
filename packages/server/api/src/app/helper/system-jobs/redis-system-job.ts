@@ -9,7 +9,7 @@ import { systemJobHandlers } from './job-handlers'
 const FIFTEEN_MINUTES = 15 * 60 * 1000
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
-let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
+export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
 let systemJobWorker: Worker<SystemJobData, unknown, SystemJobName>
 
 export const redisSystemJobSchedulerService: SystemJobSchedule = {

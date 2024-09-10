@@ -11,6 +11,8 @@ import { createInvoice } from './lib/actions/create-invoice';
 import { newLead } from './lib/triggers/new-lead';
 import { newPayment } from './lib/triggers/new-payment';
 import { newSubscription } from './lib/triggers/new-subscription';
+import { createProduct } from './lib/actions/create-product';
+import { getContactDetails } from './lib/actions/get-contact-details';
 
 const markdownDescription = `
   Follow these instructions to get your Chargekeep API Key:
@@ -62,6 +64,8 @@ export const chargekeep = createPiece({
     addOrUpdateContactExtended,
     addOrUpdateSubscription,
     createInvoice,
+    createProduct,
+    getContactDetails,
   ],
   triggers: [newLead, newPayment, newSubscription],
 });

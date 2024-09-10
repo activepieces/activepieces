@@ -43,7 +43,9 @@ export enum GitPushOperationType {
 
 export const PushGitRepoRequest = Type.Object({
     type: Type.Enum(GitPushOperationType),
-    commitMessage: Type.String(),
+    commitMessage: Type.String({
+        minLength: 1,
+    }),
     flowId: Type.String()
 })
 
@@ -60,14 +62,22 @@ export const PullGitRepoRequest = Type.Object({
 export type PullGitRepoRequest = Static<typeof PullGitRepoRequest>
 
 export const ConfigureRepoRequest = Type.Object({
-    projectId: Type.String(),
+    projectId: Type.String({
+        minLength: 1,
+    }),
     remoteUrl: Type.String({
         pattern: '^git@',
     }),
-    branch: Type.String(),
+    branch: Type.String({
+        minLength: 1,
+    }),
     branchType: Type.Enum(GitBranchType),
-    sshPrivateKey: Type.String(),
-    slug: Type.String(),
+    sshPrivateKey: Type.String({
+        minLength: 1,
+    }),
+    slug: Type.String({
+        minLength: 1,
+    }),
 })
 
 export type ConfigureRepoRequest = Static<typeof ConfigureRepoRequest>

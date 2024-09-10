@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
+import { ProjectMemberRole } from './project-member'
 
 export const ListProjectRequestForUserQueryParams = Type.Object({
     cursor: Type.Optional(Type.String()),
@@ -26,6 +27,13 @@ export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
     teamMembers: Type.Number(),
 })
+
+export const SwitchProjectResponse = Type.Object({
+    token: Type.String(),
+    projectRole: Type.Union([Type.Enum(ProjectMemberRole), Type.Null()]),
+})
+
+export type SwitchProjectResponse = Static<typeof SwitchProjectResponse>
 
 export type ProjectUsage = Static<typeof ProjectUsage>
 

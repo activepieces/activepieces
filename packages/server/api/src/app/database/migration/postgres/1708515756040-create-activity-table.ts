@@ -41,7 +41,7 @@ export class CreateActivityTable1708515756040 implements MigrationInterface {
             ALTER TABLE "activity" DROP CONSTRAINT "fk_activity_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_activity_project_id_created_desc"
+            DROP INDEX "idx_activity_project_id_created_desc"
         `)
         await queryRunner.query(`
             DROP TABLE "activity"

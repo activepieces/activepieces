@@ -11,7 +11,7 @@ implements MigrationInterface {
             return
         }
         await queryRunner.query(`
-            DROP INDEX "public"."idx_app_credentials_projectId_appName"
+            DROP INDEX "idx_app_credentials_projectId_appName"
         `)
     }
 

@@ -2,6 +2,7 @@ version: '3.8'
 
 networks:
   activepieces:
+    driver: bridge
 
 services:
   app:
@@ -18,12 +19,12 @@ services:
     volumes:
       - ..:/workspace:cached
 
-    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
-    network_mode: service:redis
- 
+    # Connect the app to the same network as db and redis
+    networks:
+      - activepieces
+
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
-
 
     # Uncomment the next line to use a non-root user for all processes.
     # user: node
@@ -37,12 +38,17 @@ services:
       POSTGRES_DB: activepieces
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: A79Vm5D4p2VQHOp2gd5
-    network_mode: service:redis
+    networks:
+      - activepieces
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
 
   redis:
     image: redis:7.0.7
+    networks:
+      - activepieces
     volumes:
       - redis_data:/data
 

@@ -7,8 +7,13 @@ import {
     PiecePackage,
     PrivatePiecePackage,
 } from '@activepieces/shared'
-import { cacheHandler, CacheState } from '../utils/cache-handler'
+import { cacheHandler } from '../utils/cache-handler'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
+
+enum CacheState {
+    READY = 'READY',
+    PENDING = 'PENDING',
+}
 
 export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({

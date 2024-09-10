@@ -53,6 +53,7 @@ export enum AppSystemProp {
     TRIGGER_FAILURES_THRESHOLD = 'TRIGGER_FAILURES_THRESHOLD',
     MAX_CONCURRENT_JOBS_PER_PROJECT = 'MAX_CONCURRENT_JOBS_PER_PROJECT',
     PROJECT_RATE_LIMITER_ENABLED = 'PROJECT_RATE_LIMITER_ENABLED',
+    DEV_PIECES = 'DEV_PIECES',
 
 
     // ENTERPRISE ONLY
@@ -80,15 +81,10 @@ export enum SharedSystemProp  {
     FLOW_TIMEOUT_SECONDS = 'FLOW_TIMEOUT_SECONDS',
     APP_WEBHOOK_SECRETS = 'APP_WEBHOOK_SECRETS',
 
-    /**
-     * @deprecated It's replaced now with flow timeout and trigger timeout.
-     */
-    SANDBOX_RUN_TIME_SECONDS = 'SANDBOX_RUN_TIME_SECONDS',
     FRONTEND_URL = 'FRONTEND_URL',
         
     // These are shared as the app is using the engine as a dependency for now.
     CACHE_PATH = 'CACHE_PATH',
-    CODE_SANDBOX_TYPE = 'CODE_SANDBOX_TYPE',
     EXECUTION_MODE = 'EXECUTION_MODE',
     PACKAGE_ARCHIVE_PATH = 'PACKAGE_ARCHIVE_PATH',
     SANDBOX_MEMORY_LIMIT = 'SANDBOX_MEMORY_LIMIT',

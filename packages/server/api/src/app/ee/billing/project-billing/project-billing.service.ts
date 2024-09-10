@@ -3,7 +3,7 @@ import { logger } from '@activepieces/server-shared'
 import { apId, isNil, User } from '@activepieces/shared'
 import Stripe from 'stripe'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { acquireLock } from '../../../helper/lock'
+import { distributedLock } from '../../../helper/lock'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { ProjectBillingEntity } from './project-billing.entity'
@@ -13,7 +13,7 @@ const projectBillingRepo = repoFactory(ProjectBillingEntity)
 
 export const projectBillingService = {
     async getOrCreateForProject(projectId: string): Promise<ProjectBilling> {
-        const projectBilling = await acquireLock({
+        const projectBilling = await distributedLock.acquireLock({
             key: `project_billing_${projectId}`,
             timeout: 30 * 1000,
         })

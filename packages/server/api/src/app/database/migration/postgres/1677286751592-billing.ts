@@ -7,7 +7,7 @@ export class billing1677286751592 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info('Running migration billing1677286751592')
         await queryRunner.query(
-            'DROP INDEX "public"."idx_app_connection_project_id_and_app_name_and_name"',
+            'DROP INDEX "idx_app_connection_project_id_and_app_name_and_name"',
         )
         await queryRunner.query(
             'CREATE TABLE "project_plan" ("id" character varying(21) NOT NULL, "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "projectId" character varying(21) NOT NULL, "name" character varying NOT NULL, "stripeCustomerId" character varying NOT NULL, "stripeSubscriptionId" character varying NOT NULL, "tasks" integer NOT NULL, "subscriptionStartDatetime" TIMESTAMP WITH TIME ZONE NOT NULL, CONSTRAINT "REL_4f52e89612966d95843e4158bb" UNIQUE ("projectId"), CONSTRAINT "PK_759d33fce71c95de832df935841" PRIMARY KEY ("id"))',
@@ -42,13 +42,13 @@ export class billing1677286751592 implements MigrationInterface {
             'ALTER TABLE "project_plan" DROP CONSTRAINT "fk_project_plan_project_id"',
         )
         await queryRunner.query(
-            'DROP INDEX "public"."idx_project_usage_project_id"',
+            'DROP INDEX "idx_project_usage_project_id"',
         )
         await queryRunner.query('DROP TABLE "project_usage"')
         await queryRunner.query(
-            'DROP INDEX "public"."idx_plan_stripe_customer_id"',
+            'DROP INDEX "idx_plan_stripe_customer_id"',
         )
-        await queryRunner.query('DROP INDEX "public"."idx_plan_project_id"')
+        await queryRunner.query('DROP INDEX "idx_plan_project_id"')
         await queryRunner.query('DROP TABLE "project_plan"')
         await queryRunner.query(
             'CREATE UNIQUE INDEX "idx_app_connection_project_id_and_app_name_and_name" ON "app_connection" ("name", "appName", "projectId") ',

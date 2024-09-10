@@ -3,7 +3,7 @@ import path from 'node:path'
 import { fileExists, logger, memoryLock, PackageInfo, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
 import { FlowVersionState } from '@activepieces/shared'
 import { CodeArtifact } from '../engine/engine-runner'
-import { cacheHandler, CacheState } from '../utils/cache-handler'
+import { cacheHandler } from '../utils/cache-handler'
 
 const TS_CONFIG_CONTENT = `
 
@@ -31,6 +31,11 @@ const INVALID_ARTIFACT_TEMPLATE_PATH =
     './packages/server/api/src/assets/invalid-code.js'
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
+
+enum CacheState {
+    READY = 'READY',
+    PENDING = 'PENDING',
+}
 
 export const codeBuilder = {
     getCodesFolder({ codesFolderPath, flowVersionId }: { codesFolderPath: string, flowVersionId: string }): string {

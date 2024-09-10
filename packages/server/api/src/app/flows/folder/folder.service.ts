@@ -1,14 +1,14 @@
 import {
     ActivepiecesError,
     apId,
-    CreateOrRenameFolderRequest,
-
+    CreateFolderRequest,
     Cursor,
     ErrorCode,
     Folder,
     FolderDto,
     FolderId,
     isNil, ProjectId,
+    UpdateFolderRequest,
 } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -19,28 +19,16 @@ import { FolderEntity } from './folder.entity'
 export const folderRepo = repoFactory(FolderEntity)
 
 export const flowFolderService = {
-    async delete({
-        projectId,
-        folderId,
-    }: {
-        projectId: ProjectId
-        folderId: FolderId
-    }): Promise<void> {
+    async delete(params: DeleteParams): Promise<void> {
+        const { projectId, folderId } = params
         const folder = await this.getOneOrThrow({ projectId, folderId })
         await folderRepo().delete({
             id: folder.id,
             projectId,
         })
     },
-    async update({
-        projectId,
-        folderId,
-        request,
-    }: {
-        projectId: ProjectId
-        folderId: FolderId
-        request: CreateOrRenameFolderRequest
-    }): Promise<FolderDto> {
+    async update(params: UpdateParams): Promise<FolderDto> {
+        const { projectId, folderId, request } = params
         const folder = await this.getOneOrThrow({ projectId, folderId })
         const folderWithDisplayName = await this.getOneByDisplayNameCaseInsensitive({
             projectId,
@@ -57,13 +45,8 @@ export const flowFolderService = {
         })
         return this.getOneOrThrow({ projectId, folderId })
     },
-    async upsert({
-        projectId,
-        request,
-    }: {
-        projectId: ProjectId
-        request: CreateOrRenameFolderRequest
-    }): Promise<FolderDto> {
+    async upsert(params: UpsertParams): Promise<FolderDto> {
+        const { projectId, request } = params
         const folderWithDisplayName = await this.getOneByDisplayNameCaseInsensitive({
             projectId,
             displayName: request.displayName,
@@ -87,15 +70,8 @@ export const flowFolderService = {
             numberOfFlows: 0,
         }
     },
-    async list({
-        projectId,
-        cursorRequest,
-        limit,
-    }: {
-        projectId: ProjectId
-        cursorRequest: Cursor | null
-        limit: number
-    }) {
+    async list(params: ListParams) {
+        const { projectId, cursorRequest, limit } = params
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: FolderEntity,
@@ -124,25 +100,15 @@ export const flowFolderService = {
             paginationResponse.cursor,
         )
     },
-    async getOneByDisplayNameCaseInsensitive({
-        projectId,
-        displayName,
-    }: {
-        projectId: ProjectId
-        displayName: string
-    }): Promise<Folder | null> {
+    async getOneByDisplayNameCaseInsensitive(params: GetOneByDisplayNameParams): Promise<Folder | null> {
+        const { projectId, displayName } = params
         return folderRepo().createQueryBuilder('folder')
             .where('folder.projectId = :projectId', { projectId })
             .andWhere('LOWER(folder.displayName) = LOWER(:displayName)', { displayName })
             .getOne()
     },
-    async getOneOrThrow({
-        projectId,
-        folderId,
-    }: {
-        projectId: ProjectId
-        folderId: FolderId
-    }): Promise<FolderDto> {
+    async getOneOrThrow(params: GetOneOrThrowParams): Promise<FolderDto> {
+        const { projectId, folderId } = params
         const folder = await folderRepo().findOneBy({ projectId, id: folderId })
         if (!folder) {
             throw new ActivepiecesError({
@@ -158,4 +124,36 @@ export const flowFolderService = {
             numberOfFlows,
         }
     },
+}
+
+type DeleteParams = {
+    projectId: ProjectId
+    folderId: FolderId
+}
+
+type UpdateParams = {
+    projectId: ProjectId
+    folderId: FolderId
+    request: UpdateFolderRequest
+}
+
+type UpsertParams = {
+    projectId: ProjectId
+    request: CreateFolderRequest
+}
+
+type ListParams = {
+    projectId: ProjectId
+    cursorRequest: Cursor | null
+    limit: number
+}
+
+type GetOneByDisplayNameParams = {
+    projectId: ProjectId
+    displayName: string
+}
+
+type GetOneOrThrowParams = {
+    projectId: ProjectId
+    folderId: FolderId
 }

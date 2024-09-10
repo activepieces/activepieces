@@ -131,6 +131,7 @@ export class VariableService {
             return result ?? ''
         }
         catch (exception) {
+            console.error('[evalInScope] Error evaluating variable', exception)
             return ''
         }
     }
@@ -186,14 +187,15 @@ export class VariableService {
             }
         }
 
+        const flattenedSteps = executionState.currentState()
         const resolvedInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
-            executionState.currentState,
+            flattenedSteps,
             false,
         )
         const censoredInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
-            executionState.currentState,
+            flattenedSteps,
             true,
         )
         return {
@@ -269,5 +271,5 @@ export class VariableService {
 
 }
 
-export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string }): VariableService => 
+export const variableService = ({ projectId, engineToken, apiUrl }: { projectId: string, engineToken: string, apiUrl: string }): VariableService =>
     new VariableService({ projectId, engineToken, apiUrl })

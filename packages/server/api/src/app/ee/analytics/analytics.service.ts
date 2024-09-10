@@ -130,6 +130,8 @@ async function analyzeUsers(platformId: PlatformId) {
     }
 }
 
+
+
 async function tasksReport(platformId: PlatformId) {
     const tasks = await flowRunRepo().createQueryBuilder('flow_run')
         .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
