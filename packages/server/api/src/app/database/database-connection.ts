@@ -7,6 +7,7 @@ import {
     ObjectLiteral,
     SelectQueryBuilder,
 } from 'typeorm'
+import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
@@ -46,7 +47,6 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { ProxyConfigEntity } from '../proxy/proxy-config-entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -76,7 +76,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AlertEntity,
         UserInvitationEntity,
         WorkerMachineEntity,
-        ProxyConfigEntity,
+        AiProviderEntity,
     ]
 
     switch (edition) {

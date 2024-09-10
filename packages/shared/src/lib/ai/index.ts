@@ -1,9 +1,12 @@
 import { Static, Type } from "@sinclair/typebox";
 import { BaseModelSchema } from "../common";
 
-export const ProxyConfig = Type.Object({
+
+export const AiProviderConfig = Type.Object({
   ...BaseModelSchema,
-  defaultHeaders: Type.Record(Type.String(), Type.String({ minLength: 1 })),
+  config: Type.Object({
+    defaultHeaders: Type.Record(Type.String(), Type.String({ minLength: 1 })),
+  }),
   baseUrl: Type.String({
     pattern: '^https?://.+$',
   }),
@@ -11,7 +14,10 @@ export const ProxyConfig = Type.Object({
   platformId: Type.String(),
 })
 
-export type ProxyConfig = Static<typeof ProxyConfig>;
+export type AiProviderConfig = Static<typeof AiProviderConfig>;
+
+export const AiProviderWithoutSensitiveData = Type.Omit(AiProviderConfig, ['config'])
+export type AiProviderWithoutSensitiveData = Static<typeof AiProviderWithoutSensitiveData>
 
 export const AiProviders = [
   {

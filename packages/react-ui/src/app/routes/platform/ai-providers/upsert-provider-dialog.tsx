@@ -13,19 +13,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage, useFormField } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { proxyConfigApi } from '@/lib/proxy-config-api';
 import { Type } from '@sinclair/typebox';
-import { AiProviders, ProxyConfig } from '../../../../../../shared/src';
+import { AiProviders as aiProviders, AiProviderConfig } from '@activepieces/shared';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { aiProviderApi } from '@/features/platform-admin-panel/lib/provider-api-api';
 
 type UpsertAIProviderDialogProps = {
-  config?: ProxyConfig;
+  provider?: AiProviderConfig;
   children: React.ReactNode;
   onCreate: () => void;
 };
@@ -33,17 +33,12 @@ type UpsertAIProviderDialogProps = {
 export const UpsertAIProviderDialog = ({
   children,
   onCreate,
-  config
+  provider
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<ProxyConfig>({
-    resolver: typeboxResolver(Type.Composite([
-      Type.Omit(ProxyConfig, ['id', 'created', 'updated', 'platformId']),
-      Type.Object({
-        defaultHeaders: Type.Record(Type.String(), Type.String()),
-      }, { default: { defaultHeaders: {} } }),
-    ])),
-    defaultValues: config,
+  const form = useForm<AiProviderConfig>({
+    resolver: typeboxResolver(AiProviderConfig),
+    defaultValues: provider,
   });
 
   const formState = form.watch()
@@ -60,14 +55,7 @@ export const UpsertAIProviderDialog = ({
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['upsert-proxy-config'],
-    mutationFn: async () => {
-      const formValues = form.getValues();
-      if (config) {
-        await proxyConfigApi.update(config.id, formValues)
-      } else {
-        await proxyConfigApi.create(formValues)
-      }
-    },
+    mutationFn: () => aiProviderApi.upsert(form.getValues()),
     onSuccess: () => {
       onCreate();
       form.reset();
@@ -94,13 +82,13 @@ export const UpsertAIProviderDialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="provider">{t('AI Provider')}</Label>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={Boolean(config)}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={Boolean(provider)}>
                     <SelectTrigger>
                       <SelectValue placeholder={t('Select AI Provider')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {AiProviders.map(p => <SelectItem value={p.value}>{p.label}</SelectItem>)}
+                        {aiProviders.map(p => <SelectItem value={p.value}>{p.label}</SelectItem>)}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -150,7 +138,7 @@ export const UpsertAIProviderDialog = ({
                                 className="rounded-sm"
                               />
                               <Button onClick={(e) => {
-                                if (Object.hasOwn(formState.defaultHeaders ?? {}, field.value)) {
+                                if (Object.hasOwn(formState.config.defaultHeaders ?? {}, field.value)) {
                                   newHeaderForm.setError('root.serverError', {
                                     message: t('Header already exists'),
                                   })
@@ -162,7 +150,7 @@ export const UpsertAIProviderDialog = ({
                                   })
                                   return
                                 }
-                                form.setValue(`defaultHeaders.${field.value}`, '')
+                                form.setValue(`config.defaultHeaders.${field.value}`, '')
                                 newHeaderForm.resetField('name')
                                 setIsNewHeaderFormOpen(false)
                               }}>
@@ -183,34 +171,7 @@ export const UpsertAIProviderDialog = ({
                 </PopoverContent>
               </Popover>
             </div>
-            {Object.entries(formState.defaultHeaders ?? {}).map(([key, value]) => (
-              <div className='w-full' key={`header-${key}`}>
-                <FormField
-                  key={key}
-                  name={`defaultHeaders.${key}`}
-                  render={({ field }) => (
-                    <FormItem className="grid space-y-2">
-                      <Label htmlFor={key} className='font-mono'>{key.toUpperCase()}</Label>
-                      <div className='flex gap-2 items-center justify-center'>
-                        <Input
-                          {...field}
-                          required
-                          id={key}
-                          placeholder={key}
-                          className="rounded-sm"
-                        />
-                        <Button variant="ghost" color='destructive' size="sm" onClick={() => {
-                          form.unregister(`defaultHeaders.${key}`)
-                        }}>
-                          <Trash className='w-4 h-4' color='red' />
-                        </Button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            ))}
+
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>
                 {form.formState.errors.root.serverError.message}

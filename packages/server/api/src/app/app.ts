@@ -7,6 +7,7 @@ import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifySocketIO from 'fastify-socket.io'
 import { Socket } from 'socket.io'
+import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
@@ -94,7 +95,6 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
 import { workerModule } from './workers/worker-module'
-import { aiProviderModule } from 'packages/server/api/src/app/proxy/proxy-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
