@@ -155,7 +155,12 @@ export default function ProjectsPage() {
               },
             },
           ]}
-          fetchData={() => projectApi.list({})}
+          fetchData={(_, pagination) =>
+            projectApi.list({
+              cursor: pagination.cursor,
+              limit: pagination.limit ?? 10,
+            })
+          }
           refresh={refreshCount}
           actions={[
             (row) => {
