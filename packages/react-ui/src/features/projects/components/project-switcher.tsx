@@ -50,7 +50,7 @@ function ProjectSwitcher() {
             <CommandInput placeholder="Search project..." />
             <CommandEmpty>No projects found.</CommandEmpty>
             <CommandGroup key="projects" heading="Projects">
-              <ScrollArea viewPortClassName="h-[200px]">
+              <ScrollArea viewPortClassName="max-h-[200px]">
                 {projects &&
                   projects.map((project) => (
                     <CommandItem
