@@ -2,14 +2,13 @@ import OpenAI from 'openai';
 import { AI, AIChatRole, AIFactory } from "../..";
 
 export const openai: AIFactory = ({
-  serverUrl,
+  proxyUrl,
   engineToken,
-}: { serverUrl: string, engineToken: string }): AI<OpenAI> => {
-  const openaiEndpoint = '/v1';
-  const proxyUrl = `${serverUrl}v1/ai-providers/proxy/openai`
+}): AI<OpenAI> => {
+  const openaiApiVersion = 'v1';
   const sdk = new OpenAI({
     apiKey: engineToken,
-    baseURL: `${proxyUrl}${openaiEndpoint}`,
+    baseURL: `${proxyUrl}/${openaiApiVersion}`,
     defaultHeaders: {
       'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.total_tokens',
     },

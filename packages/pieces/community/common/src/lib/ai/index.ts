@@ -45,15 +45,16 @@ export enum AIChatRole {
   ASSISTANT = 'assistant',
 }
 
-export type AIFactory = (params: { serverUrl: string, engineToken: string }) => AI<unknown>
+export type AIFactory = (params: { proxyUrl: string, engineToken: string }) => AI<unknown>
 
 export const AI = ({
   provider,
   server
 }: { provider: AiProvider, server: ServerContext }): AI<unknown> => {
 
+  const proxyUrl = `${server.apiUrl}v1/ai-providers/proxy/${provider}` 
   const factory = AiProviders.find(p => p.value === provider)?.factory
-  const impl = factory?.({ serverUrl: server.apiUrl, engineToken: server.token })
+  const impl = factory?.({ proxyUrl, engineToken: server.token })
 
   if (!impl) {
     throw new Error(`AI provider ${provider} is not registered`)

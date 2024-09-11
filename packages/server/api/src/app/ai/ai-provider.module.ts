@@ -9,7 +9,7 @@ import { projectUsageService } from '../project/usage/project-usage-service'
 import { aiProviderService } from './ai-provider.service'
 
 export const aiProviderModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
+    await app.register(proxyController, { prefix: '/v1/ai-providers/proxy' })
     await app.register(aiProviderController, { prefix: '/v1/ai-providers' })
 }
 
@@ -18,6 +18,7 @@ const aiProviderController: FastifyPluginCallbackTypebox = (
     _opts,
     done,
 ) => {
+    fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     fastify.post('/', CreateProxyConfigRequest, async (request) => {
         return aiProviderService.upsert(request.principal.platform.id, {
             config: request.body.config,
@@ -38,7 +39,15 @@ const aiProviderController: FastifyPluginCallbackTypebox = (
         return aiProviderService.list(request.principal.platform.id)
     })
 
-    fastify.all('/proxy/:provider/*', ProxyRequest, async (request, reply) => {
+    done()
+}
+
+const proxyController: FastifyPluginCallbackTypebox = (
+    fastify,
+    _opts,
+    done,
+) => {
+    fastify.all('/:provider/*', ProxyRequest, async (request, reply) => {
         try {
             const projectId = request.principal.projectId
 
@@ -116,7 +125,6 @@ const aiProviderController: FastifyPluginCallbackTypebox = (
             await reply.code(500).send({ error: 'Proxy error' })
         }
     })
-
     done()
 }
 
