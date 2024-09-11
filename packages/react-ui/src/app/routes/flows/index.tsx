@@ -307,7 +307,6 @@ const FlowsPage = () => {
           />
         </div>
       </div>
-      <ShowPoweredBy show={platform?.showPoweredBy} />
     </div>
   );
 };
