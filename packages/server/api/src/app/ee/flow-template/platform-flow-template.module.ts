@@ -1,20 +1,20 @@
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
-import { AppSystemProp, system } from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
-    ErrorCode,
-    ListFlowTemplatesRequest,
-    Principal,
-    PrincipalType,
-    TemplateType,
-} from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { flowTemplateService } from './flow-template.service'
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
+import { AppSystemProp, system } from '@activepieces/server-shared'
+import {
+    ActivepiecesError,
+    ALL_PRINCIPAL_TYPES, EndpointScope,
+    ErrorCode,
+    ListFlowTemplatesRequest,
+    Principal,
+    PrincipalType,
+    TemplateType,
+} from '@activepieces/shared'
 
 export const platformFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
@@ -75,12 +75,14 @@ async function resolveTemplatesPlatformId(principal: Principal, platformId: stri
     }
     const platform = await platformService.getOneOrThrow(platformId)
     return platform.id
-  
-}   
+
+}
 
 const GetParams = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
+
     },
     schema: {
         params: GetIdParams,
@@ -90,6 +92,8 @@ const GetParams = {
 const ListFlowParams = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
+
     },
     schema: {
         querystring: ListFlowTemplatesRequest,
@@ -98,7 +102,9 @@ const ListFlowParams = {
 
 const DeleteParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
+
     },
     schema: {
         params: GetIdParams,
@@ -107,7 +113,9 @@ const DeleteParams = {
 
 const CreateParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
+
     },
     schema: {
         body: CreateFlowTemplateRequest,
