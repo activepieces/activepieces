@@ -13,9 +13,10 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
 
-import { Header } from './header';
-import { platformHooks } from '../../hooks/platform-hooks';
 import { ShowPoweredBy } from '../../components/show-powered-by';
+import { platformHooks } from '../../hooks/platform-hooks';
+
+import { Header } from './header';
 
 type Link = {
   icon: React.ReactNode;
