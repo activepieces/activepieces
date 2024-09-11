@@ -17,11 +17,11 @@ import { projectApi } from '@/lib/project-api';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
+import { TableTitle } from '../../../components/ui/table-title';
 import { billingApi } from '../api/billing-api';
 
 import { PlanData } from './plan-data';
 import { TasksProgress } from './tasks-progress';
-import { TableTitle } from '../../../components/ui/table-title';
 
 const TasksSchema = Type.Object({
   tasks: Type.Number(),

@@ -18,6 +18,7 @@ import {
   summarizeApplicationEvent,
 } from '@activepieces/ee-shared';
 import { isNil } from '@activepieces/shared';
+
 import { TableTitle } from '../../../../components/ui/table-title';
 
 export default function AuditLogsPage() {

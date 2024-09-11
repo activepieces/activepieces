@@ -2,7 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -18,12 +18,12 @@ import {
 import { Form, FormField, FormItem } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { PiecesFilterType } from '@activepieces/shared';
+
 import { piecesHooks } from '../../../../features/pieces/lib/pieces-hook';
-import { MultiSelectPieceProperty } from '../../../builder/piece-properties/multi-select-piece-property';
-import { projectApi } from '../../../../lib/project-api';
-import { PiecesFilterType } from '../../../../../../shared/src';
 import { authenticationSession } from '../../../../lib/authentication-session';
-import React from 'react';
+import { projectApi } from '../../../../lib/project-api';
+import { MultiSelectPieceProperty } from '../../../builder/piece-properties/multi-select-piece-property';
 
 type ManagePiecesDialogProps = {
   onSuccess: () => void;

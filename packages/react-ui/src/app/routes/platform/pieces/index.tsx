@@ -20,6 +20,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import { PieceScope } from '@activepieces/shared';
+
 import { TableTitle } from '../../../../components/ui/table-title';
 
 const PlatformPiecesPage = () => {

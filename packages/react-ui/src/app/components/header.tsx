@@ -14,8 +14,9 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
-import { FlagGuard } from './flag-guard';
 import { Separator } from '../../components/ui/seperator';
+
+import { FlagGuard } from './flag-guard';
 
 export const Header = () => {
   const history = useLocation();

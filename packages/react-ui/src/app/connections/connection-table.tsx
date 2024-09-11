@@ -25,10 +25,10 @@ import {
   Permission,
 } from '@activepieces/shared';
 
+import { TableTitle } from '../../components/ui/table-title';
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
 import { NewConnectionTypeDialog } from './new-connection-type-dialog';
-import { TableTitle } from '../../components/ui/table-title';
 
 type PieceIconWithPieceNameProps = {
   pieceName: string;

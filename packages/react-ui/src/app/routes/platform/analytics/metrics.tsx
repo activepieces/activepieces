@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Building, User, Workflow, Puzzle, Bot, Info } from 'lucide-react';
 import React from 'react';
 
@@ -9,7 +10,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { AnalyticsReportResponse } from '@activepieces/shared';
-import { t } from 'i18next';
 
 type MetricProps = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;

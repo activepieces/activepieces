@@ -18,8 +18,9 @@ import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-us
 import { formatUtils } from '@/lib/utils';
 import { UserStatus } from '@activepieces/shared';
 
-import { UpdateUserRoleDialog } from './update-role-dialog';
 import { TableTitle } from '../../../../components/ui/table-title';
+
+import { UpdateUserRoleDialog } from './update-role-dialog';
 
 export default function UsersPage() {
   const [refreshCount, setRefreshCount] = useState(0);

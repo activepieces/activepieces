@@ -37,7 +37,7 @@ type UsePieceMetadata = {
 
 type UsePiecesProps = {
   searchQuery?: string;
-  includeHidden?: boolean
+  includeHidden?: boolean;
 };
 
 type UseMetadataProps = {
@@ -110,10 +110,10 @@ export const piecesHooks = {
       queries: props.map((step) => stepMetadataQueryBuilder(step)),
     });
   },
-  usePieces: ({ searchQuery,includeHidden=false }: UsePiecesProps) => {
+  usePieces: ({ searchQuery, includeHidden = false }: UsePiecesProps) => {
     const query = useQuery<PieceMetadataModelSummary[], Error>({
-      queryKey: ['pieces', searchQuery,includeHidden],
-      queryFn: () => piecesApi.list({ searchQuery,includeHidden }),
+      queryKey: ['pieces', searchQuery, includeHidden],
+      queryFn: () => piecesApi.list({ searchQuery, includeHidden }),
       staleTime: searchQuery ? 0 : Infinity,
     });
     return {

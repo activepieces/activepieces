@@ -19,8 +19,9 @@ import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 
-import { UpsertTemplateDialog } from './upsert-template-dialog';
 import { TableTitle } from '../../../../components/ui/table-title';
+
+import { UpsertTemplateDialog } from './upsert-template-dialog';
 
 export default function TemplatesPage() {
   const { platform } = platformHooks.useCurrentPlatform();

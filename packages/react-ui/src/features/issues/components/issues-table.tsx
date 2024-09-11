@@ -24,9 +24,9 @@ import {
   Permission,
 } from '@activepieces/shared';
 
+import { TableTitle } from '../../../components/ui/table-title';
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
-import { TableTitle } from '../../../components/ui/table-title';
 
 const fetchData = async (
   _: Record<string, string>,

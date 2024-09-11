@@ -20,8 +20,9 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 
-import { NewProjectDialog } from './new-project-dialog';
 import { TableTitle } from '../../../../components/ui/table-title';
+
+import { NewProjectDialog } from './new-project-dialog';
 
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();

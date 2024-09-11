@@ -13,7 +13,9 @@ import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ApFlagId, isNil, PieceScope, PieceType } from '@activepieces/shared';
+
 import { TableTitle } from '../../../../components/ui/table-title';
+
 import { ManagePiecesDialog } from './manage-pieces-dialog';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
