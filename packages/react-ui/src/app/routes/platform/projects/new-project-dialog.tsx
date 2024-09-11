@@ -1,4 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -19,7 +20,6 @@ import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectApi } from '@/lib/project-api';
 import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
-import { Type } from '@sinclair/typebox';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
