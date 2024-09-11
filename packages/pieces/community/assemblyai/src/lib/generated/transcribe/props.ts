@@ -8,8 +8,7 @@ export const props = {
   language_code: Property.StaticDropdown({
     displayName: 'Language Code',
     required: false,
-    description:
-      "The language of your audio file. Possible values are found in [Supported Languages](https://www.assemblyai.com/docs/concepts/supported-languages).\nThe default value is 'en_us'.\n",
+    description: `The language of your audio file. Possible values are found in [Supported Languages](https://www.assemblyai.com/docs/concepts/supported-languages).\nThe default value is 'en_us'.\n`,
     options: {
       options: [
         {
@@ -426,8 +425,7 @@ export const props = {
   language_detection: Property.Checkbox({
     displayName: 'Language Detection',
     required: false,
-    description:
-      'Enable [Automatic language detection](https://www.assemblyai.com/docs/models/speech-recognition#automatic-language-detection), either true or false.',
+    description: `Enable [Automatic language detection](https://www.assemblyai.com/docs/models/speech-recognition#automatic-language-detection), either true or false.`,
     defaultValue: false,
   }),
   language_confidence_threshold: Property.Number({
@@ -476,8 +474,7 @@ export const props = {
   dual_channel: Property.Checkbox({
     displayName: 'Dual Channel',
     required: false,
-    description:
-      'Enable [Dual Channel](https://www.assemblyai.com/docs/models/speech-recognition#dual-channel-transcription) transcription, can be true or false.',
+    description: `Enable [Dual Channel](https://www.assemblyai.com/docs/models/speech-recognition#dual-channel-transcription) transcription, can be true or false.`,
     defaultValue: false,
   }),
   webhook_url: Property.ShortText({
@@ -560,15 +557,13 @@ export const props = {
   redact_pii_audio: Property.Checkbox({
     displayName: 'Redact PII Audio',
     required: false,
-    description:
-      'Generate a copy of the original media file with spoken PII "beeped" out, can be true or false. See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.',
+    description: `Generate a copy of the original media file with spoken PII "beeped" out, can be true or false. See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.`,
     defaultValue: false,
   }),
   redact_pii_audio_quality: Property.StaticDropdown({
     displayName: 'Redact PII Audio Quality',
     required: false,
-    description:
-      'Controls the filetype of the audio created by redact_pii_audio. Currently supports mp3 (default) and wav. See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.',
+    description: `Controls the filetype of the audio created by redact_pii_audio. Currently supports mp3 (default) and wav. See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.`,
     options: {
       options: [
         {
@@ -585,8 +580,7 @@ export const props = {
   redact_pii_policies: Property.StaticMultiSelectDropdown({
     displayName: 'Redact PII Policies',
     required: false,
-    description:
-      'The list of PII Redaction policies to enable. See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.',
+    description: `The list of PII Redaction policies to enable. See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.`,
     options: {
       options: [
         {
@@ -771,8 +765,7 @@ export const props = {
   redact_pii_sub: Property.StaticDropdown({
     displayName: 'Redact PII Substitution',
     required: false,
-    description:
-      'The replacement logic for detected PII, can be "entity_type" or "hash". See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.',
+    description: `The replacement logic for detected PII, can be "entity_type" or "hash". See [PII redaction](https://www.assemblyai.com/docs/models/pii-redaction) for more details.`,
     options: {
       options: [
         {
@@ -789,21 +782,18 @@ export const props = {
   speaker_labels: Property.Checkbox({
     displayName: 'Speaker Labels',
     required: false,
-    description:
-      'Enable [Speaker diarization](https://www.assemblyai.com/docs/models/speaker-diarization), can be true or false',
+    description: `Enable [Speaker diarization](https://www.assemblyai.com/docs/models/speaker-diarization), can be true or false`,
     defaultValue: false,
   }),
   speakers_expected: Property.Number({
     displayName: 'Speakers Expected',
     required: false,
-    description:
-      'Tells the speaker label model how many speakers it should attempt to identify, up to 10. See [Speaker diarization](https://www.assemblyai.com/docs/models/speaker-diarization) for more details.',
+    description: `Tells the speaker label model how many speakers it should attempt to identify, up to 10. See [Speaker diarization](https://www.assemblyai.com/docs/models/speaker-diarization) for more details.`,
   }),
   content_safety: Property.Checkbox({
     displayName: 'Content Moderation',
     required: false,
-    description:
-      'Enable [Content Moderation](https://www.assemblyai.com/docs/models/content-moderation), can be true or false',
+    description: `Enable [Content Moderation](https://www.assemblyai.com/docs/models/content-moderation), can be true or false`,
     defaultValue: false,
   }),
   content_safety_confidence: Property.Number({
@@ -815,8 +805,7 @@ export const props = {
   iab_categories: Property.Checkbox({
     displayName: 'Topic Detection',
     required: false,
-    description:
-      'Enable [Topic Detection](https://www.assemblyai.com/docs/models/topic-detection), can be true or false',
+    description: `Enable [Topic Detection](https://www.assemblyai.com/docs/models/topic-detection), can be true or false`,
     defaultValue: false,
   }),
   custom_spelling: Property.Json({
@@ -828,22 +817,19 @@ export const props = {
   sentiment_analysis: Property.Checkbox({
     displayName: 'Sentiment Analysis',
     required: false,
-    description:
-      'Enable [Sentiment Analysis](https://www.assemblyai.com/docs/models/sentiment-analysis), can be true or false',
+    description: `Enable [Sentiment Analysis](https://www.assemblyai.com/docs/models/sentiment-analysis), can be true or false`,
     defaultValue: false,
   }),
   auto_chapters: Property.Checkbox({
     displayName: 'Auto Chapters',
     required: false,
-    description:
-      'Enable [Auto Chapters](https://www.assemblyai.com/docs/models/auto-chapters), can be true or false',
+    description: `Enable [Auto Chapters](https://www.assemblyai.com/docs/models/auto-chapters), can be true or false`,
     defaultValue: false,
   }),
   entity_detection: Property.Checkbox({
     displayName: 'Entity Detection',
     required: false,
-    description:
-      'Enable [Entity Detection](https://www.assemblyai.com/docs/models/entity-detection), can be true or false',
+    description: `Enable [Entity Detection](https://www.assemblyai.com/docs/models/entity-detection), can be true or false`,
     defaultValue: false,
   }),
   speech_threshold: Property.Number({
@@ -855,8 +841,7 @@ export const props = {
   summarization: Property.Checkbox({
     displayName: 'Enable Summarization',
     required: false,
-    description:
-      'Enable [Summarization](https://www.assemblyai.com/docs/models/summarization), can be true or false',
+    description: `Enable [Summarization](https://www.assemblyai.com/docs/models/summarization), can be true or false`,
     defaultValue: false,
   }),
   summary_model: Property.StaticDropdown({
