@@ -223,9 +223,8 @@ export function DataTable<
     setSearchParams(
       (prev) => {
         const newParams = new URLSearchParams(prev);
-        if (currentCursor) {
-          newParams.set('cursor', currentCursor);
-        }
+
+        newParams.set('cursor', currentCursor);
         newParams.set('limit', `${table.getState().pagination.pageSize}`);
         return newParams;
       },
@@ -326,6 +325,7 @@ export function DataTable<
           value={`${table.getState().pagination.pageSize}`}
           onValueChange={(value) => {
             table.setPageSize(Number(value));
+            setCurrentCursor(undefined);
           }}
         >
           <SelectTrigger className="h-9 min-w-[70px] w-auto">
@@ -351,7 +351,6 @@ export function DataTable<
           variant="outline"
           size="sm"
           onClick={() => {
-            console.log('setCurrentCursor', nextPageCursor);
             setCurrentCursor(nextPageCursor);
           }}
           disabled={!nextPageCursor}
