@@ -1,7 +1,7 @@
 {
-  "name": "pieces-flows",
+  "name": "pieces-subflows",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/flows/src",
+  "sourceRoot": "packages/pieces/community/subflows/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -15,17 +15,13 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/pieces/community/flows",
-        "tsConfig": "packages/pieces/community/flows/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/flows/package.json",
-        "main": "packages/pieces/community/flows/src/index.ts",
-        "assets": [
-          "packages/pieces/community/flows/*.md"
-        ],
+        "outputPath": "dist/packages/pieces/community/subflows",
+        "tsConfig": "packages/pieces/community/subflows/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/subflows/package.json",
+        "main": "packages/pieces/community/subflows/src/index.ts",
+        "assets": ["packages/pieces/community/subflows/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
@@ -37,9 +33,7 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ]
+      "outputs": ["{options.outputFile}"]
     }
   }
 }

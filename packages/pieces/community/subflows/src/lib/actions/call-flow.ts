@@ -7,9 +7,9 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { FlowStatus, isNil, TriggerType } from '@activepieces/shared';
 
 type FlowValue = {
-  id: string
-  exampleData: unknown
-}
+  id: string;
+  exampleData: unknown;
+};
 
 export const callFlow = createAction({
   name: 'callFlow',
@@ -22,17 +22,21 @@ export const callFlow = createAction({
       required: true,
       options: async (_, context) => {
         const allFlows = (await context.flows.list()).data;
-        const flows = allFlows.filter(flow => flow.status === FlowStatus.ENABLED
-          && flow.version.trigger.type === TriggerType.PIECE
-          && flow.version.trigger.settings.pieceName == '@activepieces/piece-flows');
+        const flows = allFlows.filter(
+          (flow) =>
+            flow.status === FlowStatus.ENABLED &&
+            flow.version.trigger.type === TriggerType.PIECE &&
+            flow.version.trigger.settings.pieceName ==
+              '@activepieces/piece-subflows'
+        );
         return {
-          options: flows.map(flow => ({
+          options: flows.map((flow) => ({
             value: {
               id: flow.id,
               exampleData: flow.version.trigger.settings.input.exampleData,
             },
             label: flow.version.displayName,
-          }))
+          })),
         };
       },
       refreshers: [],
@@ -46,15 +50,15 @@ export const callFlow = createAction({
         const props: Record<string, DynamicProp> = {};
         const castedFlowValue = propsValue['flow'] as unknown as FlowValue;
         if (!isNil(castedFlowValue)) {
-          props['exampleData'] = Property.Json({
-            displayName: 'Sample Data',
-            description: 'Provide the sample data to be passed to the flow, It will be used for testing purposes',
+          props['payload'] = Property.Json({
+            displayName: 'Payload',
+            description:
+              'Provide the data to be passed to the flow',
             required: true,
             defaultValue: castedFlowValue.exampleData as unknown as object,
-          })
+          });
         }
         return props;
-
       },
     }),
     waitForResponse: Property.Checkbox({
@@ -67,11 +71,13 @@ export const callFlow = createAction({
   async run(context) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}${context.propsValue.waitForResponse ? '/sync' : ''}`,
+      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}${
+        context.propsValue.waitForResponse ? '/sync' : ''
+      }`,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(context.propsValue.flowProps['exampleData'])
+      body: JSON.stringify(context.propsValue.flowProps['payload']),
     });
     return response.body;
   },

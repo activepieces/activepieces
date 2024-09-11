@@ -7,6 +7,7 @@ import { createFilesService } from '../services/files.service'
 import { createContextStore } from '../services/storage.service'
 import { variableService } from '../variables/variable-service'
 import { pieceLoader } from './piece-loader'
+import { createFlowsContext } from '../services/flows.service'
 
 type Listener = {
     events: string[]
@@ -70,14 +71,12 @@ export const triggerHelper = {
                     failureCount: request.failureCount ?? 0,
                 }
             },
-            flows: {
-                current: {
-                    id: params.flowVersion.flowId,
-                    version: {
-                        id: params.flowVersion.id,
-                    },
-                },
-            },
+            flows: createFlowsContext({
+                engineToken: params.engineToken,
+                internalApiUrl: constants.internalApiUrl,
+                flowId: params.flowVersion.flowId,
+                flowVersionId: params.flowVersion.id,
+            }),
             webhookUrl: params.webhookUrl,
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             propsValue: processedInput,
