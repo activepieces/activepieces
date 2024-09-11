@@ -131,7 +131,12 @@ export default function AuditLogsPage() {
               },
             },
           ]}
-          fetchData={() => auditEventsApi.list({})}
+          fetchData={(_, pagination) =>
+            auditEventsApi.list({
+              cursor: pagination.cursor,
+              limit: pagination.limit ?? 10,
+            })
+          }
         />
       </div>
     </LockedFeatureGuard>
