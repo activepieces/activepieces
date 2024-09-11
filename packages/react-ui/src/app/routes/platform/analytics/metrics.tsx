@@ -115,7 +115,7 @@ export function Metrics({ report }: MetricsProps) {
       icon: Bot,
       title: t('Flows with AI'),
       value: report?.activeFlowsWithAI,
-      description: t('The number of flows that incorporate AI components'),
+      description: t('The number of enabled flows that use AI pieces'),
       iconColor: 'text-purple-700',
     },
   ];
