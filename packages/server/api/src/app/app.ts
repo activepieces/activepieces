@@ -1,7 +1,7 @@
 import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, initializeSentry, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ExecutionMode, Flow, FlowRun, FlowTemplate, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
@@ -129,6 +129,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
                     [ApplicationEventName.USER_EMAIL_VERIFIED]: AuthenticationEvent,
                     [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
+                    'flow-template': FlowTemplate,
                     'folder': Folder,
                     'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
@@ -340,14 +341,41 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
 
 const validateEnvPropsOnStartup = async (): Promise<void> => {
+    const codeSandboxType = process.env.AP_CODE_SANDBOX_TYPE
+    if (!isNil(codeSandboxType)) {
+        throw new Error(JSON.stringify({
+            message: 'AP_CODE_SANDBOX_TYPE is deprecated, please use AP_EXECUTION_MODE instead',
+            docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
+        }))
+    }
     const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-    await encryptUtils.loadEncryptionKey(queueMode)
+    const encryptionKey = await encryptUtils.loadEncryptionKey(queueMode)
+    const isValidHexKey = encryptionKey && /^[A-Fa-z0-9]{32}$/.test(encryptionKey)
+    if (!isValidHexKey) {
+        throw new Error(JSON.stringify({
+            message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',
+            docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
+        }))
+    }
 
     const jwtSecret = await jwtUtils.getJwtSecret()
     if (isNil(jwtSecret)) {
         throw new Error(JSON.stringify({
             message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
+            docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
         }))
+    }
+
+    const edition = system.getEdition()
+    const test = system.get(SharedSystemProp.ENVIRONMENT)
+    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && test !== ApEnvironment.TESTING) {
+        const executionMode = system.getOrThrow<ExecutionMode>(SharedSystemProp.EXECUTION_MODE)
+        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode)) {
+            throw new Error(JSON.stringify({
+                message: 'Execution mode UNSANDBOXED is no longer supported in this edition, check the documentation for recent changes',
+                docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
+            }))
+        }
     }
 }
 

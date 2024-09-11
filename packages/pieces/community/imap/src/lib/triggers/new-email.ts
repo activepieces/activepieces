@@ -1,10 +1,12 @@
 import {
+  FilesService,
   Property,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { imapAuth } from '../..';
-import { imapCommon } from '../common';
+import { convertAttachment, imapCommon } from '../common';
+import { ParsedMail } from 'mailparser';
 
 const filterInstructions = `
 **Filter Emails:**
@@ -28,6 +30,7 @@ export const newEmail = createTrigger({
     await context.store.put('lastPoll', Date.now());
   },
   onDisable: async (context) => {
+    await context.store.delete('lastPoll');
     return;
   },
   run: async (context) => {
@@ -45,9 +48,9 @@ export const newEmail = createTrigger({
       lastEpochMilliSeconds
     );
     await store.put('lastPoll', newLastEpochMilliSeconds);
-    return items
-      .filter((f) => f.epochMilliSeconds > lastEpochMilliSeconds)
-      .map((item) => item.data);
+    const filteredEmail = items
+      .filter((f) => f.epochMilliSeconds > lastEpochMilliSeconds);
+    return enrichAttachments(filteredEmail, files);
   },
   test: async (context) => {
     const { auth, propsValue, files } = context;
@@ -59,7 +62,8 @@ export const newEmail = createTrigger({
       mailbox,
       files,
     });
-    return getFirstFiveOrAll(items.map((item) => item.data));
+    const filteredEmails = getFirstFiveOrAll(items);
+    return enrichAttachments(filteredEmails, files);
   },
   sampleData: {
     html: 'My email body',
@@ -96,7 +100,18 @@ export const newEmail = createTrigger({
   },
 });
 
-function getFirstFiveOrAll(array: unknown[]) {
+async function enrichAttachments(item: {
+  data: ParsedMail;
+  epochMilliSeconds: number;
+}[], files: FilesService) {
+  return Promise.all(item.map(async (item) => {
+    return {
+      ...item,
+      attachments: await convertAttachment(item.data.attachments, files),
+    }
+  }));
+}
+function getFirstFiveOrAll<T>(array: T[]) {
   if (array.length <= 5) {
     return array;
   } else {

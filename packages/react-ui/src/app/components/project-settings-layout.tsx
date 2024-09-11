@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 const iconSize = 20;
 
@@ -48,12 +49,18 @@ const sidebarNavItems = [
 interface SettingsLayoutProps {
   children: React.ReactNode;
 }
-
 export default function ProjectSettingsLayout({
   children,
 }: SettingsLayoutProps) {
+  const { platform } = platformHooks.useCurrentPlatform();
+
+  // TODO enable alerts for communityh when it is ready
+  const filteredNavItems = platform.alertsEnabled
+    ? sidebarNavItems
+    : sidebarNavItems.filter((item) => item.title !== t('Alerts'));
+
   return (
-    <SidebarLayout title={t('Settings')} items={sidebarNavItems}>
+    <SidebarLayout title={t('Settings')} items={filteredNavItems}>
       {children}
     </SidebarLayout>
   );

@@ -175,6 +175,17 @@
             "endpoints/folders/list",
             "endpoints/folders/delete"
           ]
+        },
+        {
+          "group": "Flow Templates",
+          "icon": "copy",
+          "pages": [
+            "endpoints/flow-templates/schema",
+            "endpoints/flow-templates/create",
+            "endpoints/flow-templates/delete",
+            "endpoints/flow-templates/get",
+            "endpoints/flow-templates/list"
+          ]
         }
       ]
     },
@@ -195,25 +206,24 @@
         "install/overview",
         "install/options/docker",
         "install/options/docker-compose",
-        "install/options/easypanel",
-        "install/options/aws",
-        "install/options/gcp"
+        {
+          "group": "Others Options",
+          "pages": [
+            "install/options/easypanel",
+            "install/options/aws",
+            "install/options/gcp"
+          ]
+        }
       ]
     },
     {
-      "group": "Reference",
+      "group": "Configuration",
       "pages": [
-        {
-          "group": "Configurations",
-          "icon": "gear",
-          "pages": [
-            "install/configurations/environment-variables",
-            "install/configurations/setup-app-webhooks"
-          ]
-        },
-        "install/setup-ssl",
-        "install/enterprise",
-        "install/troubleshooting"
+        "install/configuration/overview",
+        "install/configuration/environment-variables",
+        "install/configuration/setup-app-webhooks",
+        "install/configuration/setup-ssl",
+        "install/configuration/troubleshooting"
       ]
     },
     {

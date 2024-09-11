@@ -53,6 +53,8 @@ import { AddPremiumPiecesColumnSqlite1717443603235 } from './migration/sqlite/17
 import { AddUserInvitationSqlite1717943564437 } from './migration/sqlite/1717943564437-AddUserInvitationSqlite'
 import { AddWorkerMachineSqlite1720100928449 } from './migration/sqlite/1720100928449-AddWorkerMachineSqlite'
 import { AddAnalyticsToPlatformSqlite1725151368300 } from './migration/sqlite/1725151368300-AddAnalyticsToPlatformSqlite'
+import { LogFileRelationWithFlowRunSqlite1725637505836 } from './migration/sqlite/1725637505836-LogFileRelationWithFlowRunSqlite'
+import { AddLogsFileIdIndexSqlite1725699920020 } from './migration/sqlite/1725699920020-AddLogsFileIdIndexSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -124,6 +126,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeEventRoutingConstraint1723549873495,
         AddAnalyticsToPlatformSqlite1725151368300,
         RemoveUniqueConstraintOnStepFile1725570317713,
+        LogFileRelationWithFlowRunSqlite1725637505836,
+        AddLogsFileIdIndexSqlite1725699920020,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

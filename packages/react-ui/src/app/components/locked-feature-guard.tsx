@@ -12,6 +12,7 @@ type LockedFeatureGuardProps = {
   lockDescription: string;
   lockVideoUrl?: string;
   featureKey: FeatureKey;
+  cloudOnlyFeature?: boolean;
 };
 
 export const LockedFeatureGuard = ({
@@ -21,12 +22,13 @@ export const LockedFeatureGuard = ({
   lockDescription,
   lockVideoUrl,
   featureKey,
+  cloudOnlyFeature = false,
 }: LockedFeatureGuardProps) => {
   const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PLATFORM_DEMO,
   );
 
-  if (!locked && !showPlatformDemo) {
+  if (!locked && (!showPlatformDemo || cloudOnlyFeature)) {
     return children;
   }
 

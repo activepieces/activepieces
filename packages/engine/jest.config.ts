@@ -1,8 +1,10 @@
+
+process.env.AP_EXECUTION_MODE = 'UNSANDBOXED'
+
 /* eslint-disable */
 export default {
   displayName: 'engine',
   preset: '../../jest.preset.js',
-  globals: {},
   testEnvironment: 'node',
   transform: {
     '^.+\\.[tj]s$': [

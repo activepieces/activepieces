@@ -153,7 +153,7 @@ const FlowsPage = () => {
       cell: ({ row }) => {
         const folderId = row.original.folderId;
         return (
-          <div className="text-left">
+          <div className="text-left min-w-[150px]">
             {folderId ? (
               <FolderBadge folderId={folderId} />
             ) : (
@@ -171,7 +171,7 @@ const FlowsPage = () => {
       cell: ({ row }) => {
         const created = row.original.created;
         return (
-          <div className="text-left font-medium">
+          <div className="text-left font-medium min-w-[150px]">
             {formatUtils.formatDate(new Date(created))}
           </div>
         );

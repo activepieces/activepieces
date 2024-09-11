@@ -135,43 +135,49 @@ export const BuilderHeader = () => {
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
+                  className="gap-2 px-2"
                   onClick={() =>
                     window.open(supportUrl, '_blank', 'noopener noreferrer')
                   }
                 >
-                  <QuestionMarkCircledIcon className="w-6 h-6"></QuestionMarkCircledIcon>
+                  <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
+                  {t('Support')}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t('Support')}</TooltipContent>
             </Tooltip>
           )}
-          {!isInRunsPage && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
-                >
-                  <History className="w-6 h-6" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t('Version History')}
-              </TooltipContent>
-            </Tooltip>
-          )}
-
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
+                className="gap-2 px-2"
               >
-                <Logs className="w-6 h-6" />
+                <Logs className="w-4 h-4" />
+                {t('Runs')}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('Run Logs')}</TooltipContent>
           </Tooltip>
+
+          {!isInRunsPage && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="gap-2 px-2"
+                  onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
+                >
+                  <History className="w-4 h-4" />
+                  {t('Versions')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {t('Versions History')}
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           <BuilderPublishButton></BuilderPublishButton>
           <UserAvatar></UserAvatar>
