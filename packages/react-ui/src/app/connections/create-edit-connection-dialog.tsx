@@ -241,7 +241,7 @@ const CreateOrEditConnectionDialog = React.memo(
       >
         <DialogContent
           onInteractOutside={(e) => e.preventDefault()}
-          className="max-h-[70vh] min-w-[800px] overflow-y-auto"
+          className="max-h-[70vh]  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
         >
           <DialogHeader>
             <DialogTitle>
