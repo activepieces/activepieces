@@ -8,6 +8,17 @@ export enum ActionType {
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
     BRANCH = 'BRANCH',
+    ROUTER = 'ROUTER',
+}
+
+export enum RouterExecutionType {
+    EXECUTE_ALL_MATCH = 'EXECUTE_ALL_MATCH',
+    EXECUTE_FIRST_MATCH = 'EXECUTE_FIRST_MATCH',
+}
+
+export enum BranchExecutionType {
+    FALLBACK = 'FALLBACK',
+    CONDITION = 'CONDITION',
 }
 
 const commonActionProps = {
@@ -189,10 +200,34 @@ export const BranchActionSettings = Type.Object({
 })
 export type BranchActionSettings = Static<typeof BranchActionSettings>
 
+export const RouterActionSettings = Type.Object({
+    branches: Type.Array(
+        Type.Union([
+            Type.Object({
+                conditions: Type.Array(Type.Array(BranchConditionValid(false))),
+                branchType: Type.Literal(BranchExecutionType.CONDITION),
+            }),
+            Type.Object({
+                branchType: Type.Literal(BranchExecutionType.FALLBACK),
+            }),
+        ], 
+        ),
+    ),
+    executionType: Type.Enum(RouterExecutionType),
+    inputUiInfo: SampleDataSettingsObject,
+})
+export type RouterActionSettings = Static<typeof RouterActionSettings>
+
 export const BranchActionSchema = Type.Object({
     ...commonActionProps,
     type: Type.Literal(ActionType.BRANCH),
     settings: BranchActionSettings,
+})
+
+export const RouterActionSchema = Type.Object({
+    ...commonActionProps,
+    type: Type.Literal(ActionType.ROUTER),
+    settings: RouterActionSettings,
 })
 
 // Union of all actions
@@ -213,6 +248,10 @@ export const Action = Type.Recursive(action => Type.Union([
         onSuccessAction: Type.Optional(action),
         onFailureAction: Type.Optional(action),
     })]),
+    Type.Intersect([RouterActionSchema, Type.Object({
+        nextAction: Type.Optional(action),
+        children: Type.Optional(Type.Array(action)),
+    })]),
 ]))
 
 export const SingleActionSchema = Type.Union([
@@ -225,6 +264,8 @@ export type Action = Static<typeof Action>
 
 
 export type BranchAction = Static<typeof BranchActionSchema> & { nextAction?: Action, onFailureAction?: Action, onSuccessAction?: Action }
+
+export type RouterAction = Static<typeof RouterActionSchema> & { nextAction?: Action, children: Action[] }
 
 export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & { nextAction?: Action, firstLoopAction?: Action }
 

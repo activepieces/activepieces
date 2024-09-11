@@ -74,11 +74,27 @@ type BranchStepResult = {
     condition: boolean
 }
 
+type RouterStepResult = {
+    conditions: boolean[]
+}
+
 export class BranchStepOutput extends GenericStepOutput<ActionType.BRANCH, BranchStepResult> {
 
     static init({ input }: { input: unknown }): BranchStepOutput {
         return new BranchStepOutput({
             type: ActionType.BRANCH,
+            input,
+            status: StepOutputStatus.SUCCEEDED,
+        })
+    }
+
+}
+
+export class RouterStepOutput extends GenericStepOutput<ActionType.ROUTER, RouterStepResult> {
+
+    static init({ input }: { input: unknown }): RouterStepOutput {
+        return new RouterStepOutput({
+            type: ActionType.ROUTER,
             input,
             status: StepOutputStatus.SUCCEEDED,
         })

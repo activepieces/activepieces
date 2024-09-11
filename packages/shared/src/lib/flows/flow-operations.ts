@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../common'
 import {
     BranchActionSchema, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema,
+    RouterActionSchema,
 } from './actions/action'
 import { FlowStatus } from './flow'
 import { EmptyTrigger, PieceTrigger, Trigger } from './triggers/trigger'
@@ -66,7 +67,7 @@ export const DeleteActionRequest = Type.Object({
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>
 
-export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema])
+export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema, RouterActionSchema])
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>
 
 export const DuplicateStepRequest = Type.Object({

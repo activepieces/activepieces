@@ -1,4 +1,4 @@
-import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType } from '@activepieces/shared'
+import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, BranchExecutionType, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType, RouterExecutionType } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 import { VariableService } from '../../src/lib/variables/variable-service'
 
@@ -53,7 +53,23 @@ export function buildSimpleLoopAction({
     }
 }
 
-
+export function buildRouterWithOneCondition({ children, conditions, executionType }: { children: Action[], conditions: BranchCondition[], executionType: RouterExecutionType }): Action {
+    return {
+        name: 'router',
+        displayName: 'Your Router Name',
+        type: ActionType.ROUTER,
+        settings: {
+            branches: conditions.map((condition) => ({
+                conditions: [[condition]],
+                branchType: BranchExecutionType.CONDITION,
+            })),
+            executionType,
+            inputUiInfo: {},
+        },
+        children,
+        valid: true,
+    }
+}
 
 export function buildActionWithOneCondition({ condition, onSuccessAction, onFailureAction }: { condition: BranchCondition, onSuccessAction?: Action, onFailureAction?: Action }): BranchAction {
     return {

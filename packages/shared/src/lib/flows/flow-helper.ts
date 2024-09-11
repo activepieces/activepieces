@@ -515,11 +515,13 @@ function createAction(
         onFailureAction,
         onSuccessAction,
         firstLoopAction,
+        children,
     }: {
         nextAction?: Action
         firstLoopAction?: Action
         onSuccessAction?: Action
         onFailureAction?: Action
+        children?: Action[]
     },
 ): Action {
     const baseProperties = {
@@ -537,6 +539,14 @@ function createAction(
                 onSuccessAction,
                 type: ActionType.BRANCH,
                 settings: request.settings,
+            }
+            break
+        case ActionType.ROUTER:
+            action = {
+                ...baseProperties,
+                type: ActionType.ROUTER,
+                settings: request.settings,
+                children: children || [],
             }
             break
         case ActionType.LOOP_ON_ITEMS:
@@ -672,6 +682,7 @@ export function getImportOperations(
                 break
 
             }
+            case ActionType.ROUTER:
             case ActionType.CODE:
             case ActionType.PIECE:
             case TriggerType.PIECE:
@@ -694,6 +705,10 @@ function removeAnySubsequentAction(action: Action): Action {
         case ActionType.BRANCH: {
             delete clonedAction.onSuccessAction
             delete clonedAction.onFailureAction
+            break
+        }
+        case ActionType.ROUTER: {
+            delete clonedAction.children
             break
         }
         case ActionType.LOOP_ON_ITEMS: {
