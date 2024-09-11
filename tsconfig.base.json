@@ -60,6 +60,9 @@
       "@activepieces/piece-asana": [
         "packages/pieces/community/asana/src/index.ts"
       ],
+      "@activepieces/piece-assemblyai": [
+        "packages/pieces/community/assemblyai/src/index.ts"
+      ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
       ],
