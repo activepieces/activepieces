@@ -27,7 +27,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
+import { cn, formatUtils } from '@/lib/utils';
 import { OtpType } from '@activepieces/ee-shared';
 import {
   ApEdition,
@@ -36,10 +36,7 @@ import {
   SignUpRequest,
 } from '@activepieces/shared';
 
-import {
-  emailRegex,
-  passwordValidation,
-} from '../lib/password-validation-utils';
+import { passwordValidation } from '../lib/password-validation-utils';
 
 type SignUpSchema = {
   email: string;
@@ -208,7 +205,7 @@ const SignUpForm = ({
             rules={{
               required: t('Email is required'),
               validate: (email: string) =>
-                emailRegex.test(email) || t('Email is invalid'),
+                formatUtils.emailRegex.test(email) || t('Email is invalid'),
             }}
             render={({ field }) => (
               <FormItem className="grid space-y-2">

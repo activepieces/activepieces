@@ -556,6 +556,9 @@
       "@activepieces/piece-stripe": [
         "packages/pieces/community/stripe/src/index.ts"
       ],
+      "@activepieces/piece-subflows": [
+        "packages/pieces/community/subflows/src/index.ts"
+      ],
       "@activepieces/piece-supabase": [
         "packages/pieces/community/supabase/src/index.ts"
       ],

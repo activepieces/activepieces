@@ -72,6 +72,12 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
           ))}
         </div>
       )}
+      {selectedAction && (
+        <div className="text-sm font-medium">{selectedAction.displayName}</div>
+      )}
+      {selectedTrigger && (
+        <div className="text-sm font-medium">{selectedTrigger.displayName}</div>
+      )}
       {pieceModel && (
         <>
           {pieceModel.auth &&
