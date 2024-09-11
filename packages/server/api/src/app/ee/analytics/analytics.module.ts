@@ -13,7 +13,7 @@ export const analyticsModule: FastifyPluginAsyncTypebox = async (app) => {
 const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', async (request) => {
-        const { platform, projectId } = request.principal
+        const { platform } = request.principal
         const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
         if (platform.id === cloudPlatformId) {
             return {
@@ -29,6 +29,6 @@ const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
                 topProjects: [],
             }
         }
-        return analyticsService.generateReport(platform.id, projectId)
+        return analyticsService.generateReport(platform.id)
     })
 }

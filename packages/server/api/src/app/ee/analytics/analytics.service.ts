@@ -9,8 +9,8 @@ import { projectRepo } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
 
 export const analyticsService = {
-    generateReport: async (platformId: PlatformId, projectId?: ProjectId): Promise<AnalyticsReportResponse> => {
-        const flows = await listAllFlows(platformId, projectId)
+    generateReport: async (platformId: PlatformId): Promise<AnalyticsReportResponse> => {
+        const flows = await listAllFlows(platformId, undefined)
         const activeFlows = countFlows(flows, FlowStatus.ENABLED)
         const totalFlows = countFlows(flows, undefined)
         const totalProjects = await countProjects(platformId)
