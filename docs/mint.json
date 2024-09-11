@@ -118,7 +118,6 @@
           "icon": "user",
           "pages": [
             "endpoints/project-members/schema",
-            "endpoints/project-members/create",
             "endpoints/project-members/list",
             "endpoints/project-members/delete"
           ]

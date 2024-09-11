@@ -103,7 +103,7 @@ export const userInvitationsService = {
 
         if (!isNil(invitation)) {
             if (status === InvitationStatus.ACCEPTED) {
-                return invitation;
+                return invitation
             }
             return enrichWithInvitationLink(platform, invitation, invitationExpirySeconds)
         }
