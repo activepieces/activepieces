@@ -18,6 +18,8 @@ import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-us
 import { formatUtils } from '@/lib/utils';
 import { UserStatus } from '@activepieces/shared';
 
+import { TableTitle } from '../../../../components/ui/table-title';
+
 import { UpdateUserRoleDialog } from './update-role-dialog';
 
 export default function UsersPage() {
@@ -84,7 +86,7 @@ export default function UsersPage() {
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold">{t('Users')}</span>
+          <TableTitle>{t('Users')}</TableTitle>
         </div>
         <DataTable
           columns={[

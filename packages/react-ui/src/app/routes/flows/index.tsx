@@ -45,6 +45,7 @@ import { formatUtils } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
+import { TableTitle } from '../../../components/ui/table-title';
 
 const filters = [
   {
@@ -223,7 +224,7 @@ const FlowsPage = () => {
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">{t('Flows')}</h1>
+        <TableTitle>{t('Flows')}</TableTitle>
         <div className="ml-auto flex flex-row gap-2">
           <PermissionNeededTooltip
             hasPermission={doesUserHavePermissionToWriteFlow}
