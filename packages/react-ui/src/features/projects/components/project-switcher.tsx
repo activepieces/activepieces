@@ -20,8 +20,8 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-import { projectHooks } from '../../../hooks/project-hooks';
 import { ScrollArea } from '../../../components/ui/scroll-area';
+import { projectHooks } from '../../../hooks/project-hooks';
 
 function ProjectSwitcher() {
   const queryClient = useQueryClient();
