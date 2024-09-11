@@ -29,7 +29,7 @@ import { issueHooks } from '../hooks/issue-hooks';
 import { TableTitle } from '../../../components/ui/table-title';
 
 const fetchData = async (
-  _params: Record<string, string>,
+  _: Record<string, string>,
   pagination: PaginationParams,
 ) => {
   return issuesApi.list({

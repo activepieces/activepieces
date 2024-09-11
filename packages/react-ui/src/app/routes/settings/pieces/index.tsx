@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash } from 'lucide-react';
+import { CheckIcon, Trash } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -96,17 +96,33 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   },
 ];
 
-const fetchData = async () => {
+const fetchData = async ({ name }: { name: string }) => {
   const pieces = await piecesApi.list({
     includeHidden: true,
   });
+  const filteredPieces = name
+    ? pieces.filter(
+        (piece) =>
+          piece.name.toLowerCase().includes(name.toLowerCase()) ||
+          piece.displayName.toLowerCase().includes(name.toLowerCase()),
+      )
+    : pieces;
   return {
-    data: pieces,
+    data: filteredPieces,
     next: null,
     previous: null,
   };
 };
 
+const filters = [
+  {
+    type: 'input',
+    title: t('Piece Name'),
+    accessorKey: 'name',
+    options: [],
+    icon: CheckIcon,
+  } as const,
+];
 const ProjectPiecesPage = () => {
   const [refresh, setRefresh] = useState(0);
 
@@ -128,7 +144,13 @@ const ProjectPiecesPage = () => {
             )}
           </div>
         </div>
-        <DataTable columns={columns} refresh={refresh} fetchData={fetchData} />
+        <DataTable
+          columns={columns}
+          filters={filters}
+          refresh={refresh}
+          fetchData={(filterParams) => fetchData(filterParams)}
+          hidePagination={true}
+        />
       </div>
     </div>
   );
