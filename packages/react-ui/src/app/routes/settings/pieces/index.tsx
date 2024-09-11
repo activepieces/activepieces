@@ -14,6 +14,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ApFlagId, isNil, PieceScope, PieceType } from '@activepieces/shared';
 import { TableTitle } from '../../../../components/ui/table-title';
+import { ManagePiecesDialog } from './manage-pieces-dialog';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -98,17 +99,12 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
 
 const fetchData = async ({ name }: { name: string }) => {
   const pieces = await piecesApi.list({
-    includeHidden: true,
+    searchQuery: name,
+    includeHidden: false,
   });
-  const filteredPieces = name
-    ? pieces.filter(
-        (piece) =>
-          piece.name.toLowerCase().includes(name.toLowerCase()) ||
-          piece.displayName.toLowerCase().includes(name.toLowerCase()),
-      )
-    : pieces;
+
   return {
-    data: filteredPieces,
+    data: pieces,
     next: null,
     previous: null,
   };
@@ -143,6 +139,11 @@ const ProjectPiecesPage = () => {
               />
             )}
           </div>
+        </div>
+        <div className="flex justify-end">
+          <ManagePiecesDialog
+            onSuccess={() => setRefresh(refresh + 1)}
+          ></ManagePiecesDialog>
         </div>
         <DataTable
           columns={columns}
