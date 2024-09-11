@@ -1,12 +1,12 @@
 import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
+import { useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
 
 import { TextInputWithMentions } from './text-input-with-mentions';
-import { useRef } from 'react';
 
 type DictionaryInputItem = {
   key: string;
