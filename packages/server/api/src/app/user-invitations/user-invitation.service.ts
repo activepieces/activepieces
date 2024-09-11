@@ -102,12 +102,15 @@ export const userInvitationsService = {
         const platform = await platformService.getOneOrThrow(platformId)
 
         if (!isNil(invitation)) {
+            if (status === InvitationStatus.ACCEPTED) {
+                return invitation;
+            }
             return enrichWithInvitationLink(platform, invitation, invitationExpirySeconds)
         }
         const id = apId()
         await repo().upsert({
             id,
-            status: InvitationStatus.PENDING,
+            status,
             type,
             email,
             platformId,
