@@ -30,9 +30,6 @@ export default function AnalyticsPage() {
       )}
     >
       <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold">{t('Platform Overview')}</span>
-        </div>
         <div className="mt-8 flex gap-8 flex-col">
           <Metrics report={isLoading ? undefined : data} />
           <Separator />

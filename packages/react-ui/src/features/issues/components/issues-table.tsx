@@ -26,6 +26,7 @@ import {
 
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
+import { TableTitle } from '../../../components/ui/table-title';
 
 const fetchData = async (
   _params: Record<string, string>,
@@ -145,7 +146,7 @@ export default function IssuesTable() {
     <div className="flex-col w-full">
       <div className="mb-4 flex">
         <div className="flex flex-col">
-          <h1 className="text-3xl font-bold">{t('Issues')}</h1>
+          <TableTitle>{t('Issues')}</TableTitle>
           <span className="text-md text-muted-foreground">
             {t(
               'Track failed runs grouped by flow name, and mark them as resolved when fixed.',

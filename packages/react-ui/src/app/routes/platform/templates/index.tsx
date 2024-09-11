@@ -20,6 +20,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 
 import { UpsertTemplateDialog } from './upsert-template-dialog';
+import { TableTitle } from '../../../../components/ui/table-title';
 
 export default function TemplatesPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -61,7 +62,7 @@ export default function TemplatesPage() {
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold">{t('Templates')}</span>
+          <TableTitle>{t('Templates')}</TableTitle>
           <UpsertTemplateDialog onDone={() => refreshData()}>
             <Button
               size="sm"

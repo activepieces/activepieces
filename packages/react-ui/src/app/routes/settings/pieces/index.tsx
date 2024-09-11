@@ -13,6 +13,7 @@ import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ApFlagId, isNil, PieceScope, PieceType } from '@activepieces/shared';
+import { TableTitle } from '../../../../components/ui/table-title';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -117,7 +118,7 @@ const ProjectPiecesPage = () => {
     <div className="flex w-full flex-col items-center justify-center gap-4">
       <div className="mx-auto w-full flex-col">
         <div className="mb-4 flex">
-          <h1 className="text-3xl font-bold">{t('Pieces')}</h1>
+          <TableTitle>{t('Pieces')}</TableTitle>
           <div className="ml-auto">
             {installPiecesEnabled && (
               <InstallPieceDialog

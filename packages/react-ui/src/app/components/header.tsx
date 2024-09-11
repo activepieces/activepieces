@@ -15,46 +15,54 @@ import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from './flag-guard';
+import { Separator } from '../../components/ui/seperator';
 
 export const Header = () => {
   const history = useLocation();
   const isInPlatformAdmin = history.pathname.startsWith('/platform');
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   return (
-    <div className="flex h-[60px]">
-      {isInPlatformAdmin ? (
-        <span className="text-xl px-4 py-2">{t('Platform Admin')}</span>
-      ) : (
-        <ProjectSwitcher />
-      )}
-      <div className="grow"></div>
-      <div className="flex items-center justify-center gap-4">
-        <ReportBugsButton variant="outline"></ReportBugsButton>
-        <InviteUserDialog></InviteUserDialog>
-        {showPlatformAdminDashboard && (
-          <Link to={isInPlatformAdmin ? '/' : '/platform'}>
-            <Button
-              variant={'outline'}
-              size="sm"
-              className="flex items-center justify-center gap-2"
-            >
-              {isInPlatformAdmin ? (
-                <LogOut className="size-4" />
-              ) : (
-                <Shield className="size-4" />
-              )}
-              <span>
-                {t(
-                  isInPlatformAdmin ? 'Exit Platform Admin' : 'Platform Admin',
-                )}
-              </span>
-            </Button>
-          </Link>
+    <div>
+      <div className="flex h-[60px] items-center">
+        {isInPlatformAdmin ? (
+          <span className="text-2xl font-bold px-4 py-2">
+            {t('Platform Admin')}
+          </span>
+        ) : (
+          <ProjectSwitcher />
         )}
+        <div className="grow"></div>
+        <div className="flex items-center justify-center gap-4">
+          <ReportBugsButton variant="outline"></ReportBugsButton>
+          <InviteUserDialog></InviteUserDialog>
+          {showPlatformAdminDashboard && (
+            <Link to={isInPlatformAdmin ? '/' : '/platform'}>
+              <Button
+                variant={'outline'}
+                size="sm"
+                className="flex items-center justify-center gap-2"
+              >
+                {isInPlatformAdmin ? (
+                  <LogOut className="size-4" />
+                ) : (
+                  <Shield className="size-4" />
+                )}
+                <span>
+                  {t(
+                    isInPlatformAdmin
+                      ? 'Exit Platform Admin'
+                      : 'Platform Admin',
+                  )}
+                </span>
+              </Button>
+            </Link>
+          )}
 
-        <TaskLimitButton />
-        <UserAvatar />
+          <TaskLimitButton />
+          <UserAvatar />
+        </div>
       </div>
+      <Separator></Separator>
     </div>
   );
 };

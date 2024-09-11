@@ -21,6 +21,7 @@ import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 
 import { NewProjectDialog } from './new-project-dialog';
+import { TableTitle } from '../../../../components/ui/table-title';
 
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -72,7 +73,7 @@ export default function ProjectsPage() {
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold">{t('Projects')}</span>
+          <TableTitle>{t('Projects')}</TableTitle>
           <NewProjectDialog onCreate={() => refreshData()}>
             <Button
               size="sm"
@@ -155,12 +156,13 @@ export default function ProjectsPage() {
               },
             },
           ]}
-          fetchData={(_, pagination) =>
-            projectApi.list({
+          fetchData={(_, pagination) => {
+            console.log(pagination);
+            return projectApi.list({
               cursor: pagination.cursor,
               limit: pagination.limit ?? 10,
-            })
-          }
+            });
+          }}
           refresh={refreshCount}
           actions={[
             (row) => {

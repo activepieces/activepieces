@@ -19,6 +19,7 @@ import { formatUtils } from '@/lib/utils';
 import { UserStatus } from '@activepieces/shared';
 
 import { UpdateUserRoleDialog } from './update-role-dialog';
+import { TableTitle } from '../../../../components/ui/table-title';
 
 export default function UsersPage() {
   const [refreshCount, setRefreshCount] = useState(0);
@@ -84,7 +85,7 @@ export default function UsersPage() {
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold">{t('Users')}</span>
+          <TableTitle>{t('Users')}</TableTitle>
         </div>
         <DataTable
           columns={[

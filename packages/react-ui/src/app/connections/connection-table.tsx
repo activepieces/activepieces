@@ -28,6 +28,7 @@ import {
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
 import { NewConnectionTypeDialog } from './new-connection-type-dialog';
+import { TableTitle } from '../../components/ui/table-title';
 
 type PieceIconWithPieceNameProps = {
   pieceName: string;
@@ -211,7 +212,7 @@ function AppConnectionsTable() {
   return (
     <div className="flex-col w-full">
       <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">{t('Connections')}</h1>
+        <TableTitle>{t('Connections')}</TableTitle>
         <div className="ml-auto">
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToWriteAppConnection}
