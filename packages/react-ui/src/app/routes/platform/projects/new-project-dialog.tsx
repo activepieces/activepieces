@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectApi } from '@/lib/project-api';
 import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
+import { Type } from '@sinclair/typebox';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
@@ -31,7 +32,14 @@ export const NewProjectDialog = ({
 }: NewProjectDialogProps) => {
   const [open, setOpen] = useState(false);
   const form = useForm<CreatePlatformProjectRequest>({
-    resolver: typeboxResolver(CreatePlatformProjectRequest),
+    resolver: typeboxResolver(
+      Type.Object({
+        displayName: Type.String({
+          minLength: 1,
+          errorMessage: t('Name is required'),
+        }),
+      }),
+    ),
   });
 
   const { toast } = useToast();
@@ -57,7 +65,10 @@ export const NewProjectDialog = ({
           <DialogTitle>{t('Create New Project')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="grid space-y-4"
+            onSubmit={(e) => form.handleSubmit(() => mutate())(e)}
+          >
             <FormField
               name="displayName"
               render={({ field }) => (
@@ -65,7 +76,6 @@ export const NewProjectDialog = ({
                   <Label htmlFor="displayName">{t('Project Name')}</Label>
                   <Input
                     {...field}
-                    required
                     id="displayName"
                     placeholder={t('Project Name')}
                     className="rounded-sm"
@@ -93,12 +103,12 @@ export const NewProjectDialog = ({
             {t('Cancel')}
           </Button>
           <Button
-            disabled={isPending || !form.formState.isValid}
+            disabled={isPending}
             loading={isPending}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              mutate();
+              form.handleSubmit(() => mutate())(e);
             }}
           >
             {t('Save')}
