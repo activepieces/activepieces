@@ -2,8 +2,10 @@ import {
   AppConnectionValue,
   ExecutionType,
   FlowRunId,
+  PopulatedFlow,
   ProjectId,
   ResumePayload,
+  SeekPage,
   TriggerPayload,
 } from '@activepieces/shared';
 import { TriggerStrategy } from './trigger/trigger';
@@ -95,6 +97,10 @@ export type PauseHook = (params: {
   pauseMetadata: DelayPauseMetadata | Omit<WebhookPauseMetadata, 'requestId'>
 }) => void;
 
+export type FlowsContext = {
+  list(): Promise<SeekPage<PopulatedFlow>>
+}
+
 export type FlowContext = {
   current: {
     id: string;
@@ -106,12 +112,13 @@ export type FlowContext = {
 
 export type PropertyContext = {
   server: ServerContext;
-  flows: FlowContext;
+  flow: FlowContext;
   project: {
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
   };
   searchValue?: string;
+  flows:FlowsContext;
 };
 
 export type ServerContext = {

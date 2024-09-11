@@ -19,6 +19,7 @@ import {
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { createFlowsContext } from '../services/flows.service'
 import { variableService } from '../variables/variable-service'
 import { pieceLoader } from './piece-loader'
 
@@ -42,7 +43,7 @@ export const pieceHelper = {
             })
             const ctx = {
                 searchValue,
-                flows: {
+                flow: {
                     current: {
                         id: params.flowVersion.flowId,
                         version: {
@@ -59,6 +60,7 @@ export const pieceHelper = {
                     id: params.projectId,
                     externalId: constants.externalProjectId,
                 },
+                flows: createFlowsContext(constants),
             }
 
             if (property.type === PropertyType.DYNAMIC) {
