@@ -3,10 +3,9 @@ import Anthropic from '@anthropic-ai/sdk';
 
 
 export const anthropic: AIFactory = ({
-  serverUrl,
+  proxyUrl,
   engineToken,
-}: { serverUrl: string, engineToken: string }): AI<Anthropic> => {
-  const proxyUrl = `${serverUrl}v1/ai-providers/proxy/anthropic`
+}): AI<Anthropic> => {
   const sdk = new Anthropic({
     apiKey: engineToken,
     baseURL: proxyUrl,
