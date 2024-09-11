@@ -1,6 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
-import { text } from '../common/props';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { toBuffer } from 'qrcode';
 
 export const outputQrcodeAction = createAction({
@@ -8,12 +6,13 @@ export const outputQrcodeAction = createAction({
   displayName: 'Text to QR Code',
   description: 'Convert text to QR code',
   props: {
-    text,
+    text: Property.LongText({
+      displayName: 'Content',
+      required: true,
+    }),
   },
   async run(context) {
     const { text } = context.propsValue;
-
-    assertNotNullOrUndefined(text, 'text');
 
     const qrcodeBuffer = await toBuffer(text);
 
