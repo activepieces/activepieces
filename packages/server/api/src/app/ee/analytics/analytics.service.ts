@@ -1,5 +1,7 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsReportResponse, flowHelper, FlowStatus, PieceCategory, PlatformId, PopulatedFlow, ProjectId } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { MoreThan } from 'typeorm'
 import { auditLogRepo } from '../../ee/audit-logs/audit-event-service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
@@ -9,8 +11,8 @@ import { projectRepo } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
 
 export const analyticsService = {
-    generateReport: async (platformId: PlatformId, projectId?: ProjectId): Promise<AnalyticsReportResponse> => {
-        const flows = await listAllFlows(platformId, projectId)
+    generateReport: async (platformId: PlatformId): Promise<AnalyticsReportResponse> => {
+        const flows = await listAllFlows(platformId, undefined)
         const activeFlows = countFlows(flows, FlowStatus.ENABLED)
         const totalFlows = countFlows(flows, undefined)
         const totalProjects = await countProjects(platformId)
@@ -119,9 +121,13 @@ async function analyzeUsers(platformId: PlatformId) {
         const lastLoggined = await auditLogRepo().createQueryBuilder('audit_event')
             .where('audit_event."userId" = :userId', { userId: user.id })
             .andWhere('audit_event."action" = :action', { action: ApplicationEventName.USER_SIGNED_IN })
+            .andWhere({
+                created: MoreThan(dayjs().subtract(1, 'month').toISOString()),
+            })
             .getCount()
         return lastLoggined > 0
     })
+    
     const activeUsersResults = await Promise.all(activeUsersPromises)
     const activeUsers = activeUsersResults.filter(Boolean).length
     return {

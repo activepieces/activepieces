@@ -39,6 +39,8 @@ import {
   isFailedState,
 } from '@activepieces/shared';
 
+import { TableTitle } from '../../../components/ui/table-title';
+
 const fetchData = async (
   params: {
     flowId: string[];
@@ -261,7 +263,7 @@ const FlowRunsPage = () => {
   return (
     <div className="flex-col w-full">
       <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">{t('Flow Runs')}</h1>
+        <TableTitle>{t('Flow Runs')}</TableTitle>
         <div className="ml-auto"></div>
       </div>
       <DataTable

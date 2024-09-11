@@ -44,7 +44,7 @@ export const getPiecePackage = async (
             return {
                 packageType: PackageType.ARCHIVE,
                 pieceName: pkg.pieceName,
-                pieceVersion: pkg.pieceVersion,
+                pieceVersion: pieceMetadata.version,
                 pieceType: pkg.pieceType,
                 archiveId: pieceMetadata.archiveId!,
                 archive: archiveFile.data,

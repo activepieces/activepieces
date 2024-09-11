@@ -5,6 +5,7 @@ import { continueIfFailureHandler, handleExecutionError, runWithExponentialBacko
 import { pieceLoader } from '../helper/piece-loader'
 import { createConnectionService } from '../services/connections.service'
 import { createFilesService } from '../services/files.service'
+import { createFlowsContext } from '../services/flows.service'
 import { createContextStore } from '../services/storage.service'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
@@ -75,14 +76,12 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowId: constants.flowId,
                 engineToken: constants.engineToken,
             }),
-            flows: {
-                current: {
-                    id: constants.flowId,
-                    version: {
-                        id: constants.flowVersionId,
-                    },
-                },
-            },
+            flows: createFlowsContext({
+                engineToken: constants.engineToken,
+                internalApiUrl: constants.internalApiUrl,
+                flowId: constants.flowId,
+                flowVersionId: constants.flowVersionId,
+            }),
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             files: createFilesService({
                 apiUrl: constants.internalApiUrl,
