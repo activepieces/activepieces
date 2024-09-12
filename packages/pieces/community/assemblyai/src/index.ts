@@ -1,5 +1,5 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import * as actions from './lib/actions/index';
+import * as actions from './lib/actions';
 import { assemblyaiAuth } from './lib/auth';
 import { PieceCategory } from '@activepieces/shared';
 

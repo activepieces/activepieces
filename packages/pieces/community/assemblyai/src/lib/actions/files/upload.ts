@@ -5,6 +5,7 @@ import { getAssemblyAIClient } from '../../client';
 export const uploadFile = createAction({
   name: 'uploadFile',
   auth: assemblyaiAuth,
+  requireAuth: true,
   displayName: 'Upload File',
   description: "Upload a media file to AssemblyAI's servers.",
   props: {
