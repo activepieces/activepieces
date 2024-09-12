@@ -58,53 +58,37 @@ describe('router with branching different conditions', () => {
 
     it('should execute router with the all matching conditions', async () => {
         const result = await executeRouterActionWithOneCondition([
-            // buildPieceAction({
-            //     name: 'data_mapper',
-            //     pieceName: '@activepieces/piece-data-mapper',
-            //     actionName: 'advanced_mapping',
-            //     input: {
-            //         mapping: {
-            //             'key': '{{ 1 + 2 }}',
-            //         },
-            //     },
-            // }),
-            // buildPieceAction({
-            //     name: 'data_mapper',
-            //     pieceName: '@activepieces/piece-data-mapper',
-            //     actionName: 'advanced_mapping',
-            //     input: {
-            //         mapping: {
-            //             'key': '{{ 1 + 2 }}',
-            //         },
-            //     },
-            // }),
             buildPieceAction({
                 name: 'data_mapper',
                 pieceName: '@activepieces/piece-data-mapper',
                 actionName: 'advanced_mapping',
                 input: {
                     mapping: {
-                        'key': '{{ 1 + 5 }}',
+                        'key': '{{ 1 + 2 }}',
+                    },
+                },
+            }),
+            buildPieceAction({
+                name: 'data_mapper',
+                pieceName: '@activepieces/piece-data-mapper',
+                actionName: 'advanced_mapping',
+                input: {
+                    mapping: {
+                        'key': '{{ 1 + 2 }}',
                     },
                 },
             }),
         ], [
-            // {
-            //     operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-            //     firstValue: 'test',
-            //     secondValue: 'test',
-            //     caseSensitive: false,
-            // },
-            // {
-            //     operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-            //     firstValue: 'test',
-            //     secondValue: 'test',
-            //     caseSensitive: false,
-            // },
             {
                 operator: BranchOperator.TEXT_EXACTLY_MATCHES,
                 firstValue: 'test',
-                secondValue: 'fasc',
+                secondValue: 'test',
+                caseSensitive: false,
+            },
+            {
+                operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                firstValue: 'test',
+                secondValue: 'test',
                 caseSensitive: false,
             },
         ], RouterExecutionType.EXECUTE_ALL_MATCH)

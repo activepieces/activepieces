@@ -250,7 +250,7 @@ export const Action = Type.Recursive(action => Type.Union([
     })]),
     Type.Intersect([RouterActionSchema, Type.Object({
         nextAction: Type.Optional(action),
-        children: Type.Optional(Type.Array(action)),
+        children: Type.Array(action),
     })]),
 ]))
 

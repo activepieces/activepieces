@@ -708,7 +708,6 @@ function removeAnySubsequentAction(action: Action): Action {
             break
         }
         case ActionType.ROUTER: {
-            delete clonedAction.children
             break
         }
         case ActionType.LOOP_ON_ITEMS: {
