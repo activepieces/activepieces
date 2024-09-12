@@ -6,6 +6,7 @@ import { getAssemblyAIClient } from '../../client';
 export const getSubtitles = createAction({
   name: 'getSubtitles',
   auth: assemblyaiAuth,
+  requireAuth: true,
   displayName: 'Get Transcript Subtitles',
   description: 'Export the transcript as SRT or VTT subtitles.',
   props: {

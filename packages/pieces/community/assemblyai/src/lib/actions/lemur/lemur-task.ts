@@ -6,6 +6,7 @@ import { props } from '../../generated/lemur-task/props';
 export const lemurTask = createAction({
   name: 'lemurTask',
   auth: assemblyaiAuth,
+  requireAuth: true,
   displayName: 'Run a Task using LeMUR',
   description: 'Use the LeMUR task endpoint to input your own LLM prompt.',
   props,

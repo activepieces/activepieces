@@ -6,6 +6,7 @@ import { transcriptIdProp } from './shared-props';
 export const deleteTranscript = createAction({
   name: 'deleteTranscript',
   auth: assemblyaiAuth,
+  requireAuth: true,
   displayName: 'Delete transcript',
   description: 'Remove the data from the transcript and mark it as deleted.',
   props: {
