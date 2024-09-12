@@ -1,6 +1,7 @@
 import { logger, system } from '@activepieces/server-shared'
 import { AiProviderConfig, AiProviderWithoutSensitiveData, ApEdition, isNil, PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
+import { Value } from '@sinclair/typebox/value'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { projectLimitsService } from '../ee/project-plan/project-plan.service'
@@ -51,6 +52,8 @@ const proxyController: FastifyPluginCallbackTypebox = (
         try {
             const edition = system.getEdition()
 
+            const { model } = Value.Decode(Type.Object({ model: Type.String() }), request.body)
+
             const projectId = request.principal.projectId
 
             const platformId = await projectService.getPlatformId(projectId)
@@ -59,31 +62,31 @@ const proxyController: FastifyPluginCallbackTypebox = (
 
             const aiProvider = await aiProviderService.getOrThrow({ platformId, provider })
 
+            const credits = aiProvider.config.creditsCriteria[model]
+
+            if (isNil(credits)) {
+                reply.code(StatusCodes.NOT_IMPLEMENTED).send({ error: 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_MODEL', model })
+                return
+            }
 
             if (edition !== ApEdition.COMMUNITY) {
                 const plan = await projectLimitsService.getPlanByProjectId(projectId)
                 const planTokens = plan?.aiTokens
                 const tokensUsage = await projectUsageService.getAITokensUsage(projectId)
-                if (!isNil(planTokens) && tokensUsage > planTokens) {
+                if (!isNil(planTokens) && tokensUsage + credits > planTokens) {
                     reply.code(StatusCodes.TOO_MANY_REQUESTS).send({ error: 'YOU_HAVE_EXCEEDED_YOUR_AI_TOKENS_PLAN_LIMIT' })
                     return
                 }
             }
 
             if (!aiProvider) {
-                reply.code(StatusCodes.NOT_IMPLEMENTED).send({ error: 'PROVIDER_PROXY_CONFIG_NOT_FOUND' })
+                reply.code(StatusCodes.NOT_IMPLEMENTED).send({ error: 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER', provider, model })
                 return
             }
 
             const targetUrl = new URL(`${aiProvider.baseUrl}/${request.params['*']}`)
 
             const requestHeaders = structuredClone({ ...request.headers })
-
-            const tokensUsagePath = requestHeaders['x-ap-total-usage-body-path']
-            if (edition !== ApEdition.COMMUNITY && isNil(tokensUsagePath)) {
-                reply.code(StatusCodes.BAD_REQUEST).send({ error: 'X_AP_TOTAL_USAGE_BODY_PATH HEADER IS REQUIRED' })
-                return
-            }
 
             delete requestHeaders.authorization
             delete requestHeaders.Authorization
@@ -115,9 +118,8 @@ const proxyController: FastifyPluginCallbackTypebox = (
 
             logger.debug({ data }, '[PROXY] Response')
 
-            if (edition !== ApEdition.COMMUNITY && !isNil(tokensUsagePath)) {
-                const usage = calculateUsage(data, tokensUsagePath)
-                await projectUsageService.increaseAITokens(projectId, usage)
+            if (edition !== ApEdition.COMMUNITY) {
+                await projectUsageService.increaseAITokens(projectId, credits)
             }
 
             await reply

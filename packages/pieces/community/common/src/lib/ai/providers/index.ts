@@ -25,19 +25,19 @@ export const AiProviders = [
     value: 'anthropic' as const,
     models: [
       {
-        label: 'claude-3-5-sonnet-20240620',
+        label: 'claude-3-5-sonnet',
         value: 'claude-3-5-sonnet-20240620'
       },
       {
-        label: 'claude-3-opus-20240229',
+        label: 'claude-3-opus',
         value: 'claude-3-opus-20240229',
       },
       {
-        label: 'claude-3-sonnet-20240229',
+        label: 'claude-3-sonnet',
         value: 'claude-3-sonnet-20240229',
       },
       {
-        label: 'claude-3-haiku-20240307',
+        label: 'claude-3-haiku',
         value: 'claude-3-haiku-20240307',
       },
     ],
@@ -45,6 +45,8 @@ export const AiProviders = [
     factory: anthropic,
   },
 ]
+
+export type AiProviderMetadata = typeof AiProviders[number]
 
 export const AiProvider = Type.Union(AiProviders.map(p => Type.Literal(p.value)))
 

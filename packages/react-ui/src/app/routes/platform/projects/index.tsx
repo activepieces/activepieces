@@ -143,7 +143,7 @@ export default function ProjectsPage() {
             {
               accessorKey: 'ai-tokens',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('AI Tokens')} />
+                <DataTableColumnHeader column={column} title={t('AI Credits')} />
               ),
               cell: ({ row }) => {
                 return (

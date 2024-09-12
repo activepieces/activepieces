@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -18,65 +18,79 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
+import type { AiProviderMetadata } from '@activepieces/pieces-common';
 import { AiProviderConfig } from '@activepieces/shared';
-import { AuthHeader } from '@activepieces/pieces-common';
 import { Static, Type } from '@sinclair/typebox';
 
-const UpsertAiProviderConfigInput = Type.Composite([
+const EnableAiProviderConfigInput = Type.Composite([
   Type.Omit(AiProviderConfig, ['id', 'created', 'updated', 'platformId']),
   Type.Object({
     id: Type.Optional(Type.String()),
   }),
 ])
-
-export type UpsertAiProviderConfigInput = Static<typeof UpsertAiProviderConfigInput>
+export type EnableAiProviderConfigInput = Static<typeof EnableAiProviderConfigInput>
 
 type UpsertAIProviderDialogProps = {
-  provider: UpsertAiProviderConfigInput;
+  provider: EnableAiProviderConfigInput;
+  providerMetadata: AiProviderMetadata,
   children: React.ReactNode;
   onSave: () => void;
-  auth: AuthHeader;
 };
 
 export const UpsertAIProviderDialog = ({
   children,
   onSave,
   provider,
-  auth
+  providerMetadata
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<UpsertAiProviderConfigInput>({
-    resolver: typeboxResolver(UpsertAiProviderConfigInput),
-    defaultValues: provider,
+  const form = useForm({
+    resolver: typeboxResolver(EnableAiProviderConfigInput),
+    defaultValues: encodeForm(provider),
   });
 
   const { toast } = useToast();
 
+  const formState = form.watch();
+
+  console.log("formState", formState)
+
   const { mutate, isPending } = useMutation({
     mutationKey: ['upsert-proxy-config'],
-    mutationFn: () => aiProviderApi.upsert({
+    mutationFn: () => aiProviderApi.upsert(decodeForm({
       ...form.getValues(),
       config: {
         ...form.getValues().config,
-        defaultHeaders: {
-          [auth.name]: auth.mapper(form.getValues().config.defaultHeaders[auth.name])
-        }
+        defaultHeaders: (() => {
+          const headerValue = form.getValues().config.defaultHeaders[providerMetadata.auth.name];
+          if (typeof headerValue === 'string' && headerValue.trim() !== '') {
+            return {
+              [providerMetadata.auth.name]: providerMetadata.auth.mapper(headerValue)
+            };
+          }
+          return {};
+        })()
       }
-    }), 
-    onSuccess: () => {
-      form.reset();
+    })),
+    onSuccess: (data) => {
+      form.reset(encodeForm(data));
       setOpen(false);
       onSave();
     },
     onError: () => {
       toast(INTERNAL_ERROR_TOAST);
-      form.reset();
       setOpen(false);
     },
   });
 
   return (
-    <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+    <Dialog open={open}
+      onOpenChange={(open) => {
+        if (!open) {
+          form.reset(encodeForm(provider));
+        }
+        setOpen(open);
+      }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -103,16 +117,17 @@ export const UpsertAIProviderDialog = ({
             />
 
             <FormField
-              name={`config.defaultHeaders.${auth.name}`}
+              name={`config.defaultHeaders.${providerMetadata.auth.name}`}
+              defaultValue={provider.id ? "" : undefined}
               render={({ field }) => (
                 <FormItem className="grid space-y-3">
-                  <Label htmlFor={`config.defaultHeaders.${auth.name}`}>{t('API Key')}</Label>
+                  <Label htmlFor={`config.defaultHeaders.${providerMetadata.auth.name}`}>{t('API Key')}</Label>
                   <div className='flex gap-2 items-center justify-center'>
                     <Input
                       autoFocus
                       {...field}
                       required
-                      id={`config.defaultHeaders.${auth.name}`}
+                      id={`config.defaultHeaders.${providerMetadata.auth.name}`}
                       placeholder={t('sk_************************')}
                       className="rounded-sm"
                     />
@@ -121,6 +136,34 @@ export const UpsertAIProviderDialog = ({
                 </FormItem>
               )}
             />
+
+            <div className='flex flex-col gap-2'>
+              <h1 className='text-lg font-semibold'>{t('Credits Criteria')}</h1>
+              <p className='text-sm text-muted-foreground'>{t('The credits criteria is the number of project AI credits consumed per request for each model.')}</p>
+            </div>
+
+            {providerMetadata.models.map((model) => (
+              <FormField
+                key={encodeModelValueAsFormKey(model.value)}
+                name={`config.creditsCriteria.${encodeModelValueAsFormKey(model.value)}`}
+                render={({ field }) => (
+                  <FormItem className="grid space-y-3">
+                    <Label htmlFor={`config.creditsCriteria.${encodeModelValueAsFormKey(model.value)}`}>{model.label}</Label>
+                    <Input
+                      {...field}
+                      min={0}
+                      type='number'
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      required
+                      id={`config.creditsCriteria.${encodeModelValueAsFormKey(model.value)}`}
+                      placeholder={t('Credits Criteria')}
+                      className="rounded-sm"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
 
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>
@@ -156,3 +199,31 @@ export const UpsertAIProviderDialog = ({
     </Dialog>
   );
 };
+
+function decodeForm(form: EnableAiProviderConfigInput): EnableAiProviderConfigInput {
+  return {
+    ...form,
+    config: {
+      ...form.config,
+      creditsCriteria: Object.fromEntries(Object.entries(form.config.creditsCriteria).map(([key, value]) => [decodeModelValueAsFormKey(key), value]).filter(([key, value]) => Boolean(value)))
+    }
+  }
+}
+
+function encodeForm(form: EnableAiProviderConfigInput): EnableAiProviderConfigInput {
+  return {
+    ...form,
+    config: {
+      ...form.config,
+      creditsCriteria: Object.fromEntries(Object.entries(form.config.creditsCriteria).map(([key, value]) => [encodeModelValueAsFormKey(key), value]).filter(([key, value]) => Boolean(value)))
+    }
+  }
+}
+
+function encodeModelValueAsFormKey(model: string) {
+  return model.replace('.', '\\')
+}
+
+function decodeModelValueAsFormKey(model: string) {
+  return model.replace('\\', '.')
+}

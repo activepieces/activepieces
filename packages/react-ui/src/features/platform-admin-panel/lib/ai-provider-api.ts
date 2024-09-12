@@ -9,7 +9,7 @@ export const aiProviderApi = {
   list() {
     return api.get<SeekPage<AiProviderWithoutSensitiveData>>('/v1/ai-providers');
   },
-  upsert(request: Omit<AiProviderConfig, 'id' | 'created' | 'updated' | 'platformId'>) { 
+  upsert(request: Omit<AiProviderWithoutSensitiveData, 'id' | 'created' | 'updated' | 'platformId'>) { 
     return api.post<AiProviderConfig>('/v1/ai-providers', request);
   },
   delete(provider: string) {

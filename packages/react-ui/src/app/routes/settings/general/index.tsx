@@ -126,13 +126,13 @@ export default function GeneralPage() {
                 name="plan.aiTokens"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <Label htmlFor="plan.aiTokens">{t('AI Tokens')}</Label>
+                    <Label htmlFor="plan.aiTokens">{t('AI Credits')}</Label>
                     <Input
                       type="number"
                       {...field}
                       onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                       id="plan.aiTokens"
-                      placeholder={t('AI Tokens')}
+                      placeholder={t('AI Credits')}
                       className="rounded-sm"
                     />
                     <FormMessage />

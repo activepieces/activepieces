@@ -1,7 +1,7 @@
 import { ActivepiecesError, AiProviderConfig, AiProviderWithoutSensitiveData, apId, ErrorCode, isNil, PlatformId, SeekPage } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { encryptUtils } from '../helper/encryption'
-import { AiProviderEntity } from './ai-provider-entity'
+import { AiProviderEntity, AiProviderSchema } from './ai-provider-entity'
 
 const repo = repoFactory(AiProviderEntity)
 
@@ -20,8 +20,26 @@ export const aiProviderService = {
         const decryptedConfig = encryptUtils.decryptObject<AiProviderConfig['config']>(provider.config)
         return { ...provider, config: decryptedConfig }
     },
-    async upsert(platformId: string, aiConfig: Omit<AiProviderConfig, 'id' | 'created' | 'updated' | 'platformId'>): Promise<AiProviderConfig> {
-        const encryptedConfig = encryptUtils.encryptObject(aiConfig.config)
+    async getSanitizedOrThrow(params: GetParams): Promise<AiProviderWithoutSensitiveData> {
+        const provider = await repo().findOneBy(params)
+        if (isNil(provider)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: `${params.platformId}-${params.provider}`,
+                    entityType: 'proxy_config',
+                },
+            })
+        }
+        const decryptedConfig = encryptUtils.decryptObject<AiProviderConfig['config']>(provider.config)
+        return sanitizeProviderConfig({ ...provider, config: decryptedConfig })
+    },
+    async upsert(platformId: string, aiConfig: Omit<AiProviderConfig, 'id' | 'created' | 'updated' | 'platformId'>): Promise<AiProviderWithoutSensitiveData> {
+        const existingProvider = await this.getOrThrow({ platformId, provider: aiConfig.provider }).catch(() => null)
+        const existingHeaders = existingProvider?.config.defaultHeaders ?? {}
+        const nonEmptyHeaders = Object.fromEntries(Object.entries(aiConfig.config.defaultHeaders).filter(([_, v]) => !isNil(v)))
+        const newHeaders = { ...existingHeaders, ...nonEmptyHeaders }
+        const encryptedConfig = encryptUtils.encryptObject({ ...aiConfig.config, defaultHeaders: newHeaders })
         await repo().upsert({
             id: apId(),
             platformId,
@@ -29,7 +47,7 @@ export const aiProviderService = {
             config: encryptedConfig,
             provider: aiConfig.provider,
         }, ['platformId', 'provider'])
-        return this.getOrThrow({ platformId, provider: aiConfig.provider })
+        return this.getSanitizedOrThrow({ platformId, provider: aiConfig.provider })
     },
     async delete(params: DeleteParams): Promise<void> {
         await this.getOrThrow(params)
@@ -37,12 +55,20 @@ export const aiProviderService = {
     },
     async list(platformId: PlatformId): Promise<SeekPage<AiProviderWithoutSensitiveData>> {
         const providers = await repo().findBy({ platformId })
+        const data = providers.map(p => {
+            const decryptedConfig = encryptUtils.decryptObject<AiProviderConfig["config"]>(p.config)
+            return { ...p, config: { creditsCriteria: decryptedConfig.creditsCriteria } }
+        })
         return {
-            data: providers,
+            data,
             next: null,
             previous: null,
         }
     },
+}
+
+const sanitizeProviderConfig = (p: AiProviderConfig): AiProviderWithoutSensitiveData => {
+    return { ...p, config: { creditsCriteria: p.config.creditsCriteria } }
 }
 
 type DeleteParams = {
