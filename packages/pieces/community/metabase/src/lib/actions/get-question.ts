@@ -33,7 +33,7 @@ export const getQuestion = createAction({
     );
     const parameters = card['parameters'] as MetabaseParam[];
 
-    return queryMetabaseApi(
+    const response = await queryMetabaseApi(
       {
         endpoint: `card/${propsValue.questionId}/query`,
         method: HttpMethod.POST,
@@ -59,5 +59,10 @@ export const getQuestion = createAction({
       },
       auth
     );
+    if (response.error) {
+      throw new Error(response.error);
+    } else {
+      return response;
+    }
   },
 });
