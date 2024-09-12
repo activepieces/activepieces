@@ -108,7 +108,7 @@
           "icon": "paper-plane",
           "pages": [
             "endpoints/user-invitations/schema",
-            "endpoints/user-invitations/create",
+            "endpoints/user-invitations/upsert",
             "endpoints/user-invitations/list",
             "endpoints/user-invitations/delete"
           ]

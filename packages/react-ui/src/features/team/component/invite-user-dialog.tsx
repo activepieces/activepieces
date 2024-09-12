@@ -48,7 +48,6 @@ import {
   Permission,
   PlatformRole,
   ProjectMemberRole,
-  SendUserInvitationRequest,
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
@@ -90,18 +89,24 @@ export function InviteUserDialog() {
   const { mutate, isPending } = useMutation<
     UserInvitationWithLink,
     HttpError,
-    SendUserInvitationRequest
+    FormSchema
   >({
     mutationFn: (data) => {
-      const request: SendUserInvitationRequest = {
-        email: data.email,
-        type: data.type,
-        platformRole: data.platformRole,
-        projectId: data.type === InvitationType.PLATFORM ? null : project.id,
-        projectRole:
-          data.type === InvitationType.PLATFORM ? undefined : data.projectRole,
-      };
-      return userInvitationApi.invite(request);
+      switch (data.type) {
+        case InvitationType.PLATFORM:
+          return userInvitationApi.invite({
+            email: data.email,
+            type: data.type,
+            platformRole: data.platformRole,
+          });
+        case InvitationType.PROJECT:
+          return userInvitationApi.invite({
+            email: data.email,
+            type: data.type,
+            projectRole: data.projectRole,
+            projectId: project.id,
+          });
+      }
     },
     onSuccess: (res) => {
       if (res.link) {

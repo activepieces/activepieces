@@ -32,14 +32,22 @@ export const UserInvitationWithLink = Type.Composite([UserInvitation, Type.Objec
 
 export type UserInvitationWithLink = Static<typeof UserInvitationWithLink>
 
-export const SendUserInvitationRequest = Type.Object({
-    email: Type.String(),
-    type: Type.Enum(InvitationType),
-    platformRole: Type.Optional(Type.Enum(PlatformRole)),
-    projectId: Nullable(Type.String()),
-    projectRole: Type.Optional(Type.Enum(ProjectMemberRole)),
-    expireyInSeconds: Type.Optional(Type.Number()),
-})
+export const SendUserInvitationRequest = Type.Union([
+    Type.Object({
+        type: Type.Literal(InvitationType.PROJECT),
+        email: Type.String(),
+        projectId: Type.String(),
+        projectRole: Type.Enum(ProjectMemberRole),
+        expireyInSeconds: Type.Optional(Type.Number()),
+    }),
+    Type.Object({
+        type: Type.Literal(InvitationType.PLATFORM),
+        email: Type.String(),
+        platformRole: Type.Enum(PlatformRole),
+        expireyInSeconds: Type.Optional(Type.Number()),
+    }),
+])
+
 
 export type SendUserInvitationRequest = Static<typeof SendUserInvitationRequest>
 
