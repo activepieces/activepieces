@@ -78,7 +78,7 @@ const requiredPropertySettings = {
 };
 
 const createPropertySchema = (input: FormInputWithName) => {
-  const defaultSettings = {
+  const schemaSettings = {
     defaultValue: input.type === FormInputType.TOGGLE ? false : '',
     ...spreadIfDefined(
       'requiredPropertySettings',
@@ -86,8 +86,8 @@ const createPropertySchema = (input: FormInputWithName) => {
     ),
   };
   return input.type === FormInputType.TOGGLE
-    ? Type.Boolean(defaultSettings)
-    : Type.String(defaultSettings);
+    ? Type.Boolean(schemaSettings)
+    : Type.String(schemaSettings);
 };
 
 function buildSchema(inputs: FormInputWithName[]): TObject {
