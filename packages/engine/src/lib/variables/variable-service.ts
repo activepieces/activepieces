@@ -131,7 +131,7 @@ export class VariableService {
             return result ?? ''
         }
         catch (exception) {
-            console.error('[evalInScope] Error evaluating variable', exception)
+            console.warn('[evalInScope] Error evaluating variable', exception)
             return ''
         }
     }
