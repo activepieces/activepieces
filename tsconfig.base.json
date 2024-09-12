@@ -60,6 +60,9 @@
       "@activepieces/piece-asana": [
         "packages/pieces/community/asana/src/index.ts"
       ],
+      "@activepieces/piece-assemblyai": [
+        "packages/pieces/community/assemblyai/src/index.ts"
+      ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
       ],
@@ -450,6 +453,9 @@
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
       ],
+      "@activepieces/piece-qrcode": [
+        "packages/pieces/community/qrcode/src/index.ts"
+      ],
       "@activepieces/piece-queue": [
         "packages/pieces/community/queue/src/index.ts"
       ],
@@ -552,6 +558,9 @@
       ],
       "@activepieces/piece-stripe": [
         "packages/pieces/community/stripe/src/index.ts"
+      ],
+      "@activepieces/piece-subflows": [
+        "packages/pieces/community/subflows/src/index.ts"
       ],
       "@activepieces/piece-supabase": [
         "packages/pieces/community/supabase/src/index.ts"

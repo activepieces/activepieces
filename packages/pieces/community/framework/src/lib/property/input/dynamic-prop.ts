@@ -5,16 +5,19 @@ import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyContext } from "../../context";
 import { ValidationInputType } from "../../validators/types";
 import { PropertyType } from "./property-type";
+import { JsonProperty } from "./json-property";
 
 export const DynamicProp = Type.Union([
   ShortTextProperty,
   StaticDropdownProperty,
+  JsonProperty,
   StaticMultiSelectDropdownProperty,
 ])
 
 export type DynamicProp =
   | ShortTextProperty<boolean>
   | StaticDropdownProperty<any, boolean>
+  | JsonProperty<boolean>
   | StaticMultiSelectDropdownProperty<any, boolean>;
 
 export const DynamicPropsValue = Type.Record(Type.String(), DynamicProp);

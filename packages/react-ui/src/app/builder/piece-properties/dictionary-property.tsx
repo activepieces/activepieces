@@ -1,7 +1,6 @@
 import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import { useEffect, useState } from 'react';
+import { useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,46 +27,31 @@ export const DictionaryProperty = ({
   disabled,
   useMentionTextInput,
 }: DictionaryInputProps) => {
-  const [formValue, setFormValue] = useState<DictionaryInputItem[]>(() => {
-    return Object.entries(values ?? {}).map(([key, value]) => ({
-      key,
-      value,
-      id: nanoid(),
-    }));
-  });
-
-  useEffect(() => {
-    const newFormValue = Object.entries(values ?? {}).map(([key, value]) => ({
-      key,
-      value,
-      id: nanoid(),
-    }));
-
-    const areEqual = (a: DictionaryInputItem[], b: DictionaryInputItem[]) => {
-      if (a.length !== b.length) return false;
-      for (let i = 0; i < a.length; i++) {
-        if (a[i].key !== b[i].key || a[i].value !== b[i].value) {
-          return false;
-        }
-      }
-      return true;
-    };
-
-    if (!areEqual(newFormValue, formValue)) {
-      setFormValue(newFormValue);
-    }
-  }, [values]);
-
+  const id = useRef(1);
+  const valuesArray = useRef(
+    Object.entries(values ?? {}).map((el) => {
+      id.current++;
+      return {
+        key: el[0],
+        value: el[1],
+        id: `${id.current}`,
+      };
+    }),
+  );
   const remove = (index: number) => {
-    const newValues = formValue.filter((_, i) => i !== index);
-    setFormValue(newValues);
+    const newValues = valuesArray.current.filter((_, i) => i !== index);
+    valuesArray.current = newValues;
     updateValue(newValues);
   };
 
   const add = () => {
-    const newValues = [...formValue, { key: '', value: '', id: nanoid() }];
+    id.current++;
+    const newValues = [
+      ...valuesArray.current,
+      { key: '', value: '', id: `${id.current}` },
+    ];
+    valuesArray.current = newValues;
     updateValue(newValues);
-    setFormValue(newValues);
   };
 
   const onChangeValue = (
@@ -75,7 +59,7 @@ export const DictionaryProperty = ({
     value: string | undefined,
     key: string | undefined,
   ) => {
-    const newValues = [...formValue];
+    const newValues = [...valuesArray.current];
     if (value !== undefined) {
       newValues[index].value = value;
     }
@@ -93,10 +77,9 @@ export const DictionaryProperty = ({
       ),
     );
   };
-
   return (
     <div className="flex w-full flex-col gap-4">
-      {formValue.map(({ key, value, id }, index) => (
+      {valuesArray.current.map(({ key, value, id }, index) => (
         <div
           key={'dictionary-input-' + id}
           className="flex items-center gap-3 items-center"

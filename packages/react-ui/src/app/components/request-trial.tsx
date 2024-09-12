@@ -53,6 +53,7 @@ export type FeatureKey =
   | 'BRANDING'
   | 'PIECES'
   | 'TEMPLATES'
+  | 'TEAM'
   | 'API'
   | 'SSO'
   | 'AUDIT_LOGS'

@@ -1,4 +1,3 @@
-
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -20,6 +19,25 @@ export const userInvitationsService = {
         return repo().countBy({
             projectId,
         })
+    },
+    async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation | null> {
+        const decodedToken = await jwtUtils.decodeAndVerify<UserInvitationToken>({
+            jwt: invitationToken,
+            key: await jwtUtils.getJwtSecret(),
+        })
+        const invitation = await repo().findOneBy({
+            id: decodedToken.id,
+        })
+        if (isNil(invitation)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: `id=${decodedToken.id}`,
+                    entityType: 'UserInvitation',
+                },
+            })
+        }
+        return invitation
     },
     async provisionUserInvitation({ email, platformId }: ProvisionUserInvitationParams): Promise<void> {
         const user = await userService.getByPlatformAndEmail({
@@ -74,6 +92,7 @@ export const userInvitationsService = {
         projectRole,
         platformRole,
         invitationExpirySeconds,
+        status,
     }: CreateParams): Promise<UserInvitationWithLink> {
         const invitation = await repo().findOneBy({
             email,
@@ -83,12 +102,15 @@ export const userInvitationsService = {
         const platform = await platformService.getOneOrThrow(platformId)
 
         if (!isNil(invitation)) {
+            if (status === InvitationStatus.ACCEPTED) {
+                return invitation
+            }
             return enrichWithInvitationLink(platform, invitation, invitationExpirySeconds)
         }
         const id = apId()
         await repo().upsert({
             id,
-            status: InvitationStatus.PENDING,
+            status,
             type,
             email,
             platformId,
@@ -101,6 +123,13 @@ export const userInvitationsService = {
             id,
             platformId,
         })
+        if (status === InvitationStatus.ACCEPTED) {
+            await this.accept({
+                invitationId: id,
+                platformId,
+            })
+            return userInvitation
+        }
         return enrichWithInvitationLink(platform, userInvitation, invitationExpirySeconds)
     },
     async list(params: ListUserParams): Promise<SeekPage<UserInvitation>> {
@@ -146,10 +175,8 @@ export const userInvitationsService = {
         }
         return invitation
     },
-    async accept({ invitationToken }: AcceptParams): Promise<{ registered: boolean }> {
-        const invitation = await getByInvitationTokenOrThrow(
-            invitationToken,
-        )
+    async accept({ invitationId, platformId }: AcceptParams): Promise<{ registered: boolean }> {
+        const invitation = await this.getOneOrThrow({ id: invitationId, platformId })
         await repo().update(invitation.id, {
             status: InvitationStatus.ACCEPTED,
         })
@@ -236,53 +263,29 @@ type PlatformAndIdParams = {
     id: string
     platformId: string
 }
-type UserInvitationToken = {
+export type UserInvitationToken = {
     id: string
 }
 
-async function getByInvitationTokenOrThrow(
-    invitationToken: string,
-): Promise<UserInvitation> {
-    const { id: projectMemberId } =
-        await jwtUtils.decodeAndVerify<UserInvitationToken>({
-            jwt: invitationToken,
-            key: await jwtUtils.getJwtSecret(),
-        })
-    const userInvitation = await repo().findOneBy({
-        id: projectMemberId,
-    })
-    if (isNil(userInvitation)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: `Project Member Id ${projectMemberId} is not found`,
-            },
-        })
-    }
-    return userInvitation
+type AcceptParams = {
+    invitationId: string
+    platformId: string
 }
 
-
-export type AcceptParams = {
-    invitationToken: string
-}
-
-export type CreateParams = {
+type CreateParams = {
     email: string
     platformId: string
     platformRole: PlatformRole | null
     projectId: string | null
+    status: InvitationStatus
     type: InvitationType
     projectRole: ProjectMemberRole | null
     invitationExpirySeconds: number
 }
 
-export type DeleteParams = {
-    id: string
-    platformId: string
-}
 
-export type GetOneByPlatformIdAndEmailParams = {
+
+type GetOneByPlatformIdAndEmailParams = {
     email: string
     platformId: string
     projectId: string | null

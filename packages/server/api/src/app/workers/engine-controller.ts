@@ -32,6 +32,17 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
+    app.get('/populated-flows', GetAllFlowsByProjectParams,  async (request) => {
+        return flowService.list({
+            projectId: request.principal.projectId,
+            limit: 1000000,
+            cursorRequest: null,
+            folderId: undefined,
+            status: undefined,
+            name: undefined,
+        })
+    })
+
     app.post('/update-job', {
         config: {
             allowedPrincipals: [PrincipalType.ENGINE],
@@ -311,7 +322,12 @@ async function getFlowResponse(
 }
 
 
-
+const GetAllFlowsByProjectParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {},
+}
 const CheckTaskLimitParams = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE],

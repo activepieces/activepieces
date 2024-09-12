@@ -201,7 +201,10 @@ const BuilderPage = () => {
           <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
             <div ref={middlePanelRef} className="relative h-full w-full">
               <CanvasControls></CanvasControls>
-              <ShowPoweredBy show={platform?.showPoweredBy} />
+              <ShowPoweredBy
+                position="absolute"
+                show={platform?.showPoweredBy}
+              />
               <DataSelector
                 parentHeight={middlePanelSize.height}
                 parentWidth={middlePanelSize.width}

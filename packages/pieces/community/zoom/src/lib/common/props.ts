@@ -71,24 +71,56 @@ export const getRegistarantProps = () => ({
     description: "The registrant's job title.",
     required: false,
   }),
-  no_of_employees: Property.ShortText({
+  no_of_employees: Property.StaticDropdown({
     displayName: 'No of employees',
     description: "The registrant's number of employees.",
     required: false,
+    options: {
+      disabled: false,
+      options: [
+        { label: '1-20', value: '1-20' },
+        { label: '21-50', value: '21-50' },
+        { label: '51-100', value: '51-100' },
+        { label: '101-500', value: '101-500' },
+        { label: '500-1,000', value: '500-1,000' },
+        { label: '1,001-5,000', value: '1,001-5,000' },
+        { label: '5,001-10,000', value: '5,001-10,000' },
+        { label: 'More than 10,000', value: 'More than 10,000' },
+      ],
+    },
   }),
   org: Property.ShortText({
     displayName: 'Organization',
     description: "The registrant's organization.",
     required: false,
   }),
-  purchasing_time_frame: Property.ShortText({
+  purchasing_time_frame: Property.StaticDropdown({
     displayName: 'Purchasing time frame',
     description: "The registrant's purchasing time frame.",
     required: false,
+    options: {
+      disabled: false,
+      options: [
+        { label: 'Within a month', value: 'Within a month' },
+        { label: '1-3 months', value: '1-3 months' },
+        { label: '4-6 months', value: '4-6 months' },
+        { label: 'More than 6 months', value: 'More than 6 months' },
+        { label: 'No timeframe', value: 'No timeframe' },
+      ],
+    },
   }),
-  role_in_purchase_process: Property.ShortText({
+  role_in_purchase_process: Property.StaticDropdown({
     displayName: 'Role in purchase process',
     description: "The registrant's role in the purchase process.",
     required: false,
+    options: {
+      disabled: false,
+      options: [
+        { label: 'Decision Maker', value: 'Decision Maker' },
+        { label: 'Evaluator/Recommender', value: 'Evaluator/Recommender' },
+        { label: 'Influencer', value: 'Influencer' },
+        { label: 'Not involved', value: 'Not involved' },
+      ],
+    },
   }),
 });

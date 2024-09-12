@@ -15,6 +15,7 @@ import {
   CommandSeparator,
 } from './command';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { ScrollArea } from './scroll-area';
 import { Separator } from './seperator';
 
 type DataTableSelectPopoverProps = {
@@ -82,47 +83,50 @@ const DataTableSelectPopover = ({
           <CommandInput placeholder={title} />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup className="max-h-[300px] overflow-y-scroll">
-              {options.map((option, index) => {
-                const isSelected = selectedValues.has(option.value);
-                return (
-                  <CommandItem
-                    key={option.value}
-                    onSelect={() => {
-                      if (isSelected) {
-                        selectedValues.delete(option.value);
-                      } else {
-                        selectedValues.add(option.value);
-                      }
-                      const filterValues = Array.from(selectedValues);
-                      handleFilterChange(filterValues);
-                    }}
-                  >
-                    <div
-                      className={cn(
-                        'mr-2 flex h-4 w-4 items-center justify-center rounded border border-primary',
-                        isSelected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'opacity-50 [&_svg]:invisible',
-                      )}
+
+            <CommandGroup>
+              <ScrollArea viewPortClassName="max-h-[200px]">
+                {options.map((option, index) => {
+                  const isSelected = selectedValues.has(option.value);
+                  return (
+                    <CommandItem
+                      key={option.value}
+                      onSelect={() => {
+                        if (isSelected) {
+                          selectedValues.delete(option.value);
+                        } else {
+                          selectedValues.add(option.value);
+                        }
+                        const filterValues = Array.from(selectedValues);
+                        handleFilterChange(filterValues);
+                      }}
                     >
-                      <CheckIcon className={cn('h-4 w-4')} />
-                    </div>
-                    {option.icon && (
-                      <option.icon className="mr-2 size-4 text-muted-foreground" />
-                    )}
-                    <div>
-                      <span>{option.label}</span>
-                      <span className="hidden">{index}</span>
-                    </div>
-                    {facets?.get(option.value) && (
-                      <span className="ml-auto flex size-4 items-center justify-center font-mono text-xs">
-                        {facets.get(option.value)}
-                      </span>
-                    )}
-                  </CommandItem>
-                );
-              })}
+                      <div
+                        className={cn(
+                          'mr-2 flex h-4 w-4 items-center justify-center rounded border border-primary',
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'opacity-50 [&_svg]:invisible',
+                        )}
+                      >
+                        <CheckIcon className={cn('h-4 w-4')} />
+                      </div>
+                      {option.icon && (
+                        <option.icon className="mr-2 size-4 text-muted-foreground" />
+                      )}
+                      <div>
+                        <span>{option.label}</span>
+                        <span className="hidden">{index}</span>
+                      </div>
+                      {facets?.get(option.value) && (
+                        <span className="ml-auto flex size-4 items-center justify-center font-mono text-xs">
+                          {facets.get(option.value)}
+                        </span>
+                      )}
+                    </CommandItem>
+                  );
+                })}
+              </ScrollArea>
             </CommandGroup>
             {selectedValues.size > 0 && (
               <>

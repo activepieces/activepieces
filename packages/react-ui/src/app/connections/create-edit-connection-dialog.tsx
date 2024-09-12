@@ -54,6 +54,7 @@ import {
   UpsertCloudOAuth2Request,
   UpsertCustomAuthRequest,
   UpsertOAuth2Request,
+  UpsertPlatformOAuth2Request,
   UpsertSecretTextRequest,
 } from '@activepieces/shared';
 
@@ -124,7 +125,11 @@ function buildConnectionSchema(
       return Type.Object({
         request: Type.Composite([
           Type.Omit(
-            Type.Union([UpsertOAuth2Request, UpsertCloudOAuth2Request]),
+            Type.Union([
+              UpsertOAuth2Request,
+              UpsertCloudOAuth2Request,
+              UpsertPlatformOAuth2Request,
+            ]),
             ['name'],
           ),
           connectionSchema,
@@ -190,7 +195,7 @@ const CreateOrEditConnectionDialog = React.memo(
         const existingConnection = connections.data.find(
           (connection) => connection.name === formValues.name,
         );
-        if (!isNil(existingConnection)) {
+        if (!isNil(existingConnection) && isNil(reconnectConnection)) {
           throw new ConnectionNameAlreadyExists();
         }
         return appConnectionsApi.upsert(formValues);
@@ -236,7 +241,7 @@ const CreateOrEditConnectionDialog = React.memo(
       >
         <DialogContent
           onInteractOutside={(e) => e.preventDefault()}
-          className="max-h-[70vh] min-w-[800px] overflow-y-auto"
+          className="max-h-[70vh]  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
         >
           <DialogHeader>
             <DialogTitle>
