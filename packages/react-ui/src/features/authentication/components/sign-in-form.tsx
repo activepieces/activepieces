@@ -4,21 +4,27 @@ import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { emailRegex } from '@/features/authentication/lib/password-validation-utils';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { AuthenticationResponse, SignInRequest } from '@activepieces/shared';
+import { formatUtils } from '@/lib/utils';
+import {
+  ApEdition,
+  ApFlagId,
+  AuthenticationResponse,
+  SignInRequest,
+} from '@activepieces/shared';
 
 const SignInSchema = Type.Object({
   email: Type.String({
-    pattern: emailRegex.source,
+    pattern: formatUtils.emailRegex.source,
     errorMessage: t('Email is invalid'),
   }),
   password: Type.String({
@@ -35,6 +41,9 @@ const SignInForm: React.FC = () => {
     mode: 'onChange',
   });
 
+  const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
+
+  const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
   const navigate = useNavigate();
 
   const { mutate, isPending } = useMutation<
@@ -76,6 +85,10 @@ const SignInForm: React.FC = () => {
     mutate(data);
   };
 
+  if (!userCreated) {
+    return <Navigate to="/sign-up" />;
+  }
+
   return (
     <>
       <Form {...form}>
@@ -105,12 +118,14 @@ const SignInForm: React.FC = () => {
               <FormItem className="grid space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">{t('Password')}</Label>
-                  <Link
-                    to="/forget-password"
-                    className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
-                  >
-                    {t('Forgot your password?')}
-                  </Link>
+                  {edition !== ApEdition.COMMUNITY && (
+                    <Link
+                      to="/forget-password"
+                      className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
+                    >
+                      {t('Forgot your password?')}
+                    </Link>
+                  )}
                 </div>
                 <Input
                   {...field}

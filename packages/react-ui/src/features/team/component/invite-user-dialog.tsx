@@ -57,7 +57,7 @@ import { userInvitationsHooks } from '../lib/user-invitations-hooks';
 const FormSchema = Type.Object({
   email: Type.String({
     errorMessage: t('Please enter a valid email address'),
-    pattern: formatUtils.EMAIL_REGEX,
+    pattern: formatUtils.emailRegex.source,
   }),
   type: Type.Enum(InvitationType, {
     errorMessage: t('Please select invitation type'),

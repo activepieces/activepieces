@@ -103,7 +103,7 @@ const AutoFormFieldWrapper = ({
         <TextInputWithMentions
           disabled={disabled}
           onChange={field.onChange}
-          initialValue={field.value ?? property.defaultValue}
+          initialValue={field.value ?? property.defaultValue ?? null}
         ></TextInputWithMentions>
       )}
       {!placeBeforeLabelText && !toggled && <div>{children}</div>}

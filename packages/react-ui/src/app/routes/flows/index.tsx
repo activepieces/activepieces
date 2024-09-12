@@ -13,7 +13,6 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { ShowPoweredBy } from '@/components/show-powered-by';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
@@ -41,12 +40,12 @@ import {
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
+import { TableTitle } from '../../../components/ui/table-title';
 
 const filters = [
   {
@@ -93,7 +92,6 @@ const FlowsPage = () => {
     });
   }
 
-  const { platform } = platformHooks.useCurrentPlatform();
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
     PopulatedFlow,
     Error,
@@ -226,7 +224,7 @@ const FlowsPage = () => {
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">{t('Flows')}</h1>
+        <TableTitle>{t('Flows')}</TableTitle>
         <div className="ml-auto flex flex-row gap-2">
           <PermissionNeededTooltip
             hasPermission={doesUserHavePermissionToWriteFlow}
@@ -307,7 +305,6 @@ const FlowsPage = () => {
           />
         </div>
       </div>
-      <ShowPoweredBy show={platform?.showPoweredBy} />
     </div>
   );
 };

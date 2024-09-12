@@ -2,8 +2,10 @@ import {
   AppConnectionValue,
   ExecutionType,
   FlowRunId,
+  PopulatedFlow,
   ProjectId,
   ResumePayload,
+  SeekPage,
   TriggerPayload,
 } from '@activepieces/shared';
 import { TriggerStrategy } from './trigger/trigger';
@@ -19,7 +21,7 @@ type BaseContext<
   PieceAuth extends PieceAuthProperty,
   Props extends InputPropertyMap
 > = {
-  flows: FlowContext;
+  flows: FlowsContext;
   auth: PiecePropValueSchema<PieceAuth>;
   propsValue: StaticPropsValue<Props>;
   store: Store;
@@ -95,23 +97,26 @@ export type PauseHook = (params: {
   pauseMetadata: DelayPauseMetadata | Omit<WebhookPauseMetadata, 'requestId'>
 }) => void;
 
-export type FlowContext = {
+export type FlowsContext = {
+  list(): Promise<SeekPage<PopulatedFlow>>
   current: {
     id: string;
     version: {
       id: string;
     };
-  }
+  };
 }
+
+
 
 export type PropertyContext = {
   server: ServerContext;
-  flows: FlowContext;
   project: {
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
   };
   searchValue?: string;
+  flows: FlowsContext;
 };
 
 export type ServerContext = {

@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.29.1",
-  "rcVersion": "0.30.0-rc.8",
+  "version": "0.31.0",
+  "rcVersion": "0.32.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -75,7 +75,8 @@
     "@radix-ui/react-toast": "1.2.1",
     "@radix-ui/react-toggle": "1.1.0",
     "@radix-ui/react-tooltip": "1.1.2",
-    "@segment/analytics-next": "1.67.0",
+    "@rollup/wasm-node": "4.21.2",
+    "@segment/analytics-next": "1.72.0",
     "@segment/analytics-node": "2.1.0",
     "@sendgrid/mail": "8.0.0",
     "@sentry/node": "7.64.0",
@@ -103,6 +104,7 @@
     "airtable": "0.11.6",
     "ajv": "8.12.0",
     "amqplib": "0.10.4",
+    "assemblyai": "4.7.0",
     "async-mutex": "0.4.0",
     "aws-sdk": "2.1642.0",
     "axios": "1.7.4",
@@ -208,6 +210,7 @@
     "prismjs": "1.29.0",
     "product-fruits": "1.0.23",
     "promise-mysql": "5.2.0",
+    "qrcode": "1.5.4",
     "qs": "6.11.2",
     "react": "18.3.1",
     "react-colorful": "5.6.1",
@@ -309,6 +312,7 @@
     "@types/papaparse": "5.3.8",
     "@types/pg": "8.10.2",
     "@types/prismjs": "1.26.0",
+    "@types/qrcode": "1.5.5",
     "@types/qs": "6.9.7",
     "@types/react": "18.3.1",
     "@types/react-dom": "18.3.0",
@@ -386,17 +390,25 @@
   "optionalDependencies": {
     "@nx/nx-darwin-arm64": "18.0.4",
     "@nx/nx-darwin-x64": "18.0.4",
+    "@nx/nx-linux-arm-gnueabihf": "18.0.4",
     "@nx/nx-linux-x64-gnu": "18.0.4",
     "@nx/nx-win32-x64-msvc": "18.0.4",
-    "@rollup/rollup-linux-arm64-gnu": "4.20.0",
-    "@rollup/rollup-darwin-arm64": "4.20.0"
+    "@rollup/rollup-darwin-arm64": "4.20.0",
+    "@rollup/rollup-linux-arm-gnueabihf": "4.200",
+    "@rollup/rollup-linux-arm64-gnu": "4.20.0"
   },
   "nx": {
     "includedScripts": []
   },
+  "resolutions": {
+    "rollup": "npm:@rollup/wasm-node"
+  },
   "overrides": {
     "@tryfabric/martian": {
       "@notionhq/client": "$@notionhq/client"
+    },
+    "vite": {
+      "rollup": "npm:@rollup/wasm-node"
     }
   }
 }
