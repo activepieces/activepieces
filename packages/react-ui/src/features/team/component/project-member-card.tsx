@@ -6,14 +6,20 @@ import { PermissionNeededTooltip } from '@/components/ui/permission-needed-toolt
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import { Permission } from '@activepieces/shared';
+import { Permission, ProjectMemberRole } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
-import { Avatar, AvatarImage } from '../../../components/ui/avatar';
+import { Avatar } from '../../../components/ui/avatar';
 import { Button } from '../../../components/ui/button';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
 
+const roleToLabel = {
+  [ProjectMemberRole.ADMIN]: 'Project Admin',
+  [ProjectMemberRole.EDITOR]: 'Project Editor',
+  [ProjectMemberRole.VIEWER]: 'Project Viewer',
+  [ProjectMemberRole.OPERATOR]: 'Project Operator',
+};
 export function ProjectMemberCard({
   member,
 }: {
@@ -37,21 +43,21 @@ export function ProjectMemberCard({
     >
       <div className="flex items-center space-x-4">
         <Avatar className="hidden size-9 sm:flex">
-          <AvatarImage src="/avatars/05.png" alt="Avatar" />
           <AvatarFallback className="justify-center items-center flex">
             <span className="p-2">
-              {member.user.email.charAt(0).toLocaleUpperCase()}
+              {member.user.firstName.charAt(0).toLocaleUpperCase()}
             </span>
           </AvatarFallback>
         </Avatar>
-        <div>
+        <div className="flex flex-col gap-1">
           <p className="text-sm font-medium leading-none">
-            {member.user.firstName} {member.user.lastName}
+            {member.user.firstName} {member.user.lastName} (
+            {roleToLabel[member.role]})
           </p>
           <p className="text-sm text-muted-foreground">{member.user.email}</p>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         {project.ownerId !== member.userId && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToRemoveMember}
