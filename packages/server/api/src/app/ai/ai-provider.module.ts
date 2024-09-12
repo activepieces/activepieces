@@ -1,5 +1,5 @@
-import { logger } from '@activepieces/server-shared'
-import { AiProviderConfig, AiProviderWithoutSensitiveData, isNil, PrincipalType, SeekPage } from '@activepieces/shared'
+import { logger, system } from '@activepieces/server-shared'
+import { AiProviderConfig, AiProviderWithoutSensitiveData, ApEdition, isNil, PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
@@ -49,11 +49,9 @@ const proxyController: FastifyPluginCallbackTypebox = (
 ) => {
     fastify.all('/:provider/*', ProxyRequest, async (request, reply) => {
         try {
+            const edition = system.getEdition()
+
             const projectId = request.principal.projectId
-
-            const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
-
-            const planTokens = projectPlan?.aiTokens
 
             const platformId = await projectService.getPlatformId(projectId)
 
@@ -61,11 +59,15 @@ const proxyController: FastifyPluginCallbackTypebox = (
 
             const aiProvider = await aiProviderService.getOrThrow({ platformId, provider })
 
-            const tokensUsage = await projectUsageService.getAITokensUsage(projectId)
 
-            if (!isNil(planTokens) && tokensUsage > planTokens) {
-                reply.code(StatusCodes.TOO_MANY_REQUESTS).send({ error: 'YOU_HAVE_EXCEEDED_YOUR_AI_TOKENS_PLAN_LIMIT' })
-                return
+            if (edition !== ApEdition.COMMUNITY) {
+                const plan = await projectLimitsService.getPlanByProjectId(projectId)
+                const planTokens = plan?.aiTokens
+                const tokensUsage = await projectUsageService.getAITokensUsage(projectId)
+                if (!isNil(planTokens) && tokensUsage > planTokens) {
+                    reply.code(StatusCodes.TOO_MANY_REQUESTS).send({ error: 'YOU_HAVE_EXCEEDED_YOUR_AI_TOKENS_PLAN_LIMIT' })
+                    return
+                }
             }
 
             if (!aiProvider) {
@@ -78,6 +80,10 @@ const proxyController: FastifyPluginCallbackTypebox = (
             const requestHeaders = structuredClone({ ...request.headers })
 
             const tokensUsagePath = requestHeaders['x-ap-total-usage-body-path']
+            if (edition !== ApEdition.COMMUNITY && isNil(tokensUsagePath)) {
+                reply.code(StatusCodes.BAD_REQUEST).send({ error: 'X_AP_TOTAL_USAGE_BODY_PATH HEADER IS REQUIRED' })
+                return
+            }
 
             delete requestHeaders.authorization
             delete requestHeaders.Authorization
@@ -109,12 +115,10 @@ const proxyController: FastifyPluginCallbackTypebox = (
 
             logger.debug({ data }, '[PROXY] Response')
 
-            if (isNil(tokensUsagePath)) {
-                reply.code(StatusCodes.BAD_REQUEST).send({ error: 'FAILED_TO_CALCULATE_USAGE' })
-                return
+            if (edition !== ApEdition.COMMUNITY && !isNil(tokensUsagePath)) {
+                const usage = calculateUsage(data, tokensUsagePath)
+                await projectUsageService.increaseAITokens(projectId, usage)
             }
-
-            await projectUsageService.increaseAITokens(projectId, calculateUsage(data, tokensUsagePath))
 
             await reply
                 .code(response.status)
