@@ -1,13 +1,12 @@
 import { t } from 'i18next';
 import {
-  BrainCog,
   LayoutGrid,
   LineChart,
   LogsIcon,
   Puzzle,
   UserCog,
   Workflow,
-  Wrench,
+  Wrench
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 

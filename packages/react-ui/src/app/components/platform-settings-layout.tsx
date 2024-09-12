@@ -26,11 +26,6 @@ const sidebarNavItems = [
     href: '/platform/settings/sso',
     icon: <ShieldPlus size={iconSize} />,
   },
-  {
-    title: 'AI Providers',
-    href: '/platform/settings/ai',
-    icon: <Brain size={iconSize} />,
-  },
 ];
 
 interface SettingsLayoutProps {

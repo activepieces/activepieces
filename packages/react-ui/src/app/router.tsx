@@ -57,6 +57,7 @@ import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
 import AIProvidersPage from '@/app/routes/platform/ai-providers';
+import { PlatformPiecesLayout } from './routes/platform/pieces/platform-pieces-layout';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -322,9 +323,11 @@ const routes = [
     path: '/platform/pieces',
     element: (
       <PlatformAdminContainer>
-        <PageTitle title="Platform Pieces">
-          <PlatformPiecesPage />
+        <PlatformPiecesLayout>
+          <PageTitle title="Platform Pieces">
+            <PlatformPiecesPage />
         </PageTitle>
+        </PlatformPiecesLayout>
       </PlatformAdminContainer>
     ),
   },
@@ -391,14 +394,14 @@ const routes = [
     ),
   },
   {
-    path: '/platform/settings/ai',
+    path: '/platform/pieces/ai',
     element: (
       <PlatformAdminContainer>
-        <PlatformSettingsLayout>
+        <PlatformPiecesLayout>
           <PageTitle title="AI Providers">
             <AIProvidersPage />
           </PageTitle>
-        </PlatformSettingsLayout>
+        </PlatformPiecesLayout>
       </PlatformAdminContainer>
     ),
   },
