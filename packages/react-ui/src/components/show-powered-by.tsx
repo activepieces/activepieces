@@ -2,7 +2,7 @@ import { cn } from '../lib/utils';
 
 type ShowPoweredByProps = {
   show: boolean;
-  position?: 'sticky' | 'absolute';
+  position?: 'sticky' | 'absolute' | 'static';
 };
 const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
   if (!show) {
@@ -15,7 +15,14 @@ const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
         'mr-5': position === 'sticky',
       })}
     >
-      <div className="justify-end p-1 text-muted-foreground/70 text-sm items-center flex gap-1 transition group ">
+      <div
+        className={cn(
+          'justify-end p-1 text-muted-foreground/70 text-sm items-center flex gap-1 transition group ',
+          {
+            'justify-center': position === 'static',
+          },
+        )}
+      >
         <div className=" text-sm transition">Built with</div>
         <div className="justify-center flex items-center gap-1">
           <svg
