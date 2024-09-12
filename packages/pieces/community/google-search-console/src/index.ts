@@ -53,3 +53,4 @@ export const googleSearchConsolePiece = createPiece({
     urlInspection,
   ],
 });
+//TODO : remove this comment, add Gushkool's email to local git configuration
