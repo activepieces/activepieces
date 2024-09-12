@@ -11,6 +11,8 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
+import { logger } from '@activepieces/server-shared'
+import { log } from 'console'
 
 const repo = repoFactory(UserInvitationEntity)
 
@@ -20,7 +22,7 @@ export const userInvitationsService = {
             projectId,
         })
     },
-    async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation | null> {
+    async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation> {
         const decodedToken = await jwtUtils.decodeAndVerify<UserInvitationToken>({
             jwt: invitationToken,
             key: await jwtUtils.getJwtSecret(),
@@ -44,6 +46,11 @@ export const userInvitationsService = {
             email,
             platformId,
         })
+        logger.info({
+            email,
+            platformId,
+            user,
+        }, `[provisionUserInvitation]`)
         if (isNil(user)) {
             return
         }
@@ -55,7 +62,14 @@ export const userInvitationsService = {
                 status: InvitationStatus.ACCEPTED,
             },
         ])
+        logger.info({
+            platformId,
+            count: invitations.length,
+        }, `[provisionUserInvitation]`)
         for (const invitation of invitations) {
+            logger.info({
+                invitation,
+            }, `[provisionUserInvitation] provision`)
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
                     assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
@@ -94,19 +108,7 @@ export const userInvitationsService = {
         invitationExpirySeconds,
         status,
     }: CreateParams): Promise<UserInvitationWithLink> {
-        const invitation = await repo().findOneBy({
-            email,
-            platformId,
-            projectId: isNil(projectId) ? IsNull() : projectId,
-        })
         const platform = await platformService.getOneOrThrow(platformId)
-
-        if (!isNil(invitation)) {
-            if (status === InvitationStatus.ACCEPTED) {
-                return invitation
-            }
-            return enrichWithInvitationLink(platform, invitation, invitationExpirySeconds)
-        }
         const id = apId()
         await repo().upsert({
             id,
