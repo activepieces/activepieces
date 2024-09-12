@@ -45,7 +45,7 @@ export const SendUserInvitationRequest = Type.Union([
         email: Type.String(),
         platformRole: Type.Enum(PlatformRole),
         expireyInSeconds: Type.Optional(Type.Number()),
-    })
+    }),
 ])
 
 

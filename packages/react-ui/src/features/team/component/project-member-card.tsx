@@ -9,7 +9,7 @@ import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { Permission, ProjectMemberRole } from '@activepieces/shared';
 
 import { ConfirmationDeleteDialog } from '../../../components/delete-dialog';
-import { Avatar, AvatarImage } from '../../../components/ui/avatar';
+import { Avatar } from '../../../components/ui/avatar';
 import { Button } from '../../../components/ui/button';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
@@ -19,7 +19,7 @@ const roleToLabel = {
   [ProjectMemberRole.EDITOR]: 'Project Editor',
   [ProjectMemberRole.VIEWER]: 'Project Viewer',
   [ProjectMemberRole.OPERATOR]: 'Project Operator',
-}
+};
 export function ProjectMemberCard({
   member,
 }: {
@@ -49,9 +49,10 @@ export function ProjectMemberCard({
             </span>
           </AvatarFallback>
         </Avatar>
-        <div className='flex flex-col gap-1'>
+        <div className="flex flex-col gap-1">
           <p className="text-sm font-medium leading-none">
-            {member.user.firstName} {member.user.lastName} ({roleToLabel[member.role]})
+            {member.user.firstName} {member.user.lastName} (
+            {roleToLabel[member.role]})
           </p>
           <p className="text-sm text-muted-foreground">{member.user.email}</p>
         </div>
@@ -62,8 +63,9 @@ export function ProjectMemberCard({
             hasPermission={userHasPermissionToRemoveMember}
           >
             <ConfirmationDeleteDialog
-              title={`${t('Remove')} ${member.user.firstName} ${member.user.lastName
-                }`}
+              title={`${t('Remove')} ${member.user.firstName} ${
+                member.user.lastName
+              }`}
               message={t('Are you sure you want to remove this member?')}
               mutationFn={() => deleteMember()}
               entityName={`${member.user.firstName} ${member.user.lastName}`}

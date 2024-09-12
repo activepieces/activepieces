@@ -30,6 +30,10 @@ function ProjectSwitcher() {
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
 
+  const sortedProjects = projects?.sort((a, b) => {
+    return a.displayName.localeCompare(b.displayName);
+  });
+  
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -51,8 +55,8 @@ function ProjectSwitcher() {
             <CommandEmpty>No projects found.</CommandEmpty>
             <CommandGroup key="projects" heading="Projects">
               <ScrollArea viewPortClassName="max-h-[200px]">
-                {projects &&
-                  projects.map((project) => (
+                {sortedProjects &&
+                  sortedProjects.map((project) => (
                     <CommandItem
                       key={project.id}
                       onSelect={() => {
