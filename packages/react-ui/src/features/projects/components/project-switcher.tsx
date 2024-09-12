@@ -33,7 +33,7 @@ function ProjectSwitcher() {
   const sortedProjects = projects?.sort((a, b) => {
     return a.displayName.localeCompare(b.displayName);
   });
-  
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
