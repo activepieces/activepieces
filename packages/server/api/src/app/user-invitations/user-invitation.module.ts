@@ -9,7 +9,6 @@ import {
     isNil,
     ListUserInvitationsRequest,
     Permission,
-    PlatformRole,
     PrincipalType,
     SeekPage,
     SendUserInvitationRequest,
@@ -35,7 +34,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
 
-    app.post('/', CreateUserInvitationRequestParams, async (request, reply) => {
+    app.post('/', UpsertUserInvitationRequestParams, async (request, reply) => {
         switch (request.body.type) {
             case InvitationType.PROJECT:
                 await assertPrincipalHasPermissionToProject(app, request, reply, request.body.projectId, Permission.WRITE_INVITATION)
@@ -116,7 +115,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
 const getProjectIdAndAssertPermission = async (app: FastifyInstance, request: FastifyRequest, reply: FastifyReply, requestQuery: ListUserInvitationsRequest): Promise<string | null> => {
     if (request.principal.type === PrincipalType.SERVICE) {
         if (isNil(requestQuery.projectId)) {
-            return null;
+            return null
         }
         await assertPrincipalHasPermissionToProject(app, request, reply, requestQuery.projectId, Permission.READ_INVITATION)
         return requestQuery.projectId
@@ -184,13 +183,14 @@ const DeleteInvitationRequestParams = {
     },
 }
 
-const CreateUserInvitationRequestParams = {
+const UpsertUserInvitationRequestParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
     schema: {
         body: SendUserInvitationRequest,
+        description: 'Send a user invitation to a user. If the user already has an invitation, the invitation will be updated.',
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {

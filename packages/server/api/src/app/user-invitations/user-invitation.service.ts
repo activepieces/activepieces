@@ -1,3 +1,4 @@
+import { logger } from '@activepieces/server-shared'
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -11,8 +12,6 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
-import { logger } from '@activepieces/server-shared'
-import { log } from 'console'
 
 const repo = repoFactory(UserInvitationEntity)
 
@@ -50,7 +49,7 @@ export const userInvitationsService = {
             email,
             platformId,
             user,
-        }, `[provisionUserInvitation]`)
+        }, '[provisionUserInvitation]')
         if (isNil(user)) {
             return
         }
@@ -65,11 +64,11 @@ export const userInvitationsService = {
         logger.info({
             platformId,
             count: invitations.length,
-        }, `[provisionUserInvitation]`)
+        }, '[provisionUserInvitation]')
         for (const invitation of invitations) {
             logger.info({
                 invitation,
-            }, `[provisionUserInvitation] provision`)
+            }, '[provisionUserInvitation] provision')
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
                     assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
