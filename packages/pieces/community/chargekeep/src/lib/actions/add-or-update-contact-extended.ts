@@ -181,10 +181,22 @@ export const addOrUpdateContactExtended = createAction({
       required: false,
     }),
     // personal info
-    gender: Property.ShortText({
+    gender: Property.StaticDropdown({
       displayName: 'Gender',
-      description: 'Possible values are Male and Female',
       required: false,
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Male',
+            value: 'Male',
+          },
+          {
+            label: 'Female',
+            value: 'Female',
+          },
+        ],
+      },
     }),
     dob: Property.ShortText({
       displayName: 'Date of Birth',
