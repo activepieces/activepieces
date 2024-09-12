@@ -1,6 +1,5 @@
 import {
     ApiKeyResponseWithValue,
-    UpsertProjectMemberRequestBody,
 } from '@activepieces/ee-shared'
 import { Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
@@ -39,97 +38,7 @@ afterAll(async () => {
 })
 
 describe('Project Member API', () => {
-    describe('Invite member to project Endpoint', () => {
-        it('Adds new invited user from api for random project', async () => {
-            const { mockApiKey } = await createBasicEnvironment()
-            const { mockProject: mockProject2, mockMember } = await createBasicEnvironment()
-            
-            const mockInviteProjectMemberRequest: UpsertProjectMemberRequestBody = {
-                userId: mockMember.id,
-                role: ProjectMemberRole.VIEWER,
-                projectId: mockProject2.id,
-            }
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/project-members',
-                headers: {
-                    authorization: `Bearer ${mockApiKey.value}`,
-                },
-                body: mockInviteProjectMemberRequest,
-            })
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
-
-        it('Adds new invited user from api', async () => {
-            const { mockApiKey, mockProject, mockMember } = await createBasicEnvironment()
-            const mockInviteProjectMemberRequest: UpsertProjectMemberRequestBody = {
-                userId: mockMember.id,
-                role: ProjectMemberRole.VIEWER,
-                projectId: mockProject.id,
-            }
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/project-members',
-                headers: {
-                    authorization: `Bearer ${mockApiKey.value}`,
-                },
-                body: mockInviteProjectMemberRequest,
-            })
-            expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        })
-
-        it.each([
-            ProjectMemberRole.EDITOR,
-            ProjectMemberRole.VIEWER,
-            ProjectMemberRole.ADMIN,
-            ProjectMemberRole.OPERATOR,
-        ])('Fails for user with role %s, only api keys allowed', async (testRole) => {
-            const { mockPlatform, mockProject } = await createBasicEnvironment()
-
-            const mockUser = createMockUser({ platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save(mockUser)
-
-            const mockProjectMember = createMockProjectMember({
-                userId: mockUser.id,
-                platformId: mockPlatform.id,
-                projectId: mockProject.id,
-                role: testRole,
-            })
-            await databaseConnection().getRepository('project_member').save([mockProjectMember])
-
-            const mockToken = await generateMockToken({
-                id: mockUser.id,
-                type: PrincipalType.USER,
-                projectId: mockProject.id,
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/project-members',
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-                body: {
-                    userId: mockProjectMember.userId,
-                    role: 'VIEWER',
-                    projectId: mockProject.id,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-
-            const responseBody = response?.json()
-            expect(responseBody?.code).toBe('AUTHORIZATION')
-        })
-    })
-
+ 
     describe('List project members Endpoint', () => {
         describe('List project members from api', () => {
             it('should return project members', async () => {

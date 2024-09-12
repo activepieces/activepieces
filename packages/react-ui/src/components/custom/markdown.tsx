@@ -75,22 +75,22 @@ const ApMarkdown = React.memo(
               const codeContent = String(props.children).trim();
               const isCopying = codeContent === copiedText;
               return (
-                <div className="relative py-2">
+                <div className="relative  w-full items-center flex bg-background border border-solid text-sm rounded block w-full gap-1 p-1.5">
                   <input
                     type="text"
-                    className="col-span-6 bg-background border border-solid text-sm rounded block w-full p-2.5"
+                    className=" grow bg-background "
                     value={codeContent}
                     disabled
                   />
                   <Button
                     variant="ghost"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-background rounded p-2 inline-flex items-center justify-center"
+                    className="bg-background rounded p-2 inline-flex items-center justify-center h-8"
                     onClick={() => copyToClipboard(codeContent)}
                   >
                     {isCopying ? (
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3 h-3" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3 h-3" />
                     )}
                   </Button>
                 </div>
@@ -115,7 +115,10 @@ const ApMarkdown = React.memo(
               />
             ),
             p: ({ node, ...props }) => (
-              <p className="leading-7 [&:not(:first-child)]:mt-6" {...props} />
+              <p
+                className="leading-7 [&:not(:first-child)]:mt-6 w-full"
+                {...props}
+              />
             ),
             ul: ({ node, ...props }) => (
               <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props} />
