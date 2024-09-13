@@ -161,7 +161,6 @@ function createPropsFromSchema(schema: any): Record<string, any> {
       value.items.type === 'string' &&
       value.items.enum
     ) {
-      console.log(value.items);
       properties[key] = {
         ...createField(key, label, value.items, required),
         displayName: label,
