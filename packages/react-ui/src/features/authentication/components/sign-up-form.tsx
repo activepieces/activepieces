@@ -114,7 +114,9 @@ const SignUpForm = ({
         switch (error.response?.status) {
           case HttpStatusCode.Forbidden: {
             form.setError('root.serverError', {
-              message: t('Sign up is restricted. You need an invitation to join. Please contact the administrator.'),
+              message: t(
+                'Sign up is restricted. You need an invitation to join. Please contact the administrator.',
+              ),
             });
             break;
           }

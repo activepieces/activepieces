@@ -148,9 +148,7 @@ const ProjectPiecesPage = () => {
         </div>
         <div className="flex justify-end">
           {managedPiecesEnabled && (
-            <ManagePiecesDialog
-              onSuccess={() => setRefresh(refresh + 1)}
-            />
+            <ManagePiecesDialog onSuccess={() => setRefresh(refresh + 1)} />
           )}
         </div>
         <DataTable
