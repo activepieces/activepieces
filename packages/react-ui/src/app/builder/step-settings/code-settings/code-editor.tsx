@@ -27,7 +27,7 @@ type CodeEditorProps = {
   applyCodeToCurrentStep?: () => void;
 };
 
-const CodeEditior = ({
+const CodeEditor = ({
   sourceCode,
   readonly,
   onChange,
@@ -39,7 +39,7 @@ const CodeEditior = ({
   const codeApplicationEnabled = typeof applyCodeToCurrentStep === 'function';
   const { theme } = useTheme();
 
-  const codeEditiorTheme = theme === 'dark' ? githubDark : githubLight;
+  const codeEditorTheme = theme === 'dark' ? githubDark : githubLight;
 
   const extensions = [
     styleTheme,
@@ -140,7 +140,7 @@ const CodeEditior = ({
               : { code, packageJson: value },
           );
         }}
-        theme={codeEditiorTheme}
+        theme={codeEditorTheme}
         readOnly={readonly}
         extensions={extensions}
       />
@@ -148,4 +148,4 @@ const CodeEditior = ({
   );
 };
 
-export { CodeEditior };
+export { CodeEditor };
