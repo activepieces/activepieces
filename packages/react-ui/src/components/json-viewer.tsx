@@ -53,7 +53,7 @@ const removeDoubleQuotes = (str: string): string =>
 const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
   const { theme } = useTheme();
 
-  const viewerTheme = theme === 'dark' ? 'pop' : 'rjv-default';
+  const viewerTheme = theme === 'dark' ? 'bright' : 'rjv-default';
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(json, null, 2));
     toast({
