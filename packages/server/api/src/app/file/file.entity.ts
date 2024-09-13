@@ -18,7 +18,15 @@ export const FileEntity = new EntitySchema<FileSchema>({
         platformId: { ...ApIdSchema, nullable: true },
         data: {
             type: BLOB_COLUMN_TYPE,
+            nullable: true,
+        },
+        location: {
+            type: String,
             nullable: false,
+        },
+        s3Key: {
+            type: String,
+            nullable: true,
         },
         type: {
             type: String,

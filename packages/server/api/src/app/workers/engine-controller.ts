@@ -174,13 +174,13 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/files/:fileId', GetFileRequestParams, async (request, reply) => {
         const { fileId } = request.params
-        const file = await fileService.getOneOrThrow({
+        const data = await fileService.getDataOrThrow({
             fileId,
         })
         return reply
             .type('application/zip')
             .status(StatusCodes.OK)
-            .send(file.data)
+            .send(data)
     })
 
 }
