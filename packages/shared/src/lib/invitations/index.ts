@@ -38,13 +38,11 @@ export const SendUserInvitationRequest = Type.Union([
         email: Type.String(),
         projectId: Type.String(),
         projectRole: Type.Enum(ProjectMemberRole),
-        expireyInSeconds: Type.Optional(Type.Number()),
     }),
     Type.Object({
         type: Type.Literal(InvitationType.PLATFORM),
         email: Type.String(),
         platformRole: Type.Enum(PlatformRole),
-        expireyInSeconds: Type.Optional(Type.Number()),
     }),
 ])
 

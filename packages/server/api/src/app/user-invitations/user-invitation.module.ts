@@ -44,7 +44,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
                 break
         }
         const status = request.principal.type === PrincipalType.SERVICE ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
-        const { email, type, expireyInSeconds } = request.body
+        const { email, type } = request.body
         if (type === InvitationType.PROJECT) {
             await projectMembersLimit.limit({
                 projectId: request.body.projectId,
@@ -60,7 +60,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
             projectRole: type === InvitationType.PLATFORM ? null : request.body.projectRole,
-            invitationExpirySeconds: expireyInSeconds ?? dayjs.duration(1, 'day').asSeconds(),
+            invitationExpirySeconds:  dayjs.duration(1, 'day').asSeconds(),
             status,
         })
         await reply.status(StatusCodes.CREATED).send(invitation)
