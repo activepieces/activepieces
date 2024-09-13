@@ -67,9 +67,9 @@ function handlingArrayStepOutput(
   if (stepOutput.length <= maxSliceLength) {
     return {
       key: parentDisplayName,
-      children: stepOutput.map((ouput, idx) =>
+      children: stepOutput.map((output, idx) =>
         traverseStepOutputAndReturnMentionTree({
-          stepOutput: ouput,
+          stepOutput: output,
           propertyPath: `${path}[${idx + startingIndex}]`,
           displayName: `${parentDisplayName} [${idx + startingIndex + 1}]`,
         }),
