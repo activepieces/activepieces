@@ -4,6 +4,7 @@ import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -27,6 +28,7 @@ function ProjectSwitcher() {
   const queryClient = useQueryClient();
   const { data: projects } = projectHooks.useProjects();
   const [open, setOpen] = React.useState(false);
+  const { embedState } = useEmbedding();
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
 
@@ -34,6 +36,9 @@ function ProjectSwitcher() {
     return a.displayName.localeCompare(b.displayName);
   });
 
+  if (embedState.isEmbedded) {
+    return null;
+  }
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>

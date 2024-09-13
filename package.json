@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.31.0",
-  "rcVersion": "0.32.0-rc.2",
+  "rcVersion": "0.32.0-rc.3",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -137,7 +137,7 @@
     "decompress": "4.2.1",
     "deep-equal": "2.2.2",
     "deepmerge-ts": "7.1.0",
-    "drip-nodejs": "3.1.1",
+    "drip-nodejs": "3.1.2",
     "elevenlabs": "0.2.2",
     "embla-carousel-react": "8.1.8",
     "exifreader": "4.20.0",

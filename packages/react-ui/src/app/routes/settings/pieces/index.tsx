@@ -128,6 +128,10 @@ const ProjectPiecesPage = () => {
     ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
   );
 
+  const { data: managedPiecesEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
+  );
+
   return (
     <div className="flex w-full flex-col items-center justify-center gap-4">
       <div className="mx-auto w-full flex-col">
@@ -143,9 +147,9 @@ const ProjectPiecesPage = () => {
           </div>
         </div>
         <div className="flex justify-end">
-          <ManagePiecesDialog
-            onSuccess={() => setRefresh(refresh + 1)}
-          ></ManagePiecesDialog>
+          {managedPiecesEnabled && (
+            <ManagePiecesDialog onSuccess={() => setRefresh(refresh + 1)} />
+          )}
         </div>
         <DataTable
           columns={columns}
