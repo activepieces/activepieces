@@ -112,6 +112,12 @@ const SignUpForm = ({
     onError: (error) => {
       if (api.isError(error)) {
         switch (error.response?.status) {
+          case HttpStatusCode.Forbidden: {
+            form.setError('root.serverError', {
+              message: t('Sign up is restricted. You need an invitation to join. Please contact the administrator.'),
+            });
+            break;
+          }
           case HttpStatusCode.Conflict: {
             form.setError('root.serverError', {
               message: t('Email is already used'),
