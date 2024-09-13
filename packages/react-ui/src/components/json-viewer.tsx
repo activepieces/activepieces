@@ -33,6 +33,7 @@ const FileButton = ({ fileUrl, handleDownloadFile }: FileButtonProps) => {
       <Button
         variant="ghost"
         size="sm"
+        disabled={readonly}
         onClick={() => handleDownloadFile(fileUrl)}
         className="flex items-center gap-2 p-2 max-h-[20px] text-xs"
       >
