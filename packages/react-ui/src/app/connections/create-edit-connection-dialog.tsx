@@ -385,9 +385,9 @@ function createDefaultValues(
         projectId,
         type: AppConnectionType.CLOUD_OAUTH2,
         value: {
-          authorization_method: piece.auth?.authorizationMethod,
           type: AppConnectionType.CLOUD_OAUTH2,
           scope: piece.auth?.scope.join(' '),
+          authorization_method: piece.auth?.authorizationMethod,
           client_id: '',
           props: {},
           code: '',
