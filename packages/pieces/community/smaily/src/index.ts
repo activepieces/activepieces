@@ -1,13 +1,15 @@
 import {
   createPiece,
   PieceAuth,
+  PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import {
   AuthenticationType,
   httpClient,
-  HttpMethod,
+  HttpMethod, createCustomApiCallAction 
+
 } from '@activepieces/pieces-common';
 import { createOrUpdateSubscriberAction } from './lib/actions/create-or-update-subscriber.action';
 import { getSubscriberAction } from './lib/actions/get-subscriber.action';
@@ -62,6 +64,20 @@ export const smaily = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/smaily.png',
   categories: [PieceCategory.MARKETING],
   authors: ['kishanprmr'],
-  actions: [createOrUpdateSubscriberAction, getSubscriberAction],
+  actions: [createOrUpdateSubscriberAction, getSubscriberAction,
+    createCustomApiCallAction({
+      auth:smailyAuth,
+      baseUrl: (auth)=>{
+        return `https://${(auth as PiecePropValueSchema<typeof smailyAuth>).domain}.sendsmaily.net/api`
+      },
+      authMapping: async (auth) => ({
+        Authorization: `Basic ${Buffer.from(
+          `${(auth as { username: string }).username}:${
+            (auth as { password: string }).password
+          }`
+        ).toString('base64')}`,
+      }),
+    })
+  ],
   triggers: [],
 });
