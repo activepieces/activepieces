@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { Bot } from 'lucide-react';
 import React from 'react';
 
-import { CodeEditior } from '../step-settings/code-settings/code-editior';
+import { CodeEditor } from '../step-settings/code-settings/code-editor';
 
 export const CopilotMessage = Type.Union([
   Type.Object({
@@ -61,7 +61,7 @@ export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
                   <p>{message.content}</p>
                 </ChatBox>
               ) : (
-                <CodeEditior
+                <CodeEditor
                   sourceCode={{
                     code: message.content.code,
                     packageJson: JSON.stringify(
@@ -73,7 +73,7 @@ export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
                   readonly={true}
                   onChange={() => {}}
                   applyCodeToCurrentStep={() => onApplyCode(message)}
-                ></CodeEditior>
+                ></CodeEditor>
               )}
             </div>
           </>
