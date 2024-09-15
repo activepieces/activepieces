@@ -40,6 +40,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
                 stepName: request.body.stepName,
                 flowId: request.body.flowId,
             },
+            fileName: request.body.fileName,
             type: FileType.FLOW_STEP_FILE,
             compression: FileCompression.NONE,
             projectId: request.principal.projectId,

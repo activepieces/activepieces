@@ -24,7 +24,9 @@ export const fileService = {
             projectId: params.projectId,
             platformId: params.platformId,
             type: params.type,
+            fileName: params.fileName,
             compression: params.compression,
+            size: params.data.length,
             metadata: params.metadata,
         }
         const location = getLocationForFile(params.type)
@@ -100,6 +102,7 @@ type SaveParams = {
     data: Buffer
     type: FileType
     platformId?: string
+    fileName?: string
     compression: FileCompression
     metadata?: Record<string, string>
 }
