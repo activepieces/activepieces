@@ -11,8 +11,8 @@ import { flowHelper, StepOutput } from '@activepieces/shared';
 
 const FlowStepInputOutput = React.memo(
   ({ stepDetails }: { stepDetails: StepOutput | undefined }) => {
-    const loopStepOut = stepDetails
-      ? formatUtils.formatStepInputAndOutput(
+    const stepOutput = stepDetails
+      ? formatUtils.formatStepInputOrOutput(
           stepDetails.output ?? stepDetails.errorMessage,
           stepDetails.type,
         )
@@ -45,7 +45,7 @@ const FlowStepInputOutput = React.memo(
             </div>
             <JsonViewer title={t('Input')} json={stepDetails.input} />
             <div className="mt-4"></div>
-            <JsonViewer title={t('Output')} json={loopStepOut} />
+            <JsonViewer title={t('Output')} json={stepOutput} />
           </div>
         )}
       </ScrollArea>

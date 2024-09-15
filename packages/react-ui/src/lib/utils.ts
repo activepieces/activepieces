@@ -15,7 +15,7 @@ const EMAIL_REGEX =
 
 export const formatUtils = {
   EMAIL_REGEX,
-  formatStepInputAndOutput(
+  formatStepInputOrOutput(
     sampleData: unknown,
     type: ActionType | TriggerType | null,
   ) {

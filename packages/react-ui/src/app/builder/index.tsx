@@ -35,7 +35,7 @@ import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
-import { FlowRecentRunsList } from './run-list';
+import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
@@ -183,7 +183,7 @@ const BuilderPage = () => {
                 [animateResizeClassName]: !isDraggingHandle,
               })}
             >
-              {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
+              {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
               {leftSidebar === LeftSideBarType.RUN_DETAILS && (
                 <FlowRunDetails />
               )}

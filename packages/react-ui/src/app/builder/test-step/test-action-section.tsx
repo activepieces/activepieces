@@ -8,13 +8,13 @@ import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { flowsApi } from '@/features/flows/lib/flows-api';
 import { formatUtils } from '@/lib/utils';
 import { Action, StepRunResponse, isNil } from '@activepieces/shared';
 
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
+import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -50,13 +50,13 @@ const TestActionSection = React.memo(
       void
     >({
       mutationFn: async () => {
-        return flowsApi.testStep(socket, {
+        return flowRunsApi.testStep(socket, {
           flowVersionId,
           stepName: formValues.name,
         });
       },
       onSuccess: (stepResponse) => {
-        const formattedResponse = formatUtils.formatStepInputAndOutput(
+        const formattedResponse = formatUtils.formatStepInputOrOutput(
           stepResponse.output,
           null,
         );

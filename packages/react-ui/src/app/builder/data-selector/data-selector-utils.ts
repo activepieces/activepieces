@@ -35,7 +35,7 @@ function traverseStepOutputAndReturnMentionTree({
     data: {
       propertyPath,
       displayName,
-      value: formatUtils.formatStepInputAndOutput(stepOutput, null),
+      value: formatUtils.formatStepInputOrOutput(stepOutput, null),
     },
     children: undefined,
   };

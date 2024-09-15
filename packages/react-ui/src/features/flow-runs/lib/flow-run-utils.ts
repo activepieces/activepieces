@@ -8,7 +8,7 @@ import {
   X,
 } from 'lucide-react';
 
-import { FlowRunStatus, StepOutputStatus } from '@activepieces/shared';
+import { ActionType, FlowRun, FlowRunStatus, isNil, LoopStepResult, StepOutputStatus } from '@activepieces/shared';
 
 export const flowRunUtils = {
   getStatusIconForStep(stepOutput: StepOutputStatus): {
@@ -91,3 +91,76 @@ export const flowRunUtils = {
     }
   },
 };
+
+export const findFailedStepInLoop: (
+  loopStepResult: LoopStepResult,
+) => string | null = (loopStepResult) => {
+  return loopStepResult.iterations.reduce((res, iteration) => {
+    const failedStepWithinLoop = Object.entries(iteration).reduce(
+      (res, [stepName, step]) => {
+        if (step.status === StepOutputStatus.FAILED) {
+          return stepName;
+        }
+        if (
+          step.type === ActionType.LOOP_ON_ITEMS &&
+          step.output &&
+          isNil(res)
+        ) {
+          return findFailedStepInLoop(step.output);
+        }
+        return res;
+      },
+      null as null | string,
+    );
+    return res ?? failedStepWithinLoop;
+  }, null as null | string);
+};
+
+
+export const findInitalIndexForLoop: (
+  loopStepResult: LoopStepResult,
+) =>  number = (loopStepResult) => {
+  return loopStepResult.iterations.reduce((answer, iteration,index) => {
+    const hasIterationFailed= Object.values(iteration).some(
+      (step) => {
+        if (step.status === StepOutputStatus.FAILED) {
+          return true;
+        }
+        if (
+          step.type === ActionType.LOOP_ON_ITEMS &&
+          step.output         
+        ) {
+          const failedStepInLoop = findFailedStepInLoop(step.output);
+          if(failedStepInLoop){
+            return true;
+          }
+        }
+        return false;
+      },
+      0
+    );
+    if(hasIterationFailed)
+    {
+      return index;
+    }
+    return answer;
+  },0);
+};
+
+export const findFailedStep = (run: FlowRun) => {
+  return Object.entries(run.steps).reduce((res, [stepName, step]) => {
+    if (step.status === StepOutputStatus.FAILED) {
+      return stepName;
+    }
+    if (step.type === ActionType.LOOP_ON_ITEMS && step.output && isNil(res)) {
+      return findFailedStepInLoop(step.output);
+    }
+    return res;
+  }, null as null | string);
+};
+
+
+export function hasRunFinished(runStatus: FlowRunStatus): boolean {
+  return runStatus !== FlowRunStatus.RUNNING &&
+  runStatus !== FlowRunStatus.PAUSED;
+}
