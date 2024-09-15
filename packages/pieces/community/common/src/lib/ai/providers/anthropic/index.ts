@@ -83,7 +83,7 @@ export const anthropic: AIFactory = ({
         });
 
         const toolCallsResponse: ToolUseBlock[] = completion.content.filter(
-          (choice) => choice.type === 'tool_use'
+          (choice): choice is ToolUseBlock => choice.type === 'tool_use'
         );
 
         return {
@@ -97,7 +97,7 @@ export const anthropic: AIFactory = ({
             id: toolCallsResponse[0].id,
             type: 'function',
             function: {
-              name: toolCallsResponse[0].name,
+              name: toolCallsResponse[0].name ?? 'extract_structured_data',
               arguments: toolCallsResponse[0].input,
             },
           },

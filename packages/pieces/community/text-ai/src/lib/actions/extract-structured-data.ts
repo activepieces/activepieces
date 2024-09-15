@@ -73,6 +73,11 @@ export const extractStructuredData = createAction({
         }),
       },
     }),
+    maxTokens: Property.Number({
+      displayName: 'Max Tokens',
+      required: false,
+      defaultValue: 2000,
+    }),
   },
   async run(context) {
     const provider = context.propsValue.provider;
@@ -91,6 +96,6 @@ export const extractStructuredData = createAction({
         .params as AIFunctionCallingPropDefinition[],
     });
 
-    response;
+    return response.toolCall.function.arguments;
   },
 });
