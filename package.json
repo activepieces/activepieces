@@ -26,7 +26,7 @@
   "dependencies": {
     "@activepieces/import-fresh-webpack": "3.3.0",
     "@actual-app/api": "6.8.1",
-    "@anthropic-ai/sdk": "0.19.0",
+    "@anthropic-ai/sdk": "0.27.3",
     "@authenio/samlify-node-xmllint": "2.0.0",
     "@aws-sdk/client-s3": "3.637.0",
     "@azure/openai": "1.0.0-beta.11",
@@ -388,8 +388,8 @@
     "@nx/nx-darwin-x64": "18.0.4",
     "@nx/nx-linux-x64-gnu": "18.0.4",
     "@nx/nx-win32-x64-msvc": "18.0.4",
-    "@rollup/rollup-linux-arm64-gnu": "4.20.0",
-    "@rollup/rollup-darwin-arm64": "4.20.0"
+    "@rollup/rollup-darwin-arm64": "4.20.0",
+    "@rollup/rollup-linux-arm64-gnu": "4.20.0"
   },
   "nx": {
     "includedScripts": []
