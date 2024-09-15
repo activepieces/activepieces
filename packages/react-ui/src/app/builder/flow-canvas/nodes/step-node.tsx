@@ -170,7 +170,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         width: `${AP_NODE_SIZE.stepNode.width}px`,
       }}
       className={cn(
-        'transition-all border-box border rounded-sm border border-solid  border-border relative hover:border-primary group',
+        'transition-all border-box rounded-sm  border  border-solid  border-border relative hover:border-primary group',
         {
           'shadow-step-container': !isDragging,
           'border-primary': isSelected,
