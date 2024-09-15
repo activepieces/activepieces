@@ -1,8 +1,8 @@
-import { logger, ApLock } from '@activepieces/server-shared'
+import { ApLock, logger } from '@activepieces/server-shared'
 import { FileCompression, FileType } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
-import { fileService } from '../file.service'
 import { distributedLock } from '../../helper/lock'
+import { fileService } from '../file.service'
 
 const BATCH_SIZE = 10
 const LOCK_KEY = 'step-file-migration'
