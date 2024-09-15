@@ -1,5 +1,5 @@
 import { Readable } from 'stream'
-import { AppSystemProp, logger, system } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
 import { FileType, ProjectId } from '@activepieces/shared'
 import { S3 } from '@aws-sdk/client-s3'
 import dayjs from 'dayjs'
@@ -29,6 +29,7 @@ export const s3Helper = {
                 s3Key,
                 error,
             }, 'failed to upload file to s3')
+            exceptionHandler.handle(error)
             throw error
         }
         return s3Key
