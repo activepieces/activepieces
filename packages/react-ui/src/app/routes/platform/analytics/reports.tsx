@@ -89,6 +89,7 @@ function Reports({ report }: ReportsProps) {
       name: (
         <div className="flex items-center gap-3">
           <PieceIcon
+            key={piece.name}
             logoUrl={piece.logoUrl}
             displayName={piece.displayName}
             showTooltip={false}

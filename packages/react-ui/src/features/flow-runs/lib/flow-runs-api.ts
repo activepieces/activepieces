@@ -1,3 +1,6 @@
+import { nanoid } from 'nanoid';
+import { Socket } from 'socket.io-client';
+
 import { api } from '@/lib/api';
 import {
   FlowRun,
@@ -10,9 +13,8 @@ import {
   CreateStepRunRequestBody,
   StepRunResponse,
 } from '@activepieces/shared';
-import { Socket } from 'socket.io-client';
-import { hasRunFinished } from './flow-run-utils';
-import { nanoid } from 'nanoid';
+
+import { flowRunUtils } from './flow-run-utils';
 
 export const flowRunsApi = {
   list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {
@@ -39,9 +41,7 @@ export const flowRunsApi = {
           return;
         }
         onUpdate(response);
-        if (
-          hasRunFinished(response.status)
-        ) {
+        if (flowRunUtils.hasRunFinished(response.status)) {
           socket.off(
             WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS,
             handleProgress,

@@ -7,17 +7,17 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
   ActionType,
-  ExecutionState,
   Flow,
   FlowOperationRequest,
   FlowRun,
   FlowVersion,
   FlowVersionState,
-  StepOutput,
   TriggerType,
   flowHelper,
   isNil,
 } from '@activepieces/shared';
+
+import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -31,11 +31,6 @@ export function useBuilderStateContext<T>(
     throw new Error('Missing BuilderStateContext.Provider in the tree');
   return useStore(store, selector);
 }
-
-export type StepPathWithName = {
-  path: [string, number][];
-  stepName: string;
-};
 
 export enum LeftSideBarType {
   RUNS = 'runs',
@@ -56,10 +51,11 @@ export type BuilderState = {
   flow: Flow;
   flowVersion: FlowVersion;
   readonly: boolean;
+  loopsIndexes: Record<string, number>;
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
-  selectedStep: StepPathWithName | null;
+  selectedStep: string | null;
   canExitRun: boolean;
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
@@ -78,7 +74,6 @@ export type BuilderState = {
     onError: () => void,
   ) => void;
   removeStepSelection: () => void;
-  selectStepByPath: (path: StepPathWithName) => void;
   selectStepByName: (stepName: string) => void;
   startSaving: () => void;
   setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
@@ -89,6 +84,7 @@ export type BuilderState = {
   insertMention: InsertMentionHandler | null;
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
+  setLoopIndex: (stepName: string, index: number) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -100,6 +96,7 @@ export type BuilderStore = ReturnType<typeof createBuilderStore>;
 
 export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set) => ({
+    loopsIndexes: {},
     flow: initialState.flow,
     flowVersion: initialState.flowVersion,
     leftSidebar: initialState.run
@@ -109,10 +106,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     run: initialState.run,
     saving: false,
     selectedStep: initialState.run
-      ? {
-          path: [],
-          stepName: initialState.flowVersion.trigger.name,
-        }
+      ? initialState.flowVersion.trigger.name
       : null,
     canExitRun: initialState.canExitRun,
     activeDraggingStep: null,
@@ -145,21 +139,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     },
     selectStepByName: (stepName: string) => {
       set((state) => {
-        const pathToStep = flowHelper
-          .getAllSteps(state.flowVersion.trigger)
-          .filter((step) =>
-            flowHelper.isPartOfInnerFlow({
-              parentStep: step,
-              childName: stepName,
-            }),
-          );
         return {
-          selectedStep: {
-            path: pathToStep
-              .filter((p) => p.name !== stepName)
-              .map((p) => [p.name, 0]),
-            stepName,
-          },
+          selectedStep: stepName,
           rightSidebar:
             stepName === 'trigger' &&
             state.flowVersion.trigger.type === TriggerType.EMPTY
@@ -186,6 +167,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       set({
         run: null,
         readonly: false,
+        loopsIndexes: {},
         leftSidebar: LeftSideBarType.NONE,
         rightSidebar: RightSideBarType.NONE,
       }),
@@ -198,33 +180,31 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       set({
         rightSidebar: RightSideBarType.NONE,
       }),
-    selectStepByPath: (path: StepPathWithName) =>
-      set((state) => {
-        return {
-          selectedStep: path,
-          leftSidebar: isNil(state.run)
-            ? LeftSideBarType.NONE
-            : LeftSideBarType.RUN_DETAILS,
-          rightSidebar: path
-            ? RightSideBarType.PIECE_SETTINGS
-            : RightSideBarType.NONE,
-        };
-      }),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
     setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
-      set({
-        run,
-        flowVersion,
-        leftSidebar: LeftSideBarType.RUN_DETAILS,
-        rightSidebar: RightSideBarType.PIECE_SETTINGS,
-        selectedStep: {
-          path: [],
-          stepName: flowVersion.trigger.name,
-        },
-        readonly: true,
+      set((state) => {
+        return {
+          loopsIndexes:flowRunUtils.findLoopsState(flowVersion,run,state.loopsIndexes),
+          run,
+          flowVersion,
+          leftSidebar: LeftSideBarType.RUN_DETAILS,
+          rightSidebar: RightSideBarType.PIECE_SETTINGS,
+          selectedStep: run.steps? (flowRunUtils.findFailedStep(run) ?? state.selectedStep?? 'trigger'):'trigger',
+          readonly: true,
+        };
       }),
     startSaving: () => set({ saving: true }),
+    setLoopIndex: (stepName: string, index: number) => {
+      set((state) => {
+        return {
+          loopsIndexes: {
+            ...state.loopsIndexes,
+            [stepName]: index,
+          },
+        };
+      });
+    },
     applyOperation: (operation: FlowOperationRequest, onError: () => void) =>
       set((state) => {
         if (state.readonly) {
@@ -279,60 +259,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       })),
   }));
 
-export const stepPathToKeyString = (path: StepPathWithName): string => {
-  return path.path.map((p) => p.join('-')).join('/') + '/' + path.stepName;
-};
-
-function getStepOutputFromExecutionPath({
-  stepName,
-  selectedPath,
-  executionState,
-}: {
-  stepName: string;
-  selectedPath: StepPathWithName | null;
-  executionState: ExecutionState | FlowRun | undefined | null;
-}): StepOutput | undefined {
-  if (isNil(executionState)) {
-    return undefined;
-  }
-  const stateAtPath = constructCurrentStateForEachStep(
-    executionState.steps,
-    selectedPath,
-  );
-  return stateAtPath?.[stepName];
-}
-
-function constructCurrentStateForEachStep(
-  steps: Record<string, StepOutput> | undefined,
-  selectedPath: StepPathWithName | null,
-): Record<string, StepOutput> {
-  const currentState: Record<string, StepOutput> = {};
-  Object.entries(steps ?? {}).forEach(([key, value]) => {
-    currentState[key] = value;
-    if (value.type === ActionType.LOOP_ON_ITEMS && value.output) {
-      const [, iteration] = selectedPath?.path.find((p) => p[0] === key) ?? [
-        undefined,
-        0,
-      ];
-      const state = constructCurrentStateForEachStep(
-        value.output.iterations[iteration],
-        selectedPath,
-      );
-      for (const [key, value] of Object.entries(state)) {
-        currentState[key] = value;
-      }
-    }
-  });
-  return currentState;
-}
-export const builderSelectors = {
-  getStepOutputFromExecutionPath,
-};
-
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion] = useBuilderStateContext((state) => [
+  const [flowVersion, setVersion,exitRun] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.setVersion,
+    state.exitRun
   ]);
 
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
@@ -343,6 +274,7 @@ export const useSwitchToDraft = () => {
       },
       onSuccess: (flow) => {
         setVersion(flow.version);
+        exitRun();
       },
       onError: () => {
         toast(INTERNAL_ERROR_TOAST);

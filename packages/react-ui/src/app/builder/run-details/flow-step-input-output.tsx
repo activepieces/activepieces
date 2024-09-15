@@ -10,20 +10,18 @@ import { formatUtils } from '@/lib/utils';
 import { flowHelper, StepOutput } from '@activepieces/shared';
 
 const FlowStepInputOutput = React.memo(
-  ({ stepDetails }: { stepDetails: StepOutput | undefined }) => {
-    const stepOutput = stepDetails
-      ? formatUtils.formatStepInputOrOutput(
-          stepDetails.output ?? stepDetails.errorMessage,
-          stepDetails.type,
-        )
-      : {};
+  ({ stepDetails }: { stepDetails: StepOutput }) => {
+    const stepOutput = formatUtils.formatStepInputOrOutput(
+      stepDetails.output ?? stepDetails.errorMessage,
+      stepDetails.type,
+    );
 
     const [flowVersion, selectedStepName] = useBuilderStateContext((state) => [
       state.flowVersion,
       state.selectedStep,
     ]);
     const selectedStep = selectedStepName
-      ? flowHelper.getStep(flowVersion, selectedStepName.stepName)
+      ? flowHelper.getStep(flowVersion, selectedStepName)
       : undefined;
     return (
       <ScrollArea className="h-full p-4 ">

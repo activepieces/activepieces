@@ -26,6 +26,7 @@ import {
   TriggerType,
   WebsocketClientEvent,
   flowHelper,
+  isNil,
 } from '@activepieces/shared';
 
 import { cn, useElementSize } from '../../lib/utils';
@@ -80,15 +81,18 @@ const BuilderPage = () => {
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
-      const stepPath = state.selectedStep;
       const flowVersion = state.flowVersion;
-      if (!stepPath || !flowVersion) {
+      if (
+        isNil(state.selectedStep) ||
+        state.selectedStep === '' ||
+        isNil(flowVersion)
+      ) {
         return {
           memorizedSelectedStep: undefined,
           containerKey: undefined,
         };
       }
-      const step = flowHelper.getStep(flowVersion, stepPath.stepName);
+      const step = flowHelper.getStep(flowVersion, state.selectedStep);
       const triggerOrActionName =
         step?.type === TriggerType.PIECE
           ? (step as PieceTrigger).settings.triggerName
@@ -97,7 +101,7 @@ const BuilderPage = () => {
         memorizedSelectedStep: step,
         containerKey: constructContainerKey(
           flowVersion.id,
-          stepPath.stepName,
+          state.selectedStep,
           triggerOrActionName,
         ),
       };
