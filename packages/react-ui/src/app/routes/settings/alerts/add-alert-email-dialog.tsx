@@ -37,7 +37,7 @@ import { ProjectMemberRole } from '@activepieces/shared';
 const FormSchema = Type.Object({
   email: Type.String({
     errorMessage: t('Please enter a valid email address'),
-    pattern: formatUtils.EMAIL_REGEX,
+    pattern: formatUtils.emailRegex.source,
   }),
 });
 

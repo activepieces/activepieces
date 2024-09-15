@@ -50,7 +50,7 @@ export const executionFiles = {
                 pieces: officialPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
                 globalCachePath,
                 timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
-            }, 'Intalled official pieces in sandbox')
+            }, 'Installed official pieces in sandbox')
         }
 
         const customPieces = pieces.filter(f => f.pieceType === PieceType.CUSTOM)

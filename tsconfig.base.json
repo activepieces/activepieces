@@ -453,6 +453,9 @@
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
       ],
+      "@activepieces/piece-qrcode": [
+        "packages/pieces/community/qrcode/src/index.ts"
+      ],
       "@activepieces/piece-queue": [
         "packages/pieces/community/queue/src/index.ts"
       ],
@@ -555,6 +558,9 @@
       ],
       "@activepieces/piece-stripe": [
         "packages/pieces/community/stripe/src/index.ts"
+      ],
+      "@activepieces/piece-subflows": [
+        "packages/pieces/community/subflows/src/index.ts"
       ],
       "@activepieces/piece-supabase": [
         "packages/pieces/community/supabase/src/index.ts"

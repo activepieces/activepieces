@@ -243,7 +243,11 @@ const MultiSelectTrigger = React.forwardRef<
             {showDeselect && (
               <SelectUtilButton
                 tooltipText={t('Unset')}
-                onClick={onDeselect}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDeselect?.();
+                }}
                 Icon={X}
               ></SelectUtilButton>
             )}
@@ -391,13 +395,11 @@ const MultiSelectList = React.forwardRef<
   ComponentPropsWithoutRef<typeof CommandList>
 >(({ className, ...props }, ref) => {
   return (
-    <ScrollArea className="h-full" viewPortClassName={'max-h-[200px]'}>
-      <CommandList
-        ref={ref}
-        className={cn('py-1 px-0 ', className)}
-        {...props}
-      />
-    </ScrollArea>
+    <CommandList ref={ref} className={cn('py-1 px-0 ', className)} {...props}>
+      <ScrollArea viewPortClassName="max-h-[200px]">
+        {props.children}
+      </ScrollArea>
+    </CommandList>
   );
 });
 

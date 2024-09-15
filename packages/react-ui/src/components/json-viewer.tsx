@@ -33,6 +33,7 @@ const FileButton = ({ fileUrl, handleDownloadFile }: FileButtonProps) => {
       <Button
         variant="ghost"
         size="sm"
+        disabled={readonly}
         onClick={() => handleDownloadFile(fileUrl)}
         className="flex items-center gap-2 p-2 max-h-[20px] text-xs"
       >
@@ -53,7 +54,7 @@ const removeDoubleQuotes = (str: string): string =>
 const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
   const { theme } = useTheme();
 
-  const viewerTheme = theme === 'dark' ? 'pop' : 'rjv-default';
+  const viewerTheme = theme === 'dark' ? 'bright' : 'rjv-default';
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(json, null, 2));
     toast({

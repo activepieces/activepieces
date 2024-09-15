@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppSystemProp, system } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtls, system } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -28,7 +28,12 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             provider: Provider.EMAIL,
         })
 
-        eventsHooks.get().sendUserEvent(request, {
+        eventsHooks.get().sendUserEvent({
+            platformId: platformId!,
+            userId: signUpResponse.id,
+            projectId: signUpResponse.projectId,
+            ip: networkUtls.extractClientRealIp(request),
+        }, {
             action: ApplicationEventName.USER_SIGNED_UP,
             data: {
                 source: 'credentials',
@@ -40,16 +45,26 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
 
     app.post('/sign-in', SignInRequestOptions, async (request) => {
         const platformId = await resolvePlatformIdForAuthnRequest(request.body.email, request)
-        eventsHooks.get().sendUserEvent(request, {
-            action: ApplicationEventName.USER_SIGNED_IN,
-            data: {},
-        })
-        return authenticationService.signIn({
+
+
+        const response = await authenticationService.signIn({
             email: request.body.email,
             password: request.body.password,
             platformId,
             provider: Provider.EMAIL,
         })
+
+        eventsHooks.get().sendUserEvent({
+            platformId: platformId!,
+            userId: response.id,
+            projectId: response.projectId,
+            ip: networkUtls.extractClientRealIp(request),
+        }, {
+            action: ApplicationEventName.USER_SIGNED_IN,
+            data: {},
+        })
+
+        return response
     })
 }
 

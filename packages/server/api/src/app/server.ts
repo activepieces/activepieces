@@ -30,6 +30,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 async function setupBaseApp(): Promise<FastifyInstance> {
     const app = fastify({
         logger,
+        ignoreTrailingSlash: true,
         // Default 4MB, also set in nginx.conf
         pluginTimeout: 30000,
         bodyLimit: 4 * 1024 * 1024,

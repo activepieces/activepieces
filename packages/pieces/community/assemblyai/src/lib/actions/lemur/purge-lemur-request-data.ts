@@ -6,6 +6,7 @@ import { lemurRequestIdProp } from './shared-props';
 export const purgeLemurRequestData = createAction({
   name: 'purgeLemurRequestData',
   auth: assemblyaiAuth,
+  requireAuth: true,
   displayName: 'Purge LeMUR request data',
   description: `Delete the data for a previously submitted LeMUR request.
 The LLM response data, as well as any context provided in the original request will be removed.`,

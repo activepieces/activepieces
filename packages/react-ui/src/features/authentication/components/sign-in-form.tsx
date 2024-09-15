@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { emailRegex } from '@/features/authentication/lib/password-validation-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/utils';
 import {
   ApEdition,
   ApFlagId,
@@ -24,7 +24,7 @@ import {
 
 const SignInSchema = Type.Object({
   email: Type.String({
-    pattern: emailRegex.source,
+    pattern: formatUtils.emailRegex.source,
     errorMessage: t('Email is invalid'),
   }),
   password: Type.String({

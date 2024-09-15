@@ -51,7 +51,6 @@ const MultiSelectPieceProperty = ({
         return option.label.toLowerCase().includes(searchTerm.toLowerCase());
       });
   }, [options, searchTerm]);
-
   const selectedIndicies = initialValues
     ? initialValues
         .map((value) =>
@@ -81,11 +80,25 @@ const MultiSelectPieceProperty = ({
         showRefresh={showRefresh && !disabled}
         onRefresh={onRefresh}
       >
-        <MultiSelectValue placeholder={placeholder} />
+        {selectedIndicies.length < 10 ? (
+          <MultiSelectValue placeholder={placeholder} />
+        ) : (
+          t('{number} items selected', { number: selectedIndicies.length })
+        )}
       </MultiSelectTrigger>
       <MultiSelectContent>
         <MultiSelectSearch placeholder={placeholder} />
         <MultiSelectList>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onChange(filteredOptions.map((opt) => opt.value));
+            }}
+          >
+            <MultiSelectItem>{t('Select All')}</MultiSelectItem>
+          </div>
+
           {filteredOptions.map((opt) => (
             <MultiSelectItem
               key={opt.originalIndex}

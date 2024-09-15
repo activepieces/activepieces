@@ -306,6 +306,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://swimburger.net"><img src="https://avatars.githubusercontent.com/u/3382717?v=4?s=100" width="100px;" alt="Niels Swimberghe"/><br /><sub><b>Niels Swimberghe</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3ASwimburger" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lostinbug"><img src="https://avatars.githubusercontent.com/u/157452389?v=4?s=100" width="100px;" alt="lostinbug"/><br /><sub><b>lostinbug</b></sub></a><br /><a href="#plugin-lostinbug" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

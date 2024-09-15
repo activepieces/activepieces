@@ -31,6 +31,7 @@ type TranscribeContext = ActionContext<
 export const transcribe = createAction({
   name: 'transcribe',
   auth: assemblyaiAuth,
+  requireAuth: true,
   displayName: 'Transcribe',
   description: 'Transcribe an audio or video file using AssemblyAI.',
   props: transcribeProps,

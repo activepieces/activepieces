@@ -23,11 +23,6 @@ const initialState: ThemeProviderState = {
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
-const extractSystemTheme = () => {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
-};
 
 const setFavicon = (url: string) => {
   let link: HTMLLinkElement | null =
@@ -57,7 +52,7 @@ export function ThemeProvider({
     }
     const root = window.document.documentElement;
 
-    const resolvedTheme = theme === 'system' ? extractSystemTheme() : theme;
+    const resolvedTheme = theme === 'system' ? 'light' : theme;
     root.classList.remove('light', 'dark');
     document.title = branding.websiteName;
     document.documentElement.style.setProperty(

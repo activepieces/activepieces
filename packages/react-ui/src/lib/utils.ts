@@ -9,13 +9,12 @@ import { ActionType, TriggerType, LocalesEnum } from '@activepieces/shared';
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-
-const EMAIL_REGEX =
-  '^[a-zA-Z0-9_.+]+(?<!^[0-9]*)@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$';
+const emailRegex =
+  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
 export const formatUtils = {
-  EMAIL_REGEX,
-  formatStepInputOrOutput(
+  emailRegex,
+  formatStepInputAndOutput(
     sampleData: unknown,
     type: ActionType | TriggerType | null,
   ) {

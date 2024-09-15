@@ -21,6 +21,8 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceScope } from '@activepieces/shared';
 
+import { TableTitle } from '../../../../components/ui/table-title';
+
 const PlatformPiecesPage = () => {
   const [refresh, setRefresh] = useState(0);
   const { platform } = platformHooks.useCurrentPlatform();
@@ -146,7 +148,7 @@ const PlatformPiecesPage = () => {
       <div className="flex w-full flex-col items-center justify-center gap-4">
         <div className="mx-auto w-full flex-col">
           <div className="mb-4 flex">
-            <h1 className="text-3xl font-bold">{t('Pieces')}</h1>
+            <TableTitle>{t('Pieces')}</TableTitle>
             <div className="ml-auto">
               <div className="flex gap-3">
                 <ApplyTags

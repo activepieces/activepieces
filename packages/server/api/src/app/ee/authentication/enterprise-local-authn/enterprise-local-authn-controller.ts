@@ -11,7 +11,7 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
     app.post('/verify-email', VerifyEmailRequest, async (req) => {
-        eventsHooks.get().sendUserEvent(req, {
+        eventsHooks.get().sendUserEventFromRequest(req, {
             action: ApplicationEventName.USER_EMAIL_VERIFIED,
             data: {},
         })
@@ -19,7 +19,7 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/reset-password', ResetPasswordRequest, async (req) => {
-        eventsHooks.get().sendUserEvent(req, {
+        eventsHooks.get().sendUserEventFromRequest(req, {
             action: ApplicationEventName.USER_PASSWORD_RESET,
             data: {},
         })

@@ -4,6 +4,7 @@ import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -27,9 +28,17 @@ function ProjectSwitcher() {
   const queryClient = useQueryClient();
   const { data: projects } = projectHooks.useProjects();
   const [open, setOpen] = React.useState(false);
+  const { embedState } = useEmbedding();
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
 
+  const sortedProjects = projects?.sort((a, b) => {
+    return a.displayName.localeCompare(b.displayName);
+  });
+
+  if (embedState.isEmbedded) {
+    return null;
+  }
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -50,9 +59,9 @@ function ProjectSwitcher() {
             <CommandInput placeholder="Search project..." />
             <CommandEmpty>No projects found.</CommandEmpty>
             <CommandGroup key="projects" heading="Projects">
-              <ScrollArea viewPortClassName="h-[200px]">
-                {projects &&
-                  projects.map((project) => (
+              <ScrollArea viewPortClassName="max-h-[200px]">
+                {sortedProjects &&
+                  sortedProjects.map((project) => (
                     <CommandItem
                       key={project.id}
                       onSelect={() => {
