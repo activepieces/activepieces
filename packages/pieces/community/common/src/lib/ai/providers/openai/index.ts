@@ -47,6 +47,7 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI<OpenAI> => {
             role: message.role === 'user' ? 'user' : 'assistant',
             content: message.content,
           })),
+          max_tokens: params.maxTokens,
           tools: [
             {
               type: 'function',
@@ -84,9 +85,10 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI<OpenAI> => {
               name:
                 completion.choices[0].message.tool_calls?.[0].function.name ??
                 'extract_structured_data',
-              arguments:
+              arguments: JSON.parse(
                 completion.choices[0].message.tool_calls?.[0].function
-                  .arguments,
+                  .arguments as string
+              ),
             },
           },
           created: completion.created,

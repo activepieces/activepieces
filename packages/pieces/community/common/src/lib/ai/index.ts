@@ -51,7 +51,7 @@ export type AIChatMessage = {
   content: string;
 };
 
-export type AIFunctionCallingPropDefination = {
+export type AIFunctionCallingPropDefinition = {
   name: string;
   type: string;
   description?: string;
@@ -59,7 +59,7 @@ export type AIFunctionCallingPropDefination = {
 };
 
 export type AIExtractStructuredDataParams = AIChatCompletionsCreateParams & {
-  functionCallingProps: AIFunctionCallingPropDefination[];
+  functionCallingProps: AIFunctionCallingPropDefinition[];
 };
 
 export type AIExtractStructuredDataResponse = {

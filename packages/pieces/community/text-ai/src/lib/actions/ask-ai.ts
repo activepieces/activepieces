@@ -1,4 +1,9 @@
-import { AI, AIChatMessage, AIChatRole, AiProviders } from '@activepieces/pieces-common';
+import {
+  AI,
+  AIChatMessage,
+  AIChatRole,
+  AiProviders,
+} from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
@@ -99,6 +104,6 @@ export const askAi = createAction({
       await storage.put(conversationKey, conversation);
     }
 
-    return response;
+    return response.choices[0].content;
   },
 });

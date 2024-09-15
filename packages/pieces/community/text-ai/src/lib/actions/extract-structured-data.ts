@@ -1,7 +1,7 @@
 import {
   AI,
   AIChatRole,
-  AIFunctionCallingPropDefination,
+  AIFunctionCallingPropDefinition,
   AiProviders,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
@@ -73,6 +73,11 @@ export const extractStructuredData = createAction({
         }),
       },
     }),
+    maxTokens: Property.Number({
+      displayName: 'Max Tokens',
+      required: false,
+      defaultValue: 2000,
+    }),
   },
   async run(context) {
     const provider = context.propsValue.provider;
@@ -88,9 +93,9 @@ export const extractStructuredData = createAction({
         },
       ],
       functionCallingProps: context.propsValue
-        .params as AIFunctionCallingPropDefination[],
+        .params as AIFunctionCallingPropDefinition[],
     });
 
-    response;
+    return response.toolCall.function.arguments;
   },
 });
