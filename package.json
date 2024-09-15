@@ -83,7 +83,7 @@
     "@sinclair/typebox": "0.32.35",
     "@slack/web-api": "7.0.4",
     "@socket.io/redis-adapter": "8.2.1",
-    "@supabase/supabase-js": "2.33.1",
+    "@supabase/supabase-js": "2.45.4",
     "@tanstack/react-query": "5.51.1",
     "@tanstack/react-table": "8.19.2",
     "@tiptap/extension-mention": "2.5.4",
