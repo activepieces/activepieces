@@ -7,7 +7,15 @@ export class SupportS3Files1726364421096 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "file"
-            ADD "location" character varying NOT NULL
+            ADD "location" character varying
+        `)
+        await queryRunner.query(`
+            UPDATE "file"
+            SET "location" = 'DB'
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "file"
+            ALTER COLUMN "location" SET NOT NULL
         `)
         await queryRunner.query(`
             ALTER TABLE "file"
