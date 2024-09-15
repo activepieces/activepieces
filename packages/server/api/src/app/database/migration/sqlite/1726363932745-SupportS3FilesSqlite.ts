@@ -72,11 +72,6 @@ export class SupportS3FilesSqlite1726363932745 implements MigrationInterface {
         await queryRunner.query(`
             CREATE INDEX "idx_file_project_id" ON "file" ("projectId")
         `)
-        await queryRunner.query(`
-            INSERT INTO "file" ("id", "fileName", "projectId", "size", "data", "type", "location", "compression", "metadata")
-            SELECT "id", "name", "projectId", "size", "data", 'FLOW_STEP_FILE', 'DB', 'NONE', json_object('flowId', "flowId", 'stepName', "stepName")
-            FROM "step_file"
-        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

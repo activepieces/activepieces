@@ -37,12 +37,6 @@ export class SupportS3Files1726364421096 implements MigrationInterface {
             ALTER TABLE "file"
             ALTER COLUMN "data" DROP NOT NULL
         `)
-        await queryRunner.query(`
-            INSERT INTO "file" ("id", "fileName", "projectId", "size", "data", "type", "location", "compression", "metadata")
-            SELECT "id", "name", "projectId", "size", "data", 'FLOW_STEP_FILE', 'DB', 'NONE', jsonb_build_object('flowId', "flowId", 'stepName', "stepName")
-            FROM "step_file"
-            ON CONFLICT("id") DO NOTHING
-        `)
         logger.info({
             name: this.name,
         }, 'is up')
