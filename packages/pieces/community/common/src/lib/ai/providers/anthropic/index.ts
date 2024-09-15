@@ -53,7 +53,7 @@ export const anthropic: AIFactory = ({
           },
         };
       },
-      extract_structured_data: async (params) => {
+      extractStructuredData: async (params) => {
         const completion = await sdk.messages.create({
           model: params.model,
           messages: params.messages.map((message) => ({

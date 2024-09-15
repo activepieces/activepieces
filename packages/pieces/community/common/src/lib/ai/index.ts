@@ -10,7 +10,7 @@ export type AI<SDK> = {
 
 export type AIChat = {
   text: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
-  extract_structured_data: (
+  extractStructuredData: (
     params: AIExtractStructuredDataParams
   ) => Promise<AIExtractStructuredDataResponse>;
 };
@@ -51,7 +51,7 @@ export type AIChatMessage = {
   content: string;
 };
 
-export type AIFunctionCallingPropDefination = {
+export type AIFunctionCallingPropDefinition = {
   name: string;
   type: string;
   description?: string;
@@ -59,7 +59,7 @@ export type AIFunctionCallingPropDefination = {
 };
 
 export type AIExtractStructuredDataParams = AIChatCompletionsCreateParams & {
-  functionCallingProps: AIFunctionCallingPropDefination[];
+  functionCallingProps: AIFunctionCallingPropDefinition[];
 };
 
 export type AIExtractStructuredDataResponse = {
@@ -111,9 +111,9 @@ export const AI = ({
           throw e;
         }
       },
-      extract_structured_data: async (params) => {
+      extractStructuredData: async (params) => {
         try {
-          const response = await impl.chat.extract_structured_data(params);
+          const response = await impl.chat.extractStructuredData(params);
           return response;
         } catch (e: any) {
           if (e?.error?.error) {

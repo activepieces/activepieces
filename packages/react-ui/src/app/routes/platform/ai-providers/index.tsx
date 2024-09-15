@@ -44,7 +44,7 @@ export default function AIProvidersPage() {
             return isLoading ? <Skeleton className="h-24 w-full" /> : <AIProviderCard
               providerMetadata={metadata}
               defaultBaseUrl={provider?.baseUrl ?? metadata.defaultBaseUrl}
-              provider={provider ? { ...provider, config: { defaultHeaders: {}, creditsCriteria: provider.config.creditsCriteria } } : undefined}
+              provider={provider ? { ...provider, config: { defaultHeaders: {} } } : undefined}
               isDeleting={isDeleting}
               onDelete={() => deleteProvider(metadata.value)}
               onSave={() => {

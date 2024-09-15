@@ -31,7 +31,6 @@ const AIProviderCard = ({
         provider: providerMetadata.value,
         config: {
             defaultHeaders: {},
-            creditsCriteria: {}
         },
         created: new Date().toISOString(),
         updated: new Date().toISOString(),

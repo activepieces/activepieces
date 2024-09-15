@@ -46,7 +46,7 @@ export const UpsertAIProviderDialog = ({
   const [open, setOpen] = useState(false);
   const form = useForm({
     resolver: typeboxResolver(EnableAiProviderConfigInput),
-    defaultValues: encodeForm(provider),
+    defaultValues: provider,
   });
 
   const { toast } = useToast();
@@ -57,7 +57,7 @@ export const UpsertAIProviderDialog = ({
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['upsert-proxy-config'],
-    mutationFn: () => aiProviderApi.upsert(decodeForm({
+    mutationFn: () => aiProviderApi.upsert({
       ...form.getValues(),
       config: {
         ...form.getValues().config,
@@ -71,9 +71,9 @@ export const UpsertAIProviderDialog = ({
           return {};
         })()
       }
-    })),
+    }),
     onSuccess: (data) => {
-      form.reset(encodeForm(data));
+      form.reset(data);
       setOpen(false);
       onSave();
     },
@@ -87,7 +87,7 @@ export const UpsertAIProviderDialog = ({
     <Dialog open={open}
       onOpenChange={(open) => {
         if (!open) {
-          form.reset(encodeForm(provider));
+          form.reset(provider);
         }
         setOpen(open);
       }}>
@@ -142,29 +142,6 @@ export const UpsertAIProviderDialog = ({
               <p className='text-sm text-muted-foreground'>{t('The credits criteria is the number of project AI credits consumed per request for each model.')}</p>
             </div>
 
-            {providerMetadata.models.map((model) => (
-              <FormField
-                key={encodeModelValueAsFormKey(model.value)}
-                name={`config.creditsCriteria.${encodeModelValueAsFormKey(model.value)}`}
-                render={({ field }) => (
-                  <FormItem className="grid space-y-3">
-                    <Label htmlFor={`config.creditsCriteria.${encodeModelValueAsFormKey(model.value)}`}>{model.label}</Label>
-                    <Input
-                      {...field}
-                      min={0}
-                      type='number'
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                      required
-                      id={`config.creditsCriteria.${encodeModelValueAsFormKey(model.value)}`}
-                      placeholder={t('Credits Criteria')}
-                      className="rounded-sm"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
-
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>
                 {form.formState.errors.root.serverError.message}
@@ -199,31 +176,3 @@ export const UpsertAIProviderDialog = ({
     </Dialog>
   );
 };
-
-function decodeForm(form: EnableAiProviderConfigInput): EnableAiProviderConfigInput {
-  return {
-    ...form,
-    config: {
-      ...form.config,
-      creditsCriteria: Object.fromEntries(Object.entries(form.config.creditsCriteria).map(([key, value]) => [decodeModelValueAsFormKey(key), value]).filter(([key, value]) => Boolean(value)))
-    }
-  }
-}
-
-function encodeForm(form: EnableAiProviderConfigInput): EnableAiProviderConfigInput {
-  return {
-    ...form,
-    config: {
-      ...form.config,
-      creditsCriteria: Object.fromEntries(Object.entries(form.config.creditsCriteria).map(([key, value]) => [encodeModelValueAsFormKey(key), value]).filter(([key, value]) => Boolean(value)))
-    }
-  }
-}
-
-function encodeModelValueAsFormKey(model: string) {
-  return model.replace('.', '\\')
-}
-
-function decodeModelValueAsFormKey(model: string) {
-  return model.replace('\\', '.')
-}

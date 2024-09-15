@@ -40,7 +40,7 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI<OpenAI> => {
           },
         };
       },
-      extract_structured_data: async (params) => {
+      extractStructuredData: async (params) => {
         const completion = await sdk.chat.completions.create({
           model: params.model,
           messages: params.messages.map((message) => ({

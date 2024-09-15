@@ -62,18 +62,11 @@ const proxyController: FastifyPluginCallbackTypebox = (
 
             const aiProvider = await aiProviderService.getOrThrow({ platformId, provider })
 
-            const credits = aiProvider.config.creditsCriteria[model]
-
-            if (isNil(credits)) {
-                reply.code(StatusCodes.NOT_IMPLEMENTED).send({ error: 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_MODEL', model })
-                return
-            }
-
             if (edition !== ApEdition.COMMUNITY) {
                 const plan = await projectLimitsService.getPlanByProjectId(projectId)
                 const planTokens = plan?.aiTokens
                 const tokensUsage = await projectUsageService.getAITokensUsage(projectId)
-                if (!isNil(planTokens) && tokensUsage + credits > planTokens) {
+                if (!isNil(planTokens) && tokensUsage + 1 > planTokens) {
                     reply.code(StatusCodes.TOO_MANY_REQUESTS).send({ error: 'YOU_HAVE_EXCEEDED_YOUR_AI_TOKENS_PLAN_LIMIT' })
                     return
                 }
@@ -119,7 +112,7 @@ const proxyController: FastifyPluginCallbackTypebox = (
             logger.debug({ data }, '[PROXY] Response')
 
             if (edition !== ApEdition.COMMUNITY) {
-                await projectUsageService.increaseAITokens(projectId, credits)
+                await projectUsageService.increaseAITokens(projectId, 1)
             }
 
             await reply

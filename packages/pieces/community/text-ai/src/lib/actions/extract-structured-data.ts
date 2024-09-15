@@ -1,7 +1,7 @@
 import {
   AI,
   AIChatRole,
-  AIFunctionCallingPropDefination,
+  AIFunctionCallingPropDefinition,
   AiProviders,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
@@ -79,7 +79,7 @@ export const extractStructuredData = createAction({
 
     const ai = AI({ provider, server: context.server });
 
-    const response = await ai.chat.extract_structured_data({
+    const response = await ai.chat.extractStructuredData({
       model: context.propsValue.model,
       messages: [
         {
@@ -88,7 +88,7 @@ export const extractStructuredData = createAction({
         },
       ],
       functionCallingProps: context.propsValue
-        .params as AIFunctionCallingPropDefination[],
+        .params as AIFunctionCallingPropDefinition[],
     });
 
     response;

@@ -21,18 +21,8 @@ export const aiProviderService = {
         return { ...provider, config: decryptedConfig }
     },
     async getSanitizedOrThrow(params: GetParams): Promise<AiProviderWithoutSensitiveData> {
-        const provider = await repo().findOneBy(params)
-        if (isNil(provider)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityId: `${params.platformId}-${params.provider}`,
-                    entityType: 'proxy_config',
-                },
-            })
-        }
-        const decryptedConfig = encryptUtils.decryptObject<AiProviderConfig['config']>(provider.config)
-        return sanitizeProviderConfig({ ...provider, config: decryptedConfig })
+        const provider = await this.getOrThrow(params)
+        return { ...provider, config: { defaultHeaders: {} } }
     },
     async upsert(platformId: string, aiConfig: Omit<AiProviderConfig, 'id' | 'created' | 'updated' | 'platformId'>): Promise<AiProviderWithoutSensitiveData> {
         const existingProvider = await this.getOrThrow({ platformId, provider: aiConfig.provider }).catch(() => null)
@@ -56,8 +46,7 @@ export const aiProviderService = {
     async list(platformId: PlatformId): Promise<SeekPage<AiProviderWithoutSensitiveData>> {
         const providers = await repo().findBy({ platformId })
         const data = providers.map(p => {
-            const decryptedConfig = encryptUtils.decryptObject<AiProviderConfig["config"]>(p.config)
-            return { ...p, config: { creditsCriteria: decryptedConfig.creditsCriteria } }
+            return { ...p, config: {} }
         })
         return {
             data,
@@ -65,10 +54,6 @@ export const aiProviderService = {
             previous: null,
         }
     },
-}
-
-const sanitizeProviderConfig = (p: AiProviderConfig): AiProviderWithoutSensitiveData => {
-    return { ...p, config: { creditsCriteria: p.config.creditsCriteria } }
 }
 
 type DeleteParams = {
