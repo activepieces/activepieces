@@ -14,7 +14,9 @@
       "dark": "#121212"
     }
   },
-  "openapi": ["/openapi.json"],
+  "openapi": [
+    "/openapi.json"
+  ],
   "metadata": {
     "description": "Open source no-code business automation· Zapier open source alternative"
   },
@@ -67,27 +69,39 @@
   "navigation": [
     {
       "group": "Getting Started",
-      "pages": ["getting-started/introduction", "getting-started/principles"]
+      "pages": [
+        "getting-started/introduction",
+        "getting-started/principles"
+      ]
     },
     {
       "group": "Get Started",
-      "pages": ["endpoints/overview"]
+      "pages": [
+        "endpoints/overview"
+      ]
     },
     {
       "group": "Handbook",
       "pages": [
-        "handbook/overview",
-        "handbook/values",
-        {
-          "group": "Engineering",
-          "icon": "code",
-          "pages": [
-            "handbook/engineering/pre-releases",
-            "handbook/engineering/team",
-            "handbook/engineering/how-we-work",
-            "handbook/engineering/hiring"
-          ]
-        }
+        "handbook/overview"
+      ]
+    },
+    {
+      "group": "Hiring",
+      "icon": "user",
+      "pages": [
+        "handbook/hiring/hiring",
+        "handbook/hiring/levels",
+        "handbook/hiring/team",
+        "handbook/hiring/compensation"
+      ]
+    },
+    {
+      "group": "Engineering",
+      "icon": "code",
+      "pages": [
+        "handbook/engineering/pre-releases",
+        "handbook/engineering/how-we-work"
       ]
     },
     {
@@ -156,12 +170,18 @@
         {
           "group": "Pieces",
           "icon": "plug",
-          "pages": ["endpoints/pieces/schema", "endpoints/pieces/install"]
+          "pages": [
+            "endpoints/pieces/schema",
+            "endpoints/pieces/install"
+          ]
         },
         {
           "group": "Git Sync",
           "icon": "git",
-          "pages": ["endpoints/git-repos/schema", "endpoints/git-repos/pull"]
+          "pages": [
+            "endpoints/git-repos/schema",
+            "endpoints/git-repos/pull"
+          ]
         },
         {
           "group": "Folders",
@@ -353,7 +373,11 @@
     },
     {
       "group": "Security",
-      "pages": ["security/practices", "security/permissions", "security/sso"]
+      "pages": [
+        "security/practices",
+        "security/permissions",
+        "security/sso"
+      ]
     },
     {
       "group": "About",
