@@ -1,7 +1,6 @@
 import { assertNotNullOrUndefined, BranchAction, BranchActionSettings, BranchCondition, BranchOperator, BranchStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
-import { EngineConstants } from './context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { ExecutionVerdict } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
 
 export const branchExecutor: BaseExecutor<BranchAction> = {
@@ -9,10 +8,6 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
         action,
         executionState,
         constants,
-    }: {
-        action: BranchAction
-        executionState: FlowExecutorContext
-        constants: EngineConstants
     }) {
         const { censoredInput, resolvedInput } = await constants.variableService.resolve<BranchActionSettings>({
             unresolvedInput: action.settings,
