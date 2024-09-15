@@ -197,6 +197,7 @@ export class IsolateSandbox {
             AP_EXECUTION_MODE: system.getOrThrow(SharedSystemProp.EXECUTION_MODE),
             AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
             AP_BASE_CODE_DIRECTORY: IsolateSandbox.sandboxCodesCachePath,
+            AP_MAX_FILE_SIZE_MB: system.getOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB),
         }
     }
 

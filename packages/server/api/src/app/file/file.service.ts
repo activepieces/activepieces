@@ -9,14 +9,13 @@ import {
     FileLocation,
     FileType,
     isNil,
-    ProjectId
+    ProjectId,
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
 
 export const fileRepo = repoFactory<File>(FileEntity)
-const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
 
 export const fileService = {
     async save(params: SaveParams): Promise<File> {
@@ -26,16 +25,18 @@ export const fileService = {
             platformId: params.platformId,
             type: params.type,
             compression: params.compression,
+            metadata: params.metadata,
         }
-        switch (FILE_LOCATION) {
+        const location = getLocationForFile(params.type)
+        switch (location) {
             case FileLocation.DB:
                 return fileRepo().save({
                     ...baseFile,
                     location: FileLocation.DB,
                     data: params.data,
                 })
-            case FileLocation.S3:{
-                const s3Key = await s3Helper.uploadFile(params.platformId, params.projectId, baseFile.id, params.data)
+            case FileLocation.S3: {
+                const s3Key = await s3Helper.uploadFile(params.platformId, params.projectId, params.type, baseFile.id, params.data)
                 return fileRepo().save({
                     ...baseFile,
                     location: FileLocation.S3,
@@ -44,10 +45,11 @@ export const fileService = {
             }
         }
     },
-    async getDataOrThrow({ projectId, fileId }: GetOneParams): Promise<Buffer> {
+    async getDataOrThrow({ projectId, fileId, type }: GetOneParams): Promise<GetDataResponse> {
         const file = await fileRepo().findOneBy({
             projectId,
             id: fileId,
+            type,
         })
         if (isNil(file)) {
             throw new ActivepiecesError({
@@ -57,13 +59,40 @@ export const fileService = {
                 },
             })
         }
-        return fileCompressor.decompress({
+        const data = await fileCompressor.decompress({
             data: file.location === FileLocation.DB ? file.data : await s3Helper.getFile(file.s3Key!),
             compression: file.compression,
         })
+        return {
+            data,
+            fileName: file.fileName,
+        }
     },
 }
 
+type GetDataResponse = {
+    data: Buffer
+    fileName?: string
+}
+function getLocationForFile(type: FileType) {
+    const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
+    if (isExecutionDataFileThatExpires(type)) {
+        return FILE_LOCATION
+    }
+    return FileLocation.DB
+}
+
+function isExecutionDataFileThatExpires(type: FileType) {
+    switch (type) {
+        case FileType.FLOW_RUN_LOG:
+        case FileType.FLOW_STEP_FILE:
+            return true
+        case FileType.PACKAGE_ARCHIVE:
+            return false
+        default:
+            throw new Error(`File type ${type} is not supported`)
+    }
+}
 
 type SaveParams = {
     fileId?: FileId | undefined
@@ -72,10 +101,11 @@ type SaveParams = {
     type: FileType
     platformId?: string
     compression: FileCompression
-    s3Key?: string // Add this line to fix the linter error
+    metadata?: Record<string, string>
 }
 
 type GetOneParams = {
     fileId: FileId
     projectId?: ProjectId
+    type?: FileType
 }

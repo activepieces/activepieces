@@ -4,7 +4,7 @@ import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOp
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { executionFiles } from '../execution-files'
-import { pieceEngineUtil } from '../flow-enginer-util'
+import { pieceEngineUtil } from '../flow-engine-util'
 import { EngineWorker } from './worker'
 
 const memoryLimit = Math.floor((Number(system.getOrThrow(SharedSystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
@@ -234,5 +234,6 @@ function getEnvironmentVariables(): Record<string, string | undefined> {
         AP_EXECUTION_MODE: system.getOrThrow(SharedSystemProp.EXECUTION_MODE),
         AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
         AP_BASE_CODE_DIRECTORY: `${sandboxPath}/codes`,
+        AP_MAX_FILE_SIZE_MB: system.getOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB),
     }
 }

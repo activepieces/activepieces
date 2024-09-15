@@ -1,14 +1,14 @@
-import { AppSystemProp, logger, system } from '@activepieces/server-shared'
-import { S3 } from '@aws-sdk/client-s3'
-import { ProjectId } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { Readable } from 'stream'
+import { AppSystemProp, logger, system } from '@activepieces/server-shared'
+import { FileType, ProjectId } from '@activepieces/shared'
+import { S3 } from '@aws-sdk/client-s3'
+import dayjs from 'dayjs'
 const executionRentetionInDays = system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)!
 
 export const s3Helper = {
-    async uploadFile(platformId: string | undefined, projectId: ProjectId | undefined, fileId: string, data: Buffer): Promise<string> {
+    async uploadFile(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string, data: Buffer): Promise<string> {
 
-        const s3Key = constructS3Key(platformId, projectId, fileId)
+        const s3Key = constructS3Key(platformId, projectId, type, fileId)
         logger.info({
             s3Key,
         }, 'uploading file to s3')
@@ -23,7 +23,8 @@ export const s3Helper = {
             logger.info({
                 s3Key,
             }, 'file uploaded to s3')
-        } catch (error) {
+        }
+        catch (error) {
             logger.error({
                 s3Key,
                 error,
@@ -43,14 +44,16 @@ export const s3Helper = {
 }
 
 
-const constructS3Key = (platformId: string | undefined, projectId: ProjectId | undefined, fileId: string): string => {
+const constructS3Key = (platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): string => {
     const now = dayjs()
     const datePath = `${now.format('YYYY/MM/DD/HH')}`
     if (platformId) {
-        return `platform/${platformId}/${datePath}/${fileId}`
-    } else if (projectId) {
-        return `project/${projectId}/${datePath}/${fileId}`
-    } else {
+        return `platform/${platformId}/${type}/${datePath}/${fileId}`
+    }
+    else if (projectId) {
+        return `project/${projectId}/${type}/${datePath}/${fileId}`
+    }
+    else {
         throw new Error('Either platformId or projectId must be provided')
     }
 }

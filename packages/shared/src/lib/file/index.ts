@@ -8,6 +8,7 @@ export enum FileType {
     UNKNOWN = 'UNKNOWN',
     FLOW_RUN_LOG = 'FLOW_RUN_LOG',
     PACKAGE_ARCHIVE = 'PACKAGE_ARCHIVE',
+    FLOW_STEP_FILE = 'FLOW_STEP_FILE',
 }
 export enum FileCompression {
     NONE = 'NONE',
@@ -27,7 +28,10 @@ export const File = Type.Object({
     compression: Type.Enum(FileCompression),
     data: Type.Optional(Type.Unknown()),
     location: Type.Enum(FileLocation),
+    size: Type.Optional(Type.Number()),
+    fileName: Type.Optional(Type.String()),
     s3Key: Type.Optional(Type.String()),
+    metadata: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
 
 export type File = Static<typeof File> & {
