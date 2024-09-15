@@ -4,7 +4,7 @@ import { databaseConnection } from '../../database/database-connection'
 import { distributedLock } from '../../helper/lock'
 import { fileService } from '../file.service'
 
-const BATCH_SIZE = 10
+const BATCH_SIZE = 1000
 const LOCK_KEY = 'step-file-migration'
 const LOCK_TIMEOUT = 120 * 60 * 1000 // 2 hours
 
