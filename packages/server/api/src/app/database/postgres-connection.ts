@@ -145,6 +145,7 @@ import { MigrateAuditEventSchema1723489038729 } from './migration/postgres/17234
 import { AddAnalyticsToPlatform1725113652923 } from './migration/postgres/1725113652923-AddAnalyticsToPlatform'
 import { LogFileRelationWithFlowRun1725639666232 } from './migration/postgres/1725639666232-LogFileRelationWithFlowRun'
 import { AddLogsFileIdIndex1725699690971 } from './migration/postgres/1725699690971-AddLogsFileIdIndex'
+import { SupportS3Files1726364421096 } from './migration/postgres/1726364421096-SupportS3Files'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -240,6 +241,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveUniqueConstraintOnStepFile1725570317713,
         LogFileRelationWithFlowRun1725639666232,
         AddLogsFileIdIndex1725699690971,
+        SupportS3Files1726364421096,
     ]
 
     const edition = system.getEdition()

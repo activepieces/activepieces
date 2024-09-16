@@ -38,7 +38,7 @@ export const getPiecePackage = async (
     })
     switch (pkg.packageType) {
         case PackageType.ARCHIVE: {
-            const archiveFile = await fileService.getOneOrThrow({
+            const { data } = await fileService.getDataOrThrow({
                 fileId: pieceMetadata.archiveId!,
             })
             return {
@@ -47,7 +47,7 @@ export const getPiecePackage = async (
                 pieceVersion: pieceMetadata.version,
                 pieceType: pkg.pieceType,
                 archiveId: pieceMetadata.archiveId!,
-                archive: archiveFile.data,
+                archive: data,
             }
         }
         case PackageType.REGISTRY: {

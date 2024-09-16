@@ -7,8 +7,12 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import { uploadFile } from './lib/actions/upload-file';
 
+const markdown = `
+Copy the **URL** and **Service API Key** from your Supabase project settings.
+`;
 export const supabaseAuth = PieceAuth.CustomAuth({
   required: true,
+  description: markdown,
   props: {
     url: Property.ShortText({
       displayName: 'URL',

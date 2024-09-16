@@ -5,18 +5,13 @@ import { initCodeSandbox } from '../core/code/code-sandbox'
 import { CodeModule } from '../core/code/code-sandbox-common'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { EngineConstants } from './context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { ExecutionVerdict } from './context/flow-execution-context'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
     async handle({
         action,
         executionState,
         constants,
-    }: {
-        action: CodeAction
-        executionState: FlowExecutorContext
-        constants: EngineConstants
     }) {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
