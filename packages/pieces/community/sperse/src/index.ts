@@ -54,7 +54,8 @@ export const sperseAuth = PieceAuth.CustomAuth({
 
 export const sperse = createPiece({
   displayName: 'Sperse',
-  description: 'Recurring Payments Software',
+  description:
+    'Sperse CRM enables secure payment processing and affiliate marketing for online businesses',
   auth: sperseAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sperse.png',
