@@ -4,7 +4,7 @@ import { aiTokenLimit } from '../ee/project-plan/ai-token-limit'
 import { projectService } from '../project/project-service'
 import { projectUsageService } from '../project/usage/project-usage-service'
 import { aiProviderService } from './ai-provider.service'
-
+import { StatusCodes } from 'http-status-codes'
 
 export const proxyController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
 
@@ -15,7 +15,17 @@ export const proxyController: FastifyPluginCallbackTypebox = (fastify, _opts, do
 
         const platformId = await projectService.getPlatformId(projectId)
         const aiProvider = await aiProviderService.getOrThrow({ platformId, provider })
-        await aiTokenLimit.exceededLimit({ projectId, tokensToConsume: 1 })
+        const limitResponse = await aiTokenLimit.exceededLimit({ projectId, tokensToConsume: 0 })
+        if (limitResponse.exceeded) {
+            return reply.code(StatusCodes.PAYMENT_REQUIRED).send(makeOpenAiResponse(
+                "You have exceeded your AI tokens limit for this project.",
+                "ai_tokens_limit_exceeded",
+                {
+                    usage: limitResponse.usage,
+                    limit: limitResponse.limit,
+                }
+            ))
+        }
 
         const url = buildUrl(aiProvider.baseUrl, request.params['*'])
         try {
@@ -45,6 +55,16 @@ export const proxyController: FastifyPluginCallbackTypebox = (fastify, _opts, do
 }
 
 
+function makeOpenAiResponse(message: string, code: string, params: Record<string, unknown>) {
+    return {
+        "error": {
+            "message": message,
+            "type": "invalid_request_error",
+            "param": params,
+            "code": code
+        }
+    }
+}
 
 function buildUrl(baseUrl: string, path: string): string {
     const url = new URL(path, baseUrl)
@@ -59,9 +79,8 @@ const calculateHeaders = (
     aiProviderDefaultHeaders: Record<string, string>,
 ): [string, string][] => {
     const cleanedHeaders = Object.entries(requestHeaders).reduce((acc, [key, value]) => {
-        if (
-            value !== undefined &&
-            !['authorization', 'Authorization', 'content-length', 'host'].includes(key) &&
+        if (value !== undefined &&
+            !['authorization', 'content-length', 'host'].includes(key.toLocaleLowerCase()) &&
             !key.startsWith('x-')
         ) {
             acc[key as keyof typeof acc] = value

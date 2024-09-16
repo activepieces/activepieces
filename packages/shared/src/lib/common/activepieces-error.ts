@@ -64,7 +64,7 @@ export type ApErrorParams =
     | ActivationKeyNotAlreadyActivated
     | EmailAlreadyHasActivationKey
     | ProviderProxyConfigNotFoundParams
-
+    | AITokenLimitExceededParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -95,6 +95,11 @@ Record<string, string> &
     message?: string
 }
 >
+
+export type AITokenLimitExceededParams = BaseErrorParams<ErrorCode.AI_TOKEN_LIMIT_EXCEEDED, {
+    usage: number
+    limit: number
+}> 
 
 export type PermissionDeniedErrorParams = BaseErrorParams<
 ErrorCode.PERMISSION_DENIED,
@@ -417,6 +422,7 @@ export enum ErrorCode {
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
+    AI_TOKEN_LIMIT_EXCEEDED = 'AI_TOKEN_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
