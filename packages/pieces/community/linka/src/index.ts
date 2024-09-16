@@ -3,15 +3,15 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-// import { addOrUpdateContactExtended } from './lib/actions/add-or-update-contact-extended';
-// import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
-// import { addOrUpdateSubscription } from './lib/actions/add-or-update-subscription';
-// import { createInvoice } from './lib/actions/create-invoice';
-// import { createProduct } from './lib/actions/create-product';
-// import { getContactDetails } from './lib/actions/get-contact-details';
-// import { newLead } from './lib/triggers/new-lead';
-// import { newPayment } from './lib/triggers/new-payment';
-// import { newSubscription } from './lib/triggers/new-subscription';
+import { addOrUpdateContactExtended } from './lib/actions/add-or-update-contact-extended';
+import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
+import { addOrUpdateSubscription } from './lib/actions/add-or-update-subscription';
+import { createInvoice } from './lib/actions/create-invoice';
+import { createProduct } from './lib/actions/create-product';
+import { getContactDetails } from './lib/actions/get-contact-details';
+import { newLead } from './lib/triggers/new-lead';
+import { newPayment } from './lib/triggers/new-payment';
+import { newSubscription } from './lib/triggers/new-subscription';
 
 const markdownDescription = `
   Follow these instructions to get your Linka API Key:
@@ -59,14 +59,12 @@ export const linka = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/linka.png',
   authors: ['Trayshmhirk', 'OmarSayed'],
   actions: [
-    // addOrUpdateContact,
-    // addOrUpdateContactExtended,
-    // addOrUpdateSubscription,
-    // createInvoice,
-    // createProduct,
-    // getContactDetails,
+    addOrUpdateContact,
+    addOrUpdateContactExtended,
+    addOrUpdateSubscription,
+    createInvoice,
+    createProduct,
+    getContactDetails,
   ],
-  triggers: [
-    // newLead, newPayment, newSubscription
-  ],
+  triggers: [newLead, newPayment, newSubscription],
 });
