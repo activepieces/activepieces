@@ -10,6 +10,9 @@ import {
 
 import SidebarLayout from '@/app/components/sidebar-layout';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '../../lib/authentication-session';
+import { Navigate } from 'react-router-dom';
+import { isNil } from '../../../../shared/src';
 
 const iconSize = 20;
 
@@ -53,11 +56,20 @@ export default function ProjectSettingsLayout({
   children,
 }: SettingsLayoutProps) {
   const { platform } = platformHooks.useCurrentPlatform();
+  const currentProjectId = authenticationSession.getProjectId();
+  if (isNil(currentProjectId) || currentProjectId === '') {
+    return <Navigate to="/sign-in" replace />;
+  }
 
   // TODO enable alerts for communityh when it is ready
-  const filteredNavItems = platform.alertsEnabled
-    ? sidebarNavItems
-    : sidebarNavItems.filter((item) => item.title !== t('Alerts'));
+  const filteredNavItems = (
+    platform.alertsEnabled
+      ? sidebarNavItems
+      : sidebarNavItems.filter((item) => item.title !== t('Alerts'))
+  ).map((item) => ({
+    ...item,
+    href: `/projects/${currentProjectId}${item.href}`,
+  }));
 
   return (
     <SidebarLayout title={t('Settings')} items={filteredNavItems}>

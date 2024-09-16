@@ -5,6 +5,7 @@ import {
   createBrowserRouter,
   createMemoryRouter,
   useLocation,
+  useParams,
 } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
@@ -56,6 +57,9 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
+import { authenticationSession } from '../lib/authentication-session';
+import { isNil } from '../../../shared/src';
+import { projectHooks } from '../hooks/project-hooks';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -66,6 +70,52 @@ const SettingsRerouter = () => {
     <Navigate to="/settings/general" replace />
   );
 };
+
+const TokenCheckerWrapper = ({ children }: { children: React.ReactNode }) => {
+  const { projectId } = useParams();
+  const currentProjectId = authenticationSession.getProjectId();
+  if (isNil(currentProjectId) || isNil(projectId)) {
+    return <Navigate to="/sign-in" replace />;
+  }
+  if (projectId !== currentProjectId) {
+    projectHooks.useSwitchToProject(projectId);
+  }
+  return children;
+};
+const RedirectToCurrentProjectRoute = ({ path }: { path: string }) => {
+  const currentProjectId = authenticationSession.getProjectId();
+  const params = useParams();
+  if (isNil(currentProjectId)) {
+    return <Navigate to="/sign-in" replace />;
+  }
+  const pathWithParams = `${
+    path.startsWith('/') ? path : `/${path}`
+  }`.replaceAll(/:(\w+)/g, (_, param) => params[param] ?? '');
+  return (
+    <Navigate to={`/projects/${currentProjectId}${pathWithParams}`} replace />
+  );
+};
+const ProjectRouterWrapper = ({
+  element,
+  path,
+}: {
+  path: string;
+  element: React.ReactNode;
+}) => [
+  {
+    path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
+    element: <TokenCheckerWrapper>{element}</TokenCheckerWrapper>,
+  },
+  {
+    path,
+    element: (
+      <RedirectToCurrentProjectRoute
+        path={path}
+      ></RedirectToCurrentProjectRoute>
+    ),
+  },
+];
+
 const routes = [
   {
     path: '/embed',
@@ -76,7 +126,7 @@ const routes = [
     path: '/switch-to-beta',
     element: <SwitchToBetaPage />,
   },
-  {
+  ...ProjectRouterWrapper({
     path: '/flows',
     element: (
       <DashboardContainer>
@@ -85,8 +135,8 @@ const routes = [
         </PageTitle>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/flows/:flowId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
@@ -95,7 +145,7 @@ const routes = [
         </PageTitle>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
-  },
+  }),
   {
     path: '/forms/:flowId',
     element: (
@@ -104,7 +154,7 @@ const routes = [
       </PageTitle>
     ),
   },
-  {
+  ...ProjectRouterWrapper({
     path: '/runs/:runId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
@@ -113,7 +163,7 @@ const routes = [
         </PageTitle>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
-  },
+  }),
   {
     path: '/templates/:templateId',
     element: (
@@ -124,7 +174,7 @@ const routes = [
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
-  {
+  ...ProjectRouterWrapper({
     path: '/runs',
     element: (
       <DashboardContainer>
@@ -133,8 +183,8 @@ const routes = [
         </PageTitle>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/issues',
     element: (
       <DashboardContainer>
@@ -143,8 +193,8 @@ const routes = [
         </PageTitle>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/connections',
     element: (
       <DashboardContainer>
@@ -153,8 +203,8 @@ const routes = [
         </PageTitle>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/plans',
     element: (
       <DashboardContainer>
@@ -163,15 +213,15 @@ const routes = [
         </PageTitle>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings',
     element: (
       <DashboardContainer>
         <SettingsRerouter></SettingsRerouter>
       </DashboardContainer>
     ),
-  },
+  }),
   {
     path: '/forget-password',
     element: (
@@ -212,7 +262,7 @@ const routes = [
       </PageTitle>
     ),
   },
-  {
+  ...ProjectRouterWrapper({
     path: '/settings/alerts',
     element: (
       <DashboardContainer>
@@ -223,8 +273,8 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings/appearance',
     element: (
       <DashboardContainer>
@@ -235,8 +285,8 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings/general',
     element: (
       <DashboardContainer>
@@ -247,8 +297,8 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings/pieces',
     element: (
       <DashboardContainer>
@@ -259,9 +309,8 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
-
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings/team',
     element: (
       <DashboardContainer>
@@ -272,12 +321,13 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
+  }),
   {
     path: '/team',
     element: <Navigate to="/settings/team" replace></Navigate>,
   },
-  {
+
+  ...ProjectRouterWrapper({
     path: '/settings/git-sync',
     element: (
       <DashboardContainer>
@@ -288,7 +338,7 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
+  }),
 
   {
     path: '/invitation',

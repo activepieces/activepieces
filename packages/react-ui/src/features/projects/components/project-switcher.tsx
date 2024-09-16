@@ -23,8 +23,10 @@ import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { projectHooks } from '../../../hooks/project-hooks';
+import { useLocation } from 'react-router-dom';
 
 function ProjectSwitcher() {
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { data: projects } = projectHooks.useProjects();
   const [open, setOpen] = React.useState(false);
@@ -65,9 +67,14 @@ function ProjectSwitcher() {
                     <CommandItem
                       key={project.id}
                       onSelect={() => {
-                        setCurrentProject(queryClient, project);
+                        setCurrentProject(
+                          queryClient,
+                          project,
+                          location.pathname,
+                        );
                         setOpen(false);
                       }}
+                      value={project.id}
                       className="text-sm"
                     >
                       {project.displayName}
