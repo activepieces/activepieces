@@ -326,6 +326,9 @@
       "@activepieces/piece-linear": [
         "packages/pieces/community/linear/src/index.ts"
       ],
+      "@activepieces/piece-linka": [
+        "packages/pieces/community/linka/src/index.ts"
+      ],
       "@activepieces/piece-linkedin": [
         "packages/pieces/community/linkedin/src/index.ts"
       ],
