@@ -16,12 +16,15 @@ const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     const { projectId } = useParams<{ projectId: string }>();
     const currentProjectId = authenticationSession.getProjectId();
     const { toast } = useToast();
-    const { data, isError, isLoading } = useQuery<string | null, Error>({
+    const { data: isProjectValid, isError } = useSuspenseQuery<boolean, Error>({
         queryKey: ['switch-to-project', projectId],
         queryFn: async () => {
+            if (isNil(projectId)) {
+                return false;
+            }
             try {
                 await authenticationSession.switchToSession(projectId!);
-                return projectId!;
+                return true;
             } catch (error) {
                 if (api.isError(error)) {
                     toast({
@@ -31,19 +34,18 @@ const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
                     });
                     authenticationSession.clearSession();
                 }
-                return null;
+                return false;
             }
         },
         retry: false,
         staleTime: Infinity,
-        enabled: !!projectId,
     });
 
     if (isNil(currentProjectId) || isNil(projectId)) {
         return <Navigate to="/sign-in" replace />;
     }
 
-    if (isError || (isNil(data) && !isLoading)) {
+    if (isError || !isProjectValid) {
         return <Navigate to="/404" replace />;
     }
 
