@@ -607,6 +607,9 @@
       "@activepieces/piece-typeform": [
         "packages/pieces/community/typeform/src/index.ts"
       ],
+      "@activepieces/piece-upgradechat": [
+        "packages/pieces/community/upgradechat/src/index.ts"
+      ],
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"
       ],
