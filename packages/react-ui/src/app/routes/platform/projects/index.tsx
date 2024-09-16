@@ -87,7 +87,7 @@ export default function ProjectsPage() {
         </div>
         <DataTable
           onRowClick={async (project) => {
-            await setCurrentProject(queryClient, project, false);
+            await setCurrentProject(queryClient, project);
             navigate('/');
           }}
           columns={[
@@ -177,7 +177,7 @@ export default function ProjectsPage() {
                         onClick={async (e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          await setCurrentProject(queryClient, row, false);
+                          await setCurrentProject(queryClient, row);
                           navigate('/settings/general');
                         }}
                       >

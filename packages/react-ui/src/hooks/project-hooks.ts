@@ -60,14 +60,15 @@ const updateProject = async (
 const setCurrentProject = async (
   queryClient: QueryClient,
   project: ProjectWithLimits,
-  shouldReload = true,
+  pathName?: string,
 ) => {
-  const projectChanged = authenticationSession.getProjectId() !== project.id;
-  if (projectChanged) {
-    await authenticationSession.switchToSession(project.id);
-  }
+  await authenticationSession.switchToSession(project.id);
   queryClient.setQueryData(['current-project'], project);
-  if (projectChanged && shouldReload) {
-    window.location.reload();
+  if (pathName) {
+    const pathNameWithNewProjectId = pathName.replace(
+      /\/projects\/\w+/,
+      `/projects/${project.id}`,
+    );
+    window.location.href = pathNameWithNewProjectId;
   }
 };
