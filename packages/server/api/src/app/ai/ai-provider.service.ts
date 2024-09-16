@@ -10,19 +10,14 @@ export const aiProviderService = {
         const provider = await repo().findOneBy(params)
         if (isNil(provider)) {
             throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
+                code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
                 params: {
-                    entityId: `${params.platformId}-${params.provider}`,
-                    entityType: 'proxy_config',
+                    provider: params.provider,
                 },
             })
         }
         const decryptedConfig = encryptUtils.decryptObject<AiProviderConfig['config']>(provider.config)
         return { ...provider, config: decryptedConfig }
-    },
-    async getSanitizedOrThrow(params: GetParams): Promise<AiProviderWithoutSensitiveData> {
-        const provider = await this.getOrThrow(params)
-        return { ...provider, config: { defaultHeaders: {} } }
     },
     async upsert(platformId: string, aiConfig: Omit<AiProviderConfig, 'id' | 'created' | 'updated' | 'platformId'>): Promise<AiProviderWithoutSensitiveData> {
         const existingProvider = await this.getOrThrow({ platformId, provider: aiConfig.provider }).catch(() => null)
@@ -37,7 +32,8 @@ export const aiProviderService = {
             config: encryptedConfig,
             provider: aiConfig.provider,
         }, ['platformId', 'provider'])
-        return this.getSanitizedOrThrow({ platformId, provider: aiConfig.provider })
+        const provider = await repo().findOneByOrFail({ platformId, provider: aiConfig.provider })
+        return removeSensitiveData(provider)
     },
     async delete(params: DeleteParams): Promise<void> {
         await this.getOrThrow(params)
@@ -45,15 +41,17 @@ export const aiProviderService = {
     },
     async list(platformId: PlatformId): Promise<SeekPage<AiProviderWithoutSensitiveData>> {
         const providers = await repo().findBy({ platformId })
-        const data = providers.map(p => {
-            return { ...p, config: {} }
-        })
+        const data = providers.map((p) => removeSensitiveData(p))
         return {
             data,
             next: null,
             previous: null,
         }
     },
+}
+
+function removeSensitiveData(provider: AiProviderSchema | AiProviderConfig): AiProviderWithoutSensitiveData {
+    return { ...provider, config: {} }
 }
 
 type DeleteParams = {

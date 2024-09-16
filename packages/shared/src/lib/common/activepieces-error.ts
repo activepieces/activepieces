@@ -63,6 +63,7 @@ export type ApErrorParams =
     | ActivationKeyNotFoundParams
     | ActivationKeyNotAlreadyActivated
     | EmailAlreadyHasActivationKey
+    | ProviderProxyConfigNotFoundParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -323,10 +324,16 @@ ErrorCode.INVALID_APP_CONNECTION,
 export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
-    metric: 'tasks' | 'team-members'
+    metric: 'tasks' | 'team-members' | 'ai-tokens'
     quota?: number
 }
 >
+
+export type ProviderProxyConfigNotFoundParams = BaseErrorParams<
+ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+{
+    provider: string
+}>
 
 export type FeatureDisabledErrorParams = BaseErrorParams<
 ErrorCode.FEATURE_DISABLED,
@@ -375,6 +382,7 @@ export type EmailAlreadyHasActivationKey = BaseErrorParams<ErrorCode.EMAIL_ALREA
 export enum ErrorCode {
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
+    PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',

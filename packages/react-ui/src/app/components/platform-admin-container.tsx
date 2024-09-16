@@ -6,7 +6,7 @@ import {
   Puzzle,
   UserCog,
   Workflow,
-  Wrench
+  Wrench,
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
@@ -57,7 +57,6 @@ export function PlatformAdminContainer({
       to: '/platform/pieces',
       label: t('Pieces'),
       icon: Puzzle,
-      locked: isLocked(!platform.managePiecesEnabled),
     },
     {
       to: '/platform/templates',

@@ -6,8 +6,7 @@ import {
 import { projectUsageService } from '../../project/usage/project-usage-service'
 import { projectLimitsService } from './project-plan.service'
 
-
-async function exceededLimit({ projectId }: { projectId: ProjectId }): Promise<boolean> {
+async function exceededLimit({ projectId, tokensToConsume }: { projectId: ProjectId, tokensToConsume: number }): Promise<boolean> {
     const edition = system.getEdition()
 
     if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
@@ -19,8 +18,8 @@ async function exceededLimit({ projectId }: { projectId: ProjectId }): Promise<b
         if (!projectPlan) {
             return false
         }
-        const consumedTasks = await projectUsageService.increaseUsage(projectId, 0, 'tasks')
-        return consumedTasks >= projectPlan.tasks
+        const consumedTokens = await projectUsageService.increaseUsage(projectId, tokensToConsume, 'aiTokens')
+        return consumedTokens > projectPlan.aiTokens
     }
     catch (e) {
         exceptionHandler.handle(e)
@@ -28,6 +27,6 @@ async function exceededLimit({ projectId }: { projectId: ProjectId }): Promise<b
     }
 }
 
-export const tasksLimit = {
+export const aiTokenLimit = {
     exceededLimit,
 }

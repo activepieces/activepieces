@@ -4,7 +4,6 @@ import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-sh
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { commonProperties } from './database-connection'
-import { AddAiProviderSqlite1725930375719 } from './migration/sqlite/1725930375719-AddAiProviderSqlite'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
@@ -56,6 +55,7 @@ import { AddWorkerMachineSqlite1720100928449 } from './migration/sqlite/17201009
 import { AddAnalyticsToPlatformSqlite1725151368300 } from './migration/sqlite/1725151368300-AddAnalyticsToPlatformSqlite'
 import { LogFileRelationWithFlowRunSqlite1725637505836 } from './migration/sqlite/1725637505836-LogFileRelationWithFlowRunSqlite'
 import { AddLogsFileIdIndexSqlite1725699920020 } from './migration/sqlite/1725699920020-AddLogsFileIdIndexSqlite'
+import { AddAiProviderSqlite1726446345221 } from './migration/sqlite/1726446345221-AddAiProviderSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -129,7 +129,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveUniqueConstraintOnStepFile1725570317713,
         LogFileRelationWithFlowRunSqlite1725637505836,
         AddLogsFileIdIndexSqlite1725699920020,
-        AddAiProviderSqlite1725930375719,
+        AddAiProviderSqlite1726446345221,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

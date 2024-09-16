@@ -16,9 +16,10 @@ export const platformRunHooks: FlowRunHooks = {
     }): Promise<void> {
         const edition = system.getEdition()
         if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-            const consumedTasks = await projectUsageService.increaseTasks(
+            const consumedTasks = await projectUsageService.increaseUsage(
                 projectId,
                 tasks,
+                'tasks',
             )
             await sendAlertsIfNeeded({
                 projectId,

@@ -11,6 +11,7 @@ import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { EmbedPage } from '@/app/routes/embed';
+import AIProvidersPage from '@/app/routes/platform/ai-providers';
 import AnalyticsPage from '@/app/routes/platform/analytics';
 import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
 import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
@@ -44,6 +45,7 @@ import { FormPage } from './routes/forms';
 import IssuesPage from './routes/issues';
 import PlansPage from './routes/plans';
 import AuditLogsPage from './routes/platform/audit-logs';
+import { PlatformPiecesLayout } from './routes/platform/pieces/platform-pieces-layout';
 import ProjectsPage from './routes/platform/projects';
 import TemplatesPage from './routes/platform/templates';
 import UsersPage from './routes/platform/users';
@@ -56,8 +58,6 @@ import TeamPage from './routes/settings/team';
 import { SignInPage } from './routes/sign-in';
 import { SignUpPage } from './routes/sign-up';
 import { ShareTemplatePage } from './routes/templates/share-template';
-import AIProvidersPage from '@/app/routes/platform/ai-providers';
-import { PlatformPiecesLayout } from './routes/platform/pieces/platform-pieces-layout';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -326,7 +326,7 @@ const routes = [
         <PlatformPiecesLayout>
           <PageTitle title="Platform Pieces">
             <PlatformPiecesPage />
-        </PageTitle>
+          </PageTitle>
         </PlatformPiecesLayout>
       </PlatformAdminContainer>
     ),
@@ -470,8 +470,8 @@ const ApRouter = () => {
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
-        initialEntries: [window.location.pathname],
-      })
+          initialEntries: [window.location.pathname],
+        })
       : createBrowserRouter(routes);
   }, [embedState.isEmbedded]);
 

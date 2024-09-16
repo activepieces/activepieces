@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Brain, Puzzle, ShieldPlus } from 'lucide-react';
+import { Brain, Puzzle } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
 
@@ -22,9 +22,7 @@ interface PiecesLayoutProps {
   children: React.ReactNode;
 }
 
-export function PlatformPiecesLayout({
-  children,
-}: PiecesLayoutProps) {
+export function PlatformPiecesLayout({ children }: PiecesLayoutProps) {
   return (
     <SidebarLayout title={t('Pieces')} items={sidebarNavItems}>
       {children}

@@ -10,7 +10,7 @@ const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
 
 export const projectLimitsService = {
     async upsert(
-        planLimits: Partial<FlowPlanLimits & { aiTokens?: number }>,
+        planLimits: Partial<FlowPlanLimits>,
         projectId: string,
     ): Promise<ProjectPlan> {
         const existingPlan = await projectPlanRepo().findOneBy({ projectId })
@@ -77,7 +77,8 @@ async function createDefaultPlan(projectId: string, flowPlanLimit: FlowPlanLimit
         tasks: flowPlanLimit.tasks,
         teamMembers: flowPlanLimit.teamMembers,
         minimumPollingInterval: flowPlanLimit.minimumPollingInterval,
-        connections: flowPlanLimit.connections,
+        connections: flowPlanLimit.connections, 
+        aiTokens: flowPlanLimit.aiTokens,
         name: flowPlanLimit.nickname,
     }, ['projectId'])
 

@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddAiProviderSqlite1725930375719 implements MigrationInterface {
-    name = 'AddAiProviderSqlite1725930375719'
+export class AddAiProviderSqlite1726446345221 implements MigrationInterface {
+    name = 'AddAiProviderSqlite1726446345221'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
@@ -13,23 +13,17 @@ export class AddAiProviderSqlite1725930375719 implements MigrationInterface {
                 "config" text NOT NULL,
                 "baseUrl" varchar NOT NULL,
                 "provider" varchar NOT NULL,
-                CONSTRAINT "REL_04619a92ba6ba054cd41335a67" UNIQUE ("platformId"),
-                CONSTRAINT "fk_ai_provider_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+                CONSTRAINT "fk_ai_provider_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_ai_provider_platform_id_provider" ON "ai_provider" ("platformId", "provider")
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            DROP INDEX "idx_ai_provider_platform_id_provider"
-        `)
-        await queryRunner.query(`
-            DROP TABLE "temporary_ai_provider"
-        `)
+        await queryRunner.query('DROP INDEX "idx_ai_provider_platform_id_provider"')
+        await queryRunner.query('DROP TABLE "ai_provider"')
     }
 
 }

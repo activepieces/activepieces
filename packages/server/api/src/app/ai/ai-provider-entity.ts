@@ -44,9 +44,10 @@ export const AiProviderEntity = new EntitySchema<AiProviderSchema>({
     ],
     relations: {
         platform: {
-            type: 'one-to-one',
+            type: 'many-to-one',
             target: 'platform',
-            nullable: false,
+            cascade: true,
+            onDelete: 'CASCADE',
             joinColumn: {
                 name: 'platformId',
                 foreignKeyConstraintName: 'fk_ai_provider_platform_id',

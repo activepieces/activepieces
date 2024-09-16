@@ -49,7 +49,7 @@ export default function GeneralPage() {
     Error,
     {
       displayName: string;
-      plan: { tasks: number, aiTokens?: number };
+      plan: { tasks: number; aiTokens?: number };
     }
   >({
     mutationFn: (request) => {
@@ -130,7 +130,11 @@ export default function GeneralPage() {
                     <Input
                       type="number"
                       {...field}
-                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value ? parseInt(e.target.value) : undefined,
+                        )
+                      }
                       id="plan.aiTokens"
                       placeholder={t('AI Credits')}
                       className="rounded-sm"

@@ -1,32 +1,13 @@
-import { AI, AIChatRole, AiProviders } from '@activepieces/pieces-common';
+import { AI, AIChatRole, aiProps } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
 
 export const summarizeText = createAction({
   name: 'summarizeText',
   displayName: 'Summarize Text',
   description: '',
   props: {
-    provider: Property.StaticDropdown({
-      displayName: 'Provider',
-      required: true,
-      options: {
-        disabled: false,
-        options: AiProviders,
-      },
-    }),
-    model: Property.Dropdown({
-      displayName: 'Model',
-      required: true,
-      refreshers: ['provider'],
-      options: async ({ provider }) => {
-        const models = AiProviders.find((p) => p.value === provider)?.models;
-        return {
-          disabled: isNil(models),
-          options: models ?? [],
-        };
-      },
-    }),
+    provider: aiProps.provider,
+    model: aiProps.model,
     text: Property.LongText({
       displayName: 'Text',
       required: true,
