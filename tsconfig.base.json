@@ -257,6 +257,9 @@
       "@activepieces/piece-google-my-business": [
         "packages/pieces/community/google-my-business/src/index.ts"
       ],
+      "@activepieces/piece-google-search-console": [
+        "packages/pieces/community/google-search-console/src/index.ts"
+      ],
       "@activepieces/piece-google-sheets": [
         "packages/pieces/community/google-sheets/src/index.ts"
       ],
