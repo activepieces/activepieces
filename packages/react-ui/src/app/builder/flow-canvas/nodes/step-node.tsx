@@ -39,6 +39,7 @@ import {
 } from '@activepieces/shared';
 
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
+import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -151,9 +152,6 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   }, [data.step?.name, run, loopIndexes, flowVersion]);
   const showRunningIcon =
     isNil(stepOutputStatus) && run?.status === FlowRunStatus.RUNNING;
-  const statusInfo = isNil(stepOutputStatus)
-    ? undefined
-    : flowRunUtils.getStatusIconForStep(stepOutputStatus);
 
   const handleStepClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const { name } = data.step!;
@@ -347,15 +345,12 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                       {stepMetadata?.displayName}
                     </div>
                     <div className="w-4 flex mt-0.5 items-center justify-center">
-                      {statusInfo &&
-                        React.createElement(statusInfo.Icon, {
-                          className: cn('w-4 h-4', {
-                            'text-success-300':
-                              statusInfo.variant === 'success',
-                            'text-destructive-300':
-                              statusInfo.variant === 'error',
-                          }),
-                        })}
+                      {stepOutputStatus && (
+                        <StepStatusIcon
+                          status={stepOutputStatus}
+                          size="4"
+                        ></StepStatusIcon>
+                      )}
                       {showRunningIcon && (
                         <LoadingSpinner className="w-4 h-4 text-primary"></LoadingSpinner>
                       )}
