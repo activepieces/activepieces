@@ -53,7 +53,7 @@ export const chargekeepAuth = PieceAuth.CustomAuth({
 
 export const chargekeep = createPiece({
   displayName: 'ChargeKeep',
-  description: 'Recurring Payments Software',
+  description: 'Easy-to-use recurring and one-time payments software for Stripe & PayPal',
   auth: chargekeepAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/chargekeep.png',
