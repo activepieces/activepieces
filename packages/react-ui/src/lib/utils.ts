@@ -18,17 +18,14 @@ export const formatUtils = {
     sampleData: unknown,
     type: ActionType | TriggerType | null,
   ) {
-    const cleanedSampleData = sampleData;
+    const cleanedSampleData = typeof sampleData === 'object'? JSON.parse(JSON.stringify(sampleData)) : sampleData;
     const shouldRemoveIterations =
       type === ActionType.LOOP_ON_ITEMS &&
       cleanedSampleData &&
       typeof cleanedSampleData === 'object' &&
       'iterations' in cleanedSampleData;
     if (shouldRemoveIterations) {
-      return {
-        ...cleanedSampleData,
-        iterations: undefined,
-      };
+      delete cleanedSampleData['iterations'];
     }
     return cleanedSampleData;
   },
