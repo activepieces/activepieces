@@ -3,6 +3,7 @@
 import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,6 @@ import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { projectHooks } from '../../../hooks/project-hooks';
-import { useLocation } from 'react-router-dom';
 
 function ProjectSwitcher() {
   const location = useLocation();

@@ -10,7 +10,6 @@ import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
-import { NavigateFunction, useNavigate } from 'react-router-dom';
 
 export const projectHooks = {
   prefetchProject: () => {
@@ -46,29 +45,6 @@ export const projectHooks = {
       },
     });
   },
-  useSwitchToProject: (projectId: string) => {
-    const navigate = useNavigate();
-    const query = useSuspenseQuery<string,Error>({
-      queryKey: ['switch-to-project', projectId],
-      queryFn: async () => {
-        try{
-          await authenticationSession.switchToSession(projectId);
-          return projectId;
-        }
-        catch(e)
-        {
-          console.error(e);
-          navigate('/404');
-          return 'error';
-        }
-      },
-     staleTime: 0
-    });
-    return {
-      ...query,
-      project: query.data,
-    };
-  }
 };
 
 const updateProject = async (
@@ -84,12 +60,15 @@ const updateProject = async (
 const setCurrentProject = async (
   queryClient: QueryClient,
   project: ProjectWithLimits,
-  pathName?: string ,
+  pathName?: string,
 ) => {
   await authenticationSession.switchToSession(project.id);
   queryClient.setQueryData(['current-project'], project);
   if (pathName) {
-    const pathNameWithNewProjectId = pathName.replace(/\/projects\/\w+/, `/projects/${project.id}`);
+    const pathNameWithNewProjectId = pathName.replace(
+      /\/projects\/\w+/,
+      `/projects/${project.id}`,
+    );
     window.location.href = pathNameWithNewProjectId;
   }
 };
