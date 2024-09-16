@@ -33,6 +33,7 @@ export const DEFAULT_PLATFORM_LIMIT = {
     tasks: 50000,
     teamMembers: 5,
     pieces: [],
+    aiTokens: 0,
     piecesFilterType: PiecesFilterType.NONE,
     minimumPollingInterval: 1,
 }
