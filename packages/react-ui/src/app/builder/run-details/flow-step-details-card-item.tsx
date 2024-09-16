@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { ChevronRight } from 'lucide-react';
 import React, { useMemo } from 'react';
+
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import { CardListItem } from '@/components/ui/card-list';
@@ -14,9 +15,9 @@ import { cn, formatUtils } from '@/lib/utils';
 import { ActionType, flowHelper } from '@activepieces/shared';
 
 import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
+import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 
 import { LoopIterationInput } from './loop-iteration-input';
-import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 type FlowStepDetailsCardProps = {
   stepName: string;
   depth: number;

@@ -6,7 +6,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
-  ActionType,
   Flow,
   FlowOperationRequest,
   FlowRun,
@@ -185,12 +184,20 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
       set((state) => {
         return {
-          loopsIndexes:flowRunUtils.findLoopsState(flowVersion,run,state.loopsIndexes),
+          loopsIndexes: flowRunUtils.findLoopsState(
+            flowVersion,
+            run,
+            state.loopsIndexes,
+          ),
           run,
           flowVersion,
           leftSidebar: LeftSideBarType.RUN_DETAILS,
           rightSidebar: RightSideBarType.PIECE_SETTINGS,
-          selectedStep: run.steps? (flowRunUtils.findFailedStep(run) ?? state.selectedStep?? 'trigger'):'trigger',
+          selectedStep: run.steps
+            ? flowRunUtils.findFailedStep(run) ??
+              state.selectedStep ??
+              'trigger'
+            : 'trigger',
           readonly: true,
         };
       }),
@@ -260,10 +267,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
   }));
 
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion,exitRun] = useBuilderStateContext((state) => [
+  const [flowVersion, setVersion, exitRun] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.setVersion,
-    state.exitRun
+    state.exitRun,
   ]);
 
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =

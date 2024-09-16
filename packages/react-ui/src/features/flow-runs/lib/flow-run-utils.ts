@@ -16,6 +16,7 @@ import {
   FlowRunStatus,
   FlowVersion,
   isNil,
+  LoopOnItemsAction,
   LoopStepOutput,
   LoopStepResult,
   StepOutput,
@@ -133,21 +134,28 @@ const findFailedStepInLoop: (
   }, null as null | string);
 };
 
-function findLoopsState(flowVersion:FlowVersion,run: FlowRun, currentLoopsState: Record<string, number>) {
-  const loops = flowHelper.getAllSteps(flowVersion.trigger).filter(s=> s.type === ActionType.LOOP_ON_ITEMS);
-  const failedStep = run.steps? findFailedStep(run) : null;
-  const res= loops.reduce((res, step) => {
-      const isFailedStepParent = failedStep && flowHelper.isChildOf(step, failedStep);
-      return {
-        ...res,
-        [step.name]: isFailedStepParent? Number.MAX_SAFE_INTEGER : currentLoopsState[step.name] ?? 0,
-      };
+function findLoopsState(
+  flowVersion: FlowVersion,
+  run: FlowRun,
+  currentLoopsState: Record<string, number>,
+) {
+  const loops = flowHelper
+    .getAllSteps(flowVersion.trigger)
+    .filter((s) => s.type === ActionType.LOOP_ON_ITEMS);
+  const failedStep = run.steps ? findFailedStep(run) : null;
+  const res = loops.reduce((res, step) => {
+    const isFailedStepParent =
+      failedStep && flowHelper.isChildOf(step, failedStep);
+    return {
+      ...res,
+      [step.name]: isFailedStepParent
+        ? Number.MAX_SAFE_INTEGER
+        : currentLoopsState[step.name] ?? 0,
+    };
   }, currentLoopsState);
 
-return res;
-
+  return res;
 }
-
 
 function findFailedStep(run: FlowRun) {
   return Object.entries(run.steps).reduce((res, [stepName, step]) => {
@@ -205,44 +213,35 @@ function findStepParents(
   return undefined;
 }
 function getLoopChildStepOutput(
-  parents: Action[],
+  parents: LoopOnItemsAction[],
   loopIndexes: Record<string, number>,
   childName: string,
-  output: Record<string, StepOutput>,
+  runOutput: Record<string, StepOutput>,
 ): StepOutput | undefined {
-  const parentStepsThatAreLoops = parents.filter(
-    (p) => p.type === ActionType.LOOP_ON_ITEMS,
-  );
-  if (parentStepsThatAreLoops.length === 0) return undefined;
-  let iterator: LoopStepOutput | undefined = output[
-    parentStepsThatAreLoops[0].name
-  ] as LoopStepOutput | undefined;
+  if (parents.length === 0) {
+    return undefined;
+  }
+  let childOutput: LoopStepOutput | undefined = runOutput[parents[0].name] as
+    | LoopStepOutput
+    | undefined;
+
   let index = 0;
-  while (index < parentStepsThatAreLoops.length - 1) {
-    if(iterator?.output && iterator?.output?.iterations[
-      loopIndexes[parentStepsThatAreLoops[index].name]
-    ])
-    {
-      iterator = iterator?.output?.iterations[
-        loopIndexes[parentStepsThatAreLoops[index].name]
-      ][parentStepsThatAreLoops[index + 1].name] as LoopStepOutput | undefined;
+  while (index < parents.length) {
+    const currentParentName = parents[index].name;
+    if (
+      childOutput &&
+      childOutput.output &&
+      childOutput.output.iterations[loopIndexes[currentParentName]]
+    ) {
+      const stepName =
+        index + 1 < parents.length ? parents[index + 1].name : childName;
+      childOutput = childOutput.output.iterations[
+        loopIndexes[parents[index].name]
+      ][stepName] as LoopStepOutput | undefined;
     }
-    
     index++;
   }
-  if (iterator) {
-    const directParentOutput =
-      iterator.output?.iterations[
-        loopIndexes[
-          parentStepsThatAreLoops[parentStepsThatAreLoops.length - 1].name
-        ]
-      ];
-    //Could be accessing out of bounds iteration
-    if (directParentOutput) {
-      return directParentOutput[childName];
-    }
-  }
-  return undefined;
+  return childOutput;
 }
 function extractStepOutput(
   stepName: string,
@@ -256,7 +255,12 @@ function extractStepOutput(
   }
   const parents = findStepParents(stepName, trigger);
   if (parents) {
-    return getLoopChildStepOutput(parents, loopIndexes, stepName, output);
+    return getLoopChildStepOutput(
+      parents.filter((p) => p.type === ActionType.LOOP_ON_ITEMS),
+      loopIndexes,
+      stepName,
+      output,
+    );
   }
   return undefined;
 }

@@ -1,5 +1,3 @@
-
-
 import { api } from '@/lib/api';
 import {
   CreateFlowRequest,
@@ -13,7 +11,6 @@ import {
   ListFlowsRequest,
   PopulatedFlow,
   SeekPage,
-
 } from '@activepieces/shared';
 
 export const flowsApi = {
@@ -56,4 +53,3 @@ export const flowsApi = {
     return api.get<number>('/v1/flows/count');
   },
 };
-

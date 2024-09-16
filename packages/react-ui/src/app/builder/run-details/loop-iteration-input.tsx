@@ -44,7 +44,6 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
       totalIterations <= currentIndex ||
       currentIndex === Number.MAX_SAFE_INTEGER
     ) {
-      debugger;
       setLoopIndex(stepName, totalIterations - 1);
     }
   }, [totalIterations, currentIndex]);
@@ -127,7 +126,6 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           onChange={onChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => {
-            debugger;
             setIsFocused(false);
           }}
           onKeyDown={(e) => {
