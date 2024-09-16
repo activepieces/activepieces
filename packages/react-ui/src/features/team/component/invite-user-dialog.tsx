@@ -159,6 +159,7 @@ export function InviteUserDialog() {
         <DialogTrigger asChild>
           <Button
             variant={'outline'}
+            size="sm"
             className="flex items-center justify-center gap-2 w-full"
           >
             <Plus className="size-4" />

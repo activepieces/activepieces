@@ -17,7 +17,7 @@ export const ReportBugsButton = ({
   return (
     showSupport && (
       <Button
-        size={'sm'}
+        size="sm"
         variant={variant}
         onClick={() =>
           window.open(reportBugsUrl, '_blank', 'noopener noreferrer')
