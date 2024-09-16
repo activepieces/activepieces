@@ -27,19 +27,19 @@ const FlowStepInputOutput = React.memo(
       <ScrollArea className="h-full p-4 ">
         {stepDetails && (
           <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 justify-start">
+            <div className="flex items-center leading-4  gap-2 justify-start">
               <StepStatusIcon
                 status={stepDetails.status}
                 size="5"
               ></StepStatusIcon>
               <div>{selectedStep?.displayName}</div>
             </div>
-            <div className="flex items-center gap-1 justify-start">
+            <div className="flex items-center gap-2 leading-4 justify-start">
               <Timer className="w-5 h-5" />
-              <span>
+              <div>
                 {t('Duration')}:{' '}
                 {formatUtils.formatDuration(stepDetails.duration ?? 0, false)}
-              </span>
+              </div>
             </div>
             <JsonViewer title={t('Input')} json={stepDetails.input} />
             <JsonViewer title={t('Output')} json={stepOutput} />
