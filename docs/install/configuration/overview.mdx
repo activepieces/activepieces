@@ -63,7 +63,18 @@ If you are looking to enable the "ASK AI" feature in the code piece, you need to
 <Accordion title="Configure S3 (Optional)" icon="cloud">
 Run logs and files are stored in the database by default, but you can switch to S3 later without any migration; for most cases, the database is enough.
 
-It's recommended to start with the database and switch to S3 if needed—after switching, expired files in the database will be deleted, and everything will be stored in S3, no manual migration is needed.
+It's recommended to start with the database and switch to S3 if needed. After switching, expired files in the database will be deleted, and everything will be stored in S3. No manual migration is needed.
+
+Configure the following environment variables:
+
+- `AP_S3_ACCESS_KEY_ID`
+- `AP_S3_SECRET_ACCESS_KEY`
+- `AP_S3_ENDPOINT`
+- `AP_S3_BUCKET`
+- `AP_S3_REGION`
+- `AP_MAX_FILE_SIZE_MB`
+- `AP_FILE_STORAGE_LOCATION` (set to `S3`)
+
 </Accordion>
 <Accordion title="Troubleshooting (Optional)" icon="wrench">
     If you encounter any issues, check out our [Troubleshooting](./troubleshooting) guide.
