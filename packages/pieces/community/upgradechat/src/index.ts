@@ -57,7 +57,7 @@ export const upgradechat = createPiece({
   auth: upgradechatAuth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/upgradechat.png',
-  authors: ['Trayshmhirk'],
+  authors: ['Trayshmhirk', 'OmarSayed'],
   actions: [
     addOrUpdateContact,
     addOrUpdateContactExtended,
