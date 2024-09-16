@@ -7,6 +7,7 @@ import { summarizeText } from './lib/actions/summarize-text';
 export const activepiecesAi = createPiece({
   displayName: 'Text AI',
   auth: PieceAuth.None(),
+  minimumSupportedRelease: '0.32.1',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   logoUrl: 'https://cdn.activepieces.com/pieces/text-ai.svg',
   authors: ['anasbarg'],

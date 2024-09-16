@@ -2,37 +2,17 @@ import {
   AI,
   AIChatMessage,
   AIChatRole,
-  AiProviders,
+  aiProps,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
 
 export const askAi = createAction({
   name: 'askAi',
   displayName: 'Ask AI',
   description: '',
   props: {
-    provider: Property.StaticDropdown({
-      displayName: 'Provider',
-      required: true,
-      options: {
-        disabled: false,
-        options: AiProviders,
-      },
-    }),
-    model: Property.Dropdown({
-      displayName: 'Model',
-      required: true,
-      refreshers: ['provider'],
-      async options(propsValue, ctx) {
-        const provider = propsValue['provider'];
-        const models = AiProviders.find((p) => p.value === provider)?.models;
-        return {
-          disabled: isNil(models),
-          options: models ?? [],
-        };
-      },
-    }),
+    provider: aiProps.provider,
+    model: aiProps.model,
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
@@ -55,9 +35,8 @@ export const askAi = createAction({
     }),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
 
-    const ai = AI({ provider, server: context.server });
+    const ai = AI({ provider: context.propsValue.provider, server: context.server });
 
     const storage = context.store;
 

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Brain, Key, Lock, Palette, ShieldPlus } from 'lucide-react';
+import { Key, Lock, Palette, ShieldPlus } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
 

@@ -36,7 +36,7 @@ function getMessage(run: FlowRun | null, retentionDays: number | null) {
   if (
     [FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT].includes(run.status)
   ) {
-    return t("There are no logs captured for this run.");
+    return t('There are no logs captured for this run.');
   }
   if (isNil(run.logsFileId)) {
     return t(
@@ -55,17 +55,17 @@ const FlowRunDetails = React.memo(() => {
     (state) => {
       const paths: StepPathWithName[] = state.run?.steps
         ? Object.keys(state.run.steps).map((stepName: string) => ({
-          stepName,
-          path: [],
-        }))
+            stepName,
+            path: [],
+          }))
         : [];
       const stepDetails =
         !isNil(state.selectedStep) && !isNil(state.run)
           ? builderSelectors.getStepOutputFromExecutionPath({
-            selectedPath: state.selectedStep,
-            executionState: state.run,
-            stepName: state.selectedStep.stepName,
-          })
+              selectedPath: state.selectedStep,
+              executionState: state.run,
+              stepName: state.selectedStep.stepName,
+            })
           : null;
       return [state.setLeftSidebar, state.run, paths, stepDetails];
     },

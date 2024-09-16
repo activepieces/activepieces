@@ -50,7 +50,7 @@ export const ProjectPlan = Type.Object({
     connections: Type.Number(),
     teamMembers: Type.Number(),
     tasks: Type.Number(),
-    aiTokens: Type.Optional(Type.Number()),
+    aiTokens: Type.Number(),
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>

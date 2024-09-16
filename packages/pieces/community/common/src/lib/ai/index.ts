@@ -1,7 +1,5 @@
 import { ServerContext } from '@activepieces/pieces-framework';
-import { anthropic } from './providers/anthropic';
-import { openai } from './providers/openai';
-import { AiProvider, AiProviders } from './providers';
+import { AiProvider, AI_PROVIDERS } from './providers';
 
 export type AI<SDK> = {
   provider: string;
@@ -90,7 +88,7 @@ export const AI = ({
   server: ServerContext;
 }): AI<unknown> => {
   const proxyUrl = `${server.apiUrl}v1/ai-providers/proxy/${provider}`;
-  const factory = AiProviders.find((p) => p.value === provider)?.factory;
+  const factory = AI_PROVIDERS.find((p) => p.value === provider)?.factory;
   const impl = factory?.({ proxyUrl, engineToken: server.token });
 
   if (!impl) {

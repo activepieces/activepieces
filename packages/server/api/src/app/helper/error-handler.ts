@@ -18,6 +18,7 @@ export const errorHandler = async (
             [ErrorCode.PERMISSION_DENIED]: StatusCodes.FORBIDDEN,
             [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,
+            [ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER]: StatusCodes.NOT_IMPLEMENTED,
             [ErrorCode.EXISTING_ALERT_CHANNEL]: StatusCodes.CONFLICT,
             [ErrorCode.FLOW_IN_USE]: StatusCodes.CONFLICT,
             [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,
