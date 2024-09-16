@@ -147,6 +147,7 @@ import { LogFileRelationWithFlowRun1725639666232 } from './migration/postgres/17
 import { AddLogsFileIdIndex1725699690971 } from './migration/postgres/1725699690971-AddLogsFileIdIndex'
 import { AddAiProviderTable1726445983043 } from './migration/postgres/1726445983043-AddAiProviderTable'
 import { AddAiTokensForProjectPlan1726446092010 } from './migration/postgres/1726446092010-AddAiTokensForProjectPlan'
+import { SupportS3Files1726364421096 } from './migration/postgres/1726364421096-SupportS3Files'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -243,6 +244,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         LogFileRelationWithFlowRun1725639666232,
         AddLogsFileIdIndex1725699690971,
         AddAiProviderTable1726445983043,
+        SupportS3Files1726364421096,
     ]
 
     const edition = system.getEdition()

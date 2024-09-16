@@ -310,7 +310,7 @@ export const formUtils = {
           break;
         case PropertyType.CHECKBOX:
           propsSchema[name] = Type.Union([
-            Type.Boolean(),
+            Type.Boolean({ defaultValue: false }),
             Type.String({
               minLength: property.required ? 1 : undefined,
             }),
@@ -350,7 +350,6 @@ export const formUtils = {
           const arraySchema = isNil(property.properties)
             ? Type.Unknown()
             : formUtils.buildSchema(property.properties);
-          // Only accepts connections variable.
           propsSchema[name] = Type.Union([
             Type.Array(arraySchema, {
               minItems: property.required ? 1 : undefined,
@@ -398,7 +397,6 @@ export const formUtils = {
         );
       }
     }
-
     return Type.Object(propsSchema);
   },
   getDefaultValueForStep,

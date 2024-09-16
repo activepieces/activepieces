@@ -1,4 +1,4 @@
-import { FileId } from '../file/file'
+import { FileId } from '../file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'

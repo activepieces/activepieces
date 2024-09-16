@@ -367,12 +367,12 @@ export const flowRunService = {
         const flowRun = await this.getOneOrThrow(params)
         let steps = {}
         if (!isNil(flowRun.logsFileId)) {
-            const logFile = await fileService.getOneOrThrow({
+            const { data } = await fileService.getDataOrThrow({
                 fileId: flowRun.logsFileId,
                 projectId: flowRun.projectId,
             })
 
-            const serializedExecutionOutput = logFile.data.toString('utf-8')
+            const serializedExecutionOutput = data.toString('utf-8')
             const executionOutput: ExecutioOutputFile = JSON.parse(
                 serializedExecutionOutput,
             )

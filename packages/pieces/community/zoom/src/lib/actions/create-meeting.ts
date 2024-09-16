@@ -62,6 +62,31 @@ const action = () => {
         description: 'Duration of the meeting',
         required: false,
       }),
+      auto_recording: Property.StaticDropdown({
+        displayName: 'Auto Recording',
+        required: false,
+        options: {
+          disabled: false,
+          options: [
+            { label: 'Local', value: 'local' },
+            { label: 'Cloud', value: 'cloud' },
+            { label: 'None', value: 'none' },
+          ],
+        },
+      }),
+      audio: Property.StaticDropdown({
+        displayName: 'Audio',
+        required: false,
+        options: {
+          disabled: false,
+          options: [
+            { label: 'Both telephony and VoIP', value: 'both' },
+            { label: 'Telephony only', value: 'telephony' },
+            { label: 'VoIP only', value: 'voip' },
+            { label: 'Third party audio conference', value: 'thirdParty' },
+          ],
+        },
+      }),
       agenda: Property.LongText({
         displayName: 'Agenda',
         description: "The meeting's agenda",
@@ -96,6 +121,14 @@ const action = () => {
         ...defaults,
         ...context.propsValue,
       };
+
+      if (context.propsValue.auto_recording) {
+        body.settings.auto_recording = context.propsValue.auto_recording;
+      }
+
+      if (context.propsValue.audio) {
+        body.settings.audio = context.propsValue.audio;
+      }
       delete body['auth'];
       const request: HttpRequest<MeetingMessageBody> = {
         method: HttpMethod.POST,
@@ -109,7 +142,6 @@ const action = () => {
       };
 
       const result = await httpClient.sendRequest<MeetingResponseBody>(request);
-      console.debug('Meeting creation response', result);
 
       if (result.status === 201) {
         return result.body;

@@ -4,6 +4,7 @@ import {
     ApIdSchema,
     BaseColumnSchemaPart,
     BLOB_COLUMN_TYPE,
+    JSONB_COLUMN_TYPE,
 } from '../database/database-common'
 
 type FileSchema = File & {
@@ -18,7 +19,27 @@ export const FileEntity = new EntitySchema<FileSchema>({
         platformId: { ...ApIdSchema, nullable: true },
         data: {
             type: BLOB_COLUMN_TYPE,
+            nullable: true,
+        },
+        location: {
+            type: String,
             nullable: false,
+        },
+        fileName: {
+            type: String,
+            nullable: true,
+        },
+        size: {
+            type: Number,
+            nullable: true,
+        },
+        metadata: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
+        s3Key: {
+            type: String,
+            nullable: true,
         },
         type: {
             type: String,

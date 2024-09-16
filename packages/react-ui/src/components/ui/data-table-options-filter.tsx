@@ -109,9 +109,10 @@ export function DataTableFacetedFilter<TData, TValue>({
 
       return (
         <DatePickerWithRange
+          presetType="past"
           onChange={handleFilterChange}
-          from={from || undefined}
-          to={to || undefined}
+          from={from ?? undefined}
+          to={to ?? undefined}
         />
       );
     }

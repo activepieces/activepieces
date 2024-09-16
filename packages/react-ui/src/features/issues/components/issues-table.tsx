@@ -13,22 +13,18 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { PopulatedIssue } from '@activepieces/ee-shared';
-import {
-  ApEdition,
-  ApFlagId,
-  FlowRunStatus,
-  Permission,
-} from '@activepieces/shared';
+import { FlowRunStatus, Permission } from '@activepieces/shared';
 
+import { TableTitle } from '../../../components/ui/table-title';
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
 
 const fetchData = async (
-  _params: Record<string, string>,
+  _: Record<string, string>,
   pagination: PaginationParams,
 ) => {
   return issuesApi.list({
@@ -40,8 +36,10 @@ const fetchData = async (
 
 export default function IssuesTable() {
   const navigate = useNavigate();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { refetch } = issueHooks.useIssuesNotification(edition);
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { refetch } = issueHooks.useIssuesNotification(
+    platform.flowIssuesEnabled,
+  );
 
   const handleMarkAsResolved = async (
     flowDisplayName: string,
@@ -145,7 +143,7 @@ export default function IssuesTable() {
     <div className="flex-col w-full">
       <div className="mb-4 flex">
         <div className="flex flex-col">
-          <h1 className="text-3xl font-bold">{t('Issues')}</h1>
+          <TableTitle>{t('Issues')}</TableTitle>
           <span className="text-md text-muted-foreground">
             {t(
               'Track failed runs grouped by flow name, and mark them as resolved when fixed.',

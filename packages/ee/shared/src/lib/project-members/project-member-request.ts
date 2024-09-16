@@ -6,14 +6,6 @@ export const AcceptInvitationRequest = Type.Object({
 })
 export type AcceptInvitationRequest = Static<typeof AcceptInvitationRequest>;
 
-export const UpsertProjectMemberRequestBody = Type.Object({
-    projectId: Type.String(),
-    userId: Type.String(),
-    role: Type.Enum(ProjectMemberRole),
-});
-
-export type UpsertProjectMemberRequestBody = Static<typeof UpsertProjectMemberRequestBody>;
-
 export const ListProjectMembersRequestQuery = Type.Object({
     projectId: Type.String(),
     cursor: Type.Optional(Type.String()),

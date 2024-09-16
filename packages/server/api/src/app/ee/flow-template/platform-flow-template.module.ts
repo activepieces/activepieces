@@ -7,6 +7,7 @@ import {
     ListFlowTemplatesRequest,
     Principal,
     PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
     TemplateType,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -75,14 +76,17 @@ async function resolveTemplatesPlatformId(principal: Principal, platformId: stri
     }
     const platform = await platformService.getOneOrThrow(platformId)
     return platform.id
-  
-}   
+
+}
 
 const GetParams = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
+        tags: ['flow-templates'],
+        description: 'Get a flow template',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
     },
 }
@@ -92,24 +96,33 @@ const ListFlowParams = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
+        tags: ['flow-templates'],
+        description: 'List flow templates',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListFlowTemplatesRequest,
     },
 }
 
 const DeleteParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
+        description: 'Delete a flow template',
+        tags: ['flow-templates'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
     },
 }
 
 const CreateParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
+        description: 'Create a flow template',
+        tags: ['flow-templates'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: CreateFlowTemplateRequest,
     },
 }

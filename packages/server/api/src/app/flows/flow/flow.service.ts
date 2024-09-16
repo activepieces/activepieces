@@ -111,7 +111,6 @@ export const flowService = {
         if (status !== undefined) {
             queryWhere.status = In(status)
         }
-
         const paginationResult = await paginator.paginate(
             flowRepo().createQueryBuilder('flow').where(queryWhere),
         )
@@ -129,13 +128,7 @@ export const flowService = {
         })
 
         const populatedFlows = await Promise.all(populatedFlowPromises)
-
-        let filteredPopulatedFlows = populatedFlows
-        
-        if (name) {
-            filteredPopulatedFlows = populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i')))
-        }
-
+        const filteredPopulatedFlows = name ? populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i'))) : populatedFlows
         return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
     },
 
@@ -330,22 +323,22 @@ export const flowService = {
             id: flowId,
             projectId,
         })
-        
-        const { schedule } = flow
-        const skipUpdateFlowCount = isNil(schedule) || flow.status === FlowStatus.DISABLED 
 
-        if ( skipUpdateFlowCount ) {
+        const { schedule } = flow
+        const skipUpdateFlowCount = isNil(schedule) || flow.status === FlowStatus.DISABLED
+
+        if (skipUpdateFlowCount) {
             return
         }
         const newFailureCount = success ? 0 : (schedule.failureCount ?? 0) + 1
-        
+
         if (newFailureCount >= TRIGGER_FAILURES_THRESHOLD) {
             await this.updateStatus({
                 id: flowId,
                 projectId,
                 newStatus: FlowStatus.DISABLED,
             })
-            
+
             await emailService.sendExceedFailureThresholdAlert(projectId, flow.version.displayName)
             rejectedPromiseHandler(telemetry.trackProject(projectId, {
                 name: TelemetryEventName.TRIGGER_FAILURES_EXCEEDED,
@@ -420,7 +413,7 @@ export const flowService = {
                 id,
                 projectId,
             })
-            
+
             await flowSideEffects.preDelete({
                 flowToDelete,
             })

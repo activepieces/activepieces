@@ -37,7 +37,7 @@ export const federatedAuthnController: FastifyPluginAsyncTypebox = async (
             providerName: req.body.providerName,
             code: req.body.code,
         })
-        eventsHooks.get().sendUserEvent(req, {
+        eventsHooks.get().sendUserEventFromRequest(req, {
             action: ApplicationEventName.USER_SIGNED_UP,
             data: {
                 source: 'sso',

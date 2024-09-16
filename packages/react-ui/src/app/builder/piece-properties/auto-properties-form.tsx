@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import React from 'react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
-import { JsonEditor } from '@/components/custom/json-editior';
+import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { FormControl, FormField } from '@/components/ui/form';
@@ -52,19 +52,19 @@ const AutoPropertiesFormComponent = React.memo(
           return (
             <FormField
               key={propertyName}
-              name={prefixValue + '.' + propertyName}
+              name={`${prefixValue}.${propertyName}`}
               control={form.control}
               render={({ field }) =>
-                selectRightComponent(
+                selectFormComponentForProperty({
                   field,
                   propertyName,
-                  prefixValue + '.' + propertyName,
-                  props[propertyName],
+                  inputName: `${prefixValue}.${propertyName}`,
+                  property: props[propertyName],
                   allowDynamicValues,
-                  markdownVariables ?? {},
-                  useMentionTextInput,
-                  disabled ?? false,
-                )
+                  markdownVariables: markdownVariables ?? {},
+                  useMentionTextInput: useMentionTextInput,
+                  disabled: disabled ?? false,
+                })
               }
             />
           );
@@ -74,16 +74,27 @@ const AutoPropertiesFormComponent = React.memo(
   },
 );
 
-const selectRightComponent = (
-  field: ControllerRenderProps<Record<string, any>, string>,
-  propertyName: string,
-  inputName: string,
-  property: PieceProperty,
-  allowDynamicValues: boolean,
-  markdownVariables: Record<string, string>,
-  useMentionTextInput: boolean,
-  disabled: boolean,
-) => {
+type selectFormComponentForPropertyParams = {
+  field: ControllerRenderProps<Record<string, any>, string>;
+  propertyName: string;
+  inputName: string;
+  property: PieceProperty;
+  allowDynamicValues: boolean;
+  markdownVariables: Record<string, string>;
+  useMentionTextInput: boolean;
+  disabled: boolean;
+};
+
+const selectFormComponentForProperty = ({
+  field,
+  propertyName,
+  inputName,
+  property,
+  allowDynamicValues,
+  markdownVariables,
+  useMentionTextInput,
+  disabled,
+}: selectFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
       return (
@@ -92,6 +103,7 @@ const selectRightComponent = (
           propertyName={propertyName}
           field={field}
           disabled={disabled}
+          inputName={inputName}
           allowDynamicValues={allowDynamicValues}
         >
           <ArrayPieceProperty
@@ -108,6 +120,7 @@ const selectRightComponent = (
           property={property}
           propertyName={propertyName}
           field={field}
+          inputName={inputName}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
@@ -126,6 +139,7 @@ const selectRightComponent = (
           propertyName={propertyName}
           disabled={disabled}
           field={field}
+          inputName={inputName}
           allowDynamicValues={allowDynamicValues}
           placeBeforeLabelText={true}
         >
@@ -151,6 +165,7 @@ const selectRightComponent = (
         <AutoFormFieldWrapper
           property={property}
           propertyName={propertyName}
+          inputName={inputName}
           field={field}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
@@ -169,6 +184,7 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           propertyName={propertyName}
+          inputName={inputName}
           property={property}
           field={field}
           disabled={disabled}
@@ -188,6 +204,7 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
+          inputName={inputName}
           propertyName={propertyName}
           field={field}
           disabled={disabled}
@@ -211,6 +228,7 @@ const selectRightComponent = (
     case PropertyType.DROPDOWN:
       return (
         <AutoFormFieldWrapper
+          inputName={inputName}
           property={property}
           propertyName={propertyName}
           field={field}
@@ -237,6 +255,7 @@ const selectRightComponent = (
       return (
         <AutoFormFieldWrapper
           property={property}
+          inputName={inputName}
           field={field}
           propertyName={propertyName}
           disabled={disabled}

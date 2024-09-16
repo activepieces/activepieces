@@ -5,8 +5,10 @@ import { linearCreateIssue } from './lib/actions/issues/create-issue';
 import { linearUpdateIssue } from './lib/actions/issues/update-issue';
 import { linearCreateProject } from './lib/actions/projects/create-project';
 import { linearUpdateProject } from './lib/actions/projects/update-project';
-import { linearNewIssue } from './lib/triggers/new-issue';
 import { linearRawGraphqlQuery } from './lib/actions/raw-graphql-query';
+import { linearNewIssue } from './lib/triggers/new-issue';
+import { linearUpdatedIssue } from './lib/triggers/updated-issue';
+import { linearRemovedIssue } from './lib/triggers/removed-issue';
 
 const markdown = `
 To obtain your API key, follow these steps:
@@ -48,5 +50,5 @@ export const linear = createPiece({
     linearCreateComment,
     linearRawGraphqlQuery,
   ],
-  triggers: [linearNewIssue],
+  triggers: [linearNewIssue, linearUpdatedIssue, linearRemovedIssue],
 });

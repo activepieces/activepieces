@@ -19,7 +19,7 @@ export const triggerEventsApi = {
     });
   },
   deleteWebhookSimulation(flowId: string) {
-    return api.delete<void>('/v1/trigger-events', {
+    return api.delete<void>('/v1/webhook-simulation', {
       flowId,
     });
   },

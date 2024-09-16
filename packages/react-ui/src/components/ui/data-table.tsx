@@ -43,8 +43,8 @@ export type RowDataWithActions<TData extends DataWithId> = TData & {
   update: (payload: Partial<TData>) => void;
 };
 
-type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>[]> = {
-  [K in F[number] as K['accessorKey']]: K['type'] extends 'select'
+type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>> = {
+  [K in F as K['accessorKey']]: K['type'] extends 'select'
     ? K['options'][number]['value'][]
     : K['options'][number]['value'];
 };
@@ -76,7 +76,7 @@ interface DataTableProps<
   TData extends DataWithId,
   TValue,
   Keys extends string,
-  F extends DataTableFilter<Keys>[],
+  F extends DataTableFilter<Keys>,
 > {
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
   fetchData: (
@@ -87,25 +87,27 @@ interface DataTableProps<
     row: RowDataWithActions<TData>,
     e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
   ) => void;
-  filters?: [...F];
+  filters?: F[];
   refresh?: number;
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
   actions?: DataTableAction<TData>[];
+  hidePagination?: boolean;
 }
 
 export function DataTable<
   TData extends DataWithId,
   TValue,
   Keys extends string,
-  F extends DataTableFilter<Keys>[],
+  F extends DataTableFilter<Keys>,
 >({
   columns: columnsInitial,
   fetchData,
   onRowClick,
-  filters,
+  filters = [] as F[],
   refresh,
   actions = [],
   onSelectedRowsChange,
+  hidePagination,
 }: DataTableProps<TData, TValue, Keys, F>) {
   const columns = columnsInitial.concat([
     {
@@ -150,7 +152,7 @@ export function DataTable<
     setTableData([]);
     try {
       const limit = params.get('limit') ?? undefined;
-      const filterNames = (filters ?? []).map((filter) => filter.accessorKey);
+      const filterNames = filters.map((filter) => filter.accessorKey);
       const paramsObject = filterNames
         .map((key) => [key, params.getAll(key)] as const)
         .reduce((acc, [key, values]) => {
@@ -158,7 +160,17 @@ export function DataTable<
           if (!value) {
             return acc;
           }
-          return { ...acc, [key]: value };
+          const filter = filters.find((filter) => filter.accessorKey === key);
+          if (!filter || value.length > 0) {
+            return { ...acc, [key]: value };
+          }
+          if (filter.type === 'select') {
+            return { ...acc, [key]: [] };
+          }
+          return {
+            ...acc,
+            [key]: '',
+          };
         }, {} as FilterRecord<Keys, F>);
 
       const response = await fetchData(paramsObject, {
@@ -223,9 +235,8 @@ export function DataTable<
     setSearchParams(
       (prev) => {
         const newParams = new URLSearchParams(prev);
-        if (currentCursor) {
-          newParams.set('cursor', currentCursor);
-        }
+
+        newParams.set('cursor', currentCursor ?? '');
         newParams.set('limit', `${table.getState().pagination.pageSize}`);
         return newParams;
       },
@@ -320,45 +331,47 @@ export function DataTable<
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <p className="text-sm font-medium">Rows per page</p>
-        <Select
-          value={`${table.getState().pagination.pageSize}`}
-          onValueChange={(value) => {
-            table.setPageSize(Number(value));
-          }}
-        >
-          <SelectTrigger className="h-9 min-w-[70px] w-auto">
-            <SelectValue placeholder={table.getState().pagination.pageSize} />
-          </SelectTrigger>
-          <SelectContent side="top">
-            {[10, 30, 50].map((pageSize) => (
-              <SelectItem key={pageSize} value={`${pageSize}`}>
-                {pageSize}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentCursor(previousPageCursor)}
-          disabled={!previousPageCursor}
-        >
-          {t('Previous')}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            console.log('setCurrentCursor', nextPageCursor);
-            setCurrentCursor(nextPageCursor);
-          }}
-          disabled={!nextPageCursor}
-        >
-          {t('Next')}
-        </Button>
-      </div>
+      {!hidePagination && (
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <p className="text-sm font-medium">Rows per page</p>
+          <Select
+            value={`${table.getState().pagination.pageSize}`}
+            onValueChange={(value) => {
+              table.setPageSize(Number(value));
+              setCurrentCursor(undefined);
+            }}
+          >
+            <SelectTrigger className="h-9 min-w-[70px] w-auto">
+              <SelectValue placeholder={table.getState().pagination.pageSize} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[10, 30, 50].map((pageSize) => (
+                <SelectItem key={pageSize} value={`${pageSize}`}>
+                  {pageSize}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentCursor(previousPageCursor)}
+            disabled={!previousPageCursor}
+          >
+            {t('Previous')}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setCurrentCursor(nextPageCursor);
+            }}
+            disabled={!nextPageCursor}
+          >
+            {t('Next')}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

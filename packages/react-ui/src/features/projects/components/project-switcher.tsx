@@ -3,7 +3,9 @@
 import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
+import { useLocation } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -20,15 +22,25 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
+import { ScrollArea } from '../../../components/ui/scroll-area';
 import { projectHooks } from '../../../hooks/project-hooks';
 
 function ProjectSwitcher() {
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { data: projects } = projectHooks.useProjects();
   const [open, setOpen] = React.useState(false);
+  const { embedState } = useEmbedding();
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
 
+  const sortedProjects = projects?.sort((a, b) => {
+    return a.displayName.localeCompare(b.displayName);
+  });
+
+  if (embedState.isEmbedded) {
+    return null;
+  }
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -49,27 +61,34 @@ function ProjectSwitcher() {
             <CommandInput placeholder="Search project..." />
             <CommandEmpty>No projects found.</CommandEmpty>
             <CommandGroup key="projects" heading="Projects">
-              {projects &&
-                projects.map((project) => (
-                  <CommandItem
-                    key={project.id}
-                    onSelect={() => {
-                      setCurrentProject(queryClient, project);
-                      setOpen(false);
-                    }}
-                    className="text-sm"
-                  >
-                    {project.displayName}
-                    <CheckIcon
-                      className={cn(
-                        'ml-auto h-4 w-4',
-                        currentProject?.id === project.id
-                          ? 'opacity-100'
-                          : 'opacity-0',
-                      )}
-                    />
-                  </CommandItem>
-                ))}
+              <ScrollArea viewPortClassName="max-h-[200px]">
+                {sortedProjects &&
+                  sortedProjects.map((project) => (
+                    <CommandItem
+                      key={project.id}
+                      onSelect={() => {
+                        setCurrentProject(
+                          queryClient,
+                          project,
+                          location.pathname,
+                        );
+                        setOpen(false);
+                      }}
+                      value={project.id}
+                      className="text-sm"
+                    >
+                      {project.displayName}
+                      <CheckIcon
+                        className={cn(
+                          'ml-auto h-4 w-4',
+                          currentProject?.id === project.id
+                            ? 'opacity-100'
+                            : 'opacity-0',
+                        )}
+                      />
+                    </CommandItem>
+                  ))}
+              </ScrollArea>
             </CommandGroup>
           </CommandList>
         </Command>

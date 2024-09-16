@@ -33,9 +33,7 @@ interface DefaultEventsMap {
 const initialMessages: CopilotMessage[] = [
   {
     messageType: 'text',
-    content: t(
-      'Hi! I can help you writing your code. What do you need help with?',
-    ),
+    content: t("Hi! Give me an idea and I'll write the code for it."),
     userType: 'bot',
   },
 ];
@@ -136,6 +134,14 @@ export const CopilotSidebar = () => {
   };
 
   const updateAction = (newAction: Action): void => {
+    setMessages([
+      ...messages,
+      {
+        content: t('I have updated the code piece for you.'),
+        userType: 'bot',
+        messageType: 'text',
+      },
+    ]);
     applyOperation(
       {
         type: FlowOperationType.UPDATE_ACTION,

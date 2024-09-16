@@ -13,7 +13,7 @@ const getIvm = () => {
     }
     return ivmCache as typeof import('isolated-vm')
 }
-  
+
 /**
  * Runs code in a V8 Isolate sandbox
  */
@@ -48,9 +48,10 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
 
         try {
+            // It is to avoid strucutedClone issue of proxy objects / functions, It will throw cannot be cloned error.
             const isolateContext = await initIsolateContext({
                 isolate,
-                codeContext: scriptContext,
+                codeContext: JSON.parse(JSON.stringify(scriptContext)),
             })
 
             return await executeIsolate({

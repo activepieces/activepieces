@@ -48,7 +48,6 @@ import {
   Permission,
   PlatformRole,
   ProjectMemberRole,
-  SendUserInvitationRequest,
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
@@ -57,7 +56,7 @@ import { userInvitationsHooks } from '../lib/user-invitations-hooks';
 const FormSchema = Type.Object({
   email: Type.String({
     errorMessage: t('Please enter a valid email address'),
-    pattern: formatUtils.EMAIL_REGEX,
+    pattern: formatUtils.emailRegex.source,
   }),
   type: Type.Enum(InvitationType, {
     errorMessage: t('Please select invitation type'),
@@ -90,18 +89,24 @@ export function InviteUserDialog() {
   const { mutate, isPending } = useMutation<
     UserInvitationWithLink,
     HttpError,
-    SendUserInvitationRequest
+    FormSchema
   >({
     mutationFn: (data) => {
-      const request: SendUserInvitationRequest = {
-        email: data.email,
-        type: data.type,
-        platformRole: data.platformRole,
-        projectId: data.type === InvitationType.PLATFORM ? null : project.id,
-        projectRole:
-          data.type === InvitationType.PLATFORM ? undefined : data.projectRole,
-      };
-      return userInvitationApi.invite(request);
+      switch (data.type) {
+        case InvitationType.PLATFORM:
+          return userInvitationApi.invite({
+            email: data.email,
+            type: data.type,
+            platformRole: data.platformRole,
+          });
+        case InvitationType.PROJECT:
+          return userInvitationApi.invite({
+            email: data.email,
+            type: data.type,
+            projectRole: data.projectRole,
+            projectId: project.id,
+          });
+      }
     },
     onSuccess: (res) => {
       if (res.link) {
@@ -154,6 +159,7 @@ export function InviteUserDialog() {
         <DialogTrigger asChild>
           <Button
             variant={'outline'}
+            size="sm"
             className="flex items-center justify-center gap-2 w-full"
           >
             <Plus className="size-4" />
