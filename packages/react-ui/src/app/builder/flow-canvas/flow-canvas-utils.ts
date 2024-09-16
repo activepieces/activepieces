@@ -53,6 +53,7 @@ export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
     return traverseFlow(version.trigger);
   },
+  createFocusStepInGraphParams
 };
 
 function traverseFlow(step: Action | Trigger | undefined): ApGraph {
@@ -302,6 +303,17 @@ function mergeGraph(graph1: ApGraph, graph2: ApGraph): ApGraph {
     nodes: [...graph1.nodes, ...graph2.nodes],
     edges: [...graph1.edges, ...graph2.edges],
   };
+}
+
+function createFocusStepInGraphParams(stepName:string){
+  return {
+    nodes: [
+      {id:stepName}
+    ],
+    duration: 1000,
+    maxZoom: 1,
+    minZoom: 1,
+  }
 }
 
 type Step = Action | Trigger;

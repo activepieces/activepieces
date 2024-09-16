@@ -4,6 +4,8 @@ import React, { useMemo } from 'react';
 import { BuilderState } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import { FlowVersion, flowHelper } from '@activepieces/shared';
+import { useReactFlow } from '@xyflow/react';
+import { flowCanvasUtils } from '../flow-canvas-utils';
 
 type IncompleteSettingsButtonProps = {
   flowVersion: FlowVersion;
@@ -20,12 +22,16 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
         .length,
     [flowVersion],
   );
+  const { fitView } = useReactFlow();
   function onClick() {
     const invalidSteps = flowHelper
       .getAllSteps(flowVersion.trigger)
       .filter((step) => !step.valid);
     if (invalidSteps.length > 0) {
       selectStepByName(invalidSteps[0].name);
+      fitView(
+        flowCanvasUtils.createFocusStepInGraphParams(invalidSteps[0].name),
+      );
     }
   }
 

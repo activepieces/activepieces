@@ -1,13 +1,17 @@
-import { ViewportPortal } from '@xyflow/react';
+import { useReactFlow, ViewportPortal } from '@xyflow/react';
 import React from 'react';
 
-import { AP_NODE_SIZE } from '@/app/builder/flow-canvas/flow-canvas-utils';
+import {
+  AP_NODE_SIZE,
+  flowCanvasUtils,
+} from '@/app/builder/flow-canvas/flow-canvas-utils';
 import FlowEndWidget from '@/app/builder/flow-canvas/widgets/flow-end-widget';
 import IncompleteSettingsButton from '@/app/builder/flow-canvas/widgets/incomplete-settings-widget';
 import { TestFlowWidget } from '@/app/builder/flow-canvas/widgets/test-flow-widget';
 import ViewOnlyWidget from '@/app/builder/flow-canvas/widgets/view-only-widget';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { flowRunUtils } from '../../../../features/flow-runs/lib/flow-run-utils';
 
 const AboveFlowWidgets = React.memo(() => {
   const [flowVersion, setRun, selectStepByName, readonly] =
@@ -17,7 +21,7 @@ const AboveFlowWidgets = React.memo(() => {
       state.selectStepByName,
       state.readonly,
     ]);
-
+  const { fitView } = useReactFlow();
   return (
     <ViewportPortal>
       <div
@@ -34,7 +38,20 @@ const AboveFlowWidgets = React.memo(() => {
             <>
               <TestFlowWidget
                 flowVersion={flowVersion}
-                setRun={setRun}
+                setRun={(run, flowVersion) => {
+                  setRun(run, flowVersion, () => {
+                    const failedStep = run.steps
+                      ? flowRunUtils.findFailedStep(run)
+                      : null;
+                    if (failedStep) {
+                      fitView(
+                        flowCanvasUtils.createFocusStepInGraphParams(
+                          failedStep,
+                        ),
+                      );
+                    }
+                  });
+                }}
               ></TestFlowWidget>
               <IncompleteSettingsButton
                 flowVersion={flowVersion}

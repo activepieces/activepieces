@@ -26,8 +26,8 @@ const FlowStepInputOutput = React.memo(
     return (
       <ScrollArea className="h-full p-4 ">
         {stepDetails && (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 justify-start mb-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2 justify-start">
               <StepStatusIcon
                 status={stepDetails.status}
                 size="5"
@@ -42,7 +42,6 @@ const FlowStepInputOutput = React.memo(
               </span>
             </div>
             <JsonViewer title={t('Input')} json={stepDetails.input} />
-            <div className="mt-4"></div>
             <JsonViewer title={t('Output')} json={stepOutput} />
           </div>
         )}

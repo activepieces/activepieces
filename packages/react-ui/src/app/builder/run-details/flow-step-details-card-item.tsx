@@ -18,6 +18,8 @@ import { StepStatusIcon } from '../../../features/flow-runs/components/step-stat
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 
 import { LoopIterationInput } from './loop-iteration-input';
+import { useReactFlow } from '@xyflow/react';
+import { flowCanvasUtils } from '../flow-canvas/flow-canvas-utils';
 type FlowStepDetailsCardProps = {
   stepName: string;
   depth: number;
@@ -51,7 +53,7 @@ const FlowStepDetailsCardItem = ({
       state.flowVersion,
     ];
   });
-
+  const { fitView } = useReactFlow();
   const isChildSelected = useMemo(() => {
     return step?.type === ActionType.LOOP_ON_ITEMS && selectedStep
       ? flowHelper.isChildOf(step, selectedStep)
@@ -92,6 +94,7 @@ const FlowStepDetailsCardItem = ({
           onClick={() => {
             if (!isStepSelected) {
               selectStepByName(stepName);
+              fitView(flowCanvasUtils.createFocusStepInGraphParams(stepName));
               setIsOpen(true);
             } else {
               setIsOpen(!isOpen);
@@ -125,9 +128,9 @@ const FlowStepDetailsCardItem = ({
               </Button>
             )}
             <img className="w-6 h-6" src={stepMetadata?.logoUrl} />
-            <div className="break-all truncate">{`${stepIndex + 1}. ${
-              step?.displayName
-            }`}</div>
+            <div className="break-all truncate min-w-0 grow-1 shrink-1">{`${
+              stepIndex + 1
+            }. ${step?.displayName}`}</div>
             <div className="w-2"></div>
             <div className="flex gap-1 justify-end  items-center flex-grow">
               {isLoopStep && isStepSelected && (
