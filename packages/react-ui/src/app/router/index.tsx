@@ -11,6 +11,7 @@ import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { EmbedPage } from '@/app/routes/embed';
+import AIProvidersPage from '@/app/routes/platform/ai-providers';
 import AnalyticsPage from '@/app/routes/platform/analytics';
 import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
 import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
@@ -57,6 +58,7 @@ import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { ProjectRouterWrapper } from './project-route-wrapper';
+import { PlatformPiecesLayout } from '../routes/platform/pieces/platform-pieces-layout';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -323,9 +325,11 @@ const routes = [
     path: '/platform/pieces',
     element: (
       <PlatformAdminContainer>
-        <PageTitle title="Platform Pieces">
-          <PlatformPiecesPage />
-        </PageTitle>
+        <PlatformPiecesLayout>
+          <PageTitle title="Platform Pieces">
+            <PlatformPiecesPage />
+          </PageTitle>
+        </PlatformPiecesLayout>
       </PlatformAdminContainer>
     ),
   },
@@ -388,6 +392,18 @@ const routes = [
             <BrandingPage />
           </PageTitle>
         </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/pieces/ai',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformPiecesLayout>
+          <PageTitle title="AI Providers">
+            <AIProvidersPage />
+          </PageTitle>
+        </PlatformPiecesLayout>
       </PlatformAdminContainer>
     ),
   },

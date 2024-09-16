@@ -10,6 +10,7 @@ export type FlowPlanLimits = {
     connections: number
     teamMembers: number
     pieces: string[]
+    aiTokens: number
     piecesFilterType: PiecesFilterType
 }
 
@@ -21,6 +22,7 @@ export const DEFAULT_FREE_PLAN_LIMIT = {
     teamMembers: 100,
     connections: 1000,
     pieces: [],
+    aiTokens: 200,
     piecesFilterType: PiecesFilterType.NONE,
     minimumPollingInterval: 5,
 }
