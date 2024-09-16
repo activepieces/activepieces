@@ -65,7 +65,11 @@ export type BuilderState = {
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
   moveToFolderClientSide: (folderId: string) => void;
-  setRun: (run: FlowRun, flowVersion: FlowVersion, sideEffect?: ()=>void ) => void;
+  setRun: (
+    run: FlowRun,
+    flowVersion: FlowVersion,
+    sideEffect?: () => void,
+  ) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
   applyOperation: (
@@ -181,7 +185,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       }),
     setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
     setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
-    setRun: async (run: FlowRun, flowVersion: FlowVersion, sideEffect?: ()=>void) =>
+    setRun: async (
+      run: FlowRun,
+      flowVersion: FlowVersion,
+      sideEffect?: () => void,
+    ) =>
       set((state) => {
         sideEffect?.();
         return {

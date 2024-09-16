@@ -1,3 +1,4 @@
+import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { ChevronRight } from 'lucide-react';
 import React, { useMemo } from 'react';
@@ -16,10 +17,9 @@ import { ActionType, flowHelper } from '@activepieces/shared';
 
 import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
+import { flowCanvasUtils } from '../flow-canvas/flow-canvas-utils';
 
 import { LoopIterationInput } from './loop-iteration-input';
-import { useReactFlow } from '@xyflow/react';
-import { flowCanvasUtils } from '../flow-canvas/flow-canvas-utils';
 type FlowStepDetailsCardProps = {
   stepName: string;
   depth: number;
