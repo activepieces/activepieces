@@ -143,6 +143,25 @@ export default function ProjectsPage() {
               },
             },
             {
+              accessorKey: 'ai-tokens',
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('AI Credits')}
+                />
+              ),
+              cell: ({ row }) => {
+                return (
+                  <div className="text-left">
+                    {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
+                    {row.original.plan.aiTokens
+                      ? formatUtils.formatNumber(row.original.plan.aiTokens)
+                      : '-'}
+                  </div>
+                );
+              },
+            },
+            {
               accessorKey: 'externalId',
               header: ({ column }) => (
                 <DataTableColumnHeader

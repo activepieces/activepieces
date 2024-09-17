@@ -279,7 +279,6 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                   type="submit"
                   className="w-full mt-4"
                   loading={isPending}
-                  onClick={() => mutate()}
                 >
                   {t('Submit')}
                 </Button>

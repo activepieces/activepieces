@@ -1,0 +1,38 @@
+---
+title: "Manage AI Providers"
+description: ""
+icon: "brain"
+---
+
+You can configure the AI providers that you want to use in your flows.
+
+## Manage AI Providers
+
+You can manage the AI providers that you want to use in your flows. To do this, go to the **AI Providers** page in the **Admin Console**.
+
+You can define the provider's base URL and the API key. 
+
+These settings will be used for all the projects for every request to the AI provider.
+
+![Manage AI Providers](/resources/screenshots/configure-openai.png)
+
+## Configure Token Limits Per Project
+
+You can configure the token limits per project. To do this, go to the project general settings and change the **AI Tokens** field to the desired value.
+
+<Note>
+  This limit is per project and is an accumulation of all the reported usage by the AI piece in the project.
+  Since only the AI piece goes through the Activepieces API,
+  using any other piece like the native OpenAI, Anthropic, Perplexity, etc. pieces will not count towards or respect this limit.
+</Note>
+
+![Manage AI Providers](/resources/screenshots/token-limits.png)
+
+### Example
+
+If you have a project with a **1000 Tokens** limit which has the following flow runs:
+
+- A run that used OpenAI (consumed **100 tokens**)
+- A run that used Anthropic (consumed **200 tokens**)
+
+the total tokens consumed for this project will be **300 tokens** and the total remaining for this project tokens will be **700 tokens**.

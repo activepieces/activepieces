@@ -589,6 +589,9 @@
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
       ],
+      "@activepieces/piece-text-ai": [
+        "packages/pieces/community/text-ai/src/index.ts"
+      ],
       "@activepieces/piece-text-helper": [
         "packages/pieces/community/text-helper/src/index.ts"
       ],
