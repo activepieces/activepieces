@@ -200,7 +200,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           leftSidebar: LeftSideBarType.RUN_DETAILS,
           rightSidebar: RightSideBarType.PIECE_SETTINGS,
           selectedStep: run.steps
-            ? flowRunUtils.findFailedStep(run) ??
+            ? flowRunUtils.findFailedStepInOutput(run.steps) ??
               state.selectedStep ??
               'trigger'
             : 'trigger',

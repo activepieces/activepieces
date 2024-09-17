@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 
 import {
-  Action,
   ActionType,
   flowHelper,
   FlowRun,
@@ -18,23 +17,22 @@ import {
   isNil,
   LoopOnItemsAction,
   LoopStepOutput,
-  LoopStepResult,
   StepOutput,
   StepOutputStatus,
   Trigger,
 } from '@activepieces/shared';
 
 export const flowRunUtils = {
-  findFailedStep,
+  findFailedStepInOutput,
   findLoopsState,
   extractStepOutput,
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: 'default' | 'success' | 'error';
     Icon:
-    | typeof Timer
-    | typeof CircleCheck
-    | typeof PauseCircleIcon
-    | typeof CircleX;
+      | typeof Timer
+      | typeof CircleCheck
+      | typeof PauseCircleIcon
+      | typeof CircleX;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
@@ -117,21 +115,23 @@ function findLoopsState(
   const loops = flowHelper
     .getAllSteps(flowVersion.trigger)
     .filter((s) => s.type === ActionType.LOOP_ON_ITEMS);
-  const failedStep = run.steps ? findFailedStep(run) : null;
+  const failedStep = run.steps ? findFailedStepInOutput(run.steps) : null;
 
-  return loops.reduce((res, step) => ({
-    ...res,
-    [step.name]: failedStep && flowHelper.isChildOf(step, failedStep)
-      ? Number.MAX_SAFE_INTEGER
-      : currentLoopsState[step.name] ?? 0,
-  }), currentLoopsState);
+  return loops.reduce(
+    (res, step) => ({
+      ...res,
+      [step.name]:
+        failedStep && flowHelper.isChildOf(step, failedStep)
+          ? Number.MAX_SAFE_INTEGER
+          : currentLoopsState[step.name] ?? 0,
+    }),
+    currentLoopsState,
+  );
 }
 
-function findFailedStep(run: FlowRun) {
-  return findFailedStepInSteps(run.steps);
-}
-
-function findFailedStepInSteps(steps: Record<string, StepOutput>): string | null {
+function findFailedStepInOutput(
+  steps: Record<string, StepOutput>,
+): string | null {
   return Object.entries(steps).reduce((res, [stepName, step]) => {
     if (step.status === StepOutputStatus.FAILED) {
       return stepName;
@@ -148,12 +148,11 @@ function findFailedStepInLoop(loopStepResult: LoopStepOutput): string | null {
     return null;
   }
   for (const iteration of loopStepResult.output.iterations) {
-    const failedStep = findFailedStepInSteps(iteration);
+    const failedStep = findFailedStepInOutput(iteration);
     if (failedStep) return failedStep;
   }
   return null;
 }
-
 
 function getLoopChildStepOutput(
   parents: LoopOnItemsAction[],
@@ -186,6 +185,7 @@ function getLoopChildStepOutput(
   }
   return childOutput;
 }
+
 function extractStepOutput(
   stepName: string,
   loopIndexes: Record<string, number>,
@@ -196,17 +196,19 @@ function extractStepOutput(
   if (stepOutput) {
     return stepOutput;
   }
-  const parents = flowHelper.findPathToStep({
-    trigger: trigger,
-    targetStepName: stepName,
-  });
-  if (parents) {
-    return getLoopChildStepOutput(
-      parents.filter((p) => p.type === ActionType.LOOP_ON_ITEMS),
-      loopIndexes,
-      stepName,
-      output,
-    );
+  const parents: LoopOnItemsAction[] = flowHelper
+    .findPathToStep({
+      targetStepName: stepName,
+      trigger: trigger,
+    })
+    .filter(
+      (p) =>
+        p.type === ActionType.LOOP_ON_ITEMS &&
+        flowHelper.isChildOf(p, stepName),
+    ) as LoopOnItemsAction[];
+
+  if (parents.length > 0) {
+    return getLoopChildStepOutput(parents, loopIndexes, stepName, output);
   }
   return undefined;
 }

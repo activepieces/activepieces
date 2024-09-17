@@ -26,8 +26,9 @@ const AboveFlowWidgets = React.memo(() => {
     <ViewportPortal>
       <div
         style={{
-          transform: `translate(0px,-${AP_NODE_SIZE.stepNode.height / 2 + 8
-            }px )`,
+          transform: `translate(0px,-${
+            AP_NODE_SIZE.stepNode.height / 2 + 8
+          }px )`,
           position: 'absolute',
           pointerEvents: 'auto',
         }}
@@ -40,13 +41,11 @@ const AboveFlowWidgets = React.memo(() => {
                 setRun={(run, flowVersion) => {
                   setRun(run, flowVersion);
                   const failedStep = run.steps
-                    ? flowRunUtils.findFailedStep(run)
+                    ? flowRunUtils.findFailedStepInOutput(run.steps)
                     : null;
                   if (failedStep) {
                     fitView(
-                      flowCanvasUtils.createFocusStepInGraphParams(
-                        failedStep,
-                      ),
+                      flowCanvasUtils.createFocusStepInGraphParams(failedStep),
                     );
                   }
                 }}
