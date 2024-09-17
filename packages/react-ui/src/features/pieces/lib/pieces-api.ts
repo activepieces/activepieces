@@ -14,13 +14,11 @@ import {
   ListPiecesRequestQuery,
   PackageType,
   PieceOptionRequest,
-  PieceScope,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
 
 import { PieceStepMetadata, StepMetadata } from './pieces-hook';
-
 export const PRIMITIVE_STEP_METADATA = {
   [ActionType.CODE]: {
     displayName: 'Code',
@@ -104,16 +102,20 @@ export const piecesApi = {
   syncFromCloud() {
     return api.post<void>(`/v1/pieces/sync`, {});
   },
-  install(params: AddPieceRequestBody) {
+  async install(params: AddPieceRequestBody) {
     const formData = new FormData();
     formData.set('packageType', params.packageType);
     formData.set('pieceName', params.pieceName);
     formData.set('pieceVersion', params.pieceVersion);
-    formData.set('scope', PieceScope.PROJECT);
+    formData.set('scope', params.scope);
     if (params.packageType === PackageType.ARCHIVE) {
-      formData.set('pieceArchive', params.pieceArchive as any);
+      const buffer = await (params.pieceArchive as File).arrayBuffer();
+      formData.append('pieceArchive', new Blob([buffer]));
     }
-    return api.post<PieceMetadataModel>(`/v1/pieces`, params);
+
+    return api.post<PieceMetadataModel>('/v1/pieces', formData, undefined, {
+      'Content-Type': 'multipart/form-data',
+    });
   },
   delete(id: string) {
     return api.delete(`/v1/pieces/${id}`);

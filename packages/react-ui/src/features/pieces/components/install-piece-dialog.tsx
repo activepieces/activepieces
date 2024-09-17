@@ -91,6 +91,7 @@ const InstallPieceDialog = ({
     },
     onSuccess: () => {
       setIsOpen(false);
+      form.reset();
       onInstallPiece();
       toast({
         title: t('Success'),
@@ -214,15 +215,18 @@ const InstallPieceDialog = ({
               <FormField
                 name="pieceArchive"
                 control={form.control}
-                render={({ field }) => (
+                render={({ field: { value, onChange, ...fieldProps } }) => (
                   <FormItem>
                     <FormLabel htmlFor="pieceArchive">
                       {t('Package Archive')}
                     </FormLabel>
                     <Input
-                      {...field}
+                      {...fieldProps}
                       id="pieceArchive"
                       type="file"
+                      onChange={(event) => {
+                        onChange(event.target.files && event.target.files[0]);
+                      }}
                       placeholder={t('Package archive')}
                       className="rounded-sm"
                     />
