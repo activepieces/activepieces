@@ -1,4 +1,4 @@
-import { initializeSentry, logger, system } from '@activepieces/server-shared'
+import { initializeSentry, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
@@ -12,6 +12,7 @@ import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { setupWorker } from './worker'
 
+const MAX_FILE_SIZE_MB = system.getNumberOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB)
 
 export const setupServer = async (): Promise<FastifyInstance> => {
     const app = await setupBaseApp()
@@ -30,9 +31,10 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 async function setupBaseApp(): Promise<FastifyInstance> {
     const app = fastify({
         logger,
+        ignoreTrailingSlash: true,
         // Default 4MB, also set in nginx.conf
         pluginTimeout: 30000,
-        bodyLimit: 4 * 1024 * 1024,
+        bodyLimit: MAX_FILE_SIZE_MB * 1024 * 1024,
         genReqId: () => {
             return `req_${apId()}`
         },

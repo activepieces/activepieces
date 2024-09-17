@@ -69,7 +69,6 @@ const constructContainerKey = (
 };
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-
   const [leftSidebar, rightSidebar, run, canExitRun] = useBuilderStateContext(
     (state) => [
       state.leftSidebar,
@@ -131,6 +130,16 @@ const BuilderPage = () => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
+    return () => {
+      socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
+      socket.removeAllListeners(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS);
+      socket.removeAllListeners(WebsocketClientEvent.TEST_STEP_FINISHED);
+      socket.removeAllListeners(WebsocketClientEvent.TEST_FLOW_RUN_STARTED);
+      socket.removeAllListeners(WebsocketClientEvent.GENERATE_CODE_FINISHED);
+      socket.removeAllListeners(
+        WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED,
+      );
+    };
   }, [socket, refetchPiece]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
@@ -142,7 +151,12 @@ const BuilderPage = () => {
           canExitRun={canExitRun}
           run={run}
           isLoading={isSwitchingToDraftPending}
-          exitRun={switchToDraft}
+          exitRun={() => {
+            socket.removeAllListeners(
+              WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS,
+            );
+            switchToDraft();
+          }}
         />
       )}
       <div ref={builderNavBarContainer} className="z-50">
@@ -187,7 +201,10 @@ const BuilderPage = () => {
           <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
             <div ref={middlePanelRef} className="relative h-full w-full">
               <CanvasControls></CanvasControls>
-              <ShowPoweredBy show={platform?.showPoweredBy} />
+              <ShowPoweredBy
+                position="absolute"
+                show={platform?.showPoweredBy}
+              />
               <DataSelector
                 parentHeight={middlePanelSize.height}
                 parentWidth={middlePanelSize.width}

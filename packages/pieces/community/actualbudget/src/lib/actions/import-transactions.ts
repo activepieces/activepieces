@@ -22,14 +22,10 @@ export const importTransactions = createAction({
     })    
   },
 
-  async run({ auth, propsValue: { account_id, transactions } }) {
-    
-    await initializeAndDownloadBudget(api, auth)
-    
+  async run({ auth, propsValue: { account_id, transactions } }) {  
+    await initializeAndDownloadBudget(api, auth)   
     const res = await api.importTransactions(account_id, transactions);
-
     await api.shutdown();
-
     return res;
   },
 });

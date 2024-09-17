@@ -87,6 +87,7 @@ export const platformProjectService = {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
                         ...spreadIfDefined('tasks', newTasks),
+                        ...spreadIfDefined('aiTokens', request.plan.aiTokens),
                     },
                     projectId,
                 )

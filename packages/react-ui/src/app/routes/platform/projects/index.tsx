@@ -20,6 +20,8 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 
+import { TableTitle } from '../../../../components/ui/table-title';
+
 import { NewProjectDialog } from './new-project-dialog';
 
 export default function ProjectsPage() {
@@ -72,7 +74,7 @@ export default function ProjectsPage() {
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold">{t('Projects')}</span>
+          <TableTitle>{t('Projects')}</TableTitle>
           <NewProjectDialog onCreate={() => refreshData()}>
             <Button
               size="sm"
@@ -85,7 +87,7 @@ export default function ProjectsPage() {
         </div>
         <DataTable
           onRowClick={async (project) => {
-            await setCurrentProject(queryClient, project, false);
+            await setCurrentProject(queryClient, project);
             navigate('/');
           }}
           columns={[
@@ -141,6 +143,25 @@ export default function ProjectsPage() {
               },
             },
             {
+              accessorKey: 'ai-tokens',
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('AI Credits')}
+                />
+              ),
+              cell: ({ row }) => {
+                return (
+                  <div className="text-left">
+                    {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
+                    {row.original.plan.aiTokens
+                      ? formatUtils.formatNumber(row.original.plan.aiTokens)
+                      : '-'}
+                  </div>
+                );
+              },
+            },
+            {
               accessorKey: 'externalId',
               header: ({ column }) => (
                 <DataTableColumnHeader
@@ -155,7 +176,13 @@ export default function ProjectsPage() {
               },
             },
           ]}
-          fetchData={() => projectApi.list({})}
+          fetchData={(_, pagination) => {
+            console.log(pagination);
+            return projectApi.list({
+              cursor: pagination.cursor,
+              limit: pagination.limit ?? 10,
+            });
+          }}
           refresh={refreshCount}
           actions={[
             (row) => {
@@ -169,7 +196,7 @@ export default function ProjectsPage() {
                         onClick={async (e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          await setCurrentProject(queryClient, row, false);
+                          await setCurrentProject(queryClient, row);
                           navigate('/settings/general');
                         }}
                       >

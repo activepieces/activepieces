@@ -17,6 +17,7 @@ import { projectApi } from '@/lib/project-api';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
+import { TableTitle } from '../../../components/ui/table-title';
 import { billingApi } from '../api/billing-api';
 
 import { PlanData } from './plan-data';
@@ -136,7 +137,7 @@ const Plans: React.FC = () => {
   return (
     <div className="container mx-auto flex-col py-10">
       <div className="mb-4 flex">
-        <h1 className="text-3xl font-bold">{t('Your Automation Plan')}</h1>
+        <TableTitle>{t('Your Automation Plan')}</TableTitle>
         <div className="ml-auto"></div>
       </div>
       {project && subscriptionData && (

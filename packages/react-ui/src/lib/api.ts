@@ -25,6 +25,7 @@ const disallowedRoutes = [
   '/v1/otp',
   '/v1/forms/',
   '/v1/authn/local/reset-password',
+  '/v1/user-invitations/accept',
 ];
 
 function isUrlRelative(url: string) {
@@ -82,11 +83,12 @@ export const api = {
     url: string,
     body?: TBody,
     params?: TParams,
+    headers?: Record<string, string>,
   ) =>
     request<TResponse>(url, {
       method: 'POST',
       data: body,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...headers },
       params: params,
     }),
 

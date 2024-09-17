@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { Bot } from 'lucide-react';
 import React from 'react';
 
-import { CodeEditior } from '../step-settings/code-settings/code-editior';
+import { CodeEditor } from '../step-settings/code-settings/code-editor';
 
 export const CopilotMessage = Type.Union([
   Type.Object({
@@ -45,7 +45,9 @@ export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
 
     return (
       <div
-        className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-2 m-2`}
+        className={`flex ${
+          isUser ? 'justify-end' : 'justify-start'
+        } gap-2 px-4`}
         ref={ref}
       >
         {isBot && (
@@ -53,13 +55,13 @@ export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
             <div className="min-w-8 min-h-8 max-h-8 max-w-8 border rounded-full border-gray-300 dark:border-gray-600 flex items-center justify-center">
               <Bot className="h-6 w-6 text-gray-500 dark:text-gray-400" />
             </div>
-            <div className={`w-full mb-6 min-w-0`}>
+            <div className={`w-full min-w-0`}>
               {!isCode ? (
                 <ChatBox>
                   <p>{message.content}</p>
                 </ChatBox>
               ) : (
-                <CodeEditior
+                <CodeEditor
                   sourceCode={{
                     code: message.content.code,
                     packageJson: JSON.stringify(
@@ -71,7 +73,7 @@ export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
                   readonly={true}
                   onChange={() => {}}
                   applyCodeToCurrentStep={() => onApplyCode(message)}
-                ></CodeEditior>
+                ></CodeEditor>
               )}
             </div>
           </>

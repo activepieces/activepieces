@@ -1226,6 +1226,24 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "lostinbug",
+      "name": "lostinbug",
+      "avatar_url": "https://avatars.githubusercontent.com/u/157452389?v=4",
+      "profile": "https://github.com/lostinbug",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "gushkool",
+      "name": "gushkool",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64713308?v=4",
+      "profile": "https://github.com/gushkool",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

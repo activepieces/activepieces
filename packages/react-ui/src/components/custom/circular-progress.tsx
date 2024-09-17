@@ -21,7 +21,7 @@ const ProgressCircularComponent: React.FC<{
           data={[
             {
               name: 'plan',
-              progress: 0,
+              progress: data.usage,
               fill: 'hsl(var(--primary))',
             },
           ]}

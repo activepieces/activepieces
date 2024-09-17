@@ -1,12 +1,13 @@
 import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, initializeSentry, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ExecutionMode, Flow, FlowRun, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ExecutionMode, Flow, FlowRun, FlowTemplate, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifySocketIO from 'fastify-socket.io'
 import { Socket } from 'socket.io'
+import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
@@ -66,7 +67,6 @@ import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
-import { stepFileModule } from './flows/step-file/step-file.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
@@ -129,6 +129,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
                     [ApplicationEventName.USER_EMAIL_VERIFIED]: AuthenticationEvent,
                     [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
+                    'flow-template': FlowTemplate,
                     'folder': Folder,
                     'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
@@ -206,7 +207,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(openapiModule)
     await app.register(triggerEventModule)
     await app.register(appEventRoutingModule)
-    await app.register(stepFileModule)
     await app.register(userModule)
     await app.register(authenticationModule)
     await app.register(copilotModule),
@@ -221,6 +221,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(alertsModule)
     await app.register(invitationModule)
     await app.register(workerModule)
+    await app.register(aiProviderModule)
 
     app.get(
         '/redirect',
@@ -349,7 +350,7 @@ const validateEnvPropsOnStartup = async (): Promise<void> => {
     }
     const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
     const encryptionKey = await encryptUtils.loadEncryptionKey(queueMode)
-    const isValidHexKey = encryptionKey && /^[A-Fa-z0-9]{32}$/.test(encryptionKey)
+    const isValidHexKey = encryptionKey && /^[A-Za-z0-9]{32}$/.test(encryptionKey)
     if (!isValidHexKey) {
         throw new Error(JSON.stringify({
             message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',

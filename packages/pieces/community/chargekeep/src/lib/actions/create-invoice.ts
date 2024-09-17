@@ -2,6 +2,11 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { chargekeepAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
+// Helper function to get current date in the required format
+const getCurrentDateInISOFormat = () => {
+  return new Date().toISOString(); // Returns current date in format: YYYY-MM-DDTHH:MM:SSZ
+};
+
 export const createInvoice = createAction({
   name: 'createInvoice',
   displayName: 'Create Invoice',
@@ -53,12 +58,13 @@ export const createInvoice = createAction({
     }),
     date: Property.DateTime({
       displayName: 'Date of the Invoice',
-      description: 'should be like this : 2024-06-11T11:11:41Z',
+      description: 'should be like this: 2024-06-11T11:11:41Z',
+      defaultValue: getCurrentDateInISOFormat(),
       required: true,
     }),
     dueDate: Property.DateTime({
       displayName: 'Due Date of the Invoice',
-      description: 'should be like this : 2024-06-11T11:11:41Z',
+      description: 'should be like this: 2024-06-11T11:11:41Z',
       required: true,
     }),
     currencyId: Property.StaticDropdown({
@@ -338,7 +344,8 @@ export const createInvoice = createAction({
     // transactions
     transactionDate: Property.DateTime({
       displayName: 'Transaction Date',
-      description: 'should be like this : 2024-06-11T11:11:41Z',
+      description: 'should be like this: 2024-06-11T11:11:41Z',
+      defaultValue: getCurrentDateInISOFormat(),
       required: true,
     }),
     transactionDescription: Property.ShortText({

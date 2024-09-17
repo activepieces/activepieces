@@ -7,8 +7,13 @@ import {
   SunMoon,
   Users,
 } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
-import SidebarLayout from '@/app/components/sidebar-layout';
+import SidebarLayout, { SidebarItem } from '@/app/components/sidebar-layout';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { isNil } from '@activepieces/shared';
+
+import { authenticationSession } from '../../lib/authentication-session';
 
 const iconSize = 20;
 
@@ -52,8 +57,25 @@ interface SettingsLayoutProps {
 export default function ProjectSettingsLayout({
   children,
 }: SettingsLayoutProps) {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const currentProjectId = authenticationSession.getProjectId();
+  if (isNil(currentProjectId)) {
+    return <Navigate to="/sign-in" replace />;
+  }
+
+  const filterAlerts = (item: SidebarItem) =>
+    platform.alertsEnabled || item.title !== t('Alerts');
+  const addProjectIdToHref = (item: SidebarItem) => ({
+    ...item,
+    href: `/projects/${currentProjectId}${item.href}`,
+  });
+
+  const filteredNavItems = sidebarNavItems
+    .filter(filterAlerts)
+    .map(addProjectIdToHref);
+
   return (
-    <SidebarLayout title={t('Settings')} items={sidebarNavItems}>
+    <SidebarLayout title={t('Settings')} items={filteredNavItems}>
       {children}
     </SidebarLayout>
   );

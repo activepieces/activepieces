@@ -15,10 +15,12 @@ import {
     ExecutePropsOptions,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
+    OAuth2ConnectionValueWithApp,
     SecretTextConnectionValue,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { createFlowsContext } from '../services/flows.service'
 import { variableService } from '../variables/variable-service'
 import { pieceLoader } from './piece-loader'
 
@@ -42,14 +44,6 @@ export const pieceHelper = {
             })
             const ctx = {
                 searchValue,
-                flows: {
-                    current: {
-                        id: params.flowVersion.flowId,
-                        version: {
-                            id: params.flowVersion.id,
-                        },
-                    },
-                },
                 server: {
                     token: params.engineToken,
                     apiUrl: constants.internalApiUrl,
@@ -59,6 +53,7 @@ export const pieceHelper = {
                     id: params.projectId,
                     externalId: constants.externalProjectId,
                 },
+                flows: createFlowsContext(constants),
             }
 
             if (property.type === PropertyType.DYNAMIC) {
@@ -119,6 +114,12 @@ export const pieceHelper = {
                 const con = params.auth as CustomAuthConnectionValue
                 return piece.auth.validate({
                     auth: con.props,
+                })
+            }
+            case PropertyType.OAUTH2: {
+                const con = params.auth as OAuth2ConnectionValueWithApp
+                return piece.auth.validate({
+                    auth: con,
                 })
             }
             default: {

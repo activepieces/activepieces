@@ -31,8 +31,13 @@ const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.NUMBER_IS_GREATER_THAN]: t('(Number) Is greater than'),
   [BranchOperator.NUMBER_IS_LESS_THAN]: t('(Number) Is less than'),
   [BranchOperator.NUMBER_IS_EQUAL_TO]: t('(Number) Is equal to'),
+  [BranchOperator.DATE_IS_AFTER]: t('(Date/time) After'),
+  [BranchOperator.DATE_IS_BEFORE]: t('(Date/time) Before'),
+  [BranchOperator.DATE_IS_EQUAL]: t('(Date/time) Equals'),
   [BranchOperator.BOOLEAN_IS_TRUE]: t('(Boolean) Is true'),
   [BranchOperator.BOOLEAN_IS_FALSE]: t('(Boolean) Is false'),
+  [BranchOperator.LIST_IS_EMPTY]: t('(List) Is empty'),
+  [BranchOperator.LIST_IS_NOT_EMPTY]: t('(List) Is not empty'),
   [BranchOperator.EXISTS]: t('Exists'),
   [BranchOperator.DOES_NOT_EXIST]: t('Does not exist'),
 };

@@ -27,7 +27,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
+import { cn, formatUtils } from '@/lib/utils';
 import { OtpType } from '@activepieces/ee-shared';
 import {
   ApEdition,
@@ -36,10 +36,7 @@ import {
   SignUpRequest,
 } from '@activepieces/shared';
 
-import {
-  emailRegex,
-  passwordValidation,
-} from '../lib/password-validation-utils';
+import { passwordValidation } from '../lib/password-validation-utils';
 
 type SignUpSchema = {
   email: string;
@@ -115,6 +112,14 @@ const SignUpForm = ({
     onError: (error) => {
       if (api.isError(error)) {
         switch (error.response?.status) {
+          case HttpStatusCode.Forbidden: {
+            form.setError('root.serverError', {
+              message: t(
+                'Sign up is restricted. You need an invitation to join. Please contact the administrator.',
+              ),
+            });
+            break;
+          }
           case HttpStatusCode.Conflict: {
             form.setError('root.serverError', {
               message: t('Email is already used'),
@@ -208,7 +213,7 @@ const SignUpForm = ({
             rules={{
               required: t('Email is required'),
               validate: (email: string) =>
-                emailRegex.test(email) || t('Email is invalid'),
+                formatUtils.emailRegex.test(email) || t('Email is invalid'),
             }}
             render={({ field }) => (
               <FormItem className="grid space-y-2">
@@ -301,34 +306,36 @@ const SignUpForm = ({
         </form>
       </Form>
 
-      <div
-        className={cn('text-center text-sm', {
-          'mt-4': termsOfServiceUrl || privacyPolicyUrl,
-        })}
-      >
-        {(termsOfServiceUrl || privacyPolicyUrl) &&
-          t('By creating an account, you agree to our')}
-        {termsOfServiceUrl && (
-          <Link
-            to={termsOfServiceUrl || ''}
-            target="_blank"
-            className="px-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
-          >
-            {t('terms of service')}
-          </Link>
-        )}
-        {termsOfServiceUrl && privacyPolicyUrl && t('and')}
-        {privacyPolicyUrl && (
-          <Link
-            to={privacyPolicyUrl || ''}
-            target="_blank"
-            className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
-          >
-            {t('privacy policy')}
-          </Link>
-        )}
-        .
-      </div>
+      {edition === ApEdition.CLOUD && (
+        <div
+          className={cn('text-center text-sm', {
+            'mt-4': termsOfServiceUrl || privacyPolicyUrl,
+          })}
+        >
+          {(termsOfServiceUrl || privacyPolicyUrl) &&
+            t('By creating an account, you agree to our')}
+          {termsOfServiceUrl && (
+            <Link
+              to={termsOfServiceUrl || ''}
+              target="_blank"
+              className="px-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
+            >
+              {t('terms of service')}
+            </Link>
+          )}
+          {termsOfServiceUrl && privacyPolicyUrl && t('and')}
+          {privacyPolicyUrl && (
+            <Link
+              to={privacyPolicyUrl || ''}
+              target="_blank"
+              className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
+            >
+              {t('privacy policy')}
+            </Link>
+          )}
+          .
+        </div>
+      )}
       <div className="mt-4 text-center text-sm">
         {t('Already have an account?')}
         <Link

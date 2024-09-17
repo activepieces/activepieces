@@ -35,7 +35,6 @@ module.exports = {
         },
         border: {
           DEFAULT: 'hsl(var(--border))',
-          300: 'hsl(var(--border-300))',
         },
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

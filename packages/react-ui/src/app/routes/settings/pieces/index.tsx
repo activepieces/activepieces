@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash } from 'lucide-react';
+import { CheckIcon, Trash } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -13,6 +13,10 @@ import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ApFlagId, isNil, PieceScope, PieceType } from '@activepieces/shared';
+
+import { TableTitle } from '../../../../components/ui/table-title';
+
+import { ManagePiecesDialog } from './manage-pieces-dialog';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -95,10 +99,12 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   },
 ];
 
-const fetchData = async () => {
+const fetchData = async ({ name }: { name: string }) => {
   const pieces = await piecesApi.list({
-    includeHidden: true,
+    searchQuery: name,
+    includeHidden: false,
   });
+
   return {
     data: pieces,
     next: null,
@@ -106,6 +112,15 @@ const fetchData = async () => {
   };
 };
 
+const filters = [
+  {
+    type: 'input',
+    title: t('Piece Name'),
+    accessorKey: 'name',
+    options: [],
+    icon: CheckIcon,
+  } as const,
+];
 const ProjectPiecesPage = () => {
   const [refresh, setRefresh] = useState(0);
 
@@ -113,11 +128,15 @@ const ProjectPiecesPage = () => {
     ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
   );
 
+  const { data: managedPiecesEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
+  );
+
   return (
     <div className="flex w-full flex-col items-center justify-center gap-4">
       <div className="mx-auto w-full flex-col">
         <div className="mb-4 flex">
-          <h1 className="text-3xl font-bold">{t('Pieces')}</h1>
+          <TableTitle>{t('Pieces')}</TableTitle>
           <div className="ml-auto">
             {installPiecesEnabled && (
               <InstallPieceDialog
@@ -127,7 +146,18 @@ const ProjectPiecesPage = () => {
             )}
           </div>
         </div>
-        <DataTable columns={columns} refresh={refresh} fetchData={fetchData} />
+        <div className="flex justify-end">
+          {managedPiecesEnabled && (
+            <ManagePiecesDialog onSuccess={() => setRefresh(refresh + 1)} />
+          )}
+        </div>
+        <DataTable
+          columns={columns}
+          filters={filters}
+          refresh={refresh}
+          fetchData={(filterParams) => fetchData(filterParams)}
+          hidePagination={true}
+        />
       </div>
     </div>
   );

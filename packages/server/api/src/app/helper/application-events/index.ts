@@ -17,7 +17,10 @@ export type AuditEventParam = Static<typeof AuditEventParam>
 
 
 let hooks: ApplicationEventHooks = {
-    async sendUserEvent(_request, _params) {
+    async sendUserEvent(_requestInformation, _params) {
+        return
+    },
+    async sendUserEventFromRequest(_request, _params) {
         return
     },
     async sendWorkerEvent(_params) {
@@ -36,7 +39,14 @@ export const eventsHooks = {
 }
 
 export type ApplicationEventHooks = {
-    sendUserEvent(request: FastifyRequest, params: AuditEventParam): void
+    sendUserEvent(requestInformation: MetaInformation, params: AuditEventParam): void
+    sendUserEventFromRequest(request: FastifyRequest, params: AuditEventParam): void
     sendWorkerEvent(projectId: string, params: AuditEventParam): void
 }
 
+type MetaInformation = {
+    platformId: string
+    userId: string
+    projectId: string
+    ip: string
+}

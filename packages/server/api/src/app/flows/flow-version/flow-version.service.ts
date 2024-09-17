@@ -33,7 +33,6 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
-import { stepFileService } from '../step-file/step-file.service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 
@@ -412,22 +411,6 @@ async function prepareRequest(
                         settings: clonedRequest.request.settings,
                         projectId,
                     })
-                    const previousStep = flowHelper.getStep(
-                        flowVersion,
-                        clonedRequest.request.name,
-                    )
-                    if (
-                        previousStep !== undefined &&
-                        previousStep.type === ActionType.PIECE &&
-                        clonedRequest.request.settings.pieceName !==
-                        previousStep.settings.pieceName
-                    ) {
-                        await stepFileService.deleteAll({
-                            projectId,
-                            flowId: flowVersion.flowId,
-                            stepName: previousStep.name,
-                        })
-                    }
                     break
                 }
                 case ActionType.CODE: {
@@ -436,20 +419,6 @@ async function prepareRequest(
             }
             break
         case FlowOperationType.DELETE_ACTION: {
-            const previousStep = flowHelper.getStep(
-                flowVersion,
-                clonedRequest.request.name,
-            )
-            if (
-                previousStep !== undefined &&
-                previousStep.type === ActionType.PIECE
-            ) {
-                await stepFileService.deleteAll({
-                    projectId,
-                    flowId: flowVersion.flowId,
-                    stepName: previousStep.name,
-                })
-            }
             break
         }
         case FlowOperationType.UPDATE_TRIGGER:

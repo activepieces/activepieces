@@ -19,6 +19,8 @@ import {
 } from '@activepieces/ee-shared';
 import { isNil } from '@activepieces/shared';
 
+import { TableTitle } from '../../../../components/ui/table-title';
+
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
 
@@ -33,9 +35,7 @@ export default function AuditLogsPage() {
       )}
     >
       <div className="flex flex-col  w-full">
-        <div className="flex items-center justify-between flex-row">
-          <span className="text-3xl font-bold ">{t('Audit Logs')}</span>
-        </div>
+        <TableTitle>{t('Audit Logs')}</TableTitle>
         <DataTable
           columns={[
             {
@@ -131,7 +131,12 @@ export default function AuditLogsPage() {
               },
             },
           ]}
-          fetchData={() => auditEventsApi.list({})}
+          fetchData={(_, pagination) =>
+            auditEventsApi.list({
+              cursor: pagination.cursor,
+              limit: pagination.limit ?? 10,
+            })
+          }
         />
       </div>
     </LockedFeatureGuard>
