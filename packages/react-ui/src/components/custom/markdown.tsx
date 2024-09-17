@@ -7,7 +7,6 @@ import ReactMarkdown from 'react-markdown';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
-
 function applyVariables(markdown: string, variables: Record<string, string>) {
   return markdown
     .replaceAll('<br>', '\n')
@@ -61,8 +60,10 @@ const ApMarkdown = React.memo(
     if (!markdown) {
       return null;
     }
-
-    const markdownProcessed = applyVariables(markdown, variables ?? {});
+    const markdownProcessed = applyVariables(markdown, variables ?? {})
+      .split('\n')
+      .map((line) => line.trim())
+      .join('\n');
     return (
       <Container withBorder={withBorder}>
         <ReactMarkdown
@@ -98,33 +99,33 @@ const ApMarkdown = React.memo(
             },
             h1: ({ node, ...props }) => (
               <h1
-                className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
+                className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-5xl"
                 {...props}
               />
             ),
             h2: ({ node, ...props }) => (
               <h2
-                className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0"
+                className="scroll-m-20 text-xl text-3xl font-semibold tracking-tight first:mt-0"
                 {...props}
               />
             ),
             h3: ({ node, ...props }) => (
               <h3
-                className="scroll-m-20 text-2xl font-semibold tracking-tight"
+                className="scroll-m-20 text-lg font-semibold tracking-tight"
                 {...props}
               />
             ),
             p: ({ node, ...props }) => (
               <p
-                className="leading-7 [&:not(:first-child)]:mt-6 w-full"
+                className="leading-7 [&:not(:first-child)]:mt-4 w-full"
                 {...props}
               />
             ),
             ul: ({ node, ...props }) => (
-              <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props} />
+              <ul className="mt-4 ml-6 list-disc [&>li]:mt-4" {...props} />
             ),
             ol: ({ node, ...props }) => (
-              <ol className="my-6 ml-6 list-decimal [&>li]:mt-2" {...props} />
+              <ol className="mt-4 ml-6 list-decimal [&>li]:mt-4" {...props} />
             ),
             li: ({ node, ...props }) => <li {...props} />,
             a: ({ node, ...props }) => (
@@ -134,11 +135,16 @@ const ApMarkdown = React.memo(
               />
             ),
             blockquote: ({ node, ...props }) => (
-              <blockquote className="mt-6 border-l-2 pl-6 italic" {...props} />
+              <blockquote
+                className="mt-4 first:mt-0 border-l-2 pl-6 italic"
+                {...props}
+              />
             ),
+            b: ({ node, ...props }) => <b {...props} />,
+            em: ({ node, ...props }) => <em {...props} />,
           }}
         >
-          {markdownProcessed}
+          {markdownProcessed.trim()}
         </ReactMarkdown>
       </Container>
     );
