@@ -238,7 +238,7 @@ const validateConnectionValue = async (
                 pieceName: connection.pieceName,
                 props: connection.value.props,
             })
-            return oauth2Handler[connection.value.type].claim({
+            const auth = await oauth2Handler[connection.value.type].claim({
                 projectId,
                 pieceName: connection.pieceName,
                 request: {
@@ -253,6 +253,12 @@ const validateConnectionValue = async (
                     codeVerifier: connection.value.code_challenge,
                 },
             })
+            await engineValidateAuth({
+                pieceName: connection.pieceName,
+                projectId,
+                auth,
+            })
+            return auth
         }
         case AppConnectionType.CUSTOM_AUTH:
         case AppConnectionType.BASIC_AUTH:
