@@ -3,22 +3,28 @@ import React from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { t } from 'i18next';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
     const { projectId } = useParams<{ projectId: string }>();
     const currentProjectId = authenticationSession.getProjectId();
+    const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
     const { toast } = useToast();
     const { data: isProjectValid, isError } = useSuspenseQuery<boolean, Error>({
         queryKey: ['switch-to-project', projectId],
         queryFn: async () => {
+            if (edition === ApEdition.COMMUNITY) {
+                return true;
+            }
             if (isNil(projectId)) {
                 return false;
             }
@@ -26,7 +32,7 @@ const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
                 await authenticationSession.switchToSession(projectId!);
                 return true;
             } catch (error) {
-                if (api.isError(error)) {
+                if (api.isError(error) && error.response?.status === 401) {
                     toast({
                         duration: 3000,
                         title: t('Invalid Access'),
