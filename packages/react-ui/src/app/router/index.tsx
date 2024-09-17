@@ -44,6 +44,7 @@ import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import AuditLogsPage from '../routes/platform/audit-logs';
+import { PlatformPiecesLayout } from '../routes/platform/pieces/platform-pieces-layout';
 import ProjectsPage from '../routes/platform/projects';
 import TemplatesPage from '../routes/platform/templates';
 import UsersPage from '../routes/platform/users';
@@ -58,7 +59,6 @@ import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { ProjectRouterWrapper } from './project-route-wrapper';
-import { PlatformPiecesLayout } from '../routes/platform/pieces/platform-pieces-layout';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
