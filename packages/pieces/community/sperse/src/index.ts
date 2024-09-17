@@ -10,6 +10,9 @@ import { addOrUpdateSubscription } from './lib/actions/add-or-update-subscriptio
 import { createInvoice } from './lib/actions/create-invoice';
 import { createProduct } from './lib/actions/create-product';
 import { getContactDetails } from './lib/actions/get-contact-details';
+import { newLead } from './lib/triggers/new-lead';
+import { newPayment } from './lib/triggers/new-payment';
+import { newSubscription } from './lib/triggers/new-subscription';
 
 const markdownDescription = `
   Follow these instructions to get your Sperse API Key:
@@ -69,5 +72,5 @@ export const sperse = createPiece({
     createProduct,
     getContactDetails,
   ],
-  triggers: [],
+  triggers: [newLead, newPayment, newSubscription],
 });

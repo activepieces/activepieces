@@ -11,6 +11,7 @@ import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { EmbedPage } from '@/app/routes/embed';
+import AIProvidersPage from '@/app/routes/platform/ai-providers';
 import AnalyticsPage from '@/app/routes/platform/analytics';
 import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
 import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
@@ -30,32 +31,34 @@ import {
   ActivepiecesVendorRouteChanged,
 } from 'ee-embed-sdk';
 
-import { FlowsPage } from '../app/routes/flows';
+import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
+import { DashboardContainer } from '../components/dashboard-container';
+import { PlatformAdminContainer } from '../components/platform-admin-container';
+import NotFoundPage from '../routes/404-page';
+import { ChangePasswordPage } from '../routes/change-password';
+import AppConnectionsPage from '../routes/connections';
+import { FlowsPage } from '../routes/flows';
+import { FlowBuilderPage } from '../routes/flows/id';
+import { ResetPasswordPage } from '../routes/forget-password';
+import { FormPage } from '../routes/forms';
+import IssuesPage from '../routes/issues';
+import PlansPage from '../routes/plans';
+import AuditLogsPage from '../routes/platform/audit-logs';
+import { PlatformPiecesLayout } from '../routes/platform/pieces/platform-pieces-layout';
+import ProjectsPage from '../routes/platform/projects';
+import TemplatesPage from '../routes/platform/templates';
+import UsersPage from '../routes/platform/users';
+import { FlowRunPage } from '../routes/runs/id';
+import AlertsPage from '../routes/settings/alerts';
+import AppearancePage from '../routes/settings/appearance';
+import GeneralPage from '../routes/settings/general';
+import { GitSyncPage } from '../routes/settings/git-sync';
+import TeamPage from '../routes/settings/team';
+import { SignInPage } from '../routes/sign-in';
+import { SignUpPage } from '../routes/sign-up';
+import { ShareTemplatePage } from '../routes/templates/share-template';
 
-import { AllowOnlyLoggedInUserOnlyGuard } from './components/allow-logged-in-user-only-guard';
-import { DashboardContainer } from './components/dashboard-container';
-import { PlatformAdminContainer } from './components/platform-admin-container';
-import NotFoundPage from './routes/404-page';
-import { ChangePasswordPage } from './routes/change-password';
-import AppConnectionsPage from './routes/connections';
-import { FlowBuilderPage } from './routes/flows/id';
-import { ResetPasswordPage } from './routes/forget-password';
-import { FormPage } from './routes/forms';
-import IssuesPage from './routes/issues';
-import PlansPage from './routes/plans';
-import AuditLogsPage from './routes/platform/audit-logs';
-import ProjectsPage from './routes/platform/projects';
-import TemplatesPage from './routes/platform/templates';
-import UsersPage from './routes/platform/users';
-import { FlowRunPage } from './routes/runs/id';
-import AlertsPage from './routes/settings/alerts';
-import AppearancePage from './routes/settings/appearance';
-import GeneralPage from './routes/settings/general';
-import { GitSyncPage } from './routes/settings/git-sync';
-import TeamPage from './routes/settings/team';
-import { SignInPage } from './routes/sign-in';
-import { SignUpPage } from './routes/sign-up';
-import { ShareTemplatePage } from './routes/templates/share-template';
+import { ProjectRouterWrapper } from './project-route-wrapper';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -66,6 +69,7 @@ const SettingsRerouter = () => {
     <Navigate to="/settings/general" replace />
   );
 };
+
 const routes = [
   {
     path: '/embed',
@@ -76,7 +80,7 @@ const routes = [
     path: '/switch-to-beta',
     element: <SwitchToBetaPage />,
   },
-  {
+  ...ProjectRouterWrapper({
     path: '/flows',
     element: (
       <DashboardContainer>
@@ -85,8 +89,8 @@ const routes = [
         </PageTitle>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/flows/:flowId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
@@ -95,7 +99,7 @@ const routes = [
         </PageTitle>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
-  },
+  }),
   {
     path: '/forms/:flowId',
     element: (
@@ -104,7 +108,7 @@ const routes = [
       </PageTitle>
     ),
   },
-  {
+  ...ProjectRouterWrapper({
     path: '/runs/:runId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
@@ -113,7 +117,7 @@ const routes = [
         </PageTitle>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
-  },
+  }),
   {
     path: '/templates/:templateId',
     element: (
@@ -124,7 +128,7 @@ const routes = [
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
-  {
+  ...ProjectRouterWrapper({
     path: '/runs',
     element: (
       <DashboardContainer>
@@ -133,8 +137,8 @@ const routes = [
         </PageTitle>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/issues',
     element: (
       <DashboardContainer>
@@ -143,8 +147,8 @@ const routes = [
         </PageTitle>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/connections',
     element: (
       <DashboardContainer>
@@ -153,8 +157,8 @@ const routes = [
         </PageTitle>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/plans',
     element: (
       <DashboardContainer>
@@ -163,15 +167,15 @@ const routes = [
         </PageTitle>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings',
     element: (
       <DashboardContainer>
         <SettingsRerouter></SettingsRerouter>
       </DashboardContainer>
     ),
-  },
+  }),
   {
     path: '/forget-password',
     element: (
@@ -212,7 +216,7 @@ const routes = [
       </PageTitle>
     ),
   },
-  {
+  ...ProjectRouterWrapper({
     path: '/settings/alerts',
     element: (
       <DashboardContainer>
@@ -223,8 +227,8 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings/appearance',
     element: (
       <DashboardContainer>
@@ -235,8 +239,8 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings/general',
     element: (
       <DashboardContainer>
@@ -247,8 +251,8 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings/pieces',
     element: (
       <DashboardContainer>
@@ -259,9 +263,8 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
-
-  {
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings/team',
     element: (
       <DashboardContainer>
@@ -272,12 +275,13 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
+  }),
   {
     path: '/team',
     element: <Navigate to="/settings/team" replace></Navigate>,
   },
-  {
+
+  ...ProjectRouterWrapper({
     path: '/settings/git-sync',
     element: (
       <DashboardContainer>
@@ -288,7 +292,7 @@ const routes = [
         </ProjectSettingsLayout>
       </DashboardContainer>
     ),
-  },
+  }),
 
   {
     path: '/invitation',
@@ -321,9 +325,11 @@ const routes = [
     path: '/platform/pieces',
     element: (
       <PlatformAdminContainer>
-        <PageTitle title="Platform Pieces">
-          <PlatformPiecesPage />
-        </PageTitle>
+        <PlatformPiecesLayout>
+          <PageTitle title="Platform Pieces">
+            <PlatformPiecesPage />
+          </PageTitle>
+        </PlatformPiecesLayout>
       </PlatformAdminContainer>
     ),
   },
@@ -386,6 +392,18 @@ const routes = [
             <BrandingPage />
           </PageTitle>
         </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/pieces/ai',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformPiecesLayout>
+          <PageTitle title="AI Providers">
+            <AIProvidersPage />
+          </PageTitle>
+        </PlatformPiecesLayout>
       </PlatformAdminContainer>
     ),
   },

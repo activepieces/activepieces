@@ -15,6 +15,7 @@ import {
     ExecutePropsOptions,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
+    OAuth2ConnectionValueWithApp,
     SecretTextConnectionValue,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -113,6 +114,12 @@ export const pieceHelper = {
                 const con = params.auth as CustomAuthConnectionValue
                 return piece.auth.validate({
                     auth: con.props,
+                })
+            }
+            case PropertyType.OAUTH2: {
+                const con = params.auth as OAuth2ConnectionValueWithApp
+                return piece.auth.validate({
+                    auth: con,
                 })
             }
             default: {

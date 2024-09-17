@@ -7,6 +7,7 @@ import {
     ObjectLiteral,
     SelectQueryBuilder,
 } from 'typeorm'
+import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
@@ -73,6 +74,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AlertEntity,
         UserInvitationEntity,
         WorkerMachineEntity,
+        AiProviderEntity,
     ]
 
     switch (edition) {
@@ -160,3 +162,6 @@ export function APArrayContains<T extends ObjectLiteral>(
             throw new Error(`Unsupported database type: ${databaseType}`)
     }
 }
+
+// Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
+// export const exportedConnection = databaseConnection()

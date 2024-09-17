@@ -6,6 +6,7 @@ const FILE_PREFIX_URL = 'file://'
 const MAX_FILE_SIZE_MB = Number(process.env.AP_MAX_FILE_SIZE_MB)
 
 export type DefaultFileSystem = 'db' | 'local'
+const MEMORY_PREFIX_URL = 'memory://'
 
 type CreateFilesServiceParams = { apiUrl: string, stepName: string, type: DefaultFileSystem, flowId: string, engineToken: string }
 
@@ -31,9 +32,24 @@ async function readApFile(path: string): Promise<ApFile | null> {
     if (path.startsWith(FILE_PREFIX_URL)) {
         return readLocalFile(path)
     }
+    if (path.startsWith(MEMORY_PREFIX_URL)) {
+        return readMemoryFile(path)
+    }
     return null
 }
 
+// TODO remove this as memory write is removed
+async function readMemoryFile(absolutePath: string): Promise<ApFile> {
+    try {
+        const base64String = absolutePath.replace(MEMORY_PREFIX_URL, '')
+        const { fileName, data } = JSON.parse(base64String)
+        const calculatedExtension = fileName.includes('.') ? fileName.split('.').pop() : null
+        return new ApFile(fileName, Buffer.from(data, 'base64'), calculatedExtension)
+    }
+    catch (error) {
+        throw new Error(`Error reading file: ${error}`)
+    }
+}
 
 async function writeDbFile({ stepName, flowId, fileName, data, engineToken, apiUrl }: StepFileUpsert & { engineToken: string, apiUrl: string }): Promise<string> {
     const formData = new FormData()
