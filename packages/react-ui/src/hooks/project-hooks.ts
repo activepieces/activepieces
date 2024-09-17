@@ -39,7 +39,7 @@ export const projectHooks = {
       queryFn: async () => {
         const results = await projectApi.list({
           cursor: undefined,
-          limit: 100,
+          limit: 1000,
         });
         return results.data;
       },
