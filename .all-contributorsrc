@@ -1235,6 +1235,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "gushkool",
+      "name": "gushkool",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64713308?v=4",
+      "profile": "https://github.com/gushkool",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

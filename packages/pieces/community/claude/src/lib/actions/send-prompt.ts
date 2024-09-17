@@ -6,6 +6,7 @@ import {
 import Anthropic from '@anthropic-ai/sdk';
 import mime from 'mime-types';
 import { claudeAuth } from '../..';
+import { TextBlock } from '@anthropic-ai/sdk/resources';
 
 const billingIssueMessage = `Error Occurred: 429 \n
 
@@ -155,7 +156,7 @@ export const askClaude = createAction({
           messages: roles,
         });
 
-        response = req?.content[0].text?.trim();
+        response = (req?.content[0] as TextBlock).text?.trim();
 
         break; // Break out of the loop if the request is successful
       } catch (e: any) {

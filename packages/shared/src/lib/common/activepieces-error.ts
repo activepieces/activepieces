@@ -1,4 +1,4 @@
-import { FileId } from '../file/file'
+import { FileId } from '../file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
@@ -63,7 +63,8 @@ export type ApErrorParams =
     | ActivationKeyNotFoundParams
     | ActivationKeyNotAlreadyActivated
     | EmailAlreadyHasActivationKey
-
+    | ProviderProxyConfigNotFoundParams
+    | AITokenLimitExceededParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -94,6 +95,11 @@ Record<string, string> &
     message?: string
 }
 >
+
+export type AITokenLimitExceededParams = BaseErrorParams<ErrorCode.AI_TOKEN_LIMIT_EXCEEDED, {
+    usage: number
+    limit: number
+}> 
 
 export type PermissionDeniedErrorParams = BaseErrorParams<
 ErrorCode.PERMISSION_DENIED,
@@ -323,10 +329,16 @@ ErrorCode.INVALID_APP_CONNECTION,
 export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
-    metric: 'tasks' | 'team-members'
+    metric: 'tasks' | 'team-members' | 'ai-tokens'
     quota?: number
 }
 >
+
+export type ProviderProxyConfigNotFoundParams = BaseErrorParams<
+ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+{
+    provider: string
+}>
 
 export type FeatureDisabledErrorParams = BaseErrorParams<
 ErrorCode.FEATURE_DISABLED,
@@ -375,6 +387,7 @@ export type EmailAlreadyHasActivationKey = BaseErrorParams<ErrorCode.EMAIL_ALREA
 export enum ErrorCode {
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
+    PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
@@ -409,6 +422,7 @@ export enum ErrorCode {
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
+    AI_TOKEN_LIMIT_EXCEEDED = 'AI_TOKEN_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',

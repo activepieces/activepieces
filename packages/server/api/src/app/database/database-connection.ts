@@ -7,6 +7,7 @@ import {
     ObjectLiteral,
     SelectQueryBuilder,
 } from 'typeorm'
+import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
@@ -32,7 +33,6 @@ import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
-import { StepFileEntity } from '../flows/step-file/step-file.entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
@@ -67,7 +67,6 @@ function getEntities(): EntitySchema<unknown>[] {
         WebhookSimulationEntity,
         FolderEntity,
         PieceMetadataEntity,
-        StepFileEntity,
         PlatformEntity,
         TagEntity,
         PieceTagEntity,
@@ -75,6 +74,7 @@ function getEntities(): EntitySchema<unknown>[] {
         AlertEntity,
         UserInvitationEntity,
         WorkerMachineEntity,
+        AiProviderEntity,
     ]
 
     switch (edition) {
@@ -162,3 +162,6 @@ export function APArrayContains<T extends ObjectLiteral>(
             throw new Error(`Unsupported database type: ${databaseType}`)
     }
 }
+
+// Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
+// export const exportedConnection = databaseConnection()

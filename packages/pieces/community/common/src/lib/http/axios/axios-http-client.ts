@@ -56,7 +56,7 @@ export class AxiosHttpClient extends BaseHttpClient {
         );
         console.error(
           '[HttpClient#sendRequest] error, responseBody:',
-          e.response?.data
+          JSON.stringify(e.response?.data)
         );
 
         throw new HttpError(request.body, e);

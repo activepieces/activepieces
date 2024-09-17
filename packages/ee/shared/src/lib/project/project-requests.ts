@@ -8,6 +8,7 @@ export const UpdateProjectPlatformRequest = Type.Object({
         tasks: Type.Optional(Type.Number({})),
         pieces: Type.Optional(Type.Array(Type.String({}))),
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
+        aiTokens: Type.Optional(Type.Number({})),
     })),
 })
 

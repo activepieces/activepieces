@@ -19,7 +19,7 @@ async function exceededLimit({ projectId }: { projectId: ProjectId }): Promise<b
         if (!projectPlan) {
             return false
         }
-        const consumedTasks = await projectUsageService.increaseTasks(projectId, 0)
+        const consumedTasks = await projectUsageService.increaseUsage(projectId, 0, 'tasks')
         return consumedTasks >= projectPlan.tasks
     }
     catch (e) {

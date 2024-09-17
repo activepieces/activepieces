@@ -34,7 +34,7 @@ export const managedAuthnService = {
             externalProjectId: externalPrincipal.externalProjectId,
         })
 
-        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks)
+        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens)
 
         const projectMember = await projectMemberService.upsert({
             projectId: project.id,
@@ -66,6 +66,7 @@ const updateProjectLimits = async (
     piecesTags: string[],
     piecesFilterType: PiecesFilterType,
     tasks: number | undefined,
+    aiTokens: number | undefined,
 ): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
@@ -76,6 +77,7 @@ const updateProjectLimits = async (
     await projectLimitsService.upsert({
         ...DEFAULT_PLATFORM_LIMIT,
         ...spreadIfDefined('tasks', tasks),
+        ...spreadIfDefined('aiTokens', aiTokens),
         pieces,
         piecesFilterType,
     }, projectId)

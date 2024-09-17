@@ -10,7 +10,7 @@ interface SidebarLayoutProps {
   children: React.ReactNode;
 }
 
-type SidebarItem = {
+export type SidebarItem = {
   title: string;
   href: string;
   icon: JSX.Element;
