@@ -12,9 +12,9 @@ import {
   WebsocketClientEvent,
   CreateStepRunRequestBody,
   StepRunResponse,
+  isFlowStateTerminal,
 } from '@activepieces/shared';
 
-import { flowRunUtils } from './flow-run-utils';
 
 export const flowRunsApi = {
   list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {
@@ -41,7 +41,7 @@ export const flowRunsApi = {
           return;
         }
         onUpdate(response);
-        if (flowRunUtils.hasRunFinished(response.status)) {
+        if (isFlowStateTerminal(response.status)) {
           socket.off(
             WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS,
             handleProgress,

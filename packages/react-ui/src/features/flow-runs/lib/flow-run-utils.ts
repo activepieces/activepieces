@@ -28,7 +28,6 @@ export const flowRunUtils = {
   findFailedStep,
   findLoopsState,
   extractStepOutput,
-  hasRunFinished,
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: 'default' | 'success' | 'error';
     Icon:
@@ -169,49 +168,7 @@ function findFailedStep(run: FlowRun) {
   }, null as null | string);
 }
 
-function hasRunFinished(runStatus: FlowRunStatus): boolean {
-  return (
-    runStatus !== FlowRunStatus.RUNNING && runStatus !== FlowRunStatus.PAUSED
-  );
-}
 
-function findStepParents(
-  stepName: string,
-  step: Action | Trigger,
-): Action[] | undefined {
-  if (step.name === stepName) {
-    return [];
-  }
-  if (step.nextAction) {
-    const pathFromNextAction = findStepParents(stepName, step.nextAction);
-    if (pathFromNextAction) {
-      return pathFromNextAction;
-    }
-  }
-  if (step.type === ActionType.BRANCH) {
-    const pathFromTrueBranch = step.onSuccessAction
-      ? findStepParents(stepName, step.onSuccessAction)
-      : undefined;
-    if (pathFromTrueBranch) {
-      return [step, ...pathFromTrueBranch];
-    }
-    const pathFromFalseBranch = step.onFailureAction
-      ? findStepParents(stepName, step.onFailureAction)
-      : undefined;
-    if (pathFromFalseBranch) {
-      return [step, ...pathFromFalseBranch];
-    }
-  }
-  if (step.type === ActionType.LOOP_ON_ITEMS) {
-    const pathFromLoop = step.firstLoopAction
-      ? findStepParents(stepName, step.firstLoopAction)
-      : undefined;
-    if (pathFromLoop) {
-      return [step, ...pathFromLoop];
-    }
-  }
-  return undefined;
-}
 function getLoopChildStepOutput(
   parents: LoopOnItemsAction[],
   loopIndexes: Record<string, number>,
@@ -253,7 +210,10 @@ function extractStepOutput(
   if (stepOutput) {
     return stepOutput;
   }
-  const parents = findStepParents(stepName, trigger);
+  const parents = flowHelper.findPathToStep({
+    trigger: trigger,
+    targetStepName: stepName,
+  });
   if (parents) {
     return getLoopChildStepOutput(
       parents.filter((p) => p.type === ActionType.LOOP_ON_ITEMS),

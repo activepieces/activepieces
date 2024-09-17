@@ -38,8 +38,8 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
+import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 function getStepStatus(
   stepName: string | undefined,

@@ -84,7 +84,6 @@ const BuilderPage = () => {
       const flowVersion = state.flowVersion;
       if (
         isNil(state.selectedStep) ||
-        state.selectedStep === '' ||
         isNil(flowVersion)
       ) {
         return {

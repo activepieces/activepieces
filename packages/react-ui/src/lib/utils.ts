@@ -18,7 +18,10 @@ export const formatUtils = {
     sampleData: unknown,
     type: ActionType | TriggerType | null,
   ) {
-    const cleanedSampleData = typeof sampleData === 'object'? JSON.parse(JSON.stringify(sampleData)) : sampleData;
+    const cleanedSampleData =
+      typeof sampleData === 'object'
+        ? JSON.parse(JSON.stringify(sampleData))
+        : sampleData;
     const shouldRemoveIterations =
       type === ActionType.LOOP_ON_ITEMS &&
       cleanedSampleData &&
