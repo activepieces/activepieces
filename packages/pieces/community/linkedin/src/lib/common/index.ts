@@ -19,6 +19,7 @@ export const linkedinCommon = {
   baseUrl: 'https://api.linkedin.com',
   linkedinHeaders: {
     'X-Restli-Protocol-Version': '2.0.0',
+    'LinkedIn-Version': '202312',
   },
   text: Property.LongText({
     displayName: 'Text',
@@ -114,19 +115,19 @@ export const linkedinCommon = {
       }
     );
 
-    const companySearch = (
-      await httpClient.sendRequest({
-        url: `${
-          linkedinCommon.baseUrl
-        }/v2/organizations?ids=List(${companyIds.join(',')})`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken,
-        },
-        headers: linkedinCommon.linkedinHeaders,
-      })
-    ).body;
+    const response = await fetch(`${linkedinCommon.baseUrl}/rest/organizations?ids=List(${companyIds.join(',')})`, {
+      method: 'GET',
+      headers: {
+        ...linkedinCommon.linkedinHeaders,
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const companySearch = await response.json();
 
     return companySearch.results;
   },

@@ -1,6 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { flatten } from 'safe-flat';
 
+const markdown = `
+**Notes**:
+* The input should be a JSON array.
+* The JSON object will be flattened If nested and the keys will be used as headers.
+`
 export const jsonToCsvAction = createAction({
   name: 'convert_json_to_csv',
   displayName: 'Convert JSON to CSV',
@@ -11,11 +16,8 @@ export const jsonToCsvAction = createAction({
   },
   props: {
     markdown: Property.MarkDown({
-      value: `
-      **Notes**:
-      * The input should be a JSON array.
-      * The JSON object will be flattened If nested and the keys will be used as headers.
-    `}),
+      value: markdown,
+    }),
     json_array: Property.Json({
       displayName: 'JSON Array',
       defaultValue: [
@@ -60,7 +62,7 @@ export const jsonToCsvAction = createAction({
         message: 'The input should be a JSON array.',
       }))
     }
-    const flattened = json_array.map((item) => flatten(item) as Record<string,string>);
+    const flattened = json_array.map((item) => flatten(item) as Record<string, string>);
     const headers: string[] = [];
     flattened.map((item) => {
       Object.keys(item).forEach((key) => {

@@ -34,6 +34,8 @@ COPY default.cf /usr/local/etc/isolate
 RUN npm i -g pnpm@7.28.0
 RUN npm i -g cross-env@7.0.3
 
+RUN pnpm config set store-dir /root/.local/share/pnpm/store
+
 RUN pnpm store add \
   @tsconfig/node18@1.0.0 \
   @types/node@18.17.1 \

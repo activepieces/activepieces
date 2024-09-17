@@ -51,7 +51,6 @@ export const createCompanyUpdate = createAction({
 
     const requestBody = linkedinCommon.generatePostRequestBody(bodyConfig);
     const createPostHeaders: any = linkedinCommon.linkedinHeaders;
-    createPostHeaders['LinkedIn-Version'] = '202306';
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
