@@ -193,7 +193,7 @@ export const airtableCommon = {
         tableId: tableId as unknown as string,
       });
 
-      airtable.fields.forEach((field: AirtableField) => {
+      for (const field of airtable.fields) {
         if (!AirtableEnterpriseFields.includes(field.type)) {
           const params = {
             displayName: field.name,
@@ -204,12 +204,12 @@ export const airtableCommon = {
               : field.description,
             required: false,
           };
+
           if (isNil(AirtableFieldMapping[field.type])) {
             fields[field.id] = Property.ShortText({
               ...params,
             });
-          }
-          if (
+          } else if (
             field.type === 'singleSelect' ||
             field.type === 'multipleSelects'
           ) {
@@ -230,7 +230,7 @@ export const airtableCommon = {
             fields[field.id] = AirtableFieldMapping[field.type](params);
           }
         }
-      });
+      }
 
       return fields;
     },

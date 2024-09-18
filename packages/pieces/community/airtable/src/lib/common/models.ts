@@ -90,6 +90,7 @@ export type AirtableFieldType =
 export const AirtableEnterpriseFields = [
   'singleCollaborator',
   'multipleCollaborators',
+  'aiText',
 ];
 
 export const AirtableFieldMapping = {
