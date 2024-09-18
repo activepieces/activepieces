@@ -185,15 +185,12 @@ export const airtableCommon = {
       if (!base) return {};
       if (!tableId) return {};
 
-      const fields: DynamicPropsValue = {};
-
       const airtable: AirtableTable = await airtableCommon.fetchTable({
         token: auth as unknown as string,
         baseId: base as unknown as string,
         tableId: tableId as unknown as string,
       });
-
-      for (const field of airtable.fields) {
+      const fields = airtable.fields.reduce((acc, field) => {
         if (!AirtableEnterpriseFields.includes(field.type)) {
           const params = {
             displayName: field.name,
@@ -206,7 +203,7 @@ export const airtableCommon = {
           };
 
           if (isNil(AirtableFieldMapping[field.type])) {
-            fields[field.id] = Property.ShortText({
+            acc[field.id] = Property.ShortText({
               ...params,
             });
           } else if (
@@ -220,17 +217,19 @@ export const airtableCommon = {
               })
             );
 
-            fields[field.id] = AirtableFieldMapping[field.type]({
+            acc[field.id] = AirtableFieldMapping[field.type]({
               ...params,
               options: {
                 options: options ?? [],
               },
             });
           } else {
-            fields[field.id] = AirtableFieldMapping[field.type](params);
+            acc[field.id] = AirtableFieldMapping[field.type](params);
           }
         }
-      }
+
+        return acc;
+      }, {} as DynamicPropsValue);
 
       return fields;
     },
