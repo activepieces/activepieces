@@ -37,7 +37,7 @@ export const BuilderHeader = () => {
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
-  const branding = flagsHooks.useWebsiteBranding();
+  // const branding = flagsHooks.useWebsiteBranding();
   const isInRunsPage = useMemo(
     () => location.pathname.startsWith('/runs'),
     [location.pathname],
