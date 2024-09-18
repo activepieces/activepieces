@@ -65,10 +65,7 @@ export type BuilderState = {
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
   moveToFolderClientSide: (folderId: string) => void;
-  setRun: (
-    run: FlowRun,
-    flowVersion: FlowVersion,
-  ) => void;
+  setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
   applyOperation: (
@@ -97,180 +94,188 @@ export type BuilderInitialState = Pick<
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 
 export const createBuilderStore = (initialState: BuilderInitialState) =>
-  create<BuilderState>((set) => ({
-    loopsIndexes: {},
-    flow: initialState.flow,
-    flowVersion: initialState.flowVersion,
-    leftSidebar: initialState.run
-      ? LeftSideBarType.RUN_DETAILS
-      : LeftSideBarType.NONE,
-    readonly: initialState.readonly,
-    run: initialState.run,
-    saving: false,
-    selectedStep: initialState.run
-      ? initialState.flowVersion.trigger.name
-      : null,
-    canExitRun: initialState.canExitRun,
-    activeDraggingStep: null,
-    allowCanvasPanning: true,
-    rightSidebar: initialState.run
-      ? RightSideBarType.PIECE_SETTINGS
-      : RightSideBarType.NONE,
-    refreshPieceFormSettings: false,
+  create<BuilderState>((set) => {
+    const failedStep = initialState.run?.steps
+      ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
+      : null;
+    return {
+      loopsIndexes:
+        initialState.run && initialState.run.steps
+          ? flowRunUtils.findLoopsState(
+              initialState.flowVersion,
+              initialState.run,
+              {},
+            )
+          : {},
+      flow: initialState.flow,
+      flowVersion: initialState.flowVersion,
+      leftSidebar: initialState.run
+        ? LeftSideBarType.RUN_DETAILS
+        : LeftSideBarType.NONE,
+      readonly: initialState.readonly,
+      run: initialState.run,
+      saving: false,
+      selectedStep: failedStep ? failedStep : 'trigger',
+      canExitRun: initialState.canExitRun,
+      activeDraggingStep: null,
+      allowCanvasPanning: true,
+      rightSidebar: initialState.run
+        ? RightSideBarType.PIECE_SETTINGS
+        : RightSideBarType.NONE,
+      refreshPieceFormSettings: false,
 
-    removeStepSelection: () =>
-      set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
-    setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
-      set({
-        allowCanvasPanning,
-      }),
-    setActiveDraggingStep: (stepName: string | null) =>
-      set({
-        activeDraggingStep: stepName,
-      }),
-    setReadOnly: (readonly: boolean) => set({ readonly }),
-    renameFlowClientSide: (newName: string) => {
-      set((state) => {
-        return {
-          flowVersion: {
-            ...state.flowVersion,
-            displayName: newName,
-          },
-        };
-      });
-    },
-    selectStepByName: (stepName: string) => {
-      set((state) => {
-        return {
-          selectedStep: stepName,
-          rightSidebar:
-            stepName === 'trigger' &&
-            state.flowVersion.trigger.type === TriggerType.EMPTY
-              ? RightSideBarType.NONE
-              : RightSideBarType.PIECE_SETTINGS,
-          leftSidebar: !isNil(state.run)
-            ? LeftSideBarType.RUN_DETAILS
-            : LeftSideBarType.NONE,
-        };
-      });
-    },
-    moveToFolderClientSide: (folderId: string) => {
-      set((state) => {
-        return {
-          flow: {
-            ...state.flow,
-            folderId,
-          },
-        };
-      });
-    },
-    setFlow: (flow: Flow) => set({ flow }),
-    exitRun: () =>
-      set({
-        run: null,
-        readonly: false,
-        loopsIndexes: {},
-        leftSidebar: LeftSideBarType.NONE,
-        rightSidebar: RightSideBarType.NONE,
-      }),
-    exitStepSettings: () =>
-      set({
-        rightSidebar: RightSideBarType.NONE,
-        selectedStep: null,
-      }),
-    exitPieceSelector: () =>
-      set({
-        rightSidebar: RightSideBarType.NONE,
-      }),
-    setRightSidebar: (rightSidebar: RightSideBarType) => set({ rightSidebar }),
-    setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
-    setRun: async (
-      run: FlowRun,
-      flowVersion: FlowVersion,
-    ) =>
-      set((state) => {
-        return {
-          loopsIndexes: flowRunUtils.findLoopsState(
-            flowVersion,
+      removeStepSelection: () =>
+        set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
+      setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
+        set({
+          allowCanvasPanning,
+        }),
+      setActiveDraggingStep: (stepName: string | null) =>
+        set({
+          activeDraggingStep: stepName,
+        }),
+      setReadOnly: (readonly: boolean) => set({ readonly }),
+      renameFlowClientSide: (newName: string) => {
+        set((state) => {
+          return {
+            flowVersion: {
+              ...state.flowVersion,
+              displayName: newName,
+            },
+          };
+        });
+      },
+      selectStepByName: (stepName: string) => {
+        set((state) => {
+          return {
+            selectedStep: stepName,
+            rightSidebar:
+              stepName === 'trigger' &&
+              state.flowVersion.trigger.type === TriggerType.EMPTY
+                ? RightSideBarType.NONE
+                : RightSideBarType.PIECE_SETTINGS,
+            leftSidebar: !isNil(state.run)
+              ? LeftSideBarType.RUN_DETAILS
+              : LeftSideBarType.NONE,
+          };
+        });
+      },
+      moveToFolderClientSide: (folderId: string) => {
+        set((state) => {
+          return {
+            flow: {
+              ...state.flow,
+              folderId,
+            },
+          };
+        });
+      },
+      setFlow: (flow: Flow) => set({ flow }),
+      exitRun: () =>
+        set({
+          run: null,
+          readonly: false,
+          loopsIndexes: {},
+          leftSidebar: LeftSideBarType.NONE,
+          rightSidebar: RightSideBarType.NONE,
+        }),
+      exitStepSettings: () =>
+        set({
+          rightSidebar: RightSideBarType.NONE,
+          selectedStep: null,
+        }),
+      exitPieceSelector: () =>
+        set({
+          rightSidebar: RightSideBarType.NONE,
+        }),
+      setRightSidebar: (rightSidebar: RightSideBarType) =>
+        set({ rightSidebar }),
+      setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
+      setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
+        set((state) => {
+          return {
+            loopsIndexes: flowRunUtils.findLoopsState(
+              flowVersion,
+              run,
+              state.loopsIndexes,
+            ),
             run,
-            state.loopsIndexes,
-          ),
-          run,
-          flowVersion,
-          leftSidebar: LeftSideBarType.RUN_DETAILS,
-          rightSidebar: RightSideBarType.PIECE_SETTINGS,
-          selectedStep: run.steps
-            ? flowRunUtils.findFailedStepInOutput(run.steps) ??
-              state.selectedStep ??
-              'trigger'
-            : 'trigger',
-          readonly: true,
-        };
-      }),
-    startSaving: () => set({ saving: true }),
-    setLoopIndex: (stepName: string, index: number) => {
-      set((state) => {
-        return {
-          loopsIndexes: {
-            ...state.loopsIndexes,
-            [stepName]: index,
-          },
-        };
-      });
-    },
-    applyOperation: (operation: FlowOperationRequest, onError: () => void) =>
-      set((state) => {
-        if (state.readonly) {
-          console.warn('Cannot apply operation while readonly');
-          return state;
-        }
-        const newFlowVersion = flowHelper.apply(state.flowVersion, operation);
-        const updateRequest = async () => {
-          set({ saving: true });
-          try {
-            const updatedFlowVersion = await flowsApi.update(
-              state.flow.id,
-              operation,
-            );
-            set((state) => {
-              return {
-                flowVersion: {
-                  ...state.flowVersion,
-                  id: updatedFlowVersion.version.id,
-                  state: updatedFlowVersion.version.state,
-                },
-                saving: flowUpdatesQueue.size() !== 0,
-              };
-            });
-          } catch (error) {
-            console.error(error);
-            flowUpdatesQueue.halt();
-            onError();
+            flowVersion,
+            leftSidebar: LeftSideBarType.RUN_DETAILS,
+            rightSidebar: RightSideBarType.PIECE_SETTINGS,
+            selectedStep: run.steps
+              ? flowRunUtils.findFailedStepInOutput(run.steps) ??
+                state.selectedStep ??
+                'trigger'
+              : 'trigger',
+            readonly: true,
+          };
+        }),
+      startSaving: () => set({ saving: true }),
+      setLoopIndex: (stepName: string, index: number) => {
+        set((state) => {
+          return {
+            loopsIndexes: {
+              ...state.loopsIndexes,
+              [stepName]: index,
+            },
+          };
+        });
+      },
+      applyOperation: (operation: FlowOperationRequest, onError: () => void) =>
+        set((state) => {
+          if (state.readonly) {
+            console.warn('Cannot apply operation while readonly');
+            return state;
           }
-        };
-        flowUpdatesQueue.add(updateRequest);
-        return { flowVersion: newFlowVersion };
-      }),
-    setVersion: (flowVersion: FlowVersion) => {
-      set((state) => ({
-        flowVersion,
-        run: null,
-        readonly:
-          state.flow.publishedVersionId !== flowVersion.id &&
-          flowVersion.state === FlowVersionState.LOCKED,
-        leftSidebar: LeftSideBarType.NONE,
-        rightSidebar: RightSideBarType.NONE,
-      }));
-    },
-    insertMention: null,
-    setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
-      set({ insertMention });
-    },
-    refreshSettings: () =>
-      set((state) => ({
-        refreshPieceFormSettings: !state.refreshPieceFormSettings,
-      })),
-  }));
+          const newFlowVersion = flowHelper.apply(state.flowVersion, operation);
+          const updateRequest = async () => {
+            set({ saving: true });
+            try {
+              const updatedFlowVersion = await flowsApi.update(
+                state.flow.id,
+                operation,
+              );
+              set((state) => {
+                return {
+                  flowVersion: {
+                    ...state.flowVersion,
+                    id: updatedFlowVersion.version.id,
+                    state: updatedFlowVersion.version.state,
+                  },
+                  saving: flowUpdatesQueue.size() !== 0,
+                };
+              });
+            } catch (error) {
+              console.error(error);
+              flowUpdatesQueue.halt();
+              onError();
+            }
+          };
+          flowUpdatesQueue.add(updateRequest);
+          return { flowVersion: newFlowVersion };
+        }),
+      setVersion: (flowVersion: FlowVersion) => {
+        set((state) => ({
+          flowVersion,
+          run: null,
+          readonly:
+            state.flow.publishedVersionId !== flowVersion.id &&
+            flowVersion.state === FlowVersionState.LOCKED,
+          leftSidebar: LeftSideBarType.NONE,
+          rightSidebar: RightSideBarType.NONE,
+        }));
+      },
+      insertMention: null,
+      setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
+        set({ insertMention });
+      },
+      refreshSettings: () =>
+        set((state) => ({
+          refreshPieceFormSettings: !state.refreshPieceFormSettings,
+        })),
+    };
+  });
 
 export const useSwitchToDraft = () => {
   const [flowVersion, setVersion, exitRun] = useBuilderStateContext((state) => [

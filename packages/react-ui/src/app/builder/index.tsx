@@ -82,10 +82,7 @@ const BuilderPage = () => {
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
       const flowVersion = state.flowVersion;
-      if (
-        isNil(state.selectedStep) ||
-        isNil(flowVersion)
-      ) {
+      if (isNil(state.selectedStep) || isNil(flowVersion)) {
         return {
           memorizedSelectedStep: undefined,
           containerKey: undefined,
