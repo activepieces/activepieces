@@ -152,16 +152,6 @@ const SignInForm: React.FC = () => {
           </Button>
         </form>
       </Form>
-
-      <div className="mt-4 text-center text-sm">
-        {t("Don't have an account?")}
-        <Link
-          to="/sign-up"
-          className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
-        >
-          {t('Sign up')}
-        </Link>
-      </div>
     </>
   );
 };

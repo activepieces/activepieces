@@ -23,7 +23,7 @@ const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
 };
 
-const ThirdPartyLogin = React.memo(() => {
+const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const navigate = useNavigate();
 
   const { data: thirdPartyAuthProviders } =
@@ -82,7 +82,9 @@ const ThirdPartyLogin = React.memo(() => {
             }
           >
             <ThirdPartyIcon icon={GoogleIcon} />
-            {t(`Sign in With Google`)}
+            {isSignUp
+              ? `${t(`Sign up With`)} ${t('Google')}`
+              : `${t(`Sign in With`)} ${t('Google')}`}
           </Button>
         )}
         {thirdPartyAuthProviders?.github && (
@@ -94,7 +96,9 @@ const ThirdPartyLogin = React.memo(() => {
             }
           >
             <ThirdPartyIcon icon={Github} />
-            {t('Sign in With GitHub')}
+            {isSignUp
+              ? `${t(`Sign up With`)} ${t('Github')}`
+              : `${t(`Sign in With`)} ${t('Github')}`}
           </Button>
         )}
         {thirdPartyAuthProviders?.saml && (
@@ -104,17 +108,12 @@ const ThirdPartyLogin = React.memo(() => {
             onClick={signInWithSaml}
           >
             <ThirdPartyIcon icon={SamlIcon} />
-            {t('Sign in With SAML')}
+            {isSignUp
+              ? `${t(`Sign up With`)} ${t('SAML')}`
+              : `${t(`Sign in With`)} ${t('SAML')}`}
           </Button>
         )}
       </div>
-      {thirdPartyAuthProviders?.google ||
-      thirdPartyAuthProviders?.github ||
-      thirdPartyAuthProviders?.saml ? (
-        <HorizontalSeparatorWithText className="my-4">
-          {t('OR')}
-        </HorizontalSeparatorWithText>
-      ) : null}
     </>
   );
 });
