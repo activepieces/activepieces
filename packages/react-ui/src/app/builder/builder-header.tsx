@@ -128,7 +128,8 @@ export const BuilderHeader = () => {
             <ChevronDown className="h-8 w-8" />
           </FlowActionMenu>
         </div>
-        {!embedState.hideLogoInBuilder && (
+        {/* TODO: Enable logo in builder header after we remove "Report Bugs" button
+         {!embedState.hideLogoInBuilder && (
           <div className="absolute absolute w-full h-full left-0 top-0 flex items-center justify-center p-4 pointer-events-none">
             <img
               className="h-8 object-contain"
@@ -136,7 +137,7 @@ export const BuilderHeader = () => {
               alt={branding.websiteName}
             ></img>
           </div>
-        )}
+        )} */}
 
         <div className="grow "></div>
         <div className="flex items-center justify-center gap-4">
