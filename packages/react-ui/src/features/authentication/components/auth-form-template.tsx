@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import {
   Card,
@@ -8,17 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { ApFlagId } from '@activepieces/shared';
+
+import { HorizontalSeparatorWithText } from '../../../components/ui/seperator';
+import { flagsHooks } from '../../../hooks/flags-hooks';
 
 import { SignInForm } from './sign-in-form';
 import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
-import { flagsHooks } from '../../../hooks/flags-hooks';
-import {
-  ApFlagId,
-  ThirdPartyAuthnProvidersToShowMap,
-} from '../../../../../shared/src';
-import { HorizontalSeparatorWithText } from '../../../components/ui/seperator';
-import { Link } from 'react-router-dom';
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   return isSignup ? (
