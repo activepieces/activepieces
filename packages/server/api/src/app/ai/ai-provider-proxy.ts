@@ -1,10 +1,10 @@
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
 import { aiTokenLimit } from '../ee/project-plan/ai-token-limit'
 import { projectService } from '../project/project-service'
 import { projectUsageService } from '../project/usage/project-usage-service'
 import { aiProviderService } from './ai-provider.service'
-import { StatusCodes } from 'http-status-codes'
 
 export const proxyController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
 
@@ -18,12 +18,12 @@ export const proxyController: FastifyPluginCallbackTypebox = (fastify, _opts, do
         const limitResponse = await aiTokenLimit.exceededLimit({ projectId, tokensToConsume: 0 })
         if (limitResponse.exceeded) {
             return reply.code(StatusCodes.PAYMENT_REQUIRED).send(makeOpenAiResponse(
-                "You have exceeded your AI tokens limit for this project.",
-                "ai_tokens_limit_exceeded",
+                'You have exceeded your AI tokens limit for this project.',
+                'ai_tokens_limit_exceeded',
                 {
                     usage: limitResponse.usage,
                     limit: limitResponse.limit,
-                }
+                },
             ))
         }
 
@@ -57,12 +57,12 @@ export const proxyController: FastifyPluginCallbackTypebox = (fastify, _opts, do
 
 function makeOpenAiResponse(message: string, code: string, params: Record<string, unknown>) {
     return {
-        "error": {
-            "message": message,
-            "type": "invalid_request_error",
-            "param": params,
-            "code": code
-        }
+        'error': {
+            message,
+            'type': 'invalid_request_error',
+            'param': params,
+            code,
+        },
     }
 }
 

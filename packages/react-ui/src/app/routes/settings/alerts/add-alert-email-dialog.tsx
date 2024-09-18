@@ -94,27 +94,25 @@ const AddAlertEmailDialog = React.memo(
 
     return (
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <Button
-                  variant="outline"
-                  className="mt-4 w-full flex items-center space-x-2"
-                  disabled={role !== ProjectMemberRole.ADMIN}
-                >
-                  <Plus className="size-4" />
-                  <span>{t('Add email')}</span>
-                </Button>
-              </div>
-            </TooltipTrigger>
-            {role !== ProjectMemberRole.ADMIN && (
-              <TooltipContent side="bottom">
-                {t('Only project admins can do this')}
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </DialogTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="mt-4 w-full flex items-center space-x-2"
+                disabled={role !== ProjectMemberRole.ADMIN}
+              >
+                <Plus className="size-4" />
+                <span>{t('Add email')}</span>
+              </Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          {role !== ProjectMemberRole.ADMIN && (
+            <TooltipContent side="bottom">
+              {t('Only project admins can do this')}
+            </TooltipContent>
+          )}
+        </Tooltip>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{t('Add Alert Email')}</DialogTitle>
@@ -141,7 +139,7 @@ const AddAlertEmailDialog = React.memo(
                         {...field}
                         id="email"
                         type="text"
-                        placeholder="gilfoyle@piedpiper.com"
+                        placeholder="joe@doe.com"
                       />
                       <FormMessage />
                     </FormItem>
