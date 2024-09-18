@@ -1,3 +1,10 @@
+import {
+  InvitationType,
+  Permission,
+  PlatformRole,
+  ProjectMemberRole,
+  UserInvitationWithLink,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
@@ -5,6 +12,8 @@ import { t } from 'i18next';
 import { CopyIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+import { userInvitationsHooks } from '../lib/user-invitations-hooks';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -43,15 +52,6 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { HttpError } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import {
-  InvitationType,
-  Permission,
-  PlatformRole,
-  ProjectMemberRole,
-  UserInvitationWithLink,
-} from '@activepieces/shared';
-
-import { userInvitationsHooks } from '../lib/user-invitations-hooks';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -95,13 +95,13 @@ export function InviteUserDialog() {
       switch (data.type) {
         case InvitationType.PLATFORM:
           return userInvitationApi.invite({
-            email: data.email,
+            email: data.email.trim().toLowerCase(),
             type: data.type,
             platformRole: data.platformRole,
           });
         case InvitationType.PROJECT:
           return userInvitationApi.invite({
-            email: data.email,
+            email: data.email.trim().toLowerCase(),
             type: data.type,
             projectRole: data.projectRole,
             projectId: project.id,
