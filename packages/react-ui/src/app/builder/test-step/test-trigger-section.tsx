@@ -177,7 +177,7 @@ const TestTriggerSection = React.memo(
         'settings.inputUiInfo',
         {
           ...formValues.settings.inputUiInfo,
-          currentSelectedData: formatUtils.formatStepInputAndOutput(
+          currentSelectedData: formatUtils.formatStepInputOrOutput(
             data.payload,
             null,
           ),

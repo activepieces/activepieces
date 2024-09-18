@@ -26,6 +26,7 @@ import {
   TriggerType,
   WebsocketClientEvent,
   flowHelper,
+  isNil,
 } from '@activepieces/shared';
 
 import { cn, useElementSize } from '../../lib/utils';
@@ -35,7 +36,7 @@ import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
-import { FlowRecentRunsList } from './run-list';
+import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
@@ -80,15 +81,14 @@ const BuilderPage = () => {
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
-      const stepPath = state.selectedStep;
       const flowVersion = state.flowVersion;
-      if (!stepPath || !flowVersion) {
+      if (isNil(state.selectedStep) || isNil(flowVersion)) {
         return {
           memorizedSelectedStep: undefined,
           containerKey: undefined,
         };
       }
-      const step = flowHelper.getStep(flowVersion, stepPath.stepName);
+      const step = flowHelper.getStep(flowVersion, state.selectedStep);
       const triggerOrActionName =
         step?.type === TriggerType.PIECE
           ? (step as PieceTrigger).settings.triggerName
@@ -97,7 +97,7 @@ const BuilderPage = () => {
         memorizedSelectedStep: step,
         containerKey: constructContainerKey(
           flowVersion.id,
-          stepPath.stepName,
+          state.selectedStep,
           triggerOrActionName,
         ),
       };
@@ -183,7 +183,7 @@ const BuilderPage = () => {
                 [animateResizeClassName]: !isDraggingHandle,
               })}
             >
-              {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
+              {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
               {leftSidebar === LeftSideBarType.RUN_DETAILS && (
                 <FlowRunDetails />
               )}

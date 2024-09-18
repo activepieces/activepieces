@@ -111,7 +111,7 @@ module.exports = {
         fade: 'fade 0.2s ease-out',
       },
       boxShadow: {
-        'step-container': '0px 0px 22px hsl(var(--border))',
+        'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',
         'add-button': 'var(--add-button-shadow)',
       },
     },
