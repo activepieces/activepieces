@@ -11,8 +11,8 @@ export const askAi = createAction({
   displayName: 'Ask AI',
   description: '',
   props: {
-    provider: aiProps.provider,
-    model: aiProps.model,
+    provider: aiProps('text').provider,
+    model: aiProps('text').model,
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,

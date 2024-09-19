@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
 import { AI_PROVIDERS } from '@activepieces/pieces-common';
@@ -33,7 +34,7 @@ export default function AIProvidersPage() {
       <div className="mb-4 flex">
         <div className="flex justify-between flex-row w-full">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold w-full">{t('AI Providers')}</h1>
+            <TableTitle>{t('AI Providers')}</TableTitle>
           </div>
         </div>
       </div>

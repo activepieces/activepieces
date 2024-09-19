@@ -1,9 +1,8 @@
 import {
   AI,
-  AI_PROVIDERS,
   AIChatRole,
-  AIFunctionCallingPropDefinition,
   aiProps,
+  AIFunctionArgumentDefinition
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
@@ -12,8 +11,8 @@ export const extractStructuredData = createAction({
   displayName: 'Extract Structured Data',
   description: '',
   props: {
-    provider: aiProps.provider,
-    model: aiProps.model,
+    provider: aiProps('text').provider,
+    model: aiProps('text').model,
     text: Property.LongText({
       displayName: 'Unstructured Text',
       required: true,
@@ -66,7 +65,7 @@ export const extractStructuredData = createAction({
 
     const ai = AI({ provider, server: context.server });
 
-    const response = await ai.chat.extractStructuredData({
+    const response = await ai.chat.function({
       model: context.propsValue.model,
       messages: [
         {
@@ -74,10 +73,17 @@ export const extractStructuredData = createAction({
           content: context.propsValue.text,
         },
       ],
-      functionCallingProps: context.propsValue
-        .params as AIFunctionCallingPropDefinition[],
+      functions: [
+        {
+          name: 'extract_structured_data',
+          description:
+            'Extract the following data from the provided text.',
+          arguments: context.propsValue
+            .params as AIFunctionArgumentDefinition[],
+        }
+      ]
     });
 
-    return response.toolCall.function.arguments;
+    return response.call?.function.arguments
   },
 });
