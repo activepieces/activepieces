@@ -2,12 +2,12 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
 import { AI_PROVIDERS } from '@activepieces/pieces-common';
 
 import { AIProviderCard } from './ai-provider-card';
-import { TableTitle } from '@/components/ui/table-title';
 
 export default function AIProvidersPage() {
   const {
