@@ -1,3 +1,10 @@
+import {
+  ApFlagId,
+  FileResponseInterface,
+  FormInput,
+  FormInputType,
+  FormResponse,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Separator } from '@radix-ui/react-dropdown-menu';
 import { Static, TObject, TSchema, Type } from '@sinclair/typebox';
@@ -5,6 +12,8 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+import { FormResult, FormResultTypes, formsApi } from '../lib/forms-api';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { ShowPoweredBy } from '@/components/show-powered-by';
@@ -24,16 +33,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
-import {
-  ApFlagId,
-  FileResponseInterface,
-  FormInput,
-  FormInputType,
-  FormResponse,
-  spreadIfDefined,
-} from '@activepieces/shared';
-
-import { FormResult, FormResultTypes, formsApi } from '../lib/forms-api';
 
 type ApFormProps = {
   form: FormResponse;
@@ -78,26 +77,29 @@ const requiredPropertySettings = {
 };
 
 const createPropertySchema = (input: FormInputWithName) => {
-  const schemaSettings = {
-    defaultValue: input.type === FormInputType.TOGGLE ? false : '',
-    ...spreadIfDefined(
-      'requiredPropertySettings',
-      input.required ? requiredPropertySettings : undefined,
-    ),
-  };
+  const schemaSettings = input.required ? requiredPropertySettings : {};
   return input.type === FormInputType.TOGGLE
     ? Type.Boolean(schemaSettings)
     : Type.String(schemaSettings);
 };
 
-function buildSchema(inputs: FormInputWithName[]): TObject {
-  const properties = inputs.reduce<Record<string, TSchema>>((acc, input) => {
-    acc[input.name] = createPropertySchema(input);
-    return acc;
-  }, {});
-  return Type.Object(properties);
+function buildSchema(inputs: FormInputWithName[]) {
+  return {
+    properties: Type.Object(
+      inputs.reduce<Record<string, TSchema>>((acc, input) => {
+        acc[input.name] = createPropertySchema(input);
+        return acc;
+      }, {}),
+    ),
+    defaultValues: inputs.reduce<Record<string, string | boolean>>(
+      (acc, input) => {
+        acc[input.name] = input.type === FormInputType.TOGGLE ? false : '';
+        return acc;
+      },
+      {},
+    ),
+  };
 }
-
 const handleDownloadFile = (formResult: FormResult) => {
   const link = document.createElement('a');
   const fileBase = formResult.value as FileResponseInterface;
@@ -136,11 +138,11 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
   const { data: showPoweredBy } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_POWERED_BY_IN_FORM,
   );
-
-  const reactForm = useForm<Static<typeof schema>>({
-    defaultValues: {},
-    resolver: typeboxResolver(schema),
+  const reactForm = useForm({
+    defaultValues: schema.defaultValues,
+    resolver: typeboxResolver(schema.properties),
   });
+
   const { mutate, isPending } = useMutation<FormResult | null, Error>({
     mutationFn: async () =>
       formsApi.submitForm(
