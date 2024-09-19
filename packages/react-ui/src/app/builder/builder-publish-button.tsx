@@ -69,25 +69,33 @@ const BuilderPublishButton = React.memo(() => {
   const isPublishedVersion =
     flow.publishedVersionId === flowVersion.id &&
     flowVersion.state === FlowVersionState.LOCKED;
+  const isViewingDraft =
+    (flow.publishedVersionId === flowVersion.id &&
+      flow.version.id === flowVersion.id) ||
+    flowVersion.state === FlowVersionState.DRAFT;
 
-  const isValid = flowVersion.valid;
   return (
     <>
-      {!run &&
-        flowVersion.state === FlowVersionState.DRAFT &&
-        userHasPermissionToUpdateFlowStatus && (
-          <>
-            {flow.publishedVersionId && (
-              <div className="flex items-center space-x-2">
-                <FlowVersionStateDot
-                  state={flowVersion.state}
-                ></FlowVersionStateDot>
+      {!run && userHasPermissionToUpdateFlowStatus && (
+        <>
+          {flow.publishedVersionId && (
+            <div className="flex items-center space-x-2">
+              <FlowVersionStateDot
+                state={flowVersion.state}
+                versionId={flowVersion.id}
+                publishedVersionId={flow.publishedVersionId}
+              ></FlowVersionStateDot>
+              {(flow.publishedVersionId === flowVersion.id ||
+                flowVersion.state === FlowVersionState.DRAFT) && (
                 <FlowStatusToggle
                   flow={flow}
                   flowVersion={flowVersion}
                 ></FlowStatusToggle>
-              </div>
-            )}
+              )}
+            </div>
+          )}
+
+          {isViewingDraft && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger
@@ -97,7 +105,7 @@ const BuilderPublishButton = React.memo(() => {
                   <Button
                     size={'sm'}
                     loading={isSaving || isPublishingPending}
-                    disabled={isPublishedVersion || !isValid}
+                    disabled={isPublishedVersion || !flowVersion.valid}
                     onClick={() => publish()}
                   >
                     {t('Publish')}
@@ -106,17 +114,18 @@ const BuilderPublishButton = React.memo(() => {
                 <TooltipContent side="bottom">
                   {isPublishedVersion
                     ? t('Latest version is published')
-                    : !isValid
+                    : !flowVersion.valid
                     ? t('Your flow has incomplete steps')
                     : t('Publish')}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          </>
-        )}
+          )}
+        </>
+      )}
       {userHasPermissionToUpdateFlowStatus &&
         !userHasPermissionToEditFlow &&
-        (run || flowVersion.state === FlowVersionState.LOCKED) && (
+        (run || !isViewingDraft) && (
           <Button
             size={'sm'}
             variant={'outline'}

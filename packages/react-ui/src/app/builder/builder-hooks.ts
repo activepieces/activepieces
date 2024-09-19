@@ -12,6 +12,7 @@ import {
   FlowVersion,
   FlowVersionState,
   Permission,
+  PopulatedFlow,
   TriggerType,
   flowHelper,
   isNil,
@@ -49,7 +50,7 @@ export enum RightSideBarType {
 type InsertMentionHandler = (propertyPath: string) => void;
 
 export type BuilderState = {
-  flow: Flow;
+  flow: PopulatedFlow;
   flowVersion: FlowVersion;
   readonly: boolean;
   loopsIndexes: Record<string, number>;
