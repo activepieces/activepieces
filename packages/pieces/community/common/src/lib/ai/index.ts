@@ -1,9 +1,25 @@
 import { ServerContext } from '@activepieces/pieces-framework';
 import { AI_PROVIDERS, AiProvider } from './providers';
 
-export type AI<SDK> = {
+export type AI = {
   provider: string;
   chat: AIChat;
+  image?: AIImage;
+}
+
+export type AIImage = {
+  generate: (params: AIImageGenerateParams) => Promise<AIImageCompletion | null>;
+};
+
+export type AIImageGenerateParams = {
+  prompt: string;
+  model: string;
+  numImages: number;
+  size: string;
+};
+
+export type AIImageCompletion = {
+  url: string;
 };
 
 export type AIChat = {
@@ -68,7 +84,7 @@ export enum AIChatRole {
 export type AIFactory = (params: {
   proxyUrl: string;
   engineToken: string;
-}) => AI<unknown>;
+}) => AI;
 
 export const AI = ({
   provider,
@@ -76,7 +92,7 @@ export const AI = ({
 }: {
   provider: AiProvider;
   server: ServerContext;
-}): AI<unknown> => {
+}): AI => {
   const proxyUrl = `${server.apiUrl}v1/ai-providers/proxy/${provider}`;
   const factory = AI_PROVIDERS.find((p) => p.value === provider)?.factory;
   const impl = factory?.({ proxyUrl, engineToken: server.token });
@@ -87,6 +103,7 @@ export const AI = ({
 
   return {
     provider,
+    image: impl.image,
     chat: {
       text: async (params) => {
         try {

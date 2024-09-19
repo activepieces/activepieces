@@ -1,8 +1,7 @@
 import OpenAI from 'openai';
 import { AI, AIChatRole, AIFactory } from '../..';
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 
-export const openai: AIFactory = ({ proxyUrl, engineToken }): AI<OpenAI> => {
+export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const openaiApiVersion = 'v1';
   const sdk = new OpenAI({
     apiKey: engineToken,
@@ -13,6 +12,17 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI<OpenAI> => {
   });
   return {
     provider: 'OPENAI',
+    image: {
+      generate: async (params) => {
+        const response = await sdk.images.generate({
+          model: params.model,
+          prompt: params.prompt,
+          n: params.numImages,
+        });
+        const url = response.data[0].url;
+        return url ? { url } : null;
+      },
+    },
     chat: {
       text: async (params) => {
         const completion = await sdk.chat.completions.create({

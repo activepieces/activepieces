@@ -13,10 +13,12 @@ export const AI_PROVIDERS = [
     label: 'OpenAI' as const,
     value: 'openai' as const,
     models: [
-      { label: 'gpt-4o', value: 'gpt-4o' },
-      { label: 'gpt-4o-mini', value: 'gpt-4o-mini' },
-      { label: 'gpt-4-turbo', value: 'gpt-4-turbo' },
-      { label: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo' },
+      { label: 'gpt-4o', value: 'gpt-4o', types: ['text'] },
+      { label: 'gpt-4o-mini', value: 'gpt-4o-mini', types: ['text'] },
+      { label: 'gpt-4-turbo', value: 'gpt-4-turbo', types: ['text'] },
+      { label: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo', types: ['text'] },
+      { label: 'dall-e-3', value: 'dall-e-3', types: ['image'] },
+      { label: 'dall-e-2', value: 'dall-e-2', types: ['image'] },
     ],
     auth: authHeader({ bearer: true }),
     factory: openai,
@@ -29,19 +31,23 @@ export const AI_PROVIDERS = [
     models: [
       {
         label: 'claude-3-5-sonnet',
-        value: 'claude-3-5-sonnet-20240620'
+        value: 'claude-3-5-sonnet-20240620',
+        types: ['text']
       },
       {
         label: 'claude-3-opus',
         value: 'claude-3-opus-20240229',
+        types: ['text']
       },
       {
         label: 'claude-3-sonnet',
         value: 'claude-3-sonnet-20240229',
+        types: ['text']
       },
       {
         label: 'claude-3-haiku',
         value: 'claude-3-haiku-20240307',
+        types: ['text']
       },
     ],
     auth: authHeader({ name: "x-api-key", bearer: false }),
@@ -49,7 +55,7 @@ export const AI_PROVIDERS = [
   },
 ]
 
-export const aiProps = {
+export const aiProps = (type: 'text' | 'image') => ({
   provider: Property.Dropdown<AiProvider, true>({
     displayName: 'Provider',
     required: true,
@@ -69,13 +75,23 @@ export const aiProps = {
           placeholder: 'No AI providers configured by the admin.',
         }
       }
+
+      const providersWithMetadata = providers.body.data.flatMap((p) => {
+        const providerMetadata = AI_PROVIDERS.find((meta) => meta.value === p.provider && meta.models.some(m => m.types.includes(type)));
+        if (isNil(providerMetadata)) {
+          return []
+        }
+        return {
+          value: providerMetadata.value,
+          label: providerMetadata.label,
+          models: providerMetadata.models,
+        };
+      });
+
       return {
         placeholder: 'Select AI Provider',
         disabled: false,
-        options: providers.body.data.map((p) => ({
-          label: AI_PROVIDERS.find((f) => f.value === p.provider)?.label ?? 'Unknown Label',
-          value: p.provider as AiProvider,
-        })),
+        options: providersWithMetadata,
       }
     }
   }),
@@ -91,14 +107,14 @@ export const aiProps = {
           placeholder: 'Select AI Provider',
         }
       }
-      const models = AI_PROVIDERS.find((p) => p.value === provider)?.models;
+      const models = AI_PROVIDERS.find((p) => p.value === provider)?.models.filter(m => m.types.includes(type));
       return {
         disabled: isNil(models),
         options: models ?? [],
       };
     },
   }),
-}
+})
 
 export type AiProviderMetadata = typeof AI_PROVIDERS[number]
 

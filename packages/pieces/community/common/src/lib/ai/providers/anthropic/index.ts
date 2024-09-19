@@ -1,12 +1,11 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import { AI, AIChatRole, AIFactory } from '../..';
-import Anthropic from '@anthropic-ai/sdk';
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 
 export const anthropic: AIFactory = ({
   proxyUrl,
   engineToken,
-}): AI<Anthropic> => {
+}): AI => {
   const sdk = new Anthropic({
     apiKey: engineToken,
     baseURL: proxyUrl,
@@ -17,6 +16,7 @@ export const anthropic: AIFactory = ({
   });
   return {
     provider: 'ANTHROPIC' as const,
+    image: undefined,
     chat: {
       text: async (params) => {
         const concatenatedSystemMessage = params.messages

@@ -11,8 +11,8 @@ export const extractStructuredData = createAction({
   displayName: 'Extract Structured Data',
   description: '',
   props: {
-    provider: aiProps.provider,
-    model: aiProps.model,
+    provider: aiProps('text').provider,
+    model: aiProps('text').model,
     text: Property.LongText({
       displayName: 'Unstructured Text',
       required: true,
