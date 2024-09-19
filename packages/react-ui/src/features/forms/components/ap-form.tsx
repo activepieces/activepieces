@@ -1,19 +1,10 @@
-import {
-  ApFlagId,
-  FileResponseInterface,
-  FormInput,
-  FormInputType,
-  FormResponse,
-} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Separator } from '@radix-ui/react-dropdown-menu';
-import { Static, TObject, TSchema, Type } from '@sinclair/typebox';
+import { TSchema, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-import { FormResult, FormResultTypes, formsApi } from '../lib/forms-api';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { ShowPoweredBy } from '@/components/show-powered-by';
@@ -28,12 +19,20 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
+import {
+  ApFlagId,
+  FileResponseInterface,
+  FormInput,
+  FormInputType,
+  FormResponse,
+} from '@activepieces/shared';
+
 import { Checkbox } from '../../../components/ui/checkbox';
+import { FormResult, FormResultTypes, formsApi } from '../lib/forms-api';
 
 type ApFormProps = {
   form: FormResponse;
