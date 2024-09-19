@@ -21,7 +21,6 @@ import { SSOPage } from '@/app/routes/platform/settings/sso';
 import { RedirectPage } from '@/app/routes/redirect';
 import { FlowRunsPage } from '@/app/routes/runs';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
-import { SwitchToBetaPage } from '@/app/routes/switch-to-beta';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
@@ -35,6 +34,7 @@ import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-us
 import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
 import NotFoundPage from '../routes/404-page';
+import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import AppConnectionsPage from '../routes/connections';
 import { FlowsPage } from '../routes/flows';
@@ -76,9 +76,8 @@ const routes = [
     element: <EmbedPage></EmbedPage>,
   },
   {
-    // TODO remove after react is launched
-    path: '/switch-to-beta',
-    element: <SwitchToBetaPage />,
+    path: '/authenticate',
+    element: <AuthenticatePage />,
   },
   ...ProjectRouterWrapper({
     path: '/flows',
