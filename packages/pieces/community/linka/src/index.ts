@@ -12,6 +12,7 @@ import { getContactDetails } from './lib/actions/get-contact-details';
 import { newLead } from './lib/triggers/new-lead';
 import { newPayment } from './lib/triggers/new-payment';
 import { newSubscription } from './lib/triggers/new-subscription';
+import { PieceCategory } from '@activepieces/shared';
 
 const markdownDescription = `
   Follow these instructions to get your Linka API Key:
@@ -58,6 +59,7 @@ export const linka = createPiece({
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/linka.png',
   authors: ['Trayshmhirk', 'OmarSayed'],
+  categories: [PieceCategory.SALES_AND_CRM],
   actions: [
     addOrUpdateContact,
     addOrUpdateContactExtended,
