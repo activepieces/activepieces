@@ -38,7 +38,7 @@ const TestSampleDataViewer = React.memo(
     children,
   }: TestSampleDataViewerProps) => {
     const formattedData = useMemo(
-      () => formatUtils.formatStepInputAndOutput(currentSelectedData, type),
+      () => formatUtils.formatStepInputOrOutput(currentSelectedData, type),
       [currentSelectedData, type],
     );
     return (

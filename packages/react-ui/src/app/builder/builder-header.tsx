@@ -37,6 +37,7 @@ export const BuilderHeader = () => {
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
+  // const branding = flagsHooks.useWebsiteBranding();
   const isInRunsPage = useMemo(
     () => location.pathname.startsWith('/runs'),
     [location.pathname],
@@ -67,7 +68,7 @@ export const BuilderHeader = () => {
 
   return (
     <div className="bg-background ">
-      <div className=" items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
+      <div className="relative items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
         <div className="flex h-full items-center justify-center gap-2">
           {!embedState.disableNavigationInBuilder && (
             <Tooltip>
@@ -127,7 +128,18 @@ export const BuilderHeader = () => {
             <ChevronDown className="h-8 w-8" />
           </FlowActionMenu>
         </div>
-        <div className="grow"></div>
+        {/* TODO: Enable logo in builder header after we remove "Report Bugs" button
+         {!embedState.hideLogoInBuilder && (
+          <div className="absolute absolute w-full h-full left-0 top-0 flex items-center justify-center p-4 pointer-events-none">
+            <img
+              className="h-8 object-contain"
+              src={branding.logos.fullLogoUrl}
+              alt={branding.websiteName}
+            ></img>
+          </div>
+        )} */}
+
+        <div className="grow "></div>
         <div className="flex items-center justify-center gap-4">
           <ReportBugsButton variant="ghost"></ReportBugsButton>
           {showSupport && (

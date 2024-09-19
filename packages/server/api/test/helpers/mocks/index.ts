@@ -121,6 +121,7 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         updated: plan?.updated ?? faker.date.recent().toISOString(),
         projectId: plan?.projectId ?? apId(),
         name: plan?.name ?? faker.lorem.word(),
+        aiTokens: plan?.aiTokens ?? 0,
         minimumPollingInterval: plan?.minimumPollingInterval ?? 0,
         connections: plan?.connections ?? 0,
         pieces: plan?.pieces ?? [],

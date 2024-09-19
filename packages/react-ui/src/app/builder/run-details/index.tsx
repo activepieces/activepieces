@@ -1,12 +1,9 @@
 import { t } from 'i18next';
 import { ChevronLeft, Info } from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import {
   LeftSideBarType,
-  StepPathWithName,
-  builderSelectors,
-  stepPathToKeyString,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
@@ -26,6 +23,7 @@ import {
   RunEnvironment,
 } from '@activepieces/shared';
 
+import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { SidebarHeader } from '../sidebar-header';
 
 import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
@@ -50,26 +48,30 @@ const FlowRunDetails = React.memo(() => {
   const { data: rententionDays } = flagsHooks.useFlag<number>(
     ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
   );
+  const [setLeftSidebar, run, steps, loopsIndexes, flowVersion, selectedStep] =
+    useBuilderStateContext((state) => {
+      const steps =
+        state.run && state.run.steps ? Object.keys(state.run.steps) : [];
+      return [
+        state.setLeftSidebar,
+        state.run,
+        steps,
+        state.loopsIndexes,
+        state.flowVersion,
+        state.selectedStep,
+      ];
+    });
 
-  const [setLeftSidebar, run, steps, stepDetails] = useBuilderStateContext(
-    (state) => {
-      const paths: StepPathWithName[] = state.run?.steps
-        ? Object.keys(state.run.steps).map((stepName: string) => ({
-            stepName,
-            path: [],
-          }))
-        : [];
-      const stepDetails =
-        !isNil(state.selectedStep) && !isNil(state.run)
-          ? builderSelectors.getStepOutputFromExecutionPath({
-              selectedPath: state.selectedStep,
-              executionState: state.run,
-              stepName: state.selectedStep.stepName,
-            })
-          : null;
-      return [state.setLeftSidebar, state.run, paths, stepDetails];
-    },
-  );
+  const selectedStepOutput = useMemo(() => {
+    return run && selectedStep && run.steps
+      ? flowRunUtils.extractStepOutput(
+          selectedStep,
+          loopsIndexes,
+          run.steps,
+          flowVersion.trigger,
+        )
+      : null;
+  }, [run, selectedStep, loopsIndexes, flowVersion.trigger]);
 
   const message = getMessage(run, rententionDays);
 
@@ -106,8 +108,9 @@ const FlowRunDetails = React.memo(() => {
               .filter((path) => !isNil(path))
               .map((path) => (
                 <FlowStepDetailsCardItem
-                  path={path}
-                  key={stepPathToKeyString(path)}
+                  stepName={path}
+                  depth={0}
+                  key={path}
                 ></FlowStepDetailsCardItem>
               ))}
           {steps.length === 0 && (
@@ -117,12 +120,12 @@ const FlowRunDetails = React.memo(() => {
           )}
         </CardList>
       </ResizablePanel>
-      {stepDetails && (
+      {selectedStepOutput && (
         <>
           <ResizableHandle withHandle={true} />
           <ResizablePanel defaultValue={25}>
             <FlowStepInputOutput
-              stepDetails={stepDetails}
+              stepDetails={selectedStepOutput}
             ></FlowStepInputOutput>
           </ResizablePanel>
         </>

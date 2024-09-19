@@ -1,13 +1,7 @@
-import { nanoid } from 'nanoid';
-import { Socket } from 'socket.io-client';
-
 import { api } from '@/lib/api';
 import {
   CreateFlowRequest,
-  CreateStepRunRequestBody,
   FlowOperationRequest,
-  FlowRun,
-  FlowRunStatus,
   FlowTemplate,
   FlowVersion,
   FlowVersionMetadata,
@@ -17,10 +11,6 @@ import {
   ListFlowsRequest,
   PopulatedFlow,
   SeekPage,
-  StepRunResponse,
-  TestFlowRunRequestBody,
-  WebsocketClientEvent,
-  WebsocketServerEvent,
 } from '@activepieces/shared';
 
 export const flowsApi = {
@@ -39,76 +29,6 @@ export const flowsApi = {
   getTemplate(flowId: string, request: GetFlowTemplateRequestQuery) {
     return api.get<FlowTemplate>(`/v1/flows/${flowId}/template`, {
       params: request,
-    });
-  },
-  async testFlow(
-    socket: Socket,
-    request: TestFlowRunRequestBody,
-    onUpdate: (response: FlowRun) => void,
-  ) {
-    socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
-    const run = await getInitialRun(socket, request.flowVersionId);
-
-    onUpdate(run);
-    return new Promise<void>((resolve, reject) => {
-      const handleProgress = (response: FlowRun) => {
-        if (run.id !== response.id) {
-          return;
-        }
-        onUpdate(response);
-        if (
-          response.status !== FlowRunStatus.RUNNING &&
-          response.status !== FlowRunStatus.PAUSED
-        ) {
-          socket.off(
-            WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS,
-            handleProgress,
-          );
-          socket.off('error', handleError);
-          resolve();
-        }
-      };
-
-      const handleError = (error: any) => {
-        socket.off(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, handleProgress);
-        socket.off('error', handleError);
-        reject(error);
-      };
-
-      socket.on(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, handleProgress);
-      socket.on('error', handleError);
-    });
-  },
-  testStep(
-    socket: Socket,
-    request: Omit<CreateStepRunRequestBody, 'id'>,
-  ): Promise<StepRunResponse> {
-    const id = nanoid();
-    socket.emit(WebsocketServerEvent.TEST_STEP_RUN, {
-      ...request,
-      id,
-    });
-
-    return new Promise<StepRunResponse>((resolve, reject) => {
-      const handleStepFinished = (response: StepRunResponse) => {
-        if (response.id === id) {
-          socket.off(
-            WebsocketClientEvent.TEST_STEP_FINISHED,
-            handleStepFinished,
-          );
-          socket.off('error', handleError);
-          resolve(response);
-        }
-      };
-
-      const handleError = (error: any) => {
-        socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-        socket.off('error', handleError);
-        reject(error);
-      };
-
-      socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-      socket.on('error', handleError);
     });
   },
   get(
@@ -133,20 +53,3 @@ export const flowsApi = {
     return api.get<number>('/v1/flows/count');
   },
 };
-
-function getInitialRun(
-  socket: Socket,
-  flowVersionId: string,
-): Promise<FlowRun> {
-  return new Promise<FlowRun>((resolve) => {
-    const onRunStarted = (run: FlowRun) => {
-      if (run.flowVersionId !== flowVersionId) {
-        return;
-      }
-      socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-      resolve(run);
-    };
-
-    socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-  });
-}

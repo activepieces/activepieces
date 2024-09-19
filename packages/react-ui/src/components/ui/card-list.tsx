@@ -2,7 +2,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { PackageOpen } from 'lucide-react';
 import React, { forwardRef } from 'react';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 import { Skeleton } from './skeleton';
@@ -12,12 +12,13 @@ const CardList = forwardRef<
   React.HTMLAttributes<HTMLDivElement>
 >(({ children, ...props }, ref) => (
   <ScrollArea
-    className="h-full overflow-y-auto"
+    className="h-full overflow-auto"
     viewPortClassName="[&>div]:h-full"
   >
-    <div ref={ref} className="flex flex-col gap-4 h-full" {...props}>
+    <div ref={ref} className="flex flex-col gap-4 h-full w-full" {...props}>
       {children}
     </div>
+    <ScrollBar orientation="horizontal" />
   </ScrollArea>
 ));
 CardList.displayName = 'CardList';

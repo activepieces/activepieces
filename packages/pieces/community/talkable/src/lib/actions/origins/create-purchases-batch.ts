@@ -54,10 +54,6 @@ export const createPurchasesBatch = createAction({
         },
       ],
     }),
-    failsafe: Property.Checkbox({
-      displayName: 'No Error On Failure',
-      required: false,
-    }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
@@ -75,12 +71,6 @@ export const createPurchasesBatch = createAction({
           data: context.propsValue.purchases,
           create_offers: context.propsValue.create_offers,
         },
-      })
-      .catch((error) => {
-        if (context.propsValue.failsafe) {
-          return error.errorMessage();
-        }
-        throw error;
       });
     return createPurchasesBatch.body;
   },

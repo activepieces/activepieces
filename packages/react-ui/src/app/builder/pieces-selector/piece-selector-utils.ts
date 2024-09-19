@@ -30,7 +30,7 @@ function toKey(stepMetadata: StepMetadata): string {
       return `${stepMetadata.type}-${pieceMetadata.pieceName}-${pieceMetadata.pieceVersion}`;
     }
     default:
-      return stepMetadata.displayName.toLowerCase();
+      return stepMetadata.type.toLowerCase();
   }
 }
 
