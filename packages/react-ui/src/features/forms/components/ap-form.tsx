@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
+import { Checkbox } from '../../../components/ui/checkbox';
 
 type ApFormProps = {
   form: FormResponse;
@@ -199,7 +200,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                 <CardTitle className="text-center">{form?.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid w-full items-center gap-6">
+                <div className="grid w-full items-center gap-3">
                   {inputs.current.map((input) => {
                     return (
                       <FormField
@@ -210,10 +211,10 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                           <>
                             {input.type === FormInputType.TOGGLE && (
                               <FormItem className="flex items-center gap-2">
-                                <Switch
+                                <Checkbox
                                   onCheckedChange={(e) => field.onChange(e)}
                                   checked={field.value as boolean}
-                                />
+                                ></Checkbox>
                                 <FormLabel
                                   htmlFor={input.name}
                                   className="flex items-center justify-center"
@@ -228,13 +229,15 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                   htmlFor={input.name}
                                   className="flex items-center justify-between"
                                 >
-                                  {input.displayName}
+                                  {input.displayName} {input.required && '*'}
                                 </FormLabel>
                                 <FormControl className="flex flex-col gap-1">
                                   <>
                                     {input.type === FormInputType.TEXT_AREA && (
                                       <Textarea
                                         {...field}
+                                        name={input.name}
+                                        id={input.name}
                                         onChange={field.onChange}
                                         value={
                                           field.value as string | undefined
@@ -245,6 +248,8 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                       <Input
                                         {...field}
                                         onChange={field.onChange}
+                                        id={input.name}
+                                        name={input.name}
                                         value={
                                           field.value as string | undefined
                                         }
@@ -252,6 +257,8 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                     )}
                                     {input.type === FormInputType.FILE && (
                                       <Input
+                                        name={input.name}
+                                        id={input.name}
                                         onChange={(e) => {
                                           const file = e.target.files?.[0];
                                           if (file) {
