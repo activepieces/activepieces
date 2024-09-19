@@ -169,7 +169,7 @@ export const NewOAuth2Dialog = ({
                   <Input
                     {...field}
                     required
-                    type='password'
+                    type="password"
                     id="clientSecret"
                     className="rounded-sm"
                   />
