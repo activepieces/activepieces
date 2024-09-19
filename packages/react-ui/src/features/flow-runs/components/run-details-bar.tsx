@@ -5,16 +5,20 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApFlagId, FlowRun, FlowRunStatus, Permission } from '@activepieces/shared';
+import {
+  ApFlagId,
+  FlowRun,
+  FlowRunStatus,
+  Permission,
+} from '@activepieces/shared';
 
-import { flowRunUtils } from '../lib/flow-run-utils';
 import { useAuthorization } from '../../../hooks/authorization-hooks';
-import { BuilderState } from '../../../app/builder/builder-hooks';
+import { flowRunUtils } from '../lib/flow-run-utils';
 
 type RunDetailsBarProps = {
   run?: FlowRun;
   canExitRun: boolean;
-  exitRun: BuilderState['exitRun'];
+  exitRun: (userHasPermissionToUpdateFlow: boolean) => void;
   isLoading: boolean;
 };
 
@@ -49,7 +53,7 @@ const RunDetailsBar = React.memo(
     const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
       ApFlagId.FLOW_RUN_TIME_SECONDS,
     );
-    const {checkAccess}=useAuthorization();
+    const { checkAccess } = useAuthorization();
     const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
 
     if (!run) {

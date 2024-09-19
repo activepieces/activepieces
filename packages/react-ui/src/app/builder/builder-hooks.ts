@@ -63,7 +63,7 @@ export type BuilderState = {
   saving: boolean;
   refreshPieceFormSettings: boolean;
   refreshSettings: () => void;
-  exitRun: (userHasPermissionToEditFlow:boolean) => void;
+  exitRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
   moveToFolderClientSide: (folderId: string) => void;
@@ -173,7 +173,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         });
       },
       setFlow: (flow: Flow) => set({ flow }),
-      exitRun: (userHasPermissionToEditFlow:boolean) =>
+      exitRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,
           readonly: !userHasPermissionToEditFlow,
@@ -285,7 +285,7 @@ export const useSwitchToDraft = () => {
     state.setVersion,
     state.exitRun,
   ]);
-  const {checkAccess}=useAuthorization();
+  const { checkAccess } = useAuthorization();
   const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
     useMutation({

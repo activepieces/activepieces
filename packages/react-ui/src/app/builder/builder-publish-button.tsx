@@ -30,8 +30,10 @@ const BuilderPublishButton = React.memo(() => {
   const navigate = useNavigate();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToUpdateFlowStatus = checkAccess(Permission.UPDATE_FLOW_STATUS)
-  const [flowVersion, flow, isSaving, setVersion, setFlow, readonly,run] =
+  const userHasPermissionToUpdateFlowStatus = checkAccess(
+    Permission.UPDATE_FLOW_STATUS,
+  );
+  const [flowVersion, flow, isSaving, setVersion, setFlow, readonly, run] =
     useBuilderStateContext((state) => [
       state.flowVersion,
       state.flow,
@@ -71,58 +73,50 @@ const BuilderPublishButton = React.memo(() => {
   const isValid = flowVersion.valid;
   return (
     <>
-      {!run && flowVersion.state === FlowVersionState.DRAFT  && userHasPermissionToUpdateFlowStatus && (
-        <>
-        {
-          flow.publishedVersionId && (<div className="flex items-center space-x-2">
-            <FlowVersionStateDot state={flowVersion.state}></FlowVersionStateDot>
-            <FlowStatusToggle
-              flow={flow}
-              flowVersion={flowVersion}
-            ></FlowStatusToggle>
-          </div>)
-        }
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild className="disabled:pointer-events-auto">
-              <Button
-                size={'sm'}
-                loading={isSaving || isPublishingPending}
-                disabled={isPublishedVersion || !isValid}
-                onClick={() => publish()}
-              >
-                {t('Publish')}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {isPublishedVersion
-                ? t('Latest version is published')
-                : !isValid
-                ? t('Your flow has incomplete steps')
-                : t('Publish')}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        </>
-      )}
-      {
-        userHasPermissionToUpdateFlowStatus && !userHasPermissionToEditFlow && (run ||flowVersion.state === FlowVersionState.LOCKED)  &&   <Button
-        size={'sm'}
-        variant={'outline'}
-        loading={isSwitchingToDraftPending || isSaving}
-        onClick={() => {
-          if (location.pathname.includes('/runs')) {
-            navigate(`/flows/${flow.id}`);
-          } else {
-           switchToDraft();
-          }
-        }}
-      >
-        {t('View Draft')}
-      </Button>
-      }
-
-      {userHasPermissionToEditFlow && readonly && (
+      {!run &&
+        flowVersion.state === FlowVersionState.DRAFT &&
+        userHasPermissionToUpdateFlowStatus && (
+          <>
+            {flow.publishedVersionId && (
+              <div className="flex items-center space-x-2">
+                <FlowVersionStateDot
+                  state={flowVersion.state}
+                ></FlowVersionStateDot>
+                <FlowStatusToggle
+                  flow={flow}
+                  flowVersion={flowVersion}
+                ></FlowStatusToggle>
+              </div>
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger
+                  asChild
+                  className="disabled:pointer-events-auto"
+                >
+                  <Button
+                    size={'sm'}
+                    loading={isSaving || isPublishingPending}
+                    disabled={isPublishedVersion || !isValid}
+                    onClick={() => publish()}
+                  >
+                    {t('Publish')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {isPublishedVersion
+                    ? t('Latest version is published')
+                    : !isValid
+                    ? t('Your flow has incomplete steps')
+                    : t('Publish')}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </>
+        )}
+      {userHasPermissionToUpdateFlowStatus &&
+        !userHasPermissionToEditFlow &&
+        (run || flowVersion.state === FlowVersionState.LOCKED) && (
           <Button
             size={'sm'}
             variant={'outline'}
@@ -135,9 +129,25 @@ const BuilderPublishButton = React.memo(() => {
               }
             }}
           >
-            {t('Edit Flow')}
+            {t('View Draft')}
           </Button>
-   
+        )}
+
+      {userHasPermissionToEditFlow && readonly && (
+        <Button
+          size={'sm'}
+          variant={'outline'}
+          loading={isSwitchingToDraftPending || isSaving}
+          onClick={() => {
+            if (location.pathname.includes('/runs')) {
+              navigate(`/flows/${flow.id}`);
+            } else {
+              switchToDraft();
+            }
+          }}
+        >
+          {t('Edit Flow')}
+        </Button>
       )}
     </>
   );

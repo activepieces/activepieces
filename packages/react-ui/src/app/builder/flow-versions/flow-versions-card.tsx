@@ -137,7 +137,10 @@ const FlowVersionDetailsCard = React.memo(
       },
       onSuccess: (populatedFlowVersion) => {
         setBuilderVersion(populatedFlowVersion);
-        setReadonly(populatedFlowVersion.state === FlowVersionState.LOCKED || !checkAccess(Permission.WRITE_FLOW));
+        setReadonly(
+          populatedFlowVersion.state === FlowVersionState.LOCKED ||
+            !checkAccess(Permission.WRITE_FLOW),
+        );
       },
       onError: (error) => {
         toast(INTERNAL_ERROR_TOAST);
