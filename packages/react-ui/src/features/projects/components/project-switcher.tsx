@@ -33,7 +33,21 @@ function ProjectSwitcher() {
   const { embedState } = useEmbedding();
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
-
+  const filterProjects = React.useCallback(
+    (projectId: string, search: string) => {
+      //Radix UI lowercases the value string (projectId)
+      const project = projects?.find(
+        (project) => project.id.toLowerCase() === projectId,
+      );
+      if (!project) {
+        return 0;
+      }
+      return project.displayName.toLowerCase().includes(search.toLowerCase())
+        ? 1
+        : 0;
+    },
+    [projects],
+  );
   const sortedProjects = projects?.sort((a, b) => {
     return a.displayName.localeCompare(b.displayName);
   });
@@ -56,7 +70,7 @@ function ProjectSwitcher() {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
-        <Command>
+        <Command filter={filterProjects}>
           <CommandList>
             <CommandInput placeholder="Search project..." />
             <CommandEmpty>No projects found.</CommandEmpty>
