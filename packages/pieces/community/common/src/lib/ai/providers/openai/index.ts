@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { AI, AIChatRole, AIFactory } from '../..';
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 
 export const openai: AIFactory = ({ proxyUrl, engineToken }): AI<OpenAI> => {
   const openaiApiVersion = 'v1';
@@ -40,7 +41,7 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI<OpenAI> => {
           },
         };
       },
-      extractStructuredData: async (params) => {
+      function: async (params) => {
         const completion = await sdk.chat.completions.create({
           model: params.model,
           messages: params.messages.map((message) => ({
@@ -48,49 +49,45 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI<OpenAI> => {
             content: message.content,
           })),
           max_tokens: params.maxTokens,
-          tools: [
-            {
-              type: 'function',
-              function: {
-                name: 'extract_structured_data',
-                description:
-                  'Extract the following data from the provided text.',
-                parameters: {
-                  type: 'object',
-                  properties: params.functionCallingProps.reduce(
-                    (acc, { name, type, description }) => {
-                      acc[name] = { type, description };
-                      return acc;
-                    },
-                    {} as Record<string, unknown>
-                  ),
-                  required: params.functionCallingProps
-                    .filter((prop) => prop.isRequired)
-                    .map((prop) => prop.name),
-                },
-              },
-            },
-          ],
-        });
-
-        return {
-          choices: completion.choices.map((choice) => ({
-            role: AIChatRole.ASSISTANT,
-            content: choice.message.content ?? '',
-          })),
-          toolCall: {
-            id: completion.choices[0].message.tool_calls?.[0].id ?? '',
+          tools: params.functions.map((functionDefinition) => ({
             type: 'function',
             function: {
-              name:
-                completion.choices[0].message.tool_calls?.[0].function.name ??
-                'extract_structured_data',
+              name: functionDefinition.name,
+              description: functionDefinition.description,
+              parameters: {
+                type: 'object',
+                properties: functionDefinition.arguments.reduce(
+                  (acc, { name, type, description }) => {
+                    acc[name] = { type, description };
+                    return acc;
+                  },
+                  {} as Record<string, unknown>
+                ),
+                required: functionDefinition.arguments
+                  .filter((prop) => prop.isRequired)
+                  .map((prop) => prop.name),
+              },
+            },
+          })),
+        });
+
+        const toolCall = completion.choices[0].message.tool_calls?.[0]
+
+        return {
+          choices: completion.choices
+            .map((choice) => ({
+              role: AIChatRole.ASSISTANT,
+              content: choice.message.content ?? '',
+            })),
+          call: toolCall ? {
+            id: toolCall.id,
+            function: {
+              name: toolCall.function.name,
               arguments: JSON.parse(
-                completion.choices[0].message.tool_calls?.[0].function
-                  .arguments as string
+                toolCall.function.arguments as string
               ),
             },
-          },
+          } : null,
           created: completion.created,
           id: completion.id,
           model: completion.model,

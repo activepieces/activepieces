@@ -1,5 +1,5 @@
 import { ServerContext } from '@activepieces/pieces-framework';
-import { AiProvider, AI_PROVIDERS } from './providers';
+import { AI_PROVIDERS, AiProvider } from './providers';
 
 export type AI<SDK> = {
   provider: string;
@@ -8,9 +8,9 @@ export type AI<SDK> = {
 
 export type AIChat = {
   text: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
-  extractStructuredData: (
-    params: AIExtractStructuredDataParams
-  ) => Promise<AIExtractStructuredDataResponse>;
+  function: (
+    params: AIChatCompletionsCreateParams & { functions: AIFunctionDefinition[] }
+  ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
 };
 
 export type AIChatCompletionsCreateParams = {
@@ -23,8 +23,6 @@ export type AIChatCompletionsCreateParams = {
 
 export type AIChatCompletion = {
   id: string;
-  created: number;
-  model: string;
   choices: AIChatMessage[];
   usage?: AIChatCompletionUsage;
 };
@@ -35,38 +33,30 @@ export type AIChatCompletionUsage = {
   totalTokens: number;
 };
 
-export type AIChatCompletionMessageToolCall = {
+export type AIChatMessage = {
+  role: AIChatRole;
+  content: string;
+};
+
+export type AIFunctionCall = {
   id: string;
-  type: string;
   function: {
     name: string;
     arguments: unknown;
   };
 };
 
-export type AIChatMessage = {
-  role: AIChatRole;
-  content: string;
+export type AIFunctionDefinition = {
+  name: string;
+  description: string;
+  arguments: AIFunctionArgumentDefinition[];
 };
 
-export type AIFunctionCallingPropDefinition = {
+export type AIFunctionArgumentDefinition = {
   name: string;
-  type: string;
+  type: "string" | "number" | "boolean";
   description?: string;
   isRequired: boolean;
-};
-
-export type AIExtractStructuredDataParams = AIChatCompletionsCreateParams & {
-  functionCallingProps: AIFunctionCallingPropDefinition[];
-};
-
-export type AIExtractStructuredDataResponse = {
-  id: string;
-  created: number;
-  model: string;
-  choices: AIChatMessage[];
-  toolCall: AIChatCompletionMessageToolCall;
-  usage?: AIChatCompletionUsage;
 };
 
 export enum AIChatRole {
@@ -109,9 +99,9 @@ export const AI = ({
           throw e;
         }
       },
-      extractStructuredData: async (params) => {
+      function: async (params) => {
         try {
-          const response = await impl.chat.extractStructuredData(params);
+          const response = await impl.chat.function(params);
           return response;
         } catch (e: any) {
           if (e?.error?.error) {

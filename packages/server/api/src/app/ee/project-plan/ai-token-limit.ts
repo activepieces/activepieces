@@ -39,9 +39,7 @@ async function exceededLimit({ projectId, tokensToConsume }: { projectId: Projec
     }
     catch (e) {
         exceptionHandler.handle(e)
-        return {
-            exceeded: false,
-        }
+        throw e
     }
 }
 

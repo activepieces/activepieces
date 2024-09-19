@@ -7,6 +7,7 @@ import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-a
 import { AI_PROVIDERS } from '@activepieces/pieces-common';
 
 import { AIProviderCard } from './ai-provider-card';
+import { TableTitle } from '@/components/ui/table-title';
 
 export default function AIProvidersPage() {
   const {
@@ -33,7 +34,7 @@ export default function AIProvidersPage() {
       <div className="mb-4 flex">
         <div className="flex justify-between flex-row w-full">
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold w-full">{t('AI Providers')}</h1>
+            <TableTitle>{t('AI Providers')}</TableTitle>
           </div>
         </div>
       </div>
