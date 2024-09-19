@@ -5,14 +5,20 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApFlagId, FlowRun, FlowRunStatus } from '@activepieces/shared';
+import {
+  ApFlagId,
+  FlowRun,
+  FlowRunStatus,
+  Permission,
+} from '@activepieces/shared';
 
+import { useAuthorization } from '../../../hooks/authorization-hooks';
 import { flowRunUtils } from '../lib/flow-run-utils';
 
 type RunDetailsBarProps = {
   run?: FlowRun;
   canExitRun: boolean;
-  exitRun: () => void;
+  exitRun: (userHasPermissionToUpdateFlow: boolean) => void;
   isLoading: boolean;
 };
 
@@ -47,6 +53,8 @@ const RunDetailsBar = React.memo(
     const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
       ApFlagId.FLOW_RUN_TIME_SECONDS,
     );
+    const { checkAccess } = useAuthorization();
+    const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
 
     if (!run) {
       return <></>;
@@ -75,9 +83,9 @@ const RunDetailsBar = React.memo(
         {canExitRun && (
           <Button
             variant={'outline'}
-            onClick={() => exitRun()}
+            onClick={() => exitRun(userHasPermissionToEditFlow)}
             loading={isLoading}
-            onKeyboardShortcut={() => exitRun()}
+            onKeyboardShortcut={() => exitRun(userHasPermissionToEditFlow)}
             keyboardShortcut="Esc"
           >
             {t('Exit Run')}

@@ -11,12 +11,15 @@ import {
   FlowRun,
   FlowVersion,
   FlowVersionState,
+  Permission,
+  PopulatedFlow,
   TriggerType,
   flowHelper,
   isNil,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
+import { useAuthorization } from '../../hooks/authorization-hooks';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -47,7 +50,7 @@ export enum RightSideBarType {
 type InsertMentionHandler = (propertyPath: string) => void;
 
 export type BuilderState = {
-  flow: Flow;
+  flow: PopulatedFlow;
   flowVersion: FlowVersion;
   readonly: boolean;
   loopsIndexes: Record<string, number>;
@@ -61,7 +64,7 @@ export type BuilderState = {
   saving: boolean;
   refreshPieceFormSettings: boolean;
   refreshSettings: () => void;
-  exitRun: () => void;
+  exitRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
   moveToFolderClientSide: (folderId: string) => void;
@@ -171,10 +174,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         });
       },
       setFlow: (flow: Flow) => set({ flow }),
-      exitRun: () =>
+      exitRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,
-          readonly: false,
+          readonly: !userHasPermissionToEditFlow,
           loopsIndexes: {},
           leftSidebar: LeftSideBarType.NONE,
           rightSidebar: RightSideBarType.NONE,
@@ -283,7 +286,8 @@ export const useSwitchToDraft = () => {
     state.setVersion,
     state.exitRun,
   ]);
-
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
     useMutation({
       mutationFn: async () => {
@@ -292,7 +296,7 @@ export const useSwitchToDraft = () => {
       },
       onSuccess: (flow) => {
         setVersion(flow.version);
-        exitRun();
+        exitRun(userHasPermissionToEditFlow);
       },
       onError: () => {
         toast(INTERNAL_ERROR_TOAST);

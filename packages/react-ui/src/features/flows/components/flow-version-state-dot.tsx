@@ -10,25 +10,47 @@ import { FlowVersionState } from '@activepieces/shared';
 
 type FlowVersionStateProps = {
   state: FlowVersionState;
+  publishedVersionId?: string;
+  versionId: string;
 };
 
-const FlowVersionStateDot = React.memo(({ state }: FlowVersionStateProps) => {
+const findVersionStateName: (
+  state: FlowVersionStateProps,
+) => 'Draft' | 'Published' | 'Locked' = ({
+  state,
+  publishedVersionId,
+  versionId,
+}) => {
+  if (state === FlowVersionState.DRAFT) {
+    return 'Draft';
+  }
+  if (publishedVersionId === versionId) {
+    return 'Published';
+  }
+  return 'Locked';
+};
+const FlowVersionStateDot = React.memo((state: FlowVersionStateProps) => {
+  const stateName = findVersionStateName(state);
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="size-10 flex justify-center items-center">
-          {state === FlowVersionState.DRAFT && (
+          {stateName === 'Draft' && (
             <span className="bg-warning size-1.5 rounded-full"></span>
           )}
-          {state === FlowVersionState.LOCKED && (
+          {stateName === 'Published' && (
             <span className="bg-success size-1.5 rounded-full"></span>
+          )}
+          {stateName === 'Locked' && (
+            <span className="bg-foreground/45 size-1.5 rounded-full"></span>
           )}
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        {state === FlowVersionState.DRAFT
-          ? t('Draft Version')
-          : t('Locked Version')}
+        {stateName === 'Draft' && t('Draft Version')}
+        {stateName === 'Published' && t('Published Version')}
+        {stateName === 'Locked' && t('Locked Version')}
       </TooltipContent>
     </Tooltip>
   );
