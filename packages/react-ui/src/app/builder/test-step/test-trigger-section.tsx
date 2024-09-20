@@ -1,10 +1,3 @@
-import {
-  SeekPage,
-  Trigger,
-  TriggerEvent,
-  TriggerTestStrategy,
-  isNil,
-} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import deepEqual from 'deep-equal';
@@ -12,10 +5,6 @@ import { t } from 'i18next';
 import { AlertCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-
-import { TestSampleDataViewer } from './test-sample-data-viewer';
-import { TestButtonTooltip } from './test-step-tooltip';
-import { testStepUtils } from './test-step-utils';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -31,6 +20,17 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { formatUtils } from '@/lib/utils';
+import {
+  SeekPage,
+  Trigger,
+  TriggerEvent,
+  TriggerTestStrategy,
+  isNil,
+} from '@activepieces/shared';
+
+import { TestSampleDataViewer } from './test-sample-data-viewer';
+import { TestButtonTooltip } from './test-step-tooltip';
+import { testStepUtils } from './test-step-utils';
 
 const waitFor2Seconds = () =>
   new Promise((resolve) => setTimeout(resolve, 2000));

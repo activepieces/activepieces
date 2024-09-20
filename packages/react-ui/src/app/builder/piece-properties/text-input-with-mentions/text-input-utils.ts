@@ -202,7 +202,7 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   if (apMentionNodeAttrs.logoUrl) {
     const imgElement = document.createElement('img');
     imgElement.src = apMentionNodeAttrs.logoUrl;
-    imgElement.className = 'object-fit w-4 h-4';
+    imgElement.className = 'object-contain w-4 h-4';
     mentionElement.appendChild(imgElement);
   }
 
