@@ -18,7 +18,8 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 
-import { PieceStepMetadata, StepMetadata } from './pieces-hook';
+import { PieceStepMetadata, StepMetadata } from './types';
+
 export const PRIMITIVE_STEP_METADATA = {
   [ActionType.CODE]: {
     displayName: 'Code',
@@ -76,6 +77,14 @@ export const piecesApi = {
       pieceVersion: piece.version,
       categories: piece.categories ?? [],
       packageType: piece.packageType,
+    };
+  },
+  mapToSuggestions(
+    piece: PieceMetadataModelSummary,
+  ): Pick<PieceMetadataModelSummary, 'suggestedActions' | 'suggestedTriggers'> {
+    return {
+      suggestedActions: piece.suggestedActions,
+      suggestedTriggers: piece.suggestedTriggers,
     };
   },
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {

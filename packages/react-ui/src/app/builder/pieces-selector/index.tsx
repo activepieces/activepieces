@@ -31,12 +31,15 @@ import {
   toast,
 } from '@/components/ui/use-toast';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { PieceOperationSuggestions } from '@/features/pieces/components/piece-operations-suggestions';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   PieceStepMetadata,
   StepMetadata,
-  piecesHooks,
-} from '@/features/pieces/lib/pieces-hook';
+  ItemListMetadata,
+  PieceSelectorOperation,
+} from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   Action,
@@ -44,37 +47,17 @@ import {
   ApFlagId,
   FlowOperationType,
   isNil,
-  StepLocationRelativeToParent,
   supportUrl,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
 
-type ItemListMetadata = {
-  name: string;
-  displayName: string;
-  description: string;
-};
-
 type PieceSelectorProps = {
   children: React.ReactNode;
-  operation:
-    | {
-        type: FlowOperationType.ADD_ACTION;
-        actionLocation: {
-          parentStep: string;
-          stepLocationRelativeToParent: StepLocationRelativeToParent;
-        };
-      }
-    | { type: FlowOperationType.UPDATE_TRIGGER }
-    | {
-        type: FlowOperationType.UPDATE_ACTION;
-        stepName: string;
-      };
   open: boolean;
   asChild?: boolean;
   onOpenChange: (open: boolean) => void;
-};
+} & { operation: PieceSelectorOperation };
 
 const PieceSelector = ({
   children,
@@ -254,11 +237,14 @@ const PieceSelector = ({
           case PieceTagEnum.APPS:
             return pieceSelectorUtils.isAppPiece(stepMetadata);
           case PieceTagEnum.ALL:
+          default:
             return true;
         }
       }),
     [metadata, selectedTag],
   );
+
+  const isSearching = !!debouncedQuery;
 
   return (
     <Popover
@@ -313,7 +299,7 @@ const PieceSelector = ({
                 piecesMetadata &&
                 piecesMetadata.map((pieceMetadata) => (
                   <CardListItem
-                    className="p-3"
+                    className="flex-col p-3 gap-1 items-start"
                     key={pieceSelectorUtils.toKey(pieceMetadata)}
                     selected={
                       pieceMetadata.displayName ===
@@ -331,17 +317,24 @@ const PieceSelector = ({
                       }
                     }}
                   >
-                    <div>
+                    <div className="flex gap-2 items-center">
                       <PieceIcon
                         logoUrl={pieceMetadata.logoUrl}
                         displayName={pieceMetadata.displayName}
                         showTooltip={false}
                         size={'sm'}
                       ></PieceIcon>
+                      <div className="flex-grow h-full flex items-center justify-left text-sm">
+                        {pieceMetadata.displayName}
+                      </div>
                     </div>
-                    <div className="flex-grow h-full flex items-center justify-left text-sm">
-                      {pieceMetadata.displayName}
-                    </div>
+                    {isSearching && (
+                      <PieceOperationSuggestions
+                        pieceMetadata={pieceMetadata}
+                        operation={operation}
+                        handleSelectOperationSuggestion={handleSelect}
+                      />
+                    )}
                   </CardListItem>
                 ))}
 
@@ -411,9 +404,7 @@ const PieceSelector = ({
               {(isNil(actionsOrTriggers) || isLoadingPieces) && (
                 <div className="flex flex-col gap-2 items-center justify-center h-[300px]">
                   <MoveLeft className="w-10 h-10 rtl:rotate-180" />
-                  <div className="text-sm">
-                    {t('Please select a piece first')}
-                  </div>
+                  <div className="text-sm">{t('Please select')}</div>
                 </div>
               )}
             </CardList>

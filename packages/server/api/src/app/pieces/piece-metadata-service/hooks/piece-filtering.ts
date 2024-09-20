@@ -13,7 +13,7 @@ const pieceFilterKeys = [{
     weight: 1,
 }]
 
-const suggestionLimit = 3
+const suggestionLimit = 10
 export const filterPiecesBasedUser = async ({
     searchQuery,
     pieces,

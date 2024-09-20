@@ -8,7 +8,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { piecesHooks, StepMetadata } from '../lib/pieces-hook';
+import { piecesHooks } from '../lib/pieces-hook';
+import { StepMetadata } from '../lib/types';
 
 import { PieceIcon } from './piece-icon';
 
