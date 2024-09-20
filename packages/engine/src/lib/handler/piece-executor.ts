@@ -177,9 +177,9 @@ const createConnectionManager = ({ engineToken, projectId, hookResponse, apiUrl 
 }
 
 function createStopHook(hookResponse: HookResponse): StopHook {
-    return (req: StopHookParams) => {
+    return (req?: StopHookParams) => {
         hookResponse.stopped = true
-        hookResponse.stopResponse = req
+        hookResponse.stopResponse = req ?? { response: {} }
     }
 }
 
