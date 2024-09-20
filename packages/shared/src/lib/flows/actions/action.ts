@@ -87,6 +87,8 @@ export enum BranchOperator {
     TEXT_DOES_NOT_START_WITH = 'TEXT_DOES_NOT_START_WITH',
     TEXT_ENDS_WITH = 'TEXT_ENDS_WITH',
     TEXT_DOES_NOT_END_WITH = 'TEXT_DOES_NOT_END_WITH',
+    TEXT_LIST_CONTAINS = 'TEXT_LIST_CONTAINS',
+    TEXT_LIST_DOES_NOT_CONTAIN = 'TEXT_LIST_DOES_NOT_CONTAIN',
     NUMBER_IS_GREATER_THAN = 'NUMBER_IS_GREATER_THAN',
     NUMBER_IS_LESS_THAN = 'NUMBER_IS_LESS_THAN',
     NUMBER_IS_EQUAL_TO = 'NUMBER_IS_EQUAL_TO',
@@ -119,6 +121,8 @@ export const textConditions = [
     BranchOperator.TEXT_DOES_NOT_START_WITH,
     BranchOperator.TEXT_ENDS_WITH,
     BranchOperator.TEXT_DOES_NOT_END_WITH,
+    BranchOperator.TEXT_LIST_CONTAINS,
+    BranchOperator.TEXT_LIST_DOES_NOT_CONTAIN,
 ]
 
 const BranchOperatorTextLiterals = [
@@ -130,6 +134,8 @@ const BranchOperatorTextLiterals = [
     Type.Literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
     Type.Literal(BranchOperator.TEXT_ENDS_WITH),
     Type.Literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
+    Type.Literal(BranchOperator.TEXT_LIST_CONTAINS),
+    Type.Literal(BranchOperator.TEXT_LIST_DOES_NOT_CONTAIN),
 ]
 
 const BranchOperatorNumberLiterals = [

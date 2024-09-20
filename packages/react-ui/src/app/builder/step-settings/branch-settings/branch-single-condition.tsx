@@ -28,6 +28,10 @@ const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_DOES_NOT_START_WITH]: t('(Text) Does not start with'),
   [BranchOperator.TEXT_ENDS_WITH]: t('(Text) Ends with'),
   [BranchOperator.TEXT_DOES_NOT_END_WITH]: t('(Text) Does not end with'),
+  [BranchOperator.TEXT_LIST_CONTAINS]: t('(Text List) Contains'),
+  [BranchOperator.TEXT_LIST_DOES_NOT_CONTAIN]: t(
+    '(Text List) Does not contain',
+  ),
   [BranchOperator.NUMBER_IS_GREATER_THAN]: t('(Number) Is greater than'),
   [BranchOperator.NUMBER_IS_LESS_THAN]: t('(Number) Is less than'),
   [BranchOperator.NUMBER_IS_EQUAL_TO]: t('(Number) Is equal to'),

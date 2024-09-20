@@ -113,6 +113,21 @@ export function evaluateConditions(conditionGroups: BranchCondition[][]): boolea
                     andGroup = andGroup && firstValueDoesNotEndWith
                     break
                 }
+                case BranchOperator.TEXT_LIST_CONTAINS: {
+                    const list = parseAndCoerceListAsArray(castedCondition.firstValue)
+                    console.log(JSON.stringify(list))
+                    andGroup = andGroup && list.some((item) =>
+                        toLowercaseIfCaseInsensitive(item, castedCondition.caseSensitive) === toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
+                    )
+                    break
+                }
+                case BranchOperator.TEXT_LIST_DOES_NOT_CONTAIN: {
+                    const list = parseAndCoerceListAsArray(castedCondition.firstValue)
+                    andGroup = andGroup && !list.some((item) =>
+                        toLowercaseIfCaseInsensitive(item, castedCondition.caseSensitive) === toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
+                    )
+                    break
+                }
                 case BranchOperator.NUMBER_IS_GREATER_THAN: {
                     const firstValue = parseStringToNumber(castedCondition.firstValue)
                     const secondValue = parseStringToNumber(castedCondition.secondValue)
@@ -194,6 +209,19 @@ function parseListAsArray(input: unknown): unknown[] | undefined {
         }
     }
     return Array.isArray(input) ? input : undefined
+}
+
+function parseAndCoerceListAsArray(input: unknown): unknown[] {
+    if (typeof input === 'string') {
+        try {
+            const parsed = JSON.parse(input)
+            return Array.isArray(parsed) ? parsed : [parsed]
+        }
+        catch (e) {
+            return [input]
+        }
+    }
+    return Array.isArray(input) ? input : [input]
 }
 
 function isValidDate(date: unknown): boolean {
