@@ -12,7 +12,7 @@ const AuthenticatePage = () => {
 
   useEffect(() => {
     if (response) {
-      const decodedResponse = JSON.parse(atob(response));
+      const decodedResponse = JSON.parse(response);
       authenticationSession.saveResponse(decodedResponse);
       navigate('/flows');
     }

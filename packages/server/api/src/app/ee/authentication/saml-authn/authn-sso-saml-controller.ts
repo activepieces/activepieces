@@ -26,7 +26,7 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             projectId: project.id,
             projectRole,
         }
-        url.searchParams.append('response', btoa(JSON.stringify(response)))
+        url.searchParams.append('response', JSON.stringify(response))
         return res.redirect(url.toString())
     })
 }
