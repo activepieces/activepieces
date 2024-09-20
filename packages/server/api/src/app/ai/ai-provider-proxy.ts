@@ -15,7 +15,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (fastify, _opts, do
 
         const platformId = await projectService.getPlatformId(projectId)
         const aiProvider = await aiProviderService.getOrThrow({ platformId, provider })
-        const limitResponse = await aiTokenLimit.exceededLimit({ projectId, tokensToConsume: 0 })
+        const limitResponse = await aiTokenLimit.exceededLimit({ projectId, tokensToConsume: 1 })
         if (limitResponse.exceeded) {
             return reply.code(StatusCodes.PAYMENT_REQUIRED).send(makeOpenAiResponse(
                 'You have exceeded your AI tokens limit for this project.',
