@@ -4,7 +4,7 @@ import {
   aiProps,
   AIFunctionArgumentDefinition
 } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, Validators } from '@activepieces/pieces-framework';
 
 export const extractStructuredData = createAction({
   name: 'extractStructuredData',
@@ -58,6 +58,7 @@ export const extractStructuredData = createAction({
       displayName: 'Max Tokens',
       required: false,
       defaultValue: 2000,
+      validators: [Validators.minValue(100), Validators.maxValue(4000)]
     }),
   },
   async run(context) {

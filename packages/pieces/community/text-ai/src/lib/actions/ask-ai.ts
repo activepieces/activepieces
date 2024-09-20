@@ -4,7 +4,7 @@ import {
   AIChatRole,
   aiProps,
 } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, ValidationInputType, Validators } from '@activepieces/pieces-framework';
 
 export const askAi = createAction({
   name: 'askAi',
@@ -32,6 +32,7 @@ export const askAi = createAction({
       displayName: 'Max Tokens',
       required: false,
       defaultValue: 2000,
+      validators: [Validators.minValue(100), Validators.maxValue(4000)]
     }),
   },
   async run(context) {

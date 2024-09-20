@@ -1,5 +1,5 @@
 import { AI, AIChatRole, aiProps } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, Validators } from '@activepieces/pieces-framework';
 
 export const summarizeText = createAction({
   name: 'summarizeText',
@@ -16,6 +16,7 @@ export const summarizeText = createAction({
       displayName: 'Max Tokens',
       required: false,
       defaultValue: 2000,
+      validators: [Validators.minValue(100), Validators.maxValue(4000)]
     }),
   },
   async run(context) {
