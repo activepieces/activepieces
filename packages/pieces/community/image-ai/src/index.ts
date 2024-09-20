@@ -1,5 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { generateImage } from './lib/actions/generate-image';
 
 export const imageAi = createPiece({
   displayName: 'Image AI',
@@ -8,6 +9,6 @@ export const imageAi = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/image-ai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['kishanprmr'],
-  actions: [],
+  actions: [generateImage],
   triggers: [],
 });
