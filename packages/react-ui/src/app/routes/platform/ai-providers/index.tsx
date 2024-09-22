@@ -35,6 +35,9 @@ export default function AIProvidersPage() {
         <div className="flex justify-between flex-row w-full">
           <div className="flex flex-col gap-2">
             <TableTitle>{t('AI Providers')}</TableTitle>
+            <div className="text-md text-muted-foreground">
+              {t('Add your api keys that will be used by our Text AI piece.')}
+            </div>
           </div>
         </div>
       </div>

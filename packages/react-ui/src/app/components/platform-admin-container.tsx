@@ -56,6 +56,7 @@ export function PlatformAdminContainer({
     {
       to: '/platform/pieces',
       label: t('Pieces'),
+      locked: isLocked(!platform.managePiecesEnabled),
       icon: Puzzle,
     },
     {

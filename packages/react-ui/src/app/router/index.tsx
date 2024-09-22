@@ -44,7 +44,6 @@ import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import AuditLogsPage from '../routes/platform/audit-logs';
-import { PlatformPiecesLayout } from '../routes/platform/pieces/platform-pieces-layout';
 import ProjectsPage from '../routes/platform/projects';
 import TemplatesPage from '../routes/platform/templates';
 import UsersPage from '../routes/platform/users';
@@ -324,11 +323,9 @@ const routes = [
     path: '/platform/pieces',
     element: (
       <PlatformAdminContainer>
-        <PlatformPiecesLayout>
-          <PageTitle title="Platform Pieces">
-            <PlatformPiecesPage />
-          </PageTitle>
-        </PlatformPiecesLayout>
+        <PageTitle title="Platform Pieces">
+          <PlatformPiecesPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -395,14 +392,12 @@ const routes = [
     ),
   },
   {
-    path: '/platform/pieces/ai',
+    path: '/platform/ai',
     element: (
       <PlatformAdminContainer>
-        <PlatformPiecesLayout>
-          <PageTitle title="AI Providers">
-            <AIProvidersPage />
-          </PageTitle>
-        </PlatformPiecesLayout>
+        <PageTitle title="AI Providers">
+          <AIProvidersPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },

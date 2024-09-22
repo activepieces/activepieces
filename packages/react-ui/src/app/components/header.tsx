@@ -26,7 +26,7 @@ export const Header = () => {
     <div>
       <div className="flex h-[60px] items-center">
         {isInPlatformAdmin ? (
-          <span className="text-2xl font-bold px-4 py-2">
+          <span className="text-3xl font-bold px-4 py-2">
             {t('Platform Admin')}
           </span>
         ) : (
