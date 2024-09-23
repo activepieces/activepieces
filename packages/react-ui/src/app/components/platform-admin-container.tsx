@@ -1,10 +1,10 @@
 import { t } from 'i18next';
 import {
-  BrainIcon,
   LayoutGrid,
   LineChart,
   LogsIcon,
   Puzzle,
+  SparkleIcon,
   UserCog,
   Workflow,
   Wrench,
@@ -47,7 +47,7 @@ export function PlatformAdminContainer({
     {
       to: '/platform/ai',
       label: t('AI'),
-      icon: BrainIcon,
+      icon: SparkleIcon,
       locked: currentUser?.platformRole !== PlatformRole.ADMIN,
     },
     {
