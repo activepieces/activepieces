@@ -399,7 +399,7 @@ const routes = [
     path: '/platform/ai',
     element: (
       <PlatformAdminContainer>
-        <PageTitle title="AI Providers">
+        <PageTitle title="Universal AI">
           <AIProvidersPage />
         </PageTitle>
       </PlatformAdminContainer>

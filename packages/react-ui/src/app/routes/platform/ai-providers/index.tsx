@@ -36,11 +36,11 @@ export default function AIProvidersPage() {
 
   return (
     <LockedFeatureGuard
-      featureKey="NATIVE_AI"
+      featureKey="UNIVERSAL_AI"
       locked={currentUser?.platformRole !== PlatformRole.ADMIN}
-      lockTitle={t('Unlock Native AI')}
+      lockTitle={t('Unlock Universal AI')}
       lockDescription={t(
-        'Set your AI providers so your users enjoy a seamless building experience with our native AI pieces',
+        'Set your AI providers so your users enjoy a seamless building experience with our univeral AI pieces',
       )}
     >
       <div className="flex flex-col w-full">
@@ -50,7 +50,7 @@ export default function AIProvidersPage() {
               <TableTitle>{t('AI Providers')}</TableTitle>
               <div className="text-md text-muted-foreground">
                 {t(
-                  'Set provider credentials that will be used by native AI pieces, i.e Text AI.',
+                  'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
                 )}
               </div>
             </div>

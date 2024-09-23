@@ -42,7 +42,7 @@ export function PlatformAdminContainer({
       to: '/platform/analytics',
       label: t('Overview'),
       icon: LineChart,
-      locked: isLocked(false),
+      locked: isLocked(!platform.analyticsEnabled),
     },
     {
       to: '/platform/ai',
