@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 import {
+  BrainIcon,
   LayoutGrid,
   LineChart,
   LogsIcon,
@@ -13,10 +14,11 @@ import { Navigate } from 'react-router-dom';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, PlatformRole } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
+import { authenticationSession } from '../../lib/authentication-session';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;
@@ -33,13 +35,19 @@ export function PlatformAdminContainer({
 
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
-
+  const currentUser = authenticationSession.getCurrentUser();
   const links: SidebarLink[] = [
     {
       to: '/platform/analytics',
       label: t('Overview'),
       icon: LineChart,
       locked: isLocked(false),
+    },
+    {
+      to: '/platform/ai',
+      label: t('AI'),
+      icon: BrainIcon,
+      locked: currentUser?.platformRole !== PlatformRole.ADMIN,
     },
     {
       to: '/platform/projects',

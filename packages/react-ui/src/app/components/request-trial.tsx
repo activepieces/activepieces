@@ -62,7 +62,8 @@ export type FeatureKey =
   | 'ISSUES'
   | 'ANALYTICS'
   | 'ALERTS'
-  | 'ENTERPRISE_PIECES';
+  | 'ENTERPRISE_PIECES'
+  | 'NATIVE_AI';
 
 const features = [
   {
@@ -90,6 +91,10 @@ const features = [
   {
     label: t('Analytics'),
     key: `ANALYTICS`,
+  },
+  {
+    label: t('Native AI'),
+    key: `NATIVE_AI`,
   },
 ];
 
