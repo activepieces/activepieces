@@ -58,6 +58,8 @@ import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { ProjectRouterWrapper } from './project-route-wrapper';
+import { ApFlagId } from '../../../../shared/src';
+import { FlagRouteGuard } from './flag-route-guard';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -159,11 +161,13 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/plans',
     element: (
-      <DashboardContainer>
-        <PageTitle title="Plans">
-          <PlansPage />
-        </PageTitle>
-      </DashboardContainer>
+      <FlagRouteGuard flag={ApFlagId.SHOW_BILLING}>
+        <DashboardContainer>
+          <PageTitle title="Plans">
+            <PlansPage />
+          </PageTitle>
+        </DashboardContainer>
+      </FlagRouteGuard>
     ),
   }),
   ...ProjectRouterWrapper({
