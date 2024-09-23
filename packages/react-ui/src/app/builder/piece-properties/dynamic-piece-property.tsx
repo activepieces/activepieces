@@ -6,6 +6,7 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
+import { usePieceSettingsContext } from '@/app/builder/step-settings/piece-settings-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
@@ -21,7 +22,7 @@ type DynamicPropertiesProps = {
 const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
   const form = useFormContext<Action | Trigger>();
-
+  const { updateFormSchema } = usePieceSettingsContext();
   const isFirstRender = useRef(true);
   const previousValues = useRef<undefined | unknown[]>(undefined);
 
@@ -106,6 +107,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
             currentValue ?? {},
           );
           setPropertyMap(response);
+          updateFormSchema(`settings.input.${props.propertyName}`, response);
           form.setValue(`settings.input.${props.propertyName}`, defaultValue, {
             shouldValidate: true,
           });

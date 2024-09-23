@@ -10,6 +10,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
+import { PieceSettingsProvider } from '@/app/builder/step-settings/piece-settings-context';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { useSocket } from '@/components/socket-provider';
 import {
@@ -235,11 +236,13 @@ const BuilderPage = () => {
               {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
                 memorizedSelectedStep &&
                 !isPieceLoading && (
-                  <StepSettingsContainer
-                    key={containerKey}
+                  <PieceSettingsProvider
                     pieceModel={pieceModel}
                     selectedStep={memorizedSelectedStep}
-                  />
+                    key={containerKey}
+                  >
+                    <StepSettingsContainer />
+                  </PieceSettingsProvider>
                 )}
             </ResizablePanel>
           </>
