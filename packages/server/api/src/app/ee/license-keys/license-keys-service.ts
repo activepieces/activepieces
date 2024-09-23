@@ -7,6 +7,7 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
+import { nanoid } from 'nanoid'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
@@ -138,6 +139,7 @@ const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<voi
             status: UserStatus.INACTIVE,
             platformId,
             platformRole: u.platformRole,
+            sessionId: nanoid(),
         })
     })
     await Promise.all(users)

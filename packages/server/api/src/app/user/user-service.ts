@@ -18,6 +18,7 @@ import { IsNull } from 'typeorm'
 import { passwordHasher } from '../authentication/lib/password-hasher'
 import { repoFactory } from '../core/db/repo-factory'
 import { UserEntity } from './user-entity'
+import { nanoid } from 'nanoid'
 
 
 export const userRepo = repoFactory(UserEntity)
@@ -32,14 +33,16 @@ export const userService = {
             platformRole: params.platformRole,
             status: UserStatus.ACTIVE,
             password: hashedPassword,
+            sessionId: nanoid(),
         }
 
         return userRepo().save(user)
     },
-    async update({ id, status, platformId, platformRole }: UpdateParams): Promise<User> {
+    async update({ id, status, platformId, platformRole, sessionId }: UpdateParams): Promise<User> {
         const updateResult = await userRepo().update({
             id,
             platformId,
+            sessionId: isNil(sessionId) ? nanoid() : sessionId,
         },
         {
             ...spreadIfDefined('status', status),
@@ -189,6 +192,7 @@ type UpdateParams = {
     status?: UserStatus
     platformId: PlatformId
     platformRole?: PlatformRole
+    sessionId?: string
 }
 
 type CreateParams = SignUpRequest & {

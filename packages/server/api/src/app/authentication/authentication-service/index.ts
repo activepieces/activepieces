@@ -25,6 +25,7 @@ import { userService } from '../../user/user-service';
 import { passwordHasher } from '../lib/password-hasher';
 import { authenticationServiceHooks as hooks } from './hooks';
 import { Provider } from './hooks/authentication-service-hooks';
+import { nanoid } from 'nanoid';
 
 export const authenticationService = {
   async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
@@ -142,6 +143,7 @@ const createUser = async (params: SignUpParams): Promise<User> => {
       newsLetter: params.newsLetter,
       password: params.password,
       platformId: params.platformId,
+      sessionId: nanoid(),
     };
 
     return await userService.create(newUser);

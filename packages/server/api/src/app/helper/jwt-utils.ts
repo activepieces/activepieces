@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto'
 import { promisify } from 'util'
-import { AppSystemProp, QueueMode, system } from '@activepieces/server-shared'
+import { AppSystemProp, logger, QueueMode, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -9,10 +9,12 @@ import {
 } from '@activepieces/shared'
 import jwtLibrary, {
     DecodeOptions,
+    JwtPayload,
     SignOptions,
     VerifyOptions,
 } from 'jsonwebtoken'
 import { localFileStore } from './local-store'
+import { userService } from '../user/user-service'
 
 export enum JwtSignAlgorithm {
     HS256 = 'HS256',
@@ -115,9 +117,16 @@ export const jwtUtils = {
         }
 
         return new Promise((resolve, reject) => {
-            jwtLibrary.verify(jwt, key, verifyOptions, (err, payload) => {
+            jwtLibrary.verify(jwt, key, verifyOptions, async (err, payload) => {
                 if (err) {
                     return reject(err)
+                }
+                if(!isNil((payload as JwtPayload).platform)) {
+                    const user = await userService.getOneOrFail({id: (payload as JwtPayload).id})
+                    const isVerified = (!isNil(user) && user.sessionId == (payload as JwtPayload).sessionId)
+                    if (!isVerified) {
+                        return reject(err)
+                    }
                 }
                 return resolve(payload as T)
             })
