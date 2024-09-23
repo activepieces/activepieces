@@ -1,38 +1,35 @@
 ---
 title: "Manage AI Providers"
 description: ""
-icon: "brain"
+icon: "sparkles"
 ---
 
-You can configure the AI providers that you want to use in your flows.
+Set your AI providers so your users enjoy a seamless building experience with our univeral AI pieces like [Text AI](https://www.activepieces.com/pieces/text-ai).
 
 ## Manage AI Providers
 
-You can manage the AI providers that you want to use in your flows. To do this, go to the **AI Providers** page in the **Admin Console**.
+You can manage the AI providers that you want to use in your flows. To do this, go to the **AI** page in the **Admin Console**.
 
 You can define the provider's base URL and the API key. 
 
 These settings will be used for all the projects for every request to the AI provider.
 
-![Manage AI Providers](/resources/screenshots/configure-openai.png)
+![Manage AI Providers](/resources/screenshots/configure-ai-provider.png)
 
-## Configure Token Limits Per Project
+## Configure AI Credits Limits Per Project
 
-You can configure the token limits per project. To do this, go to the project general settings and change the **AI Tokens** field to the desired value.
+You can configure the token limits per project. To do this, go to the project general settings and change the **AI Credits** field to the desired value.
 
 <Note>
   This limit is per project and is an accumulation of all the reported usage by the AI piece in the project.
   Since only the AI piece goes through the Activepieces API,
-  using any other piece like the native OpenAI, Anthropic, Perplexity, etc. pieces will not count towards or respect this limit.
+  using any other piece like the standalone OpenAI, Anthropic or Perplexity pieces will not count towards or respect this limit.
 </Note>
 
-![Manage AI Providers](/resources/screenshots/token-limits.png)
+![Manage AI Providers](/resources/screenshots/ai-credits-limit.png)
 
-### Example
+### AI Credits Explained
 
-If you have a project with a **1000 Tokens** limit which has the following flow runs:
+AI credits are the number tasks that can be run by any of our universal AI pieces.
 
-- A run that used OpenAI (consumed **100 tokens**)
-- A run that used Anthropic (consumed **200 tokens**)
-
-the total tokens consumed for this project will be **300 tokens** and the total remaining for this project tokens will be **700 tokens**.
+So if you have a flow run that contains 5 universal AI pieces steps, the AI credits consumed will be 5.

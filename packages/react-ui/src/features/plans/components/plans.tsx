@@ -21,7 +21,7 @@ import { TableTitle } from '../../../components/ui/table-title';
 import { billingApi } from '../api/billing-api';
 
 import { PlanData } from './plan-data';
-import { TasksProgress } from './tasks-progress';
+import { TasksProgress } from './ai-credits-and-tasks-progress';
 
 const TasksSchema = Type.Object({
   tasks: Type.Number(),

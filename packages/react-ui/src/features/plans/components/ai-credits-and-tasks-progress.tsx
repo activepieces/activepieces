@@ -4,7 +4,7 @@ import React from 'react';
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { formatUtils } from '@/lib/utils';
 
-type TasksProgressProps = {
+type AiCreditsAndTasksProgressProps = {
   tasks: {
     usage: number;
     plan: number;
@@ -16,7 +16,7 @@ type TasksProgressProps = {
   nextBillingDate: string;
 };
 
-const TasksProgress: React.FC<TasksProgressProps> = ({
+const AiCreditsAndTasksProgress: React.FC<AiCreditsAndTasksProgressProps> = ({
   aiTokens,
   tasks,
   nextBillingDate,
@@ -42,10 +42,18 @@ const TasksProgress: React.FC<TasksProgressProps> = ({
         />
         <div className="flex flex-col gap-2">
           <span className="text-md">
-            {t('{usage} of {plan} AI Credits', {
+            {t('{usage} of {plan}', {
               usage: aiTokens.usage,
               plan: aiTokens.plan,
-            })}
+            })}{' '}
+            <a
+              href="https://activepieces.com/docs/admin-console/manage-ai-providers#ai-credits-explained"
+              target="_blank"
+              className="text-primary hover:underline"
+              rel="noopener noreferrer"
+            >
+              {t('AI Credits')}
+            </a>
           </span>
         </div>
       </div>
@@ -57,4 +65,7 @@ const TasksProgress: React.FC<TasksProgressProps> = ({
   );
 };
 
-export { ProgressCircularComponent, TasksProgress };
+export {
+  ProgressCircularComponent,
+  AiCreditsAndTasksProgress as TasksProgress,
+};
