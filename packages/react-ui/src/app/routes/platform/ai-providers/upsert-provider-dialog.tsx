@@ -98,7 +98,8 @@ export const UpsertAIProviderDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {provider.id ? t('Update AI Provider') : t('Enable AI Provider')}
+            {provider.id ? t('Update AI Provider') : t('Enable AI Provider')} (
+            {providerMetadata.label})
           </DialogTitle>
         </DialogHeader>
 
