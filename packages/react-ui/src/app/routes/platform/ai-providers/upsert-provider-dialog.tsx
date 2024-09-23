@@ -21,6 +21,7 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
 import type { AiProviderMetadata } from '@activepieces/pieces-common';
 import { AiProviderConfig } from '@activepieces/shared';
+import { ApMarkdown } from '../../../../components/custom/markdown';
 
 const EnableAiProviderConfigInput = Type.Composite([
   Type.Omit(AiProviderConfig, ['id', 'created', 'updated', 'platformId']),
@@ -100,6 +101,15 @@ export const UpsertAIProviderDialog = ({
             {provider.id ? t('Update AI Provider') : t('Enable AI Provider')}
           </DialogTitle>
         </DialogHeader>
+
+        {providerMetadata.instructionsMarkdown && (
+          <div className="mb-4">
+            <ApMarkdown
+              markdown={providerMetadata.instructionsMarkdown}
+            ></ApMarkdown>
+          </div>
+        )}
+
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
             <FormField
