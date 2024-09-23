@@ -6,11 +6,12 @@ import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
 import { AI_PROVIDERS } from '@activepieces/pieces-common';
+import { PlatformRole } from '@activepieces/shared';
+
+import { authenticationSession } from '../../../../lib/authentication-session';
+import LockedFeatureGuard from '../../../components/locked-feature-guard';
 
 import { AIProviderCard } from './ai-provider-card';
-import { authenticationSession } from '../../../../lib/authentication-session';
-import { PlatformRole } from '../../../../../../shared/src';
-import LockedFeatureGuard from '../../../components/locked-feature-guard';
 
 export default function AIProvidersPage() {
   const {

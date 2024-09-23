@@ -16,9 +16,10 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApFlagId, PlatformRole } from '@activepieces/shared';
 
+import { authenticationSession } from '../../lib/authentication-session';
+
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
-import { authenticationSession } from '../../lib/authentication-session';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;
