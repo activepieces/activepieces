@@ -4,7 +4,7 @@ import {
   LineChart,
   LogsIcon,
   Puzzle,
-  SparkleIcon,
+  SparklesIcon,
   UserCog,
   Workflow,
   Wrench,
@@ -47,7 +47,7 @@ export function PlatformAdminContainer({
     {
       to: '/platform/ai',
       label: t('AI'),
-      icon: SparkleIcon,
+      icon: SparklesIcon,
       locked: currentUser?.platformRole !== PlatformRole.ADMIN,
     },
     {
