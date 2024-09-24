@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.32.2",
+  "version": "0.32.3",
   "rcVersion": "0.33.0-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -198,6 +198,7 @@
     "npm": "10.8.2",
     "nx-cloud": "19.0.0",
     "object-sizeof": "2.6.3",
+    "octokit": "3.2.1",
     "openai": "4.47.1",
     "pdf-parse": "1.1.1",
     "pdf-text-reader": "5.1.0",

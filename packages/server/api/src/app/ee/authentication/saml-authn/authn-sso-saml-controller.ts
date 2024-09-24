@@ -1,4 +1,4 @@
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
@@ -18,9 +18,15 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             body: req.body,
             query: req.query,
         })
-        const { token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const { token, project, projectRole } = await authenticationHelper.getProjectAndTokenOrThrow(user)
         const url = new URL('/authenticate', `${req.protocol}://${req.hostname}`)
-        url.searchParams.append('token', token)
+        const response: AuthenticationResponse = {
+            token,  
+            ...user,
+            projectId: project.id,
+            projectRole,
+        }
+        url.searchParams.append('response', JSON.stringify(response))
         return res.redirect(url.toString())
     })
 }

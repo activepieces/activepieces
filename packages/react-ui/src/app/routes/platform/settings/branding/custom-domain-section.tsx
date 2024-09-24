@@ -75,7 +75,7 @@ const CustomDomainsCard = () => {
                 </div>
                 <ConfirmationDeleteDialog
                   title={`${t('Delete')} ${domain.domain}`}
-                  message={t('Are you sure you want to delete {{domain}}?', {
+                  message={t('Are you sure you want to delete {domain}?', {
                     domain: domain.domain,
                   })}
                   mutationFn={async () => {

@@ -1,11 +1,11 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import { AI, AIChatRole, AIFactory } from '../..';
-import Anthropic from '@anthropic-ai/sdk';
 
 export const anthropic: AIFactory = ({
   proxyUrl,
   engineToken,
-}): AI<Anthropic> => {
+}): AI => {
   const sdk = new Anthropic({
     apiKey: engineToken,
     baseURL: proxyUrl,
@@ -16,6 +16,7 @@ export const anthropic: AIFactory = ({
   });
   return {
     provider: 'ANTHROPIC' as const,
+    image: undefined,
     chat: {
       text: async (params) => {
         const concatenatedSystemMessage = params.messages
@@ -53,7 +54,7 @@ export const anthropic: AIFactory = ({
           },
         };
       },
-      extractStructuredData: async (params) => {
+      function: async (params) => {
         const completion = await sdk.messages.create({
           model: params.model,
           messages: params.messages.map((message) => ({
@@ -61,31 +62,30 @@ export const anthropic: AIFactory = ({
             content: message.content,
           })),
           max_tokens: params.maxTokens ?? 2000,
-          tools: [
-            {
-              name: 'extract_structured_data',
-              description: 'Extract the following data from the provided text.',
-              input_schema: {
-                type: 'object',
-                properties: params.functionCallingProps.reduce(
-                  (acc, { name, type, description }) => {
-                    acc[name] = { type, description };
-                    return acc;
-                  },
-                  {} as Record<string, unknown>
-                ),
-                required: params.functionCallingProps
-                  .filter((prop) => prop.isRequired)
-                  .map((prop) => prop.name),
-              },
+          tools: params.functions.map((functionDefinition) => ({
+            name: functionDefinition.name,
+            description: functionDefinition.description,
+            input_schema: {
+              type: 'object',
+              properties: functionDefinition.arguments.reduce(
+                (acc, { name, type, description }) => {
+                  acc[name] = { type, description };
+                  return acc;
+                },
+                {} as Record<string, unknown>
+              ),
+              required: functionDefinition.arguments
+                .filter((prop) => prop.isRequired)
+                .map((prop) => prop.name),
             },
-          ],
+          })),
         });
 
-        const toolCallsResponse: ToolUseBlock[] = completion.content.filter(
+        const toolCallsResponse = completion.content.filter(
           (choice): choice is ToolUseBlock => choice.type === 'tool_use'
         );
 
+        const toolCall = toolCallsResponse[0]
         return {
           choices: completion.content
             .filter((choice): choice is TextBlock => choice.type === 'text')
@@ -93,14 +93,13 @@ export const anthropic: AIFactory = ({
               content: choice.text,
               role: AIChatRole.ASSISTANT,
             })),
-          toolCall: {
-            id: toolCallsResponse[0].id,
-            type: 'function',
+          call: toolCall ? {
+            id: toolCall.id,
             function: {
-              name: toolCallsResponse[0].name ?? 'extract_structured_data',
-              arguments: toolCallsResponse[0].input,
+              name: toolCall.name,
+              arguments: toolCall.input,
             },
-          },
+          } : null,
           id: completion.id,
           model: completion.model,
           created: new Date().getTime(),
