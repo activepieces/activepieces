@@ -345,18 +345,18 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
               )}
             </form>
           </Form>
-          <div className="flex flex-col mt-4">
+          <div className="flex flex-col mt-8">
             <div className="text-lg">{t('Try Enterprise to access')}:</div>
-            <div className="grid grid-cols-2 mt-2 gap-y-4 gap-x-6">
+            <div className="grid grid-cols-2 mt-4 gap-y-5 gap-x-6">
               {features.map((feature) => (
-                <div className="flex gap-2 items-center my-3" key={feature.key}>
+                <div className="flex gap-2 items-center " key={feature.key}>
                   <CheckCircle className="h-5 w-5 text-success" />
                   {feature.label}
                 </div>
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-5 mt-6 items-center justify-center">
+          <div className="flex flex-col gap-5 mt-7 items-center justify-center">
             <div className="text-lg text-muted-foreground font-semibold">
               {t('Deploy your automations securely with Activepieces')}
             </div>
