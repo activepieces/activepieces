@@ -1,7 +1,5 @@
-import { MentionNodeAttrs, MentionNodeAttrs } from '@tiptap/extension-mention';
-import { JSONContent, JSONContent } from '@tiptap/react';
-
-import { StepMetadata } from '@/features/pieces/lib/pieces-hook';
+import { MentionNodeAttrs } from '@tiptap/extension-mention';
+import { JSONContent } from '@tiptap/react';
 import { StepMetadata } from '@/features/pieces/lib/types';
 import {
   Action,
