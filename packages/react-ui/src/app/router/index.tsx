@@ -24,6 +24,7 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
+import { ApFlagId } from '@activepieces/shared';
 import {
   ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
@@ -57,9 +58,8 @@ import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 
-import { ProjectRouterWrapper } from './project-route-wrapper';
-import { ApFlagId } from '../../../../shared/src';
 import { FlagRouteGuard } from './flag-route-guard';
+import { ProjectRouterWrapper } from './project-route-wrapper';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();

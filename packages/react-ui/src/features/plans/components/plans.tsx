@@ -20,8 +20,8 @@ import { ProjectWithLimits } from '@activepieces/shared';
 import { TableTitle } from '../../../components/ui/table-title';
 import { billingApi } from '../api/billing-api';
 
-import { PlanData } from './plan-data';
 import { TasksProgress } from './ai-credits-and-tasks-progress';
+import { PlanData } from './plan-data';
 
 const TasksSchema = Type.Object({
   tasks: Type.Number(),
