@@ -23,8 +23,12 @@ export type PieceStepMetadata = BaseStepMetadata & {
   pieceType: PieceType;
 };
 
-export type PrimitiveStepMetadata = BaseStepMetadata & {
-  type: Omit<ActionType | TriggerType, ActionType.PIECE | TriggerType.PIECE>;
+type PrimitiveStepMetadata = BaseStepMetadata & {
+  type:
+    | ActionType.BRANCH
+    | ActionType.CODE
+    | ActionType.LOOP_ON_ITEMS
+    | TriggerType.EMPTY;
 };
 
 export type PieceStepMetadataWithSuggestions = PieceStepMetadata &
@@ -36,7 +40,7 @@ export type StepMetadataWithSuggestions =
 
 export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
-export type ItemListMetadata = {
+export type ActionOrTriggerListItem = {
   name: string;
   displayName: string;
   description: string;
@@ -58,5 +62,5 @@ export type PieceSelectorOperation =
 
 export type HandleSelectCallback = (
   piece: StepMetadata | undefined,
-  item: ItemListMetadata,
+  item: ActionOrTriggerListItem,
 ) => void;

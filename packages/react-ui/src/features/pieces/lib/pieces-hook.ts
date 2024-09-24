@@ -14,11 +14,7 @@ import {
 } from '@activepieces/shared';
 
 import { PRIMITIVE_STEP_METADATA, piecesApi } from './pieces-api';
-import {
-  PrimitiveStepMetadata,
-  StepMetadata,
-  StepMetadataWithSuggestions,
-} from './types';
+import { StepMetadata, StepMetadataWithSuggestions } from './types';
 
 type UsePieceProps = {
   name: string;
@@ -120,16 +116,17 @@ export const piecesHooks = {
           )
           .map((piece) => {
             const metadata = piecesApi.mapToMetadata(type, piece);
-            const suggestions = piecesApi.mapToSuggestions(piece);
 
-            return {
+            const res: StepMetadataWithSuggestions = {
               ...metadata,
-              ...suggestions,
+              suggestedActions: piece.suggestedActions,
+              suggestedTriggers: piece.suggestedTriggers,
             };
+            return res;
           });
         switch (type) {
           case 'action': {
-            const filtersPrimitive = [
+            const filtersPrimitive: StepMetadataWithSuggestions[] = [
               PRIMITIVE_STEP_METADATA[ActionType.CODE],
               PRIMITIVE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
               PRIMITIVE_STEP_METADATA[ActionType.BRANCH],
@@ -164,7 +161,7 @@ function stepMetadataQueryBuilder(step: Step) {
 
 function passSearch(
   searchQuery: string | undefined,
-  data: PrimitiveStepMetadata,
+  data: (typeof PRIMITIVE_STEP_METADATA)[keyof typeof PRIMITIVE_STEP_METADATA],
 ) {
   if (!searchQuery) {
     return true;

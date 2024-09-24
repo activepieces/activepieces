@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { MoveLeft, SearchX } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
@@ -17,7 +17,6 @@ import {
   CardListItemSkeleton,
   CardListItem,
 } from '@/components/ui/card-list';
-import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -37,7 +36,7 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   PieceStepMetadata,
   StepMetadata,
-  ItemListMetadata,
+  ActionOrTriggerListItem,
   PieceSelectorOperation,
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -51,6 +50,8 @@ import {
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
+
+import { SearchInput } from '../../../components/ui/search-input';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -75,7 +76,7 @@ const PieceSelector = ({
     StepMetadata | undefined
   >(undefined);
   const [actionsOrTriggers, setSelectedSubItems] = useState<
-    ItemListMetadata[] | undefined
+    ActionOrTriggerListItem[] | undefined
   >(undefined);
 
   const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
@@ -105,8 +106,8 @@ const PieceSelector = ({
   };
 
   const handleSelect = (
-    piece: StepMetadata | undefined,
-    item: ItemListMetadata,
+    piece: StepMetadata,
+    actionOrTrigger: ActionOrTriggerListItem,
   ) => {
     if (!piece) {
       return;
@@ -117,8 +118,8 @@ const PieceSelector = ({
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,
       piece,
-      actionOrTriggerName: item.name,
-      displayName: item.displayName,
+      actionOrTriggerName: actionOrTrigger.name,
+      displayName: actionOrTrigger.displayName,
     });
 
     switch (operation.type) {
@@ -213,8 +214,6 @@ const PieceSelector = ({
               ),
             },
           ];
-        case TriggerType.EMPTY:
-          throw new Error('Unsupported type: ' + stepMetadata.type);
       }
     },
     onSuccess: (items) => {
@@ -225,6 +224,13 @@ const PieceSelector = ({
       toast(INTERNAL_ERROR_TOAST);
     },
   });
+
+  const setSelectedPieceMetadata = (metadata: StepMetadata) => {
+    if (metadata.displayName !== selectedPieceMetadata?.displayName) {
+      setSelectedMetadata(metadata);
+      mutate(metadata);
+    }
+  };
 
   const piecesMetadata = useMemo(
     () =>
@@ -260,11 +266,13 @@ const PieceSelector = ({
       <PopoverTrigger asChild={asChild}>{children}</PopoverTrigger>
       <PopoverContent
         className="w-[600px] p-0 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
       >
         <div className="p-2">
-          <Input
-            className="border-none"
+          <SearchInput
             placeholder={t('Search')}
             value={searchQuery}
             onChange={(e) => {
@@ -290,31 +298,19 @@ const PieceSelector = ({
         />
         <Separator orientation="horizontal" />
         <div className="flex overflow-y-auto max-h-[300px] h-[300px]">
-          <CardList className="w-[250px] min-w-[250px]">
-            <ScrollArea>
-              {isLoadingPieces && (
-                <CardListItemSkeleton numberOfCards={5} withCircle={false} />
-              )}
-              {!isLoadingPieces &&
-                piecesMetadata &&
-                piecesMetadata.map((pieceMetadata) => (
+          <CardList className="w-[250px] min-w-[250px]" listClassName="gap-0">
+            {!isLoadingPieces &&
+              piecesMetadata &&
+              piecesMetadata.map((pieceMetadata) => (
+                <div key={pieceSelectorUtils.toKey(pieceMetadata)}>
                   <CardListItem
                     className="flex-col p-3 gap-1 items-start"
-                    key={pieceSelectorUtils.toKey(pieceMetadata)}
                     selected={
                       pieceMetadata.displayName ===
                       selectedPieceMetadata?.displayName
                     }
-                    onClick={(e) => {
-                      if (
-                        pieceMetadata.displayName !==
-                        selectedPieceMetadata?.displayName
-                      ) {
-                        setSelectedMetadata(pieceMetadata);
-                        mutate(pieceMetadata);
-                        e.stopPropagation();
-                        e.preventDefault();
-                      }
+                    onMouseEnter={() => {
+                      setSelectedPieceMetadata(pieceMetadata);
                     }}
                   >
                     <div className="flex gap-2 items-center">
@@ -328,36 +324,45 @@ const PieceSelector = ({
                         {pieceMetadata.displayName}
                       </div>
                     </div>
-                    {isSearching && (
-                      <PieceOperationSuggestions
-                        pieceMetadata={pieceMetadata}
-                        operation={operation}
-                        handleSelectOperationSuggestion={handleSelect}
-                      />
-                    )}
                   </CardListItem>
-                ))}
 
-              {!isLoadingPieces &&
-                (!piecesMetadata || piecesMetadata.length === 0) && (
-                  <div className="flex flex-col gap-2 items-center justify-center h-[300px] ">
-                    <SearchX className="w-10 h-10" />
-                    <div className="text-sm ">{t('No pieces found')}</div>
-                    <div className="text-sm ">
-                      {t('Try adjusting your search')}
-                    </div>
-                    {showRequestPieceButton && (
-                      <Link
-                        to={`${supportUrl}/c/feature-requests/9`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                  {isSearching &&
+                    (pieceMetadata.type === ActionType.PIECE ||
+                      pieceMetadata.type === TriggerType.PIECE) && (
+                      <div
+                        onMouseEnter={() => {
+                          setSelectedPieceMetadata(pieceMetadata);
+                        }}
                       >
-                        <Button className="h-8 px-2 ">Request Piece</Button>
-                      </Link>
+                        <PieceOperationSuggestions
+                          pieceMetadata={pieceMetadata}
+                          operation={operation}
+                          handleSelectOperationSuggestion={handleSelect}
+                        />
+                      </div>
                     )}
+                </div>
+              ))}
+
+            {!isLoadingPieces &&
+              (!piecesMetadata || piecesMetadata.length === 0) && (
+                <div className="flex flex-col gap-2 items-center justify-center h-[300px] ">
+                  <SearchX className="w-10 h-10" />
+                  <div className="text-sm ">{t('No pieces found')}</div>
+                  <div className="text-sm ">
+                    {t('Try adjusting your search')}
                   </div>
-                )}
-            </ScrollArea>
+                  {showRequestPieceButton && (
+                    <Link
+                      to={`${supportUrl}/c/feature-requests/9`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button className="h-8 px-2 ">Request Piece</Button>
+                    </Link>
+                  )}
+                </div>
+              )}
           </CardList>
           <Separator orientation="vertical" className="h-full" />
           <ScrollArea className="h-full">
@@ -404,7 +409,9 @@ const PieceSelector = ({
               {(isNil(actionsOrTriggers) || isLoadingPieces) && (
                 <div className="flex flex-col gap-2 items-center justify-center h-[300px]">
                   <MoveLeft className="w-10 h-10 rtl:rotate-180" />
-                  <div className="text-sm">{t('Please select')}</div>
+                  <div className="text-sm">
+                    {t('Please select a piece first')}
+                  </div>
                 </div>
               )}
             </CardList>

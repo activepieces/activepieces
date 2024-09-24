@@ -1,22 +1,22 @@
-import { GearIcon } from '@radix-ui/react-icons';
-
 import { CardListItem } from '@/components/ui/card-list';
 import { FlowOperationType } from '@activepieces/shared';
 
 import {
   StepMetadata,
-  StepMetadataWithSuggestions,
-  ItemListMetadata,
+  ActionOrTriggerListItem,
   PieceSelectorOperation,
+  PieceStepMetadataWithSuggestions,
 } from '../lib/types';
 
+import { PieceIcon } from './piece-icon';
+
 type HandleSelectCallback = (
-  piece: StepMetadata | undefined,
-  item: ItemListMetadata,
+  piece: StepMetadata,
+  item: ActionOrTriggerListItem,
 ) => void;
 
 type PieceOperationSuggestionsProps = {
-  pieceMetadata: StepMetadataWithSuggestions;
+  pieceMetadata: PieceStepMetadataWithSuggestions;
   handleSelectOperationSuggestion: HandleSelectCallback;
   operation: PieceSelectorOperation;
 };
@@ -32,24 +32,29 @@ const PieceOperationSuggestions = ({
       : pieceMetadata.suggestedActions;
 
   return (
-    <>
-      <div className="mt-0.5" />
+    <div className="flex flex-col gap-2">
       {suggestions?.map((suggestion) => (
         <CardListItem
-          className="p-2 px-0 text-sm gap-2 items-start transition-transform duration-200 ease-in-out hover:scale-105 hover:font-bold"
+          className="p-3 px-0 text-sm gap-2 items-start "
           key={suggestion.name}
           onClick={(e) => {
             e.stopPropagation();
             handleSelectOperationSuggestion(pieceMetadata, suggestion);
           }}
         >
-          <GearIcon className="w-2 mt-0.5" />
-          <span className="truncate" title={suggestion.displayName}>
-            {suggestion.displayName}
-          </span>
+          <div className="opacity-0">
+            <PieceIcon
+              logoUrl={pieceMetadata.logoUrl}
+              displayName={pieceMetadata.displayName}
+              showTooltip={false}
+              size={'sm'}
+            ></PieceIcon>
+          </div>
+
+          <span title={suggestion.displayName}>{suggestion.displayName}</span>
         </CardListItem>
       ))}
-    </>
+    </div>
   );
 };
 
