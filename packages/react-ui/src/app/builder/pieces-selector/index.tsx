@@ -250,8 +250,6 @@ const PieceSelector = ({
     [metadata, selectedTag],
   );
 
-  const isSearching = !!debouncedQuery;
-
   return (
     <Popover
       open={open}
@@ -298,10 +296,15 @@ const PieceSelector = ({
         />
         <Separator orientation="horizontal" />
         <div className="flex overflow-y-auto max-h-[300px] h-[300px]">
-          <CardList className="w-[250px] min-w-[250px]" listClassName="gap-0">
-            {!isLoadingPieces &&
-              piecesMetadata &&
-              piecesMetadata.map((pieceMetadata) => (
+          {isLoadingPieces && (
+            <div className="flex flex-col gap-2">
+              <CardListItemSkeleton numberOfCards={2} withCircle={false} />
+            </div>
+          )}
+
+          {!isLoadingPieces && piecesMetadata && (
+            <CardList className="w-[250px] min-w-[250px]" listClassName="gap-0">
+              {piecesMetadata.map((pieceMetadata) => (
                 <div key={pieceSelectorUtils.toKey(pieceMetadata)}>
                   <CardListItem
                     className="flex-col p-3 gap-1 items-start"
@@ -326,7 +329,7 @@ const PieceSelector = ({
                     </div>
                   </CardListItem>
 
-                  {isSearching &&
+                  {debouncedQuery.length > 0 &&
                     (pieceMetadata.type === ActionType.PIECE ||
                       pieceMetadata.type === TriggerType.PIECE) && (
                       <div
@@ -344,26 +347,28 @@ const PieceSelector = ({
                 </div>
               ))}
 
-            {!isLoadingPieces &&
-              (!piecesMetadata || piecesMetadata.length === 0) && (
-                <div className="flex flex-col gap-2 items-center justify-center h-[300px] ">
-                  <SearchX className="w-10 h-10" />
-                  <div className="text-sm ">{t('No pieces found')}</div>
-                  <div className="text-sm ">
-                    {t('Try adjusting your search')}
+              {!isLoadingPieces &&
+                (!piecesMetadata || piecesMetadata.length === 0) && (
+                  <div className="flex flex-col gap-2 items-center justify-center h-[300px] ">
+                    <SearchX className="w-10 h-10" />
+                    <div className="text-sm ">{t('No pieces found')}</div>
+                    <div className="text-sm ">
+                      {t('Try adjusting your search')}
+                    </div>
+                    {showRequestPieceButton && (
+                      <Link
+                        to={`${supportUrl}/c/feature-requests/9`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button className="h-8 px-2 ">Request Piece</Button>
+                      </Link>
+                    )}
                   </div>
-                  {showRequestPieceButton && (
-                    <Link
-                      to={`${supportUrl}/c/feature-requests/9`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Button className="h-8 px-2 ">Request Piece</Button>
-                    </Link>
-                  )}
-                </div>
-              )}
-          </CardList>
+                )}
+            </CardList>
+          )}
+
           <Separator orientation="vertical" className="h-full" />
           <ScrollArea className="h-full">
             <CardList className="w-[350px] min-w-[350px] h-full">
