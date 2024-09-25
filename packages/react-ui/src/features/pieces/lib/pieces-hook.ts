@@ -143,6 +143,7 @@ export const piecesHooks = {
               PRIMITIVE_STEP_METADATA[ActionType.CODE],
               PRIMITIVE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
               PRIMITIVE_STEP_METADATA[ActionType.BRANCH],
+              PRIMITIVE_STEP_METADATA[ActionType.ROUTER],
             ].filter((step) => passSearch(searchQuery, step));
             return [...filtersPrimitive, ...piecesMetadata];
           }

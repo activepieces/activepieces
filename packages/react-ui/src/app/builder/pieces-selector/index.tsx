@@ -230,6 +230,16 @@ const PieceSelector = ({
               ),
             },
           ];
+        case ActionType.ROUTER:
+          return [
+            {
+              name: 'router',
+              displayName: t('Router'),
+              description: t(
+                'Route your flow to different steps based on conditions',
+              ),
+            },
+          ]
         case TriggerType.EMPTY:
           throw new Error('Unsupported type: ' + stepMetadata.type);
       }

@@ -13,6 +13,7 @@ import {
   Action,
   ActionType,
   BranchActionSchema,
+  BranchExecutionType,
   BranchOperator,
   CodeActionSchema,
   LoopOnItemsActionSchema,
@@ -20,6 +21,7 @@ import {
   PieceActionSettings,
   PieceTrigger,
   PieceTriggerSettings,
+  RouterExecutionType,
   Trigger,
   TriggerType,
   ValidBranchCondition,
@@ -73,6 +75,7 @@ function buildInputSchemaForStep(
           addAuthToPieceProps(
             piece.triggers[actionNameOrTriggerName].props,
             piece.auth,
+            true
           ),
         );
       }
@@ -128,6 +131,27 @@ export const formUtils = {
             ],
             inputUiInfo: {},
           },
+        };
+      case ActionType.ROUTER:
+        return {
+          ...selectedStep,
+          settings: {
+            ...selectedStep.settings,
+            branches: [
+              {
+                conditions: [[{
+                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                  firstValue: '',
+                  secondValue: '',
+                  caseSensitive: false,
+                }]],
+                branchType: BranchExecutionType.CONDITION,
+              }
+            ],
+            executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+            inputUiInfo: {},
+          },
+          children: [],
         };
       case ActionType.CODE: {
         const defaultCode = `export const code = async (inputs) => {
@@ -231,6 +255,16 @@ export const formUtils = {
           Type.Object({
             settings: Type.Object({
               conditions: Type.Array(Type.Array(ValidBranchCondition)),
+            }),
+          }),
+        ]);
+      case ActionType.ROUTER:
+        return Type.Composite([
+          Type.Omit(BranchActionSchema, ['conditions']),
+          Type.Object({
+            settings: Type.Object({
+              branches: Type.Array(BranchActionSchema),
+              executionType: Type.Enum(RouterExecutionType),
             }),
           }),
         ]);

@@ -29,6 +29,7 @@ export enum StepLocationRelativeToParent {
     INSIDE_FALSE_BRANCH = 'INSIDE_FALSE_BRANCH',
     AFTER = 'AFTER',
     INSIDE_LOOP = 'INSIDE_LOOP',
+    INSIDE_BRANCH = 'INSIDE_BRANCH',
 }
 
 export const UseAsDraftRequest = Type.Object({

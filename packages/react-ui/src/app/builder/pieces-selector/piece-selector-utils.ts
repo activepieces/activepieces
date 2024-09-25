@@ -15,6 +15,7 @@ import {
   FlowVersion,
   flowHelper,
   PieceCategory,
+  BranchExecutionType,
 } from '@activepieces/shared';
 
 const defaultCode = `export const code = async (inputs) => {
@@ -143,6 +144,30 @@ const getDefaultStep = ({
               ],
             ],
           },
+        },
+        common,
+      );
+    case ActionType.ROUTER:
+      return deepMergeAndCast<Action>(
+        {
+          type: ActionType.ROUTER,
+          settings: {
+            branches: [
+              {
+                conditions:[[{
+                  firstValue: '',
+                  operator: BranchOperator.TEXT_CONTAINS,
+                  secondValue: '',
+                  caseSensitive: false,
+                }]] ,
+                branchType: BranchExecutionType.CONDITION,
+              }
+            ],
+            inputUiInfo: {
+              customizedInputs: {},
+            },
+          },
+          children: [],
         },
         common,
       );
