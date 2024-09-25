@@ -30,7 +30,10 @@ export const googleSheetsCommon = {
           placeholder: 'Please authenticate first',
         };
       }
-      const queries = ["mimeType='application/vnd.google-apps.spreadsheet'", "trashed=false"];
+      const queries = [
+        "mimeType='application/vnd.google-apps.spreadsheet'",
+        'trashed=false',
+      ];
       if (searchValue) {
         queries.push(`name contains '${searchValue}'`);
       }
@@ -260,7 +263,9 @@ export async function findSheetName(
   const sheetName = sheets.find((f) => f.properties.sheetId === sheetId)
     ?.properties.title;
   if (!sheetName) {
-    throw Error(`Sheet with ID ${sheetId} not found in spreadsheet ${spreadsheetId}`);
+    throw Error(
+      `Sheet with ID ${sheetId} not found in spreadsheet ${spreadsheetId}`
+    );
   }
   return sheetName;
 }
@@ -532,7 +537,7 @@ async function clearSheet(
       ],
     },
   };
-  await httpClient.sendRequest(request);
+  return await httpClient.sendRequest(request);
 }
 
 export enum ValueInputOption {
