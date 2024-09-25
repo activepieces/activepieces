@@ -39,11 +39,11 @@ export const enterpriseLocalAuthnService = {
             id: userId,
         })
 
-        if(!isNil(user)){
+        if(!isNil(user.platformId)) {
             await userService.update({
                 id: userId,
-                platformId: user.platformId ?? '',
-                sessionId: nanoid(),
+                platformId: user.platformId,
+                changeTokenVersion: true,
             })
         }
     },

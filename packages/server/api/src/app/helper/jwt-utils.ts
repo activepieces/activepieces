@@ -121,13 +121,6 @@ export const jwtUtils = {
                 if (err) {
                     return reject(err)
                 }
-                if(!isNil((payload as JwtPayload).platform)) {
-                    const user = await userService.getOneOrFail({id: (payload as JwtPayload).id})
-                    const isVerified = (!isNil(user) && user.sessionId == (payload as JwtPayload).sessionId)
-                    if (!isVerified) {
-                        return reject(err)
-                    }
-                }
                 return resolve(payload as T)
             })
         })

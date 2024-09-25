@@ -143,7 +143,7 @@ const createUser = async (params: SignUpParams): Promise<User> => {
       newsLetter: params.newsLetter,
       password: params.password,
       platformId: params.platformId,
-      sessionId: nanoid(),
+      tokenVersion: nanoid(),
     };
 
     return await userService.create(newUser);

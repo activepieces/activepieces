@@ -33,20 +33,20 @@ export const userService = {
             platformRole: params.platformRole,
             status: UserStatus.ACTIVE,
             password: hashedPassword,
-            sessionId: nanoid(),
+            tokenVersion: nanoid(),
         }
 
         return userRepo().save(user)
     },
-    async update({ id, status, platformId, platformRole, sessionId }: UpdateParams): Promise<User> {
+    async update({ id, status, platformId, platformRole, changeTokenVersion }: UpdateParams): Promise<User> {
         const updateResult = await userRepo().update({
             id,
             platformId,
-            sessionId: isNil(sessionId) ? nanoid() : sessionId,
         },
         {
             ...spreadIfDefined('status', status),
             ...spreadIfDefined('platformRole', platformRole),
+            ...spreadIfDefined('tokenVersion', (changeTokenVersion || status === UserStatus.INACTIVE) ? nanoid() : undefined),
         })
         if (updateResult.affected !== 1) {
             throw new ActivepiecesError({
@@ -192,7 +192,7 @@ type UpdateParams = {
     status?: UserStatus
     platformId: PlatformId
     platformRole?: PlatformRole
-    sessionId?: string
+    changeTokenVersion?: Boolean
 }
 
 type CreateParams = SignUpRequest & {

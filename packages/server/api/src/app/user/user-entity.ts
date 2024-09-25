@@ -48,7 +48,7 @@ export const UserEntity = new EntitySchema<UserSchema>({
             type: String,
             nullable: true,
         },
-        sessionId: {
+        tokenVersion: {
             type: String,
             nullable: true,
         },

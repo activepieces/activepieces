@@ -51,6 +51,8 @@ services:
       - activepieces
     volumes:
       - redis_data:/data
+    ports:
+      - "6379:6379"
 
 volumes:
   postgres_data:

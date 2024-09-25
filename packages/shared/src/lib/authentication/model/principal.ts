@@ -10,7 +10,7 @@ export type Principal = {
     platform: {
         id: ApId
     }
-    sessionId?: String
+    tokenVersion?: String
 }
 
 export type WorkerPrincipal = {
