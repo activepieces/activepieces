@@ -26,15 +26,13 @@ export const setupServer = async (): Promise<FastifyInstance> => {
     return app
 }
 
-
-
 async function setupBaseApp(): Promise<FastifyInstance> {
     const app = fastify({
         logger: logger as FastifyBaseLogger,
         ignoreTrailingSlash: true,
-        // Default 100MB, also set in nginx.conf
         pluginTimeout: 30000,
-        bodyLimit: Math.max(MAX_FILE_SIZE_MB, 4) * 1024 * 1024,
+        // Default 100MB, also set in nginx.conf
+        bodyLimit: (MAX_FILE_SIZE_MB + 4) * 1024 * 1024,
         genReqId: () => {
             return `req_${apId()}`
         },
