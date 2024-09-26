@@ -12,17 +12,18 @@ import { googleContactsAuth } from '../../';
 export const googleContactsSearchContactsAction = createAction({
   auth: googleContactsAuth,
   name: 'search_contact',
-  description: 'Search contacts in Google Contacts account',
-  displayName: 'Search contacts',
+  description: 'Search contacts in Google Contacts account.',
+  displayName: 'Search Contacts',
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'The plain-text query for the request. https://developers.google.com/people/api/rest/v1/people/searchContacts',
+      description: `The plain-text query for the request.The query is used to match prefix phrases of the fields on a person. For example, a person with name "foo name" matches queries such as "f", "fo", "foo", "foo n", "nam", etc., but not "oo n".`,
       required: true,
     }),
     readMask: Property.StaticMultiSelectDropdown({
       displayName: 'Read Mask',
-      description: 'A field mask to restrict which fields on each person are returned.',
+      description:
+        'A field mask to restrict which fields on each person are returned.',
       required: true,
       options: {
         options: [
@@ -54,10 +55,10 @@ export const googleContactsSearchContactsAction = createAction({
           { label: 'sipAddresses', value: 'sipAddresses' },
           { label: 'skills', value: 'skills' },
           { label: 'urls', value: 'urls' },
-          { label: 'userDefined', value: 'userDefined' },          
+          { label: 'userDefined', value: 'userDefined' },
         ],
       },
-      defaultValue: ['names','emailAddresses'],
+      defaultValue: ['names', 'emailAddresses'],
     }),
     pageSize: Property.Number({
       displayName: 'Page Size',
@@ -70,7 +71,7 @@ export const googleContactsSearchContactsAction = createAction({
       query: context.propsValue['query'],
       readMask: context.propsValue['readMask'].join(','),
     };
-    if(context.propsValue['pageSize']) {
+    if (context.propsValue['pageSize']) {
       qs['pageSize'] = String(context.propsValue['pageSize']);
     }
     const request: HttpRequest<Record<string, unknown>> = {
@@ -80,7 +81,7 @@ export const googleContactsSearchContactsAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-      queryParams: qs
+      queryParams: qs,
     };
     return (await httpClient.sendRequest(request)).body;
   },

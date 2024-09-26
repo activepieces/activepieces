@@ -25,9 +25,9 @@ export const googleContacts = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/google-contacts.png',
   categories: [PieceCategory.SALES_AND_CRM],
   actions: [
-    googleContactsSearchContactsAction,
     googleContactsAddContactAction,
     googleContactsUpdateContactAction,
+    googleContactsSearchContactsAction,
     createCustomApiCallAction({
       baseUrl: () => googleContactsCommon.baseUrl,
       auth: googleContactsAuth,
@@ -39,7 +39,15 @@ export const googleContacts = createPiece({
   displayName: 'Google Contacts',
   description: 'Stay connected and organized',
 
-  authors: ["Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud", "ikus060"],
+  authors: [
+    'Abdallah-Alwarawreh',
+    'Salem-Alaa',
+    'kishanprmr',
+    'MoShizzle',
+    'khaledmashaly',
+    'abuaboud',
+    'ikus060',
+  ],
   triggers: [googleContactNewOrUpdatedContact],
   auth: googleContactsAuth,
 });
