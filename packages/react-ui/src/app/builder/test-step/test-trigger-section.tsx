@@ -19,7 +19,6 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { formatUtils } from '@/lib/utils';
 import {
   SeekPage,
   Trigger,

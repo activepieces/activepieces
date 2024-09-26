@@ -27,13 +27,10 @@ const TestStepContainer = React.memo(
             flowVersionId={flowVersionId}
           ></TestTriggerSection>
         ) : (
-          type !== TriggerType.EMPTY && (
-            <TestActionSection
-              actionType={type}
-              flowVersionId={flowVersionId}
-              isSaving={isSaving}
-            ></TestActionSection>
-          )
+          <TestActionSection
+            flowVersionId={flowVersionId}
+            isSaving={isSaving}
+          ></TestActionSection>
         )}
       </div>
     );

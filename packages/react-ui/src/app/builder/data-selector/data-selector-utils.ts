@@ -1,5 +1,3 @@
-import { formatUtils } from '@/lib/utils';
-
 export type MentionTreeNode = {
   key: string;
   data: {

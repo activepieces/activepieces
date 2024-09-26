@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
@@ -31,10 +31,6 @@ const TestSampleDataViewer = React.memo(
     lastTestDate,
     children,
   }: TestSampleDataViewerProps) => {
-    const formattedData = useMemo(
-      () => currentSelectedData,
-      [currentSelectedData],
-    );
     return (
       <>
         {!isTesting && children}
@@ -81,7 +77,7 @@ const TestSampleDataViewer = React.memo(
             </TestButtonTooltip>
           </div>
           <JsonViewer
-            json={errorMessage ?? formattedData}
+            json={errorMessage ?? currentSelectedData}
             title={t('Output')}
           ></JsonViewer>
         </div>

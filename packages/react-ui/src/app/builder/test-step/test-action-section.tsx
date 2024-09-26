@@ -8,13 +8,7 @@ import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { formatUtils } from '@/lib/utils';
-import {
-  Action,
-  ActionType,
-  StepRunResponse,
-  isNil,
-} from '@activepieces/shared';
+import { Action, StepRunResponse, isNil } from '@activepieces/shared';
 
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 
@@ -25,11 +19,10 @@ import { testStepUtils } from './test-step-utils';
 type TestActionComponentProps = {
   isSaving: boolean;
   flowVersionId: string;
-  actionType: ActionType;
 };
 
 const TestActionSection = React.memo(
-  ({ isSaving, flowVersionId, actionType }: TestActionComponentProps) => {
+  ({ isSaving, flowVersionId }: TestActionComponentProps) => {
     const { toast } = useToast();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
