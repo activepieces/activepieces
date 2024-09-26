@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { MoveLeft, SearchX } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
@@ -17,7 +17,6 @@ import {
   CardListItemSkeleton,
   CardListItem,
 } from '@/components/ui/card-list';
-import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -31,12 +30,15 @@ import {
   toast,
 } from '@/components/ui/use-toast';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { PieceOperationSuggestions } from '@/features/pieces/components/piece-operations-suggestions';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   PieceStepMetadata,
   StepMetadata,
-  piecesHooks,
-} from '@/features/pieces/lib/pieces-hook';
+  ActionOrTriggerListItem,
+  PieceSelectorOperation,
+} from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   Action,
@@ -44,37 +46,19 @@ import {
   ApFlagId,
   FlowOperationType,
   isNil,
-  StepLocationRelativeToParent,
   supportUrl,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
 
-type ItemListMetadata = {
-  name: string;
-  displayName: string;
-  description: string;
-};
+import { SearchInput } from '../../../components/ui/search-input';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
-  operation:
-    | {
-        type: FlowOperationType.ADD_ACTION;
-        actionLocation: {
-          parentStep: string;
-          stepLocationRelativeToParent: StepLocationRelativeToParent;
-        };
-      }
-    | { type: FlowOperationType.UPDATE_TRIGGER }
-    | {
-        type: FlowOperationType.UPDATE_ACTION;
-        stepName: string;
-      };
   open: boolean;
   asChild?: boolean;
   onOpenChange: (open: boolean) => void;
-};
+} & { operation: PieceSelectorOperation };
 
 const PieceSelector = ({
   children,
@@ -92,7 +76,7 @@ const PieceSelector = ({
     StepMetadata | undefined
   >(undefined);
   const [actionsOrTriggers, setSelectedSubItems] = useState<
-    ItemListMetadata[] | undefined
+    ActionOrTriggerListItem[] | undefined
   >(undefined);
 
   const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
@@ -122,8 +106,8 @@ const PieceSelector = ({
   };
 
   const handleSelect = (
-    piece: StepMetadata | undefined,
-    item: ItemListMetadata,
+    piece: StepMetadata,
+    actionOrTrigger: ActionOrTriggerListItem,
   ) => {
     if (!piece) {
       return;
@@ -134,8 +118,8 @@ const PieceSelector = ({
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,
       piece,
-      actionOrTriggerName: item.name,
-      displayName: item.displayName,
+      actionOrTriggerName: actionOrTrigger.name,
+      displayName: actionOrTrigger.displayName,
     });
 
     switch (operation.type) {
@@ -230,8 +214,6 @@ const PieceSelector = ({
               ),
             },
           ];
-        case TriggerType.EMPTY:
-          throw new Error('Unsupported type: ' + stepMetadata.type);
       }
     },
     onSuccess: (items) => {
@@ -242,6 +224,13 @@ const PieceSelector = ({
       toast(INTERNAL_ERROR_TOAST);
     },
   });
+
+  const setSelectedPieceMetadata = (metadata: StepMetadata) => {
+    if (metadata.displayName !== selectedPieceMetadata?.displayName) {
+      setSelectedMetadata(metadata);
+      mutate(metadata);
+    }
+  };
 
   const piecesMetadata = useMemo(
     () =>
@@ -254,6 +243,7 @@ const PieceSelector = ({
           case PieceTagEnum.APPS:
             return pieceSelectorUtils.isAppPiece(stepMetadata);
           case PieceTagEnum.ALL:
+          default:
             return true;
         }
       }),
@@ -274,11 +264,13 @@ const PieceSelector = ({
       <PopoverTrigger asChild={asChild}>{children}</PopoverTrigger>
       <PopoverContent
         className="w-[600px] p-0 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
       >
         <div className="p-2">
-          <Input
-            className="border-none"
+          <SearchInput
             placeholder={t('Search')}
             value={searchQuery}
             onChange={(e) => {
@@ -304,46 +296,56 @@ const PieceSelector = ({
         />
         <Separator orientation="horizontal" />
         <div className="flex overflow-y-auto max-h-[300px] h-[300px]">
-          <CardList className="w-[250px] min-w-[250px]">
-            <ScrollArea>
-              {isLoadingPieces && (
-                <CardListItemSkeleton numberOfCards={5} withCircle={false} />
-              )}
-              {!isLoadingPieces &&
-                piecesMetadata &&
-                piecesMetadata.map((pieceMetadata) => (
+          {isLoadingPieces && (
+            <div className="flex flex-col gap-2">
+              <CardListItemSkeleton numberOfCards={2} withCircle={false} />
+            </div>
+          )}
+
+          {!isLoadingPieces && piecesMetadata && (
+            <CardList className="w-[250px] min-w-[250px]" listClassName="gap-0">
+              {piecesMetadata.map((pieceMetadata) => (
+                <div key={pieceSelectorUtils.toKey(pieceMetadata)}>
                   <CardListItem
-                    className="p-3"
-                    key={pieceSelectorUtils.toKey(pieceMetadata)}
+                    className="flex-col p-3 gap-1 items-start"
                     selected={
                       pieceMetadata.displayName ===
                       selectedPieceMetadata?.displayName
                     }
-                    onClick={(e) => {
-                      if (
-                        pieceMetadata.displayName !==
-                        selectedPieceMetadata?.displayName
-                      ) {
-                        setSelectedMetadata(pieceMetadata);
-                        mutate(pieceMetadata);
-                        e.stopPropagation();
-                        e.preventDefault();
-                      }
+                    onMouseEnter={() => {
+                      setSelectedPieceMetadata(pieceMetadata);
                     }}
                   >
-                    <div>
+                    <div className="flex gap-2 items-center">
                       <PieceIcon
                         logoUrl={pieceMetadata.logoUrl}
                         displayName={pieceMetadata.displayName}
                         showTooltip={false}
                         size={'sm'}
                       ></PieceIcon>
-                    </div>
-                    <div className="flex-grow h-full flex items-center justify-left text-sm">
-                      {pieceMetadata.displayName}
+                      <div className="flex-grow h-full flex items-center justify-left text-sm">
+                        {pieceMetadata.displayName}
+                      </div>
                     </div>
                   </CardListItem>
-                ))}
+
+                  {debouncedQuery.length > 0 &&
+                    (pieceMetadata.type === ActionType.PIECE ||
+                      pieceMetadata.type === TriggerType.PIECE) && (
+                      <div
+                        onMouseEnter={() => {
+                          setSelectedPieceMetadata(pieceMetadata);
+                        }}
+                      >
+                        <PieceOperationSuggestions
+                          pieceMetadata={pieceMetadata}
+                          operation={operation}
+                          handleSelectOperationSuggestion={handleSelect}
+                        />
+                      </div>
+                    )}
+                </div>
+              ))}
 
               {!isLoadingPieces &&
                 (!piecesMetadata || piecesMetadata.length === 0) && (
@@ -364,8 +366,9 @@ const PieceSelector = ({
                     )}
                   </div>
                 )}
-            </ScrollArea>
-          </CardList>
+            </CardList>
+          )}
+
           <Separator orientation="vertical" className="h-full" />
           <ScrollArea className="h-full">
             <CardList className="w-[350px] min-w-[350px] h-full">

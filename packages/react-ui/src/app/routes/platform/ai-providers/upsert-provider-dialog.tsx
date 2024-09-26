@@ -22,6 +22,8 @@ import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-a
 import type { AiProviderMetadata } from '@activepieces/pieces-common';
 import { AiProviderConfig } from '@activepieces/shared';
 
+import { ApMarkdown } from '../../../../components/custom/markdown';
+
 const EnableAiProviderConfigInput = Type.Composite([
   Type.Omit(AiProviderConfig, ['id', 'created', 'updated', 'platformId']),
   Type.Object({
@@ -97,9 +99,19 @@ export const UpsertAIProviderDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {provider.id ? t('Update AI Provider') : t('Enable AI Provider')}
+            {provider.id ? t('Update AI Provider') : t('Enable AI Provider')} (
+            {providerMetadata.label})
           </DialogTitle>
         </DialogHeader>
+
+        {providerMetadata.instructionsMarkdown && (
+          <div className="mb-4">
+            <ApMarkdown
+              markdown={providerMetadata.instructionsMarkdown}
+            ></ApMarkdown>
+          </div>
+        )}
+
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
             <FormField
