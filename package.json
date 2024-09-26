@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.32.0",
+  "version": "0.32.4",
   "rcVersion": "0.33.0-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -198,6 +198,7 @@
     "npm": "10.8.2",
     "nx-cloud": "19.0.0",
     "object-sizeof": "2.6.3",
+    "octokit": "3.2.1",
     "openai": "4.47.1",
     "pdf-parse": "1.1.1",
     "pdf-text-reader": "5.1.0",
@@ -227,6 +228,7 @@
     "react-use": "17.5.1",
     "recharts": "2.12.7",
     "redlock": "5.0.0-beta.2",
+    "remark-gfm": "4.0.0",
     "rss-parser": "3.13.0",
     "rxjs": "7.8.1",
     "safe-flat": "2.1.0",

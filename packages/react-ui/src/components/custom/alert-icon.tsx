@@ -9,6 +9,7 @@ export const InvalidStepIcon = createLucideIcon('InvalidStepIcon', [
       r: '7.5',
       fill: '#FFC048',
       fillOpacity: '0.3',
+      key: 'circle',
     },
   ],
   [
@@ -18,6 +19,7 @@ export const InvalidStepIcon = createLucideIcon('InvalidStepIcon', [
       fill: '#CC8805',
       stroke: '#CC8805',
       strokeWidth: '0.4',
+      key: 'path',
     },
   ],
 ]);

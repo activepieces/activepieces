@@ -9,13 +9,12 @@ const ProgressCircularComponent: React.FC<{
   };
   size?: 'big' | 'small';
 }> = ({ data, size = 'big' }) => {
+  const sizeClass = size === 'big' ? 'size-[40px]' : 'size-[25px]';
   return (
-    <div className={size === 'big' ? 'h-[40px]' : 'h-[30px]'}>
+    <div className={`overflow-hidden ${sizeClass}`}>
       <ChartContainer
         config={{}}
-        className={`mx-auto ${
-          size === 'big' ? 'h-[180px]' : 'h-[180px]'
-        } aspect-[1/4]`}
+        className={`mx-auto aspect-square max-h-[250px] min-h-[180px] ${sizeClass}`}
       >
         <RadialBarChart
           data={[
@@ -30,7 +29,7 @@ const ProgressCircularComponent: React.FC<{
           innerRadius={80}
           outerRadius={110}
           style={{
-            height: size === 'big' ? 40 : 30,
+            height: size === 'big' ? 40 : 25,
           }}
         >
           <PolarGrid

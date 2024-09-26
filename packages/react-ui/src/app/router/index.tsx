@@ -21,10 +21,10 @@ import { SSOPage } from '@/app/routes/platform/settings/sso';
 import { RedirectPage } from '@/app/routes/redirect';
 import { FlowRunsPage } from '@/app/routes/runs';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
-import { SwitchToBetaPage } from '@/app/routes/switch-to-beta';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
+import { ApFlagId } from '@activepieces/shared';
 import {
   ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
@@ -35,6 +35,7 @@ import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-us
 import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
 import NotFoundPage from '../routes/404-page';
+import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import AppConnectionsPage from '../routes/connections';
 import { FlowsPage } from '../routes/flows';
@@ -44,7 +45,6 @@ import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import AuditLogsPage from '../routes/platform/audit-logs';
-import { PlatformPiecesLayout } from '../routes/platform/pieces/platform-pieces-layout';
 import ProjectsPage from '../routes/platform/projects';
 import TemplatesPage from '../routes/platform/templates';
 import UsersPage from '../routes/platform/users';
@@ -58,6 +58,7 @@ import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 
+import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
 
 const SettingsRerouter = () => {
@@ -76,9 +77,8 @@ const routes = [
     element: <EmbedPage></EmbedPage>,
   },
   {
-    // TODO remove after react is launched
-    path: '/switch-to-beta',
-    element: <SwitchToBetaPage />,
+    path: '/authenticate',
+    element: <AuthenticatePage />,
   },
   ...ProjectRouterWrapper({
     path: '/flows',
@@ -161,11 +161,13 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/plans',
     element: (
-      <DashboardContainer>
-        <PageTitle title="Plans">
-          <PlansPage />
-        </PageTitle>
-      </DashboardContainer>
+      <FlagRouteGuard flag={ApFlagId.SHOW_BILLING}>
+        <DashboardContainer>
+          <PageTitle title="Plans">
+            <PlansPage />
+          </PageTitle>
+        </DashboardContainer>
+      </FlagRouteGuard>
     ),
   }),
   ...ProjectRouterWrapper({
@@ -325,11 +327,9 @@ const routes = [
     path: '/platform/pieces',
     element: (
       <PlatformAdminContainer>
-        <PlatformPiecesLayout>
-          <PageTitle title="Platform Pieces">
-            <PlatformPiecesPage />
-          </PageTitle>
-        </PlatformPiecesLayout>
+        <PageTitle title="Platform Pieces">
+          <PlatformPiecesPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -396,14 +396,12 @@ const routes = [
     ),
   },
   {
-    path: '/platform/pieces/ai',
+    path: '/platform/ai',
     element: (
       <PlatformAdminContainer>
-        <PlatformPiecesLayout>
-          <PageTitle title="AI Providers">
-            <AIProvidersPage />
-          </PageTitle>
-        </PlatformPiecesLayout>
+        <PageTitle title="Universal AI">
+          <AIProvidersPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },

@@ -95,13 +95,13 @@ export function InviteUserDialog() {
       switch (data.type) {
         case InvitationType.PLATFORM:
           return userInvitationApi.invite({
-            email: data.email,
+            email: data.email.trim().toLowerCase(),
             type: data.type,
             platformRole: data.platformRole,
           });
         case InvitationType.PROJECT:
           return userInvitationApi.invite({
-            email: data.email,
+            email: data.email.trim().toLowerCase(),
             type: data.type,
             projectRole: data.projectRole,
             projectId: project.id,
