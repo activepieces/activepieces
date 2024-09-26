@@ -18,31 +18,32 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 
-import { PieceStepMetadata, StepMetadata } from './pieces-hook';
+import { PieceStepMetadata, StepMetadata } from './types';
+
 export const PRIMITIVE_STEP_METADATA = {
   [ActionType.CODE]: {
     displayName: 'Code',
     logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
     description: 'Powerful Node.js & TypeScript code with npm',
-    type: ActionType.CODE,
+    type: ActionType.CODE as const,
   },
   [ActionType.LOOP_ON_ITEMS]: {
     displayName: 'Loop on Items',
     logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
     description: 'Iterate over a list of items',
-    type: ActionType.LOOP_ON_ITEMS,
+    type: ActionType.LOOP_ON_ITEMS as const,
   },
   [ActionType.BRANCH]: {
     displayName: 'Branch',
     logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
     description: 'Branch',
-    type: ActionType.BRANCH,
+    type: ActionType.BRANCH as const,
   },
   [TriggerType.EMPTY]: {
     displayName: 'Empty Trigger',
     logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
     description: 'Empty Trigger',
-    type: TriggerType.EMPTY,
+    type: TriggerType.EMPTY as const,
   },
 };
 
@@ -76,6 +77,14 @@ export const piecesApi = {
       pieceVersion: piece.version,
       categories: piece.categories ?? [],
       packageType: piece.packageType,
+    };
+  },
+  mapToSuggestions(
+    piece: PieceMetadataModelSummary,
+  ): Pick<PieceMetadataModelSummary, 'suggestedActions' | 'suggestedTriggers'> {
+    return {
+      suggestedActions: piece.suggestedActions,
+      suggestedTriggers: piece.suggestedTriggers,
     };
   },
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {

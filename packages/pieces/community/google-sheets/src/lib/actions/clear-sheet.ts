@@ -38,18 +38,18 @@ export const clearSheetAction = createAction({
       rowsToDelete.push(parseInt(key) + 1);
     }
 
-    for (let i = 0; i < rowsToDelete.length; i++) {
-      await googleSheetsCommon.clearSheet(
-        propsValue.spreadsheet_id,
-        propsValue.sheet_id,
-        auth['access_token'],
-        propsValue.is_first_row_headers ? 1 : 0,
-        rowsToDelete.length
-      );
-    }
+    const response = await googleSheetsCommon.clearSheet(
+      propsValue.spreadsheet_id,
+      propsValue.sheet_id,
+      auth['access_token'],
+      propsValue.is_first_row_headers ? 1 : 0,
+      rowsToDelete.length
+    );
 
-    return {
-      deletedRow: rowsToDelete,
-    };
+    return response.body;
+
+    // return {
+    //   deletedRow: rowsToDelete,
+    // };
   },
 });

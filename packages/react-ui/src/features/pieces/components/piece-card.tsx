@@ -3,7 +3,7 @@ import React from 'react';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { ActionType, TriggerType } from '@activepieces/shared';
 
-import { PieceStepMetadata, StepMetadata } from '../lib/pieces-hook';
+import { PieceStepMetadata, StepMetadata } from '../lib/types';
 
 type PieceCardInfoProps = {
   piece: StepMetadata;
