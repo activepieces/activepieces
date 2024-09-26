@@ -221,7 +221,9 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
                 },
               )}
             >
-              {!actionMenuOpen && <Plus className="w-3 h-3 text-white" />}
+              {!actionMenuOpen && (
+                <Plus className="w-3 h-3 stroke-[3px] text-white" />
+              )}
             </div>
           </foreignObject>
         </PieceSelector>

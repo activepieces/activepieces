@@ -2,28 +2,33 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { PackageOpen } from 'lucide-react';
 import React, { forwardRef } from 'react';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 import { Skeleton } from './skeleton';
 
 const CardList = forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ children, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement> & { listClassName?: string }
+>(({ children, className, listClassName, ...props }, ref) => (
   <ScrollArea
-    className="h-full overflow-y-auto"
+    className={`h-full overflow-auto ${className}`}
     viewPortClassName="[&>div]:h-full"
   >
-    <div ref={ref} className="flex flex-col gap-4 h-full" {...props}>
+    <div
+      ref={ref}
+      className={cn('flex flex-col gap-4 h-full w-full', listClassName)}
+      {...props}
+    >
       {children}
     </div>
+    <ScrollBar orientation="horizontal" />
   </ScrollArea>
 ));
 CardList.displayName = 'CardList';
 export { CardList };
 
-const cardItemListVariants = cva('flex items-center gap-4 w-full p-4 ', {
+const cardItemListVariants = cva('flex items-center gap-4 w-full py-4 px-2 ', {
   variants: {
     interactive: {
       true: 'cursor-pointer hover:bg-accent hover:text-accent-foreground',

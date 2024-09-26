@@ -1,7 +1,7 @@
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
 
-import { StepMetadata } from '@/features/pieces/lib/pieces-hook';
+import { StepMetadata } from '@/features/pieces/lib/types';
 import {
   Action,
   Trigger,
@@ -202,7 +202,7 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
   if (apMentionNodeAttrs.logoUrl) {
     const imgElement = document.createElement('img');
     imgElement.src = apMentionNodeAttrs.logoUrl;
-    imgElement.className = 'object-fit w-4 h-4';
+    imgElement.className = 'object-contain w-4 h-4';
     mentionElement.appendChild(imgElement);
   }
 

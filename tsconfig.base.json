@@ -260,6 +260,9 @@
       "@activepieces/piece-google-my-business": [
         "packages/pieces/community/google-my-business/src/index.ts"
       ],
+      "@activepieces/piece-google-search-console": [
+        "packages/pieces/community/google-search-console/src/index.ts"
+      ],
       "@activepieces/piece-google-sheets": [
         "packages/pieces/community/google-sheets/src/index.ts"
       ],
@@ -328,6 +331,9 @@
       ],
       "@activepieces/piece-linear": [
         "packages/pieces/community/linear/src/index.ts"
+      ],
+      "@activepieces/piece-linka": [
+        "packages/pieces/community/linka/src/index.ts"
       ],
       "@activepieces/piece-linkedin": [
         "packages/pieces/community/linkedin/src/index.ts"
@@ -541,6 +547,9 @@
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
       ],
+      "@activepieces/piece-sperse": [
+        "packages/pieces/community/sperse/src/index.ts"
+      ],
       "@activepieces/piece-spotify": [
         "packages/pieces/community/spotify/src/index.ts"
       ],
@@ -586,6 +595,9 @@
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
       ],
+      "@activepieces/piece-text-ai": [
+        "packages/pieces/community/text-ai/src/index.ts"
+      ],
       "@activepieces/piece-text-helper": [
         "packages/pieces/community/text-helper/src/index.ts"
       ],
@@ -609,6 +621,9 @@
       ],
       "@activepieces/piece-typeform": [
         "packages/pieces/community/typeform/src/index.ts"
+      ],
+      "@activepieces/piece-upgradechat": [
+        "packages/pieces/community/upgradechat/src/index.ts"
       ],
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"

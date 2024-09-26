@@ -7,16 +7,18 @@ import {
     assertNotNullOrUndefined,
     isNil,
 } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 import { localFileStore } from './local-store'
 
 let secret: string | null
 const algorithm = 'aes-256-cbc'
 const ivLength = 16
 
-export type EncryptedObject = {
-    iv: string
-    data: string
-}
+export const EncryptedObject = Type.Composite([Type.Object({
+    iv: Type.String(),
+    data: Type.String(),
+})])
+export type EncryptedObject = Static<typeof EncryptedObject>
 
 const loadEncryptionKey = async (queueMode: QueueMode): Promise<string | null> => {
     secret = system.get(AppSystemProp.ENCRYPTION_KEY) ?? null

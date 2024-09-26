@@ -1,40 +1,70 @@
 import { t } from 'i18next';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { ActionType, isNil } from '@activepieces/shared';
 
-type LoopIterationInputProps = {
-  totalIterations: number;
-  value: number;
-  onChange: (value: number) => void;
-};
-const LoopIterationInput = (params: LoopIterationInputProps) => {
-  const [isFocused, setIsFocused] = useState(false);
-  const [value, setValue] = useState(params.value + 1);
+import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
+import { useBuilderStateContext } from '../builder-hooks';
+
+const LoopIterationInput = ({ stepName }: { stepName: string }) => {
+  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes] =
+    useBuilderStateContext((state) => [
+      state.setLoopIndex,
+      state.loopsIndexes[stepName] ?? 0,
+      state.run,
+      state.flowVersion,
+      state.loopsIndexes,
+    ]);
+
+  const stepOutput = useMemo(() => {
+    return run && run.steps
+      ? flowRunUtils.extractStepOutput(
+          stepName,
+          loopsIndexes,
+          run.steps,
+          flowVersion.trigger,
+        )
+      : null;
+  }, [run, stepName, loopsIndexes, flowVersion.trigger]);
+
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+  const totalIterations =
+    stepOutput &&
+    stepOutput.output &&
+    stepOutput.type === ActionType.LOOP_ON_ITEMS
+      ? stepOutput.output.iterations.length
+      : 0;
+
+  useMemo(() => {
+    if (
+      totalIterations <= currentIndex ||
+      currentIndex === Number.MAX_SAFE_INTEGER
+    ) {
+      setLoopIndex(stepName, totalIterations - 1);
+    }
+  }, [totalIterations, currentIndex]);
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value ?? '1';
     const parsedValue = Math.max(
       1,
-      Math.min(parseInt(value) ?? 1, params.totalIterations),
+      Math.min(parseInt(value) ?? 1, totalIterations),
     );
-    setValue(parsedValue);
-    params.onChange(parsedValue - 1);
+    setLoopIndex(stepName, parsedValue - 1);
   }
 
   function removeFocus() {
+    setIsFocused(false);
     if (inputRef.current) {
       inputRef.current.blur();
     }
     if (!isNil(inputRef.current) && inputRef.current.value.length === 0) {
-      setValue(1);
-      params.onChange(0);
+      setLoopIndex(stepName, 0);
     }
-    setIsFocused(false);
   }
 
   return (
@@ -67,7 +97,7 @@ const LoopIterationInput = (params: LoopIterationInputProps) => {
           )}
           dir="ltr"
         >
-          <div className="pointer-events-none">/{params.totalIterations}</div>
+          <div className="pointer-events-none">/{totalIterations}</div>
           <Button
             variant="transparent"
             className="p-1 text-xs rounded-xs h-auto pointer-events-auto "
@@ -89,13 +119,15 @@ const LoopIterationInput = (params: LoopIterationInputProps) => {
               ? '100%'
               : (inputRef.current?.value.length || 1) * 2.6 + 1 + 'ch',
           }}
-          value={value}
+          value={currentIndex + 1}
           type="number"
           min={1}
-          max={params.totalIterations}
+          max={totalIterations}
           onChange={onChange}
           onFocus={() => setIsFocused(true)}
-          onBlur={(e) => removeFocus()}
+          onBlur={() => {
+            setIsFocused(false);
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               onChange(e as unknown as React.ChangeEvent<HTMLInputElement>);

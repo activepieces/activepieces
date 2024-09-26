@@ -95,13 +95,13 @@ export function InviteUserDialog() {
       switch (data.type) {
         case InvitationType.PLATFORM:
           return userInvitationApi.invite({
-            email: data.email,
+            email: data.email.trim().toLowerCase(),
             type: data.type,
             platformRole: data.platformRole,
           });
         case InvitationType.PROJECT:
           return userInvitationApi.invite({
-            email: data.email,
+            email: data.email.trim().toLowerCase(),
             type: data.type,
             projectRole: data.projectRole,
             projectId: project.id,
@@ -159,6 +159,7 @@ export function InviteUserDialog() {
         <DialogTrigger asChild>
           <Button
             variant={'outline'}
+            size="sm"
             className="flex items-center justify-center gap-2 w-full"
           >
             <Plus className="size-4" />

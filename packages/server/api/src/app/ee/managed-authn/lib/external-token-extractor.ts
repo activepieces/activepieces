@@ -119,6 +119,7 @@ export type ExternalPrincipal = {
         filterType: PiecesFilterType
         tags: string[]
     }
+    aiTokens?: number
     tasks?: number
 }
 

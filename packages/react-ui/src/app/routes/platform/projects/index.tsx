@@ -87,7 +87,7 @@ export default function ProjectsPage() {
         </div>
         <DataTable
           onRowClick={async (project) => {
-            await setCurrentProject(queryClient, project, false);
+            await setCurrentProject(queryClient, project);
             navigate('/');
           }}
           columns={[
@@ -143,6 +143,25 @@ export default function ProjectsPage() {
               },
             },
             {
+              accessorKey: 'ai-tokens',
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('AI Credits')}
+                />
+              ),
+              cell: ({ row }) => {
+                return (
+                  <div className="text-left">
+                    {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
+                    {row.original.plan.aiTokens
+                      ? formatUtils.formatNumber(row.original.plan.aiTokens)
+                      : '-'}
+                  </div>
+                );
+              },
+            },
+            {
               accessorKey: 'externalId',
               header: ({ column }) => (
                 <DataTableColumnHeader
@@ -177,7 +196,7 @@ export default function ProjectsPage() {
                         onClick={async (e) => {
                           e.stopPropagation();
                           e.preventDefault();
-                          await setCurrentProject(queryClient, row, false);
+                          await setCurrentProject(queryClient, row);
                           navigate('/settings/general');
                         }}
                       >

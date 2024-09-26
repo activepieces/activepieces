@@ -10,11 +10,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useState, useRef } from 'react';
 
-import {
-  StepPathWithName,
-  builderSelectors,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
@@ -36,27 +32,31 @@ import {
   FlowOperationType,
   FlowRun,
   FlowRunStatus,
+  FlowVersion,
   TriggerType,
   flowHelper,
   isNil,
 } from '@activepieces/shared';
 
+import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
 import { AP_NODE_SIZE, ApNode, DRAGGED_STEP_TAG } from '../flow-canvas-utils';
 
 function getStepStatus(
   stepName: string | undefined,
-  selectedStep: StepPathWithName | null,
   run: FlowRun | null,
+  loopIndexes: Record<string, number>,
+  flowVersion: FlowVersion,
 ) {
-  if (!run || !stepName) {
+  if (!run || !stepName || !run.steps) {
     return undefined;
   }
-  const state = builderSelectors.getStepOutputFromExecutionPath({
-    selectedPath: selectedStep,
+  const stepOutput = flowRunUtils.extractStepOutput(
     stepName,
-    executionState: run,
-  });
-  return state?.status;
+    loopIndexes,
+    run.steps,
+    flowVersion.trigger,
+  );
+  return stepOutput?.status;
 }
 
 const StepActionWrapper = React.memo(
@@ -81,10 +81,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     applyOperation,
     removeStepSelection,
     flowVersion,
+    loopIndexes,
   ] = useBuilderStateContext((state) => [
     state.selectStepByName,
     state.setAllowCanvasPanning,
-    state.selectedStep?.stepName === data.step?.name,
+    state.selectedStep === data.step?.name,
     state.activeDraggingStep === data.step?.name,
     state.selectedStep,
     state.run,
@@ -93,6 +94,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     state.applyOperation,
     state.removeStepSelection,
     state.flowVersion,
+    state.loopsIndexes,
   ]);
   const pieceSelectorOperation = useRef<
     FlowOperationType.UPDATE_ACTION | FlowOperationType.UPDATE_TRIGGER
@@ -135,8 +137,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   const isTrigger = flowHelper.isTrigger(data.step!.type);
   const isAction = flowHelper.isAction(data.step!.type);
   const isEmptyTriggerSelected =
-    selectedStep?.stepName === 'trigger' &&
-    data.step?.type === TriggerType.EMPTY;
+    selectedStep === 'trigger' && data.step?.type === TriggerType.EMPTY;
 
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: data.step!.name,
@@ -146,16 +147,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     },
   });
 
-  const stepOutputStatus = useMemo(
-    () => getStepStatus(data.step?.name, selectedStep, run),
-    [data.step?.name, selectedStep, run],
-  );
-
+  const stepOutputStatus = useMemo(() => {
+    return getStepStatus(data.step?.name, run, loopIndexes, flowVersion);
+  }, [data.step?.name, run, loopIndexes, flowVersion]);
   const showRunningIcon =
     isNil(stepOutputStatus) && run?.status === FlowRunStatus.RUNNING;
-  const statusInfo = isNil(stepOutputStatus)
-    ? undefined
-    : flowRunUtils.getStatusIconForStep(stepOutputStatus);
 
   const handleStepClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const { name } = data.step!;
@@ -172,7 +168,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         width: `${AP_NODE_SIZE.stepNode.width}px`,
       }}
       className={cn(
-        'transition-all border-box border rounded-sm border border-solid  border-border relative hover:border-primary group',
+        'transition-all border-box rounded-sm  border  border-solid  border-border relative hover:border-primary group',
         {
           'shadow-step-container': !isDragging,
           'border-primary': isSelected,
@@ -189,9 +185,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         setAllowCanvasPanning(true);
       }}
       key={data.step?.name}
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
+      ref={openPieceSelector ? null : setNodeRef}
+      {...(!openPieceSelector ? attributes : {})}
+      {...(!openPieceSelector ? listeners : {})}
     >
       <div
         className="absolute text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
@@ -349,15 +345,12 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                       {stepMetadata?.displayName}
                     </div>
                     <div className="w-4 flex mt-0.5 items-center justify-center">
-                      {statusInfo &&
-                        React.createElement(statusInfo.Icon, {
-                          className: cn('w-4 h-4', {
-                            'text-success-300':
-                              statusInfo.variant === 'success',
-                            'text-destructive-300':
-                              statusInfo.variant === 'error',
-                          }),
-                        })}
+                      {stepOutputStatus && (
+                        <StepStatusIcon
+                          status={stepOutputStatus}
+                          size="4"
+                        ></StepStatusIcon>
+                      )}
                       {showRunningIcon && (
                         <LoadingSpinner className="w-4 h-4 text-primary"></LoadingSpinner>
                       )}

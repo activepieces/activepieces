@@ -1,10 +1,13 @@
 import { t } from 'i18next';
 import { AlertCircle, Link2, Logs, Workflow, Wrench } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { isNil } from '@activepieces/shared';
+
+import { authenticationSession } from '../../lib/authentication-session';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
@@ -14,11 +17,16 @@ type DashboardContainerProps = {
 };
 
 export function DashboardContainer({ children }: DashboardContainerProps) {
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { data: showIssuesNotification } =
-    issueHooks.useIssuesNotification(edition);
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
+    platform.flowIssuesEnabled,
+  );
 
   const { embedState } = useEmbedding();
+  const currentProjectId = authenticationSession.getProjectId();
+  if (isNil(currentProjectId) || currentProjectId === '') {
+    return <Navigate to="/sign-in" replace />;
+  }
   const links: SidebarLink[] = [
     {
       to: '/flows',
@@ -51,7 +59,14 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       icon: Wrench,
       showInEmbed: false,
     },
-  ].filter((link) => !embedState.isEmbedded || link.showInEmbed);
+  ]
+    .filter((link) => !embedState.isEmbedded || link.showInEmbed)
+    .map((link) => {
+      return {
+        ...link,
+        to: `/projects/${currentProjectId}${link.to}`,
+      };
+    });
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>

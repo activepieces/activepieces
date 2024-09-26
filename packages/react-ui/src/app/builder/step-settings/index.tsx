@@ -110,7 +110,6 @@ const StepSettingsContainer = React.memo(
       defaultValues,
       resolver: typeboxResolver(formSchema),
     });
-
     useEffect(() => {
       form.reset(defaultValues);
       form.trigger();

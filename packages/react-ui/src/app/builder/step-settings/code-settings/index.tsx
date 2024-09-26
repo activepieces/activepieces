@@ -16,7 +16,7 @@ import { CodeAction } from '@activepieces/shared';
 import { LeftSideBarType, useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
-import { CodeEditior } from './code-editior';
+import { CodeEditor } from './code-editor';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below. 
@@ -74,11 +74,11 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         name="settings.sourceCode"
         render={({ field }) => (
           <FormItem>
-            <CodeEditior
+            <CodeEditor
               sourceCode={field.value}
               onChange={field.onChange}
               readonly={readonly}
-            ></CodeEditior>
+            ></CodeEditor>
             <FormMessage />
           </FormItem>
         )}

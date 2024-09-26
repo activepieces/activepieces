@@ -2,6 +2,7 @@ import {
   PieceStepMetadata,
   StepMetadata,
 } from '@/features/pieces/lib/pieces-hook';
+import { PieceStepMetadata, StepMetadata } from '@/features/pieces/lib/types';
 import {
   Action,
   ActionType,
@@ -30,7 +31,7 @@ function toKey(stepMetadata: StepMetadata): string {
       return `${stepMetadata.type}-${pieceMetadata.pieceName}-${pieceMetadata.pieceVersion}`;
     }
     default:
-      return stepMetadata.displayName.toLowerCase();
+      return stepMetadata.type.toLowerCase();
   }
 }
 

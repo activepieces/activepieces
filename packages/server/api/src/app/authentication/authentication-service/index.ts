@@ -1,4 +1,9 @@
-import { cryptoUtils, logger, SharedSystemProp, system } from '@activepieces/server-shared'
+import {
+    cryptoUtils,
+    logger,
+    SharedSystemProp,
+    system,
+} from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -58,13 +63,11 @@ export const authenticationService = {
             platformId: params.platformId,
             email: params.email,
         })
-
         if (existingUser) {
             return this.signInResponse({
                 user: existingUser,
             })
         }
-
         const newUser = {
             email: params.email,
             verified: params.verified,
@@ -145,6 +148,7 @@ const createUser = async (params: SignUpParams): Promise<User> => {
     }
     catch (e: unknown) {
         if (e instanceof QueryFailedError) {
+            logger.error(e)
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
                 params: {

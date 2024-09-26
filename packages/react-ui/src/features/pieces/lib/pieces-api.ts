@@ -14,37 +14,36 @@ import {
   ListPiecesRequestQuery,
   PackageType,
   PieceOptionRequest,
-  PieceScope,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
 
-import { PieceStepMetadata, StepMetadata } from './pieces-hook';
+import { PieceStepMetadata, StepMetadata } from './types';
 
 export const PRIMITIVE_STEP_METADATA = {
   [ActionType.CODE]: {
     displayName: 'Code',
     logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
     description: 'Powerful Node.js & TypeScript code with npm',
-    type: ActionType.CODE,
+    type: ActionType.CODE as const,
   },
   [ActionType.LOOP_ON_ITEMS]: {
     displayName: 'Loop on Items',
     logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
     description: 'Iterate over a list of items',
-    type: ActionType.LOOP_ON_ITEMS,
+    type: ActionType.LOOP_ON_ITEMS as const,
   },
   [ActionType.BRANCH]: {
     displayName: 'Branch',
     logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
     description: 'Branch',
-    type: ActionType.BRANCH,
+    type: ActionType.BRANCH as const,
   },
   [TriggerType.EMPTY]: {
     displayName: 'Empty Trigger',
     logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
     description: 'Empty Trigger',
-    type: TriggerType.EMPTY,
+    type: TriggerType.EMPTY as const,
   },
 };
 
@@ -80,6 +79,14 @@ export const piecesApi = {
       packageType: piece.packageType,
     };
   },
+  mapToSuggestions(
+    piece: PieceMetadataModelSummary,
+  ): Pick<PieceMetadataModelSummary, 'suggestedActions' | 'suggestedTriggers'> {
+    return {
+      suggestedActions: piece.suggestedActions,
+      suggestedTriggers: piece.suggestedTriggers,
+    };
+  },
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
     switch (step.type) {
       case ActionType.BRANCH:
@@ -104,16 +111,20 @@ export const piecesApi = {
   syncFromCloud() {
     return api.post<void>(`/v1/pieces/sync`, {});
   },
-  install(params: AddPieceRequestBody) {
+  async install(params: AddPieceRequestBody) {
     const formData = new FormData();
     formData.set('packageType', params.packageType);
     formData.set('pieceName', params.pieceName);
     formData.set('pieceVersion', params.pieceVersion);
-    formData.set('scope', PieceScope.PROJECT);
+    formData.set('scope', params.scope);
     if (params.packageType === PackageType.ARCHIVE) {
-      formData.set('pieceArchive', params.pieceArchive as any);
+      const buffer = await (params.pieceArchive as File).arrayBuffer();
+      formData.append('pieceArchive', new Blob([buffer]));
     }
-    return api.post<PieceMetadataModel>(`/v1/pieces`, params);
+
+    return api.post<PieceMetadataModel>('/v1/pieces', formData, undefined, {
+      'Content-Type': 'multipart/form-data',
+    });
   },
   delete(id: string) {
     return api.delete(`/v1/pieces/${id}`);

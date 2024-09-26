@@ -74,7 +74,7 @@ const TestTriggerSection = React.memo(
       pieceModel?.triggers?.[formValues.settings.triggerName]?.testStrategy ===
       TriggerTestStrategy.SIMULATION;
     const mockData =
-      pieceModel?.triggers?.[formValues.settings.triggerName].sampleData;
+      pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
     useEffect(() => {
       setIsValid(form.formState.isValid);
     }, [form.formState.isValid]);
@@ -177,7 +177,7 @@ const TestTriggerSection = React.memo(
         'settings.inputUiInfo',
         {
           ...formValues.settings.inputUiInfo,
-          currentSelectedData: formatUtils.formatStepInputAndOutput(
+          currentSelectedData: formatUtils.formatStepInputOrOutput(
             data.payload,
             null,
           ),

@@ -10,42 +10,39 @@ import { formatUtils } from '@/lib/utils';
 import { flowHelper, StepOutput } from '@activepieces/shared';
 
 const FlowStepInputOutput = React.memo(
-  ({ stepDetails }: { stepDetails: StepOutput | undefined }) => {
-    const loopStepOut = stepDetails
-      ? formatUtils.formatStepInputAndOutput(
-          stepDetails.output ?? stepDetails.errorMessage,
-          stepDetails.type,
-        )
-      : {};
+  ({ stepDetails }: { stepDetails: StepOutput }) => {
+    const stepOutput = formatUtils.formatStepInputOrOutput(
+      stepDetails.output ?? stepDetails.errorMessage,
+      stepDetails.type,
+    );
 
     const [flowVersion, selectedStepName] = useBuilderStateContext((state) => [
       state.flowVersion,
       state.selectedStep,
     ]);
     const selectedStep = selectedStepName
-      ? flowHelper.getStep(flowVersion, selectedStepName.stepName)
+      ? flowHelper.getStep(flowVersion, selectedStepName)
       : undefined;
     return (
       <ScrollArea className="h-full p-4 ">
         {stepDetails && (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 justify-start mb-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center leading-4  gap-2 justify-start">
               <StepStatusIcon
                 status={stepDetails.status}
                 size="5"
               ></StepStatusIcon>
               <div>{selectedStep?.displayName}</div>
             </div>
-            <div className="flex items-center gap-1 justify-start">
+            <div className="flex items-center gap-2 leading-4 justify-start">
               <Timer className="w-5 h-5" />
-              <span>
+              <div>
                 {t('Duration')}:{' '}
                 {formatUtils.formatDuration(stepDetails.duration ?? 0, false)}
-              </span>
+              </div>
             </div>
             <JsonViewer title={t('Input')} json={stepDetails.input} />
-            <div className="mt-4"></div>
-            <JsonViewer title={t('Output')} json={loopStepOut} />
+            <JsonViewer title={t('Output')} json={stepOutput} />
           </div>
         )}
       </ScrollArea>

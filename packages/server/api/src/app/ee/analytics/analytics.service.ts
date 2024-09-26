@@ -121,7 +121,7 @@ async function analyzeUsers(platformId: PlatformId) {
         const lastLoggined = await auditLogRepo().createQueryBuilder('audit_event')
             .where('audit_event."userId" = :userId', { userId: user.id })
             .andWhere({
-                action: In([ApplicationEventName.USER_SIGNED_IN, ApplicationEventName.USER_SIGNED_UP])
+                action: In([ApplicationEventName.USER_SIGNED_IN, ApplicationEventName.USER_SIGNED_UP]),
             })
             .andWhere({
                 created: MoreThan(dayjs().subtract(1, 'month').toISOString()),

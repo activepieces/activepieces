@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -40,7 +41,6 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { requestTrialApi } from '@/lib/request-trial-api';
 import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 const logos = [
   'https://www.activepieces.com/logos/alan.svg',
@@ -255,7 +255,10 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
                     <FormItem>
                       <FormLabel>{t('Work Email')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="gilfoyle@piedpiper.com" {...field} />
+                        <Input
+                          placeholder="gilfoyle@piedpiper.com"
+                          {...field}
+                        />
                       </FormControl>
                     </FormItem>
                   )}

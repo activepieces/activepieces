@@ -92,7 +92,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
     return [];
   }
   const pathToTargetStep = flowHelper.findPathToStep({
-    targetStepName: selectedStep.stepName,
+    targetStepName: selectedStep,
     trigger: flowVersion.trigger,
   });
 
