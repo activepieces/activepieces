@@ -3,10 +3,9 @@ import {
     ResetPasswordRequestBody,
     VerifyEmailRequestBody,
 } from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode, isNil, UserId } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, UserId } from '@activepieces/shared'
 import { userService } from '../../../user/user-service'
 import { otpService } from '../../otp/otp-service'
-import { nanoid } from 'nanoid'
 
 export const enterpriseLocalAuthnService = {
     async verifyEmail({ userId, otp }: VerifyEmailRequestBody): Promise<void> {
@@ -39,13 +38,11 @@ export const enterpriseLocalAuthnService = {
             id: userId,
         })
 
-        if(!isNil(user.platformId)) {
-            await userService.update({
-                id: userId,
-                platformId: user.platformId,
-                changeTokenVersion: true,
-            })
-        }
+        assertNotNullOrUndefined(user.platformId, 'Platform id is not set')
+        await userService.changeSession({
+            id: userId,
+            platformId: user.platformId,
+        })
     },
 }
 

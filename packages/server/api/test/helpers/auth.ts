@@ -6,6 +6,7 @@ import {
     ExternalPrincipal,
     ExternalTokenPayload,
 } from '../../src/app/ee/managed-authn/lib/external-token-extractor'
+import { nanoid } from 'nanoid'
 
 const generateToken = ({
     payload,
@@ -34,6 +35,7 @@ export const generateMockToken = async (
         platform: principal?.platform ?? {
             id: apId(),
         },
+        tokenVersion: principal?.tokenVersion,
     }
 
     return generateToken({

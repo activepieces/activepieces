@@ -17,7 +17,7 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(testTriggerController, { prefix: '/v1/test-trigger' })
     websocketService.addListener(WebsocketServerEvent.TEST_FLOW_RUN, (socket) => {
         return async (data: TestFlowRunRequestBody) => {
-            const principal = await accessTokenManager.extractPrincipal(socket.handshake.auth.token)
+            const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
             const flowRun = await flowRunService.test({
                 projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
@@ -27,7 +27,7 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     })
     websocketService.addListener(WebsocketServerEvent.TEST_STEP_RUN, (socket) => {
         return async (data: CreateStepRunRequestBody) => {
-            const principal = await accessTokenManager.extractPrincipal(socket.handshake.auth.token)
+            const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
             logger.debug({ data }, '[Socket#testStepRun]')
             const stepRun = await stepRunService.create({
                 projectId: principal.projectId,

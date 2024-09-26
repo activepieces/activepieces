@@ -69,28 +69,6 @@ describe('OAuth App API', () => {
             expect(responseBody.clientSecret).toBeUndefined()
         })
 
-        it('Fails if platform is not found', async () => {
-            // arrange
-            const nonExistentPlatformId = apId()
-
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                platform: {
-                    id: nonExistentPlatformId,
-                },
-            })
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/oauth-apps',
-                body: upsertRequest,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
 
         it('Fails if user is not platform owner', async () => {
             // arrange

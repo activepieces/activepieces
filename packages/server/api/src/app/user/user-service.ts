@@ -38,25 +38,22 @@ export const userService = {
 
         return userRepo().save(user)
     },
-    async update({ id, status, platformId, platformRole, changeTokenVersion }: UpdateParams): Promise<User> {
-        const updateResult = await userRepo().update({
+    async changeSession({ id, platformId }: UpdatePlatformIdParams): Promise<void> {
+        await userRepo().update({
             id,
             platformId,
-        },
-        {
+        }, {
+            tokenVersion: nanoid(),
+        })
+    },
+    async update({ id, status, platformId, platformRole }: UpdateParams): Promise<User> {
+        await userRepo().update({
+            id,
+            platformId,
+        }, {
             ...spreadIfDefined('status', status),
             ...spreadIfDefined('platformRole', platformRole),
-            ...spreadIfDefined('tokenVersion', (changeTokenVersion || status === UserStatus.INACTIVE) ? nanoid() : undefined),
         })
-        if (updateResult.affected !== 1) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'user',
-                    entityId: id,
-                },
-            })
-        }
         return userRepo().findOneByOrFail({
             id,
             platformId,
@@ -192,7 +189,6 @@ type UpdateParams = {
     status?: UserStatus
     platformId: PlatformId
     platformRole?: PlatformRole
-    changeTokenVersion?: Boolean
 }
 
 type CreateParams = SignUpRequest & {

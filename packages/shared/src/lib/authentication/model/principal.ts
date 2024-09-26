@@ -10,7 +10,7 @@ export type Principal = {
     platform: {
         id: ApId
     }
-    tokenVersion?: String
+    tokenVersion?: string
 }
 
 export type WorkerPrincipal = {

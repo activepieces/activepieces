@@ -18,6 +18,7 @@ import {
     createMockProject,
     setupMockApiKeyServiceAccount,
 } from '../../../helpers/mocks'
+import { nanoid } from 'nanoid'
 
 let app: FastifyInstance | null = null
 
@@ -496,15 +497,60 @@ describe('API Security', () => {
     })
 
     describe('Access Token Authentication', () => {
+
+        it('Session expirey for Users', async () => {
+            // arrange
+            const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
+            const sessionId = nanoid()
+            await databaseConnection().getRepository('user').update(mockOwner.id, {
+                tokenVersion: sessionId
+            })
+            const mockPrincipal: Principal = {
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            }
+
+            const mockAccessToken = await generateMockToken(mockPrincipal)
+
+            const mockRequest = {
+                method: 'GET',
+                routerPath: '/v1/flows',
+                headers: {
+                    authorization: `Bearer ${mockAccessToken}`,
+                },
+                routeConfig: {},
+            } as unknown as FastifyRequest
+
+            // act
+            const result = securityHandlerChain(mockRequest)
+
+            // assert
+            await expect(result).rejects.toEqual(
+                new ActivepiecesError({
+                    code: ErrorCode.SESSION_EXPIRED,
+                    params: {
+                        message: 'session expired',
+                    },
+                }),
+            )
+        })
+
         it('Authenticates users', async () => {
             // arrange
+
+            const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
             const mockPrincipal: Principal = {
-                id: apId(),
+                id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: apId(),
+                projectId: mockProject.id,
                 platform: {
-                    id: apId(),
+                    id: mockPlatform.id,
                 },
+
             }
 
             const mockAccessToken = await generateMockToken(mockPrincipal)

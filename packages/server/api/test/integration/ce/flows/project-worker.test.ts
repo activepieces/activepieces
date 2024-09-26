@@ -46,6 +46,7 @@ describe('Project Worker API', () => {
                     authorization: `Bearer ${mockToken}`,
                 },
             })
+            console.log(response?.json())
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)

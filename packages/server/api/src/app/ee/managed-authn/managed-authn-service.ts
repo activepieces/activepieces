@@ -19,6 +19,7 @@ import { userService } from '../../user/user-service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
+import dayjs from 'dayjs'
 
 export const managedAuthnService = {
     async externalToken({
@@ -50,7 +51,8 @@ export const managedAuthnService = {
             platform: {
                 id: externalPrincipal.platformId,
             },
-        })
+            tokenVersion: user.tokenVersion,
+        }, dayjs.duration(7, 'day').asSeconds())
         return {
             ...user,
             token,

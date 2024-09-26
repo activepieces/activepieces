@@ -139,7 +139,6 @@ const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<voi
             status: UserStatus.INACTIVE,
             platformId,
             platformRole: u.platformRole,
-            changeTokenVersion: true,
         })
     })
     await Promise.all(users)
