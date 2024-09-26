@@ -1,10 +1,29 @@
-import { Static, Type } from "@sinclair/typebox"
-import { anthropic } from "./anthropic"
-import { openai } from "./openai"
-import { authHeader } from "./utils"
-import { Property } from "@activepieces/pieces-framework"
-import { AiProviderWithoutSensitiveData, isNil, SeekPage } from "@activepieces/shared"
-import { httpClient, HttpMethod } from "../../http"
+import { Static, Type } from '@sinclair/typebox';
+import { anthropic } from './anthropic';
+import { openai } from './openai';
+import { authHeader } from './utils';
+import { Property } from '@activepieces/pieces-framework';
+import {
+  AiProviderWithoutSensitiveData,
+  isNil,
+  SeekPage,
+} from '@activepieces/shared';
+import { httpClient, HttpMethod } from '../../http';
+
+export const AI_PROVIDERS_MAKRDOWN = {
+  openai: `Follow these instructions to get your OpenAI API Key:
+
+1. Visit the following website: https://platform.openai.com/account/api-keys.
+2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
+
+It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
+`,
+  anthropic: `Follow these instructions to get your Claude API Key:
+
+1. Visit the following website: https://console.anthropic.com/settings/keys.
+2. Once on the website, locate and click on the option to obtain your Claude API Key.
+`,
+};
 
 export const AI_PROVIDERS = [
   {
@@ -22,6 +41,7 @@ export const AI_PROVIDERS = [
     ],
     auth: authHeader({ bearer: true }),
     factory: openai,
+    instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.openai,
   },
   {
     logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
@@ -32,28 +52,29 @@ export const AI_PROVIDERS = [
       {
         label: 'claude-3-5-sonnet',
         value: 'claude-3-5-sonnet-20240620',
-        types: ['text']
+        types: ['text'],
       },
       {
         label: 'claude-3-opus',
         value: 'claude-3-opus-20240229',
-        types: ['text']
+        types: ['text'],
       },
       {
         label: 'claude-3-sonnet',
         value: 'claude-3-sonnet-20240229',
-        types: ['text']
+        types: ['text'],
       },
       {
         label: 'claude-3-haiku',
         value: 'claude-3-haiku-20240307',
-        types: ['text']
+        types: ['text'],
       },
     ],
-    auth: authHeader({ name: "x-api-key", bearer: false }),
+    auth: authHeader({ name: 'x-api-key', bearer: false }),
     factory: anthropic,
+    instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.anthropic,
   },
-]
+];
 
 export const aiProps = (type: 'text' | 'image') => ({
   provider: Property.Dropdown<AiProvider, true>({
@@ -61,25 +82,31 @@ export const aiProps = (type: 'text' | 'image') => ({
     required: true,
     refreshers: [],
     options: async (_, ctx) => {
-      const providers = await httpClient.sendRequest<SeekPage<AiProviderWithoutSensitiveData>>({
+      const providers = await httpClient.sendRequest<
+        SeekPage<AiProviderWithoutSensitiveData>
+      >({
         method: HttpMethod.GET,
         url: `${ctx.server.apiUrl}v1/ai-providers`,
         headers: {
           Authorization: `Bearer ${ctx.server.token}`,
         },
-      })
+      });
       if (providers.body.data.length === 0) {
         return {
           disabled: true,
           options: [],
           placeholder: 'No AI providers configured by the admin.',
-        }
+        };
       }
 
       const providersWithMetadata = providers.body.data.flatMap((p) => {
-        const providerMetadata = AI_PROVIDERS.find((meta) => meta.value === p.provider && meta.models.some(m => m.types.includes(type)));
+        const providerMetadata = AI_PROVIDERS.find(
+          (meta) =>
+            meta.value === p.provider &&
+            meta.models.some((m) => m.types.includes(type))
+        );
         if (isNil(providerMetadata)) {
-          return []
+          return [];
         }
         return {
           value: providerMetadata.value,
@@ -92,8 +119,8 @@ export const aiProps = (type: 'text' | 'image') => ({
         placeholder: 'Select AI Provider',
         disabled: false,
         options: providersWithMetadata,
-      }
-    }
+      };
+    },
   }),
   model: Property.Dropdown({
     displayName: 'Model',
@@ -105,21 +132,25 @@ export const aiProps = (type: 'text' | 'image') => ({
           disabled: true,
           options: [],
           placeholder: 'Select AI Provider',
-        }
+        };
       }
-      const models = AI_PROVIDERS.find((p) => p.value === provider)?.models.filter(m => m.types.includes(type));
+      const models = AI_PROVIDERS.find(
+        (p) => p.value === provider
+      )?.models.filter((m) => m.types.includes(type));
       return {
         disabled: isNil(models),
         options: models ?? [],
       };
     },
   }),
-})
+});
 
-export type AiProviderMetadata = typeof AI_PROVIDERS[number]
+export type AiProviderMetadata = (typeof AI_PROVIDERS)[number];
 
-export const AiProvider = Type.Union(AI_PROVIDERS.map(p => Type.Literal(p.value)))
+export const AiProvider = Type.Union(
+  AI_PROVIDERS.map((p) => Type.Literal(p.value))
+);
 
-export type AiProvider = Static<typeof AiProvider>
+export type AiProvider = Static<typeof AiProvider>;
 
-export * from './utils'
+export * from './utils';

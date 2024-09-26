@@ -31,8 +31,8 @@ const getOrCreateUser = async (platformId: string, attributes: SamlAttributes): 
     }
     return userService.create({
         email,
-        firstName: attributes.firstName??'john',
-        lastName: attributes.lastName??'doe',
+        firstName: attributes.firstName ?? 'john',
+        lastName: attributes.lastName ?? 'doe',
         password: await cryptoUtils.generateRandomPassword(),
         trackEvents: true,
         newsLetter: false,
