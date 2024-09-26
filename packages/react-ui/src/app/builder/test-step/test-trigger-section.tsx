@@ -177,10 +177,7 @@ const TestTriggerSection = React.memo(
         'settings.inputUiInfo',
         {
           ...formValues.settings.inputUiInfo,
-          currentSelectedData: formatUtils.formatStepInputOrOutput(
-            data.payload,
-            null,
-          ),
+          currentSelectedData: data.payload,
           lastTestDate: dayjs().toISOString(),
         },
         { shouldValidate: true },
@@ -238,7 +235,6 @@ const TestTriggerSection = React.memo(
             currentSelectedData={currentSelectedData}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
-            type={formValues.type}
           >
             {pollResults?.data && (
               <div className="mb-3">

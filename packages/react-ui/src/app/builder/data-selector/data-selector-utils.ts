@@ -49,7 +49,7 @@ function traverseStepOutputAndReturnMentionTree({
       propertyPath,
       displayName,
       insertable,
-      value: formatUtils.formatStepInputOrOutput(stepOutput, null),
+      value: stepOutput,
     },
     children: undefined,
   };

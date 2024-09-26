@@ -5,11 +5,7 @@ import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
-import {
-  ActionType,
-  StepOutputStatus,
-  TriggerType,
-} from '@activepieces/shared';
+import { StepOutputStatus } from '@activepieces/shared';
 
 import { TestButtonTooltip } from './test-step-tooltip';
 
@@ -21,7 +17,6 @@ type TestSampleDataViewerProps = {
   currentSelectedData: unknown;
   errorMessage: string | undefined;
   lastTestDate: string | undefined;
-  type: ActionType | TriggerType;
   children?: React.ReactNode;
 };
 
@@ -34,12 +29,11 @@ const TestSampleDataViewer = React.memo(
     currentSelectedData,
     errorMessage,
     lastTestDate,
-    type,
     children,
   }: TestSampleDataViewerProps) => {
     const formattedData = useMemo(
-      () => formatUtils.formatStepInputOrOutput(currentSelectedData, type),
-      [currentSelectedData, type],
+      () => currentSelectedData,
+      [currentSelectedData],
     );
     return (
       <>

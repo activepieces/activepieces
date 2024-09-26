@@ -11,10 +11,7 @@ import { flowHelper, StepOutput } from '@activepieces/shared';
 
 const FlowStepInputOutput = React.memo(
   ({ stepDetails }: { stepDetails: StepOutput }) => {
-    const stepOutput = formatUtils.formatStepInputOrOutput(
-      stepDetails.output ?? stepDetails.errorMessage,
-      stepDetails.type,
-    );
+    const stepOutput = stepDetails.output ?? stepDetails.errorMessage;
 
     const [flowVersion, selectedStepName] = useBuilderStateContext((state) => [
       state.flowVersion,
