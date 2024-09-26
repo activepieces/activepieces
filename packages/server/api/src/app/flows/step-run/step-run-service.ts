@@ -1,4 +1,3 @@
-
 import {
     ActionType,
     ActivepiecesError,
@@ -7,7 +6,8 @@ import {
     FlowVersionId,
     isNil,
     ProjectId,
-    StepRunResponse } from '@activepieces/shared'
+    StepRunResponse,
+} from '@activepieces/shared'
 import { engineRunner } from 'server-worker'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { flowVersionService } from '../flow-version/flow-version.service'
@@ -36,12 +36,13 @@ export const stepRunService = {
             projectId,
         })
 
-        const { result, standardError, standardOutput } = await engineRunner.executeAction(engineToken, {
-            stepName,
-            flowVersion,
-            projectId,
-        })
-        
+        const { result, standardError, standardOutput } =
+      await engineRunner.executeAction(engineToken, {
+          stepName,
+          flowVersion,
+          projectId,
+      })
+
         return {
             success: result.success,
             output: result.output,
