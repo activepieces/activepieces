@@ -1,32 +1,25 @@
 import React from 'react';
 
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { cn } from '@/lib/utils';
 import { ActionType, TriggerType } from '@activepieces/shared';
 
 import { PieceStepMetadata, StepMetadata } from '../lib/types';
 
 type PieceCardInfoProps = {
   piece: StepMetadata;
-  interactive: boolean;
   onClick?: () => void;
+  actionOrTriggerDisplayName?: string | null;
 };
 
 const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
   piece,
-  interactive,
   onClick,
+  actionOrTriggerDisplayName,
 }) => {
   return (
     <div
       onClick={onClick}
-      className={cn(
-        'flex items-center justify-center gap-4 rounded border border-solid p-3.5',
-        {
-          'cursor-pointer hover:bg-accent hover:text-accent-foreground':
-            interactive,
-        },
-      )}
+      className="flex items-center justify-center gap-4 rounded border border-solid p-3.5"
     >
       <div className="flex h-full min-w-[48px] items-center justify-center">
         <PieceIcon
@@ -39,7 +32,12 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
       </div>
       <div className="flex h-full grow flex-col justify-center gap-1 text-start">
         <div className="text-base flex justify-center">
-          <div className="flex-grow">{piece.displayName}</div>
+          <div className="flex-grow">
+            {piece.displayName}{' '}
+            {actionOrTriggerDisplayName
+              ? `(${actionOrTriggerDisplayName})`
+              : ''}
+          </div>
           {(piece.type === ActionType.PIECE ||
             piece.type === TriggerType.PIECE) && (
             <div className="text-xs text-muted-foreground flex justify-center items-center">
