@@ -59,7 +59,7 @@ export default function SidebarLayout({
   children,
 }: SidebarLayoutProps) {
   return (
-    <div className="w-full hidden md:block">
+    <div className="w-full md:block">
       <div className="space-y-0.5">
         <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
       </div>
