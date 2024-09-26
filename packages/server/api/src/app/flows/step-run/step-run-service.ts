@@ -1,4 +1,3 @@
-
 import {
     ActionType,
     ActivepiecesError,
@@ -6,12 +5,19 @@ import {
     flowHelper,
     FlowVersionId,
     isNil,
+    LoopStepOutput,
     ProjectId,
-    StepRunResponse } from '@activepieces/shared'
+    StepRunResponse,
+} from '@activepieces/shared'
 import { engineRunner } from 'server-worker'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { flowVersionService } from '../flow-version/flow-version.service'
 
+const removeLoopIterations = (output: LoopStepOutput) => {
+    const cleanedOutput = JSON.parse(JSON.stringify(output))
+    delete cleanedOutput.iterations
+    return cleanedOutput
+}
 export const stepRunService = {
     async create({
         projectId,
@@ -36,15 +42,19 @@ export const stepRunService = {
             projectId,
         })
 
-        const { result, standardError, standardOutput } = await engineRunner.executeAction(engineToken, {
-            stepName,
-            flowVersion,
-            projectId,
-        })
-        
+        const { result, standardError, standardOutput } =
+      await engineRunner.executeAction(engineToken, {
+          stepName,
+          flowVersion,
+          projectId,
+      })
+
         return {
             success: result.success,
-            output: result.output,
+            output:
+        step.type === ActionType.LOOP_ON_ITEMS
+            ? removeLoopIterations(result.output as LoopStepOutput)
+            : result.output,
             standardError,
             standardOutput,
         }
