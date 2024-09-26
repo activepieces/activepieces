@@ -30,7 +30,6 @@ import {
   toast,
 } from '@/components/ui/use-toast';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { PieceOperationSuggestions } from '@/features/pieces/components/piece-operations-suggestions';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
@@ -52,6 +51,8 @@ import {
 } from '@activepieces/shared';
 
 import { SearchInput } from '../../../components/ui/search-input';
+
+import { PieceSearchSuggestions } from './piece-search-suggestions';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -337,7 +338,7 @@ const PieceSelector = ({
                           setSelectedPieceMetadata(pieceMetadata);
                         }}
                       >
-                        <PieceOperationSuggestions
+                        <PieceSearchSuggestions
                           pieceMetadata={pieceMetadata}
                           operation={operation}
                           handleSelectOperationSuggestion={handleSelect}
@@ -371,7 +372,10 @@ const PieceSelector = ({
 
           <Separator orientation="vertical" className="h-full" />
           <ScrollArea className="h-full">
-            <CardList className="w-[350px] min-w-[350px] h-full">
+            <CardList
+              className="w-[350px] min-w-[350px] h-full gap-0"
+              listClassName="gap-0"
+            >
               {!isLoadingPieces && (
                 <>
                   {isLoadingSelectedPieceMetadata && (

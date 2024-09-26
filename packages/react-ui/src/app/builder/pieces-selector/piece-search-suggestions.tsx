@@ -1,38 +1,37 @@
 import { CardListItem } from '@/components/ui/card-list';
 import { FlowOperationType } from '@activepieces/shared';
 
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
   StepMetadata,
   ActionOrTriggerListItem,
   PieceSelectorOperation,
   PieceStepMetadataWithSuggestions,
-} from '../lib/types';
-
-import { PieceIcon } from './piece-icon';
+} from '@/features/pieces/lib/types';
 
 type HandleSelectCallback = (
   piece: StepMetadata,
   item: ActionOrTriggerListItem,
 ) => void;
 
-type PieceOperationSuggestionsProps = {
+type PieceSearchSuggestionsProps = {
   pieceMetadata: PieceStepMetadataWithSuggestions;
   handleSelectOperationSuggestion: HandleSelectCallback;
   operation: PieceSelectorOperation;
 };
 
-const PieceOperationSuggestions = ({
+const PieceSearchSuggestions = ({
   pieceMetadata,
   handleSelectOperationSuggestion,
   operation,
-}: PieceOperationSuggestionsProps) => {
+}: PieceSearchSuggestionsProps) => {
   const suggestions =
     operation.type === FlowOperationType.UPDATE_TRIGGER
       ? pieceMetadata.suggestedTriggers
       : pieceMetadata.suggestedActions;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-0">
       {suggestions?.map((suggestion) => (
         <CardListItem
           className="p-3 px-0 text-sm gap-2 items-start "
@@ -58,4 +57,4 @@ const PieceOperationSuggestions = ({
   );
 };
 
-export { PieceOperationSuggestions };
+export { PieceSearchSuggestions };
