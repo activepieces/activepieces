@@ -22,14 +22,6 @@ export const formatUtils = {
       typeof sampleData === 'object'
         ? JSON.parse(JSON.stringify(sampleData))
         : sampleData;
-    const shouldRemoveIterations =
-      type === ActionType.LOOP_ON_ITEMS &&
-      cleanedSampleData &&
-      typeof cleanedSampleData === 'object' &&
-      'iterations' in cleanedSampleData;
-    if (shouldRemoveIterations) {
-      delete cleanedSampleData['iterations'];
-    }
     return cleanedSampleData;
   },
   convertEnumToHumanReadable(str: string) {
