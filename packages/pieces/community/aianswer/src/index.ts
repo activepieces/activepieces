@@ -1,19 +1,21 @@
+import {
+  httpClient,
+  createCustomApiCallAction,
+  HttpMethod,
+} from '@activepieces/pieces-common';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { aiAnswerConfig } from './lib/common/models';
+import { gmailGetListOfAgents } from './lib/actions/gmail-get-list-of-agents';
+import { createPhoneCall } from './lib/actions/create-phone-call';
+import { getCallDetails } from './lib/actions/get-call-details';
+import { scheduleCallAgent } from './lib/actions/schedule-call-agent';
+import { PieceCategory } from '@activepieces/shared';
+import { getCallTranscript } from './lib/actions/get-call-transcript';
 
-import { httpClient, createCustomApiCallAction, HttpMethod } from "@activepieces/pieces-common";
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { aiAnswerConfig } from "./lib/common/models";
-import { gmailGetListOfAgents } from "./lib/actions/gmail-get-list-of-agents";
-import { createPhoneCall } from "./lib/actions/create-phone-call";
-import { getCallDetails } from "./lib/actions/get-call-details";
-import { scheduleCallAgent } from "./lib/actions/schedule-call-agent";
-import { PieceCategory } from "@activepieces/shared";
-import { getCallTranscript } from "./lib/actions/get-call-transcript";
-
-    
 export const aiAnswerAuth = PieceAuth.SecretText({
   displayName: 'AiAnswer API Access Token',
   required: true,
-  description:`
+  description: `
       To obtain your AiAnswer API access token, follow these steps below:
       1. Log in to your AiAnswer account at https://app.aianswer.us .
       2. Navigate to Settings < API Key.
@@ -23,12 +25,12 @@ export const aiAnswerAuth = PieceAuth.SecretText({
   validate: async (auth) => {
     try {
       await httpClient.sendRequest<string[]>({
-      method: HttpMethod.GET,
-      url: `${aiAnswerConfig.baseUrl}/gmail/list_agents`,
-      headers: {
-        [aiAnswerConfig.accessTokenHeaderKey]: auth.auth,
+        method: HttpMethod.GET,
+        url: `${aiAnswerConfig.baseUrl}/gmail/list_agents`,
+        headers: {
+          [aiAnswerConfig.accessTokenHeaderKey]: auth.auth,
         },
-    });
+      });
       return {
         valid: true,
       };
@@ -40,27 +42,31 @@ export const aiAnswerAuth = PieceAuth.SecretText({
     }
   },
 });
-    
-    export const aianswer = createPiece({
-      displayName: "AiAnswer",
+
+export const aianswer = createPiece({
+  displayName: 'AI Answer',
+  auth: aiAnswerAuth,
+  minimumSupportedRelease: '0.20.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/aianswer.png',
+  categories: [
+    PieceCategory.COMMUNICATION,
+    PieceCategory.CUSTOMER_SUPPORT,
+    PieceCategory.ARTIFICIAL_INTELLIGENCE,
+  ],
+  authors: ['drona2938'],
+  actions: [
+    gmailGetListOfAgents,
+    createPhoneCall,
+    getCallDetails,
+    scheduleCallAgent,
+    getCallTranscript,
+    createCustomApiCallAction({
+      baseUrl: () => aiAnswerConfig.baseUrl,
       auth: aiAnswerAuth,
-      minimumSupportedRelease: '0.20.0',
-      logoUrl: "https://cdn.activepieces.com/pieces/aianswer.png",
-      categories: [PieceCategory.COMMUNICATION,PieceCategory.CUSTOMER_SUPPORT,PieceCategory.ARTIFICIAL_INTELLIGENCE],
-      authors: ["drona2938"],
-      actions: [
-        gmailGetListOfAgents, 
-        createPhoneCall,
-        getCallDetails, 
-        scheduleCallAgent,
-        getCallTranscript,
-        createCustomApiCallAction({
-          baseUrl: () => aiAnswerConfig.baseUrl,
-          auth: aiAnswerAuth,
-          authMapping: async (auth) => ({
-            [aiAnswerConfig.accessTokenHeaderKey]: `${auth}`,
-          }),
-        }),],
-      triggers: [],
-    });
-    
+      authMapping: async (auth) => ({
+        [aiAnswerConfig.accessTokenHeaderKey]: `${auth}`,
+      }),
+    }),
+  ],
+  triggers: [],
+});
