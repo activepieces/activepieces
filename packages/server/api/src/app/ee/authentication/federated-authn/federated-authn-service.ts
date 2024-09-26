@@ -35,8 +35,8 @@ export const federatedAuthnService = {
         return authenticationService.federatedAuthn({
             email: idToken.email,
             verified: true,
-            firstName: idToken.firstName?? 'john',
-            lastName: idToken.lastName?? 'doe',
+            firstName: idToken.firstName ?? 'john',
+            lastName: idToken.lastName ?? 'doe',
             platformId: platformIdFromEmail,
         })
     },

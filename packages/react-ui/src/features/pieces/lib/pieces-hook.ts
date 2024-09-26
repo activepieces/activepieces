@@ -7,8 +7,6 @@ import {
 import {
   Action,
   ActionType,
-  PackageType,
-  PieceType,
   SuggestionType,
   Trigger,
   TriggerType,
@@ -16,6 +14,7 @@ import {
 } from '@activepieces/shared';
 
 import { PRIMITIVE_STEP_METADATA, piecesApi } from './pieces-api';
+import { StepMetadata, StepMetadataWithSuggestions } from './types';
 
 type UsePieceProps = {
   name: string;
@@ -45,27 +44,6 @@ type UseMetadataProps = {
   enabled?: boolean;
   type: 'action' | 'trigger';
 };
-
-type BaseStepMetadata = {
-  displayName: string;
-  logoUrl: string;
-  description: string;
-};
-
-export type PieceStepMetadata = BaseStepMetadata & {
-  type: ActionType.PIECE | TriggerType.PIECE;
-  pieceName: string;
-  pieceVersion: string;
-  categories: string[];
-  packageType: PackageType;
-  pieceType: PieceType;
-};
-
-export type PrimitiveStepMetadata = BaseStepMetadata & {
-  type: Omit<ActionType | TriggerType, ActionType.PIECE | TriggerType.PIECE>;
-};
-
-export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
 export const piecesHooks = {
   usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
@@ -122,7 +100,7 @@ export const piecesHooks = {
     };
   },
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
-    const query = useQuery<StepMetadata[], Error>({
+    const query = useQuery<StepMetadataWithSuggestions[], Error>({
       queryKey: ['pieces-metadata', searchQuery, type],
       queryFn: async () => {
         const pieces = await piecesApi.list({
@@ -136,10 +114,19 @@ export const piecesHooks = {
               (type === 'action' && piece.actions > 0) ||
               (type === 'trigger' && piece.triggers > 0),
           )
-          .map((piece) => piecesApi.mapToMetadata(type, piece));
+          .map((piece) => {
+            const metadata = piecesApi.mapToMetadata(type, piece);
+
+            const res: StepMetadataWithSuggestions = {
+              ...metadata,
+              suggestedActions: piece.suggestedActions,
+              suggestedTriggers: piece.suggestedTriggers,
+            };
+            return res;
+          });
         switch (type) {
           case 'action': {
-            const filtersPrimitive = [
+            const filtersPrimitive: StepMetadataWithSuggestions[] = [
               PRIMITIVE_STEP_METADATA[ActionType.CODE],
               PRIMITIVE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
               PRIMITIVE_STEP_METADATA[ActionType.BRANCH],
@@ -174,7 +161,7 @@ function stepMetadataQueryBuilder(step: Step) {
 
 function passSearch(
   searchQuery: string | undefined,
-  data: PrimitiveStepMetadata,
+  data: (typeof PRIMITIVE_STEP_METADATA)[keyof typeof PRIMITIVE_STEP_METADATA],
 ) {
   if (!searchQuery) {
     return true;
