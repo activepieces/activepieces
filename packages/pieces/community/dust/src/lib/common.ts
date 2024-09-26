@@ -104,7 +104,7 @@ export async function getConversationContent(
   if (conversationStatus != 'succeeded') {
     if (retries >= maxRetries) {
       throw new Error(
-        `Could not load conversation ${conversationId} after ${timeout}s - consider increasing timeout value`
+        `Could not load conversation ${conversationId} after ${timeout}s - ${conversationStatus} - consider increasing timeout value`
       );
     } else {
       throw new Error(
