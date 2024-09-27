@@ -1,88 +1,73 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ErrorCode,
     File,
-    FileCompression,
+    FileLocation,
     FileType,
     PrincipalType,
     StepFileUpsert,
-    StepFileWithUrl,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
-import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
-import { domainHelper } from '../../helper/domain-helper'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { fileService } from '../file.service'
+import { s3Helper } from '../s3-helper'
+import { stepFileService } from './step-file.service'
 
-const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
 export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/signed', SignedFileRequest, async (request, reply) => {
-        const { data, fileName } = await getFileByToken(request.query.token)
-        await reply
-            .header(
-                'Content-Disposition',
-                `attachment; filename="${fileName}"`,
-            )
-            .type('application/octet-stream')
-            .status(StatusCodes.OK)
-            .send(data)
+        const file = await getFileByToken(request.query.token)
+
+        switch (file.location) {
+            case FileLocation.S3: {
+                const url = await s3Helper.getS3SignedUrl(file.s3Key!, file.fileName ?? 'unknown')
+                return reply
+                    .status(StatusCodes.TEMPORARY_REDIRECT)
+                    .header('Location', url)
+                    .send()
+            }
+            case FileLocation.DB: {
+                const data = await fileService.getDataOrThrow({
+                    fileId: file.id,
+                    type: FileType.FLOW_STEP_FILE,
+                })
+                return reply
+                    .header(
+                        'Content-Disposition',
+                        `attachment; filename="${file.fileName}"`,
+                    )
+                    .type('application/octet-stream')
+                    .status(StatusCodes.OK)
+                    .send(data)
+            }
+        }
     })
 
     app.post('/', UpsertStepFileRequest, async (request) => {
-        const file = await fileService.save({
-            data: request.body.data as Buffer,
-            metadata: {
-                stepName: request.body.stepName,
-                flowId: request.body.flowId,
-            },
+        const file = await stepFileService.saveAndEnrich({
             fileName: request.body.fileName,
-            type: FileType.FLOW_STEP_FILE,
-            compression: FileCompression.NONE,
-            projectId: request.principal.projectId,
-        })
-        return encrichWithUrl(request.hostname, file)
+            flowId: request.body.flowId,
+            stepName: request.body.stepName,
+            file: request.body.file.data as Buffer,
+        }, request.hostname, request.principal.projectId)
+        return file
     })
-
 }
 
 type FileToken = {
     fileId: string
 }
 
-async function encrichWithUrl(
-    hostname: string,
-    file: File,
-): Promise<StepFileWithUrl> {
-    const jwtSecret = await jwtUtils.getJwtSecret()
-    const accessToken = await jwtUtils.sign({
-        payload: {
-            fileId: file.id,
-        },
-        expiresInSeconds: dayjs.duration(executionRetentionInDays, 'days').asSeconds(),
-        key: jwtSecret,
-    })
-    const url = await domainHelper.get().constructApiUrlFromRequest({
-        domain: hostname,
-        path: `v1/step-files/signed?token=${accessToken}`,
-    })
-    return {
-        ...file,
-        url,
-    }
-}
-
-async function getFileByToken(token: string) {
+async function getFileByToken(token: string): Promise<Omit<File, 'data'>> {
     try {
         const decodedToken = await jwtUtils.decodeAndVerify<FileToken>({
             jwt: token,
             key: await jwtUtils.getJwtSecret(),
         })
-        return await fileService.getDataOrThrow({
+        return await fileService.getFileOrThrow({
             fileId: decodedToken.fileId,
             type: FileType.FLOW_STEP_FILE,
         })

@@ -15,7 +15,7 @@ export function createFilesService({ stepName, type, flowId, engineToken, apiUrl
         async write({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
             switch (type) {
                 case 'db':
-                    return writeDbFile({ stepName, flowId, fileName, data, engineToken, apiUrl })
+                    return writeDbFile({ stepName, flowId, fileName, file: data, engineToken, apiUrl })
                 case 'local':
                     return writeLocalFile({ stepName, fileName, data })
             }
@@ -51,18 +51,18 @@ async function readMemoryFile(absolutePath: string): Promise<ApFile> {
     }
 }
 
-async function writeDbFile({ stepName, flowId, fileName, data, engineToken, apiUrl }: StepFileUpsert & { engineToken: string, apiUrl: string }): Promise<string> {
+async function writeDbFile({ stepName, flowId, fileName, file, engineToken, apiUrl }: Omit<StepFileUpsert, 'file'> & { engineToken: string, apiUrl: string, file: Buffer }): Promise<string> {
     const formData = new FormData()
     formData.append('stepName', stepName)
     formData.append('fileName', fileName)
     formData.append('flowId', flowId)
-    formData.append('data', new Blob([data], { type: 'application/octet-stream' }))
+    formData.append('file', new Blob([file], { type: 'application/octet-stream' }))
 
     const maximumFileSizeInBytes = MAX_FILE_SIZE_MB * 1024 * 1024
-    if (data.length > maximumFileSizeInBytes) {
+    if (file.length > maximumFileSizeInBytes) {
         throw new Error(JSON.stringify({
             message: 'File size is larger than maximum supported size in test step mode, please use test flow instead of step as a workaround',
-            currentFileSize: `${(data.length / 1024 / 1024).toFixed(2)} MB`,
+            currentFileSize: `${(file.length / 1024 / 1024).toFixed(2)} MB`,
             maximumSupportSize: `${MAX_FILE_SIZE_MB.toFixed(2)} MB`,
         }))
     }
@@ -88,7 +88,6 @@ async function writeLocalFile({ stepName, fileName, data }: { stepName: string, 
     await fs.mkdir('tmp/' + stepName, { recursive: true })
     await fs.writeFile(path, data)
     return FILE_PREFIX_URL + stepName + '/' + fileName
-
 }
 
 async function readLocalFile(absolutePath: string): Promise<ApFile> {

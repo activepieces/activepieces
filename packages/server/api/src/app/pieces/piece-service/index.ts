@@ -98,12 +98,12 @@ const getPiecePackage = async (
             const archiveId = await saveArchive({
                 projectId: params.scope === PieceScope.PROJECT ? projectId : undefined,
                 platformId,
-                archive: params.pieceArchive as Buffer,
+                archive: params.pieceArchive.data as Buffer,
             })
             return {
                 ...params,
                 pieceType: PieceType.CUSTOM,
-                archive: params.pieceArchive as Buffer,
+                archive: params.pieceArchive.data as Buffer,
                 archiveId,
                 packageType: params.packageType,
             }

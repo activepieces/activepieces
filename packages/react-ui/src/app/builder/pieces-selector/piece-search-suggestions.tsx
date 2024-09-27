@@ -1,6 +1,4 @@
 import { CardListItem } from '@/components/ui/card-list';
-import { FlowOperationType } from '@activepieces/shared';
-
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
   StepMetadata,
@@ -8,6 +6,7 @@ import {
   PieceSelectorOperation,
   PieceStepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
+import { FlowOperationType } from '@activepieces/shared';
 
 type HandleSelectCallback = (
   piece: StepMetadata,
