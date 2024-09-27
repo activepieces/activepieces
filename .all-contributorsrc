@@ -1262,6 +1262,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "ahronshor",
+      "name": "ahronshor",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25138831?v=4",
+      "profile": "https://github.com/ahronshor",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

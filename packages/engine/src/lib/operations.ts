@@ -78,10 +78,8 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
 function cleanSampleData(stepOutput: StepOutput) {
     if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
         return {
-            output: {
-                item: stepOutput.output?.item,
-                index: stepOutput.output?.index,
-            },
+            item: stepOutput.output?.item,
+            index: stepOutput.output?.index,
         }
     }
     return stepOutput.output ?? stepOutput.errorMessage
