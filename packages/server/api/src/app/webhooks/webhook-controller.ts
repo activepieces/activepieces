@@ -3,7 +3,6 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     apId,
-    ApMultipartFile,
     EngineHttpResponse,
     ErrorCode,
     EventPayload,
@@ -18,12 +17,12 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { tasksLimit } from '../ee/project-plan/tasks-limit'
+import { stepFileService } from '../file/step-file/step-file.service'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
 import { webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
 import { flowQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
-import { stepFileService } from '../file/step-file/step-file.service'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -150,7 +149,8 @@ const convertBody = async (request: FastifyRequest, projectId: string, flowId: s
                     flowId,
                 }, request.hostname, projectId)
                 jsonResult[key] = file.url
-            } else {
+            }
+            else {
                 jsonResult[key] = value
             }
         }

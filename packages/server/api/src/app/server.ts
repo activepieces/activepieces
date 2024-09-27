@@ -2,7 +2,7 @@ import { initializeSentry, logger, SharedSystemProp, system } from '@activepiece
 import { apId, ApMultipartFile } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
-import fastifyMultipart from '@fastify/multipart'
+import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
 import fastify, { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
@@ -11,7 +11,6 @@ import { setupApp } from './app'
 import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { setupWorker } from './worker'
-import { MultipartFile } from '@fastify/multipart'
 const MAX_FILE_SIZE_MB = system.getNumberOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB)
 
 export const setupServer = async (): Promise<FastifyInstance> => {
@@ -56,10 +55,11 @@ async function setupBaseApp(): Promise<FastifyInstance> {
                 data: await part.toBuffer(),
                 type: 'file',
             };
-            (part as any).value = apFile;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (part as any).value = apFile
         },
-    });
-    initializeSentry();
+    })
+    initializeSentry()
 
 
     await app.register(fastifyRawBody, {

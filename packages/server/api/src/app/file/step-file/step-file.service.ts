@@ -3,7 +3,6 @@ import {
     File,
     FileCompression,
     FileType,
-    StepFileUpsert,
     StepFileWithUrl,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -28,7 +27,7 @@ export const stepFileService = {
             fileName: params.fileName,
             type: FileType.FLOW_STEP_FILE,
             compression: FileCompression.NONE,
-            projectId: projectId,
+            projectId,
         })
         return enrichWithUrl(hostname, file)
     },

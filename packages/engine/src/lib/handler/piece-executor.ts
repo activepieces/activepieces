@@ -83,7 +83,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 engineToken: constants.engineToken,
                 stepName: action.name,
                 flowId: constants.flowId,
-                type: constants.filesServiceType,
             }),
             server: {
                 token: constants.engineToken,

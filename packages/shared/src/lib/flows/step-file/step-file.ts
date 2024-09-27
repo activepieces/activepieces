@@ -3,7 +3,6 @@ import { ApMultipartFile } from '../../common'
 import { File } from '../../file'
 
 export const StepFileUpsert = Type.Object({
-    fileName: Type.String(),
     flowId: Type.String(),
     stepName: Type.String(),
     file: ApMultipartFile,

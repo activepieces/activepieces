@@ -30,7 +30,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
                     .send()
             }
             case FileLocation.DB: {
-                const data = await fileService.getDataOrThrow({
+                const { data } = await fileService.getDataOrThrow({
                     fileId: file.id,
                     type: FileType.FLOW_STEP_FILE,
                 })
@@ -48,7 +48,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/', UpsertStepFileRequest, async (request) => {
         const file = await stepFileService.saveAndEnrich({
-            fileName: request.body.fileName,
+            fileName: request.body.file.filename,
             flowId: request.body.flowId,
             stepName: request.body.stepName,
             file: request.body.file.data as Buffer,

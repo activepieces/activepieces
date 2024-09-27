@@ -1,10 +1,11 @@
 import { Readable } from 'stream'
 import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
 import { FileType, ProjectId } from '@activepieces/shared'
-import { S3, GetObjectCommand } from '@aws-sdk/client-s3'
+import { GetObjectCommand, S3 } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from 'dayjs'
+
 const executionRentetionInDays = system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)!
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const s3Helper = {
     async uploadFile(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string, data: Buffer): Promise<string> {
@@ -50,7 +51,7 @@ export const s3Helper = {
             Key: s3Key,
             ResponseContentDisposition: `attachment; filename="${fileName}"`,
         })
-        return getSignedUrl(client, command);
+        return getSignedUrl(client, command)
     },
 }
 
