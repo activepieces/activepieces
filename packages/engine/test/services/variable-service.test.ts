@@ -672,7 +672,7 @@ describe('Variable Service', () => {
         const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
         expect(errors).toEqual({
             text1: ['The value: short must be at least 10 characters'],
-            text2: ['The value: short1234678923145678 may not be greater than 10 characters'],
+            text2: ['The value: short1234678923145678 must be less than 10 characters'],
         })
     })
 

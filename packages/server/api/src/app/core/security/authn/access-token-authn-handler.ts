@@ -17,7 +17,7 @@ export class AccessTokenAuthnHandler extends BaseSecurityHandler {
 
     protected async doHandle(request: FastifyRequest): Promise<void> {
         const accessToken = this.extractAccessTokenOrThrow(request)
-        const principal = await accessTokenManager.extractPrincipal(accessToken)
+        const principal = await accessTokenManager.verifyPrincipal(accessToken)
         request.principal = principal
     }
 

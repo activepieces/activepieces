@@ -48,7 +48,7 @@ const MultiSelectPieceProperty = ({
         originalIndex: index,
       }))
       .filter((option) => {
-        return option.label.toLowerCase().includes(searchTerm.toLowerCase());
+        return option.label?.toLowerCase()?.includes(searchTerm?.toLowerCase());
       });
   }, [options, searchTerm]);
   const selectedIndicies = initialValues

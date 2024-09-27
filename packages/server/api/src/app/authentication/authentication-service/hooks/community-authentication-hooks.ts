@@ -90,6 +90,7 @@ async function getProjectAndToken(user: User): Promise<{ user: User, project: Pr
         platform: {
             id: platform.id,
         },
+        tokenVersion: user.tokenVersion,
     })
     return {
         user: updatedUser,

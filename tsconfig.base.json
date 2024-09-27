@@ -36,6 +36,9 @@
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
+      "@activepieces/piece-aianswer": [
+        "packages/pieces/community/aianswer/src/index.ts"
+      ],
       "@activepieces/piece-airtable": [
         "packages/pieces/community/airtable/src/index.ts"
       ],
@@ -286,6 +289,9 @@
       ],
       "@activepieces/piece-hubspot": [
         "packages/pieces/community/hubspot/src/index.ts"
+      ],
+      "@activepieces/piece-image-ai": [
+        "packages/pieces/community/image-ai/src/index.ts"
       ],
       "@activepieces/piece-image-helper": [
         "packages/pieces/community/image-helper/src/index.ts"

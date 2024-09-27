@@ -38,6 +38,7 @@ export const User = Type.Object({
     status: Type.Enum(UserStatus),
     externalId: Type.Optional(Type.String()),
     platformId: Type.Union([ApId, Type.Null()]),
+    tokenVersion: Type.Optional(Type.String()),
 })
 
 export type User = Static<typeof User>

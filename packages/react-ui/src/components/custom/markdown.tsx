@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import gfm from 'remark-gfm';
 
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
@@ -18,7 +19,6 @@ function applyVariables(markdown: string, variables: Record<string, string>) {
 type MarkdownProps = {
   markdown: string | undefined;
   variables?: Record<string, string>;
-  className?: string;
   withBorder?: boolean;
 };
 
@@ -67,6 +67,7 @@ const ApMarkdown = React.memo(
     return (
       <Container withBorder={withBorder}>
         <ReactMarkdown
+          remarkPlugins={[gfm]}
           components={{
             code(props) {
               const isLanguageText = props.className?.includes('language-text');
@@ -131,6 +132,8 @@ const ApMarkdown = React.memo(
             a: ({ node, ...props }) => (
               <a
                 className="font-medium text-primary underline underline-offset-4"
+                target="_blank"
+                rel="noreferrer noopener"
                 {...props}
               />
             ),

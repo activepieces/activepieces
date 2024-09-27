@@ -48,6 +48,10 @@ export const UserEntity = new EntitySchema<UserSchema>({
             type: String,
             nullable: true,
         },
+        tokenVersion: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {

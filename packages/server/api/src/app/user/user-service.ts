@@ -14,6 +14,7 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { nanoid } from 'nanoid'
 import { IsNull } from 'typeorm'
 import { passwordHasher } from '../authentication/lib/password-hasher'
 import { repoFactory } from '../core/db/repo-factory'
@@ -32,19 +33,21 @@ export const userService = {
             platformRole: params.platformRole,
             status: UserStatus.ACTIVE,
             password: hashedPassword,
+            tokenVersion: nanoid(),
         }
 
         return userRepo().save(user)
     },
     async update({ id, status, platformId, platformRole }: UpdateParams): Promise<User> {
+
         const updateResult = await userRepo().update({
             id,
             platformId,
-        },
-        {
+        }, {
             ...spreadIfDefined('status', status),
             ...spreadIfDefined('platformRole', platformRole),
         })
+
         if (updateResult.affected !== 1) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -158,6 +161,7 @@ export const userService = {
         await userRepo().update(id, {
             updated: dayjs().toISOString(),
             password: hashedPassword,
+            tokenVersion: nanoid(),
         })
     },
 
