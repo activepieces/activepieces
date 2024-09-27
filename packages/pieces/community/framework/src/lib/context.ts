@@ -87,7 +87,7 @@ export type StopHookParams = {
   response: StopResponse;
 };
 
-export type StopHook = (params: StopHookParams) => void;
+export type StopHook = (params?: StopHookParams) => void;
 
 export type PauseHookParams = {
   pauseMetadata: PauseMetadata;
