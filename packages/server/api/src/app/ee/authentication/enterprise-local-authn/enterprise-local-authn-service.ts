@@ -33,16 +33,6 @@ export const enterpriseLocalAuthnService = {
             id: userId,
             newPassword,
         })
-
-        const user = await userService.getOneOrFail({
-            id: userId,
-        })
-
-        assertNotNullOrUndefined(user.platformId, 'Platform id is not set')
-        await userService.changeSession({
-            id: userId,
-            platformId: user.platformId,
-        })
     },
 }
 

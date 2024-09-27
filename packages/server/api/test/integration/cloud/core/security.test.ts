@@ -501,6 +501,11 @@ describe('API Security', () => {
         it('Session expirey for Users', async () => {
             // arrange
             const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
+
+            await databaseConnection().getRepository('user').save([mockOwner])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('project').save([mockProject])
+
             const sessionId = nanoid()
             await databaseConnection().getRepository('user').update(mockOwner.id, {
                 tokenVersion: sessionId
@@ -533,7 +538,7 @@ describe('API Security', () => {
                 new ActivepiecesError({
                     code: ErrorCode.SESSION_EXPIRED,
                     params: {
-                        message: 'session expired',
+                        message: 'The session has expired.',
                     },
                 }),
             )
@@ -543,6 +548,11 @@ describe('API Security', () => {
             // arrange
 
             const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
+
+            await databaseConnection().getRepository('user').save([mockOwner])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('project').save([mockProject])
+
             const mockPrincipal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
@@ -583,10 +593,25 @@ describe('API Security', () => {
         })
 
         it('Fails if route disallows USER principal type', async () => {
+
+            const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
+
+            await databaseConnection().getRepository('user').save([mockOwner])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('project').save([mockProject])
+
+
             // arrange
-            const mockAccessToken = await generateMockToken({
+            const mockPrincipal: Principal = {
+                id: mockOwner.id,
                 type: PrincipalType.USER,
-            })
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+
+            }
+            const mockAccessToken = await generateMockToken(mockPrincipal)
 
             const mockRequest = {
                 method: 'GET',
@@ -614,12 +639,28 @@ describe('API Security', () => {
         })
 
         it('Fails if projectId in query doesn\'t match principal projectId', async () => {
+
+
+            const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
+
+            await databaseConnection().getRepository('user').save([mockOwner])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('project').save([mockProject])
+
+
+            const mockPrincipal: Principal = {
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+
+            }
+
             // arrange
-            const mockProjectId = apId()
             const mockOtherProjectId = apId()
-            const mockAccessToken = await generateMockToken({
-                projectId: mockProjectId,
-            })
+            const mockAccessToken = await generateMockToken(mockPrincipal)
 
             const mockRequest = {
                 method: 'GET',
@@ -648,12 +689,27 @@ describe('API Security', () => {
         })
 
         it('Fails if projectId in body doesn\'t match principal projectId', async () => {
+            
+            const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
+
+            await databaseConnection().getRepository('user').save([mockOwner])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('project').save([mockProject])
+
+
+            const mockPrincipal: Principal = {
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+
+            }
+
             // arrange
-            const mockProjectId = apId()
             const mockOtherProjectId = apId()
-            const mockAccessToken = await generateMockToken({
-                projectId: mockProjectId,
-            })
+            const mockAccessToken = await generateMockToken(mockPrincipal)
 
             const mockRequest = {
                 method: 'GET',

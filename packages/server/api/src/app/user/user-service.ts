@@ -38,22 +38,25 @@ export const userService = {
 
         return userRepo().save(user)
     },
-    async changeSession({ id, platformId }: UpdatePlatformIdParams): Promise<void> {
-        await userRepo().update({
-            id,
-            platformId,
-        }, {
-            tokenVersion: nanoid(),
-        })
-    },
     async update({ id, status, platformId, platformRole }: UpdateParams): Promise<User> {
-        await userRepo().update({
+
+        const updateResult = await userRepo().update({
             id,
             platformId,
         }, {
             ...spreadIfDefined('status', status),
             ...spreadIfDefined('platformRole', platformRole),
         })
+
+        if (updateResult.affected !== 1) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'user',
+                    entityId: id,
+                },
+            })
+        }
         return userRepo().findOneByOrFail({
             id,
             platformId,
@@ -158,6 +161,7 @@ export const userService = {
         await userRepo().update(id, {
             updated: dayjs().toISOString(),
             password: hashedPassword,
+            tokenVersion: nanoid(),
         })
     },
 

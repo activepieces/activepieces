@@ -115,7 +115,7 @@ describe('Piece Metadata API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
-                id: apId(),
+                id: mockUser.id,
             })
 
             // act
@@ -570,6 +570,7 @@ describe('Piece Metadata API', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
+                id: mockUser.id,
             })
 
             // act
@@ -639,6 +640,7 @@ describe('Piece Metadata API', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
+                id: mockUser.id,
             })
 
             // act
@@ -749,6 +751,7 @@ describe('Piece Metadata API', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
+                id: mockUser.id,
             })
 
             // act
@@ -811,6 +814,7 @@ describe('Piece Metadata API', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
+                id: mockUser.id,
             })
 
             // act
@@ -872,6 +876,7 @@ describe('Piece Metadata API', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
+                id: mockUser.id,
             })
 
             // act
