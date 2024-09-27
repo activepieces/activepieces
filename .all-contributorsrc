@@ -1244,6 +1244,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "OmarSayed",
+      "name": "Omar Sayed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3813045?v=4",
+      "profile": "http://www.linkedin.com/in/omarsayed",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "rSnapkoOpenOps",
+      "name": "rSnapkoOpenOps",
+      "avatar_url": "https://avatars.githubusercontent.com/u/179845343?v=4",
+      "profile": "https://github.com/rSnapkoOpenOps",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"

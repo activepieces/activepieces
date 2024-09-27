@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { CodeModule, CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128

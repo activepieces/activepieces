@@ -20,8 +20,8 @@ import { ProjectWithLimits } from '@activepieces/shared';
 import { TableTitle } from '../../../components/ui/table-title';
 import { billingApi } from '../api/billing-api';
 
+import { TasksProgress } from './ai-credits-and-tasks-progress';
 import { PlanData } from './plan-data';
-import { TasksProgress } from './tasks-progress';
 
 const TasksSchema = Type.Object({
   tasks: Type.Number(),
@@ -142,20 +142,32 @@ const Plans: React.FC = () => {
       </div>
       {project && subscriptionData && (
         <>
-          <div className="border-2 h-48 rounded-md grid grid-cols-4 divide-x">
-            <TasksProgress
-              usage={project.usage.tasks}
-              plan={project.plan.tasks}
-              nextBillingDate={subscriptionData.nextBillingDate}
-            />
+          <div className="border-2 h-48 rounded-md grid grid-cols-4 divide-x ">
+            <div className="flex  justify-center   ">
+              <TasksProgress
+                tasks={{
+                  usage: project.usage.tasks,
+                  plan: project.plan.tasks,
+                }}
+                aiTokens={{
+                  usage: project.usage.aiTokens,
+                  plan: project.plan.aiTokens,
+                }}
+                nextBillingDate={subscriptionData.nextBillingDate}
+              />
+            </div>
+
             <div className="flex flex-row items-center justify-center">
               <span>{planNameFormatter(project.plan.name)}</span>
             </div>
-            <PlanData
-              minimumPollingInterval={project.plan.minimumPollingInterval}
-              includedUsers={subscriptionData.subscription.includedUsers}
-              includedTasks={subscriptionData.subscription.includedTasks}
-            />
+            <div className="flex justify-center">
+              <PlanData
+                minimumPollingInterval={project.plan.minimumPollingInterval}
+                includedUsers={subscriptionData.subscription.includedUsers}
+                includedTasks={subscriptionData.subscription.includedTasks}
+              />
+            </div>
+
             <div className="flex flex-col items-center justify-center">
               <Button
                 loading={isBillingPending}

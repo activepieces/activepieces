@@ -24,7 +24,6 @@ const SecretTextConnectionSettings = React.memo(
 
     const form = useFormContext<Static<typeof formSchema>>();
 
-    console.log(JSON.stringify(form.formState.errors));
     return (
       <FormField
         name="request.value.secret_text"

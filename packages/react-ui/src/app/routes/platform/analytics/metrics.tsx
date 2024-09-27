@@ -35,7 +35,7 @@ const Metric = ({
           <CardTitle className="text-md font-medium">{title}</CardTitle>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
+              <Info className="h-4 w-4 text-muted-foreground " />
             </TooltipTrigger>
             <TooltipContent>{description}</TooltipContent>
           </Tooltip>

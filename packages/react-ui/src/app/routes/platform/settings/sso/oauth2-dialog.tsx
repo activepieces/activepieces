@@ -114,13 +114,13 @@ export const NewOAuth2Dialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {t('Configure {{provider}} SSO', { provider: providerDisplayName })}
+            {t('Configure {provider} SSO', { provider: providerDisplayName })}
           </DialogTitle>
         </DialogHeader>
         <div className="mb-4">
           <ApMarkdown
             markdown={t(
-              'Read more information about how to configure {{provider}} SSO [here](https://www.activepieces.com/docs/security/sso).',
+              'Read more information about how to configure {provider} SSO [here](https://www.activepieces.com/docs/security/sso).',
               { provider: providerDisplayName },
             )}
           />
@@ -143,7 +143,7 @@ export const NewOAuth2Dialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-4">
                   <Label htmlFor="clientId">
-                    {t('{{provider}} Client ID', {
+                    {t('{provider} Client ID', {
                       provider: providerDisplayName,
                     })}
                   </Label>
@@ -162,13 +162,14 @@ export const NewOAuth2Dialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-4">
                   <Label htmlFor="clientSecret">
-                    {t('{{provider}} Client Secret', {
+                    {t('{provider} Client Secret', {
                       provider: providerDisplayName,
                     })}
                   </Label>
                   <Input
                     {...field}
                     required
+                    type="password"
                     id="clientSecret"
                     className="rounded-sm"
                   />

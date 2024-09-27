@@ -6,10 +6,16 @@ export const summarizeText = createAction({
   displayName: 'Summarize Text',
   description: '',
   props: {
-    provider: aiProps.provider,
-    model: aiProps.model,
+    provider: aiProps('text').provider,
+    model: aiProps('text').model,
     text: Property.LongText({
       displayName: 'Text',
+      required: true,
+    }),
+    prompt: Property.ShortText({
+      displayName: 'Prompt',
+      defaultValue:
+        'Summarize the following text in a clear and concise manner, capturing the key points and main ideas while keeping the summary brief and informative.',
       required: true,
     }),
     maxTokens: Property.Number({
@@ -28,9 +34,7 @@ export const summarizeText = createAction({
       messages: [
         {
           role: AIChatRole.USER,
-          content: `Your task is to provide a summary of the text given by the user. 
-          Please adhere to the guidelines specified in the prompt. 
-          Summarize the following text : ${context.propsValue.text}`,
+          content: `${context.propsValue.prompt} Summarize the following text : ${context.propsValue.text}`,
         },
       ],
       maxTokens: context.propsValue.maxTokens,

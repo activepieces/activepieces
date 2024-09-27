@@ -1,16 +1,32 @@
 import { ServerContext } from '@activepieces/pieces-framework';
-import { AiProvider, AI_PROVIDERS } from './providers';
+import { AI_PROVIDERS, AiProvider } from './providers';
 
-export type AI<SDK> = {
+export type AI = {
   provider: string;
   chat: AIChat;
+  image?: AIImage;
+}
+
+export type AIImage = {
+  generate: (params: AIImageGenerateParams) => Promise<AIImageCompletion | null>;
+};
+
+export type AIImageGenerateParams = {
+  prompt: string;
+  model: string;
+  numImages: number;
+  size: string;
+};
+
+export type AIImageCompletion = {
+  url: string;
 };
 
 export type AIChat = {
   text: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
-  extractStructuredData: (
-    params: AIExtractStructuredDataParams
-  ) => Promise<AIExtractStructuredDataResponse>;
+  function: (
+    params: AIChatCompletionsCreateParams & { functions: AIFunctionDefinition[] }
+  ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
 };
 
 export type AIChatCompletionsCreateParams = {
@@ -23,8 +39,6 @@ export type AIChatCompletionsCreateParams = {
 
 export type AIChatCompletion = {
   id: string;
-  created: number;
-  model: string;
   choices: AIChatMessage[];
   usage?: AIChatCompletionUsage;
 };
@@ -35,38 +49,30 @@ export type AIChatCompletionUsage = {
   totalTokens: number;
 };
 
-export type AIChatCompletionMessageToolCall = {
+export type AIChatMessage = {
+  role: AIChatRole;
+  content: string;
+};
+
+export type AIFunctionCall = {
   id: string;
-  type: string;
   function: {
     name: string;
     arguments: unknown;
   };
 };
 
-export type AIChatMessage = {
-  role: AIChatRole;
-  content: string;
+export type AIFunctionDefinition = {
+  name: string;
+  description: string;
+  arguments: AIFunctionArgumentDefinition[];
 };
 
-export type AIFunctionCallingPropDefinition = {
+export type AIFunctionArgumentDefinition = {
   name: string;
-  type: string;
+  type: "string" | "number" | "boolean";
   description?: string;
   isRequired: boolean;
-};
-
-export type AIExtractStructuredDataParams = AIChatCompletionsCreateParams & {
-  functionCallingProps: AIFunctionCallingPropDefinition[];
-};
-
-export type AIExtractStructuredDataResponse = {
-  id: string;
-  created: number;
-  model: string;
-  choices: AIChatMessage[];
-  toolCall: AIChatCompletionMessageToolCall;
-  usage?: AIChatCompletionUsage;
 };
 
 export enum AIChatRole {
@@ -78,7 +84,7 @@ export enum AIChatRole {
 export type AIFactory = (params: {
   proxyUrl: string;
   engineToken: string;
-}) => AI<unknown>;
+}) => AI;
 
 export const AI = ({
   provider,
@@ -86,7 +92,7 @@ export const AI = ({
 }: {
   provider: AiProvider;
   server: ServerContext;
-}): AI<unknown> => {
+}): AI => {
   const proxyUrl = `${server.apiUrl}v1/ai-providers/proxy/${provider}`;
   const factory = AI_PROVIDERS.find((p) => p.value === provider)?.factory;
   const impl = factory?.({ proxyUrl, engineToken: server.token });
@@ -97,6 +103,7 @@ export const AI = ({
 
   return {
     provider,
+    image: impl.image,
     chat: {
       text: async (params) => {
         try {
@@ -109,9 +116,9 @@ export const AI = ({
           throw e;
         }
       },
-      extractStructuredData: async (params) => {
+      function: async (params) => {
         try {
-          const response = await impl.chat.extractStructuredData(params);
+          const response = await impl.chat.function(params);
           return response;
         } catch (e: any) {
           if (e?.error?.error) {

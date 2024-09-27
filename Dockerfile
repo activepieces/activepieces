@@ -32,7 +32,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
-RUN cd /usr/src && npm i isolated-vm@4.6.0
+RUN cd /usr/src && npm i isolated-vm@5.0.1
 
 RUN pnpm store add \
   @tsconfig/node18@1.0.0 \

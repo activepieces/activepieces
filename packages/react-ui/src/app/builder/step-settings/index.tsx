@@ -26,7 +26,7 @@ import {
   debounce,
 } from '@activepieces/shared';
 
-import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
+import { PieceCardInfo } from '../../../features/pieces/components/piece-card';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
@@ -96,7 +96,11 @@ const StepSettingsContainer = React.memo(
 
     const actionOrTriggerName =
       selectedStep.settings.actionName ?? selectedStep.settings.triggerName;
-
+    const actionOrTriggerDisplayName = selectedStep.settings.actionName
+      ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
+      : selectedStep.settings.triggerName
+      ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
+      : null;
     const formSchema = formUtils.buildPieceSchema(
       selectedStep.type,
       actionOrTriggerName,
@@ -212,8 +216,8 @@ const StepSettingsContainer = React.memo(
                 <div className="flex flex-col gap-4 px-4 pb-6">
                   {stepMetadata && (
                     <PieceCardInfo
+                      actionOrTriggerDisplayName={actionOrTriggerDisplayName}
                       piece={stepMetadata}
-                      interactive={false}
                     ></PieceCardInfo>
                   )}
                   {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (

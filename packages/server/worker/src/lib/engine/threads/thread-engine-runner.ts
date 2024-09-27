@@ -103,7 +103,7 @@ export const threadEngineRunner: EngineRunner = {
     async executeAction(engineToken, operation) {
         logger.debug({
             stepName: operation.stepName,
-            flowVersion: operation.flowVersion,
+            flowVersionId: operation.flowVersion.id,
         }, '[threadEngineRunner#executeAction]')
 
         const step = flowHelper.getStep(operation.flowVersion, operation.stepName) as (Action | undefined)
@@ -158,7 +158,6 @@ export const threadEngineRunner: EngineRunner = {
             piece: operation.piece,
             propertyName: operation.propertyName,
             stepName: operation.actionOrTriggerName,
-            flowVersion: operation.flowVersion,
         }, '[threadEngineRunner#executeProp]')
 
         const { piece } = operation
@@ -219,11 +218,6 @@ async function execute<Result extends EngineHelperResult>(operation: EngineOpera
         standardError: stdError,
     })
 }
-
-
-
-
-
 
 function getEnvironmentVariables(): Record<string, string | undefined> {
     const allowedEnvVariables = system.getList(SharedSystemProp.SANDBOX_PROPAGATED_ENV_VARS)
