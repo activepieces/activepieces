@@ -238,6 +238,7 @@
     "shade-generator": "1.2.7",
     "showdown": "2.1.0",
     "simple-git": "3.21.0",
+    "slugify": "1.6.6",
     "snowflake-sdk": "1.9.3",
     "soap": "1.0.0",
     "socket.io": "4.7.5",
