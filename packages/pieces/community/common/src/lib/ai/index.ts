@@ -5,27 +5,31 @@ export type AI = {
   provider: string;
   chat: AIChat;
   image?: AIImage;
-}
+};
 
 export type AIImage = {
-  generate: (params: AIImageGenerateParams) => Promise<AIImageCompletion | null>;
+  generate: (
+    params: AIImageGenerateParams
+  ) => Promise<AIImageCompletion | null>;
 };
 
 export type AIImageGenerateParams = {
   prompt: string;
   model: string;
-  numImages: number;
+  quality: string;
   size: string;
 };
 
 export type AIImageCompletion = {
-  url: string;
+  image: string;
 };
 
 export type AIChat = {
   text: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
   function: (
-    params: AIChatCompletionsCreateParams & { functions: AIFunctionDefinition[] }
+    params: AIChatCompletionsCreateParams & {
+      functions: AIFunctionDefinition[];
+    }
   ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
 };
 
@@ -70,7 +74,7 @@ export type AIFunctionDefinition = {
 
 export type AIFunctionArgumentDefinition = {
   name: string;
-  type: "string" | "number" | "boolean";
+  type: 'string' | 'number' | 'boolean';
   description?: string;
   isRequired: boolean;
 };
