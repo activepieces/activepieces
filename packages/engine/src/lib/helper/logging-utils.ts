@@ -6,7 +6,7 @@ import PriorityQueue from 'priority-queue-typescript'
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const MAX_SIZE_FOR_ALL_ENTRIES = 1024 * 1024
 const SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER = sizeof(TRUNCATION_TEXT_PLACEHOLDER)
-const nonTruncatableKeys: Key[] = ['status', 'duration', 'type', 'errorMessage']
+const nonTruncatableKeys: Key[] = ['status', 'duration', 'type']
 
 export const loggingUtils = {
     async trimExecution(steps: Record<string, StepOutput>): Promise<Record<string, StepOutput>> {
