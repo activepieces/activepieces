@@ -73,6 +73,7 @@ function buildInputSchemaForStep(
           addAuthToPieceProps(
             piece.triggers[actionNameOrTriggerName].props,
             piece.auth,
+            true,
           ),
         );
       }

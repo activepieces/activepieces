@@ -65,6 +65,7 @@ export type ApErrorParams =
     | EmailAlreadyHasActivationKey
     | ProviderProxyConfigNotFoundParams
     | AITokenLimitExceededParams
+    | SessionExpiredParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -81,6 +82,10 @@ export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redi
 export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { pieceName: string }>
 
 export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {
+    message?: string
+}>
+
+export type SessionExpiredParams = BaseErrorParams<ErrorCode.SESSION_EXPIRED, {
     message?: string
 }>
 
@@ -407,6 +412,7 @@ export enum ErrorCode {
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
     INVALID_BEARER_TOKEN = 'INVALID_BEARER_TOKEN',
+    SESSION_EXPIRED = 'SESSION_EXPIRED',
     INVALID_CLAIM = 'INVALID_CLAIM',
     INVALID_CLOUD_CLAIM = 'INVALID_CLOUD_CLAIM',
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',

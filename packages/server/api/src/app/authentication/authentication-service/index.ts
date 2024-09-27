@@ -18,6 +18,7 @@ import {
     UserId,
     UserStatus,
 } from '@activepieces/shared'
+import { nanoid } from 'nanoid'
 import { QueryFailedError } from 'typeorm'
 import { flagService } from '../../flags/flag.service'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -142,6 +143,7 @@ const createUser = async (params: SignUpParams): Promise<User> => {
             newsLetter: params.newsLetter,
             password: params.password,
             platformId: params.platformId,
+            tokenVersion: nanoid(),
         }
 
         return await userService.create(newUser)

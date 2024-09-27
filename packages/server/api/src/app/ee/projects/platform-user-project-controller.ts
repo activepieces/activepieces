@@ -71,6 +71,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
                     platform: {
                         id: platform.id,
                     },
+                    tokenVersion: request.principal.tokenVersion,
                 }),
                 projectRole,
             }

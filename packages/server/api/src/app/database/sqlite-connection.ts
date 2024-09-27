@@ -14,6 +14,7 @@ import { RemoveShowActivityLog1716105958530 } from './migration/common/171610595
 import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
 import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/1723549873495-ChangeEventRoutingConstraint'
 import { RemoveUniqueConstraintOnStepFile1725570317713 } from './migration/common/1725570317713-RemoveUniqueConstraintOnStepFile'
+import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-AddUserSessionId'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -57,6 +58,7 @@ import { LogFileRelationWithFlowRunSqlite1725637505836 } from './migration/sqlit
 import { AddLogsFileIdIndexSqlite1725699920020 } from './migration/sqlite/1725699920020-AddLogsFileIdIndexSqlite'
 import { SupportS3FilesSqlite1726363932745 } from './migration/sqlite/1726363932745-SupportS3FilesSqlite'
 import { AddAiProviderSqlite1726446345221 } from './migration/sqlite/1726446345221-AddAiProviderSqlite'
+
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -132,6 +134,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddLogsFileIdIndexSqlite1725699920020,
         AddAiProviderSqlite1726446345221,
         SupportS3FilesSqlite1726363932745,
+        AddUserSessionId1727130193726,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

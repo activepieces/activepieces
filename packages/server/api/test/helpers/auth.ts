@@ -34,6 +34,7 @@ export const generateMockToken = async (
         platform: principal?.platform ?? {
             id: apId(),
         },
+        tokenVersion: principal?.tokenVersion,
     }
 
     return generateToken({

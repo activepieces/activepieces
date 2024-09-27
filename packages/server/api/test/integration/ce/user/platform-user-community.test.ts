@@ -10,6 +10,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
+    createMockPlatform,
     createMockPlatformWithOwner,
     createMockUser,
     mockBasicSetup,
@@ -78,8 +79,14 @@ describe('Enterprise User API', () => {
 
             const { mockPlatform, mockOwner } = createMockPlatformWithOwner()
 
+            await databaseConnection().getRepository('user').save(mockOwner)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
+
+            const otherMockUser = createMockUser()
+            await databaseConnection().getRepository('user').save(otherMockUser)
+
             const testToken = await generateMockToken({
-                id: mockOwner.id,
+                id: otherMockUser.id,
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
@@ -151,14 +158,22 @@ describe('Enterprise User API', () => {
         })
 
         it('Fails if user doesn\'t exist', async () => {
+
+            const mockUser = createMockUser()
+            await databaseConnection().getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection().getRepository('platform').save(mockPlatform)
+
             // arrange
             const nonExistentUserId = apId()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 platform: {
-                    id: apId(),
+                    id: mockPlatform.id,
                 },
+                id: mockUser.id,
             })
 
             // act
@@ -180,6 +195,9 @@ describe('Enterprise User API', () => {
         it('Requires principal to be platform owner', async () => {
             // arrange
             const { mockPlatform, mockOwner } = createMockPlatformWithOwner()
+
+            await databaseConnection().getRepository('user').save(mockOwner)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             await databaseConnection().getRepository('user').update(mockOwner.id, {
                 platformRole: PlatformRole.MEMBER,
