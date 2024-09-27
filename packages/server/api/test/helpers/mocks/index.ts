@@ -298,7 +298,7 @@ export const setupMockApiKeyServiceAccount = (
     params?: SetupMockApiKeyServiceAccountParams,
 ): SetupMockApiKeyServiceAccountReturn => {
 
-    const { mockOwner, mockPlatform} = createMockPlatformWithOwner({
+    const { mockOwner, mockPlatform } = createMockPlatformWithOwner({
         owner: params?.owner,
         platform: params?.platform,
     })

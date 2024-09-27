@@ -162,7 +162,7 @@ describe('Enterprise User API', () => {
             const mockUser = createMockUser()
             await databaseConnection().getRepository('user').save(mockUser)
 
-            const mockPlatform = createMockPlatform({ownerId: mockUser.id})
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection().getRepository('platform').save(mockPlatform)
 
             // arrange

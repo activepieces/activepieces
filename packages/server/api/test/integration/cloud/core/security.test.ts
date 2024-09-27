@@ -8,6 +8,7 @@ import {
     PrincipalType,
 } from '@activepieces/shared'
 import { FastifyInstance, FastifyRequest } from 'fastify'
+import { nanoid } from 'nanoid'
 import { securityHandlerChain } from '../../../../src/app/core/security/security-handler-chain'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
@@ -18,7 +19,6 @@ import {
     createMockProject,
     setupMockApiKeyServiceAccount,
 } from '../../../helpers/mocks'
-import { nanoid } from 'nanoid'
 
 let app: FastifyInstance | null = null
 
@@ -508,7 +508,7 @@ describe('API Security', () => {
 
             const sessionId = nanoid()
             await databaseConnection().getRepository('user').update(mockOwner.id, {
-                tokenVersion: sessionId
+                tokenVersion: sessionId,
             })
             const mockPrincipal: Principal = {
                 id: mockOwner.id,

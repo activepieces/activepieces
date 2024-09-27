@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddUserSessionId1727130193726 implements MigrationInterface {
     name = 'AddUserSessionId1727130193726'
@@ -6,14 +6,14 @@ export class AddUserSessionId1727130193726 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "user"
-            ADD "sessionId" character varying
-        `);
+            ADD "tokenVersion" character varying
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "user" DROP COLUMN "sessionId"
-        `);
+            ALTER TABLE "user" DROP COLUMN "tokenVersion"
+        `)
     }
 
 }

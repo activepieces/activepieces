@@ -3,7 +3,7 @@ import {
     ResetPasswordRequestBody,
     VerifyEmailRequestBody,
 } from '@activepieces/ee-shared'
-import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, UserId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, UserId } from '@activepieces/shared'
 import { userService } from '../../../user/user-service'
 import { otpService } from '../../otp/otp-service'
 

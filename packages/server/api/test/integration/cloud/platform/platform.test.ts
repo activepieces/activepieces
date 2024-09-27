@@ -232,7 +232,7 @@ describe('Platform API', () => {
             const otherMockUser = createMockUser()
             await databaseConnection().getRepository('user').save(otherMockUser)
 
-            const otherMockPlatform = createMockPlatform({ownerId: otherMockUser.id})
+            const otherMockPlatform = createMockPlatform({ ownerId: otherMockUser.id })
             await databaseConnection().getRepository('platform').save(otherMockPlatform)
 
             const mockToken = await generateMockToken({

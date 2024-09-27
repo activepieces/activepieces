@@ -3,7 +3,7 @@ import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../../src/app/server'
 import { generateMockToken } from '../../../../helpers/auth'
-import { createMockUser } from 'packages/server/api/test/helpers/mocks'
+import { createMockUser } from '../../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -25,7 +25,7 @@ describe('List flow runs endpoint', () => {
 
         const testToken = await generateMockToken({
             type: PrincipalType.USER,
-            id: mockUser.id
+            id: mockUser.id,
         })
 
         // act

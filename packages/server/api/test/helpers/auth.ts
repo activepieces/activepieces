@@ -6,7 +6,6 @@ import {
     ExternalPrincipal,
     ExternalTokenPayload,
 } from '../../src/app/ee/managed-authn/lib/external-token-extractor'
-import { nanoid } from 'nanoid'
 
 const generateToken = ({
     payload,

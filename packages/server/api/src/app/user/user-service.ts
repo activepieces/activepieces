@@ -14,11 +14,11 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { nanoid } from 'nanoid'
 import { IsNull } from 'typeorm'
 import { passwordHasher } from '../authentication/lib/password-hasher'
 import { repoFactory } from '../core/db/repo-factory'
 import { UserEntity } from './user-entity'
-import { nanoid } from 'nanoid'
 
 
 export const userRepo = repoFactory(UserEntity)
