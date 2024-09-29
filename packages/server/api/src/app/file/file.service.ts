@@ -47,6 +47,22 @@ export const fileService = {
             }
         }
     },
+    async getFileOrThrow({ projectId, fileId, type }: GetOneParams): Promise<File> {
+        const file = await fileRepo().findOneBy({
+            projectId,
+            id: fileId,
+            type,
+        })
+        if (isNil(file)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FILE_NOT_FOUND, 
+                params: {
+                    id: fileId,
+                },
+            })
+        }
+        return file
+    },
     async getDataOrThrow({ projectId, fileId, type }: GetOneParams): Promise<GetDataResponse> {
         const file = await fileRepo().findOneBy({
             projectId,

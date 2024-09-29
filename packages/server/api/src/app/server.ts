@@ -1,8 +1,8 @@
 import { initializeSentry, logger, SharedSystemProp, system } from '@activepieces/server-shared'
-import { apId } from '@activepieces/shared'
+import { apId, ApMultipartFile } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
-import fastifyMultipart from '@fastify/multipart'
+import fastifyMultipart, { MultipartFile } from '@fastify/multipart'
 import fastify, { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import fastifyFavicon from 'fastify-favicon'
 import { fastifyRawBody } from 'fastify-raw-body'
@@ -11,7 +11,6 @@ import { setupApp } from './app'
 import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { setupWorker } from './worker'
-
 const MAX_FILE_SIZE_MB = system.getNumberOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB)
 
 export const setupServer = async (): Promise<FastifyInstance> => {
@@ -50,10 +49,14 @@ async function setupBaseApp(): Promise<FastifyInstance> {
     await app.register(fastifyFavicon)
     await app.register(fastifyMultipart, {
         attachFieldsToBody: 'keyValues',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        async onFile(part: any) {
-            const buffer = await part.toBuffer()
-            part.value = buffer
+        async onFile(part: MultipartFile) {
+            const apFile: ApMultipartFile = {
+                filename: part.filename,
+                data: await part.toBuffer(),
+                type: 'file',
+            };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (part as any).value = apFile
         },
     })
     initializeSentry()

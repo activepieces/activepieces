@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { ApMultipartFile } from '../../common'
 import { ApEdition } from '../../flag/flag'
 import { PackageType, PieceCategory, PieceType } from '../piece'
 
@@ -102,7 +103,7 @@ export const AddPieceRequestBody = Type.Union([
             minLength: 1,
         }),
         pieceVersion: ExactVersionType,
-        pieceArchive: Type.Unknown(),
+        pieceArchive: ApMultipartFile,
     }, {
         title: 'Private Piece',
     }),

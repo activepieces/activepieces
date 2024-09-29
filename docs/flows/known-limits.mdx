@@ -23,6 +23,13 @@ This Limits applies for the **Activepieces Cloud**, and can be configured via en
 **Friendly Tip #2:** The execution time limit can be worked around by splitting the flows into multiple ones, such as by having one flow call another flow using a webhook, or by having each flow process a small batch of items.
 </Tip>
 
+### File Storage Limits
+<Info>
+The files from actions or triggers are stored in the database / S3 to support retries from certain steps.
+</Info>
+
+- **Maximum File Size**: 4 MB 
+
 ### Data Storage Limits
 
 Some pieces utilize the built-in Activepieces key store, such as the Store Piece and Queue Piece.
