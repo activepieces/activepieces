@@ -15,7 +15,6 @@ import {
   BranchActionSchema,
   BranchOperator,
   CodeActionSchema,
-  isEmpty,
   LoopOnItemsActionSchema,
   PieceActionSchema,
   PieceActionSettings,
@@ -88,7 +87,7 @@ function buildInputSchemaForStep(
 export const formUtils = {
   buildPieceDefaultValue: (
     selectedStep: Action | Trigger,
-    piece: PieceMetadata | null | undefined,
+    piece: PieceMetadata | null,
     includeCurrentInput: boolean,
   ): Action | Trigger => {
     const { type } = selectedStep;
@@ -285,9 +284,8 @@ export const formUtils = {
   },
   buildSchema: (props: PiecePropertyMap) => {
     const entries = Object.entries(props);
-    const nullableType: TSchema[] = [Type.Null(), Type.Undefined()];
     const nonNullableUnknownPropType = Type.Not(
-      Type.Union(nullableType),
+      Type.Union([Type.Null(), Type.Undefined()]),
       Type.Unknown(),
     );
     const propsSchema: Record<string, TSchema> = {};
@@ -351,9 +349,7 @@ export const formUtils = {
           break;
         case PropertyType.ARRAY: {
           const arraySchema = isNil(property.properties)
-            ? Type.String({
-                minLength: property.required ? 1 : undefined,
-              })
+            ? Type.Unknown()
             : formUtils.buildSchema(property.properties);
           propsSchema[name] = Type.Union([
             Type.Array(arraySchema, {
@@ -396,14 +392,9 @@ export const formUtils = {
           break;
       }
 
-      //optional array is checked against its children
-      if (!property.required && property.type !== PropertyType.ARRAY) {
+      if (!property.required) {
         propsSchema[name] = Type.Optional(
-          Type.Union(
-            isEmpty(propsSchema[name])
-              ? [Type.Any(), ...nullableType]
-              : [propsSchema[name], ...nullableType],
-          ),
+          Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]),
         );
       }
     }

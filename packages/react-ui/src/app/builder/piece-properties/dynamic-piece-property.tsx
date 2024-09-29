@@ -6,12 +6,10 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
-import { SkeletonList } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
-
-import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
 
@@ -23,7 +21,7 @@ type DynamicPropertiesProps = {
 const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
   const form = useFormContext<Action | Trigger>();
-  const { updateFormSchema } = useStepSettingsContext();
+
   const isFirstRender = useRef(true);
   const previousValues = useRef<undefined | unknown[]>(undefined);
 
@@ -108,7 +106,6 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
             currentValue ?? {},
           );
           setPropertyMap(response);
-          updateFormSchema(`settings.input.${props.propertyName}`, response);
           form.setValue(`settings.input.${props.propertyName}`, defaultValue, {
             shouldValidate: true,
           });
@@ -120,8 +117,10 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   return (
     <>
       {isPending && (
-        <div className="space-y-3">
-          <SkeletonList numberOfItems={3} className="h-7"></SkeletonList>
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="w-full h-4" />
+          ))}
         </div>
       )}
       {!isPending && propertyMap && (
