@@ -74,6 +74,7 @@ function buildInputSchemaForStep(
           addAuthToPieceProps(
             piece.triggers[actionNameOrTriggerName].props,
             piece.auth,
+            true,
           ),
         );
       }
@@ -87,7 +88,7 @@ function buildInputSchemaForStep(
 export const formUtils = {
   buildPieceDefaultValue: (
     selectedStep: Action | Trigger,
-    piece: PieceMetadata | null,
+    piece: PieceMetadata | null | undefined,
     includeCurrentInput: boolean,
   ): Action | Trigger => {
     const { type } = selectedStep;

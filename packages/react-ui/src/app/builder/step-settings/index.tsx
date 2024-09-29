@@ -56,7 +56,7 @@ const StepSettingsContainer = React.memo(() => {
   ]);
 
   const defaultValues = useMemo(() => {
-    return formUtils.buildPieceDefaultValue(selectedStep, pieceModel!, true);
+    return formUtils.buildPieceDefaultValue(selectedStep, pieceModel, true);
   }, [selectedStep, pieceModel]);
 
   const { stepMetadata } = piecesHooks.useStepMetadata({
@@ -202,10 +202,7 @@ const StepSettingsContainer = React.memo(() => {
             <ScrollArea className="h-full">
               <div className="flex flex-col gap-4 px-4 pb-6">
                 {stepMetadata && (
-                  <PieceCardInfo
-                    piece={stepMetadata}
-                    interactive={false}
-                  ></PieceCardInfo>
+                  <PieceCardInfo piece={stepMetadata}></PieceCardInfo>
                 )}
                 {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                   <LoopsSettings readonly={readonly}></LoopsSettings>

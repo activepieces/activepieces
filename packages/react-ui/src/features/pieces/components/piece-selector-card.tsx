@@ -8,24 +8,15 @@ import { PieceStepMetadata, StepMetadata } from '../lib/pieces-hook';
 
 type PieceCardInfoProps = {
   piece: StepMetadata;
-  interactive: boolean;
   onClick?: () => void;
 };
 
-const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
-  piece,
-  interactive,
-  onClick,
-}) => {
+const PieceCardInfo: React.FC<PieceCardInfoProps> = ({ piece, onClick }) => {
   return (
     <div
       onClick={onClick}
       className={cn(
         'flex items-center justify-center gap-4 rounded border border-solid p-3.5',
-        {
-          'cursor-pointer hover:bg-accent hover:text-accent-foreground':
-            interactive,
-        },
       )}
     >
       <div className="flex h-full min-w-[48px] items-center justify-center">
