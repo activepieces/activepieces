@@ -95,6 +95,8 @@ export enum BranchOperator {
     DATE_IS_BEFORE = 'DATE_IS_BEFORE',
     DATE_IS_EQUAL = 'DATE_IS_EQUAL',
     DATE_IS_AFTER = 'DATE_IS_AFTER',
+    LIST_CONTAINS = 'LIST_CONTAINS',
+    LIST_DOES_NOT_CONTAIN = 'LIST_DOES_NOT_CONTAIN',
     LIST_IS_EMPTY = 'LIST_IS_EMPTY',
     LIST_IS_NOT_EMPTY = 'LIST_IS_NOT_EMPTY',
     EXISTS = 'EXISTS',
@@ -119,6 +121,8 @@ export const textConditions = [
     BranchOperator.TEXT_DOES_NOT_START_WITH,
     BranchOperator.TEXT_ENDS_WITH,
     BranchOperator.TEXT_DOES_NOT_END_WITH,
+    BranchOperator.LIST_CONTAINS,
+    BranchOperator.LIST_DOES_NOT_CONTAIN,
 ]
 
 const BranchOperatorTextLiterals = [
@@ -130,6 +134,8 @@ const BranchOperatorTextLiterals = [
     Type.Literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
     Type.Literal(BranchOperator.TEXT_ENDS_WITH),
     Type.Literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
+    Type.Literal(BranchOperator.LIST_CONTAINS),
+    Type.Literal(BranchOperator.LIST_DOES_NOT_CONTAIN),
 ]
 
 const BranchOperatorNumberLiterals = [

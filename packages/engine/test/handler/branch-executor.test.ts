@@ -259,4 +259,54 @@ describe('Branch evaluateConditions', () => {
             expect(evaluateConditions([[condition]])).toEqual(false)
         })
     })
+
+    describe('LIST_CONTAINS', () => {
+        test.each([
+            { expected: true, list: ['apple', 'banana', 'cherry'], value: 'banana', caseSensitive: false },
+            { expected: false, list: ['apple', 'banana', 'cherry'], value: 'Banana', caseSensitive: true },
+            { expected: true, list: ['apple', 'banana', 'cherry'], value: 'Banana', caseSensitive: false },
+            { expected: true, list: '["apple", "banana", "cherry"]', value: 'banana', caseSensitive: false },
+            { expected: true, list: 'apple', value: 'apple', caseSensitive: false },
+            { expected: true, list: [1, 2, 3, 4, 5], value: '4', caseSensitive: false },
+            { expected: true, list: [1, 2, 3, 4, 5], value: 4, caseSensitive: false },
+            { expected: true, list: [true, false, true], value: 'true', caseSensitive: false },
+            { expected: true, list: [true, false, true], value: true, caseSensitive: false },
+            { expected: true, list: ['true', 'false', 'true'], value: true, caseSensitive: false },
+            { expected: true, list: ['true', 'false', 'true'], value: 'true', caseSensitive: false },
+        ])('should return $expected for list $list containing $value (case sensitive: $caseSensitive)', ({ expected, list, value, caseSensitive }) => {
+            const condition: BranchCondition = {
+                firstValue: list as any,
+                secondValue: value as any,
+                operator: BranchOperator.LIST_CONTAINS,
+                caseSensitive,
+            }
+
+            expect(evaluateConditions([[condition]])).toEqual(expected)
+        })
+    })
+
+    describe('LIST_DOES_NOT_CONTAIN', () => {
+        test.each([
+            { expected: true, list: ['apple', 'banana', 'cherry'], value: 'grape', caseSensitive: false },
+            { expected: true, list: ['apple', 'banana', 'cherry'], value: 'Banana', caseSensitive: true },
+            { expected: false, list: ['apple', 'banana', 'cherry'], value: 'Banana', caseSensitive: false },
+            { expected: true, list: '["apple", "banana", "cherry"]', value: 'grape', caseSensitive: false },
+            { expected: true, list: 'apple', value: 'grape', caseSensitive: false },
+            { expected: true, list: [1, 2, 3, 4, 5], value: '6', caseSensitive: false },
+            { expected: true, list: [1, 2, 3, 4, 5], value: 6, caseSensitive: false },
+            { expected: false, list: [true, false, true], value: 'false', caseSensitive: false },
+            { expected: false, list: [true, false, true], value: false, caseSensitive: false },
+            { expected: false, list: ['true', 'false', 'true'], value: false, caseSensitive: false },
+            { expected: false, list: ['true', 'false', 'true'], value: 'false', caseSensitive: false },
+        ])('should return $expected for list $list not containing $value (case sensitive: $caseSensitive)', ({ expected, list, value, caseSensitive }) => {
+            const condition: BranchCondition = {
+                firstValue: list as any,
+                secondValue: value as any,
+                operator: BranchOperator.LIST_DOES_NOT_CONTAIN,
+                caseSensitive,
+            }
+
+            expect(evaluateConditions([[condition]])).toEqual(expected)
+        })
+    })
 })
