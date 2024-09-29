@@ -4,7 +4,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { activePieceAuth } from '../../index';
+import { activePieceAuth, config } from '../../index';
 
 export const createProjectMember = createAction({
   name: 'create_project_member',
@@ -63,10 +63,10 @@ export const createProjectMember = createAction({
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: `${auth.baseApiUrl}/project-members`,
+      url: `${config.baseApiUrl}/project-members`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth.apiKey,
+        token: auth,
       },
       body: {
         email: propsValue['email'],
