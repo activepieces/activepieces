@@ -21,14 +21,14 @@ export const activePieceAuth = PieceAuth.CustomAuth({
   description: markdown,
   required: true,
   props: {
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API Key',
-      required: true,
-    }),
     baseApiUrl: Property.ShortText({
       displayName: 'Base URL',
       required: true,
       defaultValue: 'https://cloud.activepieces.com/api/v1',
+    }),
+    apiKey: PieceAuth.SecretText({
+      displayName: 'API Key',
+      required: true,
     }),
   },
 });
