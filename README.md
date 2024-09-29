@@ -309,6 +309,8 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lostinbug"><img src="https://avatars.githubusercontent.com/u/157452389?v=4?s=100" width="100px;" alt="lostinbug"/><br /><sub><b>lostinbug</b></sub></a><br /><a href="#plugin-lostinbug" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gushkool"><img src="https://avatars.githubusercontent.com/u/64713308?v=4?s=100" width="100px;" alt="gushkool"/><br /><sub><b>gushkool</b></sub></a><br /><a href="#plugin-gushkool" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.linkedin.com/in/omarsayed"><img src="https://avatars.githubusercontent.com/u/3813045?v=4?s=100" width="100px;" alt="Omar Sayed"/><br /><sub><b>Omar Sayed</b></sub></a><br /><a href="#plugin-OmarSayed" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rSnapkoOpenOps"><img src="https://avatars.githubusercontent.com/u/179845343?v=4?s=100" width="100px;" alt="rSnapkoOpenOps"/><br /><sub><b>rSnapkoOpenOps</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3ArSnapkoOpenOps" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ahronshor"><img src="https://avatars.githubusercontent.com/u/25138831?v=4?s=100" width="100px;" alt="ahronshor"/><br /><sub><b>ahronshor</b></sub></a><br /><a href="#plugin-ahronshor" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

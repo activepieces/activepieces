@@ -1,5 +1,5 @@
 import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { apId, PrincipalType } from '@activepieces/shared'
+import { PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -8,6 +8,7 @@ import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockCustomDomain,
+    createMockUser,
     mockBasicSetup,
 } from '../../../helpers/mocks'
 
@@ -58,10 +59,12 @@ describe('Custom Domain API', () => {
             // arrange
             const { mockPlatform } = await mockBasicSetup()
 
-            const nonOwnerUserId = apId()
+            const nonOwnerUserId = createMockUser()
+            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: nonOwnerUserId,
+                id: nonOwnerUserId.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -174,10 +177,13 @@ describe('Custom Domain API', () => {
 
         it('should fail to delete a custom domain if user is not platform owner', async () => {
             const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const nonOwnerUserId = apId()
+
+            const nonOwnerUserId = createMockUser()
+            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+            
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: nonOwnerUserId,
+                id: nonOwnerUserId.id,
                 platform: { id: mockPlatformOne.id },
             })
 

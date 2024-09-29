@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { SquareFunction } from 'lucide-react';
+import { Calendar, SquareFunction, File } from 'lucide-react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { FormItem, FormLabel } from '@/components/ui/form';
@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { PieceProperty } from '@activepieces/pieces-framework';
+import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -71,10 +71,33 @@ const AutoFormFieldWrapper = ({
 
   return (
     <FormItem className="flex flex-col gap-1">
-      <FormLabel className="flex items-center gap-1">
+      <FormLabel className="flex items-center gap-1 ">
         {placeBeforeLabelText && !toggled && children}
-        <span>{t(property.displayName)}</span>
-        {property.required && <span className="text-destructive">*</span>}
+        {(property.type === PropertyType.FILE ||
+          property.type === PropertyType.DATE_TIME) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {property.type === PropertyType.FILE ? (
+                <File className="w-4 h-4 stroke-foreground/55"></File>
+              ) : (
+                property.type === PropertyType.DATE_TIME && (
+                  <Calendar className="w-4 h-4 stroke-foreground/55"></Calendar>
+                )
+              )}
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <>
+                {property.type === PropertyType.FILE && t('File Input')}
+                {property.type === PropertyType.DATE_TIME && t('Date Input')}
+              </>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        <div className="pt-1">
+          <span>{t(property.displayName)}</span>{' '}
+          {property.required && <span className="text-destructive">*</span>}
+        </div>
+
         <span className="grow"></span>
         {allowDynamicValues && (
           <Tooltip>

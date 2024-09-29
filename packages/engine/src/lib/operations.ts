@@ -17,6 +17,7 @@ import {
     FlowRunResponse,
     GenericStepOutput,
     isNil,
+    StepOutput,
     StepOutputStatus,
     TriggerHookType,
 } from '@activepieces/shared'
@@ -70,8 +71,18 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
     })
     return {
         success: output.verdict !== ExecutionVerdict.FAILED,
-        output: output.steps[step.name].output ?? output.steps[step.name].errorMessage,
+        output: cleanSampleData(output.steps[step.name]),
     }
+}
+
+function cleanSampleData(stepOutput: StepOutput) {
+    if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
+        return {
+            item: stepOutput.output?.item,
+            index: stepOutput.output?.index,
+        }
+    }
+    return stepOutput.output ?? stepOutput.errorMessage
 }
 
 function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext {

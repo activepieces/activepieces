@@ -25,7 +25,7 @@ import {
   debounce,
 } from '@activepieces/shared';
 
-import { PieceCardInfo } from '../../../features/pieces/components/piece-selector-card';
+import { PieceCardInfo } from '../../../features/pieces/components/piece-card';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
@@ -35,10 +35,10 @@ import { BranchSettings } from './branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
-import { usePieceSettingsContext } from './piece-settings-context';
+import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = React.memo(() => {
-  const { selectedStep, pieceModel, formSchema } = usePieceSettingsContext();
+  const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const [
     readonly,
     exitStepSettings,
@@ -106,6 +106,12 @@ const StepSettingsContainer = React.memo(() => {
     form.trigger();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshPieceFormSettings]);
+
+  const actionOrTriggerDisplayName = selectedStep.settings.actionName
+    ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
+    : selectedStep.settings.triggerName
+    ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
+    : null;
 
   useUpdateEffect(() => {
     form.setValue('valid', form.formState.isValid);
@@ -202,7 +208,10 @@ const StepSettingsContainer = React.memo(() => {
             <ScrollArea className="h-full">
               <div className="flex flex-col gap-4 px-4 pb-6">
                 {stepMetadata && (
-                  <PieceCardInfo piece={stepMetadata}></PieceCardInfo>
+                  <PieceCardInfo
+                    piece={stepMetadata}
+                    actionOrTriggerDisplayName={actionOrTriggerDisplayName}
+                  ></PieceCardInfo>
                 )}
                 {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
                   <LoopsSettings readonly={readonly}></LoopsSettings>

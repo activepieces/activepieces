@@ -34,28 +34,28 @@ const createUpdatedSchemaKey = (propertyKey: string) => {
     .join('.');
 };
 
-export type PieceSettingsContextState = {
+export type StepSettingsContextState = {
   selectedStep: Action | Trigger;
   pieceModel: PieceMetadataModel | undefined;
   formSchema: TObject<any>;
   updateFormSchema: (key: string, newFieldSchema: PiecePropertyMap) => void;
 };
 
-export type PieceSettingsProviderProps = {
+export type StepSettingsProviderProps = {
   selectedStep: Action | Trigger;
   pieceModel: PieceMetadataModel | undefined;
   children: ReactNode;
 };
 
-const PieceSettingsContext = createContext<
-  PieceSettingsContextState | undefined
->(undefined);
+const StepSettingsContext = createContext<StepSettingsContextState | undefined>(
+  undefined,
+);
 
-export const PieceSettingsProvider = ({
+export const StepSettingsProvider = ({
   selectedStep,
   pieceModel,
   children,
-}: PieceSettingsProviderProps) => {
+}: StepSettingsProviderProps) => {
   const [formSchema, setFormSchema] = useState<TObject<any>>(
     Type.Object(Type.Any()),
   );
@@ -86,19 +86,19 @@ export const PieceSettingsProvider = ({
   );
 
   return (
-    <PieceSettingsContext.Provider
+    <StepSettingsContext.Provider
       value={{ selectedStep, pieceModel, formSchema, updateFormSchema }}
     >
       {children}
-    </PieceSettingsContext.Provider>
+    </StepSettingsContext.Provider>
   );
 };
 
-export const usePieceSettingsContext = () => {
-  const context = useContext(PieceSettingsContext);
+export const useStepSettingsContext = () => {
+  const context = useContext(StepSettingsContext);
   if (context === undefined) {
     throw new Error(
-      'usePieceSettingsContext must be used within a PieceSettingsProvider',
+      'useStepSettingsContext must be used within a PieceSettingsProvider',
     );
   }
   return context;

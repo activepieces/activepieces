@@ -1,11 +1,7 @@
+import { Octokit } from 'octokit';
 import { githubAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubCommon } from '../common';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
 
 export const githubGetIssueInformation = createAction({
   auth: githubAuth,
@@ -20,23 +16,15 @@ export const githubGetIssueInformation = createAction({
       required: true,
     }),
   },
-  async run(configValue) {
-    const issueNumber = configValue.propsValue.issue_number;
-    const { owner, repo } = configValue.propsValue.repository!;
-    const request: HttpRequest = {
-      url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}`,
-      method: HttpMethod.GET,
-      headers: {
-        'X-GitHub-Api-Version': '2022-11-28',
-        Authorization: `Bearer ${configValue.auth.access_token}`,
-      },
-    };
+  async run({ auth, propsValue }) {
+    const issue_number = propsValue.issue_number;
+    const { owner, repo } = propsValue.repository!;
+    const client = new Octokit({ auth: auth.access_token });
+    return await client.rest.issues.get({
+      owner,
+      repo,
+      issue_number,
+    });
 
-    const response = await httpClient.sendRequest(request);
-
-    return {
-      success: response.status === 200,
-      issue: response.body,
-    };
   },
 });

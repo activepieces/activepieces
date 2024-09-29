@@ -185,9 +185,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
         setAllowCanvasPanning(true);
       }}
       key={data.step?.name}
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
+      ref={openPieceSelector ? null : setNodeRef}
+      {...(!openPieceSelector ? attributes : {})}
+      {...(!openPieceSelector ? listeners : {})}
     >
       <div
         className="absolute text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
