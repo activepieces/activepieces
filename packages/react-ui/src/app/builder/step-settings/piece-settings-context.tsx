@@ -1,6 +1,6 @@
 import { TObject, Type } from '@sinclair/typebox';
 import set from 'lodash/set';
-import React, {
+import {
   createContext,
   ReactNode,
   useCallback,
@@ -9,7 +9,6 @@ import React, {
   useState,
 } from 'react';
 
-import { transformKeyWithReplacements } from '@/app/builder/step-settings/utils';
 import {
   PieceMetadataModel,
   PiecePropertyMap,
@@ -17,6 +16,23 @@ import {
 import { Action, Trigger } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
+
+const numberReplacement = 'anyOf[0]items';
+const stringReplacement = 'properties.';
+const createUpdatedSchemaKey = (propertyKey: string) => {
+  return propertyKey
+    .split('.')
+    .map((part) => {
+      if (part === '') {
+        return ''; // Keep empty parts intact (for consecutive dots)
+      } else if (!isNaN(Number(part))) {
+        return numberReplacement;
+      } else {
+        return `${stringReplacement}${part}`;
+      }
+    })
+    .join('.');
+};
 
 export type PieceSettingsContextState = {
   selectedStep: Action | Trigger;
@@ -35,9 +51,6 @@ const PieceSettingsContext = createContext<
   PieceSettingsContextState | undefined
 >(undefined);
 
-const numberReplacement = 'anyOf[0]items';
-const stringReplacement = 'properties.';
-
 export const PieceSettingsProvider = ({
   selectedStep,
   pieceModel,
@@ -55,27 +68,17 @@ export const PieceSettingsProvider = ({
       selectedStep.settings.actionName ?? selectedStep.settings.triggerName,
       pieceModel ?? null,
     );
-    if (schema) {
-      formSchemaRef.current = true;
-      setFormSchema(schema);
-    }
+    formSchemaRef.current = true;
+    setFormSchema(schema);
   }
 
   const updateFormSchema = useCallback(
     (key: string, newFieldPropertyMap: PiecePropertyMap) => {
-      setFormSchema((prevSchema: any) => {
-        if (!prevSchema) return null;
-
+      setFormSchema((prevSchema) => {
         const newFieldSchema = formUtils.buildSchema(newFieldPropertyMap);
-
         const currentSchema = { ...prevSchema };
-        const keyUpdated = transformKeyWithReplacements(
-          key,
-          numberReplacement,
-          stringReplacement,
-        );
+        const keyUpdated = createUpdatedSchemaKey(key);
         set(currentSchema, keyUpdated, newFieldSchema);
-
         return currentSchema;
       });
     },
