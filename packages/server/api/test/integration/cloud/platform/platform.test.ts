@@ -119,6 +119,7 @@ describe('Platform API', () => {
 
             const notOwner = createMockUser({
                 platformId: mockPlatform.id,
+                platformRole: PlatformRole.MEMBER,
             })
             await databaseConnection().getRepository('user').save(notOwner)
 
