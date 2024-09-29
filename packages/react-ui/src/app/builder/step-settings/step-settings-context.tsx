@@ -13,7 +13,7 @@ import {
   PieceMetadataModel,
   PiecePropertyMap,
 } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
+import { Action, ActionType, Trigger, TriggerType } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
 
@@ -50,7 +50,13 @@ export type StepSettingsProviderProps = {
 const StepSettingsContext = createContext<StepSettingsContextState | undefined>(
   undefined,
 );
-
+const createStepKey = (step: Action | Trigger): string => {
+  if (step.type !== TriggerType.PIECE && step.type !== ActionType.PIECE)
+    return `${step.name}-${step.type}`;
+  if (step.type === TriggerType.PIECE)
+    return `${step.name}-${step.type}-${step.settings.pieceName}-${step.settings.pieceVersion}-${step.settings.triggerName}`;
+  return `${step.name}-${step.type}-${step.settings.pieceName}-${step.settings.pieceVersion}-${step.settings.actionName}`;
+};
 export const StepSettingsProvider = ({
   selectedStep,
   pieceModel,
@@ -59,16 +65,15 @@ export const StepSettingsProvider = ({
   const [formSchema, setFormSchema] = useState<TObject<any>>(
     Type.Object(Type.Any()),
   );
+  const previousStepKey = useRef<string | null>(null);
 
-  const formSchemaRef = useRef<boolean>(false);
-
-  if (!formSchemaRef.current && selectedStep) {
+  if (previousStepKey.current !== createStepKey(selectedStep)) {
     const schema = formUtils.buildPieceSchema(
       selectedStep.type,
       selectedStep.settings.actionName ?? selectedStep.settings.triggerName,
       pieceModel ?? null,
     );
-    formSchemaRef.current = true;
+    previousStepKey.current = createStepKey(selectedStep);
     setFormSchema(schema);
   }
 

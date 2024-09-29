@@ -234,7 +234,7 @@ const BuilderPage = () => {
                   <StepSettingsProvider
                     pieceModel={pieceModel}
                     selectedStep={memorizedSelectedStep}
-                    key={containerKey}
+                    key={containerKey + (pieceModel?.name ?? '')}
                   >
                     <StepSettingsContainer />
                   </StepSettingsProvider>
