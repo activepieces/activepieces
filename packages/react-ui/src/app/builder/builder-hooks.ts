@@ -122,11 +122,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       allowCanvasPanning: true,
-      rightSidebar:
-        initialState.run ||
-        initialState.flowVersion.trigger.type !== TriggerType.EMPTY
-          ? RightSideBarType.PIECE_SETTINGS
-          : RightSideBarType.NONE,
+      rightSidebar: initialState.run
+        ? RightSideBarType.PIECE_SETTINGS
+        : RightSideBarType.NONE,
       refreshPieceFormSettings: false,
 
       removeStepSelection: () =>
