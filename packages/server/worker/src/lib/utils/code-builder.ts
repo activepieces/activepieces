@@ -27,8 +27,11 @@ const TS_CONFIG_CONTENT = `
 }
 `
 
-const INVALID_ARTIFACT_TEMPLATE_PATH =
-    './packages/server/api/src/assets/invalid-code.js'
+const INVALID_ARTIFACT_TEMPLATE = `
+    exports.code = async (params) => {
+      throw new Error(\`\${ERROR_MESSAGE}\`);
+    };
+    `
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
@@ -57,21 +60,21 @@ export const codeBuilder = {
 
         const lock = await memoryLock.acquire(`code-builder-${flowVersionId}-${name}`)
         try {
-            const cache = cacheHandler(codePath) 
+            const cache = cacheHandler(codePath)
             const fState = await cache.cacheCheckState(codePath)
             if (fState === CacheState.READY && artifact.flowVersionState === FlowVersionState.LOCKED) {
                 return
             }
             const { code, packageJson } = sourceCode
 
-            const codeNeedCleanUp = fState === CacheState.PENDING && await fileExists(codePath)            
+            const codeNeedCleanUp = fState === CacheState.PENDING && await fileExists(codePath)
             if (codeNeedCleanUp) {
                 await rmdir(codePath, { recursive: true })
             }
 
             await threadSafeMkdir(codePath)
 
-            
+
             await cache.setCache(codePath, CacheState.PENDING)
 
             await installDependencies({
@@ -144,13 +147,9 @@ const handleCompilationError = async ({
     codePath,
     error,
 }: HandleCompilationErrorParams): Promise<void> => {
-    const invalidArtifactTemplate = await fs.readFile(
-        INVALID_ARTIFACT_TEMPLATE_PATH,
-        'utf8',
-    )
     const errorMessage = `Compilation Error: ${JSON.stringify(error['stdout']) ?? JSON.stringify(error) ?? 'error compiling code'}`
 
-    const invalidArtifactContent = invalidArtifactTemplate.replace(
+    const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
         errorMessage,
     )
