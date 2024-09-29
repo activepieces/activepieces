@@ -4,7 +4,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { activePieceAuth } from '../../index';
+import { activePieceAuth, config } from '../../index';
 
 export const listProjectMember = createAction({
   name: 'list_project_member',
@@ -20,10 +20,10 @@ export const listProjectMember = createAction({
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
-      url: `${auth.baseApiUrl}/project-members`,
+      url: `${config.baseApiUrl}/project-members`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth.apiKey,
+        token: auth,
       },
       queryParams: {
         projectId: propsValue['project_id'],

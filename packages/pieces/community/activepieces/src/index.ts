@@ -1,8 +1,4 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { createProject } from './lib/actions/create-project';
 import { createProjectMember } from './lib/actions/create-project-member';
 import { listProject } from './lib/actions/list-project';
@@ -17,20 +13,10 @@ Activepieces Platform API is available under the Platform Edition.
 You can get your API Key from the Platform Dashboard.
 `;
 
-export const activePieceAuth = PieceAuth.CustomAuth({
+export const activePieceAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
   description: markdown,
   required: true,
-  props: {
-    baseApiUrl: Property.ShortText({
-      displayName: 'Base URL',
-      required: true,
-      defaultValue: 'https://cloud.activepieces.com/api/v1',
-    }),
-    apiKey: PieceAuth.SecretText({
-      displayName: 'API Key',
-      required: true,
-    }),
-  },
 });
 
 export const activepieces = createPiece({
@@ -40,7 +26,7 @@ export const activepieces = createPiece({
   auth: activePieceAuth,
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/activepieces.png',
-  authors: ['doskyft', 'abuaboud', 'AdamSelene'],
+  authors: ["doskyft","abuaboud"],
   actions: [
     createProject,
     updateProject,
@@ -51,3 +37,7 @@ export const activepieces = createPiece({
   ],
   triggers: [],
 });
+
+export const config = {
+  baseApiUrl: 'https://cloud.activepieces.com/api/v1',
+};
