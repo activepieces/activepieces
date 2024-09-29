@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   ApFlagId,
@@ -13,9 +12,9 @@ import {
 } from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
+import { useStepSettingsContext } from '../step-settings-context';
 
 import { ConnectionSelect } from './connection-select';
-import { useStepSettingsContext } from '../step-settings-context';
 
 type PieceSettingsProps = {
   step: PieceAction | PieceTrigger;

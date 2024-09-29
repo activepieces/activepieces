@@ -6,13 +6,14 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
-import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
-import { AutoPropertiesFormComponent } from './auto-properties-form';
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
+
+import { AutoPropertiesFormComponent } from './auto-properties-form';
 
 type DynamicPropertiesProps = {
   refreshers: string[];
