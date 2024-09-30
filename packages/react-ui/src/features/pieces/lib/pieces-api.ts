@@ -21,7 +21,7 @@ import {
 import { PieceStepMetadata, StepMetadata } from './types';
 import { t } from 'i18next';
 
-export const PRIMITIVE_STEP_METADATA = {
+export const CORE_STEP_METADATA = {
   [ActionType.CODE]: {
     displayName: t('Code'),
     logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
@@ -94,7 +94,7 @@ export const piecesApi = {
       case ActionType.LOOP_ON_ITEMS:
       case ActionType.CODE:
       case TriggerType.EMPTY:
-        return PRIMITIVE_STEP_METADATA[step.type];
+        return CORE_STEP_METADATA[step.type];
       case ActionType.PIECE:
       case TriggerType.PIECE: {
         const { pieceName, pieceVersion } = step.settings;

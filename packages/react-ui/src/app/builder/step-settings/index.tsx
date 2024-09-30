@@ -3,7 +3,7 @@ import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { useDeepCompareEffect, useUpdateEffect } from 'react-use';
+import { useDeepCompareEffect } from 'react-use';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import EditableText from '@/components/ui/editable-text';
@@ -113,10 +113,6 @@ const StepSettingsContainer = React.memo(() => {
     ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
     : null;
 
-  useUpdateEffect(() => {
-    form.setValue('valid', form.formState.isValid);
-  }, [form.formState.isValid]);
-
   // Watch changes in form execluding actionName or triggerName from watching //
   const inputChanges = useWatch({
     name: 'settings.input',
@@ -155,7 +151,10 @@ const StepSettingsContainer = React.memo(() => {
   const previousSavedStep = useRef<Action | Trigger | null>(null);
 
   useEffect(() => {
-    const currentStep = JSON.parse(JSON.stringify(form.getValues()));
+    const currentStep: Trigger | Action = JSON.parse(
+      JSON.stringify(form.getValues()),
+    );
+    currentStep.valid = form.formState.isValid;
     if (previousSavedStep.current === null) {
       previousSavedStep.current = currentStep;
       return;
