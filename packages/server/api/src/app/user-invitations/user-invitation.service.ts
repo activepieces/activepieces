@@ -57,7 +57,7 @@ export const userInvitationsService = {
         const invitations = await repo().createQueryBuilder('user_invitation')
             .where('LOWER(user_invitation.email) = :email', { email: email.toLowerCase().trim() })
             .andWhere({
-                platformId: platformId,
+                platformId,
                 status: InvitationStatus.ACCEPTED,
             })
             .getMany()
