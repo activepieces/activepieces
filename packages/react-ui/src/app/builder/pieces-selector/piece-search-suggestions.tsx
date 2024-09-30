@@ -3,38 +3,47 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
   StepMetadata,
   ActionOrTriggerListItem,
-  PieceSelectorOperation,
-  PieceStepMetadataWithSuggestions,
+  StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
-import { FlowOperationType } from '@activepieces/shared';
+import { ActionType, TriggerType } from '@activepieces/shared';
+
+import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
 
 type HandleSelectCallback = (
   piece: StepMetadata,
-  item: ActionOrTriggerListItem,
+  actionOrTrigger: ActionOrTriggerListItem,
 ) => void;
 
 type PieceSearchSuggestionsProps = {
-  pieceMetadata: PieceStepMetadataWithSuggestions;
+  pieceMetadata: StepMetadataWithSuggestions;
   handleSelectOperationSuggestion: HandleSelectCallback;
-  operation: PieceSelectorOperation;
+};
+
+const stepMetadataSuggestions = (stepMetadata: StepMetadataWithSuggestions) => {
+  switch (stepMetadata.type) {
+    case TriggerType.PIECE:
+      return stepMetadata.suggestedTriggers;
+    case ActionType.PIECE:
+      return stepMetadata.suggestedActions;
+    case ActionType.CODE:
+    case ActionType.BRANCH:
+    case ActionType.LOOP_ON_ITEMS: {
+      return getCoreActions(stepMetadata.type);
+    }
+  }
 };
 
 const PieceSearchSuggestions = ({
   pieceMetadata,
   handleSelectOperationSuggestion,
-  operation,
 }: PieceSearchSuggestionsProps) => {
-  const suggestions =
-    operation.type === FlowOperationType.UPDATE_TRIGGER
-      ? pieceMetadata.suggestedTriggers
-      : pieceMetadata.suggestedActions;
-
+  const suggestions = stepMetadataSuggestions(pieceMetadata);
   return (
     <div className="flex flex-col gap-0">
       {suggestions?.map((suggestion) => (
         <CardListItem
-          className="p-3 px-0 text-sm gap-2 items-start "
-          key={suggestion.name}
+          className="p-3 text-sm gap-2 items-center "
+          key={suggestion.displayName}
           onClick={(e) => {
             e.stopPropagation();
             handleSelectOperationSuggestion(pieceMetadata, suggestion);

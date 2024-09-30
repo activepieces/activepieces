@@ -1,7 +1,3 @@
-import {
-  PieceStepMetadata,
-  StepMetadata,
-} from '@/features/pieces/lib/pieces-hook';
 import { PieceStepMetadata, StepMetadata } from '@/features/pieces/lib/types';
 import {
   Action,
@@ -65,12 +61,12 @@ const isAppPiece = (piece: StepMetadata) =>
 
 const getDefaultStep = ({
   stepName,
-  piece,
+  stepMetadata,
   actionOrTriggerName,
   displayName,
 }: {
   stepName: string;
-  piece: StepMetadata;
+  stepMetadata: StepMetadata;
   displayName: string;
   actionOrTriggerName?: string;
 }): Action | Trigger => {
@@ -87,7 +83,8 @@ const getDefaultStep = ({
   const common = {
     name: stepName,
     valid:
-      piece.type === ActionType.CODE || piece.type === ActionType.LOOP_ON_ITEMS,
+      stepMetadata.type === ActionType.CODE ||
+      stepMetadata.type === ActionType.LOOP_ON_ITEMS,
     displayName: displayName,
     settings: {
       inputUiInfo: {
@@ -96,7 +93,7 @@ const getDefaultStep = ({
     },
   };
 
-  switch (piece.type) {
+  switch (stepMetadata.type) {
     case ActionType.CODE:
       return deepMergeAndCast<CodeAction>(
         {
@@ -148,16 +145,15 @@ const getDefaultStep = ({
         common,
       );
     case ActionType.PIECE: {
-      const pieceStepMetadata = piece as PieceStepMetadata;
       return deepMergeAndCast<PieceAction>(
         {
           type: ActionType.PIECE,
           settings: {
-            pieceName: pieceStepMetadata.pieceName,
-            pieceType: pieceStepMetadata.pieceType,
-            packageType: pieceStepMetadata.packageType,
+            pieceName: stepMetadata.pieceName,
+            pieceType: stepMetadata.pieceType,
+            packageType: stepMetadata.packageType,
             actionName: actionOrTriggerName,
-            pieceVersion: pieceStepMetadata.pieceVersion,
+            pieceVersion: stepMetadata.pieceVersion,
             input: {},
             errorHandlingOptions: errorHandlingOptions,
           },
@@ -166,16 +162,15 @@ const getDefaultStep = ({
       );
     }
     case TriggerType.PIECE: {
-      const pieceStepMetadata = piece as PieceStepMetadata;
       return deepMergeAndCast<PieceTrigger>(
         {
           type: TriggerType.PIECE,
           settings: {
-            pieceName: pieceStepMetadata.pieceName,
-            pieceType: pieceStepMetadata.pieceType,
-            packageType: pieceStepMetadata.packageType,
+            pieceName: stepMetadata.pieceName,
+            pieceType: stepMetadata.pieceType,
+            packageType: stepMetadata.packageType,
             triggerName: actionOrTriggerName,
-            pieceVersion: pieceStepMetadata.pieceVersion,
+            pieceVersion: stepMetadata.pieceVersion,
             input: {},
           },
         },
@@ -183,7 +178,7 @@ const getDefaultStep = ({
       );
     }
     default:
-      throw new Error('Unsupported type: ' + piece.type);
+      throw new Error('Unsupported type: ' + stepMetadata.type);
   }
 };
 
