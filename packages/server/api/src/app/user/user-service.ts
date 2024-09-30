@@ -30,6 +30,7 @@ export const userService = {
         const user: NewUser = {
             id: apId(),
             ...params,
+            email: params.email.toLowerCase().trim(),
             platformRole: params.platformRole,
             status: UserStatus.ACTIVE,
             password: hashedPassword,

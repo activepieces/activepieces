@@ -34,18 +34,21 @@ export const externalTokenExtractor = {
                 issuer: null,
             })
 
+            const optionalEmail = payload.email ?? payload.externalUserId
+
+            const { piecesFilterType, piecesTags } = extractPieces(payload)
             return {
                 platformId: signingKey.platformId,
                 externalUserId: payload.externalUserId,
                 externalProjectId: payload.externalProjectId,
-                externalEmail: payload.email,
+                externalEmail: optionalEmail,
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
                 role: payload?.role ?? ProjectMemberRole.EDITOR,
                 tasks: payload?.tasks,
                 pieces: {
-                    filterType: payload?.pieces?.filterType ?? PiecesFilterType.NONE,
-                    tags: payload?.pieces?.tags ?? [],
+                    filterType: piecesFilterType ?? PiecesFilterType.NONE,
+                    tags: piecesTags ?? [],
                 },
             }
         }
@@ -82,6 +85,25 @@ const getSigningKey = async ({
     return signingKey
 }
 
+function extractPieces(payload: ExternalTokenPayload) {
+    if ('version' in payload && payload.version === 'v3') {
+        return {
+            piecesFilterType: payload.piecesFilterType,
+            piecesTags: payload.piecesTags,
+        }
+    }
+    if ('pieces' in payload) {
+        return {
+            piecesFilterType: payload.pieces?.filterType,
+            piecesTags: payload.pieces?.tags,
+        }
+    }
+    return {
+        piecesFilterType: PiecesFilterType.NONE,
+        piecesTags: [],
+    }
+}
+
 function externalTokenPayload() {
     const v1 = Type.Object({
         externalUserId: Type.String(),
@@ -100,7 +122,13 @@ function externalTokenPayload() {
             })),
         }),
     ])
-    return v2
+
+    const v3 = Type.Composite([Type.Omit(v2, ['pieces']), Type.Object({
+        version: Type.Literal('v3'),
+        piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
+        piecesTags: Type.Optional(Type.Array(Type.String())),
+    })])
+    return Type.Union([v2, v3])
 }
 
 export const ExternalTokenPayload = externalTokenPayload()
