@@ -43,9 +43,11 @@ const EmbedPage = React.memo(() => {
                 hideSideNav: event.data.data.hideSidebar,
                 isEmbedded: true,
                 hideLogoInBuilder: event.data.data.hideLogoInBuilder || false,
-                hideFlowNameInBuilder: event.data.data.hideFlowNameInBuilder || false,
+                hideFlowNameInBuilder:
+                  event.data.data.hideFlowNameInBuilder || false,
                 prefix: event.data.data.prefix,
-                disableNavigationInBuilder: event.data.data.disableNavigationInBuilder,
+                disableNavigationInBuilder:
+                  event.data.data.disableNavigationInBuilder,
                 hideFolders: event.data.data.hideFolders || false,
                 sdkVersion: event.data.data.sdkVersion,
               });
