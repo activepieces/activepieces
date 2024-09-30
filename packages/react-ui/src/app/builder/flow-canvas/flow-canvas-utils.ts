@@ -322,7 +322,7 @@ type ApBoundingBox = {
   widthLeft: number;
   widthRight: number;
 };
-
+//TODO: ApNode data property type should be union of types not have all of its properties optional
 export type ApNode = {
   id: string;
   position: { x: number; y: number };

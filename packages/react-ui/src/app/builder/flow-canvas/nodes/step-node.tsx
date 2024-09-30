@@ -112,7 +112,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     removeStepSelection();
   };
 
-  const duplicateStep = () =>
+  const duplicateStep = () => {
     applyOperation(
       {
         type: FlowOperationType.DUPLICATE_ACTION,
@@ -122,7 +122,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       },
       () => toast(UNSAVED_CHANGES_TOAST),
     );
-
+  };
   const { stepMetadata } = piecesHooks.useStepMetadata({
     step: data.step!,
   });
@@ -149,7 +149,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
 
   const stepOutputStatus = useMemo(() => {
     return getStepStatus(data.step?.name, run, loopIndexes, flowVersion);
-  }, [data.step?.name, run, loopIndexes, flowVersion]);
+  }, [data.step!.name, run, loopIndexes, flowVersion]);
   const showRunningIcon =
     isNil(stepOutputStatus) && run?.status === FlowRunStatus.RUNNING;
 
