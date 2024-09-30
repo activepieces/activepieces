@@ -48,7 +48,7 @@ const EmbedPage = React.memo(() => {
                 disableNavigationInBuilder: event.data.data.disableNavigationInBuilder,
                 hideFolders: event.data.data.hideFolders || false,
                 sdkVersion: event.data.data.sdkVersion,
-              });cd 
+              });
               navigate('/');
             },
           },
