@@ -23,6 +23,8 @@ export const dropboxAuth = PieceAuth.OAuth2({
   authUrl: 'https://www.dropbox.com/oauth2/authorize',
   tokenUrl: 'https://api.dropboxapi.com/oauth2/token',
   required: true,
+  // include token_access_type=offline as a parameter on Authorization URL in order to return a refresh_token
+  extra: { token_access_type: 'offline' },
   scope: [
     'files.metadata.write',
     'files.metadata.read',
@@ -50,14 +52,20 @@ export const dropbox = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.dropboxapi.com/2',
       auth: dropboxAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),
   ],
   displayName: 'Dropbox',
   description: 'Cloud storage and file synchronization',
-  authors: ["BastienMe","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: [
+    'BastienMe',
+    'kishanprmr',
+    'MoShizzle',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   categories: [PieceCategory.CONTENT_AND_FILES],
   triggers: [],
   auth: dropboxAuth,

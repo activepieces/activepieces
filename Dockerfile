@@ -32,7 +32,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
-RUN cd /usr/src && npm i isolated-vm@4.6.0
+RUN cd /usr/src && npm i isolated-vm@5.0.1
 
 RUN pnpm store add \
   @tsconfig/node18@1.0.0 \
@@ -49,8 +49,8 @@ COPY . .
 COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
-RUN npx nx run-many --target=build --projects=ui-core --configuration production --skip-nx-cache
+RUN npx nx run-many --target=build --projects=server-api --configuration production
+RUN npx nx run-many --target=build --projects=react-ui 
 
 # Install backend production dependencies
 RUN cd dist/packages/server/api && npm install --production --force
@@ -67,20 +67,28 @@ COPY packages/server/api/src/assets/default.cf /usr/local/etc/isolate
 RUN apt-get update && apt-get install -y nginx gettext
 
 # Copy Nginx configuration template
-COPY packages/ui/core/nginx.standard.conf /etc/nginx/nginx.conf
+COPY nginx.react.conf /etc/nginx/nginx.conf
 
 COPY --from=build /usr/src/app/LICENSE .
 
-# Copy Output files to appropriate directory from build stage
-COPY --from=build /usr/src/app/dist dist
+RUN mkdir -p /usr/src/app/dist/packages/server/
+RUN mkdir -p /usr/src/app/dist/packages/engine/
+RUN mkdir -p /usr/src/app/dist/packages/shared/
 
+# Copy Output files to appropriate directory from build stage
+COPY --from=build /usr/src/app/dist/packages/engine/ /usr/src/app/dist/packages/engine/
+COPY --from=build /usr/src/app/dist/packages/server/ /usr/src/app/dist/packages/server/
+COPY --from=build /usr/src/app/dist/packages/shared/ /usr/src/app/dist/packages/shared/
+
+RUN cd /usr/src/app/dist/packages/server/api/ && npm install --production --force
+
+# 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages packages
+# Copy frontend files to Nginx document root directory from build stage
+COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
 
 LABEL service=activepieces
-
-# Copy frontend files to Nginx document root directory from build stage
-COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh .

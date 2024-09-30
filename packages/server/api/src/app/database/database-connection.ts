@@ -1,12 +1,16 @@
+import { AppSystemProp, DatabaseType, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import {
     ArrayContains,
+    DataSource,
     EntitySchema,
     ObjectLiteral,
     SelectQueryBuilder,
 } from 'typeorm'
+import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
-import { ActivityEntity } from '../ee/activity/activity-entity'
+import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
@@ -16,6 +20,7 @@ import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
+import { IssueEntity } from '../ee/issues/issues-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
@@ -28,9 +33,7 @@ import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
-import { StepFileEntity } from '../flows/step-file/step-file.entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
-import { getEdition } from '../helper/secret-helper'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -38,16 +41,16 @@ import { StoreEntryEntity } from '../store-entry/store-entry-entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
 import { UserEntity } from '../user/user-entity'
+import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
+import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { DatabaseType, system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment } from '@activepieces/shared'
 
-const databaseType = system.get(SystemProp.DB_TYPE)
+const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
-    const edition = getEdition()
+    const edition = system.getEdition()
 
     const entities: EntitySchema[] = [
         TriggerEventEntity,
@@ -64,10 +67,14 @@ function getEntities(): EntitySchema<unknown>[] {
         WebhookSimulationEntity,
         FolderEntity,
         PieceMetadataEntity,
-        StepFileEntity,
         PlatformEntity,
         TagEntity,
         PieceTagEntity,
+        IssueEntity,
+        AlertEntity,
+        UserInvitationEntity,
+        WorkerMachineEntity,
+        AiProviderEntity,
     ]
 
     switch (edition) {
@@ -84,8 +91,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 FlowTemplateEntity,
                 GitRepoEntity,
                 AuditEventEntity,
-                ActivityEntity,
-
                 // CLOUD
                 AppSumoEntity,
                 ReferralEntity,
@@ -104,7 +109,7 @@ function getEntities(): EntitySchema<unknown>[] {
 }
 
 const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     const value: Partial<Record<ApEnvironment, boolean>> = {
         [ApEnvironment.TESTING]: true,
@@ -119,17 +124,23 @@ export const commonProperties = {
     synchronize: getSynchronize(),
 }
 
-export const databaseConnection =
-  databaseType === DatabaseType.SQLITE3
-      ? createSqlLiteDataSource()
-      : createPostgresDataSource()
+let _databaseConnection: DataSource | null = null
+
+export const databaseConnection = () => {
+    if (isNil(_databaseConnection)) {
+        _databaseConnection = databaseType === DatabaseType.SQLITE3
+            ? createSqlLiteDataSource()
+            : createPostgresDataSource()
+    }
+    return _databaseConnection
+}
 
 export function APArrayContains<T extends ObjectLiteral>(
     columnName: string,
     values: string[],
     query: SelectQueryBuilder<T>,
 ): SelectQueryBuilder<T> {
-    const databaseType = system.get(SystemProp.DB_TYPE)
+    const databaseType = system.get(AppSystemProp.DB_TYPE)
     switch (databaseType) {
         case DatabaseType.POSTGRES:
             return query.andWhere({
@@ -151,3 +162,6 @@ export function APArrayContains<T extends ObjectLiteral>(
             throw new Error(`Unsupported database type: ${databaseType}`)
     }
 }
+
+// Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
+// export const exportedConnection = databaseConnection()

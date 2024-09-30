@@ -1,28 +1,28 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { tasksLimit } from '../ee/project-plan/tasks-limit'
-import { flowRepo } from '../flows/flow/flow.repo'
-import { flowService } from '../flows/flow/flow.service'
-import { getEdition } from '../helper/secret-helper'
-import { EngineHttpResponse, engineResponseWatcher } from '../workers/flow-worker/engine-response-watcher'
-import { flowQueue } from '../workers/flow-worker/flow-queue'
-import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
-import { JobType } from '../workers/flow-worker/queues/queue'
-import { logger } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
-    ApEdition,
     apId,
+    EngineHttpResponse,
     ErrorCode,
     EventPayload,
     Flow,
     FlowId,
     FlowStatus,
+    isMultipartFile,
     isNil,
     WebhookUrlParams,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { tasksLimit } from '../ee/project-plan/tasks-limit'
+import { stepFileService } from '../file/step-file/step-file.service'
+import { flowRepo } from '../flows/flow/flow.repo'
+import { flowService } from '../flows/flow/flow.service'
+import { webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
+import { flowQueue } from '../workers/queue'
+import { getJobPriority } from '../workers/queue/queue-manager'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -65,7 +65,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             .send(response.body)
     })
 
-    app.all('/:flowId/simulate', WEBHOOK_PARAMS, async (request, reply) => {
+    app.all('/:flowId/test', WEBHOOK_PARAMS, async (request, reply) => {
         const response = await handleWebhook({
             request,
             flowId: request.params.flowId,
@@ -82,20 +82,36 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
 async function handleWebhook({ request, flowId, async, simulate }: { request: FastifyRequest, flowId: string, async: boolean, simulate: boolean }): Promise<EngineHttpResponse> {
     const flow = await getFlowOrThrow(flowId)
-    const payload = await convertRequest(request)
+    const payload = await convertRequest(request, flow.projectId, flow.id)
     const requestId = apId()
+    const synchronousHandlerId = async ? null : webhookResponseWatcher.getServerId()
+    if (isNil(flow)) {
+        return {
+            status: StatusCodes.GONE,
+            body: {},
+            headers: {},
+        }
+    }
+    if (flow.status !== FlowStatus.ENABLED && !simulate) {
+        return {
+            status: StatusCodes.NOT_FOUND,
+            body: {},
+            headers: {},
+        }
+    }
     await flowQueue.add({
         id: requestId,
         type: JobType.WEBHOOK,
         data: {
+            projectId: flow.projectId,
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
             requestId,
-            synchronousHandlerId: async ? undefined : engineResponseWatcher.getHandlerId(),
+            synchronousHandlerId,
             payload,
             flowId: flow.id,
             simulate,
         },
-        priority: async ? 'medium' : 'high',
+        priority: await getJobPriority(flow.projectId, synchronousHandlerId),
     })
     if (async) {
         return {
@@ -104,20 +120,20 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
             headers: {},
         }
     }
-    return engineResponseWatcher.listen(requestId, true)
+    return webhookResponseWatcher.oneTimeListener(requestId, true)
 }
 
-async function convertRequest(request: FastifyRequest): Promise<EventPayload> {
+async function convertRequest(request: FastifyRequest, projectId: string, flowId: string): Promise<EventPayload> {
     const payload: EventPayload = {
         method: request.method,
         headers: request.headers as Record<string, string>,
-        body: await convertBody(request),
+        body: await convertBody(request, projectId, flowId),
         queryParams: request.query as Record<string, string>,
     }
     return payload
 }
 
-const convertBody = async (request: FastifyRequest): Promise<unknown> => {
+const convertBody = async (request: FastifyRequest, projectId: string, flowId: string): Promise<unknown> => {
     if (request.isMultipart()) {
         const jsonResult: Record<string, unknown> = {}
         const requestBodyEntries = Object.entries(
@@ -125,12 +141,19 @@ const convertBody = async (request: FastifyRequest): Promise<unknown> => {
         )
 
         for (const [key, value] of requestBodyEntries) {
-            jsonResult[key] =
-                value instanceof Buffer ? value.toString('base64') : value
+            if (isMultipartFile(value)) {
+                const file = await stepFileService.saveAndEnrich({
+                    file: value.data as Buffer,
+                    fileName: value.filename,
+                    stepName: 'trigger',
+                    flowId,
+                }, request.hostname, projectId)
+                jsonResult[key] = file.url
+            }
+            else {
+                jsonResult[key] = value
+            }
         }
-
-        logger.debug({ name: 'WebhookController#convertBody', jsonResult })
-
         return jsonResult
     }
     return request.body
@@ -162,33 +185,21 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
         })
     }
 
-    // TODO FIX AND REFACTOR
-    // BEGIN EE
-    const edition = getEdition()
-    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-        try {
-            await tasksLimit.limit({
-                projectId: flow.projectId,
-            })
-        }
-        catch (e) {
-            if (
-                e instanceof ActivepiecesError &&
-                e.error.code === ErrorCode.QUOTA_EXCEEDED
-            ) {
-                logger.info(
-                    `[webhookController] removing flow.id=${flow.id} run out of flow quota`,
-                )
-                await flowService.updateStatus({
-                    id: flow.id,
-                    projectId: flow.projectId,
-                    newStatus: FlowStatus.DISABLED,
-                })
-            }
-            throw e
-        }
+    const exceededLimit = await tasksLimit.exceededLimit({
+        projectId: flow.projectId,
+    })
+    if (exceededLimit) {
+        logger.info({
+            message: 'disable webhook out of flow quota',
+            projectId: flow.projectId,
+            flowId: flow.id,
+        })
+        await flowService.updateStatus({
+            id: flow.id,
+            projectId: flow.projectId,
+            newStatus: FlowStatus.DISABLED,
+        })
     }
-    // END EE
 
     return flow
 }

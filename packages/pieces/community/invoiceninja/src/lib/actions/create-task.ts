@@ -37,7 +37,6 @@ export const createTask = createAction({
       displayName: 'Custom hourly rate',
       description: 'Custom hourly rate (optional) otherwise default used',
       required: false,
-      processors: [],
       validators: [Validators.number],
     }),
   },

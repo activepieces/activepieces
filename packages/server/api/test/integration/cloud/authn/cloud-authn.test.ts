@@ -1,10 +1,25 @@
+import {
+    CustomDomain,
+    OtpType,
+} from '@activepieces/ee-shared'
+import {
+    apId,
+    InvitationStatus,
+    InvitationType,
+    Platform,
+    PlatformRole,
+    ProjectMemberRole,
+    User,
+    UserStatus,
+} from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
+import { setupServer } from '../../../../src/app/server'
 import { decodeToken } from '../../../helpers/auth'
 import {
     CLOUD_PLATFORM_ID,
@@ -12,31 +27,18 @@ import {
     createMockPlatform,
     createMockProject,
     createMockUser,
-    createProjectMember,
+    createMockUserInvitation,
 } from '../../../helpers/mocks'
 import {
     createMockSignInRequest,
     createMockSignUpRequest,
 } from '../../../helpers/mocks/authn'
-import {
-    CustomDomain,
-    OtpType,
-    ProjectMemberStatus,
-} from '@activepieces/ee-shared'
-import {
-    ApFlagId,
-    apId,
-    Platform,
-    ProjectMemberRole,
-    User,
-    UserStatus,
-} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    await databaseConnection().initialize()
+    app = await setupServer()
 })
 
 beforeEach(async () => {
@@ -45,11 +47,14 @@ beforeEach(async () => {
         .fn()
         .mockResolvedValue(faker.string.alphanumeric())
 
-    await databaseConnection.getRepository('flag').delete({})
+    await databaseConnection().getRepository('flag').delete({})
+    await databaseConnection().getRepository('project').delete({})
+    await databaseConnection().getRepository('platform').delete({})
+    await databaseConnection().getRepository('user').delete({})
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -58,9 +63,9 @@ describe('Authentication API', () => {
         it('Add new user if the domain is allowed', async () => {
             // arrange
             const { mockPlatform, mockUser, mockCustomDomain } =
-        await createMockPlatformAndDomain()
+                await createMockPlatformAndDomain()
             const mockSignUpRequest = createMockSignUpRequest()
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('platform')
                 .update(mockPlatform.id, {
                     enforceAllowedAuthDomains: true,
@@ -71,18 +76,20 @@ describe('Authentication API', () => {
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
-            const mockProjectMember = createProjectMember({
-                projectId: mockProject.id,
-                email: mockSignUpRequest.email,
+            const mockUserInvitation = createMockUserInvitation({
                 platformId: mockPlatform.id,
-                status: ProjectMemberStatus.ACTIVE,
-                role: ProjectMemberRole.ADMIN,
+                email: mockSignUpRequest.email,
+                platformRole: PlatformRole.ADMIN,
+                type: InvitationType.PLATFORM,
+                status: InvitationStatus.ACCEPTED,
+                created: dayjs().toISOString(),
             })
-            await databaseConnection
-                .getRepository('project_member')
-                .save(mockProjectMember)
+
+            await databaseConnection()
+                .getRepository('user_invitation')
+                .save(mockUserInvitation)
 
             // act
             const response = await app?.inject({
@@ -93,16 +100,14 @@ describe('Authentication API', () => {
                     Host: mockCustomDomain.domain,
                 },
             })
-
-            // assert
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
         it('Fails If the domain is not allowed', async () => {
             // arrange
             const { mockPlatform, mockCustomDomain } =
-        await createMockPlatformAndDomain()
-            await databaseConnection
+                await createMockPlatformAndDomain()
+            await databaseConnection()
                 .getRepository('platform')
                 .update(mockPlatform.id, {
                     enforceAllowedAuthDomains: true,
@@ -130,7 +135,7 @@ describe('Authentication API', () => {
 
         it('Adds new user', async () => {
             const { mockPlatform, mockCustomDomain } =
-        await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
+                await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
 
@@ -169,7 +174,7 @@ describe('Authentication API', () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
             const { mockCustomDomain, mockPlatform } =
-        await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
+                await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
             // act
             const response = await app?.inject({
                 method: 'POST',
@@ -196,36 +201,41 @@ describe('Authentication API', () => {
         })
 
         it('auto verify invited users to continue platform sign up', async () => {
-            // arrange
-
             const {
                 mockUser: mockPlatformOwner,
                 mockPlatform,
                 mockCustomDomain,
             } = await createMockPlatformAndDomain()
+
+            await databaseConnection().getRepository('platform').update(mockPlatform.id, {
+                projectRolesEnabled: true,
+            })
             const mockProject = createMockProject({
                 ownerId: mockPlatformOwner.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
             const mockedUpEmail = faker.internet.email()
-            const mockProjectMember = createProjectMember({
+            const mockUserInvitation = createMockUserInvitation({
                 projectId: mockProject.id,
-                email: mockedUpEmail,
                 platformId: mockPlatform.id,
-                status: ProjectMemberStatus.ACTIVE,
-                role: ProjectMemberRole.ADMIN,
+                email: mockedUpEmail,
+                projectRole: ProjectMemberRole.ADMIN,
+                type: InvitationType.PROJECT,
+                status: InvitationStatus.ACCEPTED,
+                created: dayjs().toISOString(),
             })
-            await databaseConnection
-                .getRepository('project_member')
-                .save(mockProjectMember)
+
+            await databaseConnection()
+                .getRepository('user_invitation')
+                .save(mockUserInvitation)
+
 
             const mockSignUpRequest = createMockSignUpRequest({
                 email: mockedUpEmail,
             })
 
-            // act
             const response = await app?.inject({
                 method: 'POST',
                 url: '/v1/authentication/sign-up',
@@ -235,10 +245,10 @@ describe('Authentication API', () => {
                 body: mockSignUpRequest,
             })
 
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody?.platformId).toBe(mockPlatform.id)
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
@@ -274,15 +284,15 @@ describe('Authentication API', () => {
         it('Adds tasks for referrals', async () => {
             // arrange
             const { mockCustomDomain, mockPlatform } =
-        await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
+                await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
             const mockReferringUser = createMockUser({ platformId: mockPlatform.id })
-            await databaseConnection.getRepository('user').save(mockReferringUser)
+            await databaseConnection().getRepository('user').save(mockReferringUser)
 
             const mockProject = createMockProject({
                 ownerId: mockReferringUser.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
             const mockSignUpRequest = createMockSignUpRequest({
                 referringUserId: mockReferringUser.id,
@@ -302,21 +312,21 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            const referral = await databaseConnection
+            const referral = await databaseConnection()
                 .getRepository('referal')
                 .findOneBy({
                     referredUserId: responseBody?.id,
                 })
             expect(referral?.referringUserId).toBe(mockReferringUser.id)
 
-            const referringUserPlan = await databaseConnection
+            const referringUserPlan = await databaseConnection()
                 .getRepository('project_plan')
                 .findOneBy({
                     projectId: mockProject.id,
                 })
             expect(referringUserPlan?.tasks).toBe(1500)
 
-            const referredUserPlan = await databaseConnection
+            const referredUserPlan = await databaseConnection()
                 .getRepository('project_plan')
                 .findOneBy({
                     projectId: responseBody?.projectId,
@@ -324,28 +334,9 @@ describe('Authentication API', () => {
             expect(referredUserPlan?.tasks).toBe(1500)
         })
 
-        it('Fails if USER_CREATED flag is set, and sign-up is disabled', async () => {
-            // arrange
-            const mockSignUpRequest = createMockSignUpRequest()
-            await databaseConnection.getRepository('flag').save({
-                id: ApFlagId.USER_CREATED,
-                value: true,
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/authentication/sign-up',
-                body: mockSignUpRequest,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
-
         it('Creates new project for cloud user', async () => {
             const { mockPlatform, mockCustomDomain } =
-        await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
+                await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
 
@@ -363,7 +354,7 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            const project = await databaseConnection
+            const project = await databaseConnection()
                 .getRepository('project')
                 .findOneBy({
                     id: responseBody.projectId,
@@ -389,7 +380,7 @@ describe('Authentication API', () => {
                 status: UserStatus.ACTIVE,
                 platformId: mockPlatformId,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({
                 id: mockPlatformId,
@@ -397,13 +388,13 @@ describe('Authentication API', () => {
                 emailAuthEnabled: false,
                 ssoEnabled: true,
             })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockCustomDomain = createMockCustomDomain({
                 platformId: mockPlatformId,
                 domain: mockPlatformDomain,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('custom_domain')
                 .save(mockCustomDomain)
 
@@ -411,7 +402,7 @@ describe('Authentication API', () => {
                 ownerId: mockUser.id,
                 platformId: mockPlatformId,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
             const mockSignInRequest = createMockSignInRequest({
                 email: mockUser.email,
@@ -446,7 +437,7 @@ describe('Authentication API', () => {
                 status: UserStatus.ACTIVE,
                 platformId: mockPlatformId,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({
                 id: mockPlatformId,
@@ -455,13 +446,13 @@ describe('Authentication API', () => {
                 enforceAllowedAuthDomains: true,
                 ssoEnabled: true,
             })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockCustomDomain = createMockCustomDomain({
                 platformId: mockPlatformId,
                 domain: mockPlatformDomain,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('custom_domain')
                 .save(mockCustomDomain)
 
@@ -469,7 +460,7 @@ describe('Authentication API', () => {
                 ownerId: mockUser.id,
                 platformId: mockPlatformId,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
             const mockSignInRequest = createMockSignInRequest({
                 email: mockUser.email,
@@ -502,20 +493,20 @@ describe('Authentication API', () => {
                 verified: true,
                 status: UserStatus.ACTIVE,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
             const mockPlatform = createMockPlatform({
                 id: CLOUD_PLATFORM_ID,
                 ownerId: mockUser.id,
             })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-            await databaseConnection.getRepository('user').update(mockUser.id, {
+            await databaseConnection().getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('user').update(mockUser.id, {
                 platformId: mockPlatform.id,
             })
             const mockProject = createMockProject({
                 platformId: mockPlatform.id,
                 ownerId: mockUser.id,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
             const mockSignInRequest = createMockSignInRequest({
                 email: mockEmail,
@@ -562,19 +553,19 @@ describe('Authentication API', () => {
                 status: UserStatus.ACTIVE,
                 platformId: mockPlatformId,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({
                 id: mockPlatformId,
                 ownerId: mockUser.id,
             })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockCustomDomain = createMockCustomDomain({
                 platformId: mockPlatformId,
                 domain: mockPlatformDomain,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('custom_domain')
                 .save(mockCustomDomain)
 
@@ -582,7 +573,7 @@ describe('Authentication API', () => {
                 ownerId: mockUser.id,
                 platformId: mockPlatformId,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
             const mockSignInRequest = createMockSignInRequest({
                 email: mockEmail,
@@ -622,21 +613,21 @@ describe('Authentication API', () => {
                 status: UserStatus.ACTIVE,
                 platformId: mockPlatformId,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({
                 id: mockPlatformId,
                 ownerId: mockUser.id,
             })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-            await databaseConnection.getRepository('user').update(mockUser.id, {
+            await databaseConnection().getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('user').update(mockUser.id, {
                 platformId: mockPlatform.id,
             })
             const mockCustomDomain = createMockCustomDomain({
                 platformId: mockPlatformId,
                 domain: mockPlatformDomain,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('custom_domain')
                 .save(mockCustomDomain)
 
@@ -677,19 +668,19 @@ describe('Authentication API', () => {
                 verified: true,
                 status: UserStatus.ACTIVE,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({
                 id: CLOUD_PLATFORM_ID,
                 ownerId: mockUser.id,
             })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
             const mockSignInRequest = createMockSignInRequest({
                 email: mockEmail,
@@ -720,14 +711,14 @@ describe('Authentication API', () => {
                 verified: true,
                 status: UserStatus.INACTIVE,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({
                 id: CLOUD_PLATFORM_ID,
                 ownerId: mockUser.id,
             })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
-            await databaseConnection.getRepository('user').update(mockUser.id, {
+            await databaseConnection().getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('user').update(mockUser.id, {
                 platformId: mockPlatform.id,
             })
 
@@ -735,7 +726,7 @@ describe('Authentication API', () => {
                 ownerId: mockUser.id,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
             const mockSignInRequest = createMockSignInRequest({
                 email: mockEmail,
@@ -767,18 +758,18 @@ async function createMockPlatformAndDomain(
         mockCustomDomain: CustomDomain
     }> {
     const mockUser = createMockUser()
-    await databaseConnection.getRepository('user').save(mockUser)
+    await databaseConnection().getRepository('user').save(mockUser)
 
     const mockPlatform = createMockPlatform({
         ownerId: mockUser.id,
         id: platformId ?? apId(),
     })
-    await databaseConnection.getRepository('platform').save(mockPlatform)
+    await databaseConnection().getRepository('platform').save(mockPlatform)
 
     const mockCustomDomain = createMockCustomDomain({
         platformId: mockPlatform.id,
     })
-    await databaseConnection
+    await databaseConnection()
         .getRepository('custom_domain')
         .save(mockCustomDomain)
     return { mockUser, mockPlatform, mockCustomDomain }

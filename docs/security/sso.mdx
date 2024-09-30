@@ -7,13 +7,53 @@ icon: 'key'
 
 <Snippet file="enterprise-feature.mdx" />
 
-## Supported SSO Providers
-
-You can enable various SSO providers, including Google and GitHub, to integrate with your system. By configuring SSO.
-
 ## Enforcing SSO
 
-You can enforce SSO by specifying the domain, As part of SSO configuration, you have the option to disable email and user login. This ensures that all authentication is routed through the designated SSO provider.
+You can enforce SSO by specifying the domain. As part of the SSO configuration, you have the option to disable email and user login. This ensures that all authentication is routed through the designated SSO provider.
 
 
 ![SSO](/resources/screenshots/sso.png)
+
+
+## Supported SSO Providers
+
+You can enable various SSO providers, including Google and GitHub, to integrate with your system by configuring SSO.
+
+### Google:
+
+<Steps>
+    <Step title="Go to the Developer Console"></Step>
+    <Step title="Create an OAuth2 App"></Step>
+    <Step title="Copy the Redirect URL from the Configure Screen into the Google App"></Step>
+    <Step title="Fill in the Client ID & Client Secret in Activepieces"></Step>
+    <Step title="Click Finish"></Step>
+</Steps>
+
+### GitHub:
+
+<Steps>
+    <Step title="Go to the GitHub Developer Settings"></Step>
+    <Step title="Create a new OAuth App"></Step>
+    <Step title="Fill in the App details and click Register a new application"></Step>
+    <Step title="Use the following Redirect URL from the Configure Screen"></Step>
+    <Step title="Fill in the Homepage URL with the URL of your application"></Step>
+    <Step title="Click Register application"></Step>
+    <Step title="Copy the Client ID and Client Secret and fill them in Activepieces"></Step>
+    <Step title="Click Finish"></Step>
+</Steps>
+
+### SAML with OKTA:
+
+<Steps>
+    <Step title="Go to the Okta Admin Portal and create a new app"></Step>
+    <Step title="Select SAML 2.0 as the Sign-on method"></Step>
+    <Step title="Fill in the App details and click Next"></Step>
+    <Step title="Use the following Single Sign-On URL from the Configure Screen"></Step>
+    <Step title="Fill in Audience URI (SP Entity ID) with 'Activepieces'"></Step>
+    <Step title="Add the following attributes (firstName, lastName, email)"></Step>
+    <Step title="Click Next and Finish"></Step>
+    <Step title="Go to the Sign On tab and click on View Setup Instructions"></Step>
+    <Step title="Copy the Identity Provider metadata and paste it in the Idp Metadata field"></Step>
+    <Step title="Copy the Signing Certificate and paste it in the Signing Key field"></Step>
+    <Step title="Click Save"></Step>
+</Steps>

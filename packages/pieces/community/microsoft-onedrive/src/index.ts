@@ -28,7 +28,7 @@ export const microsoftOneDrive = createPiece({
   minimumSupportedRelease: '0.8.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/oneDrive.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud"],
+  authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud","ikus060"],
   actions: [
     uploadFile,
     downloadFile,
@@ -37,7 +37,7 @@ export const microsoftOneDrive = createPiece({
     createCustomApiCallAction({
       baseUrl: () => oneDriveCommon.baseUrl,
       auth: oneDriveAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

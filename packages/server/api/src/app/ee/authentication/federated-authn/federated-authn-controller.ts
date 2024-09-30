@@ -1,11 +1,4 @@
 import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../../../helper/application-events'
-import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
-import { federatedAuthnService } from './federated-authn-service'
-import {
     ApplicationEventName,
 } from '@activepieces/ee-shared'
 import {
@@ -14,6 +7,13 @@ import {
     ClaimTokenRequest,
     ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { eventsHooks } from '../../../helper/application-events'
+import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
+import { federatedAuthnService } from './federated-authn-service'
 
 export const federatedAuthnController: FastifyPluginAsyncTypebox = async (
     app,
@@ -37,12 +37,10 @@ export const federatedAuthnController: FastifyPluginAsyncTypebox = async (
             providerName: req.body.providerName,
             code: req.body.code,
         })
-        eventsHooks.get().send(req, {
-            action: ApplicationEventName.SIGNED_UP_USING_SSO,
-            userId: req.principal.id,
-            createdUser: {
-                id: response.id,
-                email: response.email,
+        eventsHooks.get().sendUserEventFromRequest(req, {
+            action: ApplicationEventName.USER_SIGNED_UP,
+            data: {
+                source: 'sso',
             },
         })
         return response

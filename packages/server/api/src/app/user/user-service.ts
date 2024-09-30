@@ -1,14 +1,5 @@
-import dayjs from 'dayjs'
-import { IsNull } from 'typeorm'
-import { passwordHasher } from '../authentication/lib/password-hasher'
-import { repoFactory } from '../core/db/repo-factory'
-import { transaction } from '../core/db/transaction'
-import { projectMemberService } from '../ee/project-members/project-member.service'
-import { getEdition } from '../helper/secret-helper'
-import { UserEntity } from './user-entity'
 import {
     ActivepiecesError,
-    ApEdition,
     apId,
     ErrorCode,
     isNil,
@@ -22,9 +13,15 @@ import {
     UserMeta,
     UserStatus,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { nanoid } from 'nanoid'
+import { IsNull } from 'typeorm'
+import { passwordHasher } from '../authentication/lib/password-hasher'
+import { repoFactory } from '../core/db/repo-factory'
+import { UserEntity } from './user-entity'
 
 
-const repo = repoFactory(UserEntity)
+export const userRepo = repoFactory(UserEntity)
 
 export const userService = {
     async create(params: CreateParams): Promise<User> {
@@ -36,19 +33,21 @@ export const userService = {
             platformRole: params.platformRole,
             status: UserStatus.ACTIVE,
             password: hashedPassword,
+            tokenVersion: nanoid(),
         }
 
-        return repo().save(user)
+        return userRepo().save(user)
     },
     async update({ id, status, platformId, platformRole }: UpdateParams): Promise<User> {
-        const updateResult = await repo().update({
+
+        const updateResult = await userRepo().update({
             id,
             platformId,
-        },
-        {
+        }, {
             ...spreadIfDefined('status', status),
             ...spreadIfDefined('platformRole', platformRole),
         })
+
         if (updateResult.affected !== 1) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -58,13 +57,13 @@ export const userService = {
                 },
             })
         }
-        return repo().findOneByOrFail({
+        return userRepo().findOneByOrFail({
             id,
             platformId,
         })
     },
     async list({ platformId }: ListParams): Promise<SeekPage<User>> {
-        const users = await repo().findBy({
+        const users = await userRepo().findBy({
             platformId,
         })
 
@@ -76,7 +75,7 @@ export const userService = {
     },
 
     async verify({ id }: IdParams): Promise<User> {
-        const user = await repo().findOneByOrFail({ id })
+        const user = await userRepo().findOneByOrFail({ id })
         if (user.verified) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -85,17 +84,17 @@ export const userService = {
                 },
             })
         }
-        return repo().save({
+        return userRepo().save({
             ...user,
             verified: true,
         })
     },
 
     async get({ id }: IdParams): Promise<User | null> {
-        return repo().findOneBy({ id })
+        return userRepo().findOneBy({ id })
     },
     async getOneOrFail({ id }: IdParams): Promise<User> {
-        return repo().findOneByOrFail({ id })
+        return userRepo().findOneByOrFail({ id })
     },
 
     async getMetaInfo({ id }: IdParams): Promise<UserMeta | null> {
@@ -116,30 +115,14 @@ export const userService = {
     },
 
     async delete({ id, platformId }: DeleteParams): Promise<void> {
-        return transaction(async (entityManager) => {
-            const user = await repo(entityManager).findOneByOrFail({
-                id,
-                platformId,
-            })
-
-            const edition = getEdition()
-            if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-                await projectMemberService.deleteAllByPlatformAndEmail({
-                    email: user.email,
-                    platformId,
-                    entityManager,
-                })
-            }
-
-            await repo(entityManager).delete({
-                id,
-                platformId,
-            })
+        await userRepo().delete({
+            id,
+            platformId,
         })
     },
 
     async getUsersByEmail({ email }: { email: string }): Promise<User[]> {
-        return repo()
+        return userRepo()
             .createQueryBuilder()
             .andWhere('LOWER(email) = LOWER(:email)', { email })
             .getMany()
@@ -152,7 +135,7 @@ export const userService = {
             ? { platformId }
             : { platformId: IsNull() }
 
-        return repo()
+        return userRepo()
             .createQueryBuilder()
             .where(platformWhereQuery)
             .andWhere('LOWER(email) = LOWER(:email)', { email })
@@ -163,7 +146,7 @@ export const userService = {
         platformId,
         externalId,
     }: GetByPlatformAndExternalIdParams): Promise<User | null> {
-        return repo().findOneBy({
+        return userRepo().findOneBy({
             platformId,
             externalId,
         })
@@ -175,9 +158,10 @@ export const userService = {
     }: UpdatePasswordParams): Promise<void> {
         const hashedPassword = await passwordHasher.hash(newPassword)
 
-        await repo().update(id, {
+        await userRepo().update(id, {
             updated: dayjs().toISOString(),
             password: hashedPassword,
+            tokenVersion: nanoid(),
         })
     },
 
@@ -185,7 +169,7 @@ export const userService = {
         id,
         platformId,
     }: UpdatePlatformIdParams): Promise<void> {
-        await repo().update(id, {
+        await userRepo().update(id, {
             updated: dayjs().toISOString(),
             platformRole: PlatformRole.ADMIN,
             platformId,

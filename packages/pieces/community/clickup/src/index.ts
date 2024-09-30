@@ -60,7 +60,7 @@ export const clickup = createPiece({
       baseUrl: () => {
         return 'https://api.clickup.com/api/v2/';
       },
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
         };

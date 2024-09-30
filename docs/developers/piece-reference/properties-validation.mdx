@@ -39,7 +39,6 @@ Verifies if the processed string length is within a specified minimum limit.
 text: Property.LongText({
     displayName: 'Text',
     required: true,
-    processors: [],
     validators: [Validators.minLength(41)],
 })
 ```
@@ -51,7 +50,6 @@ Ensures that the processed numeric value is greater than or equal to a specified
 age: Property.Number({
     displayName: 'Age',
     required: true,
-    processors: [],
     validators: [Validators.minValue(100)],
 })
 ```
@@ -63,7 +61,6 @@ Ensures that the processed numeric value is less than or equal to a specified ma
 count: Property.Number({
     displayName: 'Count',
     required: true,
-    processors: [],
     validators: [Validators.maxValue(7)],
 })
 ```
@@ -75,7 +72,6 @@ Checks if the processed numeric value falls within a specified range.
 score: Property.Number({
     displayName: 'Score',
     required: true,
-    processors: [],
     validators: [Validators.inRange(0, 100)], // The range is inclusive (0 to 100).
 })
 ```
@@ -87,7 +83,6 @@ Validates whether the processed value is one of the specified values.
 fruit: Property.Text({
     displayName: 'Fruit',
     required: true,
-    processors: [],
     validators: [Validators.oneOf(["apple", "banana", "orange"])],
 })
 ```
@@ -100,7 +95,6 @@ Validates whether the processed value is a valid number.
 quantity: Property.Number({
     displayName: 'Quantity',
     required: true,
-    processors: [],
     validators: [Validators.number],
 })
 ```
@@ -113,7 +107,6 @@ Validates whether the processed value is strictly NOT zero. Designed to be used 
 numberToDivideBy: Property.Number({
     displayName: 'Divide by',
     required: true,
-    processor: [],
     validators: [Validators.number, Validators.nonZero]
 })
 ```
@@ -126,7 +119,6 @@ Verifies whether the processed value is a valid image file based on its extensio
 imageFile: Property.File({
     displayName: 'Image File',
     required: true,
-    processors: [],
     validators: [Validators.image],
 })
 ```
@@ -138,7 +130,6 @@ Ensures that the processed value is a valid file.
 documentFile: Property.File({
     displayName: 'Document File',
     required: true,
-    processors: [],
     validators: [Validators.file],
 })
 ```
@@ -149,7 +140,6 @@ Validates whether the processed value is a valid email address.
 email: Property.Text({
     displayName: 'Email',
     required: true,
-    processors: [],
     validators: [Validators.email],
 })
 ```
@@ -162,7 +152,6 @@ Ensures that the processed value is a valid URL.
 websiteUrl: Property.Text({
     displayName: 'Website URL',
     required: true,
-    processors: [],
     validators: [Validators.url],
 })
 ```
@@ -175,7 +164,6 @@ Validates whether the processed value is a valid ISO-formatted date and time.
 eventDate: Property.DateTime({
     displayName: 'Event Date',
     required: true,
-    processors: [],
     validators: [Validators.datetimeIso],
 })
 ```
@@ -196,24 +184,4 @@ const customValidator = {
         return null;
     }
 };
-```
-
-## Processors
-
-Processors act as data transformers, enabling you to transform or process user input before further processing.
-
-To add a custom processor, you can define a function with this type `ProcessorFn` that takes two parameters: The function should return the processed value. Here's an example:
-
-```typescript
-const customProcessor: ProcessorFn<any, any> = (property, value) => {
-    // Your custom processing logic here
-    return processedValue;
-}
-
-text: Property.LongText({
-    displayName: 'Text',
-    required: true,
-    processors: [customProcessor],
-    validators: [],
-})
 ```

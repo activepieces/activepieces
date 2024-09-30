@@ -166,7 +166,7 @@ const setupGeneratedLibrary = async (pieceName: string, pieceType: string) => {
   await updateEslintFile(pieceName, pieceType);
 };
 
-const createPiece = async (
+export const createPiece = async (
   pieceName: string,
   packageName: string,
   pieceType: string

@@ -44,11 +44,14 @@ export const apitable = createPiece({
   description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
-  categories: [
-    PieceCategory.ARTIFICIAL_INTELLIGENCE,
-    PieceCategory.PRODUCTIVITY,
+  categories: [PieceCategory.PRODUCTIVITY],
+  authors: [
+    'alerdenisov',
+    'Abdallah-Alwarawreh',
+    'kishanprmr',
+    'MoShizzle',
+    'abuaboud',
   ],
-  authors: ["alerdenisov","Abdallah-Alwarawreh","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     createRecordAction,
     updateRecordAction,
@@ -58,7 +61,7 @@ export const apitable = createPiece({
         return (auth as { apiTableUrl: string }).apiTableUrl;
       },
       auth: APITableAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { token: string }).token}`,
       }),
     }),

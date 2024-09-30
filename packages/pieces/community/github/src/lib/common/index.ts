@@ -1,10 +1,5 @@
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { Octokit } from 'octokit';
 
 export const githubCommon = {
   baseUrl: 'https://api.github.com',
@@ -95,75 +90,39 @@ export const githubCommon = {
     }),
 };
 
-async function getUserRepo(
-  authProp: OAuth2PropertyValue
-): Promise<GithubRepository[]> {
-  const request: HttpRequest = {
-    method: HttpMethod.GET,
-    url: `${githubCommon.baseUrl}/user/repos`,
-    queryParams: {
-      per_page: '200',
-    },
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: authProp.access_token,
-    },
-  };
-  const response = await httpClient.sendRequest<GithubRepository[]>(request);
-  return response.body;
+async function getUserRepo(authProp: OAuth2PropertyValue) {
+  const client = new Octokit({ auth: authProp.access_token });
+  return await client.paginate(client.rest.repos.listForAuthenticatedUser, {
+    per_page: 100,
+  });
 }
+
 async function getAssignee(
   authProp: OAuth2PropertyValue,
   owner: string,
   repo: string
-): Promise<GithubAssignee[]> {
-  const request: HttpRequest = {
-    method: HttpMethod.GET,
-    url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/assignees`,
-    queryParams: {
-      per_page: '30',
-    },
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: authProp.access_token,
-    },
-  };
-  const response = await httpClient.sendRequest<GithubAssignee[]>(request);
-  return response.body;
+) {
+  const client = new Octokit({ auth: authProp.access_token });
+  return await client.paginate(client.rest.issues.listAssignees, {
+    owner,
+    repo,
+    per_page: 100,
+  });
 }
 
 async function listIssueLabels(
   authProp: OAuth2PropertyValue,
   owner: string,
   repo: string
-): Promise<GithubIssueLabel[]> {
-  const request: HttpRequest = {
-    method: HttpMethod.GET,
-    url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/labels`,
-    queryParams: {
-      per_page: '30',
-    },
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: authProp.access_token,
-    },
-  };
-  const response = await httpClient.sendRequest<GithubIssueLabel[]>(request);
-  return response.body;
+) {
+  const client = new Octokit({ auth: authProp.access_token });
+  return await client.paginate(client.rest.issues.listLabelsForRepo, {
+    owner,
+    repo,
+    per_page: 100,
+  });
 }
-export interface GithubRepository {
-  name: string;
-  owner: {
-    login: string;
-  };
-}
-export interface GithubAssignee {
-  login: string;
-}
-export interface GithubIssueLabel {
-  id: string;
-  name: string;
-}
+
 export interface RepositoryProp {
   repo: string;
   owner: string;

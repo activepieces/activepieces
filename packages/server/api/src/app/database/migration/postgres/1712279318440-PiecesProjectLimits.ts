@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class PiecesProjectLimits1712279318440 implements MigrationInterface {
     name = 'PiecesProjectLimits1712279318440'
@@ -69,7 +69,7 @@ export class PiecesProjectLimits1712279318440 implements MigrationInterface {
             ALTER TABLE "project_plan" DROP COLUMN "piecesFilterType"
         `)
         await queryRunner.query(`
-            DROP TYPE "public"."project_plan_piecesfiltertype_enum"
+            DROP TYPE "project_plan_piecesfiltertype_enum"
         `)
         await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "pieces"

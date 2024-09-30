@@ -1,37 +1,38 @@
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { AppSystemProp, logger, system } from '@activepieces/server-shared'
+import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { repoFactory } from '../core/db/repo-factory'
 import { flagService } from '../flags/flag.service'
 import { parseAndVerify } from '../helper/json-validator'
-import { getEdition } from '../helper/secret-helper'
 import { systemJobsSchedule } from '../helper/system-jobs'
+import { SystemJobName } from '../helper/system-jobs/common'
+import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
-import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
-import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
-const syncMode = system.get<PieceSyncMode>(SystemProp.PIECES_SYNC_MODE)
+const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 export const pieceSyncService = {
     async setup(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
             logger.info('Piece sync service is disabled')
             return
         }
+        systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
+            await pieceSyncService.sync()
+        })
         await pieceSyncService.sync()
         await systemJobsSchedule.upsertJob({
             job: {
-                name: 'pieces-sync',
+                name: SystemJobName.PIECES_SYNC,
                 data: {},
             },
             schedule: {
                 type: 'repeated',
                 cron: '0 */1 * * *',
-            },
-            async handler() {
-                await pieceSyncService.sync()
             },
         })
     },
@@ -91,7 +92,7 @@ async function existsInDatabase({ name, version }: { name: string, version: stri
 
 async function getVersions({ name }: { name: string }): Promise<ListVersionsResponse> {
     const queryParams = new URLSearchParams()
-    queryParams.append('edition', getEdition())
+    queryParams.append('edition', system.getEdition())
     queryParams.append('release', await flagService.getCurrentRelease())
     queryParams.append('name', name)
     const url = `${CLOUD_API_URL}/versions?${queryParams.toString()}`
@@ -108,7 +109,7 @@ async function getOrThrow({ name, version }: { name: string, version: string }):
 
 async function listPieces(): Promise<PieceMetadataModelSummary[]> {
     const queryParams = new URLSearchParams()
-    queryParams.append('edition', getEdition())
+    queryParams.append('edition', system.getEdition())
     queryParams.append('release', await flagService.getCurrentRelease())
     const url = `${CLOUD_API_URL}?${queryParams.toString()}`
     const response = await fetch(url)

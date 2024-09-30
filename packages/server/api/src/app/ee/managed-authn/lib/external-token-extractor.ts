@@ -1,9 +1,9 @@
-import { Static, Type } from '@sinclair/typebox'
-import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
-import { signingKeyService } from '../../signing-key/signing-key-service'
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
+import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
+import { signingKeyService } from '../../signing-key/signing-key-service'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
 
@@ -42,6 +42,7 @@ export const externalTokenExtractor = {
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
                 role: payload?.role ?? ProjectMemberRole.EDITOR,
+                tasks: payload?.tasks,
                 pieces: {
                     filterType: payload?.pieces?.filterType ?? PiecesFilterType.NONE,
                     tags: payload?.pieces?.tags ?? [],
@@ -91,6 +92,7 @@ function externalTokenPayload() {
     })
     const v2 = Type.Composite([v1,
         Type.Object({
+            tasks: Type.Optional(Type.Number()),
             role: Type.Optional(Type.Enum(ProjectMemberRole)),
             pieces: Type.Optional(Type.Object({
                 filterType: Type.Enum(PiecesFilterType),
@@ -117,6 +119,8 @@ export type ExternalPrincipal = {
         filterType: PiecesFilterType
         tags: string[]
     }
+    aiTokens?: number
+    tasks?: number
 }
 
 type GetSigningKeyParams = {

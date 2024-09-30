@@ -1,5 +1,17 @@
-import { randomBytes as randomBytesCallback } from 'node:crypto'
-import { promisify } from 'node:util'
+import {
+    DEFAULT_PLATFORM_LIMIT,
+} from '@activepieces/ee-shared'
+import { cryptoUtils } from '@activepieces/server-shared'
+import {
+    AuthenticationResponse,
+    PiecesFilterType,
+    PlatformRole,
+    PrincipalType,
+    Project,
+    spreadIfDefined,
+    User,
+} from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
@@ -8,18 +20,6 @@ import { userService } from '../../user/user-service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
-import {
-    DEFAULT_PLATFORM_LIMIT,
-    ProjectMemberStatus,
-} from '@activepieces/ee-shared'
-import {
-    AuthenticationResponse,
-    PiecesFilterType,
-    PlatformRole,
-    PrincipalType,
-    Project,
-    User,
-} from '@activepieces/shared'
 
 export const managedAuthnService = {
     async externalToken({
@@ -35,13 +35,12 @@ export const managedAuthnService = {
             externalProjectId: externalPrincipal.externalProjectId,
         })
 
-        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType)
+        await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens)
 
         const projectMember = await projectMemberService.upsert({
             projectId: project.id,
-            email: externalPrincipal.externalEmail,
+            userId: user.id,
             role: externalPrincipal.role,
-            status: ProjectMemberStatus.ACTIVE,
         })
 
 
@@ -52,7 +51,8 @@ export const managedAuthnService = {
             platform: {
                 id: externalPrincipal.platformId,
             },
-        })
+            tokenVersion: user.tokenVersion,
+        }, dayjs.duration(7, 'day').asSeconds())
         return {
             ...user,
             token,
@@ -67,6 +67,8 @@ const updateProjectLimits = async (
     projectId: string,
     piecesTags: string[],
     piecesFilterType: PiecesFilterType,
+    tasks: number | undefined,
+    aiTokens: number | undefined,
 ): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
@@ -76,6 +78,8 @@ const updateProjectLimits = async (
     })
     await projectLimitsService.upsert({
         ...DEFAULT_PLATFORM_LIMIT,
+        ...spreadIfDefined('tasks', tasks),
+        ...spreadIfDefined('aiTokens', aiTokens),
         pieces,
         piecesFilterType,
     }, projectId)
@@ -103,11 +107,11 @@ const getOrCreateUser = async (
 
     const { password: _, ...newUser } = await userService.create({
         email: externalEmail,
-        password: await generateRandomPassword(),
+        password: await cryptoUtils.generateRandomPassword(),
         firstName: externalFirstName,
         lastName: externalLastName,
         trackEvents: true,
-        newsLetter: true,
+        newsLetter: false,
         platformRole: PlatformRole.MEMBER,
         verified: true,
         externalId: externalUserId,
@@ -157,13 +161,6 @@ const getPiecesList = async ({
             return []
         }
     }
-}
-
-const randomBytes = promisify(randomBytesCallback)
-
-const generateRandomPassword = async (): Promise<string> => {
-    const passwordBytes = await randomBytes(32)
-    return passwordBytes.toString('hex')
 }
 
 type AuthenticateParams = {

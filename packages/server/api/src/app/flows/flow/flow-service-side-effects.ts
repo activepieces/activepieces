@@ -1,6 +1,3 @@
-import { EntityManager } from 'typeorm'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { triggerHooks } from '../trigger'
 import {
     assertNotNullOrUndefined,
     Flow,
@@ -11,6 +8,9 @@ import {
     ScheduleOptions,
     ScheduleType,
 } from '@activepieces/shared'
+import { EntityManager } from 'typeorm'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { triggerHooks } from '../trigger'
 
 export const flowSideEffects = {
     async preUpdateStatus({
@@ -63,6 +63,7 @@ export const flowSideEffects = {
             scheduleOptions: {
                 ...scheduleOptions,
                 type: ScheduleType.CRON_EXPRESSION,
+                failureCount: flowToUpdate.schedule?.failureCount ?? 0,
             },
         }
     },
@@ -102,6 +103,7 @@ export const flowSideEffects = {
             scheduleOptions: {
                 ...scheduleOptions,
                 type: ScheduleType.CRON_EXPRESSION,
+                failureCount: 0,
             },
         }
     },

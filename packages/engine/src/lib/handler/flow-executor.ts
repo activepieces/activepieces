@@ -1,5 +1,6 @@
 import { performance } from 'node:perf_hooks'
-import { Action, ActionType, isNil } from '@activepieces/shared'
+import { Action, ActionType, isNil, ProgressUpdateType } from '@activepieces/shared'
+import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
 import { branchExecutor } from './branch-executor'
 import { codeExecutor } from './code-executor'
@@ -50,6 +51,18 @@ export const flowExecutor = {
 
             if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 break
+            }
+
+            const isNotNested = flowExecutionContext.currentPath.path.length === 0
+            const sendContinuousProgress = isNotNested
+                && constants.progressUpdateType === ProgressUpdateType.TEST_FLOW
+            if (sendContinuousProgress) {
+                progressService.sendUpdate({
+                    engineConstants: constants,
+                    flowExecutorContext: flowExecutionContext,
+                }).catch((error) => {
+                    console.error('Error sending progress update', error)
+                })
             }
 
             currentAction = currentAction.nextAction

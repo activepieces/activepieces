@@ -1,19 +1,19 @@
-import dayjs from 'dayjs'
-import { databaseConnection } from '../../database/database-connection'
-import { userService } from '../../user/user-service'
-import { emailService } from '../helper/email/email-service'
-import { otpGenerator } from './lib/otp-generator'
-import { OtpEntity } from './otp-entity'
 import {
     OtpModel,
     OtpState,
     OtpType,
 } from '@activepieces/ee-shared'
 import { apId, PlatformId, User, UserId } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { repoFactory } from '../../core/db/repo-factory'
+import { userService } from '../../user/user-service'
+import { emailService } from '../helper/email/email-service'
+import { otpGenerator } from './lib/otp-generator'
+import { OtpEntity } from './otp-entity'
 
-const THIRTY_MINUTES = 30 * 60 * 1000
+const TEN_MINUTES = 10 * 60 * 1000
 
-const repo = databaseConnection.getRepository(OtpEntity)
+const repo = repoFactory(OtpEntity)
 
 export const otpService = {
     async createAndSend({
@@ -25,38 +25,45 @@ export const otpService = {
             platformId,
             email,
         })
-        if (user) {
-            const newOtp: Omit<OtpModel, 'created'> = {
-                id: apId(),
-                updated: dayjs().toISOString(),
-                type,
-                userId: user.id,
-                value: otpGenerator.generate(),
-                state: OtpState.PENDING,
-            }
-            await repo.upsert(newOtp, ['userId', 'type'])
-            await emailService.sendOtp({
-                platformId,
-                user,
-                otp: newOtp.value,
-                type: newOtp.type,
-            })
+        if (!user) {
+            return
         }
+        const existingOtp = await repo().findOneBy({
+            userId: user.id,
+            type,
+        })
+        const otpIsNotExpired = existingOtp && dayjs().diff(existingOtp.updated, 'milliseconds') < TEN_MINUTES
+        if (otpIsNotExpired) {
+            return
+        }
+        const newOtp: Omit<OtpModel, 'created'> = {
+            id: apId(),
+            updated: dayjs().toISOString(),
+            type,
+            userId: user.id,
+            value: otpGenerator.generate(),
+            state: OtpState.PENDING,
+        }
+        await repo().upsert(newOtp, ['userId', 'type'])
+        await emailService.sendOtp({
+            platformId,
+            user,
+            otp: newOtp.value,
+            type: newOtp.type,
+        })
     },
 
     async confirm({ userId, type, value }: ConfirmParams): Promise<boolean> {
-        const otp = await repo.findOneByOrFail({
+        const otp = await repo().findOneByOrFail({
             userId,
             type,
         })
-        const now = dayjs()
         const otpIsPending = otp.state === OtpState.PENDING
-        const otpIsNotExpired =
-      now.diff(otp.updated, 'milliseconds') < THIRTY_MINUTES
+        const otpIsNotExpired = dayjs().diff(otp.updated, 'milliseconds') < TEN_MINUTES
         const otpMatches = otp.value === value
         const verdict = otpIsNotExpired && otpMatches && otpIsPending
         if (verdict) {
-            await repo.update(otp.id, {
+            await repo().update(otp.id, {
                 state: OtpState.CONFIRMED,
             })
         }
@@ -78,7 +85,7 @@ const getUser = async ({
 }
 
 type CreateParams = {
-    platformId: PlatformId 
+    platformId: PlatformId
     email: string
     type: OtpType
 }

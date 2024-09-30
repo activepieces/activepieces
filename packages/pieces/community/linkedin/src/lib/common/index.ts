@@ -1,4 +1,4 @@
-import { ApFile, Property, ProcessorFn } from '@activepieces/pieces-framework';
+import { ApFile, Property } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   httpClient,
@@ -7,7 +7,7 @@ import {
 
 import FormData from 'form-data';
 
-const processText: ProcessorFn<any, string> = (property, text) => {
+export const santizeText = (text: string) => {
   // LinkedIn Posts API has a list of characters that need to be escaped since it's type is "LittleText"
   // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api?view=li-lms-2023-11&tabs=http
   // https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/little-text-format?view=li-lms-2023-11
@@ -19,10 +19,10 @@ export const linkedinCommon = {
   baseUrl: 'https://api.linkedin.com',
   linkedinHeaders: {
     'X-Restli-Protocol-Version': '2.0.0',
+    'LinkedIn-Version': '202312',
   },
   text: Property.LongText({
     displayName: 'Text',
-    processors: [processText],
     required: true,
   }),
   imageUrl: Property.File({
@@ -115,19 +115,19 @@ export const linkedinCommon = {
       }
     );
 
-    const companySearch = (
-      await httpClient.sendRequest({
-        url: `${
-          linkedinCommon.baseUrl
-        }/v2/organizations?ids=List(${companyIds.join(',')})`,
-        method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: accessToken,
-        },
-        headers: linkedinCommon.linkedinHeaders,
-      })
-    ).body;
+    const response = await fetch(`${linkedinCommon.baseUrl}/rest/organizations?ids=List(${companyIds.join(',')})`, {
+      method: 'GET',
+      headers: {
+        ...linkedinCommon.linkedinHeaders,
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const companySearch = await response.json();
 
     return companySearch.results;
   },

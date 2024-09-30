@@ -1,13 +1,13 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
-import _ from 'lodash';
 import { ContentfulAuth, makeClient } from '../common';
+import { isEmpty } from '@activepieces/shared';
 
 const ContentModel = Property.Dropdown<string>({
   displayName: 'Content Model',
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
-    if (_.isEmpty(auth)) {
+    if (isEmpty(auth)) {
       return {
         disabled: true,
         options: [],

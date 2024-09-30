@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class AddUserEmailToReferral1709500213947 implements MigrationInterface {
     name = 'AddUserEmailToReferral1709500213947'
@@ -46,7 +46,7 @@ export class AddUserEmailToReferral1709500213947 implements MigrationInterface {
             ALTER TABLE "referal" DROP CONSTRAINT "fk_referral_referring_user_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_referral_referring_user_id"
+            DROP INDEX "idx_referral_referring_user_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "referal"
@@ -84,7 +84,7 @@ export class AddUserEmailToReferral1709500213947 implements MigrationInterface {
             ALTER TABLE "referal" DROP CONSTRAINT "fk_referral_referred_user_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_referral_referring_user_id"
+            DROP INDEX "idx_referral_referring_user_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "referal"

@@ -1,18 +1,19 @@
-import { FileId } from '../file/file'
+import { FileId } from '../file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
-import { ProjectId } from '../project'
+import { ProjectId, ProjectMemberRole } from '../project'
 import { UserId } from '../user'
 import { ApId } from './id-generator'
+import { Permission } from './security'
 
 export class ActivepiecesError extends Error {
-    constructor(public error: ErrorParams, message?: string) {
+    constructor(public error: ApErrorParams, message?: string) {
         super(error.code + (message ? `: ${message}` : ''))
     }
 }
 
-type ErrorParams =
+export type ApErrorParams =
     | AuthenticationParams
     | AuthorizationErrorParams
     | ConfigNotFoundErrorParams
@@ -35,6 +36,7 @@ type ErrorParams =
     | InvalidCredentialsErrorParams
     | InvalidJwtTokenErrorParams
     | InvalidOtpParams
+    | InvalidSAMLResponseParams
     | InvitationOnlySignUpParams
     | JobRemovalFailureErrorParams
     | OpenAiFailedErrorParams
@@ -57,7 +59,13 @@ type ErrorParams =
     | UserIsInActiveErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
-
+    | ExistingAlertChannelErrorParams
+    | ActivationKeyNotFoundParams
+    | ActivationKeyNotAlreadyActivated
+    | EmailAlreadyHasActivationKey
+    | ProviderProxyConfigNotFoundParams
+    | AITokenLimitExceededParams
+    | SessionExpiredParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -65,13 +73,19 @@ export type BaseErrorParams<T, V> = {
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
 ErrorCode.INVITATION_ONLY_SIGN_UP,
-Record<string, never>
+{
+    message?: string
+}
 >
 
 export type InvalidClaimParams = BaseErrorParams<ErrorCode.INVALID_CLAIM, { redirectUrl: string, tokenUrl: string, clientId: string }>
 export type InvalidCloudClaimParams = BaseErrorParams<ErrorCode.INVALID_CLOUD_CLAIM, { pieceName: string }>
 
 export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_TOKEN, {
+    message?: string
+}>
+
+export type SessionExpiredParams = BaseErrorParams<ErrorCode.SESSION_EXPIRED, {
     message?: string
 }>
 
@@ -87,11 +101,18 @@ Record<string, string> &
 }
 >
 
+export type AITokenLimitExceededParams = BaseErrorParams<ErrorCode.AI_TOKEN_LIMIT_EXCEEDED, {
+    usage: number
+    limit: number
+}> 
+
 export type PermissionDeniedErrorParams = BaseErrorParams<
 ErrorCode.PERMISSION_DENIED,
 {
     userId: UserId
     projectId: ProjectId
+    role: ProjectMemberRole
+    permission: Permission | undefined
 }
 >
 
@@ -173,7 +194,7 @@ ErrorCode.PIECE_TRIGGER_NOT_FOUND,
 {
     pieceName: string
     pieceVersion: string
-    triggerName: string
+    triggerName: string | undefined
 }
 >
 
@@ -201,7 +222,7 @@ ErrorCode.CONFIG_NOT_FOUND,
 export type JobRemovalFailureErrorParams = BaseErrorParams<
 ErrorCode.JOB_REMOVAL_FAILURE,
 {
-    jobId: ApId
+    flowVersionId: ApId
 }
 >
 
@@ -313,10 +334,16 @@ ErrorCode.INVALID_APP_CONNECTION,
 export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
-    metric: 'connections' | 'tasks' | 'bots' | 'datasource' | 'team-members'
-    quota: number
+    metric: 'tasks' | 'team-members' | 'ai-tokens'
+    quota?: number
 }
 >
+
+export type ProviderProxyConfigNotFoundParams = BaseErrorParams<
+ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+{
+    provider: string
+}>
 
 export type FeatureDisabledErrorParams = BaseErrorParams<
 ErrorCode.FEATURE_DISABLED,
@@ -336,11 +363,36 @@ ErrorCode.AUTHENTICATION,
 }
 >
 
+export type InvalidSAMLResponseParams = BaseErrorParams<
+ErrorCode.INVALID_SAML_RESPONSE,
+{
+    message: string
+}
+>
+
+export type ExistingAlertChannelErrorParams = BaseErrorParams<
+ErrorCode.EXISTING_ALERT_CHANNEL,
+{
+    email: string
+}
+>
+
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
+
+export type ActivationKeyNotFoundParams = BaseErrorParams<ErrorCode.ACTIVATION_KEY_NOT_FOUND, {
+    key: string
+}>
+export type ActivationKeyNotAlreadyActivated = BaseErrorParams<ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED, {
+    key: string
+}>
+export type EmailAlreadyHasActivationKey = BaseErrorParams<ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY, {
+    email: string
+}>
 
 export enum ErrorCode {
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
+    PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
@@ -349,6 +401,7 @@ export enum ErrorCode {
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
+    EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     FLOW_FORM_NOT_FOUND = 'FLOW_FORM_NOT_FOUND',
     FILE_NOT_FOUND = 'FILE_NOT_FOUND',
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
@@ -359,11 +412,13 @@ export enum ErrorCode {
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
     INVALID_BEARER_TOKEN = 'INVALID_BEARER_TOKEN',
+    SESSION_EXPIRED = 'SESSION_EXPIRED',
     INVALID_CLAIM = 'INVALID_CLAIM',
     INVALID_CLOUD_CLAIM = 'INVALID_CLOUD_CLAIM',
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
     INVALID_OR_EXPIRED_JWT_TOKEN = 'INVALID_OR_EXPIRED_JWT_TOKEN',
     INVALID_OTP = 'INVALID_OTP',
+    INVALID_SAML_RESPONSE = 'INVALID_SAML_RESPONSE',
     INVITATION_ONLY_SIGN_UP = 'INVITATION_ONLY_SIGN_UP',
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
@@ -373,6 +428,7 @@ export enum ErrorCode {
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
+    AI_TOKEN_LIMIT_EXCEEDED = 'AI_TOKEN_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
@@ -383,4 +439,7 @@ export enum ErrorCode {
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     VALIDATION = 'VALIDATION',
+    ACTIVATION_KEY_NOT_FOUND = 'ACTIVATION_KEY_NOT_FOUND',
+    ACTIVATION_KEY_ALREADY_ACTIVATED = 'ACTIVATION_KEY_ALREADY_ACTIVATED',
+    EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
 }

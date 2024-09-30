@@ -22,7 +22,7 @@ export const resend = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.resend.com',
       auth: resendAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

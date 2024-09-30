@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class AddOtpEntity1700396157624 implements MigrationInterface {
     name = 'AddOtpEntity1700396157624'
@@ -40,7 +40,7 @@ export class AddOtpEntity1700396157624 implements MigrationInterface {
             ALTER TABLE "otp" DROP CONSTRAINT "fk_otp_user_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_otp_user_id_type"
+            DROP INDEX "idx_otp_user_id_type"
         `)
         await queryRunner.query(`
             DROP TABLE "otp"

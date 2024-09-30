@@ -1,0 +1,7 @@
+{
+  "name": "@activepieces/piece-actualbudget",
+  "version": "0.0.2",
+  "devDependencies": {
+    "@types/node": "^20.14.9"
+  }
+}

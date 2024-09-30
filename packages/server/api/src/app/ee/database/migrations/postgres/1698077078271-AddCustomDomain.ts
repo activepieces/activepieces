@@ -1,6 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../../../database/database-common'
-import { ApEdition } from '@activepieces/shared'
 
 export class AddCustomDomain1698077078271 implements MigrationInterface {
     name = 'AddCustomDomain1698077078271'
@@ -37,7 +37,7 @@ export class AddCustomDomain1698077078271 implements MigrationInterface {
             ALTER TABLE "custom_domain" DROP CONSTRAINT "fk_custom_domain_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."custom_domain_domain_unique"
+            DROP INDEX "custom_domain_domain_unique"
         `)
         await queryRunner.query(`
             DROP TABLE "custom_domain"

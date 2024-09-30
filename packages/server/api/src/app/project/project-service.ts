@@ -1,18 +1,23 @@
-import { IsNull } from 'typeorm'
-import { repoFactory } from '../core/db/repo-factory'
-import { ProjectEntity } from './project-entity'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, apId,
     ApId,
+    assertNotNullOrUndefined,
     ErrorCode,
     isNil,
     NotificationStatus,
+    PlatformRole,
     Project,
     ProjectId,
     spreadIfDefined,
+    User,
     UserId,
 } from '@activepieces/shared'
+import { IsNull } from 'typeorm'
+import { repoFactory } from '../core/db/repo-factory'
+import { ProjectEntity } from './project-entity'
+import { projectHooks } from './project-hooks'
 
-const repo = repoFactory(ProjectEntity)
+export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
@@ -21,8 +26,9 @@ export const projectService = {
             ...params,
             notifyStatus: NotificationStatus.ALWAYS,
         }
-
-        return repo().save(newProject)
+        const savedProject = await projectRepo().save(newProject)
+        rejectedPromiseHandler(projectHooks.getHooks().postCreate(savedProject))
+        return savedProject
     },
 
     async getOne(projectId: ProjectId | undefined): Promise<Project | null> {
@@ -30,14 +36,14 @@ export const projectService = {
             return null
         }
 
-        return repo().findOneBy({
+        return projectRepo().findOneBy({
             id: projectId,
             deleted: IsNull(),
         })
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
-        await repo().update(
+        await projectRepo().update(
             {
                 id: projectId,
                 deleted: IsNull(),
@@ -50,6 +56,14 @@ export const projectService = {
         return this.getOneOrThrow(projectId)
     },
 
+    async getPlatformId(projectId: ProjectId): Promise<string> {
+        const result =  await projectRepo().createQueryBuilder('project').select('"platformId"').where({
+            id: projectId,
+        }).getRawOne()
+        const platformId = result?.platformId
+        assertNotNullOrUndefined(platformId, 'platformId for project is undefined in webhook')
+        return platformId
+    },
     async getOneOrThrow(projectId: ProjectId): Promise<Project> {
         const project = await this.getOne(projectId)
 
@@ -66,15 +80,30 @@ export const projectService = {
         return project
     },
 
-    async getUserProject(ownerId: UserId): Promise<Project | null> {
-        return repo().findOneBy({
-            ownerId,
-            deleted: IsNull(),
-        })
+    async getOneForUser(user: User): Promise<Project | null> {
+        assertNotNullOrUndefined(user.platformId, 'user.platformId')
+        switch (user.platformRole) {
+            case PlatformRole.ADMIN: {
+                return projectRepo().findOneBy({
+                    platformId: user.platformId,
+                    deleted: IsNull(),
+                })
+            }
+            case PlatformRole.MEMBER: {
+                return projectRepo().findOneBy({
+                    ownerId: user.id,
+                    platformId: user.platformId,
+                    deleted: IsNull(),
+                })
+            }
+        }
     },
 
     async getUserProjectOrThrow(ownerId: UserId): Promise<Project> {
-        const project = await this.getUserProject(ownerId)
+        const project = await projectRepo().findOneBy({
+            ownerId,
+            deleted: IsNull(),
+        })
 
         if (isNil(project)) {
             throw new ActivepiecesError({
@@ -99,14 +128,14 @@ export const projectService = {
             platformId,
         }
 
-        await repo().update(query, update)
+        await projectRepo().update(query, update)
     },
 
     async getByPlatformIdAndExternalId({
         platformId,
         externalId,
     }: GetByPlatformIdAndExternalIdParams): Promise<Project | null> {
-        return repo().findOneBy({
+        return projectRepo().findOneBy({
             platformId,
             externalId,
             deleted: IsNull(),

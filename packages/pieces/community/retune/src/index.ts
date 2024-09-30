@@ -78,7 +78,7 @@ export const retune = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://retune.so/api',
       auth: retuneAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'X-Workspace-API-Key': (auth as { apiKey: string }).apiKey,
       }),
     }),

@@ -1,0 +1,56 @@
+---
+title: 'AI in Actions'
+icon: 'brain'
+description: 'Learn how to use AI in actions'
+---
+
+## The Universal AI Interface
+
+The AI interface is a set of functions that allow you to interact with the AI. It provides a way to send queries to the AI, and to receive responses through the ActivePieces server.
+
+This allows piece users to use AI in their flows, without having to worry about the underlying implementation details like authentication and rate limits.
+
+### Import the AI Interface
+
+To use the AI interface, you need to import it from the `@activepieces/pieces-common` package.
+
+```typescript
+import { AI } from '@activepieces/pieces-common';
+```
+
+### Initialize the AI Instance
+
+To initialize the AI instance in your actions, you need to provide the following parameters:
+
+- `provider`: The AI provider to use. This is a string that represents the AI provider. For example, `openai` or `anthropic`.
+- `server`: The server context object. This is an object that contains information about the server, such as the API URL and token.
+
+```typescript
+  // In your action
+  async run(context) {
+    const ai = AI({ provider: 'openai', server: context.server })
+    ...
+  }
+```
+
+### Chat with the AI
+
+To chat with the AI, you can use the `ai.chat.text` method. This method takes an array of messages and a callback function that will be called with the response from the AI.
+
+```typescript
+const response = await ai.chat.text({
+  model: "gpt-4o",
+  messages: [ // The context of the conversation
+    {
+      role: "system",
+      content: "You are a helpful assistant.",
+    },
+    {
+      role: "user",
+      content: "What is the weather like today?",
+    }
+  ],
+  creativity: 100, // Optional, default is 100 .. this a number between 0 and 100 that represents the creativity of the AI
+  maxTokens: 2000, // Optional, default is 2000 .. this is the maximum number of tokens that the AI can generate
+})
+```

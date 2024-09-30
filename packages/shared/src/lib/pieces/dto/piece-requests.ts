@@ -1,13 +1,18 @@
 import { Static, Type } from '@sinclair/typebox'
+import { ApMultipartFile } from '../../common'
 import { ApEdition } from '../../flag/flag'
 import { PackageType, PieceCategory, PieceType } from '../piece'
 
-export const EXACT_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/
-export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/
+export const EXACT_VERSION_PATTERN = '^[0-9]+\\.[0-9]+\\.[0-9]+$'
+export const EXACT_VERSION_REGEX = new RegExp(EXACT_VERSION_PATTERN)
+const VERSION_PATTERN = '^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$'
 
-export const ExactVersionType = Type.RegEx(EXACT_VERSION_PATTERN)
-export const VersionType = Type.RegEx(VERSION_PATTERN)
-
+export const ExactVersionType = Type.String({
+    pattern: EXACT_VERSION_PATTERN,
+})
+export const VersionType = Type.String({
+    pattern: VERSION_PATTERN,
+})
 export enum SuggestionType {
     ACTION = 'ACTION',
     TRIGGER = 'TRIGGER',
@@ -75,7 +80,7 @@ export const PieceOptionRequest = Type.Object({
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
-    stepName: Type.String({}),
+    actionOrTriggerName: Type.String({}),
     propertyName: Type.String({}),
     flowId: Type.String(),
     flowVersionId: Type.String(),
@@ -94,16 +99,20 @@ export const AddPieceRequestBody = Type.Union([
     Type.Object({
         packageType: Type.Literal(PackageType.ARCHIVE),
         scope: Type.Enum(PieceScope),
-        pieceName: Type.String(),
+        pieceName: Type.String({
+            minLength: 1,
+        }),
         pieceVersion: ExactVersionType,
-        pieceArchive: Type.Unknown(),
+        pieceArchive: ApMultipartFile,
     }, {
         title: 'Private Piece',
     }),
     Type.Object({
         packageType: Type.Literal(PackageType.REGISTRY),
         scope: Type.Enum(PieceScope),
-        pieceName: Type.String(),
+        pieceName: Type.String({
+            minLength: 1,
+        }),
         pieceVersion: ExactVersionType,
     }, {
         title: 'NPM Piece',

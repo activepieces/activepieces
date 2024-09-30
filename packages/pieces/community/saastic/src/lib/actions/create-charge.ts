@@ -23,7 +23,6 @@ export const createCharge = createAction({
       displayName: 'Email',
       description: "The customer's email address.",
       required: true,
-      processors: [],
       validators: [Validators.email],
     }),
     amount: Property.Number({

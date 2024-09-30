@@ -1,0 +1,124 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+/* You can add global styles to this file, and also import other style files */
+
+@layer base {
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+    --border: 220 13% 87%;
+    --input: 220 13% 87%;
+    --ring: 262.1 83.3% 57.8%;
+    --radius: 0.75rem;
+
+    --primary-100: 257 75% 85%;
+    --primary: 257 74% 57%;
+    --primary-300: 257 74% 25%;
+    --primary-foreground: 210 20% 98%;
+
+    --destructive-100: 0 84.2% 90%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-300: 0 84.2% 40%;
+
+    --success-100: 148 48% 90%;
+    --success: 148 48% 46%;
+    --success-300: 148 48% 40%;
+
+    --warning-100: 51.72, 93.55%, 93.92%;
+    --warning: 47 96% 53%;
+    --warning-300: 28 80% 31%;
+    --add-button-shadow: 0px 0px 0px 6px hsl(var(--primary-100));
+
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 20 14.3% 4.1%;
+    --foreground: 0 0% 95%;
+    --card: 24 9.8% 10%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 95%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 12 6.5% 15.1%;
+    --accent-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 35%;
+    --input: 240 3.7% 35%;
+    --ring: 240 4.9% 83.9%;
+
+    --primary-100: 257 74% 25%;
+    --primary: 257 74% 57%;
+    --primary-300: 257 75% 85%;
+    --primary-foreground: 210 20% 98%;
+
+    --destructive-100: 4 100% 20%;
+    --destructive: 4 100% 30%;
+    --destructive-300: 0 96.3% 55%;
+
+    --success-100: 166 97% 20%;
+    --success: 166 97% 14%;
+    --success-300: 166 97% 60%;
+
+    --warning-100: 51.72, 93.55%, 17.92%;
+    --warning: 47 96% 53%;
+    --warning-300: 52 96% 70%;
+    --add-button-shadow: 0px 0px 0px 6px hsl(var(--primary-100) / 0.5);
+
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}
+
+.react-flow__panel.react-flow__attribution.bottom.right {
+  display: none;
+}
+
+.react-flow {
+  --xy-edge-stroke-selected-default: #b1b1b7 !important;
+  --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7;
+  --selection-border-default: 0px solid #b1b1b7;
+  --node-border-default: 0px solid #b1b1b7;
+}

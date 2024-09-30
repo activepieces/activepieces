@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class productEmbed1677894800372 implements MigrationInterface {
     name = 'productEmbed1677894800372'
@@ -45,11 +45,11 @@ export class productEmbed1677894800372 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
-            'DROP INDEX "public"."idx_connection_key_project_id"',
+            'DROP INDEX "idx_connection_key_project_id"',
         )
         await queryRunner.query('DROP TABLE "connection_key"')
         await queryRunner.query(
-            'DROP INDEX "public"."idx_app_credentials_projectId_appName"',
+            'DROP INDEX "idx_app_credentials_projectId_appName"',
         )
         await queryRunner.query('DROP TABLE "app_credential"')
         await queryRunner.query(

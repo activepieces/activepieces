@@ -1,7 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { todoistRestClient } from '../common/client/rest-client';
-import { todoistProjectIdDropdown } from '../common/props';
+import {
+  todoistProjectIdDropdown,
+  todoistSectionIdDropdown,
+} from '../common/props';
 import { TodoistCreateTaskRequest } from '../common/models';
 import { todoistAuth } from '../..';
 
@@ -11,7 +14,9 @@ export const todoistCreateTaskAction = createAction({
   displayName: 'Create Task',
   description: 'Create task',
   props: {
-    project_id: todoistProjectIdDropdown,
+    project_id: todoistProjectIdDropdown(
+      "Task project ID. If not set, task is put to user's Inbox."
+    ),
     content: Property.LongText({
       displayName: 'content',
       description:
@@ -38,21 +43,23 @@ export const todoistCreateTaskAction = createAction({
     due_date: Property.ShortText({
       displayName: 'Due date',
       description:
-        "Specific date in YYYY-MM-DD format relative to user's timezone",
+        "Can be either a specific date in YYYY-MM-DD format relative to user's timezone, a specific date and time in RFC3339 format, or a human defined date (e.g. 'next Monday') using local time",
       required: false,
     }),
-    section_id: Property.ShortText({
-      displayName: 'Section',
-      description:
-        "A section for the task. It should be a Section ID under the same project",
-      required: false,
-    }),
+    section_id: todoistSectionIdDropdown,
   },
 
   async run({ auth, propsValue }) {
     const token = auth.access_token;
-    const { project_id, content, description, labels, priority, due_date, section_id} =
-      propsValue as TodoistCreateTaskRequest;
+    const {
+      project_id,
+      content,
+      description,
+      labels,
+      priority,
+      due_date,
+      section_id,
+    } = propsValue as TodoistCreateTaskRequest;
 
     assertNotNullOrUndefined(token, 'token');
     assertNotNullOrUndefined(content, 'content');
@@ -64,7 +71,7 @@ export const todoistCreateTaskAction = createAction({
       labels,
       priority,
       due_date,
-      section_id
+      section_id,
     });
   },
 });

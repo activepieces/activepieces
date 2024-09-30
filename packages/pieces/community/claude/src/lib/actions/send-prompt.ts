@@ -6,6 +6,7 @@ import {
 import Anthropic from '@anthropic-ai/sdk';
 import mime from 'mime-types';
 import { claudeAuth } from '../..';
+import { TextBlock } from '@anthropic-ai/sdk/resources';
 
 const billingIssueMessage = `Error Occurred: 429 \n
 
@@ -38,6 +39,7 @@ export const askClaude = createAction({
           { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
           { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
           { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
+          { value: 'claude-3-5-sonnet-20240620', label: 'Claude 3.5 Sonnet' },
         ],
       },
     }),
@@ -71,18 +73,7 @@ export const askClaude = createAction({
     roles: Property.Json({
       displayName: 'Roles',
       required: false,
-      description: 'Array of roles to specify more accurate response',
-      defaultValue: [
-        {
-          role: 'assistant',
-          content: [
-            {
-              type: 'text',
-              text: 'Hello, how are you?',
-            },
-          ],
-        },
-      ],
+      description: `Array of roles to specify more accurate response.Please check [guide to Input Messages](https://docs.anthropic.com/en/api/messages-examples#vision).`,
     }),
   },
   async run({ auth, propsValue }) {
@@ -164,7 +155,8 @@ export const askClaude = createAction({
           system: systemPrompt,
           messages: roles,
         });
-        response = req?.content[0].text?.trim();
+
+        response = (req?.content[0] as TextBlock).text?.trim();
 
         break; // Break out of the loop if the request is successful
       } catch (e: any) {

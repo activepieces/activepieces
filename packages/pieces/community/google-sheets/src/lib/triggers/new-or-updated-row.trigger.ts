@@ -101,7 +101,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
   async onEnable(context) {
     const spreadSheetId = context.propsValue.spreadsheet_id;
     const sheetId = context.propsValue.sheet_id;
-    const triggerColumn = context.propsValue.trigger_column ;
+    const triggerColumn = context.propsValue.trigger_column ?? ALL_COLUMNS;
 
     const sheetName = await getWorkSheetName(
       context.auth,
@@ -109,24 +109,32 @@ export const newOrUpdatedRowTrigger = createTrigger({
       sheetId
     );
 
-    const range =
-      triggerColumn === ALL_COLUMNS
-        ? sheetName
-        : `${sheetName}!${triggerColumn}:${triggerColumn}`; // only fetch trigger column values
-
     const sheetValues = await getWorkSheetValues(
       context.auth,
       spreadSheetId,
-      range
+      sheetName
     );
 
     const rowHashes = [];
 
     // create initial row level hashes and used it to check updated row
     for (const row of sheetValues) {
+      let targetValue;
+      if (triggerColumn === ALL_COLUMNS) {
+        targetValue = row;
+      } else {
+        const currentTriggerColumnValue = row[labelToColumn(triggerColumn)];
+
+        targetValue =
+          currentTriggerColumnValue !== undefined &&
+          currentTriggerColumnValue !== '' // if column value is empty
+            ? [currentTriggerColumnValue]
+            : [];
+      }
+
       const rowHash = crypto
         .createHash('md5')
-        .update(JSON.stringify(row))
+        .update(JSON.stringify(targetValue))
         .digest('hex');
       rowHashes.push(rowHash);
     }
@@ -210,7 +218,8 @@ export const newOrUpdatedRowTrigger = createTrigger({
           currentRowValue[labelToColumn(triggerColumn)];
 
         targetValue =
-          currentTriggerColumnValue !== undefined
+          currentTriggerColumnValue !== undefined &&
+          currentTriggerColumnValue !== ''
             ? [currentTriggerColumnValue]
             : [];
       }

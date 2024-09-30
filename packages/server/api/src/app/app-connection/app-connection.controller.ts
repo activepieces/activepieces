@@ -1,10 +1,3 @@
-import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../helper/application-events'
-import { appConnectionService } from './app-connection-service/app-connection-service'
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ApId,
@@ -16,9 +9,14 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpsertAppConnectionRequestBody,
-    ValidateConnectionNameRequestBody,
-    ValidateConnectionNameResponse,
 } from '@activepieces/shared'
+import {
+    FastifyPluginCallbackTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
+import { eventsHooks } from '../helper/application-events'
+import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (
     app,
@@ -30,10 +28,11 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
             projectId: request.principal.projectId,
             request: request.body,
         })
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.UPSERTED_CONNECTION,
-            connection: appConnection,
-            userId: request.principal.id,
+        eventsHooks.get().sendUserEventFromRequest(request, {
+            action: ApplicationEventName.CONNECTION_UPSERTED,
+            data: {
+                connection: appConnection,
+            },
         })
         await reply
             .status(StatusCodes.CREATED)
@@ -44,39 +43,25 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
         '/',
         ListAppConnectionsRequest,
         async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-            const { name, pieceName, cursor, limit } = request.query
+            const { name, pieceName, status, cursor, limit } = request.query
 
             const appConnections = await appConnectionService.list({
                 pieceName,
                 name,
+                status,
                 projectId: request.principal.projectId,
                 cursorRequest: cursor ?? null,
                 limit: limit ?? DEFAULT_PAGE_SIZE,
             })
 
-            const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> =
-      {
-          ...appConnections,
-          data: appConnections.data.map(removeSensitiveData),
-      }
+            const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> = {
+                ...appConnections,
+                data: appConnections.data.map(removeSensitiveData),
+            }
 
             return appConnectionsWithoutSensitiveData
         },
     )
-    app.post(
-        '/validate-connection-name',
-        ValidateConnectionNameRequest,
-        async (request, reply): Promise<ValidateConnectionNameResponse> => {
-            const result = await appConnectionService.validateConnectionName({
-                projectId: request.principal.projectId,
-                connectionName: request.body.connectionName,
-            })
-            if (result.error) {
-                return reply.status(StatusCodes.BAD_REQUEST).send(result)
-            }
-            return result
-        },
-    ),
     app.delete(
         '/:id',
         DeleteAppConnectionRequest,
@@ -85,10 +70,11 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
                 id: request.params.id,
                 projectId: request.principal.projectId,
             })
-            eventsHooks.get().send(request, {
-                action: ApplicationEventName.DELETED_CONNECTION,
-                connection,
-                userId: request.principal.id,
+            eventsHooks.get().sendUserEventFromRequest(request, {
+                action: ApplicationEventName.CONNECTION_DELETED,
+                data: {
+                    connection,
+                },
             })
             await appConnectionService.delete({
                 id: request.params.id,
@@ -142,22 +128,6 @@ const ListAppConnectionsRequest = {
     },
 }
 
-const ValidateConnectionNameRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.READ_APP_CONNECTION,
-    },
-    schema: {
-        tags: ['app-connections'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        body: ValidateConnectionNameRequestBody,
-        description: 'Validate app connection name',
-        response: {
-            [StatusCodes.OK]: ValidateConnectionNameResponse,
-            [StatusCodes.BAD_REQUEST]: ValidateConnectionNameResponse,
-        },
-    },
-}
 
 const DeleteAppConnectionRequest = {
     config: {
@@ -172,7 +142,7 @@ const DeleteAppConnectionRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
 }

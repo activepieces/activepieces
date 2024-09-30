@@ -1,6 +1,6 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
 import { FlowVersion } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 type Step = {
     type: string

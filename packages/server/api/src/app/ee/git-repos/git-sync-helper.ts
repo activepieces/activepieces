@@ -1,12 +1,13 @@
 import fs from 'fs/promises'
 import path from 'path'
+import { ProjectSyncError } from '@activepieces/ee-shared'
+import { fileExists } from '@activepieces/server-shared'
+import { Flow, flowHelper, FlowOperationType, PopulatedFlow } from '@activepieces/shared'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
 import { GitFile } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
-import { ProjectSyncError } from '@activepieces/ee-shared'
-import { Flow, FlowOperationType, PopulatedFlow } from '@activepieces/shared'
 
 
 async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
@@ -18,7 +19,8 @@ async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
             return flowService.getOnePopulatedOrThrow({
                 id: f.id,
                 projectId,
-                removeSecrets: false,
+                removeConnectionsName: false,
+                removeSampleData: true,
             })
         }),
     )
@@ -62,23 +64,26 @@ async function createFlowInProject(flow: PopulatedFlow, projectId: string): Prom
             projectId,
         },
     })
-    return updateFlowInProject(createdFlow.id, flow, projectId)
+    return updateFlowInProject(createdFlow, flow, projectId)
 }
 
-async function updateFlowInProject(targetFlowId: string, flow: PopulatedFlow,
+async function updateFlowInProject(originalFlow: PopulatedFlow, newFlow: PopulatedFlow,
     projectId: string,
 ): Promise<PopulatedFlow> {
     const project = await projectService.getOneOrThrow(projectId)
+
+    const newFlowVersion = await flowHelper.updateFlowSecrets(originalFlow, newFlow) 
+
     return flowService.update({
-        id: targetFlowId,
+        id: originalFlow.id,
         projectId,
         lock: true,
         userId: project.ownerId,
         operation: {
             type: FlowOperationType.IMPORT_FLOW,
             request: {
-                displayName: flow.version.displayName,
-                trigger: flow.version.trigger,
+                displayName: newFlow.version.displayName,
+                trigger: newFlowVersion.trigger,
             },
         },
     })
@@ -122,9 +127,13 @@ async function upsertFlowToGit(fileName: string, flow: Flow, flowFolderPath: str
     await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
 }
 
-async function deleteFlowFromGit(flowId: string, flowFolderPath: string): Promise<void> {
+async function deleteFlowFromGit(flowId: string, flowFolderPath: string): Promise<boolean> {
     const flowJsonPath = path.join(flowFolderPath, `${flowId}.json`)
-    await fs.unlink(flowJsonPath)
+    const exists = await fileExists(flowJsonPath)
+    if (exists) {
+        await fs.unlink(flowJsonPath)
+    }
+    return exists
 }
 
 async function deleteFlowFromProject(flowId: string, projectId: string): Promise<void> {

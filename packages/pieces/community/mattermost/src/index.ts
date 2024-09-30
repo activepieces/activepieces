@@ -46,7 +46,7 @@ export const mattermost = createPiece({
       baseUrl: (auth) =>
         (auth as { workspace_url: string }).workspace_url + '/api/v4',
       auth: mattermostAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { token: string }).token}`,
       }),
     }),

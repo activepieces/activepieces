@@ -1,7 +1,7 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class MakeStripeCustomerIdNullable1700751925992
 implements MigrationInterface {
@@ -17,7 +17,7 @@ implements MigrationInterface {
             ALTER COLUMN "stripeCustomerId" DROP NOT NULL
         `)
         await queryRunner.query(`
-        DROP INDEX "public"."idx_plan_stripe_customer_id"
+        DROP INDEX "idx_plan_stripe_customer_id"
     `)
         logger.info('MakeStripeCustomerIdNullable1700751925992 finished')
     }

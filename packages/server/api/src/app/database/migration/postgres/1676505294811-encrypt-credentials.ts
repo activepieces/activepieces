@@ -1,13 +1,13 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
-import { decryptObject, encryptObject } from '../../../helper/encryption'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { encryptUtils } from '../../../helper/encryption'
 
 export class encryptCredentials1676505294811 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info('encryptCredentials1676505294811 up: started')
         const connections = await queryRunner.query('SELECT * FROM app_connection')
         for (const currentConnection of connections) {
-            currentConnection.value = encryptObject(currentConnection.value)
+            currentConnection.value = encryptUtils.encryptObject(currentConnection.value)
             await queryRunner.query(
                 `UPDATE app_connection SET value = '${JSON.stringify(
                     currentConnection.value,
@@ -22,7 +22,7 @@ export class encryptCredentials1676505294811 implements MigrationInterface {
         const connections = await queryRunner.query('SELECT * FROM app_connection')
         for (const currentConnection of connections) {
             try {
-                currentConnection.value = decryptObject(currentConnection.value)
+                currentConnection.value = encryptUtils.decryptObject(currentConnection.value)
                 await queryRunner.query(
                     `UPDATE app_connection SET value = '${JSON.stringify(
                         currentConnection.value,

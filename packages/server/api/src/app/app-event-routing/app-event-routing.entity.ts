@@ -1,6 +1,6 @@
+import { FlowId, ProjectId } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
-import { FlowId, ProjectId } from '@activepieces/shared'
 
 export type AppEventRoutingId = string
 
@@ -38,8 +38,8 @@ export const AppEventRoutingEntity = new EntitySchema<AppEventRouting>({
             unique: false,
         },
         {
-            name: 'idx_app_event_project_id_appName_identifier_value_event',
-            columns: ['appName', 'projectId', 'identifierValue', 'event'],
+            name: 'idx_app_event_flow_id_project_id_appName_identifier_value_event',
+            columns: ['appName', 'projectId', 'flowId', 'identifierValue', 'event'],
             unique: true,
         },
     ],

@@ -1,13 +1,14 @@
 import { ActionType, BranchStepOutput, flowHelper, FlowVersion, GenericStepOutput, LoopStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
-import { variableService } from '../../services/variable-service'
+import { variableService } from '../../variables/variable-service'
 import { FlowExecutorContext } from './flow-execution-context'
 
 export const testExecutionContext = {
-    async stateFromFlowVersion({ flowVersion, excludedStepName, projectId, workerToken }: {
+    async stateFromFlowVersion({ flowVersion, excludedStepName, projectId, engineToken, apiUrl }: {
         flowVersion: FlowVersion
         excludedStepName?: string
         projectId: string
-        workerToken: string
+        apiUrl: string
+        engineToken: string
     }): Promise<FlowExecutorContext> {
         const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)
         let flowExecutionContext = FlowExecutorContext.empty()
@@ -27,8 +28,9 @@ export const testExecutionContext = {
                     break
                 case ActionType.LOOP_ON_ITEMS: {
                     const { resolvedInput } = await variableService({
+                        apiUrl,
                         projectId,
-                        workerToken,
+                        engineToken,
                     }).resolve<{ items: unknown[] }>({
                         unresolvedInput: step.settings,
                         executionState: flowExecutionContext,

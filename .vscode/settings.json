@@ -9,5 +9,5 @@
         "source.fixAll.eslint": "explicit"
     },
     "typescript.tsdk": "node_modules/typescript/lib",
-    "javascript.preferences.importModuleSpecifier": "project-relative"
+    "javascript.preferences.importModuleSpecifier": "relative",
 }

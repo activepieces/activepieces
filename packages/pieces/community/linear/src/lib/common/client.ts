@@ -16,11 +16,11 @@ export class LinearClientWrapper {
   async listIssuePriorities() {
     return this.client.issuePriorityValues;
   }
-  async listUsers() {
-    return this.client.users();
+  async listUsers(variables: LinearDocument.UsersQueryVariables) {
+    return this.client.users(variables);
   }
-  async listIssueLabels() {
-    return this.client.issueLabels();
+  async listIssueLabels(variables: LinearDocument.IssueLabelsQueryVariables) {
+    return this.client.issueLabels(variables);
   }
   async listTeams(variables: LinearDocument.TeamsQueryVariables = {}) {
     return this.client.teams(variables);
@@ -54,6 +54,16 @@ export class LinearClientWrapper {
   }
   async deleteWebhook(webhookId: string) {
     return this.client.deleteWebhook(webhookId);
+  }
+  async listTeamsTemplates(
+    teamId: string,
+    variables: Omit<LinearDocument.Team_TemplatesQueryVariables, 'id'>
+  ) {
+    const team = await this.client.team(teamId);
+    return team.templates(variables);
+  }
+  async rawRequest(query: string, variables?: Record<string, unknown>) {
+    return this.client.client.rawRequest(query, variables);
   }
 }
 

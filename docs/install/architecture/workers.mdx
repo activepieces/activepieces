@@ -1,0 +1,98 @@
+---
+title: "Workers & Sandboxing" 
+icon: "gears"
+---
+
+This component is responsible for polling jobs from the app, preparing the sandbox, and executing them with the engine.
+
+## Jobs
+
+There are three types of jobs:
+
+- **Recurring Jobs**: Polling/schedule triggers jobs for active flows.
+- **Flow Jobs**: Flows that are currently being executed.
+- **Webhook Jobs**: Webhooks that still need to be ingested, as third-party webhooks can map to multiple flows or need mapping.
+
+<Tip>
+This documentation will not discuss how the engine works other than stating that it takes the jobs and produces the output. Please refer to [engine](./engine) for more information.
+</Tip>
+
+## Sandboxing
+
+Sandbox in Activepieces means in which environment the engine will execute the flow. There are three types of sandboxes, each with different trade-offs:
+
+<Snippet file="execution-mode.mdx" />
+
+
+
+
+### No Sandboxing & V8 Sandboxing
+
+The difference between the two modes is in the execution of code pieces. For V8 Sandboxing, we use [isolated-vm](https://www.npmjs.com/package/isolated-vm), which relies on V8 isolation to isolate code pieces.
+
+These are the steps that are used to execute the flow:
+
+<Steps>
+  <Step title="Prepare Code Pieces">
+    If the code doesn't exist, it will be compiled using TypeScript Compiler (tsc) and the necessary npm packages will be prepared, if possible.
+  </Step>
+  <Step title="Install Pieces">
+    Pieces are npm packages, we perform a simple check. If they don't exist, we use `pnpm` to install the pieces.
+  </Step>
+  <Step title="Execution">
+    There is a pool of worker threads kept warm and the engine stays running and listening. Each thread executes one engine operation and sends back the result upon completion.
+  </Step>
+</Steps>
+
+
+#### Security:
+In a self-hosted environment, all piece installations are done by the **platform admin**. It is assumed that the pieces are secure, as they have full access to the machine.
+
+Code pieces provided by the end user are isolated using V8, which restricts the user to browser JavaScript instead of Node.js with npm.
+
+#### Performance
+The flow execution is fast as the javascript can be, although there is overhead in polling from queue and prepare the files first time the flow get executed.
+
+#### Benchmark
+
+TBD
+
+### Kernel Namespaces Sandboxing
+
+This consists of two steps: the first one is preparing the sandbox, and the other one is the execution part.
+
+#### Prepare the folder
+
+Each flow will have a folder with everything required to execute this flows, which means the **engine**, **code pieces** and **npms**
+
+<Steps>
+  <Step title="Prepare Code Pieces">
+If the code doesn't exist, it will be compiled using TypeScript Compiler (tsc) and the necessary npm packages will be prepared, if possible.
+  </Step>
+  <Step title="Install Pieces">
+    Pieces are npm packages, we perform simple check If they don't exist we use `pnpm` to install the pieces.
+  </Step>
+</Steps>
+
+#### Execute Flow using Sandbox
+
+In this mode, we use kernel namespaces to isolate everything (file system, memory, CPU). The folder prepared earlier will be bound as a **Read Only** Directory.
+
+Then we use the command line and to spin up the isolation with new node process, something like that.
+```bash
+./isolate node path/to/flow.js --- rest of args
+```
+
+#### Security
+
+The flow execution is isolated in their own namespaces, which means pieces are isolated in different process and namespaces, So the user can run bash scripts and use the file system safely as It's limited and will be removed after the execution, in this mode the user can use any **NPM package** in their code piece.
+
+#### Performance
+
+This mode is **Slow** and **CPU Intensive**. The reason behind this is the **cold boot** of Node.js, since each flow execution will require a new **Node.js** process. The Node.js process consumes a lot of resources and takes some time to compile the code and start executing.
+
+
+#### Benchmark
+
+
+TBD

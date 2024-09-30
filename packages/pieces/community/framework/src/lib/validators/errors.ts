@@ -6,7 +6,7 @@ export enum ErrorMessages {
   NUMBER = 'Expected number, but found value: {userInput}',
   STRING = 'Expected string, but found value: {userInput}',
   WHOLE_NUMBER = 'Expected whole number, but found value: {userInput}',
-  MAX_LENGTH = 'The value: {userInput} may not be greater than {length} characters',
+  MAX_LENGTH = 'The value: {userInput} must be less than {length} characters',
   MIN_LENGTH = 'The value: {userInput} must be at least {length} characters',
   MAX = 'The value: {userInput} must be {max} or less',
   MIN = 'The value: {userInput} must be {min} or more',

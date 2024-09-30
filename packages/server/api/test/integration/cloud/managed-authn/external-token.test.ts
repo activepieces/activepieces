@@ -1,9 +1,10 @@
+import { apId, PiecesFilterType, PieceType, ProjectMemberRole } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
+import { setupServer } from '../../../../src/app/server'
 import { generateMockExternalToken } from '../../../helpers/auth'
 import {
     createMockPieceMetadata,
@@ -14,13 +15,12 @@ import {
     createMockTag,
     createMockUser,
 } from '../../../helpers/mocks'
-import { apId, PiecesFilterType, PieceType, ProjectMemberRole } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    await databaseConnection().initialize()
+    app = await setupServer()
 })
 
 beforeEach(async () => {
@@ -30,7 +30,7 @@ beforeEach(async () => {
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -39,15 +39,15 @@ describe('Managed Authentication API', () => {
         it('Signs up new users', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('signing_key')
                 .save(mockSigningKey)
 
@@ -75,7 +75,7 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.firstName).toBe(mockExternalTokenPayload.firstName)
             expect(responseBody?.lastName).toBe(mockExternalTokenPayload.lastName)
             expect(responseBody?.trackEvents).toBe(true)
-            expect(responseBody?.newsLetter).toBe(true)
+            expect(responseBody?.newsLetter).toBe(false)
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
@@ -90,15 +90,15 @@ describe('Managed Authentication API', () => {
         it('Creates new project', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('signing_key')
                 .save(mockSigningKey)
 
@@ -122,7 +122,7 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const generatedProject = await databaseConnection
+            const generatedProject = await databaseConnection()
                 .getRepository('project')
                 .findOneBy({
                     id: responseBody?.projectId,
@@ -141,10 +141,10 @@ describe('Managed Authentication API', () => {
         it('Sync Pieces when exchanging external token', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
 
             const mockPieceMetadata1 = createMockPieceMetadata({
@@ -152,7 +152,7 @@ describe('Managed Authentication API', () => {
                 version: '0.0.1',
                 pieceType: PieceType.OFFICIAL,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_metadata')
                 .save(mockPieceMetadata1)
 
@@ -162,7 +162,7 @@ describe('Managed Authentication API', () => {
                 name: 'free',
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('tag')
                 .save(mockTag)
 
@@ -173,7 +173,7 @@ describe('Managed Authentication API', () => {
                 pieceName: '@ap/a',
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('piece_tag')
                 .save(mockPieceTag)
 
@@ -181,7 +181,7 @@ describe('Managed Authentication API', () => {
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('signing_key')
                 .save(mockSigningKey)
 
@@ -212,7 +212,7 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const generatedProject = await databaseConnection
+            const generatedProject = await databaseConnection()
                 .getRepository('project_plan')
                 .findOneBy({ projectId: responseBody?.projectId })
 
@@ -223,15 +223,15 @@ describe('Managed Authentication API', () => {
         it('Adds new user as a member in new project', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('signing_key')
                 .save(mockSigningKey)
 
@@ -257,33 +257,32 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            const generatedProjectMember = await databaseConnection
+            const generatedProjectMember = await databaseConnection()
                 .getRepository('project_member')
                 .findOneBy({
-                    email: mockedEmail,
+                    userId: responseBody?.id,
                     platformId: mockPlatform.id,
                     projectId: responseBody?.projectId,
                 })
 
             expect(generatedProjectMember?.projectId).toBe(responseBody?.projectId)
-            expect(generatedProjectMember?.email).toBe(mockedEmail)
+            expect(generatedProjectMember?.userId).toBe(responseBody?.id)
             expect(generatedProjectMember?.platformId).toBe(mockPlatform.id)
             expect(generatedProjectMember?.role).toBe('VIEWER')
-            expect(generatedProjectMember?.status).toBe('ACTIVE')
         })
 
         it('Adds new user to existing project', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('signing_key')
                 .save(mockSigningKey)
 
@@ -294,7 +293,7 @@ describe('Managed Authentication API', () => {
                 platformId: mockPlatform.id,
                 externalId: mockExternalProjectId,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
@@ -321,17 +320,17 @@ describe('Managed Authentication API', () => {
         it('Signs in existing users', async () => {
             // arrange
             const mockPlatformOwner = createMockUser()
-            await databaseConnection.getRepository('user').save(mockPlatformOwner)
+            await databaseConnection().getRepository('user').save(mockPlatformOwner)
 
             const mockPlatform = createMockPlatform({
                 ownerId: mockPlatformOwner.id,
             })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('signing_key')
                 .save(mockSigningKey)
 
@@ -345,14 +344,14 @@ describe('Managed Authentication API', () => {
                 externalId: mockExternalTokenPayload.externalUserId,
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockProject = createMockProject({
                 ownerId: mockPlatformOwner.id,
                 platformId: mockPlatform.id,
                 externalId: mockExternalTokenPayload.externalProjectId,
             })
-            await databaseConnection.getRepository('project').save(mockProject)
+            await databaseConnection().getRepository('project').save(mockProject)
 
             // act
             const response = await app?.inject({
@@ -374,10 +373,10 @@ describe('Managed Authentication API', () => {
         it('Fails if signing key is not found', async () => {
             // arrange
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
             const nonExistentSigningKeyId = apId()
 

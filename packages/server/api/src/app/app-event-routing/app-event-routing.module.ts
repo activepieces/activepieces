@@ -1,30 +1,34 @@
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
-import { flowService } from '../flows/flow/flow.service'
-import { webhookService } from '../webhooks/webhook-service'
-import { AppEventRouting } from './app-event-routing.entity'
-import { appEventRoutingService } from './app-event-routing.service'
 import { facebookLeads } from '@activepieces/piece-facebook-leads'
+import { intercom } from '@activepieces/piece-intercom'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
-import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES,
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, rejectedPromiseHandler } from '@activepieces/server-shared'
+import {
+    ActivepiecesError, ALL_PRINCIPAL_TYPES,
+    apId,
+    assertNotNullOrUndefined,
     ErrorCode,
-    EventPayload,
     isNil,
 } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { flowQueue } from '../workers/queue'
+import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
+import { appEventRoutingService } from './app-event-routing.service'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
     square,
     'facebook-leads': facebookLeads,
+    intercom,
 }
-
 const pieceNames: Record<string, string> = {
     slack: '@activepieces/piece-slack',
     square: '@activepieces/piece-square',
     'facebook-leads': '@activepieces/piece-facebook-leads',
+    intercom: '@activepieces/piece-intercom',
 }
 
 export const appEventRoutingModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -41,7 +45,6 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                 rawBody: true,
                 allowedPrincipals: ALL_PRINCIPAL_TYPES,
             },
-            logLevel: 'silent',
         },
         async (
             request: FastifyRequest<{
@@ -53,7 +56,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             requestReply,
         ) => {
             const pieceUrl = request.params.pieceUrl
-            const eventPayload = {
+            const payload = {
                 headers: request.headers as Record<string, string>,
                 body: request.body,
                 rawBody: request.rawBody,
@@ -71,39 +74,46 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                     },
                 })
             }
-            const pieceName = pieceNames[pieceUrl]
-            const { reply, event, identifierValue } = piece.events!.parseAndReply({
-                payload: eventPayload,
-            })
-
-            logger.debug(
-                `Received event ${event} with identifier ${identifierValue} in app ${pieceName}`,
-            )
-            if (event && identifierValue) {
-                const listeners = await appEventRoutingService.listListeners({
-                    appName: pieceName,
-                    event,
-                    identifierValue,
-                })
-                rejectedPromiseHandler(Promise.all(listeners.map((listener) => {
-                    return callback(listener, eventPayload)
-                })))
+            const appName = pieceNames[pieceUrl]
+            assertNotNullOrUndefined(piece.events, 'Event is possible in this piece')
+            const { reply, event, identifierValue } = piece.events.parseAndReply({ payload })
+            if (!isNil(reply)) {
+                logger.info({
+                    reply,
+                    piece: pieceUrl,
+                }, '[AppEventRoutingController#event] reply')
+                return requestReply.status(StatusCodes.OK).headers(reply?.headers ?? {}).send(reply?.body ?? {})
             }
-            return requestReply
-                .status(200)
-                .headers(reply?.headers ?? {})
-                .send(reply?.body ?? {})
-        },
-    )
-}
-
-async function callback(listener: AppEventRouting, eventPayload: EventPayload) {
-    const flow = await flowService.getOneOrThrow({
-        projectId: listener.projectId,
-        id: listener.flowId,
-    })
-    return webhookService.callback({
-        flow,
-        payload: eventPayload,
-    })
+            logger.info({
+                event,
+                identifierValue,
+            }, '[AppEventRoutingController#event] event')
+            if (isNil(event) || isNil(identifierValue)) {
+                return requestReply.status(StatusCodes.BAD_REQUEST).send({})
+            }
+            const listeners = await appEventRoutingService.listListeners({
+                appName,
+                event,
+                identifierValue,
+            })
+            const eventsQueue = listeners.map(async (listener) => {
+                const requestId = apId()
+                return flowQueue.add({
+                    id: requestId,
+                    type: JobType.WEBHOOK,
+                    data: {
+                        projectId: listener.projectId,
+                        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                        requestId,
+                        synchronousHandlerId: null,
+                        payload,
+                        flowId: listener.flowId,
+                        simulate: false,
+                    },
+                    priority: DEFAULT_PRIORITY,
+                })
+            })
+            rejectedPromiseHandler(Promise.all(eventsQueue))
+            return requestReply.status(StatusCodes.OK).send({})
+        })
 }

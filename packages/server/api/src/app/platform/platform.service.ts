@@ -1,7 +1,3 @@
-import { databaseConnection } from '../database/database-connection'
-import { defaultTheme } from '../flags/theme'
-import { userService } from '../user/user-service'
-import { PlatformEntity } from './platform.entity'
 import {
     ActivepiecesError,
     apId,
@@ -15,10 +11,18 @@ import {
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId } from '@activepieces/shared'
+import { repoFactory } from '../core/db/repo-factory'
+import { defaultTheme } from '../flags/theme'
+import { userService } from '../user/user-service'
+import { PlatformEntity } from './platform.entity'
 
-const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
+const repo = repoFactory<Platform>(PlatformEntity)
 
 export const platformService = {
+    async hasAnyPlatforms(): Promise<boolean> {
+        const count = await repo().count()
+        return count > 0
+    },
     async create(params: AddParams): Promise<Platform> {
         const {
             ownerId,
@@ -38,6 +42,7 @@ export const platformService = {
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             embeddingEnabled: false,
+            analyticsEnabled: false,
             defaultLocale: LocalesEnum.ENGLISH,
             emailAuthEnabled: true,
             auditLogEnabled: false,
@@ -49,18 +54,20 @@ export const platformService = {
             ssoEnabled: false,
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
+            flowIssuesEnabled: false,
             gitSyncEnabled: false,
             managePiecesEnabled: false,
             manageTemplatesEnabled: false,
             manageProjectsEnabled: false,
             projectRolesEnabled: false,
-            showActivityLog: false,
             customDomainsEnabled: false,
             apiKeysEnabled: false,
             customAppearanceEnabled: false,
+            alertsEnabled: false,
+            premiumPieces: [],
         }
 
-        const savedPlatform = await repo.save(newPlatform)
+        const savedPlatform = await repo().save(newPlatform)
 
         await userService.addOwnerToPlatform({
             id: ownerId,
@@ -72,7 +79,7 @@ export const platformService = {
     },
 
     async getOldestPlatform(): Promise<Platform | null> {
-        return repo.findOne({
+        return repo().findOne({
             where: {},
             order: {
                 created: 'ASC',
@@ -93,6 +100,7 @@ export const platformService = {
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('smtpHost', params.smtpHost),
             ...spreadIfDefined('smtpPort', params.smtpPort),
+            ...spreadIfDefined('analyticsEnabled', params.analyticsEnabled),
             ...spreadIfDefined(
                 'federatedAuthProviders',
                 params.federatedAuthProviders,
@@ -112,6 +120,7 @@ export const platformService = {
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
             ),
+            ...spreadIfDefined('flowIssuesEnabled', params.flowIssuesEnabled),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('manageProjectsEnabled', params.manageProjectsEnabled),
             ...spreadIfDefined('managePiecesEnabled', params.managePiecesEnabled),
@@ -120,41 +129,40 @@ export const platformService = {
             ...spreadIfDefined('projectRolesEnabled', params.projectRolesEnabled),
             ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
-            
+            ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
+            ...spreadIfDefined('premiumPieces', params.premiumPieces),
         }
 
-        return repo.save(updatedPlatform)
+        return repo().save(updatedPlatform)
     },
 
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
-        const platform = await repo.findOneBy({
+        const platform = await repo().findOneBy({
             id,
         })
 
-        assertPlatformExists(platform)
-        return platform
+        if (isNil(platform)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: id,
+                    entityType: 'Platform',
+                    message: 'Platform not found',
+                },
+            })
+        }
+        
+        return {
+            ...platform,
+        }
     },
 
     async getOne(id: PlatformId): Promise<Platform | null> {
-        return repo.findOneBy({
+        return repo().findOneBy({
             id,
         })
     },
 }
-
-const assertPlatformExists: (
-    platform: Platform | null
-) => asserts platform is Platform = (platform) => {
-    if (isNil(platform)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'platform not found',
-            },
-        })
-    }
-}
-
 
 type AddParams = {
     ownerId: UserId
@@ -177,9 +185,12 @@ type UpdateParams = UpdatePlatformRequestBody & {
     customDomainsEnabled?: boolean
     customAppearanceEnabled?: boolean
     manageProjectsEnabled?: boolean
+    flowIssuesEnabled?: boolean
     managePiecesEnabled?: boolean
     manageTemplatesEnabled?: boolean
     apiKeysEnabled?: boolean
     projectRolesEnabled?: boolean
-    
+    alertsEnabled?: boolean 
+    analyticsEnabled?: boolean  
+    premiumPieces?: string[]
 }

@@ -4,6 +4,9 @@ exclude-labels:
   - 'release'
   - 'pre-release'
 categories:
+  - title: "⛓️‍💥 Breaking Changes"
+    labels:
+      - "⛓️‍💥 breaking-change"
   - title: "✨ Exciting New Features"
     labels:
       - "🌟 feature"
@@ -25,13 +28,6 @@ categories:
   - title: "🧹 Maintenance"
     labels:
       - "🧹 clean up"
-      - "💻 tech debt"
-  - title: "Other Changes"
-    labels:
-      - "*"
-  - title: "🖥️ API Changes"
-    labels:
-      - "🖥️ api"
 
 template: |
 

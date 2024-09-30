@@ -15,7 +15,6 @@
         "tsConfig": "packages/engine/tsconfig.lib.json",
         "assets": [],
         "webpackConfig": "packages/engine/webpack.config.js",
-        "isolatedConfig": true,
         "babelUpwardRootMode": true,
         "statsJson": false,
         "sourceMap": true

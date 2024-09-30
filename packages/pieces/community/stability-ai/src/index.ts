@@ -33,7 +33,7 @@ export const stabilityAi = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.stability.ai/v1',
       auth: stabilityAiAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { api_key: string }).api_key}`,
       }),
     }),

@@ -1,6 +1,6 @@
 import { DropdownState, Property } from '@activepieces/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../common';
-import _ from 'lodash';
+import { isEmpty, isNil } from '@activepieces/shared';
 
 const SelectFields = Property.MultiSelectDropdown({
   displayName: 'Return Fields',
@@ -14,7 +14,7 @@ const SelectFields = Property.MultiSelectDropdown({
       placeholder: '',
     };
 
-    if (_.isEmpty(auth) || _.isNil(model)) return searchFields;
+    if (isEmpty(auth) || isNil(model)) return searchFields;
 
     try {
       const { client } = makeClient(auth as ContentfulAuth);
@@ -22,10 +22,10 @@ const SelectFields = Property.MultiSelectDropdown({
         contentTypeId: model as unknown as string,
       });
       // Process available options
-      searchFields.options = _.chain(contentType.fields)
-        .filter((f) => !!f.id && !f.omitted && !f.disabled && !f.deleted)
-        .map((f) => ({ label: f.name, value: `fields.${f.id}` }))
-        .value();
+      searchFields.options = contentType.fields
+      .filter((f) => !!f.id && !f.omitted && !f.disabled && !f.deleted)
+      .map((f) => ({ label: f.name as string, value: `fields.${f.id}` }));
+    
       searchFields.disabled = false;
       searchFields.placeholder = 'Select fields to return';
     } catch (e) {

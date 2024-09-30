@@ -1,0 +1,51 @@
+---
+title: "Stack & Tools" 
+icon: "hammer"
+---
+
+## Language
+
+Activepieces uses **Typescript** as its one and only language.
+The reason behind unifying the language is the ability for it to break data models and features into packages, which can be shared across its components (worker / frontend / backend). 
+
+This enables it to focus on learning fewer tooling options and perfect them across all its packages.
+
+## Frontend
+
+- Web framework/library: [React](https://reactjs.org/)
+- Layout/components: [shadcn](https://shadcn.com/) / Tailwind
+
+## Backend
+
+- Framework: [Fastify](https://www.fastify.io/)
+- Database: [PostgreSQL](https://www.postgresql.org/)
+- Task Queuing: [Redis](https://redis.io/)
+- Task Worker: [BullMQ](https://github.com/taskforcesh/bullmq)
+
+## Testing
+
+- Unit & Integration Tests: [Jest](https://jestjs.io/)
+- E2E Test: [Playwright](https://playwright.dev/)
+
+## Additional Tools
+
+- Application monitoring: [Sentry](https://sentry.io/welcome/)
+- CI/CD: [GitHub Actions](https://github.com/features/actions) / [Depot](https://depot.dev/) / [Kamal](https://kamal-deploy.org/)
+- Containerization: [Docker](https://www.docker.com/) 
+- Linter: [ESLint](https://eslint.org/)
+- Logging: [Loki](https://grafana.com/) 
+- Building: [NX Monorepo](https://nx.dev/)
+
+## Adding New Tool
+
+Adding a new tool isn't a simple choice. A simple choice is one that's easy to do or undo, or one that only affects your work and not others'.
+
+We avoid adding new stuff to increase the ease of setup, which increases adoption. Having more dependencies means more moving parts and support.
+
+If you're thinking about a new tool, ask yourself these:
+
+- Is this tool open source? How can we give it to customers who use their own servers?
+- What does it fix, and why do we need it now?
+- Can we use what we already have instead?
+
+These questions only apply to required services for everyone. If this tool speeds up your own work, we don't need to think so hard.

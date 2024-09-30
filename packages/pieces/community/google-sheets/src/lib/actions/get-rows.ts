@@ -21,6 +21,7 @@ async function getRows(
   sheetId: number,
   memKey: string,
   groupSize: number,
+  startRow: number,
   testing: boolean
 ) {
   const sheetName = await googleSheetsCommon.findSheetName(
@@ -32,16 +33,16 @@ async function getRows(
   const memVal = await store.get(memKey, StoreScope.FLOW);
 
   let startingRow;
-  if (isNil(memVal) || memVal === '') startingRow = 1;
+  if (isNil(memVal) || memVal === '') startingRow = startRow || 1;
   else {
     startingRow = parseInt(memVal as string);
     if (isNaN(startingRow)) {
       throw Error(
         'The value stored in memory key : ' +
-          memKey +
-          ' is ' +
-          memVal +
-          ' and it is not a number'
+        memKey +
+        ' is ' +
+        memVal +
+        ' and it is not a number'
       );
     }
   }
@@ -72,6 +73,12 @@ async function getRows(
   return row;
 }
 
+const notes = `
+**Notes:**
+
+- Memory key is used to remember where last row was processed and will be used in the following runs.
+- Republishing the flow **keeps** the memory key value, If you want to start over **change** the memory key.
+`
 export const getRowsAction = createAction({
   auth: googleSheetsAuth,
   name: 'get_next_rows',
@@ -81,6 +88,16 @@ export const getRowsAction = createAction({
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     include_team_drives: googleSheetsCommon.include_team_drives,
     sheet_id: googleSheetsCommon.sheet_id,
+    startRow: Property.Number({
+      displayName: 'Start Row',
+      description: 'Which row to start from?',
+      required: true,
+      defaultValue: 1,
+      validators: [Validators.minValue(1)],
+    }),
+    markdown: Property.MarkDown({
+      value: notes
+    }),
     memKey: Property.ShortText({
       displayName: 'Memory Key',
       description: 'The key used to store the current row number in memory',
@@ -104,6 +121,7 @@ export const getRowsAction = createAction({
         propsValue['sheet_id'],
         propsValue['memKey'],
         propsValue['groupSize'],
+        propsValue['startRow'],
         false
       );
     } catch (error) {
@@ -123,6 +141,7 @@ export const getRowsAction = createAction({
         propsValue['sheet_id'],
         propsValue['memKey'],
         propsValue['groupSize'],
+        propsValue['startRow'],
         true
       );
     } catch (error) {

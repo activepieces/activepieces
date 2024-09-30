@@ -58,6 +58,7 @@ export const updateOpportunityStage = createAction({
       },
       body: { stage: propsValue.stage },
     });
+
     return response.body.data;
   },
 });

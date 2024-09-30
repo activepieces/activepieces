@@ -1,14 +1,3 @@
-import { FastifyRequest } from 'fastify'
-import { nanoid } from 'nanoid'
-import { AppConnectionEntity } from '../../../app-connection/app-connection.entity'
-import { extractResourceName } from '../../../authentication/authorization'
-import { databaseConnection } from '../../../database/database-connection'
-import { apiKeyService } from '../../../ee/api-keys/api-key-service'
-import { ProjectMemberEntity } from '../../../ee/project-members/project-member.entity'
-import { FlowEntity } from '../../../flows/flow/flow.entity'
-import { projectService } from '../../../project/project-service'
-import { requestUtils } from '../../request/request-utils'
-import { BaseSecurityHandler } from '../security-handler'
 import { ApiKey } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
@@ -21,6 +10,18 @@ import {
     Project,
     ProjectId,
 } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { nanoid } from 'nanoid'
+import { AppConnectionEntity } from '../../../app-connection/app-connection.entity'
+import { extractResourceName } from '../../../authentication/authorization'
+import { databaseConnection } from '../../../database/database-connection'
+import { apiKeyService } from '../../../ee/api-keys/api-key-service'
+import { ProjectMemberEntity } from '../../../ee/project-members/project-member.entity'
+import { FlowEntity } from '../../../flows/flow/flow.entity'
+import { FolderEntity } from '../../../flows/folder/folder.entity'
+import { projectService } from '../../../project/project-service'
+import { requestUtils } from '../../request/request-utils'
+import { BaseSecurityHandler } from '../security-handler'
 
 export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_NAME = 'authorization'
@@ -29,10 +30,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
         const prefix = `${PlatformApiKeyAuthnHandler.HEADER_PREFIX}${PlatformApiKeyAuthnHandler.API_KEY_PREFIX}`
-        const routeMatches =
-      request.headers[PlatformApiKeyAuthnHandler.HEADER_NAME]?.startsWith(
-          prefix,
-      ) ?? false
+        const routeMatches = request.headers[PlatformApiKeyAuthnHandler.HEADER_NAME]?.startsWith(prefix) ?? false
         const skipAuth = request.routeConfig.skipAuth
         return Promise.resolve(routeMatches && !skipAuth)
     }
@@ -91,7 +89,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid project id',
+                    message: 'invalid project id for api key',
                 },
             })
         }
@@ -100,10 +98,9 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     private async extractProjectIdOrThrow(
         request: FastifyRequest,
     ): Promise<ProjectId> {
-        const projectId =
-      requestUtils.extractProjectId(request) ??
-      (await this.extractProjectIdFromResource(request))
-
+        const projectIdFromRequest = requestUtils.extractProjectId(request)
+        const projectIdFromResource = await this.extractProjectIdFromResource(request)
+        const projectId = projectIdFromRequest ?? projectIdFromResource
         if (isNil(projectId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -120,10 +117,10 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
         request: FastifyRequest,
     ): Promise<string | undefined> {
         const oneResourceRoute =
-      request.routerPath.includes(':id') &&
-      isObject(request.params) &&
-      'id' in request.params &&
-      typeof request.params.id === 'string'
+            request.routerPath.includes(':id') &&
+            isObject(request.params) &&
+            'id' in request.params &&
+            typeof request.params.id === 'string'
 
         if (!oneResourceRoute) {
             return undefined
@@ -142,7 +139,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
         if (isNil(tableName)) {
             return undefined
         }
-        const entity = await databaseConnection.getRepository(tableName).findOneBy({
+        const entity = await databaseConnection().getRepository(tableName).findOneBy({
             id,
         })
         return entity?.projectId
@@ -161,6 +158,8 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
                 return AppConnectionEntity.options.name
             case 'project-members':
                 return ProjectMemberEntity.options.name
+            case 'folders':
+                return FolderEntity.options.name
         }
         return undefined
     }
@@ -173,7 +172,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid project id',
+                    message: 'invalid project id and platform id',
                 },
             })
         }

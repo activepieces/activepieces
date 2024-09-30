@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, PieceAuthProperty, Property, createAction } from "@activepieces/pieces-framework";
+import { OAuth2PropertyValue, PieceAuthProperty, Property, StaticDropdownProperty, createAction } from "@activepieces/pieces-framework";
 import { HttpError, HttpHeaders, HttpMethod, HttpRequest, QueryParams, httpClient } from "../http";
 import { assertNotNullOrUndefined } from "@activepieces/shared";
 
@@ -12,15 +12,28 @@ export const getAccessTokenOrThrow = (auth: OAuth2PropertyValue | undefined): st
   return accessToken;
 };
 
-export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
+export function createCustomApiCallAction({ auth, baseUrl, authMapping, description, displayName, name, props }: {
   auth?: PieceAuthProperty,
   baseUrl: (auth?: unknown) => string,
-  authMapping?: (auth: unknown) => HttpHeaders
+  authMapping?: (auth: unknown) => Promise<HttpHeaders>,
+  //   add description as a parameter that can be null
+  description?: string | null,
+  displayName?: string | null,
+  name?: string | null,
+  props?: {
+    url?: Partial<ReturnType<typeof Property.ShortText>>,
+    method?: Partial<StaticDropdownProperty<HttpMethod, boolean>>,
+    headers?: Partial<ReturnType<typeof Property.Object>>,
+    queryParams?: Partial<ReturnType<typeof Property.Object>>,
+    body?: Partial<ReturnType<typeof Property.Json>>,
+    failsafe?: Partial<ReturnType<typeof Property.Checkbox>>,
+    timeout?: Partial<ReturnType<typeof Property.Number>>,
+  }
 }) {
   return createAction({
-    name: 'custom_api_call',
-    displayName: 'Custom API Call',
-    description: 'Send a custom API call to a specific endpoint',
+    name: name ? name : 'custom_api_call',
+    displayName: displayName ? displayName : 'Custom API Call',
+    description: description ? description : 'Make a custom API call to a specific endpoint',
     auth: auth ? auth : undefined,
     requireAuth: auth ? true : false,
     props: {
@@ -32,9 +45,10 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: 'Add the endpoint to use. For example, /models',
+              description: 'The full URL to use, including the base URL',
               required: true,
-              defaultValue: baseUrl(auth)
+              defaultValue: baseUrl(auth),
+              ...(props?.url ?? {}),
             })
           }
         }
@@ -49,28 +63,34 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
               value: v,
             }
           })
-        }
+        },
+        ...(props?.method ?? {}),
       }),
       headers: Property.Object({
         displayName: 'Headers',
         description: 'Authorization headers are injected automatically from your connection.',
         required: true,
+        ...(props?.headers ?? {}),
       }),
       queryParams: Property.Object({
         displayName: 'Query Parameters',
         required: true,
+        ...(props?.queryParams ?? {}),
       }),
       body: Property.Json({
         displayName: 'Body',
         required: false,
+        ...(props?.body ?? {}),
       }),
       failsafe: Property.Checkbox({
         displayName: 'No Error on Failure',
         required: false,
+        ...(props?.failsafe ?? {}),
       }),
       timeout: Property.Number({
         displayName: 'Timeout (in seconds)',
         required: false,
+        ...(props?.timeout ?? {}),
       }),
     },
 
@@ -83,9 +103,12 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping }: {
 
       let headersValue = headers as HttpHeaders;
       if (authMapping) {
-        headersValue = {
-          ...headersValue,
-          ...authMapping(context.auth)
+        const headers = await authMapping(context.auth)
+        if (headers) {
+          headersValue = {
+            ...headersValue,
+            ...headers
+          }
         }
       }
 

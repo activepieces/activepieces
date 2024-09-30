@@ -6,6 +6,7 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import { TwitterApi } from 'twitter-api-v2';
 import { createTweet } from './lib/actions/create-tweet';
+import { createReply } from './lib/actions/create-reply';
 
 const markdownDescription = `
 If you don't have the credentials down below, please follow these steps to obtain the required credentials:
@@ -14,7 +15,7 @@ If you don't have the credentials down below, please follow these steps to obtai
 
 2. Under the **Settings** tab then under **User authentication settings** section, click "Set up".
 
-3. Check on **Read and write** for "App permissions" and **Native App** for "Type of App", fill in your website url and let the **Callback URI / Redirect URL** be **(your_website_url)/redirect** .
+3. **This step must be completed before generating the keys**, check on **Read and write** for "App permissions" and **Native App** for "Type of App", fill in your website url and let the **Callback URI / Redirect URL** be **(your_website_url)/redirect** .
 
 4. Go back to your app settings page and click the **Keys and tokens** tab.
 
@@ -89,6 +90,6 @@ export const twitter = createPiece({
   categories: [PieceCategory.COMMUNICATION],
   authors: ["Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: twitterAuth,
-  actions: [createTweet],
+  actions: [createTweet, createReply],
   triggers: [],
 });

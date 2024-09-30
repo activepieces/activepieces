@@ -1,8 +1,10 @@
+import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
+import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockOAuthApp,
@@ -10,8 +12,6 @@ import {
     createMockUser,
     mockBasicSetup,
 } from '../../../helpers/mocks'
-import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
-import { apId, PlatformRole, PrincipalType } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -22,12 +22,12 @@ const upsertRequest: UpsertOAuth2AppRequest = {
 }
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    await databaseConnection().initialize()
+    app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -35,12 +35,12 @@ describe('OAuth App API', () => {
     describe('Upsert OAuth APP API', () => {
         it('new OAuth App', async () => {
             const mockUser = createMockUser()
-            await databaseConnection.getRepository('user').save(mockUser)
+            await databaseConnection().getRepository('user').save(mockUser)
 
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-            await databaseConnection.getRepository('platform').save(mockPlatform)
+            await databaseConnection().getRepository('platform').save(mockPlatform)
 
-            await databaseConnection.getRepository('user').update(mockUser.id, {
+            await databaseConnection().getRepository('user').update(mockUser.id, {
                 platformId: mockPlatform.id,
                 platformRole: PlatformRole.ADMIN,
             })
@@ -69,43 +69,21 @@ describe('OAuth App API', () => {
             expect(responseBody.clientSecret).toBeUndefined()
         })
 
-        it('Fails if platform is not found', async () => {
-            // arrange
-            const nonExistentPlatformId = apId()
-
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                platform: {
-                    id: nonExistentPlatformId,
-                },
-            })
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/oauth-apps',
-                body: upsertRequest,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
 
         it('Fails if user is not platform owner', async () => {
             // arrange
             const mockOwner = createMockUser()
-            await databaseConnection.getRepository('user').save([mockOwner])
+            await databaseConnection().getRepository('user').save([mockOwner])
 
             const mockPlatform = createMockPlatform({ ownerId: mockOwner.id })
-            await databaseConnection.getRepository('platform').save([mockPlatform])
+            await databaseConnection().getRepository('platform').save([mockPlatform])
 
 
             const mockUser = createMockUser({
                 platformId: mockPlatform.id,
                 platformRole: PlatformRole.MEMBER,
             })
-            await databaseConnection.getRepository('user').save([mockUser])
+            await databaseConnection().getRepository('user').save([mockUser])
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -137,10 +115,10 @@ describe('OAuth App API', () => {
                 platformId: mockPlatformTwo.id,
             })
 
-            await databaseConnection.getRepository('user').update(mockUserTwo.id, {
+            await databaseConnection().getRepository('user').update(mockUserTwo.id, {
                 platformRole: PlatformRole.MEMBER,
             })
-            await databaseConnection.getRepository('oauth_app').save(mockOAuthApp)
+            await databaseConnection().getRepository('oauth_app').save(mockOAuthApp)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -167,7 +145,7 @@ describe('OAuth App API', () => {
             const mockOAuthApp = createMockOAuthApp({
                 platformId: mockPlatform.id,
             })
-            await databaseConnection.getRepository('oauth_app').save(mockOAuthApp)
+            await databaseConnection().getRepository('oauth_app').save(mockOAuthApp)
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -198,7 +176,7 @@ describe('OAuth App API', () => {
                 platformId: mockPlatformOne.id,
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('oauth_app')
                 .save([mockOAuthAppsOne])
 
@@ -237,7 +215,7 @@ describe('OAuth App API', () => {
                 platformId: mockPlatformTwo.id,
             })
 
-            await databaseConnection
+            await databaseConnection()
                 .getRepository('oauth_app')
                 .save([mockOAuthAppsOne, mockOAuthAppsTwo])
 

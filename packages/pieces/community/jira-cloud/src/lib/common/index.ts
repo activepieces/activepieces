@@ -174,6 +174,10 @@ export async function createJiraIssue(data: CreateIssueParams) {
 			version: 1,
 		};
 
+	if (data.parentKey) {
+		fields.parent = { key: data.parentKey };
+	}
+
 	const response = await sendJiraRequest({
 		url: 'issue',
 		method: HttpMethod.POST,
@@ -207,6 +211,11 @@ export async function updateJiraIssue(data: UpdateIssueParams) {
 			type: 'doc',
 			version: 1,
 		};
+
+	if (data.parentKey) {
+		fields.parent = { key: data.parentKey };
+	}
+
 	const response = await sendJiraRequest({
 		url: `issue/${data.issueId}`,
 		method: HttpMethod.PUT,

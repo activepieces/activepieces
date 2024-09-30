@@ -1,15 +1,4 @@
-import { EntityManager, IsNull } from 'typeorm'
-import { transaction } from '../../core/db/transaction'
-import { acquireLock } from '../../helper/lock'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { telemetry } from '../../helper/telemetry.utils'
-import { flowVersionService } from '../flow-version/flow-version.service'
-import { flowFolderService } from '../folder/folder.service'
-import { flowSideEffects } from './flow-service-side-effects'
-import { FlowEntity } from './flow.entity'
-import { flowRepo } from './flow.repo'
-import { logger } from '@activepieces/server-shared'
+import { AppSystemProp, logger, rejectedPromiseHandler, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -31,6 +20,22 @@ import {
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
+import { EntityManager, In, IsNull } from 'typeorm'
+import { transaction } from '../../core/db/transaction'
+import { emailService } from '../../ee/helper/email/email-service'
+import { distributedLock } from '../../helper/lock'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { telemetry } from '../../helper/telemetry.utils'
+import { flowVersionService } from '../flow-version/flow-version.service'
+import { flowFolderService } from '../folder/folder.service'
+import { flowSideEffects } from './flow-service-side-effects'
+import { FlowEntity } from './flow.entity'
+import { flowRepo } from './flow.repo'
+
+
+const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
+
 
 export const flowService = {
     async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
@@ -38,6 +43,7 @@ export const flowService = {
         const folderId = isNil(request.folderName) ? null : (await flowFolderService.upsert({
             projectId,
             request: {
+                projectId,
                 displayName: request.folderName,
             },
         })).id
@@ -82,6 +88,7 @@ export const flowService = {
         limit,
         folderId,
         status,
+        name,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
@@ -102,9 +109,8 @@ export const flowService = {
         }
 
         if (status !== undefined) {
-            queryWhere.status = status
+            queryWhere.status = In(status)
         }
-
         const paginationResult = await paginator.paginate(
             flowRepo().createQueryBuilder('flow').where(queryWhere),
         )
@@ -122,8 +128,8 @@ export const flowService = {
         })
 
         const populatedFlows = await Promise.all(populatedFlowPromises)
-
-        return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
+        const filteredPopulatedFlows = name ? populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i'))) : populatedFlows
+        return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
     },
 
     async getOneById(id: string): Promise<Flow | null> {
@@ -148,7 +154,8 @@ export const flowService = {
         id,
         projectId,
         versionId,
-        removeSecrets = false,
+        removeConnectionsName = false,
+        removeSampleData = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
         const flow = await flowRepo(entityManager).findOneBy({
@@ -163,7 +170,8 @@ export const flowService = {
         const flowVersion = await flowVersionService.getFlowVersionOrThrow({
             flowId: id,
             versionId,
-            removeSecrets,
+            removeConnectionsName,
+            removeSampleData,
             entityManager,
         })
 
@@ -177,14 +185,16 @@ export const flowService = {
         id,
         projectId,
         versionId,
-        removeSecrets = false,
+        removeConnectionsName = false,
+        removeSampleData = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow> {
         const flow = await this.getOnePopulated({
             id,
             projectId,
             versionId,
-            removeSecrets,
+            removeConnectionsName,
+            removeSampleData,
             entityManager,
         })
         assertFlowIsNotNull(flow)
@@ -199,7 +209,7 @@ export const flowService = {
         lock = true,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowLock = lock
-            ? await acquireLock({
+            ? await distributedLock.acquireLock({
                 key: id,
                 timeout: 30000,
             })
@@ -304,6 +314,54 @@ export const flowService = {
         })
     },
 
+    async updateFailureCount({
+        flowId,
+        projectId,
+        success,
+    }: UpdateFailureCountParams): Promise<void> {
+        const flow = await flowService.getOnePopulatedOrThrow({
+            id: flowId,
+            projectId,
+        })
+
+        const { schedule } = flow
+        const skipUpdateFlowCount = isNil(schedule) || flow.status === FlowStatus.DISABLED
+
+        if (skipUpdateFlowCount) {
+            return
+        }
+        const newFailureCount = success ? 0 : (schedule.failureCount ?? 0) + 1
+
+        if (newFailureCount >= TRIGGER_FAILURES_THRESHOLD) {
+            await this.updateStatus({
+                id: flowId,
+                projectId,
+                newStatus: FlowStatus.DISABLED,
+            })
+
+            await emailService.sendExceedFailureThresholdAlert(projectId, flow.version.displayName)
+            rejectedPromiseHandler(telemetry.trackProject(projectId, {
+                name: TelemetryEventName.TRIGGER_FAILURES_EXCEEDED,
+                payload: {
+                    projectId,
+                    flowId,
+                    pieceName: flow.version.trigger.settings.pieceName,
+                    pieceVersion: flow.version.trigger.settings.pieceVersion,
+                },
+            },
+            ),
+            )
+        }
+
+        await flowRepo().update(flowId, {
+            schedule: {
+                ...flow.schedule,
+                failureCount: newFailureCount,
+            },
+        })
+    },
+
+
     async updatedPublishedVersionId({
         id,
         userId,
@@ -345,7 +403,7 @@ export const flowService = {
     },
 
     async delete({ id, projectId }: DeleteParams): Promise<void> {
-        const lock = await acquireLock({
+        const lock = await distributedLock.acquireLock({
             key: id,
             timeout: 10000,
         })
@@ -355,7 +413,7 @@ export const flowService = {
                 id,
                 projectId,
             })
-            
+
             await flowSideEffects.preDelete({
                 flowToDelete,
             })
@@ -382,7 +440,8 @@ export const flowService = {
             id: flowId,
             projectId,
             versionId,
-            removeSecrets: true,
+            removeConnectionsName: true,
+            removeSampleData: true,
         })
 
         return {
@@ -463,7 +522,8 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     folderId: string | undefined
-    status: FlowStatus | undefined
+    status: FlowStatus[] | undefined
+    name: string | undefined
 }
 
 type GetOneParams = {
@@ -474,7 +534,8 @@ type GetOneParams = {
 
 type GetOnePopulatedParams = GetOneParams & {
     versionId?: FlowVersionId
-    removeSecrets?: boolean
+    removeConnectionsName?: boolean
+    removeSampleData?: boolean
 }
 
 type GetTemplateParams = {
@@ -490,7 +551,7 @@ type CountParams = {
 
 type UpdateParams = {
     id: FlowId
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
     operation: FlowOperationRequest
     lock?: boolean
@@ -503,9 +564,15 @@ type UpdateStatusParams = {
     entityManager?: EntityManager
 }
 
+type UpdateFailureCountParams = {
+    flowId: FlowId
+    projectId: ProjectId
+    success: boolean
+}
+
 type UpdatePublishedVersionIdParams = {
     id: FlowId
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
 }
 
@@ -518,7 +585,7 @@ type NewFlow = Omit<Flow, 'created' | 'updated'>
 
 type LockFlowVersionIfNotLockedParams = {
     flowVersion: FlowVersion
-    userId: UserId
+    userId: UserId | null
     projectId: ProjectId
     entityManager: EntityManager
 }

@@ -1,16 +1,6 @@
-import {
-    FastifyPluginAsyncTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
-import dayjs from 'dayjs'
-import { StatusCodes } from 'http-status-codes'
-import { isNil } from 'lodash'
-import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { eventsHooks } from '../../helper/application-events'
-import { projectService } from '../../project/project-service'
-import { flowService } from './flow.service'
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ActivepiecesError,
+import {
+    ActivepiecesError,
     ApId,
     CountFlowsRequest,
     CreateFlowRequest,
@@ -18,6 +8,8 @@ import { ActivepiecesError,
     FlowOperationRequest,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
+    GetFlowTemplateRequestQuery,
+    isNil,
     ListFlowsRequest,
     Permission,
     PopulatedFlow,
@@ -26,6 +18,18 @@ import { ActivepiecesError,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import dayjs from 'dayjs'
+import { StatusCodes } from 'http-status-codes'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware'
+import { gitRepoService } from '../../ee/git-repos/git-repo.service'
+import { eventsHooks } from '../../helper/application-events'
+import { projectService } from '../../project/project-service'
+import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -38,33 +42,36 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             request: request.body,
         })
 
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.CREATED_FLOW,
-            flow: newFlow,
-            userId: request.principal.id,
+        eventsHooks.get().sendUserEventFromRequest(request, {
+            action: ApplicationEventName.FLOW_CREATED,
+            data: {
+                flow: newFlow,
+            },
         })
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
     })
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
+        const userId = await extractUserIdFromPrincipal(request.principal)
+        await assertUserHasPermissionToFlow(request.principal, request.body.type)
+
         const flow = await flowService.getOnePopulatedOrThrow({
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-
-        const userId = await extractUserIdFromPrincipal(request.principal)
         await assertThatFlowIsNotBeingUsed(flow, userId)
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.UPDATED_FLOW,
-            request: request.body,
-            flow,
-            userId: request.principal.id,
+        eventsHooks.get().sendUserEventFromRequest(request, {
+            action: ApplicationEventName.FLOW_UPDATED,
+            data: {
+                request: request.body,
+                flowVersion: flow.version,
+            },
         })
 
         const updatedFlow = await flowService.update({
             id: request.params.id,
-            userId,
+            userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
             projectId: request.principal.projectId,
             operation: request.body,
         })
@@ -78,6 +85,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             status: request.query.status,
+            name: request.query.name,
         })
     })
 
@@ -109,11 +117,17 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-        const userId = await extractUserIdFromPrincipal(request.principal)
-        eventsHooks.get().send(request, {
-            action: ApplicationEventName.DELETED_FLOW,
-            flow,
-            userId,
+        eventsHooks.get().sendUserEventFromRequest(request, {
+            action: ApplicationEventName.FLOW_DELETED,
+            data: {
+                flow,
+                flowVersion: flow.version,
+            },
+        })
+        await gitRepoService.onFlowDeleted({
+            flowId: request.params.id,
+            userId: request.principal.id,
+            projectId: request.principal.projectId,
         })
         await flowService.delete({
             id: request.params.id,
@@ -172,7 +186,7 @@ const CreateFlowRequestOptions = {
 
 const UpdateFlowRequestOptions = {
     config: {
-        permission: Permission.WRITE_FLOW,
+        permission: Permission.UPDATE_FLOW_STATUS,
     },
     schema: {
         tags: ['flows'],
@@ -212,6 +226,7 @@ const GetFlowTemplateRequestOptions = {
         params: Type.Object({
             id: ApId,
         }),
+        querystring: GetFlowTemplateRequestQuery,
         response: {
             [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
         },
@@ -250,7 +265,7 @@ const DeleteFlowRequestOptions = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.NO_CONTENT]: Type.Undefined(),
+            [StatusCodes.NO_CONTENT]: Type.Never(),
         },
     },
 }

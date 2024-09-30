@@ -43,7 +43,7 @@ export const pastefy = createPiece({
         return typedAuth.instance_url + '/api/v2';
       },
       auth: pastefyAuth,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         const typedAuth = auth as { token?: string };
         return {
           Authorization: typedAuth.token

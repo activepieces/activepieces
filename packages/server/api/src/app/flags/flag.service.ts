@@ -1,28 +1,29 @@
+import { AppSystemProp, flowTimeoutSandbox, SharedSystemProp, system, webhookSecretsUtils } from '@activepieces/server-shared'
+import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
-import { databaseConnection } from '../database/database-connection'
-import { getEdition, getSupportedAppWebhooks } from '../helper/secret-helper'
-import { webhookService } from '../webhooks/webhook-service'
+import { webhookUtils } from 'server-worker'
+import { repoFactory } from '../core/db/repo-factory'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, Flag, isNil } from '@activepieces/shared'
 
-const flagRepo = databaseConnection.getRepository(FlagEntity)
+const flagRepo = repoFactory(FlagEntity)
+
+let cachedVersion: string | undefined
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
-        return flagRepo.save({
+        return flagRepo().save({
             id: flag.id,
             value: flag.value,
         })
     },
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
-        return flagRepo.findOneBy({
+        return flagRepo().findOneBy({
             id: flagId,
         })
     },
     async getAll(): Promise<Flag[]> {
-        const flags = await flagRepo.find({})
+        const flags = await flagRepo().find({})
         const now = new Date().toISOString()
         const created = now
         const updated = now
@@ -31,19 +32,37 @@ export const flagService = {
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
-                value: system.get(SystemProp.ENVIRONMENT),
+                value: system.get(SharedSystemProp.ENVIRONMENT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
+                value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.IS_CLOUD_PLATFORM,
+                value: false,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.PIECES_SYNC_MODE,
-                value: system.get(SystemProp.PIECES_SYNC_MODE),
+                value: system.get(AppSystemProp.PIECES_SYNC_MODE),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+                value: system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_PLATFORM_DEMO,
-                value: [ApEdition.CLOUD].includes(getEdition()),
+                value: [ApEdition.CLOUD].includes(system.getEdition()),
                 created,
                 updated,
             },
@@ -61,7 +80,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
-                value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
+                value: system.getBoolean(AppSystemProp.CLOUD_AUTH_ENABLED) ?? true,
                 created,
                 updated,
             },
@@ -72,13 +91,19 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.COPILOT_ENABLED,
-                value: !isNil(system.get(SystemProp.OPENAI_API_KEY)),
+                id: ApFlagId.CODE_COPILOT_ENABLED,
+                value: !isNil(system.get(AppSystemProp.OPENAI_API_KEY)),
                 created,
                 updated,
             },
             {
-                id: ApFlagId.SHOW_COPILOT,
+                id: ApFlagId.HTTP_REQUEST_COPILOT_ENABLED,
+                value: !isNil(system.get(AppSystemProp.OPENAI_API_KEY)) && !isNil(system.get(AppSystemProp.RAPID_API_KEY)),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_COPILOTS,
                 value: true,
                 created,
                 updated,
@@ -103,13 +128,13 @@ export const flagService = {
             },
             {
                 id: ApFlagId.EDITION,
-                value: getEdition(),
+                value: system.getEdition(),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_BILLING,
-                value: getEdition() === ApEdition.CLOUD,
+                value: system.getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
             },
@@ -121,9 +146,9 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(getEdition())
+                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
                     ? this.getThirdPartyRedirectUrl(undefined, undefined)
-                    : undefined,
+                    : `${system.get(SharedSystemProp.FRONTEND_URL)}/redirect`,
                 created,
                 updated,
             },
@@ -141,19 +166,19 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_DOCS,
-                value: getEdition() !== ApEdition.ENTERPRISE,
+                value: system.getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_COMMUNITY,
-                value: getEdition() !== ApEdition.ENTERPRISE,
+                value: system.getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.PRIVATE_PIECES_ENABLED,
-                value: getEdition() !== ApEdition.COMMUNITY,
+                value: system.getEdition() !== ApEdition.COMMUNITY,
                 created,
                 updated,
             },
@@ -170,32 +195,26 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SIGN_UP_ENABLED,
-                value: system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.TELEMETRY_ENABLED,
-                value: system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true,
+                value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.WEBHOOK_URL_PREFIX,
-                value: await webhookService.getWebhookPrefix(),
+                value: await webhookUtils.getWebhookPrefix(),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.FRONTEND_URL,
-                value: system.get(SystemProp.FRONTEND_URL),
+                value: system.get(SharedSystemProp.FRONTEND_URL),
                 created,
                 updated,
             },
             {
-                id: ApFlagId.SANDBOX_RUN_TIME_SECONDS,
-                value: system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS),
+                id: ApFlagId.FLOW_RUN_TIME_SECONDS,
+                value: flowTimeoutSandbox,
                 created,
                 updated,
             },
@@ -213,10 +232,17 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                value: getSupportedAppWebhooks(),
+                value: webhookSecretsUtils.getSupportedAppWebhooks(),
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
+                value: system.get(SharedSystemProp.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY,
+                created,
+                updated,
+            },
+
         )
 
         return flags
@@ -230,7 +256,7 @@ export const flagService = {
         if (isCustomerPlatform) {
             return `https://${hostname}/redirect`
         }
-        const frontendUrl = system.get(SystemProp.FRONTEND_URL)
+        const frontendUrl = system.get(SharedSystemProp.FRONTEND_URL)
         const trimmedFrontendUrl = frontendUrl?.endsWith('/')
             ? frontendUrl.slice(0, -1)
             : frontendUrl
@@ -240,12 +266,18 @@ export const flagService = {
         const packageJson = await import('package.json')
         return packageJson.version
     },
-
     async getLatestRelease(): Promise<string> {
         try {
+            if (cachedVersion) {
+                return cachedVersion
+            }
             const response = await axios.get<PackageJson>(
                 'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
+                {
+                    timeout: 5000,
+                },
             )
+            cachedVersion = response.data.version
             return response.data.version
         }
         catch (ex) {
@@ -253,7 +285,7 @@ export const flagService = {
         }
     },
     isCloudPlatform(platformId: string | null): boolean {
-        const cloudPlatformId = system.get(SystemProp.CLOUD_PLATFORM_ID)
+        const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
         if (!cloudPlatformId || !platformId) {
             return false
         }
@@ -263,7 +295,6 @@ export const flagService = {
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
-    | BaseFlagStructure<ApFlagId.PLATFORM_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>

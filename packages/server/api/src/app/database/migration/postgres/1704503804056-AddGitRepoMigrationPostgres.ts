@@ -1,6 +1,6 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../database-common'
-import { ApEdition } from '@activepieces/shared'
 
 export class AddGitRepoMigrationPostgres1704503804056
 implements MigrationInterface {
@@ -40,7 +40,7 @@ implements MigrationInterface {
             ALTER TABLE "git_repo" DROP CONSTRAINT "fk_git_repo_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_git_repo_project_id"
+            DROP INDEX "idx_git_repo_project_id"
         `)
         await queryRunner.query(`
             DROP TABLE "git_repo"

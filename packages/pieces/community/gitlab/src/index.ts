@@ -29,7 +29,7 @@ export const gitlab = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://gitlab.com/api/v4',
       auth: gitlabAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

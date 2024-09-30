@@ -1,3 +1,4 @@
+import { FilteredPieceBehavior, LocalesEnum, Platform, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -6,7 +7,6 @@ import {
     isPostgres,
     JSONB_COLUMN_TYPE,
 } from '../database/database-common'
-import { FilteredPieceBehavior, LocalesEnum, Platform, User } from '@activepieces/shared'
 
 type PlatformSchema = Platform & {
     owner: User
@@ -76,6 +76,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
+        flowIssuesEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
         cloudAuthEnabled: {
             type: Boolean,
             nullable: false,
@@ -98,6 +102,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             nullable: false,
         },
         manageTemplatesEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        analyticsEnabled: {
             type: Boolean,
             nullable: false,
         },
@@ -156,8 +164,13 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
-        showActivityLog: {
+        alertsEnabled: {
             type: Boolean,
+            nullable: false,
+        },
+        premiumPieces: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
             nullable: false,
         },
     },

@@ -44,7 +44,7 @@ export const totalcms = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { domain: string }).domain,
       auth: cmsAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         'total-key': (auth as { license: string }).license,
       }),
     }),

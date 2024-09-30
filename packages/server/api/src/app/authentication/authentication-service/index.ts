@@ -1,12 +1,9 @@
-import { QueryFailedError } from 'typeorm'
-import { flagService } from '../../flags/flag.service'
-import { generateRandomPassword } from '../../helper/crypto'
-import { telemetry } from '../../helper/telemetry.utils'
-import { userService } from '../../user/user-service'
-import { passwordHasher } from '../lib/password-hasher'
-import { authenticationServiceHooks as hooks } from './hooks'
-import { Provider } from './hooks/authentication-service-hooks'
-import { logger, system, SystemProp } from '@activepieces/server-shared'
+import {
+    cryptoUtils,
+    logger,
+    SharedSystemProp,
+    system,
+} from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -21,12 +18,17 @@ import {
     UserId,
     UserStatus,
 } from '@activepieces/shared'
-
-const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
+import { nanoid } from 'nanoid'
+import { QueryFailedError } from 'typeorm'
+import { flagService } from '../../flags/flag.service'
+import { telemetry } from '../../helper/telemetry.utils'
+import { userService } from '../../user/user-service'
+import { passwordHasher } from '../lib/password-hasher'
+import { authenticationServiceHooks as hooks } from './hooks'
+import { Provider } from './hooks/authentication-service-hooks'
 
 export const authenticationService = {
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
-        await assertSignUpIsEnabled()
         await hooks.get().preSignUp(params)
         const user = await createUser(params)
 
@@ -62,13 +64,11 @@ export const authenticationService = {
             platformId: params.platformId,
             email: params.email,
         })
-
         if (existingUser) {
             return this.signInResponse({
                 user: existingUser,
             })
         }
-
         const newUser = {
             email: params.email,
             verified: params.verified,
@@ -76,7 +76,7 @@ export const authenticationService = {
             lastName: params.lastName,
             trackEvents: true,
             newsLetter: true,
-            password: await generateRandomPassword(),
+            password: await cryptoUtils.generateRandomPassword(),
             platformId: params.platformId,
         }
 
@@ -130,17 +130,6 @@ export const authenticationService = {
     },
 }
 
-const assertSignUpIsEnabled = async (): Promise<void> => {
-    const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
-
-    if (userCreated && !SIGN_UP_ENABLED) {
-        throw new ActivepiecesError({
-            code: ErrorCode.SIGN_UP_DISABLED,
-            params: {},
-        })
-    }
-}
-
 const createUser = async (params: SignUpParams): Promise<User> => {
     try {
         const newUser: NewUser = {
@@ -154,12 +143,14 @@ const createUser = async (params: SignUpParams): Promise<User> => {
             newsLetter: params.newsLetter,
             password: params.password,
             platformId: params.platformId,
+            tokenVersion: nanoid(),
         }
 
         return await userService.create(newUser)
     }
     catch (e: unknown) {
         if (e instanceof QueryFailedError) {
+            logger.error(e)
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
                 params: {
@@ -250,7 +241,7 @@ async function saveNewsLetterSubscriber(user: User): Promise<void> {
     (!isNil(user.platformId) &&
       !flagService.isCloudPlatform(user.platformId)) ||
     !user.newsLetter
-    const environment = system.get(SystemProp.ENVIRONMENT)
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
     if (
         isPlatformUserOrNotSubscribed ||
     environment !== ApEnvironment.PRODUCTION

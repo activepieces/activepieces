@@ -24,19 +24,31 @@ export const resizeImage = createAction({
       displayName: 'Maintain aspect ratio for height',
       required: false,
       defaultValue: false,
-    })
+    }),
+    resultFileName: Property.ShortText({
+      displayName: 'Result File Name',
+      description:
+        'Specifies the output file name for the result image (without extension).',
+      required: false,
+    }),
   },
   async run(context) {
     const image = await jimp.read(context.propsValue.image.data);
-    await image.resize(context.propsValue.width, (context.propsValue.aspectRatio ? jimp.AUTO : context.propsValue.height));
-    
+    await image.resize(
+      context.propsValue.width,
+      context.propsValue.aspectRatio ? jimp.AUTO : context.propsValue.height
+    );
+
     const imageBuffer = await image.getBufferAsync(image.getMIME());
 
     const imageReference = await context.files.write({
-      fileName: 'image.' + image.getExtension(),
-      data: imageBuffer
+      fileName:
+        (context.propsValue.resultFileName ?? 'image') +
+        '.' +
+        image.getExtension(),
+      data: imageBuffer,
     });
-  
+
     return imageReference;
   },
 });

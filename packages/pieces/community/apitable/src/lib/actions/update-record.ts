@@ -48,7 +48,7 @@ export const updateRecordAction = createAction({
       context.auth as PiecePropValueSchema<typeof APITableAuth>
     );
 
-    const response: any = await client.updateRecord(datasheetId as string, {
+    const response: any = await client.updateRecord(datasheetId, {
       records: [
         {
           recordId: recordId,

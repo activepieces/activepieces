@@ -1,7 +1,7 @@
 import { CodeAction, FlowRunStatus, PieceAction } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext, VerdictResponse } from '../handler/context/flow-execution-context'
-import { EngineError } from './execution-errors'
+import { ExecutionError, ExecutionErrorType } from './execution-errors'
 
 export async function runWithExponentialBackoff<T extends CodeAction | PieceAction>(
     executionState: FlowExecutorContext,
@@ -49,10 +49,10 @@ export async function continueIfFailureHandler(
 
 export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
     logError(error)
-
+    const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorType.ENGINE
     return {
         message: error instanceof Error ? error.message : JSON.stringify(error),
-        verdictResponse: error instanceof EngineError ? {
+        verdictResponse: isEngineError ? {
             reason: FlowRunStatus.INTERNAL_ERROR,
         } : undefined,
     }

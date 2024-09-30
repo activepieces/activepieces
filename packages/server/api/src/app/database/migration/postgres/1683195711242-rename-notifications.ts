@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RenameNotifications1683195711242 implements MigrationInterface {
     name = 'RenameNotifications1683195711242'

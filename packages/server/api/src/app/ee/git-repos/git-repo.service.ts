@@ -1,4 +1,24 @@
-import { databaseConnection } from '../../database/database-connection'
+import {
+    ConfigureRepoRequest,
+    GitBranchType,
+    GitPushOperationType,
+    GitRepo,
+    ProjectOperationType,
+    ProjectSyncError,
+    ProjectSyncPlan,
+    ProjectSyncPlanOperation, PushGitRepoRequest,
+} from '@activepieces/ee-shared'
+import { system } from '@activepieces/server-shared'
+import {
+    ActivepiecesError,
+    ApEdition,
+    apId,
+    ErrorCode,
+    FlowStatus,
+    isNil,
+    SeekPage,
+} from '@activepieces/shared'
+import { repoFactory } from '../../core/db/repo-factory'
 import { flowService } from '../../flows/flow/flow.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
@@ -7,31 +27,14 @@ import { GitRepoEntity } from './git-repo.entity'
 import { gitSyncHelper } from './git-sync-helper'
 import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
-import {
-    ConfigureRepoRequest,
-    GitPushOperationType,
-    GitRepo,
-    ProjectOperationType,
-    ProjectSyncError,
-    ProjectSyncPlan,
-    ProjectSyncPlanOperation, PushGitRepoRequest,
-} from '@activepieces/ee-shared'
-import {
-    ActivepiecesError,
-    apId,
-    ErrorCode,
-    FlowStatus,
-    isNil,
-    SeekPage,
-} from '@activepieces/shared'
 
-const repo = databaseConnection.getRepository(GitRepoEntity)
+const repo = repoFactory(GitRepoEntity)
 
 export const gitRepoService = {
     async upsert(request: ConfigureRepoRequest): Promise<GitRepo> {
-        const existingRepo = await repo.findOneBy({ projectId: request.projectId })
+        const existingRepo = await repo().findOneBy({ projectId: request.projectId })
         const id = existingRepo?.id ?? apId()
-        await repo.upsert(
+        await repo().upsert(
             {
                 id,
                 projectId: request.projectId,
@@ -43,10 +46,10 @@ export const gitRepoService = {
             },
             ['projectId'],
         )
-        return repo.findOneByOrFail({ id })
+        return repo().findOneByOrFail({ id })
     },
     async getOneByProjectOrThrow({ projectId }: { projectId: string }): Promise<GitRepo> {
-        const gitRepo = await repo.findOneByOrFail({ projectId })
+        const gitRepo = await repo().findOneByOrFail({ projectId })
         if (isNil(gitRepo)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -58,7 +61,7 @@ export const gitRepoService = {
         return gitRepo
     },
     async getOrThrow({ id }: { id: string }): Promise<GitRepo> {
-        const gitRepo = await repo.findOneByOrFail({ id })
+        const gitRepo = await repo().findOneByOrFail({ id })
         if (isNil(gitRepo)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -71,8 +74,27 @@ export const gitRepoService = {
         return gitRepo
     },
     async list({ projectId }: { projectId: string }): Promise<SeekPage<GitRepo>> {
-        const repos = await repo.findBy({ projectId })
+        const repos = await repo().findBy({ projectId })
         return paginationHelper.createPage<GitRepo>(repos, null)
+    },
+    async onFlowDeleted({ flowId, userId, projectId }: { flowId: string, userId: string, projectId: string }): Promise<void> {
+        const edition = system.getEdition()
+        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+            return
+        }
+        const gitRepo = await repo().findOneBy({ projectId })
+        if (isNil(gitRepo) || gitRepo.branchType === GitBranchType.PRODUCTION) {
+            return
+        }
+        await this.push({
+            id: gitRepo.id,
+            userId,
+            request: {
+                type: GitPushOperationType.DELETE_FLOW,
+                commitMessage: `chore: deleted flow ${flowId}`,
+                flowId,
+            },
+        })
     },
     async push({ id, userId, request }: PushParams): Promise<void> {
         const gitRepo = await gitRepoService.getOrThrow({ id })
@@ -84,10 +106,12 @@ export const gitRepoService = {
                 const flow = await flowService.getOnePopulatedOrThrow({
                     id: request.flowId,
                     projectId: project.id,
+                    removeConnectionsName: false,
+                    removeSampleData: true,
                 })
                 const flowName = mappingState.findSourceId(request.flowId) ?? request.flowId
                 await gitSyncHelper.upsertFlowToGit(flowName, flow, flowFolderPath)
-                await repo.update({ id: gitRepo.id }, {
+                await repo().update({ id: gitRepo.id }, {
                     mapping: mappingState.mapFlow({
                         sourceId: flowName,
                         targetId: flow.id,
@@ -98,11 +122,18 @@ export const gitRepoService = {
             }
             case GitPushOperationType.DELETE_FLOW: {
                 const mappingState = gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()
-                await repo.update({ id: gitRepo.id }, {
+                await repo().update({ id: gitRepo.id }, {
                     mapping: mappingState.deleteFlow(request.flowId),
                 })
-                await gitSyncHelper.deleteFlowFromGit(request.flowId, flowFolderPath)
-                await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowId} from user interface`)
+
+                const sourceFlowId = mappingState.findSourceId(request.flowId)
+                if (isNil(sourceFlowId)) {
+                    break
+                }
+                const deleted = await gitSyncHelper.deleteFlowFromGit(sourceFlowId, flowFolderPath)
+                if (deleted) {
+                    await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowId} from user interface`)
+                }
                 break
             }
         }
@@ -129,7 +160,7 @@ export const gitRepoService = {
         for (const operation of operations) {
             switch (operation.type) {
                 case ProjectOperationType.UPDATE_FLOW: {
-                    const flowUpdated = await gitSyncHelper.updateFlowInProject(operation.projectFlow.id, operation.gitFile.flow, gitRepo.projectId)
+                    const flowUpdated = await gitSyncHelper.updateFlowInProject(operation.projectFlow, operation.gitFile.flow, gitRepo.projectId)
                     if (flowUpdated.status === FlowStatus.ENABLED) {
                         publishJobs.push(gitSyncHelper.republishFlow(flowUpdated.id, gitRepo.projectId))
                     }
@@ -153,12 +184,12 @@ export const gitRepoService = {
                     break
             }
         }
-        await repo.update({ id: gitRepo.id }, { mapping: newMapState })
+        await repo().update({ id: gitRepo.id }, { mapping: newMapState })
         const errors = (await Promise.all(publishJobs)).filter((f): f is ProjectSyncError => f !== null)
         return toResponse(operations, errors)
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
-        const gitRepo = await repo.findOneBy({ id, projectId })
+        const gitRepo = await repo().findOneBy({ id, projectId })
         if (isNil(gitRepo)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -168,7 +199,7 @@ export const gitRepoService = {
                 },
             })
         }
-        await repo.delete({ id, projectId })
+        await repo().delete({ id, projectId })
     },
 }
 

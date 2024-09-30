@@ -1,23 +1,21 @@
-import { isNil } from 'lodash'
-import { databaseConnection } from '../../database/database-connection'
-import { ProjectPlanEntity } from './project-plan.entity'
 import { DEFAULT_FREE_PLAN_LIMIT, FlowPlanLimits } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
-    apId, ErrorCode, ProjectPlan,
+    apId, ErrorCode, isNil, ProjectPlan,
 } from '@activepieces/shared'
+import { repoFactory } from '../../core/db/repo-factory'
+import { ProjectPlanEntity } from './project-plan.entity'
 
-const projectPlanRepo =
-    databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity)
+const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
 
 export const projectLimitsService = {
     async upsert(
         planLimits: Partial<FlowPlanLimits>,
         projectId: string,
     ): Promise<ProjectPlan> {
-        const existingPlan = await projectPlanRepo.findOneBy({ projectId })
+        const existingPlan = await projectPlanRepo().findOneBy({ projectId })
         if (existingPlan) {
-            await projectPlanRepo.update(existingPlan.id, {
+            await projectPlanRepo().update(existingPlan.id, {
                 tasks: planLimits.tasks,
                 teamMembers: planLimits.teamMembers,
                 name: planLimits.nickname,
@@ -25,6 +23,7 @@ export const projectLimitsService = {
                 piecesFilterType: planLimits.piecesFilterType,
                 minimumPollingInterval: planLimits.minimumPollingInterval,
                 connections: planLimits.connections,
+                aiTokens: planLimits.aiTokens,
             })
         }
         else {
@@ -33,26 +32,26 @@ export const projectLimitsService = {
                 ...planLimits,
             })
         }
-        return projectPlanRepo.findOneByOrFail({ projectId })
+        return projectPlanRepo().findOneByOrFail({ projectId })
     },
     async getPlanByProjectId(projectId: string): Promise<ProjectPlan | null> {
-        return projectPlanRepo.findOneBy({ projectId })
+        return projectPlanRepo().findOneBy({ projectId })
     },
     async increaseTask(projectId: string, tasks: number): Promise<ProjectPlan> {
-        await projectPlanRepo.increment({
+        await projectPlanRepo().increment({
             projectId,
         }, 'tasks', tasks)
-        return projectPlanRepo.findOneByOrFail({ projectId })
+        return projectPlanRepo().findOneByOrFail({ projectId })
     },
     async getOrCreateDefaultPlan(projectId: string, flowPlanLimit: FlowPlanLimits): Promise<ProjectPlan> {
-        const existingPlan = await projectPlanRepo.findOneBy({ projectId })
+        const existingPlan = await projectPlanRepo().findOneBy({ projectId })
         if (!existingPlan) {
             await createDefaultPlan(projectId, flowPlanLimit)
         }
-        return projectPlanRepo.findOneByOrFail({ projectId })
+        return projectPlanRepo().findOneByOrFail({ projectId })
     },
     async getPiecesFilter(projectId: string): Promise<Pick<ProjectPlan, 'piecesFilterType' | 'pieces'>> {
-        const plan = await projectPlanRepo.createQueryBuilder().select(['"piecesFilterType"', 'pieces']).where('"projectId" = :projectId', { projectId }).getRawOne()
+        const plan = await projectPlanRepo().createQueryBuilder().select(['"piecesFilterType"', 'pieces']).where('"projectId" = :projectId', { projectId }).getRawOne()
         if (isNil(plan)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -70,7 +69,7 @@ export const projectLimitsService = {
 
 
 async function createDefaultPlan(projectId: string, flowPlanLimit: FlowPlanLimits): Promise<ProjectPlan> {
-    await projectPlanRepo.upsert({
+    await projectPlanRepo().upsert({
         id: apId(),
         projectId,
         pieces: flowPlanLimit.pieces,
@@ -78,10 +77,11 @@ async function createDefaultPlan(projectId: string, flowPlanLimit: FlowPlanLimit
         tasks: flowPlanLimit.tasks,
         teamMembers: flowPlanLimit.teamMembers,
         minimumPollingInterval: flowPlanLimit.minimumPollingInterval,
-        connections: flowPlanLimit.connections,
+        connections: flowPlanLimit.connections, 
+        aiTokens: flowPlanLimit.aiTokens,
         name: flowPlanLimit.nickname,
     }, ['projectId'])
 
-    return projectPlanRepo.findOneByOrFail({ projectId })
+    return projectPlanRepo().findOneByOrFail({ projectId })
 
 }

@@ -17,3 +17,7 @@ export const StepRunResponse = Type.Object({
 })
 
 export type StepRunResponse = Static<typeof StepRunResponse>
+
+export const StepExecutionPath = Type.Array(Type.Tuple([Type.String(), Type.Number()]))
+export type StepExecutionPath = Static<typeof StepExecutionPath>
+

@@ -16,7 +16,6 @@ export const getClient = createAction({
       displayName: 'Client e-mail address',
       description: 'A valid e-mail address to get client details for',
       required: true,
-      processors: [],
       validators: [Validators.email],
     }),
   },

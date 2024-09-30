@@ -1,4 +1,6 @@
 import { TlsOptions } from 'node:tls'
+import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
@@ -19,7 +21,6 @@ import { ModifyBilling1694902537045 } from '../ee/database/migrations/postgres/1
 import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
-import { getEdition } from '../helper/secret-helper'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
@@ -28,6 +29,11 @@ import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/
 import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from './migration/common/1701096458822-add-partial-unique-index-for-email-and-platform-id-is-null'
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
+import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
+import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
+import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/1723549873495-ChangeEventRoutingConstraint'
+import { RemoveUniqueConstraintOnStepFile1725570317713 } from './migration/common/1725570317713-RemoveUniqueConstraintOnStepFile'
+import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-AddUserSessionId'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -130,15 +136,27 @@ import { AddPlatformRoleToUser1713302610746 } from './migration/postgres/1713302
 import { AddUniqueNameToFolder1713643694049 } from './migration/postgres/1713643694049-AddUniqueNameToFolder'
 import { AddFeaturesToPlatform1714145914415 } from './migration/postgres/1714145914415-AddFeaturesToPlatform'
 import { UnifyEnterpriseWithCloud1714249840058 } from './migration/postgres/1714249840058-UnifyEnterpriseWithCloud'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
+import { AddIssueEntityPostgres1714904516114 } from './migration/postgres/1714904516114-AddIssueEntityPostgres'
+import { AddAlertsEntityPostgres1716989780835 } from './migration/postgres/1716989780835-AddAlertsEntityPostgres'
+import { AddPremiumPiecesColumnPostgres1717370717678 } from './migration/postgres/1717370717678-AddPremiumPiecesColumnPostgres'
+import { AddUserInvitation1717960689650 } from './migration/postgres/1717960689650-AddUserInvitation'
+import { ModifyProjectMembers1717961669938 } from './migration/postgres/1717961669938-ModifyProjectMembers'
+import { AddWorkerMachine1720101280025 } from './migration/postgres/1720101280025-AddWorkerMachine'
+import { MigrateAuditEventSchema1723489038729 } from './migration/postgres/1723489038729-MigrateAuditEventSchema'
+import { AddAnalyticsToPlatform1725113652923 } from './migration/postgres/1725113652923-AddAnalyticsToPlatform'
+import { LogFileRelationWithFlowRun1725639666232 } from './migration/postgres/1725639666232-LogFileRelationWithFlowRun'
+import { AddLogsFileIdIndex1725699690971 } from './migration/postgres/1725699690971-AddLogsFileIdIndex'
+import { SupportS3Files1726364421096 } from './migration/postgres/1726364421096-SupportS3Files'
+import { AddAiProviderTable1726445983043 } from './migration/postgres/1726445983043-AddAiProviderTable'
+import { AddAiTokensForProjectPlan1726446092010 } from './migration/postgres/1726446092010-AddAiTokensForProjectPlan'
+
 
 const getSslConfig = (): boolean | TlsOptions => {
-    const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
+    const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
 
     if (useSsl === 'true') {
         return {
-            ca: system.get(SystemProp.POSTGRES_SSL_CA)?.replace(/\\n/g, '\n'),
+            ca: system.get(AppSystemProp.POSTGRES_SSL_CA)?.replace(/\\n/g, '\n'),
         }
     }
 
@@ -215,9 +233,24 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformRoleToUser1713302610746,
         AddUniqueNameToFolder1713643694049,
         AddFeaturesToPlatform1714145914415,
+        AddIssueEntityPostgres1714904516114,
+        RemoveShowActivityLog1716105958530,
+        AddDurationForRuns1716725027424,
+        AddAlertsEntityPostgres1716989780835,
+        AddUserInvitation1717960689650,
+        AddPremiumPiecesColumnPostgres1717370717678,
+        AddWorkerMachine1720101280025,
+        ChangeEventRoutingConstraint1723549873495,
+        AddAnalyticsToPlatform1725113652923,
+        RemoveUniqueConstraintOnStepFile1725570317713,
+        LogFileRelationWithFlowRun1725639666232,
+        AddLogsFileIdIndex1725699690971,
+        AddAiProviderTable1726445983043,
+        SupportS3Files1726364421096,
+        AddUserSessionId1727130193726,
     ]
 
-    const edition = getEdition()
+    const edition = system.getEdition()
     switch (edition) {
         case ApEdition.CLOUD:
         case ApEdition.ENTERPRISE:
@@ -270,22 +303,25 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CascadeProjectDeleteToActivity1710720610670,
                 AddBranchTypeToGit1711073772867,
                 PiecesProjectLimits1712279318440,
+
                 // Cloud Only Migrations, before unifing the migrations.
                 ChangeToJsonToKeepKeysOrder1685991260335,
                 AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
                 RemoveUniqueonAppNameAppCredentials1705586178452,
                 CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669,
-
                 // Enterprise Only Migrations, before unifing the migrations.
                 MigrateEeUsersToOldestPlatform1701261357197,
                 UnifyEnterpriseWithCloud1714249840058,
-
                 // Cloud Only Entities, But we need to run them for Enterprise as well.
                 AddAppSumo1688943462327,
                 AddReferral1690459469381,
                 AddUserEmailToReferral1709500213947,
                 AddProjectBilling1708811745694,
 
+                // New Migration After Unifying
+                ModifyProjectMembers1717961669938,
+                MigrateAuditEventSchema1723489038729,
+                AddAiTokensForProjectPlan1726446092010,
             )
             break
         case ApEdition.COMMUNITY:
@@ -300,7 +336,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
 }
 
 const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return {}
@@ -315,7 +351,7 @@ const getMigrationConfig = (): MigrationConfig => {
 
 export const createPostgresDataSource = (): DataSource => {
     const migrationConfig = getMigrationConfig()
-    const url = system.get(SystemProp.POSTGRES_URL)
+    const url = system.get(AppSystemProp.POSTGRES_URL)
 
     if (!isNil(url)) {
         return new DataSource({
@@ -327,12 +363,12 @@ export const createPostgresDataSource = (): DataSource => {
         })
     }
 
-    const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
-    const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
-    const password = system.getOrThrow(SystemProp.POSTGRES_PASSWORD)
-    const serializedPort = system.getOrThrow(SystemProp.POSTGRES_PORT)
+    const database = system.getOrThrow(AppSystemProp.POSTGRES_DATABASE)
+    const host = system.getOrThrow(AppSystemProp.POSTGRES_HOST)
+    const password = system.getOrThrow(AppSystemProp.POSTGRES_PASSWORD)
+    const serializedPort = system.getOrThrow(AppSystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
-    const username = system.getOrThrow(SystemProp.POSTGRES_USERNAME)
+    const username = system.getOrThrow(AppSystemProp.POSTGRES_USERNAME)
 
     return new DataSource({
         type: 'postgres',

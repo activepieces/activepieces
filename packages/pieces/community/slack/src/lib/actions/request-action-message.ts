@@ -19,7 +19,7 @@ export const requestActionMessageAction = createAction({
     'Send a message in a channel and wait until an action is selected',
   props: {
     info: slackInfo,
-    channel: slackChannel,
+    channel: slackChannel(true),
     text,
     actions,
     username,

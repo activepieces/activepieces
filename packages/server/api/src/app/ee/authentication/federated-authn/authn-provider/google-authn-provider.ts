@@ -1,12 +1,12 @@
-import jwksClient from 'jwks-rsa'
-import { flagService } from '../../../../flags/flag.service'
-import { JwtSignAlgorithm, jwtUtils } from '../../../../helper/jwt-utils'
-import { AuthnProvider, FebderatedAuthnIdToken } from './authn-provider'
 import {
     assertNotEqual,
     assertNotNullOrUndefined,
     Platform,
 } from '@activepieces/shared'
+import jwksClient from 'jwks-rsa'
+import { flagService } from '../../../../flags/flag.service'
+import { JwtSignAlgorithm, jwtUtils } from '../../../../helper/jwt-utils'
+import { AuthnProvider, FebderatedAuthnIdToken } from './authn-provider'
 
 const JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs'
 

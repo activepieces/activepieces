@@ -24,7 +24,7 @@ export const mixpanel = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.mixpanel.com',
       auth: mixpanelAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(auth as string).toString(
           'base64'
         )}`,

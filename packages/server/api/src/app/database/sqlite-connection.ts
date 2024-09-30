@@ -1,7 +1,8 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
+import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
-import { getEdition } from '../helper/secret-helper'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -9,6 +10,11 @@ import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/
 import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from './migration/common/1701096458822-add-partial-unique-index-for-email-and-platform-id-is-null'
 import { AddTriggerTestStrategy1707087022764 } from './migration/common/1707087022764-add-trigger-test-strategy'
 import { MigrateWebhook1709581196563 } from './migration/common/1709581196563-migrate-webhook'
+import { RemoveShowActivityLog1716105958530 } from './migration/common/1716105958530-RemoveShowActivityLog'
+import { AddDurationForRuns1716725027424 } from './migration/common/1716725027424-AddDurationForRuns'
+import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/1723549873495-ChangeEventRoutingConstraint'
+import { RemoveUniqueConstraintOnStepFile1725570317713 } from './migration/common/1725570317713-RemoveUniqueConstraintOnStepFile'
+import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-AddUserSessionId'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -42,12 +48,20 @@ import { RemoveUniqueEmailOnUser1713222892743 } from './migration/sqlite/1713222
 import { AddPlatformRole1713271221154 } from './migration/sqlite/1713271221154-AddPlatformRole'
 import { AddUniqueNameToFolderSqlite1713645171373 } from './migration/sqlite/1713645171373-AddUniqueNameToFolderSqlite'
 import { AddFeatureFlagsToPlatform1714137103728 } from './migration/sqlite/1714137103728-AddFeatureFlagsToPlatform'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { AddIssueEntitySqlite1714900626443 } from './migration/sqlite/1714900626443-AddIssueEntitySqlite'
+import { AddAlertsEntitySqlite1717239613259 } from './migration/sqlite/1717239613259-AddAlertsEntitySqlite'
+import { AddPremiumPiecesColumnSqlite1717443603235 } from './migration/sqlite/1717443603235-AddPremiumPiecesColumnSqlite'
+import { AddUserInvitationSqlite1717943564437 } from './migration/sqlite/1717943564437-AddUserInvitationSqlite'
+import { AddWorkerMachineSqlite1720100928449 } from './migration/sqlite/1720100928449-AddWorkerMachineSqlite'
+import { AddAnalyticsToPlatformSqlite1725151368300 } from './migration/sqlite/1725151368300-AddAnalyticsToPlatformSqlite'
+import { LogFileRelationWithFlowRunSqlite1725637505836 } from './migration/sqlite/1725637505836-LogFileRelationWithFlowRunSqlite'
+import { AddLogsFileIdIndexSqlite1725699920020 } from './migration/sqlite/1725699920020-AddLogsFileIdIndexSqlite'
+import { SupportS3FilesSqlite1726363932745 } from './migration/sqlite/1726363932745-SupportS3FilesSqlite'
+import { AddAiProviderSqlite1726446345221 } from './migration/sqlite/1726446345221-AddAiProviderSqlite'
 
 
 const getSqliteDatabaseFilePath = (): string => {
-    const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
+    const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
     return path.resolve(path.join(apConfigDirectoryPath, 'database.sqlite'))
 }
@@ -57,7 +71,7 @@ const getSqliteDatabaseInMemory = (): string => {
 }
 
 const getSqliteDatabase = (): string => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return getSqliteDatabaseInMemory()
@@ -106,8 +120,23 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformRole1713271221154,
         AddUniqueNameToFolderSqlite1713645171373,
         AddFeatureFlagsToPlatform1714137103728,
+        AddIssueEntitySqlite1714900626443,
+        RemoveShowActivityLog1716105958530,
+        AddDurationForRuns1716725027424,
+        AddAlertsEntitySqlite1717239613259,
+        AddUserInvitationSqlite1717943564437,
+        AddPremiumPiecesColumnSqlite1717443603235,
+        AddWorkerMachineSqlite1720100928449,
+        ChangeEventRoutingConstraint1723549873495,
+        AddAnalyticsToPlatformSqlite1725151368300,
+        RemoveUniqueConstraintOnStepFile1725570317713,
+        LogFileRelationWithFlowRunSqlite1725637505836,
+        AddLogsFileIdIndexSqlite1725699920020,
+        AddAiProviderSqlite1726446345221,
+        SupportS3FilesSqlite1726363932745,
+        AddUserSessionId1727130193726,
     ]
-    const edition = getEdition()
+    const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
         throw new Error(`Edition ${edition} not supported in sqlite3 mode`)
     }
@@ -115,7 +144,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
 }
 
 const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return {}

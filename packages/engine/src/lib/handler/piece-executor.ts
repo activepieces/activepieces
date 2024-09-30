@@ -5,10 +5,10 @@ import { continueIfFailureHandler, handleExecutionError, runWithExponentialBacko
 import { pieceLoader } from '../helper/piece-loader'
 import { createConnectionService } from '../services/connections.service'
 import { createFilesService } from '../services/files.service'
+import { createFlowsContext } from '../services/flows.service'
 import { createContextStore } from '../services/storage.service'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { EngineConstants } from './context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { ExecutionVerdict } from './context/flow-execution-context'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
@@ -17,10 +17,6 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
         action,
         executionState,
         constants,
-    }: {
-        action: PieceAction
-        executionState: FlowExecutorContext
-        constants: EngineConstants
     }) {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
@@ -70,30 +66,38 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
             resumePayload: constants.resumePayload!,
             store: createContextStore({
+                apiUrl: constants.internalApiUrl,
                 prefix: '',
                 flowId: constants.flowId,
-                workerToken: constants.workerToken,
+                engineToken: constants.engineToken,
+            }),
+            flows: createFlowsContext({
+                engineToken: constants.engineToken,
+                internalApiUrl: constants.internalApiUrl,
+                flowId: constants.flowId,
+                flowVersionId: constants.flowVersionId,
             }),
             auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
             files: createFilesService({
-                workerToken: constants.workerToken,
+                apiUrl: constants.internalApiUrl,
+                engineToken: constants.engineToken,
                 stepName: action.name,
                 flowId: constants.flowId,
-                type: constants.filesServiceType,
             }),
             server: {
-                token: constants.workerToken,
-                apiUrl: constants.apiUrl,
-                publicUrl: constants.serverUrl,
+                token: constants.engineToken,
+                apiUrl: constants.internalApiUrl,
+                publicUrl: constants.publicUrl,
             },
             propsValue: processedInput,
             tags: createTagsManager(hookResponse),
             connections: createConnectionManager({
+                apiUrl: constants.internalApiUrl,
                 projectId: constants.projectId,
-                workerToken: constants.workerToken,
+                engineToken: constants.engineToken,
                 hookResponse,
             }),
-            serverUrl: constants.serverUrl,
+            serverUrl: constants.publicUrl,
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(hookResponse),
@@ -104,7 +108,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 externalId: constants.externalProjectId,
             },
             generateResumeUrl: (params) => {
-                const url = new URL(`${constants.serverUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
+                const url = new URL(`${constants.publicUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
             },
@@ -141,6 +145,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         return executionState
             .upsertStep(action.name, failedStepOutput)
             .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
+            .increaseTask()
     }
 }
 
@@ -155,11 +160,11 @@ const createTagsManager = (hookResponse: HookResponse): TagsManager => {
     }
 }
 
-const createConnectionManager = ({ workerToken, projectId, hookResponse }: { projectId: string, workerToken: string, hookResponse: HookResponse }): ConnectionsManager => {
+const createConnectionManager = ({ engineToken, projectId, hookResponse, apiUrl }: { projectId: string, engineToken: string, hookResponse: HookResponse, apiUrl: string }): ConnectionsManager => {
     return {
         get: async (key: string) => {
             try {
-                const connection = await createConnectionService({ projectId, workerToken }).obtain(key)
+                const connection = await createConnectionService({ projectId, engineToken, apiUrl }).obtain(key)
                 hookResponse.tags.push(`connection:${key}`)
                 return connection
             }
@@ -171,9 +176,9 @@ const createConnectionManager = ({ workerToken, projectId, hookResponse }: { pro
 }
 
 function createStopHook(hookResponse: HookResponse): StopHook {
-    return (req: StopHookParams) => {
+    return (req?: StopHookParams) => {
         hookResponse.stopped = true
-        hookResponse.stopResponse = req
+        hookResponse.stopResponse = req ?? { response: {} }
     }
 }
 

@@ -1,7 +1,7 @@
-import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
 import { exceptionHandler, logger } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 
 
 export const errorHandler = async (
@@ -15,13 +15,17 @@ export const errorHandler = async (
             [ErrorCode.INVALID_BEARER_TOKEN]: StatusCodes.UNAUTHORIZED,
             [ErrorCode.QUOTA_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
             [ErrorCode.FEATURE_DISABLED]: StatusCodes.PAYMENT_REQUIRED,
+            [ErrorCode.AI_TOKEN_LIMIT_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
             [ErrorCode.PERMISSION_DENIED]: StatusCodes.FORBIDDEN,
             [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,
+            [ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER]: StatusCodes.NOT_IMPLEMENTED,
+            [ErrorCode.EXISTING_ALERT_CHANNEL]: StatusCodes.CONFLICT,
             [ErrorCode.FLOW_IN_USE]: StatusCodes.CONFLICT,
             [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,
             [ErrorCode.SIGN_UP_DISABLED]: StatusCodes.FORBIDDEN,
             [ErrorCode.INVALID_CREDENTIALS]: StatusCodes.UNAUTHORIZED,
+            [ErrorCode.SESSION_EXPIRED]: StatusCodes.FORBIDDEN,
             [ErrorCode.EMAIL_IS_NOT_VERIFIED]: StatusCodes.FORBIDDEN,
             [ErrorCode.USER_IS_INACTIVE]: StatusCodes.FORBIDDEN,
             [ErrorCode.DOMAIN_NOT_ALLOWED]: StatusCodes.FORBIDDEN,
@@ -30,8 +34,10 @@ export const errorHandler = async (
             [ErrorCode.VALIDATION]: StatusCodes.CONFLICT,
             [ErrorCode.INVITATION_ONLY_SIGN_UP]: StatusCodes.FORBIDDEN,
             [ErrorCode.AUTHENTICATION]: StatusCodes.UNAUTHORIZED,
+            [ErrorCode.ACTIVATION_KEY_NOT_FOUND]: StatusCodes.NOT_FOUND,
+            [ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED]: StatusCodes.CONFLICT,
+            [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: StatusCodes.CONFLICT,
         }
-
         const statusCode =
       statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST
 

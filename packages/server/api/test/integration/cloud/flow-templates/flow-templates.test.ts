@@ -1,7 +1,13 @@
+import {
+    apId,
+    PlatformRole,
+    PrincipalType,
+    TemplateType,
+} from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     CLOUD_PLATFORM_ID,
@@ -9,22 +15,16 @@ import {
     createMockUser,
     mockBasicSetup,
 } from '../../../helpers/mocks'
-import {
-    apId,
-    PlatformRole,
-    PrincipalType,
-    TemplateType,
-} from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection.initialize()
-    app = await setupApp()
+    await databaseConnection().initialize()
+    app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection.destroy()
+    await databaseConnection().destroy()
     await app?.close()
 })
 
@@ -145,6 +145,7 @@ async function createMockPlatformTemplate({ platformId }: { platformId: string }
     const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup({
         platform: {
             id: platformId,
+            manageTemplatesEnabled: true,
         },
     })
 
@@ -153,7 +154,7 @@ async function createMockPlatformTemplate({ platformId }: { platformId: string }
         projectId: mockProject.id,
         type: TemplateType.PLATFORM,
     })
-    await databaseConnection
+    await databaseConnection()
         .getRepository('flow_template')
         .save(mockPlatformTemplate)
 
@@ -161,7 +162,7 @@ async function createMockPlatformTemplate({ platformId }: { platformId: string }
         platformId: mockPlatform.id,
         platformRole: PlatformRole.MEMBER,
     })
-    await databaseConnection.getRepository('user').save(mockUser)
+    await databaseConnection().getRepository('user').save(mockUser)
 
     return { mockOwner, mockUser, mockPlatform, mockProject, mockPlatformTemplate }
 }

@@ -1,13 +1,11 @@
 import {
+  AI_PROVIDERS_MAKRDOWN,
   AuthenticationType,
   HttpMethod,
   createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { askAssistant } from './lib/actions/ask-assistant';
 import { generateImage } from './lib/actions/generate-image';
@@ -17,18 +15,10 @@ import { transcribeAction } from './lib/actions/transcriptions';
 import { translateAction } from './lib/actions/translation';
 import { visionPrompt } from './lib/actions/vision-prompt';
 import { baseUrl } from './lib/common/common';
-
-const markdownDescription = `
-Follow these instructions to get your OpenAI API Key:
-
-1. Visit the following website: https://platform.openai.com/account/api-keys.
-2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
-
-It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
-`;
+import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
 
 export const openaiAuth = PieceAuth.SecretText({
-  description: markdownDescription,
+  description: AI_PROVIDERS_MAKRDOWN.openai,
   displayName: 'API Key',
   required: true,
   validate: async (auth) => {
@@ -70,16 +60,27 @@ export const openai = createPiece({
     textToSpeech,
     transcribeAction,
     translateAction,
+    extractStructuredDataAction,
     createCustomApiCallAction({
       auth: openaiAuth,
       baseUrl: () => baseUrl,
-      authMapping: (auth) => {
+      authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,
         };
       },
     }),
   ],
-  authors: ["aboudzein","astorozhevsky","Willianwg","Nilesh","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: [
+    'aboudzein',
+    'astorozhevsky',
+    'Willianwg',
+    'Nilesh',
+    'Salem-Alaa',
+    'kishanprmr',
+    'MoShizzle',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   triggers: [],
 });

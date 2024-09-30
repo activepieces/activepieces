@@ -1,14 +1,14 @@
+import { SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApEnvironment } from '@activepieces/shared'
 import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
-import { system, SystemProp } from '@activepieces/server-shared'
-import { ApEnvironment } from '@activepieces/shared'
 
 export type EmailSender = {
     send: (args: SendArgs) => Promise<void>
 }
 
 const getEmailSenderInstance = (): EmailSender => {
-    const env = system.get(SystemProp.ENVIRONMENT)
+    const env = system.get(SharedSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.PRODUCTION) {
         return smtpEmailSender
@@ -25,22 +25,40 @@ type BaseEmailTemplateData<Name extends string, Vars extends Record<string, stri
 }
 
 type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
-    projectName: string
+    projectOrPlatformName: string
+    role: string
     setupLink: string
 }>
 
 type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'quota-100', {
     resetDate: string
-    firstName: string
 }>
 
 type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
     setupLink: string
-    firstName: string
 }>
 
 type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
     setupLink: string
+}>
+
+type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
+    issueUrl: string
+    flowName: string
+    isIssue: string
+    createdAt: string
+}>
+
+type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
+    issuesUrl: string
+    issues: string
+    issuesCount: string
+    projectName: string
+}>
+
+type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
+    flowName: string
+    projectName: string
 }>
 
 export type EmailTemplateData =
@@ -48,9 +66,12 @@ export type EmailTemplateData =
   | QuotaEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
+  | IssueCreatedTemplateData
+  | IssuesReminderTemplateData
+  | TriggerFailureThresholdTemplateData
 
 type SendArgs = {
-    email: string
+    emails: string[]
     platformId: string | undefined
     templateData: EmailTemplateData
 }

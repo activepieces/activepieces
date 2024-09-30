@@ -1,6 +1,3 @@
-import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
-import { flowService } from '../flow/flow.service'
-import { triggerEventService } from '../trigger-events/trigger-event.service'
 import { logger } from '@activepieces/server-shared'
 import {
     FlowId,
@@ -9,6 +6,9 @@ import {
     SeekPage,
     TriggerTestStrategy,
     WebhookSimulation } from '@activepieces/shared'
+import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
+import { flowService } from '../flow/flow.service'
+import { triggerEventService } from '../trigger-events/trigger-event.service'
 
 export const testTriggerService = {
     async test(params: TestParams): Promise<unknown> {

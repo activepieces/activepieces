@@ -1,4 +1,3 @@
-import { EntityManager } from 'typeorm'
 import { PieceMetadata, 
     PieceMetadataModel,
     PieceMetadataModelSummary } from '@activepieces/pieces-framework'
@@ -13,6 +12,7 @@ import {
     ProjectId,
     SuggestionType,
 } from '@activepieces/shared'
+import { EntityManager } from 'typeorm'
 
 type ListParams = {
     release: string
@@ -72,6 +72,7 @@ type GetExactPieceVersionParams = {
 
 export type PieceMetadataService = {
     list(params: ListParams): Promise<PieceMetadataModelSummary[]>
+    get(params: GetOrThrowParams): Promise<PieceMetadataModel | undefined>
     getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
     getVersions(params: ListVersionsParams): Promise<ListVersionsResponse>
     create(params: CreateParams): Promise<PieceMetadataModel>

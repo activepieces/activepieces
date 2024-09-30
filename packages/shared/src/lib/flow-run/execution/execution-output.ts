@@ -13,9 +13,9 @@ export type ExecutionState = {
     steps: Record<string, StepOutput>
 }
 
-export const ExecutionState = {
+export const ExecutionState = Type.Object({
     steps: Type.Record(Type.String(), Type.Unknown()),
-}
+})
 
 export type ExecutioOutputFile = {
     executionState: ExecutionState

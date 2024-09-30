@@ -1,12 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-  HttpRequest,
-} from '@activepieces/pieces-common';
 import { googleDriveAuth } from '../../';
 import { common } from '../common';
+import { google } from 'googleapis';
+import { OAuth2Client } from 'googleapis-common';
 
 export const googleDriveCreateNewFolder = createAction({
   auth: googleDriveAuth,
@@ -23,31 +19,22 @@ export const googleDriveCreateNewFolder = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const body: Record<string, string | string[] | undefined> = {
-      mimeType: 'application/vnd.google-apps.folder',
-      name: context.propsValue.folderName,
-      ...(context.propsValue.parentFolder
-        ? { parents: [context.propsValue.parentFolder] }
-        : {}),
-    };
+    const authClient = new OAuth2Client();
+    authClient.setCredentials(context.auth);
 
-    const request: HttpRequest<Record<string, unknown>> = {
-      method: HttpMethod.POST,
-      url: `https://www.googleapis.com/drive/v3/files`,
-      body: body,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
+    const drive = google.drive({ version: 'v3', auth: authClient });
+
+    const response = await drive.files.create({
+      requestBody: {
+        mimeType: 'application/vnd.google-apps.folder',
+        name: context.propsValue.folderName,
+        ...(context.propsValue.parentFolder
+          ? { parents: [context.propsValue.parentFolder] }
+          : {}),
       },
-    };
+      supportsAllDrives: context.propsValue.include_team_drives,
+    });
 
-    const result = await httpClient.sendRequest(request);
-    console.debug('Folder creation response', result);
-
-    if (result.status == 200) {
-      return result.body;
-    } else {
-      return result;
-    }
+    return response.data;
   },
 });

@@ -34,7 +34,7 @@ const flawWithTwoPause = buildPieceAction({
                 input: {},
             }),
         }),
-        
+
     }),
 })
 
@@ -151,7 +151,8 @@ describe('flow with pause', () => {
             },
             'reason': 'PAUSED',
         })
-        expect(Object.keys(pauseResult.currentState).length).toBe(1)
+        const currentState = pauseResult.currentState()
+        expect(Object.keys(currentState).length).toBe(1)
 
         const resumeResult = await flowExecutor.execute({
             action: simplePauseFlow,
@@ -167,7 +168,7 @@ describe('flow with pause', () => {
             }),
         })
         expect(resumeResult.verdict).toBe(ExecutionVerdict.RUNNING)
-        expect(resumeResult.currentState).toEqual({
+        expect(resumeResult.currentState()).toEqual({
             'approval': {
                 approved: true,
             },

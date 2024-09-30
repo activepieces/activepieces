@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import pg from 'pg';
 import { postgresAuth } from '../..';
+import { pgClient } from '../common';
 
 export const runQuery = createAction({
   auth: postgresAuth,
@@ -12,7 +13,7 @@ export const runQuery = createAction({
       value: `
       **DO NOT** insert dynamic input directly into the query string. Instead, use $1, $2, $3 and add them in args for parameterized queries to prevent **SQL injection.**`
     }),
-    
+
     query: Property.ShortText({
       displayName: 'Query',
       description: 'Please use $1, $2, etc. for parameterized queries to avoid SQL injection.',
@@ -45,40 +46,8 @@ export const runQuery = createAction({
     }),
   },
   async run(context) {
-    const {
-      host,
-      user,
-      database,
-      password,
-      port,
-      enable_ssl,
-      reject_unauthorized: rejectUnauthorized,
-      certificate,
-    } = context.auth;
-    const {
-      query,
-      query_timeout,
-      application_name,
-      connection_timeout_ms: connectionTimeoutMillis,
-    } = context.propsValue;
-    const sslConf = {
-      rejectUnauthorized: rejectUnauthorized,
-      ca: certificate && certificate.length > 0 ? certificate : undefined,
-    };
-    const client = new pg.Client({
-      host,
-      port: Number(port),
-      user,
-      password,
-      database,
-      ssl: enable_ssl ? sslConf : undefined,
-      query_timeout: Number(query_timeout),
-      statement_timeout: Number(query_timeout),
-      application_name,
-      connectionTimeoutMillis: Number(connectionTimeoutMillis),
-    });
-    await client.connect();
-
+    const client = await pgClient(context.auth, context.propsValue.query_timeout, context.propsValue.application_name, context.propsValue.connection_timeout_ms);
+    const { query } = context.propsValue;
     const args = context.propsValue.args || [];
     return new Promise((resolve, reject) => {
       client.query(query, args, function (error: any, results: { rows: unknown }) {

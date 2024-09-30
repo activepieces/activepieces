@@ -1,5 +1,5 @@
-import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '@activepieces/server-shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RemoveFlowInstance1702379794665 implements MigrationInterface {
     name = 'RemoveFlowInstance1702379794665'

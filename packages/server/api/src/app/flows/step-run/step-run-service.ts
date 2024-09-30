@@ -1,5 +1,3 @@
-import { engineHelper } from '../../helper/engine-helper'
-import { flowVersionService } from '../flow-version/flow-version.service'
 import {
     ActionType,
     ActivepiecesError,
@@ -8,7 +6,11 @@ import {
     FlowVersionId,
     isNil,
     ProjectId,
-    StepRunResponse } from '@activepieces/shared'
+    StepRunResponse,
+} from '@activepieces/shared'
+import { engineRunner } from 'server-worker'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { flowVersionService } from '../flow-version/flow-version.service'
 
 export const stepRunService = {
     async create({
@@ -30,12 +32,17 @@ export const stepRunService = {
                 },
             })
         }
+        const engineToken = await accessTokenManager.generateEngineToken({
+            projectId,
+        })
+
         const { result, standardError, standardOutput } =
-      await engineHelper.executeAction({
+      await engineRunner.executeAction(engineToken, {
           stepName,
           flowVersion,
           projectId,
       })
+
         return {
             success: result.success,
             output: result.output,

@@ -1,15 +1,14 @@
 import dayjs, { OpUnitType } from 'dayjs';
-import { isEmpty, isInteger, isNil, isString } from 'lodash';
 import { ErrorMessages } from './errors';
 import {
   TypedValidatorFn,
-  ValidationErrors,
   ValidationInputType,
 } from './types';
 import { formatErrorMessage } from './utils';
 import { ApFile } from '../property';
+import { isEmpty, isNil, isString } from '@activepieces/shared';
 
-class Validators {
+export class Validators {
   static pattern(
     regex: string | RegExp
   ): TypedValidatorFn<ValidationInputType.STRING> {
@@ -258,7 +257,7 @@ class Validators {
   static integer: TypedValidatorFn<ValidationInputType.NUMBER> = {
     type: ValidationInputType.NUMBER,
     fn: (property, processedValue, userInput) => {
-      if (isInteger(processedValue)) {
+      if (!Number.isInteger(processedValue)) {
         return formatErrorMessage(ErrorMessages.WHOLE_NUMBER, { userInput });
       }
       return null;
@@ -386,5 +385,3 @@ class Validators {
     };
   }
 }
-
-export { ErrorMessages, ValidationErrors, Validators, formatErrorMessage };

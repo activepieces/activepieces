@@ -9,6 +9,7 @@ import {
     LoopOnItemsAction,
     SingleActionSchema,
 } from './actions/action'
+import { PopulatedFlow } from './flow'
 import {
     AddActionRequest,
     DeleteActionRequest,
@@ -24,10 +25,6 @@ import { DEFAULT_SAMPLE_DATA_SETTINGS } from './sample-data'
 import { Trigger, TriggerType } from './triggers/trigger'
 
 type Step = Action | Trigger
-
-type GetAllSubFlowSteps = {
-    subFlowStartStep: Step
-}
 
 type GetStepFromSubFlow = {
     subFlowStartStep: Step
@@ -125,6 +122,17 @@ function traverseInternal(
         step = step.nextAction
     }
     return steps
+}
+
+async function updateFlowSecrets(originalFlow: PopulatedFlow, newFlow: PopulatedFlow): Promise<FlowVersion> {
+    return transferFlow(newFlow.version, (step) => {
+        const oldStep = getStep(originalFlow.version, step.name)
+        if (oldStep?.settings?.input?.auth) {
+            step.settings.input.auth = oldStep.settings.input.auth
+        }
+        return step
+    },
+    )
 }
 
 async function transferStepAsync<T extends Step>(
@@ -231,7 +239,7 @@ function transferFlow<T extends Step>(
     ) as Trigger
     return clonedFlow
 }
-function getAllSteps(trigger: Trigger): (Action | Trigger)[] {
+function getAllSteps(trigger: Trigger | Action): (Action | Trigger)[] {
     return traverseInternal(trigger)
 }
 
@@ -298,23 +306,15 @@ function getStep(
     )
 }
 
-const getAllSubFlowSteps = ({
-    subFlowStartStep,
-}: GetAllSubFlowSteps): Step[] => {
-    return traverseInternal(subFlowStartStep)
-}
 
 const getStepFromSubFlow = ({
     subFlowStartStep,
     stepName,
 }: GetStepFromSubFlow): Step | undefined => {
-    const subFlowSteps = getAllSubFlowSteps({
-        subFlowStartStep,
-    })
+    const subFlowSteps = getAllSteps(subFlowStartStep)
 
     return subFlowSteps.find((step) => step.name === stepName)
 }
-
 function updateAction(
     flowVersion: FlowVersion,
     request: UpdateActionRequest,
@@ -714,6 +714,9 @@ function normalize(flowVersion: FlowVersion): FlowVersion {
         (step) => {
             const clonedStep: Step = JSON.parse(JSON.stringify(step))
             clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+            if (clonedStep?.settings?.input?.auth && [ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+                clonedStep.settings.input.auth = ''
+            }
             return upgradePiece(clonedStep, clonedStep.name)
         },
     )
@@ -767,6 +770,20 @@ function isLegacyApp({ pieceName, pieceVersion }: { pieceName: string, pieceVers
         return true
     }
     return false
+}
+
+function isPartOfInnerFlow({
+    parentStep,
+    childName,
+}: {
+    parentStep: Action | Trigger
+    childName: string
+}): boolean {
+    const steps = getAllSteps({
+        ...parentStep,
+        nextAction: undefined,
+    })
+    return steps.some((step) => step.name === childName)
 }
 
 function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion): FlowVersion {
@@ -893,6 +910,7 @@ function getDirectParentStep(child: Step, parent: Trigger | Step | undefined): S
     return getDirectParentStep(child, parent.nextAction)
 }
 
+// TODO remove this function after deprecation angular
 function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
 
     const parent = getDirectParentStep(child, trigger)
@@ -921,6 +939,24 @@ function isStepLastChildOfParent(child: Step, trigger: Trigger): boolean {
 function doesStepHaveChildren(step: Step): step is LoopOnItemsAction | BranchAction {
     return step.type === ActionType.BRANCH || step.type === ActionType.LOOP_ON_ITEMS
 }
+
+type StepWithIndex = Step & { dfsIndex: number }
+
+function findPathToStep({ targetStepName, trigger }: {
+    targetStepName: string
+    trigger: Trigger
+}): StepWithIndex[] {
+    const steps = getAllSteps(trigger).map((step, dfsIndex) => ({
+        ...step,
+        dfsIndex,
+    }))
+    return steps.filter((step) => {
+        const steps = getAllSteps(step)
+        return steps.some((s) => s.name === targetStepName)
+    }).filter((step) => step.name !== targetStepName)
+}
+
+
 export const flowHelper = {
     isValid,
     apply(
@@ -980,10 +1016,10 @@ export const flowHelper = {
     isAction,
     isTrigger,
     getAllSteps,
+    isPartOfInnerFlow,
     isStepLastChildOfParent,
     getUsedPieces,
     getImportOperations,
-    getAllSubFlowSteps,
     normalize,
     getStepFromSubFlow,
     isChildOf,
@@ -993,5 +1029,6 @@ export const flowHelper = {
     duplicateStep,
     findAvailableStepName,
     doesActionHaveChildren,
-
+    findPathToStep,
+    updateFlowSecrets,
 }

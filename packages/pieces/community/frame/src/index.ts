@@ -33,7 +33,7 @@ export const frame = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.frame.io/v2',
       auth: frameAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),

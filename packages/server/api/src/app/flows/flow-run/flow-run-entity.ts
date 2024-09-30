@@ -1,3 +1,9 @@
+import {
+    File,
+    Flow,
+    FlowRun,
+    Project,
+} from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -7,15 +13,11 @@ import {
     JSONB_COLUMN_TYPE,
     TIMESTAMP_COLUMN_TYPE,
 } from '../../database/database-common'
-import {
-    Flow,
-    FlowRun,
-    Project,
-} from '@activepieces/shared'
 
 type FlowRunSchema = FlowRun & {
     project: Project
     flow: Flow
+    logsFile: File
 }
 
 export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
@@ -32,7 +34,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         flowDisplayName: {
             type: String,
         },
-        logsFileId: { ...ApIdSchema, nullable: true },
+        logsFileId: { 
+            ...ApIdSchema, 
+            nullable: true,
+        },
         status: {
             type: String,
         },
@@ -44,6 +49,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
             nullable: true,
+        },
+        duration: {
+            nullable: true,
+            type: Number,
         },
         tasks: {
             nullable: true,
@@ -78,6 +87,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             name: 'idx_run_project_id_flow_id_environment_status_created_desc',
             columns: ['projectId', 'flowId', 'environment', 'status', 'created'],
         },
+        {
+            name: 'idx_run_logs_file_id',
+            columns: ['logsFileId'],
+        },
     ],
     relations: {
         project: {
@@ -98,6 +111,16 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             joinColumn: {
                 name: 'flowId',
                 foreignKeyConstraintName: 'fk_flow_run_flow_id',
+            },
+        },
+        logsFile: {
+            type: 'many-to-one',
+            target: 'file',
+            cascade: true,
+            onDelete: 'SET NULL',
+            joinColumn: {
+                name: 'logsFileId',
+                foreignKeyConstraintName: 'fk_flow_run_logs_file_id',
             },
         },
     },

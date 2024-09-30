@@ -1,14 +1,13 @@
-import cors from '@fastify/cors'
-import formBody from '@fastify/formbody'
-import fastifyMultipart from '@fastify/multipart'
+import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
+import { PieceMetadata } from '@activepieces/pieces-framework'
+import { AppSystemProp, initializeSentry, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ExecutionMode, Flow, FlowRun, FlowTemplate, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
-import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
-import fastifyFavicon from 'fastify-favicon'
-import { fastifyRawBody } from 'fastify-raw-body'
+import { createAdapter } from '@socket.io/redis-adapter'
+import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifySocketIO from 'fastify-socket.io'
-import qs from 'qs'
 import { Socket } from 'socket.io'
-import { appConnectionsHooks } from './app-connection/app-connection-service/app-connection-hooks'
+import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
@@ -16,12 +15,13 @@ import { authenticationServiceHooks } from './authentication/authentication-serv
 import { authenticationModule } from './authentication/authentication.module'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { copilotModule } from './copilot/copilot.module'
+import { requestWriterModule } from './copilot/request-writer/request-writer.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
-import { activityModule } from './ee/activity/activity-module'
-import { analyticsModule } from './ee/analytics/analytics-module'
+import { getRedisConnection } from './database/redis-connection'
+import { alertsModule } from './ee/alerts/alerts-module'
+import { analyticsModule } from './ee/analytics/analytics.module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
-import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
@@ -31,6 +31,7 @@ import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authen
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { rbacMiddleware } from './ee/authentication/rbac/rbac-middleware'
+import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
@@ -38,9 +39,12 @@ import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
-import { platformWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
 import { gitRepoModule } from './ee/git-repos/git-repo.module'
+import { emailService } from './ee/helper/email/email-service'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
+import { issuesModule } from './ee/issues/issues-module'
+import { licenseKeysModule } from './ee/license-keys/license-keys-module'
+import { licenseKeysService } from './ee/license-keys/license-keys-service'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -49,6 +53,7 @@ import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterpr
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { projectMemberModule } from './ee/project-members/project-member.module'
+import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { referralModule } from './ee/referrals/referral.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
@@ -61,71 +66,36 @@ import { formModule } from './flows/flow/form/form.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
-import { stepFileModule } from './flows/step-file/step-file.module'
+import { folderModule } from './flows/folder/folder.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
-import { loadEncryptionKey } from './helper/encryption'
-import { errorHandler } from './helper/error-handler'
+import { encryptUtils } from './helper/encryption'
+import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
-import { getEdition } from './helper/secret-helper'
 import { systemJobsSchedule } from './helper/system-jobs'
+import { SystemJobName } from './helper/system-jobs/common'
+import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { platformModule } from './platform/platform.module'
+import { platformService } from './platform/platform.service'
+import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tagsModule } from './tags/tags-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { userModule } from './user/user.module'
+import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
-import { flowQueueConsumer } from './workers/flow-worker/consumer/flow-queue-consumer'
-import { engineResponseWatcher } from './workers/flow-worker/engine-response-watcher'
-import { flowWorkerHooks } from './workers/flow-worker/flow-worker-hooks'
-import { flowWorkerModule } from './workers/flow-worker/flow-worker-module'
-import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-bullboard'
-import {
-    GitRepoWithoutSensitiveData,
-    ProjectMember,
-} from '@activepieces/ee-shared'
-import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ExecutionMode, initializeSentry, logger, QueueMode, system, SystemProp } from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
-    ApEdition,
-    ApEnvironment,
-    apId,
-    AppConnectionWithoutSensitiveData,
-    CodeSandboxType,
-    ErrorCode,
-    Flow,
-    FlowRun,
-    ProjectWithLimits,
-} from '@activepieces/shared'
+import { flowConsumer } from './workers/consumer'
+import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
+import { workerModule } from './workers/worker-module'
 
-export const setupApp = async (): Promise<FastifyInstance> => {
-    const app = fastify({
-        logger,
-        // Default 4MB, also set in nginx.conf
-        pluginTimeout: 30000,
-        bodyLimit: 4 * 1024 * 1024,
-        genReqId: () => {
-            return `req_${apId()}`
-        },
-        ajv: {
-            customOptions: {
-                removeAdditional: 'all',
-                useDefaults: true,
-                coerceTypes: 'array',
-                formats: {},
-            },
-        },
-    })
-
-    await app.register(fastifyFavicon)
+export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
     await app.register(swagger, {
         hideUntagged: true,
@@ -145,6 +115,23 @@ export const setupApp = async (): Promise<FastifyInstance> => {
                     },
                 },
                 schemas: {
+                    [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
+                    [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
+                    [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
+                    [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
+                    [ApplicationEventName.FOLDER_CREATED]: FolderEvent,
+                    [ApplicationEventName.FOLDER_UPDATED]: FolderEvent,
+                    [ApplicationEventName.FOLDER_DELETED]: FolderEvent,
+                    [ApplicationEventName.FLOW_RUN_STARTED]: FlowRunEvent,
+                    [ApplicationEventName.FLOW_RUN_FINISHED]: FlowRunEvent,
+                    [ApplicationEventName.USER_SIGNED_UP]: SignUpEvent,
+                    [ApplicationEventName.USER_SIGNED_IN]: AuthenticationEvent,
+                    [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
+                    [ApplicationEventName.USER_EMAIL_VERIFIED]: AuthenticationEvent,
+                    [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
+                    'flow-template': FlowTemplate,
+                    'folder': Folder,
+                    'user-invitation': UserInvitation,
                     'project-member': ProjectMember,
                     project: ProjectWithLimits,
                     flow: Flow,
@@ -156,7 +143,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             },
             info: {
                 title: 'Activepieces Documentation',
-                version: '0.14.3',
+                version: '0.0.0',
             },
             externalDocs: {
                 url: 'https://www.activepieces.com/docs',
@@ -165,42 +152,20 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         },
     })
 
-    await app.register(cors, {
-        origin: '*',
-        exposedHeaders: ['*'],
-        methods: ['*'],
-    })
 
-    await app.register(fastifyMultipart, {
-        attachFieldsToBody: 'keyValues',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        async onFile(part: any) {
-            const buffer = await part.toBuffer()
-            part.value = buffer
-        },
-    })
-
-    await app.register(fastifyRawBody, {
-        field: 'rawBody',
-        global: false,
-        encoding: 'utf8',
-        runFirst: true,
-        routes: [],
-    })
-
-    await app.register(formBody, { parser: (str) => qs.parse(str) })
     await app.register(rateLimitModule)
 
     await app.register(fastifySocketIO, {
         cors: {
             origin: '*',
         },
+        ...spreadIfDefined('adapter', await getAdapter()),
         transports: ['websocket'],
     })
 
     app.io.use((socket: Socket, next: (err?: Error) => void) => {
         accessTokenManager
-            .extractPrincipal(socket.handshake.auth.token)
+            .verifyPrincipal(socket.handshake.auth.token)
             .then(() => {
                 next()
             })
@@ -210,7 +175,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     app.io.on('connection', (socket: Socket) => {
-        websocketService.init(socket)
+        rejectedPromiseHandler(websocketService.init(socket))
     })
 
     app.addHook('onRequest', async (request, reply) => {
@@ -229,11 +194,11 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
     app.addHook('preHandler', securityHandlerChain)
     app.addHook('preHandler', rbacMiddleware)
-    app.setErrorHandler(errorHandler)
     await systemJobsSchedule.init()
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
+    await app.register(folderModule)
     await app.register(flowModule)
     await app.register(pieceModule)
     await app.register(flowRunModule)
@@ -242,17 +207,21 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(openapiModule)
     await app.register(triggerEventModule)
     await app.register(appEventRoutingModule)
-    await app.register(stepFileModule)
     await app.register(userModule)
     await app.register(authenticationModule)
-    await app.register(copilotModule)
+    await app.register(copilotModule),
+    await app.register(requestWriterModule),
     await app.register(platformModule)
     await app.register(formModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
-    await app.register(flowWorkerModule)
     await app.register(platformUserModule)
-    await setupBullMQBoard(app)
+    await app.register(issuesModule)
+    await app.register(authnSsoSamlModule)
+    await app.register(alertsModule)
+    await app.register(invitationModule)
+    await app.register(workerModule)
+    await app.register(aiProviderModule)
 
     app.get(
         '/redirect',
@@ -278,16 +247,12 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         },
     )
 
-    // SurveyMonkey
-    app.addContentTypeParser(
-        'application/vnd.surveymonkey.response.v1+json',
-        { parseAs: 'string' },
-        app.getDefaultJsonParser('ignore', 'ignore'),
-    )
     await validateEnvPropsOnStartup()
 
-    const edition = getEdition()
-    logger.info(`Activepieces ${edition} Edition`)
+    const edition = system.getEdition()
+    logger.info({
+        edition,
+    }, 'Activepieces Edition')
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(appCredentialModule)
@@ -309,23 +274,21 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(activityModule)
             await app.register(usageTrackerModule)
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
-
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
+            projectHooks.setHooks(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
-            flowWorkerHooks.setHooks(platformWorkerHooks)
             flowRunHooks.setHooks(platformRunHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             initializeSentry()
             break
         case ApEdition.ENTERPRISE:
@@ -343,15 +306,16 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(activityModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
+            await app.register(licenseKeysModule)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
+            projectHooks.setHooks(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
             flowRunHooks.setHooks(platformRunHooks)
-            flowWorkerHooks.setHooks(platformWorkerHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -361,13 +325,15 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
+            await app.register(licenseKeysModule)
             break
     }
 
     app.addHook('onClose', async () => {
-        await flowQueueConsumer.close()
+        logger.info('Shutting down')
+        await flowConsumer.close()
         await systemJobsSchedule.close()
-        await engineResponseWatcher.shutdown()
+        await webhookResponseWatcher.shutdown()
     })
 
     return app
@@ -375,30 +341,91 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
 
 const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const codeSandboxType = system.get<CodeSandboxType>(
-        SystemProp.CODE_SANDBOX_TYPE,
-    )
-    const executionMode = system.get<ExecutionMode>(SystemProp.EXECUTION_MODE)
-    const signedUpEnabled =
-        system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
-    const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
-    const environment = system.get(SystemProp.ENVIRONMENT)
-    await loadEncryptionKey(queueMode)
+    const codeSandboxType = process.env.AP_CODE_SANDBOX_TYPE
+    if (!isNil(codeSandboxType)) {
+        throw new Error(JSON.stringify({
+            message: 'AP_CODE_SANDBOX_TYPE is deprecated, please use AP_EXECUTION_MODE instead',
+            docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
+        }))
+    }
+    const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
+    const encryptionKey = await encryptUtils.loadEncryptionKey(queueMode)
+    const isValidHexKey = encryptionKey && /^[A-Za-z0-9]{32}$/.test(encryptionKey)
+    if (!isValidHexKey) {
+        throw new Error(JSON.stringify({
+            message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',
+            docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
+        }))
+    }
 
-    if (
-        executionMode === ExecutionMode.UNSANDBOXED &&
-        codeSandboxType !== CodeSandboxType.V8_ISOLATE &&
-        signedUpEnabled &&
-        environment === ApEnvironment.PRODUCTION
-    ) {
-        throw new ActivepiecesError(
-            {
-                code: ErrorCode.SYSTEM_PROP_INVALID,
-                params: {
-                    prop: SystemProp.EXECUTION_MODE,
-                },
-            },
-            'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation',
+    const jwtSecret = await jwtUtils.getJwtSecret()
+    if (isNil(jwtSecret)) {
+        throw new Error(JSON.stringify({
+            message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
+            docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
+        }))
+    }
+
+    const edition = system.getEdition()
+    const test = system.get(SharedSystemProp.ENVIRONMENT)
+    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && test !== ApEnvironment.TESTING) {
+        const executionMode = system.getOrThrow<ExecutionMode>(SharedSystemProp.EXECUTION_MODE)
+        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode)) {
+            throw new Error(JSON.stringify({
+                message: 'Execution mode UNSANDBOXED is no longer supported in this edition, check the documentation for recent changes',
+                docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
+            }))
+        }
+    }
+}
+
+async function getAdapter() {
+    const queue = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
+    switch (queue) {
+        case QueueMode.MEMORY: {
+            return undefined
+        }
+        case QueueMode.REDIS: {
+            const sub = getRedisConnection().duplicate()
+            const pub = getRedisConnection().duplicate()
+            return createAdapter(pub, sub)
+        }
+    }
+}
+
+
+export async function appPostBoot(): Promise<void> {
+
+    logger.info(`
+        _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
+/\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
+/  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___
+/ /\\ \\   | |         | |      | |     \\ \\/ /   |  __|   |  ___/    | |   |  __|   | |      |  __|    \\___ \\
+/ ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
+/_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
+
+The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.`)
+
+    const environment = system.get(SharedSystemProp.ENVIRONMENT)
+    const piecesSource = system.getOrThrow(SharedSystemProp.PIECES_SOURCE)
+    const pieces = process.env.AP_DEV_PIECES
+
+    logger.warn(
+        `[WARNING]: Pieces will be loaded from source type ${piecesSource}`,
+    )
+    if (environment === ApEnvironment.DEVELOPMENT) {
+        logger.warn(
+            `[WARNING]: The application is running in ${environment} mode.`,
         )
+        logger.warn(
+            `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
+        )
+    }
+    const oldestPlatform = await platformService.getOldestPlatform()
+    if (!isNil(oldestPlatform)) {
+        await licenseKeysService.verifyKeyAndApplyLimits({
+            platformId: oldestPlatform.id,
+            license: system.get<string>(AppSystemProp.LICENSE_KEY),
+        })
     }
 }

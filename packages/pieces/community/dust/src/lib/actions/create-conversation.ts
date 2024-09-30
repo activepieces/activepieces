@@ -10,8 +10,10 @@ import {
   usernameProp,
   timezoneProp,
   getConversationContent,
+  timeoutProp,
 } from '../common';
 import { dustAuth } from '../..';
+import mime from 'mime-types';
 
 export const createConversation = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -23,18 +25,22 @@ export const createConversation = createAction({
     assistant: assistantProp,
     username: usernameProp,
     timezone: timezoneProp,
-    query: Property.LongText({ displayName: 'Query', required: true }),
+    title: Property.ShortText({ displayName: 'Title', required: false }),
+    query: Property.LongText({ displayName: 'Query', required: false }),
     fragment: Property.File({ displayName: 'Fragment', required: false }),
     fragmentName: Property.ShortText({
       displayName: 'Fragment name',
       required: false,
     }),
+    timeout: timeoutProp,
   },
   async run({ auth, propsValue }) {
     const payload: Record<string, any> = {
       visibility: 'unlisted',
-      title: null,
-      message: {
+      title: propsValue.title || null,
+    };
+    if (propsValue.query) {
+      payload['message'] = {
         content: propsValue.query,
         mentions: [{ configurationId: propsValue.assistant }],
         context: {
@@ -44,13 +50,17 @@ export const createConversation = createAction({
           fullName: null,
           profilePictureUrl: null,
         },
-      },
-    };
+      };
+    }
     if (propsValue.fragment) {
+      const mimeType = propsValue.fragmentName
+        ? mime.lookup(propsValue.fragmentName) ||
+          mime.lookup(propsValue.fragment.filename)
+        : mime.lookup(propsValue.fragment.filename);
       payload['contentFragment'] = {
         title: propsValue.fragmentName || propsValue.fragment.filename,
         content: propsValue.fragment.data.toString('utf-8'),
-        contentType: 'file_attachment',
+        contentType: mimeType || 'text/plain',
         context: null,
         url: null,
       };
@@ -69,6 +79,14 @@ export const createConversation = createAction({
     };
     const body = (await httpClient.sendRequest(request)).body;
     const conversationId = body['conversation']['sId'];
-    return await getConversationContent(conversationId, auth);
+    if (propsValue.query) {
+      return await getConversationContent(
+        conversationId,
+        propsValue.timeout,
+        auth
+      );
+    } else {
+      return body;
+    }
   },
 });

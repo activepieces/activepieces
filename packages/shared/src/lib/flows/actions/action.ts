@@ -1,5 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-
 import { PackageType, PieceType, VersionType } from '../../pieces'
 import { SampleDataSettingsObject } from '../sample-data'
 import { PieceTriggerSettings } from '../triggers/trigger'
@@ -48,19 +47,16 @@ export const CodeActionSchema = Type.Object({
     type: Type.Literal(ActionType.CODE),
     settings: CodeActionSettings,
 })
-
-// Piece Action
-export const PieceActionSettings = Type.Object({
+export const PieceActionSettings = Type.Object({    
     packageType: Type.Enum(PackageType),
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     actionName: Type.Optional(Type.String({})),
-    input: Type.Record(Type.String({}), Type.Any()),
+    input: Type.Record(Type.String({}), Type.Unknown()),
     inputUiInfo: SampleDataSettingsObject,
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
-
 export type PieceActionSettings = Static<typeof PieceActionSettings>
 
 export const PieceActionSchema = Type.Object({
@@ -70,18 +66,10 @@ export const PieceActionSchema = Type.Object({
 })
 
 // Loop Items
-export const LoopOnItemsActionSettingsWithValidation = Type.Object({
-    items: Type.String({ minLength: 1 }),
-    inputUiInfo: SampleDataSettingsObject,
-})
-export type LoopOnItemsActionSettingsWithValidation = Static<typeof LoopOnItemsActionSettings>
-
-
 export const LoopOnItemsActionSettings = Type.Object({
     items: Type.String(),
     inputUiInfo: SampleDataSettingsObject,
 })
-
 export type LoopOnItemsActionSettings = Static<typeof LoopOnItemsActionSettings>
 
 export const LoopOnItemsActionSchema = Type.Object({
@@ -104,6 +92,13 @@ export enum BranchOperator {
     NUMBER_IS_EQUAL_TO = 'NUMBER_IS_EQUAL_TO',
     BOOLEAN_IS_TRUE = 'BOOLEAN_IS_TRUE',
     BOOLEAN_IS_FALSE = 'BOOLEAN_IS_FALSE',
+    DATE_IS_BEFORE = 'DATE_IS_BEFORE',
+    DATE_IS_EQUAL = 'DATE_IS_EQUAL',
+    DATE_IS_AFTER = 'DATE_IS_AFTER',
+    LIST_CONTAINS = 'LIST_CONTAINS',
+    LIST_DOES_NOT_CONTAIN = 'LIST_DOES_NOT_CONTAIN',
+    LIST_IS_EMPTY = 'LIST_IS_EMPTY',
+    LIST_IS_NOT_EMPTY = 'LIST_IS_NOT_EMPTY',
     EXISTS = 'EXISTS',
     DOES_NOT_EXIST = 'DOES_NOT_EXIST',
 }
@@ -113,6 +108,8 @@ export const singleValueConditions = [
     BranchOperator.DOES_NOT_EXIST,
     BranchOperator.BOOLEAN_IS_TRUE,
     BranchOperator.BOOLEAN_IS_FALSE,
+    BranchOperator.LIST_IS_EMPTY,
+    BranchOperator.LIST_IS_NOT_EMPTY,
 ]
 
 export const textConditions = [
@@ -124,42 +121,73 @@ export const textConditions = [
     BranchOperator.TEXT_DOES_NOT_START_WITH,
     BranchOperator.TEXT_ENDS_WITH,
     BranchOperator.TEXT_DOES_NOT_END_WITH,
+    BranchOperator.LIST_CONTAINS,
+    BranchOperator.LIST_DOES_NOT_CONTAIN,
 ]
 
+const BranchOperatorTextLiterals = [
+    Type.Literal(BranchOperator.TEXT_CONTAINS),
+    Type.Literal(BranchOperator.TEXT_DOES_NOT_CONTAIN),
+    Type.Literal(BranchOperator.TEXT_EXACTLY_MATCHES),
+    Type.Literal(BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH),
+    Type.Literal(BranchOperator.TEXT_STARTS_WITH),
+    Type.Literal(BranchOperator.TEXT_DOES_NOT_START_WITH),
+    Type.Literal(BranchOperator.TEXT_ENDS_WITH),
+    Type.Literal(BranchOperator.TEXT_DOES_NOT_END_WITH),
+    Type.Literal(BranchOperator.LIST_CONTAINS),
+    Type.Literal(BranchOperator.LIST_DOES_NOT_CONTAIN),
+]
+
+const BranchOperatorNumberLiterals = [
+    Type.Literal(BranchOperator.NUMBER_IS_GREATER_THAN),
+    Type.Literal(BranchOperator.NUMBER_IS_LESS_THAN),
+    Type.Literal(BranchOperator.NUMBER_IS_EQUAL_TO),
+]
+
+const BranchOperatorDateLiterals = [
+    Type.Literal(BranchOperator.DATE_IS_BEFORE),
+    Type.Literal(BranchOperator.DATE_IS_EQUAL),
+    Type.Literal(BranchOperator.DATE_IS_AFTER),
+]
+
+const BranchOperatorSingleValueLiterals = [
+    Type.Literal(BranchOperator.EXISTS),
+    Type.Literal(BranchOperator.DOES_NOT_EXIST),
+    Type.Literal(BranchOperator.BOOLEAN_IS_TRUE),
+    Type.Literal(BranchOperator.BOOLEAN_IS_FALSE),
+    Type.Literal(BranchOperator.LIST_IS_EMPTY),
+    Type.Literal(BranchOperator.LIST_IS_NOT_EMPTY),
+]
+
+const BranchTextConditionValid = (addMinLength: boolean) => Type.Object({
+    firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    caseSensitive: Type.Optional(Type.Boolean()),
+    operator: Type.Optional(Type.Union(BranchOperatorTextLiterals)),
+})
+
+const BranchNumberConditionValid = (addMinLength: boolean) => Type.Object({
+    firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    operator: Type.Optional(Type.Union(BranchOperatorNumberLiterals)),
+})
+
+const BranchDateConditionValid = (addMinLength: boolean) => Type.Object({
+    firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    secondValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    operator: Type.Optional(Type.Union(BranchOperatorDateLiterals)),
+})
+
+const BranchSingleValueConditionValid = (addMinLength: boolean) => Type.Object({
+    firstValue: Type.String(addMinLength ? { minLength: 1 } : {}),
+    operator: Type.Optional(Type.Union(BranchOperatorSingleValueLiterals)),
+})
+
 const BranchConditionValid = (addMinLength: boolean) => Type.Union([
-    Type.Object({
-        firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-        secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-        caseSensitive: Type.Optional(Type.Boolean()),
-        operator: Type.Optional(Type.Union([
-            Type.Literal( BranchOperator.TEXT_CONTAINS),
-            Type.Literal( BranchOperator.TEXT_DOES_NOT_CONTAIN),
-            Type.Literal( BranchOperator.TEXT_EXACTLY_MATCHES),
-            Type.Literal( BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH),
-            Type.Literal( BranchOperator.TEXT_STARTS_WITH),
-            Type.Literal( BranchOperator.TEXT_DOES_NOT_START_WITH),
-            Type.Literal( BranchOperator.TEXT_ENDS_WITH),
-            Type.Literal( BranchOperator.TEXT_DOES_NOT_END_WITH),
-        ])),
-    }),
-    Type.Object({
-        firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-        secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-        operator: Type.Optional(Type.Union([
-            Type.Literal( BranchOperator.NUMBER_IS_GREATER_THAN),
-            Type.Literal( BranchOperator.NUMBER_IS_LESS_THAN),
-            Type.Literal( BranchOperator.NUMBER_IS_EQUAL_TO),
-        ])),
-    }),
-    Type.Object({
-        firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-        operator: Type.Optional(Type.Union([
-            Type.Literal( BranchOperator.EXISTS),
-            Type.Literal( BranchOperator.DOES_NOT_EXIST),
-            Type.Literal( BranchOperator.BOOLEAN_IS_TRUE),
-            Type.Literal( BranchOperator.BOOLEAN_IS_FALSE),
-        ])),
-    }),
+    BranchTextConditionValid(addMinLength),
+    BranchNumberConditionValid(addMinLength),
+    BranchDateConditionValid(addMinLength),
+    BranchSingleValueConditionValid(addMinLength),
 ])
 
 export const BranchActionSettingsWithValidation = Type.Object({
@@ -167,8 +195,24 @@ export const BranchActionSettingsWithValidation = Type.Object({
     inputUiInfo: SampleDataSettingsObject,
 })
 
+export const ValidBranchCondition = BranchConditionValid(true)
+export type ValidBranchCondition = Static<typeof ValidBranchCondition>
+
+// TODO remove this and use ValidBranchCondition everywhere
 export const BranchCondition = BranchConditionValid(false)
 export type BranchCondition = Static<typeof BranchCondition>
+
+export const BranchTextCondition = BranchTextConditionValid(false)
+export type BranchTextCondition = Static<typeof BranchTextCondition>
+
+export const BranchNumberCondition = BranchNumberConditionValid(false)
+export type BranchNumberCondition = Static<typeof BranchNumberCondition>
+
+export const BranchDateCondition = BranchDateConditionValid(false)
+export type BranchDateCondition = Static<typeof BranchDateCondition>
+
+export const BranchSingleValueCondition = BranchSingleValueConditionValid(false)
+export type BranchSingleValueCondition = Static<typeof BranchSingleValueCondition>
 
 export const BranchActionSettings = Type.Object({
     conditions: Type.Array(Type.Array(BranchConditionValid(false))),
@@ -222,8 +266,8 @@ export type CodeAction = Static<typeof CodeActionSchema> & { nextAction?: Action
 
 
 export type StepSettings =
-  | CodeActionSettings
-  | PieceActionSettings
-  | PieceTriggerSettings
-  | BranchActionSettings
-  | LoopOnItemsActionSettings
+    | CodeActionSettings
+    | PieceActionSettings
+    | PieceTriggerSettings
+    | BranchActionSettings
+    | LoopOnItemsActionSettings

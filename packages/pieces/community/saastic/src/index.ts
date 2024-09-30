@@ -53,7 +53,7 @@ export const saastic = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://api.saastic.com',
       auth: saasticAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`,
       }),
     }),
