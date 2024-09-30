@@ -19,30 +19,31 @@ import {
 } from '@activepieces/shared';
 
 import { PieceStepMetadata, StepMetadata } from './types';
+import { t } from 'i18next';
 
 export const PRIMITIVE_STEP_METADATA = {
   [ActionType.CODE]: {
-    displayName: 'Code',
+    displayName: t('Code'),
     logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
-    description: 'Powerful Node.js & TypeScript code with npm',
+    description: t('Powerful Node.js & TypeScript code with npm'),
     type: ActionType.CODE as const,
   },
   [ActionType.LOOP_ON_ITEMS]: {
-    displayName: 'Loop on Items',
+    displayName: t('Loop on Items'),
     logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
     description: 'Iterate over a list of items',
     type: ActionType.LOOP_ON_ITEMS as const,
   },
   [ActionType.BRANCH]: {
-    displayName: 'Branch',
+    displayName: t('Branch'),
     logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
-    description: 'Branch',
+    description: t('Split your flow into branches depending on condition(s)'),
     type: ActionType.BRANCH as const,
   },
   [TriggerType.EMPTY]: {
-    displayName: 'Empty Trigger',
+    displayName: t('Empty Trigger'),
     logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
-    description: 'Empty Trigger',
+    description: t('Empty Trigger'),
     type: TriggerType.EMPTY as const,
   },
 };
