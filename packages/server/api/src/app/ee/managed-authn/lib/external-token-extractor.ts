@@ -34,11 +34,13 @@ export const externalTokenExtractor = {
                 issuer: null,
             })
 
+            const optionalEmail = payload.email ?? payload.externalUserId
+
             return {
                 platformId: signingKey.platformId,
                 externalUserId: payload.externalUserId,
                 externalProjectId: payload.externalProjectId,
-                externalEmail: payload.email,
+                externalEmail: optionalEmail,
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
                 role: payload?.role ?? ProjectMemberRole.EDITOR,

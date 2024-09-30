@@ -56,7 +56,7 @@ export const userInvitationsService = {
         const platform = await platformService.getOneOrThrow(platformId)
         const invitations = await repo().findBy([
             {
-                email,
+                email: email.toLowerCase().trim(),
                 platformId,
                 status: InvitationStatus.ACCEPTED,
             },
@@ -113,7 +113,7 @@ export const userInvitationsService = {
             id,
             status,
             type,
-            email,
+            email: email.toLowerCase().trim(),
             platformId,
             projectRole: type === InvitationType.PLATFORM ? undefined : projectRole!,
             platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
