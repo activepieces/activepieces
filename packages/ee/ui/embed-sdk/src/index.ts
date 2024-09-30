@@ -65,6 +65,7 @@ export interface ActivepiecesVendorInit {
     disableNavigationInBuilder: boolean;
     hideFolders?: boolean;
     sdkVersion?: string;
+    jwtToken?: string; // Added jwtToken here
   };
 }
 // We used to send JWT in query params, now we send it in local storage
@@ -182,7 +183,6 @@ class ActivepiecesEmbedded {
     callbackAfterAuthentication?: () => void
   }
   ): IframeWithWindow {
-    localStorage.setItem(_AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY, jwtToken);
     const iframe = this._createIframe({ src: `${this._instanceUrl}/embed` });
     iframeContainer.appendChild(iframe);
     if (!this._doesFrameHaveWindow(iframe)) {
@@ -202,6 +202,7 @@ class ActivepiecesEmbedded {
                 hideFolders: this._hideFolders,
                 hideLogoInBuilder: this._hideLogoInBuilder,
                 hideFlowNameInBuilder: this._hideFlowNameInBuilder,
+                jwtToken: this._jwtToken, // Pass the token here
               },
             };
             iframeWindow.postMessage(apEvent, '*');
@@ -214,10 +215,7 @@ class ActivepiecesEmbedded {
         }
       }
     };
-    window.addEventListener(
-      'message', initialMessageHandler
-
-    );
+    window.addEventListener('message', initialMessageHandler);
     return iframe;
   }
 

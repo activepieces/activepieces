@@ -2,14 +2,11 @@ import { useMutation } from '@tanstack/react-query';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
-
 import { useEmbedding } from '@/components/embed-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
-import { isNil } from '@activepieces/shared';
 import {
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
-  _AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY,
   ActivepiecesClientEventName,
   ActivepiecesClientInit,
   ActivepiecesVendorEventName,
@@ -41,45 +38,36 @@ const EmbedPage = React.memo(() => {
         hideFolders: event.data.data.hideFolders || false,
         sdkVersion: event.data.data.sdkVersion,
       });
-      localStorage.setItem(_AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY, null);
-      navigate('/');
+      const token = event.data.data.jwtToken || getExternalTokenFromSearchQuery();
+      if (token) {
+        mutateAsync(
+          {
+            externalAccessToken: token,
+          },
+          {
+            onSuccess: (data) => {
+              authenticationSession.saveResponse(data);
+              navigate('/');
+            },
+          },
+        );
+      }
     }
   };
 
-  const getExternalToken = () => {
-    const fromLocalStorage = localStorage.getItem(
-      _AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY,
-    );
-    if (!isNil(fromLocalStorage)) {
-      return fromLocalStorage;
-    }
+  const getExternalTokenFromSearchQuery = () => {
     return new URLSearchParams(window.location.search).get(
       _AP_JWT_TOKEN_QUERY_PARAM_NAME,
     );
   };
 
   useEffectOnce(() => {
-    const externalToken = getExternalToken();
-    if (!externalToken) {
-      return;
-    }
-    mutateAsync(
-      {
-        externalAccessToken: externalToken,
-      },
-      {
-        onSuccess: (data) => {
-          authenticationSession.saveResponse(data);
-          const event: ActivepiecesClientInit = {
-            type: ActivepiecesClientEventName.CLIENT_INIT,
-            data: {},
-          };
-          window.parent.postMessage(event, '*');
-          window.addEventListener('message', initState);
-        },
-      },
-    );
-
+    const event: ActivepiecesClientInit = {
+      type: ActivepiecesClientEventName.CLIENT_INIT,
+      data: {},
+    };
+    window.parent.postMessage(event, '*');
+    window.addEventListener('message', initState);
     return () => {
       window.removeEventListener('message', initState);
     };
