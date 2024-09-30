@@ -45,9 +45,9 @@ import {
 } from '@activepieces/shared';
 
 import { SearchInput } from '../../../components/ui/search-input';
+import { cn } from '../../../lib/utils';
 
 import { PieceSearchSuggestions } from './piece-search-suggestions';
-import { cn } from '../../../lib/utils';
 
 const filterOutPiecesWithNoSuggestions = (
   metadata: StepMetadataWithSuggestions[],

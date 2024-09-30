@@ -5,7 +5,8 @@ import {
   ActionOrTriggerListItem,
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
-import { ActionType, TriggerType } from '../../../../../shared/src';
+import { ActionType, TriggerType } from '@activepieces/shared';
+
 import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
 
 type HandleSelectCallback = (

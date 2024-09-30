@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { api } from '@/lib/api';
 import {
   DropdownState,
@@ -19,7 +21,6 @@ import {
 } from '@activepieces/shared';
 
 import { PieceStepMetadata, StepMetadata } from './types';
-import { t } from 'i18next';
 
 export const CORE_STEP_METADATA = {
   [ActionType.CODE]: {

@@ -1,7 +1,8 @@
+import { t } from 'i18next';
 import { Search, X } from 'lucide-react';
 import * as React from 'react';
+
 import { SelectUtilButton } from '../custom/select-util-button';
-import { t } from 'i18next';
 
 export type SearchInputProps = Omit<
   React.InputHTMLAttributes<HTMLInputElement>,

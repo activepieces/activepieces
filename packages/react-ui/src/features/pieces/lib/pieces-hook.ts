@@ -1,4 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 
 import {
   PieceMetadataModel,
@@ -12,10 +13,10 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 
+import { INTERNAL_ERROR_TOAST, toast } from '../../../components/ui/use-toast';
+
 import { CORE_STEP_METADATA, piecesApi } from './pieces-api';
 import { StepMetadata, StepMetadataWithSuggestions } from './types';
-import { t } from 'i18next';
-import { INTERNAL_ERROR_TOAST, toast } from '../../../components/ui/use-toast';
 
 type UsePieceProps = {
   name: string;
