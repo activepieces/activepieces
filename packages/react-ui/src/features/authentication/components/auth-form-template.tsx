@@ -9,7 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { ApFlagId } from '@activepieces/shared';
+import {
+  ApFlagId,
+  ThirdPartyAuthnProvidersToShowMap,
+} from '@activepieces/shared';
 
 import { HorizontalSeparatorWithText } from '../../../components/ui/seperator';
 import { flagsHooks } from '../../../hooks/flags-hooks';

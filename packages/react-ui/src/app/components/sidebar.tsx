@@ -28,7 +28,7 @@ type Link = {
 type CustomTooltipLinkProps = {
   to: string;
   label: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ElementType;
   extraClasses?: string;
   notification?: boolean;
   locked?: boolean;
@@ -97,7 +97,7 @@ export function Sidebar({
   hideSideNav = false,
 }: SidebarProps) {
   const branding = flagsHooks.useWebsiteBranding();
-  const showSupportAndDocs = flagsHooks.useFlag<boolean>(
+  const { data: showSupportAndDocs } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
   const { platform } = platformHooks.useCurrentPlatform();
