@@ -152,7 +152,6 @@ class ActivepiecesEmbedded {
           const iframeContainer = document.querySelector(containerSelector);
           if (iframeContainer) {
             const iframeWindow = this.connectToEmbed({
-              jwtToken,
               iframeContainer,
               callbackAfterAuthentication: () => {
                 resolve({ status: "success" });
@@ -177,8 +176,7 @@ class ActivepiecesEmbedded {
 
   };
 
-  private connectToEmbed({ jwtToken, iframeContainer, callbackAfterAuthentication }: {
-    jwtToken: string,
+  private connectToEmbed({ iframeContainer, callbackAfterAuthentication }: {
     iframeContainer: Element,
     callbackAfterAuthentication?: () => void
   }
@@ -234,7 +232,7 @@ class ActivepiecesEmbedded {
       },
       method: async () => {
         const connectionsIframe = this.connectToEmbed({
-          jwtToken: this._jwtToken, iframeContainer: document.body,
+          iframeContainer: document.body,
           callbackAfterAuthentication: () => {
             const apEvent: ActivepiecesVendorRouteChanged = {
               type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,

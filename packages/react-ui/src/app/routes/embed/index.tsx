@@ -29,16 +29,6 @@ const EmbedPage = React.memo(() => {
       event.source === window.parent &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
-      setEmbedState({
-        hideSideNav: event.data.data.hideSidebar,
-        isEmbedded: true,
-        hideLogoInBuilder: event.data.data.hideLogoInBuilder || false,
-        hideFlowNameInBuilder: event.data.data.hideFlowNameInBuilder || false,
-        prefix: event.data.data.prefix,
-        disableNavigationInBuilder: event.data.data.disableNavigationInBuilder,
-        hideFolders: event.data.data.hideFolders || false,
-        sdkVersion: event.data.data.sdkVersion,
-      });
       const token =
         event.data.data.jwtToken || getExternalTokenFromSearchQuery();
       if (token) {
@@ -49,11 +39,16 @@ const EmbedPage = React.memo(() => {
           {
             onSuccess: (data) => {
               authenticationSession.saveResponse(data);
-              const event: ActivepiecesClientInit = {
-                type: ActivepiecesClientEventName.CLIENT_INIT,
-                data: {},
-              };
-              window.parent.postMessage(event, '*');
+              setEmbedState({
+                hideSideNav: event.data.data.hideSidebar,
+                isEmbedded: true,
+                hideLogoInBuilder: event.data.data.hideLogoInBuilder || false,
+                hideFlowNameInBuilder: event.data.data.hideFlowNameInBuilder || false,
+                prefix: event.data.data.prefix,
+                disableNavigationInBuilder: event.data.data.disableNavigationInBuilder,
+                hideFolders: event.data.data.hideFolders || false,
+                sdkVersion: event.data.data.sdkVersion,
+              });cd 
               navigate('/');
             },
           },
@@ -69,6 +64,11 @@ const EmbedPage = React.memo(() => {
   };
 
   useEffectOnce(() => {
+    const event: ActivepiecesClientInit = {
+      type: ActivepiecesClientEventName.CLIENT_INIT,
+      data: {},
+    };
+    window.parent.postMessage(event, '*');
     window.addEventListener('message', initState);
     return () => {
       window.removeEventListener('message', initState);
