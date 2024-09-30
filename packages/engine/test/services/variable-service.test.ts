@@ -397,6 +397,27 @@ describe('Variable Service', () => {
         })
         expect(errors).toEqual({})
     })
+    
+    it('should not error if auth configured, but no auth provided in input', async () => {
+        const input = {
+            price: '0',
+        }
+        const props = {
+            price: Property.Number({
+                displayName: 'Price',
+                required: true,
+            }),
+        }
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
+            required: true,
+            props: {},
+        }))
+
+        expect(processedInput).toEqual({
+            price: 0,
+        })
+        expect(errors).toEqual({})
+    })
 
     it('should return errors for invalid number', async () => {
         const input = {

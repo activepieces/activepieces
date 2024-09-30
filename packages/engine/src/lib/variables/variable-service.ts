@@ -212,7 +212,7 @@ export class VariableService {
         const processedInput = { ...resolvedInput }
         const errors: VariableValidationError = {}
 
-        const isAuthenticationProperty = auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2) && !isNil(auth.props)
+        const isAuthenticationProperty = auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2) && !isNil(auth.props) && !isNil(resolvedInput[AUTHENTICATION_PROPERTY_NAME])
         if (isAuthenticationProperty) {
             const { processedInput: authProcessedInput, errors: authErrors } = await this.applyProcessorsAndValidators(
                 resolvedInput[AUTHENTICATION_PROPERTY_NAME],
