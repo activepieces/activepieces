@@ -40,7 +40,7 @@ export const triggerHelper = {
             apiUrl: constants.internalApiUrl,
             projectId: params.projectId,
             engineToken: params.engineToken,
-        }).applyProcessorsAndValidators(resolvedInput, trigger.props, piece.auth)
+        }).applyProcessorsAndValidators(resolvedInput, trigger.props, piece.auth, trigger.requireAuth)
 
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors))
