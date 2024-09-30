@@ -38,11 +38,10 @@ export const uploadFile = createAction({
       : 'application/octet-stream'; // Fallback to a default MIME type
     const encodedFilename = encodeURIComponent(context.propsValue.fileName);
     const parentId = context.propsValue.parentId ?? 'root';
-    
+
     if (fileData.data.length <= 4 * 1024 * 1024) {
       // If file is smaller than 4MiB, use simple upload
-      console.log('upload file using simple upload');
-      const base64Data= Buffer.from(fileData.base64, 'base64');
+      const base64Data = Buffer.from(fileData.base64, 'base64');
       const result = await httpClient.sendRequest({
         method: HttpMethod.PUT,
         url: `${oneDriveCommon.baseUrl}/items/${parentId}:/${encodedFilename}:/content`,
@@ -60,7 +59,6 @@ export const uploadFile = createAction({
       return result.body;
     } else {
       // For files larger than 4MiB, use chunked upload
-      console.log('upload file using chunked upload');
       const session = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: `${oneDriveCommon.baseUrl}/items/${parentId}:/${encodedFilename}:/createUploadSession`,
