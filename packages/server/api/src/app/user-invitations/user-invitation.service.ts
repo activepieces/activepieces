@@ -54,13 +54,14 @@ export const userInvitationsService = {
             return
         }
         const platform = await platformService.getOneOrThrow(platformId)
-        const invitations = await repo().findBy([
-            {
-                email: email.toLowerCase().trim(),
-                platformId,
+        const invitations = await repo().createQueryBuilder('user_invitation')
+            .where('LOWER(user_invitation.email) = :email', { email: email.toLowerCase().trim() })
+            .andWhere({
+                platformId: platformId,
                 status: InvitationStatus.ACCEPTED,
-            },
-        ])
+            })
+            .getMany()
+
         logger.info({
             platformId,
             count: invitations.length,
@@ -197,11 +198,11 @@ export const userInvitationsService = {
         email,
         platformId,
     }: ProvisionUserInvitationParams): Promise<boolean> {
-        const invitations = await repo().findBy({
-            email,
+        const invitations = await repo().createQueryBuilder().where({
             platformId,
             status: InvitationStatus.ACCEPTED,
-        })
+        }).andWhere('LOWER(user_invitation.email) = :email', { email: email.toLowerCase().trim() })
+            .getMany()
         return invitations.length > 0
     },
     async getByEmailAndPlatformIdOrThrow({
