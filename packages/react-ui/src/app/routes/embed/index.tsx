@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
+
 import { useEmbedding } from '@/components/embed-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
@@ -38,7 +39,8 @@ const EmbedPage = React.memo(() => {
         hideFolders: event.data.data.hideFolders || false,
         sdkVersion: event.data.data.sdkVersion,
       });
-      const token = event.data.data.jwtToken || getExternalTokenFromSearchQuery();
+      const token =
+        event.data.data.jwtToken || getExternalTokenFromSearchQuery();
       if (token) {
         mutateAsync(
           {
@@ -47,6 +49,11 @@ const EmbedPage = React.memo(() => {
           {
             onSuccess: (data) => {
               authenticationSession.saveResponse(data);
+              const event: ActivepiecesClientInit = {
+                type: ActivepiecesClientEventName.CLIENT_INIT,
+                data: {},
+              };
+              window.parent.postMessage(event, '*');
               navigate('/');
             },
           },
@@ -62,11 +69,6 @@ const EmbedPage = React.memo(() => {
   };
 
   useEffectOnce(() => {
-    const event: ActivepiecesClientInit = {
-      type: ActivepiecesClientEventName.CLIENT_INIT,
-      data: {},
-    };
-    window.parent.postMessage(event, '*');
     window.addEventListener('message', initState);
     return () => {
       window.removeEventListener('message', initState);
