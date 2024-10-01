@@ -3,19 +3,19 @@ import { ApEdition, isFailedState, isFlowUserTerminalState, RunEnvironment } fro
 import dayjs from 'dayjs'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { projectUsageService } from '../../project/usage/project-usage-service'
-import { emailService } from '../helper/email/email-service'
-import { projectLimitsService } from '../project-plan/project-plan.service'
-import { issuesService } from '../issues/issues-service'
 import { alertsService } from '../alerts/alerts-service'
+import { emailService } from '../helper/email/email-service'
+import { issuesService } from '../issues/issues-service'
+import { projectLimitsService } from '../project-plan/project-plan.service'
 
 export const platformRunHooks: FlowRunHooks = {
     async onFinish({ projectId, tasks, flowRun }): Promise<void> {
-        const edition = system.getEdition();
+        const edition = system.getEdition()
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-            return;
+            return
         }
         if (!isFlowUserTerminalState(flowRun.status)) {
-            return;
+            return
         }
         if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION) {
             const issue = await issuesService.add({
@@ -25,15 +25,15 @@ export const platformRunHooks: FlowRunHooks = {
             })
             await alertsService.sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
         }
-        const consumedTasks = await projectUsageService.increaseUsage(projectId, tasks, 'tasks');
+        const consumedTasks = await projectUsageService.increaseUsage(projectId, tasks, 'tasks')
         await sendQuotaAlertIfNeeded({
             projectId,
             consumedTasks,
             createdAt: dayjs().toISOString(),
             previousConsumedTasks: consumedTasks - tasks,
-        });
+        })
     },
-};
+}
 
 async function sendQuotaAlertIfNeeded({
     projectId,

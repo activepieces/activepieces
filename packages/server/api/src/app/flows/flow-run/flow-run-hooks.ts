@@ -1,10 +1,10 @@
-import { FlowRun } from "@activepieces/shared"
+import { FlowRun } from '@activepieces/shared'
 
 export type FlowRunHooks = {
     onFinish({
         projectId,
         tasks,
-        flowRun
+        flowRun,
     }: {
         projectId: string
         tasks: number
