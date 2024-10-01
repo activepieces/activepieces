@@ -142,7 +142,7 @@ const FormDescription = React.forwardRef<
   );
 });
 FormDescription.displayName = 'FormDescription';
-
+export const formMessageClass = 'text-sm font-medium text-destructive';
 const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
@@ -158,7 +158,7 @@ const FormMessage = React.forwardRef<
     <p
       ref={ref}
       id={formMessageId}
-      className={cn('text-sm font-medium text-destructive', className)}
+      className={cn(formMessageClass, className)}
       {...props}
     >
       {body}

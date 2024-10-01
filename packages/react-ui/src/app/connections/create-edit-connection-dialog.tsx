@@ -25,6 +25,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  formMessageClass,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/seperator';
@@ -59,6 +60,7 @@ import {
 } from '@activepieces/shared';
 
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
+import { cn } from '../../lib/utils';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
@@ -324,7 +326,7 @@ const CreateOrEditConnectionDialog = React.memo(
           </ScrollArea>
 
           {errorMessage && (
-            <div className="text-left text-sm text-destructive text-sm mt-4">
+            <div className={cn(formMessageClass, 'text-left mt-4')}>
               {errorMessage}
             </div>
           )}
