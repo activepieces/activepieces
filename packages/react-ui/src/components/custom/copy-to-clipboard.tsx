@@ -3,21 +3,26 @@ import { t } from 'i18next';
 import { Check, Copy, Download } from 'lucide-react';
 
 import { toast } from '@/components/ui/use-toast';
-import { SelectUtilButton } from './select-util-button';
+
+import { Input } from '../ui/input';
 import { ScrollArea } from '../ui/scroll-area';
 import { Textarea } from '../ui/textarea';
-import { Input } from '../ui/input';
+
+import { SelectUtilButton } from './select-util-button';
 
 type CopyToClipboardInputProps = {
   textToCopy: string;
   useInput: boolean;
-  fileName?:string;
+  fileName?: string;
 };
 
-const noBorderInputClass = `border-none w-full focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0`
+const noBorderInputClass = `border-none w-full focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0`;
 
-const CopyToClipboardInput = ({ textToCopy,fileName,useInput }: CopyToClipboardInputProps) => {
-
+const CopyToClipboardInput = ({
+  textToCopy,
+  fileName,
+  useInput,
+}: CopyToClipboardInputProps) => {
   const { mutate: copyToClipboard, isPending } = useMutation({
     mutationFn: async () => {
       await navigator.clipboard.writeText(textToCopy);
@@ -31,7 +36,7 @@ const CopyToClipboardInput = ({ textToCopy,fileName,useInput }: CopyToClipboardI
     },
   });
 
-  const downloadFile =  ()=>{
+  const downloadFile = () => {
     const blob = new Blob([textToCopy], {
       type: 'text/plain',
     });
@@ -43,39 +48,38 @@ const CopyToClipboardInput = ({ textToCopy,fileName,useInput }: CopyToClipboardI
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }
-
-
+  };
 
   return (
     <div className=" flex gap-2 items-center bg-background border border-solid text-sm rounded-lg block w-full select-none pr-3">
-
-      {
-        useInput? <Input  value={textToCopy} className={noBorderInputClass} readOnly></Input> : <Textarea value={textToCopy} rows={6} className={noBorderInputClass} readOnly></Textarea>
-      }
-     <div className='flex flex-col gap-1'>
-     <SelectUtilButton
-      tooltipText={isPending? t('Copied'):t('Copy')}
-      Icon={isPending ? (
-        Check
+      {useInput ? (
+        <Input
+          value={textToCopy}
+          className={noBorderInputClass}
+          readOnly
+        ></Input>
       ) : (
-        Copy
+        <Textarea
+          value={textToCopy}
+          rows={6}
+          className={noBorderInputClass}
+          readOnly
+        ></Textarea>
       )}
-        onClick={() => copyToClipboard()}
-      >
-        
-      </SelectUtilButton>
-     {
-      fileName && (  <SelectUtilButton
-        tooltipText={t('Download')}
-         Icon={Download}
-          onClick={() => downloadFile()}
-        >
-          
-        </SelectUtilButton>)
-     }
-     </div>
-      
+      <div className="flex flex-col gap-1">
+        <SelectUtilButton
+          tooltipText={isPending ? t('Copied') : t('Copy')}
+          Icon={isPending ? Check : Copy}
+          onClick={() => copyToClipboard()}
+        ></SelectUtilButton>
+        {fileName && (
+          <SelectUtilButton
+            tooltipText={t('Download')}
+            Icon={Download}
+            onClick={() => downloadFile()}
+          ></SelectUtilButton>
+        )}
+      </div>
     </div>
   );
 };

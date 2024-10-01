@@ -2,6 +2,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
+import { Trans } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewSigningKeyDialog } from '@/app/routes/platform/settings/signing-keys/new-signing-key-dialog';
@@ -18,8 +20,6 @@ import { signingKeyApi } from '@/features/platform-admin-panel/lib/signing-key-a
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { SigningKey } from '@activepieces/ee-shared';
-import { Link } from 'react-router-dom';
-import { Trans } from 'react-i18next';
 
 const fetchData = async (
   _params: Record<string, string>,
@@ -81,18 +81,21 @@ const SigningKeysPage = () => {
             <div className="flex flex-col gap-2">
               <h1 className="text-2xl font-bold w-full">{t('Signing Keys')}</h1>
               <div className="text-sm text-muted-foreground  flex-col gap-2 ">
-                <Trans
-                 
-                > 
-                Use our embedding <Link rel='noopener noreferrer'  target="_blank" className='font-medium text-primary underline underline-offset-4' to='https://www.activepieces.com/docs/embedding/provision-users'>JavaScript SDK</Link> to authenticate users with signing keys.
-                
-                 </Trans>
-               
-                 <div>
-    
+                <Trans>
+                  Use our embedding{' '}
+                  <Link
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    className="font-medium text-primary underline underline-offset-4"
+                    to="https://www.activepieces.com/docs/embedding/provision-users"
+                  >
+                    JavaScript SDK
+                  </Link>{' '}
+                  to authenticate users with signing keys.
+                </Trans>
+
+                <div></div>
               </div>
-              </div>
-             
             </div>
             <NewSigningKeyDialog onCreate={() => setRefresh(refresh + 1)}>
               <Button
@@ -109,7 +112,6 @@ const SigningKeysPage = () => {
           columns={columns}
           refresh={refresh}
           fetchData={fetchData}
-          
           actions={[
             (row) => (
               <div className="flex items-end justify-end">

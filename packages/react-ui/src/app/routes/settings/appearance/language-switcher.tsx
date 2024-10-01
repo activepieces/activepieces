@@ -23,9 +23,10 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { flagsHooks } from '../../../../hooks/flags-hooks';
-import { ApFlagId } from '../../../../../../shared/src';
+import { ApFlagId } from '@activepieces/shared';
+
 import { useNewWindow } from '../../../../components/embed-provider';
+import { flagsHooks } from '../../../../hooks/flags-hooks';
 
 export enum LocalesEnum {
   DUTCH = 'nl',

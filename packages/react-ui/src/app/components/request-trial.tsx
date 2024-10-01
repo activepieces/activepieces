@@ -99,8 +99,8 @@ const features = [
   },
   {
     label: t('Embedding'),
-    key: `SIGNING_KEYS`
-  }
+    key: `SIGNING_KEYS`,
+  },
 ];
 
 const goals = [
@@ -317,7 +317,6 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
               <FormField
                 control={form.control}
                 name="goal"
-              
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('Goal')} *</FormLabel>

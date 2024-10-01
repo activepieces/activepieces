@@ -39,8 +39,8 @@ import {
   isFailedState,
 } from '@activepieces/shared';
 
-import { TableTitle } from '../../../components/ui/table-title';
 import { useNewWindow } from '../../../components/embed-provider';
+import { TableTitle } from '../../../components/ui/table-title';
 
 const fetchData = async (
   params: {

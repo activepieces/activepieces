@@ -62,7 +62,13 @@ export const NewApiKeyDialog = ({
   });
 
   return (
-    <Dialog open={open} onOpenChange={(open) => {setOpen(open); form.reset();}}>
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        setOpen(open);
+        form.reset();
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -91,9 +97,7 @@ export const NewApiKeyDialog = ({
           <Form {...form}>
             <form
               className="grid space-y-4"
-              onSubmit={form.handleSubmit(() =>
-                mutate(),
-              )}
+              onSubmit={form.handleSubmit(() => mutate())}
             >
               <FormField
                 name="displayName"

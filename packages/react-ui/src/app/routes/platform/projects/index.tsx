@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Pencil, Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
@@ -20,11 +21,10 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 
+import { ProjectWithLimits } from '../../../../../../shared/src';
 import { TableTitle } from '../../../../components/ui/table-title';
 
 import { NewProjectDialog } from './new-project-dialog';
-import { ColumnDef } from '@tanstack/react-table';
-import { ProjectWithLimits } from '../../../../../../shared/src';
 
 const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {

@@ -13,6 +13,7 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
+import { useEmbedding } from '../../components/embed-provider';
 import { Separator } from '../../components/ui/seperator';
 import {
   Tooltip,
@@ -21,7 +22,6 @@ import {
 } from '../../components/ui/tooltip';
 
 import { FlagGuard } from './flag-guard';
-import { useEmbedding } from '../../components/embed-provider';
 
 export const Header = () => {
   const history = useLocation();
@@ -29,48 +29,49 @@ export const Header = () => {
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const { embedState } = useEmbedding();
   return (
-    !embedState.isEmbedded &&
-    <div>
-      <div className="flex h-[60px] items-center">
-        {isInPlatformAdmin ? (
-          <span className="text-3xl font-bold px-4 py-2">
-            {t('Platform Admin')}
-          </span>
-        ) : (
-          <ProjectSwitcher />
-        )}
-        <div className="grow"></div>
-        <div className="flex items-center justify-center gap-4">
-          <InviteUserDialog></InviteUserDialog>
-          {showPlatformAdminDashboard && (
-            <Link to={isInPlatformAdmin ? '/' : '/platform'}>
-              <Button
-                variant={'outline'}
-                size="sm"
-                className="flex items-center justify-center gap-2"
-              >
-                {isInPlatformAdmin ? (
-                  <LogOut className="size-4" />
-                ) : (
-                  <Shield className="size-4" />
-                )}
-                <span>
-                  {t(
-                    isInPlatformAdmin
-                      ? 'Exit Platform Admin'
-                      : 'Platform Admin',
-                  )}
-                </span>
-              </Button>
-            </Link>
+    !embedState.isEmbedded && (
+      <div>
+        <div className="flex h-[60px] items-center">
+          {isInPlatformAdmin ? (
+            <span className="text-3xl font-bold px-4 py-2">
+              {t('Platform Admin')}
+            </span>
+          ) : (
+            <ProjectSwitcher />
           )}
+          <div className="grow"></div>
+          <div className="flex items-center justify-center gap-4">
+            <InviteUserDialog></InviteUserDialog>
+            {showPlatformAdminDashboard && (
+              <Link to={isInPlatformAdmin ? '/' : '/platform'}>
+                <Button
+                  variant={'outline'}
+                  size="sm"
+                  className="flex items-center justify-center gap-2"
+                >
+                  {isInPlatformAdmin ? (
+                    <LogOut className="size-4" />
+                  ) : (
+                    <Shield className="size-4" />
+                  )}
+                  <span>
+                    {t(
+                      isInPlatformAdmin
+                        ? 'Exit Platform Admin'
+                        : 'Platform Admin',
+                    )}
+                  </span>
+                </Button>
+              </Link>
+            )}
 
-          <TaskLimitButton />
-          <UserAvatar />
+            <TaskLimitButton />
+            <UserAvatar />
+          </div>
         </div>
+        <Separator></Separator>
       </div>
-      <Separator></Separator>
-    </div>
+    )
   );
 };
 

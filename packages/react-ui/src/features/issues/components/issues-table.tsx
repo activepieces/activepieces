@@ -19,10 +19,10 @@ import { formatUtils } from '@/lib/utils';
 import { PopulatedIssue } from '@activepieces/ee-shared';
 import { FlowRunStatus, Permission } from '@activepieces/shared';
 
+import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
-import { useNewWindow } from '../../../components/embed-provider';
 
 const fetchData = async (
   _: Record<string, string>,

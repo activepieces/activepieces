@@ -17,12 +17,12 @@ import { projectApi } from '@/lib/project-api';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
+import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
 import { billingApi } from '../api/billing-api';
 
 import { TasksProgress } from './ai-credits-and-tasks-progress';
 import { PlanData } from './plan-data';
-import { useNewWindow } from '../../../components/embed-provider';
 
 const TasksSchema = Type.Object({
   tasks: Type.Number(),
