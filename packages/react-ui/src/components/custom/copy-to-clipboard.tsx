@@ -5,7 +5,6 @@ import { Check, Copy, Download } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
 import { Input } from '../ui/input';
-import { ScrollArea } from '../ui/scroll-area';
 import { Textarea } from '../ui/textarea';
 
 import { SelectUtilButton } from './select-util-button';
