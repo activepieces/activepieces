@@ -21,11 +21,11 @@ import {
 import {
   Form,
   FormControl,
+  FormError,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  formMessageClass,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/seperator';
@@ -326,9 +326,12 @@ const CreateOrEditConnectionDialog = React.memo(
           </ScrollArea>
 
           {errorMessage && (
-            <div className={cn(formMessageClass, 'text-left mt-4')}>
+            <FormError
+              formMessageId="create-connection-server-error-message"
+              className="text-left mt-4"
+            >
               {errorMessage}
-            </div>
+            </FormError>
           )}
         </DialogContent>
       </Dialog>

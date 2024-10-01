@@ -24,8 +24,7 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 
-import { formMessageClass } from '../../../components/ui/form';
-import { cn } from '../../../lib/utils';
+import { FormError } from '../../../components/ui/form';
 import { flowsApi } from '../lib/flows-api';
 
 export type ImportFlowDialogProps =
@@ -166,7 +165,9 @@ const ImportFlowDialog = (
           </Button>
         </div>
         {errorMessage && (
-          <div className={cn(formMessageClass, 'mt-4')}>{errorMessage}</div>
+          <FormError formMessageId="import-flow-error-message" className="mt-4">
+            {errorMessage}
+          </FormError>
         )}
       </DialogContent>
     </Dialog>
