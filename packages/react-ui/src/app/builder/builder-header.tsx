@@ -13,7 +13,7 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -33,6 +33,7 @@ import { BuilderPublishButton } from './builder-publish-button';
 export const BuilderHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const openNewWindow = useNewWindow();
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
@@ -145,9 +146,7 @@ export const BuilderHeader = () => {
                 <Button
                   variant="ghost"
                   className="gap-2 px-2"
-                  onClick={() =>
-                    window.open(supportUrl, '_blank', 'noopener noreferrer')
-                  }
+                  onClick={() => openNewWindow(supportUrl)}
                 >
                   <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
                   {t('Support')}

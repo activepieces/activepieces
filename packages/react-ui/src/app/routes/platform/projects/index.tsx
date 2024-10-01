@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/ui/data-table';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
   Tooltip,
@@ -23,7 +23,81 @@ import { formatUtils, validationUtils } from '@/lib/utils';
 import { TableTitle } from '../../../../components/ui/table-title';
 
 import { NewProjectDialog } from './new-project-dialog';
+import { ColumnDef } from '@tanstack/react-table';
+import { ProjectWithLimits } from '../../../../../../shared/src';
 
+const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
+  {
+    accessorKey: 'name',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Name')} />
+    ),
+    cell: ({ row }) => {
+      return <div className="text-left">{row.original.displayName}</div>;
+    },
+  },
+  {
+    accessorKey: 'createdAt',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Created')} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">
+          {formatUtils.formatDate(new Date(row.original.created))}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'members',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Members')} />
+    ),
+    cell: ({ row }) => {
+      return <div className="text-left">{row.original.usage.teamMembers}</div>;
+    },
+  },
+  {
+    accessorKey: 'tasks',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Tasks')} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">
+          {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
+          {formatUtils.formatNumber(row.original.plan.tasks)}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'ai-tokens',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('AI Credits')} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">
+          {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
+          {row.original.plan.aiTokens
+            ? formatUtils.formatNumber(row.original.plan.aiTokens)
+            : '-'}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'externalId',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('External ID')} />
+    ),
+    cell: ({ row }) => {
+      return <div className="text-left">{row.original.externalId}</div>;
+    },
+  },
+];
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const [refreshCount, setRefreshCount] = useState(0);
@@ -90,92 +164,7 @@ export default function ProjectsPage() {
             await setCurrentProject(queryClient, project);
             navigate('/');
           }}
-          columns={[
-            {
-              accessorKey: 'name',
-              header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Name')} />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">{row.original.displayName}</div>
-                );
-              },
-            },
-            {
-              accessorKey: 'createdAt',
-              header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Created')} />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">
-                    {formatUtils.formatDate(new Date(row.original.created))}
-                  </div>
-                );
-              },
-            },
-            {
-              accessorKey: 'members',
-              header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Members')} />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">
-                    {row.original.usage.teamMembers}
-                  </div>
-                );
-              },
-            },
-            {
-              accessorKey: 'tasks',
-              header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Tasks')} />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">
-                    {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
-                    {formatUtils.formatNumber(row.original.plan.tasks)}
-                  </div>
-                );
-              },
-            },
-            {
-              accessorKey: 'ai-tokens',
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('AI Credits')}
-                />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">
-                    {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
-                    {row.original.plan.aiTokens
-                      ? formatUtils.formatNumber(row.original.plan.aiTokens)
-                      : '-'}
-                  </div>
-                );
-              },
-            },
-            {
-              accessorKey: 'externalId',
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('External ID')}
-                />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">{row.original.externalId}</div>
-                );
-              },
-            },
-          ]}
+          columns={columns}
           fetchData={(_, pagination) => {
             console.log(pagination);
             return projectApi.list({

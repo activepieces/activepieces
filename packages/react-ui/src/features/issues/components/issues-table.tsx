@@ -22,6 +22,7 @@ import { FlowRunStatus, Permission } from '@activepieces/shared';
 import { TableTitle } from '../../../components/ui/table-title';
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
+import { useNewWindow } from '../../../components/embed-provider';
 
 const fetchData = async (
   _: Record<string, string>,
@@ -56,6 +57,7 @@ export default function IssuesTable() {
     });
   };
   const { checkAccess } = useAuthorization();
+  const openNewWindow = useNewWindow();
   const userHasPermissionToMarkAsResolved = checkAccess(
     Permission.WRITE_ISSUES,
   );
@@ -155,20 +157,25 @@ export default function IssuesTable() {
       <DataTable
         columns={columns}
         fetchData={fetchData}
-        onRowClick={(row) =>
-          navigate({
-            pathname: '/runs',
-            search: createSearchParams({
-              flowId: row.flowId,
-              createdAfter: row.created,
-              status: [
-                FlowRunStatus.FAILED,
-                FlowRunStatus.INTERNAL_ERROR,
-                FlowRunStatus.TIMEOUT,
-              ],
-            }).toString(),
-          })
-        }
+        onRowClick={(row, newWindow) => {
+          const searchParams = createSearchParams({
+            flowId: row.flowId,
+            createdAfter: row.created,
+            status: [
+              FlowRunStatus.FAILED,
+              FlowRunStatus.INTERNAL_ERROR,
+              FlowRunStatus.TIMEOUT,
+            ],
+          }).toString();
+          if (newWindow) {
+            openNewWindow('/runs', searchParams);
+          } else {
+            navigate({
+              pathname: '/runs',
+              search: searchParams,
+            });
+          }
+        }}
       />
     </div>
   );

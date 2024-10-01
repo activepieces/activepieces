@@ -13,7 +13,7 @@ import {
 import React from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +67,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onDelete,
 }) => {
   const { platform } = platformHooks.useCurrentPlatform();
+  const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
     platform.gitSyncEnabled,
@@ -95,7 +96,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       return updatedFlow;
     },
     onSuccess: (data) => {
-      window.open(`/flows/${data.id}`, '_blank', `noopener noreferrer`);
+      openNewWindow(`/flows/${data.id}`);
       onDuplicate();
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
@@ -229,7 +230,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </DropdownMenuItem>
           </ShareTemplateDialog>
         )}
-        {!readonly && (
+        {!readonly && (!embedState.isEmbedded || !insideBuilder) && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >

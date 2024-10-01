@@ -40,6 +40,7 @@ import {
 } from '@activepieces/shared';
 
 import { TableTitle } from '../../../components/ui/table-title';
+import { useNewWindow } from '../../../components/embed-provider';
 
 const fetchData = async (
   params: {
@@ -68,7 +69,7 @@ const FlowRunsPage = () => {
     limit: 1000,
     cursor: undefined,
   });
-
+  const openNewWindow = useNewWindow();
   const flows = data?.data;
   const { checkAccess } = useAuthorization();
   const userHasPermissionToRetryRun = checkAccess(Permission.RETRY_RUN);
@@ -271,9 +272,9 @@ const FlowRunsPage = () => {
         fetchData={fetchData}
         filters={filters}
         refresh={refresh}
-        onRowClick={(row, e) => {
-          if (e.ctrlKey) {
-            window.open(`/runs/${row.id}`, '_blank');
+        onRowClick={(row, newWindow) => {
+          if (newWindow) {
+            openNewWindow(`/runs/${row.id}`);
           } else {
             navigate(`/runs/${row.id}`);
           }

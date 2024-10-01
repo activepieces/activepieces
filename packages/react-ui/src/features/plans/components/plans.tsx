@@ -22,6 +22,7 @@ import { billingApi } from '../api/billing-api';
 
 import { TasksProgress } from './ai-credits-and-tasks-progress';
 import { PlanData } from './plan-data';
+import { useNewWindow } from '../../../components/embed-provider';
 
 const TasksSchema = Type.Object({
   tasks: Type.Number(),
@@ -94,15 +95,16 @@ const Plans: React.FC = () => {
       form.reset({ tasks: project.plan.tasks });
     }
   }, [project, form]);
+  const openNewWindow = useNewWindow();
   const { mutate: manageBilling, isPending: isBillingPending } = useMutation({
     mutationFn: async () => {
       if (subscriptionData?.subscription.subscriptionStatus === 'active') {
         const { portalLink } = await billingApi.portalLink();
-        window.open(portalLink, '_blank');
+        openNewWindow(portalLink);
         return;
       }
       const { paymentLink } = await billingApi.upgrade();
-      window.open(paymentLink, '_blank');
+      openNewWindow(paymentLink);
     },
     onSuccess: () => {},
     onError: () => toast(INTERNAL_ERROR_TOAST),
