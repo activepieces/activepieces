@@ -37,8 +37,9 @@ import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { useStepSettingsContext } from './step-settings-context';
 
-const StepSettingsContainer = React.memo(() => {
-  const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
+const StepSettingsContainer = () => {
+  const { selectedStep, pieceModel, formSchema, skipValueChangeDetection } =
+    useStepSettingsContext();
   const [
     readonly,
     exitStepSettings,
@@ -159,7 +160,11 @@ const StepSettingsContainer = React.memo(() => {
       previousSavedStep.current = currentStep;
       return;
     }
-    if (deepEqual(currentStep, previousSavedStep.current)) {
+
+    if (
+      deepEqual(currentStep, previousSavedStep.current) ||
+      skipValueChangeDetection
+    ) {
       return;
     }
     previousSavedStep.current = currentStep;
@@ -274,6 +279,6 @@ const StepSettingsContainer = React.memo(() => {
       </form>
     </Form>
   );
-});
+};
 StepSettingsContainer.displayName = 'StepSettingsContainer';
 export { StepSettingsContainer };

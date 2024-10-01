@@ -23,7 +23,10 @@ import {
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
+import {
+  ImportFlowDialog,
+  ImportFlowDialogProps,
+} from '@/features/flows/components/import-flow-dialog';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -75,7 +78,14 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
   const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
-
+  const importFlowProps: ImportFlowDialogProps = insideBuilder
+    ? {
+        insideBuilder: true,
+        flowId: flow.id,
+      }
+    : {
+        insideBuilder: false,
+      };
   const { embedState } = useEmbedding();
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
@@ -197,7 +207,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >
-            <ImportFlowDialog insideBuilder={insideBuilder}>
+            <ImportFlowDialog {...importFlowProps}>
               <DropdownMenuItem
                 disabled={!userHasPermissionToUpdateFlow}
                 onSelect={(e) => e.preventDefault()}

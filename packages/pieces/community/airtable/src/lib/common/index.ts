@@ -304,7 +304,9 @@ export const airtableCommon = {
               url: fields[key] as string,
             },
           ];
-        } else if (field.type === 'multipleRecordLinks') {
+        } else if (
+          ['multipleRecordLinks', 'multipleSelects'].includes(field.type)
+        ) {
           if (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0) {
             newFields[key] = fields[key];
           }

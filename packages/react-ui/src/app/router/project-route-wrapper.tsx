@@ -69,6 +69,7 @@ const RedirectToCurrentProjectRoute: React.FC<
 > = ({ path, children }) => {
   const currentProjectId = authenticationSession.getProjectId();
   const params = useParams();
+  const [searchParams] = useSearchParams();
   const { embedState } = useEmbedding();
   const [searchParams] = useSearchParams();
   if (isNil(currentProjectId)) {
@@ -82,11 +83,15 @@ const RedirectToCurrentProjectRoute: React.FC<
     /:(\w+)/g,
     (_, param) => params[param] ?? '',
   );
+
+  const searchParamsString = searchParams.toString();
+  const pathWithParamsAndSearchParams = `${pathWithParams}${
+    searchParamsString ? `?${searchParamsString}` : ''
+  }`;
+
   return (
     <Navigate
-      to={`/projects/${currentProjectId}${pathWithParams}${
-        searchParams ? '?' + searchParams.toString() : ''
-      }`}
+      to={`/projects/${currentProjectId}${pathWithParamsAndSearchParams}`}
       replace
     />
   );
