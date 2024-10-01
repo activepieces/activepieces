@@ -27,6 +27,11 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         projectId: ApIdSchema,
         flowId: ApIdSchema,
         flowVersionId: ApIdSchema,
+        deleted: {
+            type: TIMESTAMP_COLUMN_TYPE,
+            deleteDate: true,
+            nullable: true,
+        },
         environment: {
             type: String,
             nullable: true,

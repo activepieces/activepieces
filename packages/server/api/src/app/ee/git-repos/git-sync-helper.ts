@@ -3,16 +3,17 @@ import path from 'path'
 import { ProjectSyncError } from '@activepieces/ee-shared'
 import { fileExists } from '@activepieces/server-shared'
 import { Flow, flowHelper, FlowOperationType, PopulatedFlow } from '@activepieces/shared'
-import { flowRepo } from '../../flows/flow/flow.repo'
-import { flowService } from '../../flows/flow/flow.service'
+import { flowRepo, flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
 import { GitFile } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
+import { IsNull } from 'typeorm'
 
 
 async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
     const flows = await flowRepo().findBy({
         projectId,
+        deleted: IsNull()
     })
     return Promise.all(
         flows.map((f) => {

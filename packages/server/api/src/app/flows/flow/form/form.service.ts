@@ -1,7 +1,7 @@
 import { logger } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
 import { flowVersionService } from '../../flow-version/flow-version.service'
-import { flowRepo } from '../flow.repo'
+import { flowService } from '../flow.service'
 
 const FORMS_PIECE_NAME = '@activepieces/piece-forms'
 const FORM_TRIIGGER = 'form_submission'
@@ -48,7 +48,7 @@ export const formService = {
 }
 
 async function getPopulatedFlowById(id: FlowId, useDraft: boolean): Promise<PopulatedFlow | null> {
-    const flow = await flowRepo().findOneBy({ id })
+    const flow = await flowService.getOneById(id)
     if (isNil(flow) || (isNil(flow.publishedVersionId) && !useDraft)) {
         return null
     }

@@ -18,7 +18,6 @@ import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { tasksLimit } from '../ee/project-plan/tasks-limit'
 import { stepFileService } from '../file/step-file/step-file.service'
-import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
 import { webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
 import { flowQueue } from '../workers/queue'
@@ -170,7 +169,7 @@ const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
         })
     }
 
-    const flow = await flowRepo().findOneBy({ id: flowId })
+    const flow = await flowService.getOneById(flowId)
 
     if (isNil(flow)) {
         logger.error(

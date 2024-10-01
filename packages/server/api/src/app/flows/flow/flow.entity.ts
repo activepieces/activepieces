@@ -12,6 +12,7 @@ import {
     ApIdSchema,
     BaseColumnSchemaPart,
     JSONB_COLUMN_TYPE,
+    TIMESTAMP_COLUMN_TYPE,
 } from '../../database/database-common'
 
 export type FlowSchema = Flow & {
@@ -27,6 +28,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
     name: 'flow',
     columns: {
         ...BaseColumnSchemaPart,
+        deleted: {
+            type: TIMESTAMP_COLUMN_TYPE,
+            deleteDate: true,
+            nullable: true,
+        },
         projectId: {
             ...ApIdSchema,
             nullable: false,
