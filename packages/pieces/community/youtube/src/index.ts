@@ -21,7 +21,7 @@ export const youtube = createPiece({
     createCustomApiCallAction({
       baseUrl: () => 'https://www.googleapis.com/youtube/v3',
       auth: youtubeAuth,
-      authMapping: (auth) => ({
+      authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),

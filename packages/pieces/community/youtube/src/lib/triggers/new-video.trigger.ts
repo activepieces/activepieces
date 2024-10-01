@@ -11,7 +11,7 @@ export const youtubeNewVideoTrigger = createTrigger({
   displayName: 'New Video In Channel',
   description: 'Runs when a new video is added to a YouTube channel',
   type: TriggerStrategy.POLLING,
-
+  requireAuth: false,
   props: {
     channel_identifier: channelIdentifier,
   },
