@@ -105,6 +105,7 @@ const SignInForm: React.FC = () => {
                 type="text"
                 placeholder={'email@example.com'}
                 className="rounded-sm"
+                tabIndex={1}
               />
               <FormMessage />
             </FormItem>
@@ -133,6 +134,7 @@ const SignInForm: React.FC = () => {
                 type="password"
                 placeholder={'********'}
                 className="rounded-sm"
+                tabIndex={2}
               />
               <FormMessage />
             </FormItem>
@@ -146,6 +148,7 @@ const SignInForm: React.FC = () => {
         <Button
           loading={isPending}
           onClick={(e) => form.handleSubmit(onSubmit)(e)}
+          tabIndex={3}
         >
           {t('Sign in')}
         </Button>
