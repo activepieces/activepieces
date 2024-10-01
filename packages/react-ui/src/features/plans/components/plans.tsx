@@ -17,6 +17,7 @@ import { projectApi } from '@/lib/project-api';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
+import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
 import { billingApi } from '../api/billing-api';
 
@@ -94,15 +95,16 @@ const Plans: React.FC = () => {
       form.reset({ tasks: project.plan.tasks });
     }
   }, [project, form]);
+  const openNewWindow = useNewWindow();
   const { mutate: manageBilling, isPending: isBillingPending } = useMutation({
     mutationFn: async () => {
       if (subscriptionData?.subscription.subscriptionStatus === 'active') {
         const { portalLink } = await billingApi.portalLink();
-        window.open(portalLink, '_blank');
+        openNewWindow(portalLink);
         return;
       }
       const { paymentLink } = await billingApi.upgrade();
-      window.open(paymentLink, '_blank');
+      openNewWindow(paymentLink);
     },
     onSuccess: () => {},
     onError: () => toast(INTERNAL_ERROR_TOAST),

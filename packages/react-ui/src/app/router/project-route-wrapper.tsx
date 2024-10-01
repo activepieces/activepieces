@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
-import { Navigate, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, Navigate, useSearchParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useToast } from '@/components/ui/use-toast';
@@ -84,9 +84,8 @@ const RedirectToCurrentProjectRoute: React.FC<
   );
 
   const searchParamsString = searchParams.toString();
-  const pathWithParamsAndSearchParams = `${pathWithParams}${
-    searchParamsString ? `?${searchParamsString}` : ''
-  }`;
+  const pathWithParamsAndSearchParams = `${pathWithParams}${searchParamsString ? `?${searchParamsString}` : ''
+    }`;
 
   return (
     <Navigate
@@ -105,16 +104,16 @@ export const ProjectRouterWrapper = ({
   element,
   path,
 }: ProjectRouterWrapperProps) => [
-  {
-    path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
-    element: <TokenCheckerWrapper>{element}</TokenCheckerWrapper>,
-  },
-  {
-    path,
-    element: (
-      <RedirectToCurrentProjectRoute path={path}>
-        {element}
-      </RedirectToCurrentProjectRoute>
-    ),
-  },
-];
+    {
+      path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
+      element: <TokenCheckerWrapper>{element}</TokenCheckerWrapper>,
+    },
+    {
+      path,
+      element: (
+        <RedirectToCurrentProjectRoute path={path}>
+          {element}
+        </RedirectToCurrentProjectRoute>
+      ),
+    },
+  ];

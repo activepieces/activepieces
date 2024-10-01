@@ -12,7 +12,7 @@ import {
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
@@ -75,7 +75,7 @@ const FlowsPage = () => {
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
-
+  const openNewWindow = useNewWindow();
   const [searchParams] = useSearchParams();
 
   async function fetchData(
@@ -295,9 +295,9 @@ const FlowsPage = () => {
             fetchData={fetchData}
             filters={filters}
             refresh={refresh}
-            onRowClick={(row, e) => {
-              if (e.ctrlKey) {
-                window.open(`/flows/${row.id}`, '_blank');
+            onRowClick={(row, newWindow) => {
+              if (newWindow) {
+                openNewWindow(`/flows/${row.id}`);
               } else {
                 navigate(`/flows/${row.id}`);
               }
