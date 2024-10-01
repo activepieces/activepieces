@@ -230,46 +230,49 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </DropdownMenuItem>
           </ShareTemplateDialog>
         )}
-        {!readonly && (!embedState.isEmbedded || !insideBuilder) && (
-          <PermissionNeededTooltip
-            hasPermission={userHasPermissionToUpdateFlow}
-          >
-            <ConfirmationDeleteDialog
-              title={`${t('Delete')} ${flowVersion.displayName}`}
-              message={
-                <>
-                  <div>
-                    {t(
-                      'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
-                    )}
-                  </div>
-                  {isDevelopmentBranch && (
-                    <div className="font-bold mt-2">
+        {!readonly &&
+          (!embedState.isEmbedded ||
+            !embedState.disableNavigationInBuilder ||
+            !insideBuilder) && (
+            <PermissionNeededTooltip
+              hasPermission={userHasPermissionToUpdateFlow}
+            >
+              <ConfirmationDeleteDialog
+                title={`${t('Delete')} ${flowVersion.displayName}`}
+                message={
+                  <>
+                    <div>
                       {t(
-                        'You are on a development branch, this will not delete the flow from the remote repository.',
+                        'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
                       )}
                     </div>
-                  )}
-                </>
-              }
-              mutationFn={async () => {
-                await flowsApi.delete(flow.id);
-                onDelete();
-              }}
-              entityName={t('flow')}
-            >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToUpdateFlow}
-                onSelect={(e) => e.preventDefault()}
+                    {isDevelopmentBranch && (
+                      <div className="font-bold mt-2">
+                        {t(
+                          'You are on a development branch, this will not delete the flow from the remote repository.',
+                        )}
+                      </div>
+                    )}
+                  </>
+                }
+                mutationFn={async () => {
+                  await flowsApi.delete(flow.id);
+                  onDelete();
+                }}
+                entityName={t('flow')}
               >
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                  <span className="text-destructive">{t('Delete')}</span>
-                </div>
-              </DropdownMenuItem>
-            </ConfirmationDeleteDialog>
-          </PermissionNeededTooltip>
-        )}
+                <DropdownMenuItem
+                  disabled={!userHasPermissionToUpdateFlow}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <span className="text-destructive">{t('Delete')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </ConfirmationDeleteDialog>
+            </PermissionNeededTooltip>
+          )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
