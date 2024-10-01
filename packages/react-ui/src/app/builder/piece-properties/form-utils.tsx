@@ -74,7 +74,7 @@ function buildInputSchemaForStep(
           addAuthToPieceProps(
             piece.triggers[actionNameOrTriggerName].props,
             piece.auth,
-            true,
+            piece.triggers[actionNameOrTriggerName].requireAuth ?? true,
           ),
         );
       }
@@ -151,7 +151,7 @@ export const formUtils = {
         const actionName = selectedStep?.settings?.actionName;
         const requireAuth = isNil(actionName)
           ? false
-          : piece?.actions?.[actionName]?.requireAuth ?? false;
+          : piece?.actions?.[actionName]?.requireAuth ?? true;
         const actionPropsWithoutAuth =
           actionName !== undefined
             ? piece?.actions?.[actionName]?.props ?? {}
@@ -180,6 +180,9 @@ export const formUtils = {
       }
       case TriggerType.PIECE: {
         const triggerName = selectedStep?.settings?.triggerName;
+        const requireAuth = isNil(triggerName)
+          ? false
+          : piece?.triggers?.[triggerName]?.requireAuth ?? false;
         const triggerPropsWithoutAuth =
           triggerName !== undefined
             ? piece?.triggers?.[triggerName]?.props ?? {}
@@ -187,7 +190,7 @@ export const formUtils = {
         const props = addAuthToPieceProps(
           triggerPropsWithoutAuth,
           piece?.auth,
-          true,
+          requireAuth,
         );
         const input = (selectedStep?.settings?.input ?? {}) as Record<
           string,

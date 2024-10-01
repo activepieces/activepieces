@@ -60,6 +60,11 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     formUrl: `${frontendUrl}/forms/${props.flowId}`,
   };
 
+  const showAuthForAction =
+    !isNil(selectedAction) && (selectedAction.requireAuth ?? true);
+  const showAuthForTrigger =
+    !isNil(selectedTrigger) && (selectedTrigger.requireAuth ?? true);
+
   return (
     <div className="flex flex-col gap-4 w-full">
       {!pieceModel && (
@@ -72,14 +77,13 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
 
       {pieceModel && (
         <>
-          {pieceModel.auth &&
-            (selectedAction?.requireAuth || selectedTrigger) && (
-              <ConnectionSelect
-                isTrigger={!isNil(selectedTrigger)}
-                piece={pieceModel}
-                disabled={props.readonly}
-              ></ConnectionSelect>
-            )}
+          {pieceModel.auth && (showAuthForAction || showAuthForTrigger) && (
+            <ConnectionSelect
+              isTrigger={!isNil(selectedTrigger)}
+              piece={pieceModel}
+              disabled={props.readonly}
+            ></ConnectionSelect>
+          )}
           {selectedAction && (
             <AutoPropertiesFormComponent
               key={selectedAction.name}
