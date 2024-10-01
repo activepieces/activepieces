@@ -71,7 +71,7 @@ describe('Managed Authentication API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody?.id).toHaveLength(21)
-            expect(responseBody?.email).toBe(mockExternalTokenPayload.email)
+            expect(responseBody?.email).toBe(mockExternalTokenPayload.email.toLocaleLowerCase().trim())
             expect(responseBody?.firstName).toBe(mockExternalTokenPayload.firstName)
             expect(responseBody?.lastName).toBe(mockExternalTokenPayload.lastName)
             expect(responseBody?.trackEvents).toBe(true)

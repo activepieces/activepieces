@@ -49,7 +49,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         stepOutput.input = censoredInput
 
-        const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
+        const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors))
         }
