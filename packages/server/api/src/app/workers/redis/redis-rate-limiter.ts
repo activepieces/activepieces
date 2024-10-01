@@ -18,8 +18,8 @@ let redis: Redis
 let worker: Worker | null = null
 let queue: Queue | null = null
 
-const projecyKey = (projectId: string): string => `active_job_count:${projectId}`
-const projectKeyWithJobId = (projectId: string, jobId: string): string => `${projecyKey(projectId)}:${jobId}`
+const projectKey = (projectId: string): string => `active_job_count:${projectId}`
+const projectKeyWithJobId = (projectId: string, jobId: string): string => `${projectKey(projectId)}:${jobId}`
 
 export const redisRateLimiter = {
 
@@ -86,18 +86,15 @@ export const redisRateLimiter = {
                 shouldRateLimit: false,
             }
         }
-        const prefixRedisKey = projecyKey(projectId)
-        const redisKey = projectKeyWithJobId(projectId, jobId)
-        // set the job id to expire after 10 minutes
-        await redis.set(redisKey, 1, 'EX', 600)
-
-        const newActiveRuns = (await redis.keys(`${prefixRedisKey}*`)).length
+        const newActiveRuns = (await redis.keys(`${projectKey(projectId)}*`)).length
         if (newActiveRuns >= MAX_CONCURRENT_JOBS_PER_PROJECT) {
-            await redis.del(redisKey)
             return {
                 shouldRateLimit: true,
             }
         }
+        const redisKey = projectKeyWithJobId(projectId, jobId)
+        await redis.set(redisKey, 1, 'EX', 600)
+
         return {
             shouldRateLimit: false,
         }
