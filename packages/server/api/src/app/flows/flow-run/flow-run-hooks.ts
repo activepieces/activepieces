@@ -1,10 +1,14 @@
+import { FlowRun } from '@activepieces/shared'
+
 export type FlowRunHooks = {
     onFinish({
         projectId,
         tasks,
+        flowRun,
     }: {
         projectId: string
         tasks: number
+        flowRun: FlowRun
     }): Promise<void>
 }
 

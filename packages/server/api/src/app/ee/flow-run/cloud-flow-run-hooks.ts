@@ -1,38 +1,41 @@
 import { system } from '@activepieces/server-shared'
-import { ApEdition } from '@activepieces/shared'
+import { ApEdition, isFailedState, isFlowUserTerminalState, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { projectUsageService } from '../../project/usage/project-usage-service'
+import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
+import { issuesService } from '../issues/issues-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 
 export const platformRunHooks: FlowRunHooks = {
-    async onFinish({
-        projectId,
-        tasks,
-    }: {
-        projectId: string
-        tasks: number
-    }): Promise<void> {
+    async onFinish({ projectId, tasks, flowRun }): Promise<void> {
         const edition = system.getEdition()
-        if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-            const consumedTasks = await projectUsageService.increaseUsage(
-                projectId,
-                tasks,
-                'tasks',
-            )
-            await sendAlertsIfNeeded({
-                projectId,
-                consumedTasks,
-                createdAt: dayjs().toISOString(),
-                previousConsumedTasks: consumedTasks - tasks,
-            })
+        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+            return
         }
+        if (!isFlowUserTerminalState(flowRun.status)) {
+            return
+        }
+        if (isFailedState(flowRun.status) && flowRun.environment === RunEnvironment.PRODUCTION) {
+            const issue = await issuesService.add({
+                flowId: flowRun.flowId,
+                projectId: flowRun.projectId,
+                flowRunCreatedAt: flowRun.created,
+            })
+            await alertsService.sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
+        }
+        const consumedTasks = await projectUsageService.increaseUsage(projectId, tasks, 'tasks')
+        await sendQuotaAlertIfNeeded({
+            projectId,
+            consumedTasks,
+            createdAt: dayjs().toISOString(),
+            previousConsumedTasks: consumedTasks - tasks,
+        })
     },
 }
 
-
-async function sendAlertsIfNeeded({
+async function sendQuotaAlertIfNeeded({
     projectId,
     createdAt,
     consumedTasks,
