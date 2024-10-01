@@ -60,7 +60,6 @@ import {
 } from '@activepieces/shared';
 
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
-import { cn } from '../../lib/utils';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';

@@ -148,8 +148,6 @@ const FormError = React.forwardRef<
     formMessageId: string;
   }
 >(({ className, children, ...props }, ref) => {
-  const {} = useFormField();
-
   return (
     <p
       ref={ref}
@@ -171,7 +169,7 @@ const FormMessage = React.forwardRef<
   const body = error ? String(error?.message) : children;
 
   if (!body) {
-    return null;
+    return <></>;
   }
 
   return (
