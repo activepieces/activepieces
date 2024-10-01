@@ -20,11 +20,11 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
+import { ProjectWithLimits } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/ui/table-title';
 
 import { NewProjectDialog } from './new-project-dialog';
-import { ProjectWithLimits } from '@activepieces/shared';
 
 const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {

@@ -82,11 +82,6 @@ const RedirectToCurrentProjectRoute: React.FC<
     /:(\w+)/g,
     (_, param) => params[param] ?? '',
   );
-  console.log(
-    `/projects/${currentProjectId}${pathWithParams}${
-      searchParams ? '?' + searchParams.toString() : ''
-    }`,
-  );
   return (
     <Navigate
       to={`/projects/${currentProjectId}${pathWithParams}${

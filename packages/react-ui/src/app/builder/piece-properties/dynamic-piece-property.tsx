@@ -23,8 +23,7 @@ type DynamicPropertiesProps = {
 const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
   const form = useFormContext<Action | Trigger>();
-  const { updateFormSchema, setSkipValueChangeDetection } =
-    useStepSettingsContext();
+  const { updateFormSchema } = useStepSettingsContext();
   const isFirstRender = useRef(true);
   const previousValues = useRef<undefined | unknown[]>(undefined);
 
@@ -112,13 +111,9 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
           setPropertyMap(response);
           updateFormSchema(`settings.input.${props.propertyName}`, response);
 
-          setSkipValueChangeDetection(true);
           form.setValue(`settings.input.${props.propertyName}`, defaultValue, {
             shouldValidate: true,
             shouldDirty: true,
-          });
-          setTimeout(() => {
-            setSkipValueChangeDetection(false);
           });
         },
       },

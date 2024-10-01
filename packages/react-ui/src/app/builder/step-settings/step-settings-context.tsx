@@ -1,5 +1,4 @@
 import { TObject, Type } from '@sinclair/typebox';
-import set from 'lodash/set';
 import {
   createContext,
   ReactNode,
@@ -13,7 +12,7 @@ import {
   PieceMetadataModel,
   PiecePropertyMap,
 } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
+import { Action, setAtPath, Trigger } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
 
@@ -78,7 +77,7 @@ export const StepSettingsProvider = ({
         const newFieldSchema = formUtils.buildSchema(newFieldPropertyMap);
         const currentSchema = { ...prevSchema };
         const keyUpdated = createUpdatedSchemaKey(key);
-        set(currentSchema, keyUpdated, newFieldSchema);
+        setAtPath(currentSchema, keyUpdated, newFieldSchema);
         return currentSchema;
       });
     },
