@@ -21,12 +21,15 @@ import {
 } from '../../components/ui/tooltip';
 
 import { FlagGuard } from './flag-guard';
+import { useEmbedding } from '../../components/embed-provider';
 
 export const Header = () => {
   const history = useLocation();
   const isInPlatformAdmin = history.pathname.startsWith('/platform');
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
+  const { embedState } = useEmbedding();
   return (
+    !embedState.isEmbedded &&
     <div>
       <div className="flex h-[60px] items-center">
         {isInPlatformAdmin ? (
