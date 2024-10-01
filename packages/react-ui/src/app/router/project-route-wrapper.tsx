@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useToast } from '@/components/ui/use-toast';
@@ -69,6 +69,7 @@ const RedirectToCurrentProjectRoute: React.FC<
 > = ({ path, children }) => {
   const currentProjectId = authenticationSession.getProjectId();
   const params = useParams();
+  const [searchParams] = useSearchParams();
   const { embedState } = useEmbedding();
   if (isNil(currentProjectId)) {
     return <Navigate to="/sign-in" replace />;
@@ -82,8 +83,16 @@ const RedirectToCurrentProjectRoute: React.FC<
     (_, param) => params[param] ?? '',
   );
 
+  const searchParamsString = searchParams.toString();
+  const pathWithParamsAndSearchParams = `${pathWithParams}${
+    searchParamsString ? `?${searchParamsString}` : ''
+  }`;
+
   return (
-    <Navigate to={`/projects/${currentProjectId}${pathWithParams}`} replace />
+    <Navigate
+      to={`/projects/${currentProjectId}${pathWithParamsAndSearchParams}`}
+      replace
+    />
   );
 };
 
