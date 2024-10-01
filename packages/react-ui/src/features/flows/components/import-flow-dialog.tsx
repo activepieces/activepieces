@@ -124,7 +124,7 @@ const ImportFlowDialog = (
 
   const handleSubmit = async () => {
     if (!template) {
-      setErrorMessage(t('Please select a file'));
+      setErrorMessage(t('Please select a file first'));
     } else {
       setErrorMessage('');
       importFlow(template);
@@ -132,7 +132,12 @@ const ImportFlowDialog = (
   };
 
   return (
-    <Dialog>
+    <Dialog
+      onOpenChange={() => {
+        setErrorMessage('');
+        setTemplate(null);
+      }}
+    >
       <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
