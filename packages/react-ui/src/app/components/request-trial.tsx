@@ -63,7 +63,8 @@ export type FeatureKey =
   | 'ANALYTICS'
   | 'ALERTS'
   | 'ENTERPRISE_PIECES'
-  | 'UNIVERSAL_AI';
+  | 'UNIVERSAL_AI'
+  | 'SIGNING_KEYS';
 
 const features = [
   {
@@ -96,6 +97,10 @@ const features = [
     label: t('Universal AI'),
     key: `UNIVERSAL_AI`,
   },
+  {
+    label: t('Embedding'),
+    key: `SIGNING_KEYS`
+  }
 ];
 
 const goals = [
@@ -312,7 +317,7 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
               <FormField
                 control={form.control}
                 name="goal"
-                className="px-0.5"
+              
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('Goal')} *</FormLabel>
