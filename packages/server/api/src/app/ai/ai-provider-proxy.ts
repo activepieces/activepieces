@@ -1,4 +1,4 @@
-import { logger } from '@activepieces/server-shared'
+import { exceptionHandler, logger } from '@activepieces/server-shared'
 import { PrincipalType, TelemetryEventName } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
@@ -75,6 +75,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                 await reply.code(error.status).send(errorData)
             }
             else {
+                exceptionHandler.handle(error)
                 await reply
                     .code(500)
                     .send({ message: 'An unexpected error occurred in the proxy' })
