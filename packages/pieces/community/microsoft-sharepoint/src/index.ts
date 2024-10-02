@@ -32,7 +32,7 @@ export const microsoftSharePoint = createPiece({
   auth: microsoftSharePointAuth,
   minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-sharepoint.png',
-  categories: [PieceCategory.CONTENT_AND_FILES, PieceCategory.PREMIUM],
+  categories: [PieceCategory.CONTENT_AND_FILES],
   authors: ['kishanprmr'],
   actions: [
     createFolderAction,

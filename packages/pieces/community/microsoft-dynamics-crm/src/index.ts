@@ -53,7 +53,7 @@ export const microsoftDynamicsCrm = createPiece({
   minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-dynamics-crm.png',
   authors: ['kishanprmr'],
-  categories: [PieceCategory.PREMIUM, PieceCategory.SALES_AND_CRM],
+  categories: [PieceCategory.SALES_AND_CRM],
   actions: [
     createRecordAction,
     deleteRecordAction,
