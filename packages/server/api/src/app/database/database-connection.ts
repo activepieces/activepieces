@@ -164,4 +164,4 @@ export function APArrayContains<T extends ObjectLiteral>(
 }
 
 // Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
-export const exportedConnection = databaseConnection()
+// export const exportedConnection = databaseConnection()
