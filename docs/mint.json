@@ -100,8 +100,10 @@
       "group": "Engineering",
       "icon": "code",
       "pages": [
+        "handbook/engineering/how-we-work",
         "handbook/engineering/pre-releases",
-        "handbook/engineering/how-we-work"
+        "handbook/engineering/on-call",
+        "handbook/engineering/customer-support"
       ]
     },
     {
