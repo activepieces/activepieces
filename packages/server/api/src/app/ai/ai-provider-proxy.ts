@@ -1,4 +1,4 @@
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { exceptionHandler, logger, sentry } from '@activepieces/server-shared'
 import { PrincipalType, TelemetryEventName } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
@@ -17,14 +17,22 @@ export const proxyController: FastifyPluginCallbackTypebox = (
     done,
 ) => {
     fastify.all('/:provider/*', ProxyRequest, async (request, reply) => {
+        const trace = sentry?.startTransaction({ name: 'ai-provider-proxy' })
         const { provider } = request.params
         const { projectId } = request.principal
 
+        const platformIdTrace = trace?.startChild({ name: 'ai-provider-proxy.get-platform-id' })
         const platformId = await projectService.getPlatformId(projectId)
+        platformIdTrace?.finish()
+
+        const aiProviderTrace = trace?.startChild({ name: 'ai-provider-proxy.get-ai-provider' })
         const aiProvider = await aiProviderService.getOrThrow({
             platformId,
             provider,
         })
+        aiProviderTrace?.finish()
+
+        const limitResponseTrace = trace?.startChild({ name: 'ai-provider-proxy.check-ai-tokens-limit' })
         const limitResponse = await aiTokenLimit.exceededLimit({
             projectId,
             tokensToConsume: 0,
@@ -41,20 +49,37 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                 ),
             )
         }
+        limitResponseTrace?.finish()
 
+        const urlTrace = trace?.startChild({ name: 'ai-provider-proxy.build-url' })
         const url = buildUrl(aiProvider.baseUrl, request.params['*'])
+        urlTrace?.finish()
+
+        const fetchTrace = trace?.startChild({ name: 'ai-provider-proxy.fetch' })
         try {
+            const headers = calculateHeaders(
+                request.headers as Record<string, string | string[] | undefined>,
+                aiProvider.config.defaultHeaders,
+            )
+            fetchTrace?.setData('outbound.req.url', url)
+            fetchTrace?.setData('outbound.req.method', request.method)
+            fetchTrace?.setData('outbound.req.headers', headers)
+            fetchTrace?.setData('outbound.req.body', JSON.stringify(request.body))
             const response = await fetch(url, {
                 method: request.method,
-                headers: calculateHeaders(
-                    request.headers as Record<string, string | string[] | undefined>,
-                    aiProvider.config.defaultHeaders,
-                ),
+                headers,
                 body: JSON.stringify(request.body),
             })
             const data = await response.json()
-            await projectUsageService.increaseUsage(projectId, 1, 'aiTokens')
+            fetchTrace?.setData('outbound.res.status', response.status)
+            fetchTrace?.setData('outbound.res.headers', response.headers)
+            fetchTrace?.setData('outbound.res.body', JSON.stringify(data))
 
+            const increaseUsageTrace = fetchTrace?.startChild({ name: 'ai-provider-proxy.increase-usage' })
+            await projectUsageService.increaseUsage(projectId, 1, 'aiTokens')
+            increaseUsageTrace?.finish()
+
+            const telemetryTrace = fetchTrace?.startChild({ name: 'ai-provider-proxy.telemetry' })
             telemetry
                 .trackProject(projectId, {
                     name: TelemetryEventName.AI_PROVIDER_USED,
@@ -67,6 +92,8 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                 .catch((e) =>
                     logger.error(e, '[AIProviderProxy#telemetry] telemetry.trackProject'),
                 )
+            telemetryTrace?.finish()
+
             await reply.code(response.status).send(data)
         }
         catch (error) {
@@ -75,12 +102,14 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                 await reply.code(error.status).send(errorData)
             }
             else {
-                exceptionHandler.handle(error)
+                exceptionHandler.handle(error, fetchTrace?.toContext())
                 await reply
                     .code(500)
                     .send({ message: 'An unexpected error occurred in the proxy' })
             }
         }
+        fetchTrace?.finish()
+        trace?.finish()
     })
     done()
 }
@@ -116,10 +145,10 @@ const calculateHeaders = (
         (acc, [key, value]) => {
             if (
                 value !== undefined &&
-        !['authorization', 'content-length', 'host'].includes(
-            key.toLocaleLowerCase(),
-        ) &&
-        !key.startsWith('x-')
+                !['authorization', 'content-length', 'host'].includes(
+                    key.toLocaleLowerCase(),
+                ) &&
+                !key.startsWith('x-')
             ) {
                 acc[key as keyof typeof acc] = value
             }

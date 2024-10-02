@@ -24,11 +24,13 @@ export const initializeSentry = () => {
     }
 }
 
+export const sentry = sentryDsn ? Sentry : null
+
 export const exceptionHandler = {
-    handle: (e: unknown): void => {
+    handle: (e: unknown, context?: any): void => {
         logger.error(e)
         if (sentryDsn) {
-            Sentry.captureException(e)
+            Sentry.captureException(e, context)
         }
     },
 }
