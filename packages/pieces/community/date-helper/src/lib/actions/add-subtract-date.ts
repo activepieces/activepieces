@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import {
   optionalTimeFormats,
+  parseDate,
   timeFormat,
   timeFormatDescription,
   timeParts,
@@ -55,7 +56,7 @@ export const addSubtractDateAction = createAction({
     const inputDateFormat = context.propsValue.inputDateFormat;
     const outputFormat = context.propsValue.outputFormat;
     const expression = context.propsValue.expression;
-    const BeforeDate = dayjs(inputDate, inputDateFormat);
+    const BeforeDate = parseDate(inputDate, inputDateFormat);
     const AfterDate = addSubtractTime(BeforeDate.toDate(), expression);
     return { result: dayjs(AfterDate).format(outputFormat) };
   },

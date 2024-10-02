@@ -6,6 +6,7 @@ import {
   timeFormat,
   timeParts,
   timeFormatDescription,
+  parseDate,
 } from '../common';
 
 dayjs.extend(duration);
@@ -73,8 +74,8 @@ export const dateDifferenceAction = createAction({
     const startDateFormat = context.propsValue.startDateFormat;
     const inputEndDate = context.propsValue.endDate;
     const endDateFormat = context.propsValue.endDateFormat;
-    const startDate = dayjs(inputStartDate, startDateFormat);
-    const endDate = dayjs(inputEndDate, endDateFormat);
+    const startDate = parseDate(inputStartDate, startDateFormat);
+    const endDate = parseDate(inputEndDate, endDateFormat);
 
     const unitDifference = context.propsValue.unitDifference;
     const difference = dayjs.duration(endDate.diff(startDate));

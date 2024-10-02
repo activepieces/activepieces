@@ -5,6 +5,7 @@ import {
   timeFormat,
   timeParts,
   timeFormatDescription,
+  parseDate,
 } from '../common';
 
 export const extractDateParts = createAction({
@@ -59,7 +60,7 @@ export const extractDateParts = createAction({
     const inputFormat = context.propsValue.inputFormat;
     const unitExtract = context.propsValue.unitExtract;
 
-    const BeforeDate = dayjs(inputDate, inputFormat);
+    const BeforeDate = parseDate(inputDate, inputFormat);
     const outputresponse: Record<string, any> = {};
 
     for (let i = 0; i < unitExtract.length; i++) {

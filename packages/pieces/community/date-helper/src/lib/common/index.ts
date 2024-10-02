@@ -59,6 +59,14 @@ export enum timeParts {
 }
 
 
+export function parseDate(date: string, format: string): dayjs.Dayjs {
+  const djs = dayjs(date, format);
+  if (!djs.isValid()) {
+    throw new Error(`Failed to parse the date: ${date} with format: ${format}`);
+  }
+  return djs;
+}
+
 export const timeFormatDescription = `Here's what each part of the format (eg. YYYY) means:
 \nYYYY : Year (4 digits)
 \nYY : Year (2 digits)
