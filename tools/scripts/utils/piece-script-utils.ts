@@ -38,19 +38,8 @@ const validateMetadata = (pieceMetadata: PieceMetadata): void => {
         pieceMetadata.minimumSupportedRelease,
         pieceMetadata.maximumSupportedRelease,
     )
-    validatePremiumPiece(pieceMetadata)
 }
 
-const validatePremiumPiece = (piece: PieceMetadata): void => {
-    const categories = piece.categories ?? []
-
-    if (piece.directoryPath?.includes("/ee/") && !categories.includes(PieceCategory.PREMIUM)) {
-        throw Error(`[validatePremiumPiece] Premium pieces must be in the 'premium' category`)
-    }
-    if (categories.includes(PieceCategory.PREMIUM) && (!piece.minimumSupportedRelease || semver.lt(piece.minimumSupportedRelease, '0.27.1'))) {
-        throw Error(`[validatePremiumPiece] Premium pieces must have a minimum supported release of 0.27.1 or higher`)
-    }
-}
 
 const byDisplayNameIgnoreCase = (a: PieceMetadata, b: PieceMetadata) => {
     const aName = a.displayName.toUpperCase();
