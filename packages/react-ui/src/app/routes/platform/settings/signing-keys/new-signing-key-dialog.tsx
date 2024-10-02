@@ -56,7 +56,13 @@ export const NewSigningKeyDialog = ({
   });
 
   return (
-    <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        setOpen(open);
+        form.reset();
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -79,7 +85,11 @@ export const NewSigningKeyDialog = ({
                   )}
                 </span>
               </span>
-              <CopyToClipboardInput textToCopy={signingKey.privateKey} />
+              <CopyToClipboardInput
+                useInput={false}
+                fileName={signingKey.displayName}
+                textToCopy={signingKey.privateKey}
+              />
             </div>
           </div>
         )}
@@ -87,7 +97,7 @@ export const NewSigningKeyDialog = ({
           <Form {...form}>
             <form
               className="grid space-y-4"
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={form.handleSubmit(() => mutate())}
             >
               <FormField
                 name="displayName"

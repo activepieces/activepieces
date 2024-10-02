@@ -156,7 +156,7 @@ describe('Authentication API', () => {
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
-            expect(responseBody?.email).toBe(mockSignUpRequest.email)
+            expect(responseBody?.email).toBe(mockSignUpRequest.email.toLocaleLowerCase().trim())
             expect(responseBody?.firstName).toBe(mockSignUpRequest.firstName)
             expect(responseBody?.lastName).toBe(mockSignUpRequest.lastName)
             expect(responseBody?.trackEvents).toBe(mockSignUpRequest.trackEvents)

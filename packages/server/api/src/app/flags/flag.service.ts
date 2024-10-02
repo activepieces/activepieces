@@ -249,12 +249,12 @@ export const flagService = {
     },
     getThirdPartyRedirectUrl(
         platformId: string | undefined,
-        hostname: string | undefined,
+        hostUrl: string | undefined,
     ): string {
         const isCustomerPlatform =
             platformId && !flagService.isCloudPlatform(platformId)
         if (isCustomerPlatform) {
-            return `https://${hostname}/redirect`
+            return `${hostUrl}/redirect`
         }
         const frontendUrl = system.get(SharedSystemProp.FRONTEND_URL)
         const trimmedFrontendUrl = frontendUrl?.endsWith('/')

@@ -49,7 +49,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         stepOutput.input = censoredInput
 
-        const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
+        const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors))
         }
@@ -83,7 +83,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 engineToken: constants.engineToken,
                 stepName: action.name,
                 flowId: constants.flowId,
-                type: constants.filesServiceType,
             }),
             server: {
                 token: constants.engineToken,
@@ -177,9 +176,9 @@ const createConnectionManager = ({ engineToken, projectId, hookResponse, apiUrl 
 }
 
 function createStopHook(hookResponse: HookResponse): StopHook {
-    return (req: StopHookParams) => {
+    return (req?: StopHookParams) => {
         hookResponse.stopped = true
-        hookResponse.stopResponse = req
+        hookResponse.stopResponse = req ?? { response: {} }
     }
 }
 

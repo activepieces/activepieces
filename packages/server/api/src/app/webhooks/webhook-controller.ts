@@ -9,6 +9,7 @@ import {
     Flow,
     FlowId,
     FlowStatus,
+    isMultipartFile,
     isNil,
     WebhookUrlParams,
 } from '@activepieces/shared'
@@ -16,6 +17,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { tasksLimit } from '../ee/project-plan/tasks-limit'
+import { stepFileService } from '../file/step-file/step-file.service'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
 import { webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
@@ -80,7 +82,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
 async function handleWebhook({ request, flowId, async, simulate }: { request: FastifyRequest, flowId: string, async: boolean, simulate: boolean }): Promise<EngineHttpResponse> {
     const flow = await getFlowOrThrow(flowId)
-    const payload = await convertRequest(request)
+    const payload = await convertRequest(request, flow.projectId, flow.id)
     const requestId = apId()
     const synchronousHandlerId = async ? null : webhookResponseWatcher.getServerId()
     if (isNil(flow)) {
@@ -121,17 +123,17 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
     return webhookResponseWatcher.oneTimeListener(requestId, true)
 }
 
-async function convertRequest(request: FastifyRequest): Promise<EventPayload> {
+async function convertRequest(request: FastifyRequest, projectId: string, flowId: string): Promise<EventPayload> {
     const payload: EventPayload = {
         method: request.method,
         headers: request.headers as Record<string, string>,
-        body: await convertBody(request),
+        body: await convertBody(request, projectId, flowId),
         queryParams: request.query as Record<string, string>,
     }
     return payload
 }
 
-const convertBody = async (request: FastifyRequest): Promise<unknown> => {
+const convertBody = async (request: FastifyRequest, projectId: string, flowId: string): Promise<unknown> => {
     if (request.isMultipart()) {
         const jsonResult: Record<string, unknown> = {}
         const requestBodyEntries = Object.entries(
@@ -139,12 +141,19 @@ const convertBody = async (request: FastifyRequest): Promise<unknown> => {
         )
 
         for (const [key, value] of requestBodyEntries) {
-            jsonResult[key] =
-                value instanceof Buffer ? value.toString('base64') : value
+            if (isMultipartFile(value)) {
+                const file = await stepFileService.saveAndEnrich({
+                    file: value.data as Buffer,
+                    fileName: value.filename,
+                    stepName: 'trigger',
+                    flowId,
+                }, request.hostname, projectId)
+                jsonResult[key] = file.url
+            }
+            else {
+                jsonResult[key] = value
+            }
         }
-
-        logger.debug({ name: 'WebhookController#convertBody', jsonResult })
-
         return jsonResult
     }
     return request.body

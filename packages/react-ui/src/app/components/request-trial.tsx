@@ -62,7 +62,9 @@ export type FeatureKey =
   | 'ISSUES'
   | 'ANALYTICS'
   | 'ALERTS'
-  | 'ENTERPRISE_PIECES';
+  | 'ENTERPRISE_PIECES'
+  | 'UNIVERSAL_AI'
+  | 'SIGNING_KEYS';
 
 const features = [
   {
@@ -90,6 +92,14 @@ const features = [
   {
     label: t('Analytics'),
     key: `ANALYTICS`,
+  },
+  {
+    label: t('Universal AI'),
+    key: `UNIVERSAL_AI`,
+  },
+  {
+    label: t('Embedding'),
+    key: `SIGNING_KEYS`,
   },
 ];
 
@@ -226,24 +236,27 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
           {t('Request Trial')}
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="h-screen top-0 right-0 left-auto mt-0 w-[600px] rounded-none py-2 px-6 gap-6 flex">
-        <ScrollArea className="h-full w-full">
+      <DrawerContent className="h-full top-0 right-0 left-auto mt-0 w-[620px] rounded-none py-2 ">
+        <ScrollArea
+          className="h-full w-full relative px-6 "
+          viewPortClassName="h-full"
+        >
           <DrawerHeader className="mt-4">
             <DrawerTitle className="text-2xl">
               {t('14-Day Enterprise Trial')}
             </DrawerTitle>
           </DrawerHeader>
           <Form {...form}>
-            <form className="space-y-2">
-              <div className="grid grid-cols-2 gap-y-2 gap-x-6">
+            <form className="space-y-2 mt-4">
+              <div className="grid grid-cols-2 gap-y-4 gap-x-6 px-0.5">
                 <FormField
                   control={form.control}
                   name="fullName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('Name')}</FormLabel>
+                      <FormLabel>{t('Name')} *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Bertram Gilfoyle" {...field} />
+                        <Input {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -253,12 +266,9 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('Work Email')}</FormLabel>
+                      <FormLabel>{t('Work Email')} *</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="gilfoyle@piedpiper.com"
-                          {...field}
-                        />
+                        <Input {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -268,9 +278,9 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
                   name="companyName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('Company Name')}</FormLabel>
+                      <FormLabel>{t('Company Name')} *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Pied Piper" {...field} />
+                        <Input {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -280,7 +290,7 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
                   name="numberOfEmployees"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('Number of Employees')}</FormLabel>
+                      <FormLabel>{t('Number of Employees')} *</FormLabel>
                       <FormControl>
                         <Select
                           onValueChange={field.onChange}
@@ -309,7 +319,7 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
                 name="goal"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('Goal')}</FormLabel>
+                    <FormLabel>{t('Goal')} *</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -339,18 +349,18 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
               )}
             </form>
           </Form>
-          <div className="flex flex-col">
+          <div className="flex flex-col mt-8">
             <div className="text-lg">{t('Try Enterprise to access')}:</div>
-            <div className="grid grid-cols-2 mt-4 gap-y-2 gap-x-6">
+            <div className="grid grid-cols-2 mt-4 gap-y-5 gap-x-6">
               {features.map((feature) => (
-                <div className="flex gap-2 items-center my-3" key={feature.key}>
+                <div className="flex gap-2 items-center " key={feature.key}>
                   <CheckCircle className="h-5 w-5 text-success" />
                   {feature.label}
                 </div>
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-5 mt-6 items-center justify-center">
+          <div className="flex flex-col gap-5 mt-7 items-center justify-center">
             <div className="text-lg text-muted-foreground font-semibold">
               {t('Deploy your automations securely with Activepieces')}
             </div>
@@ -362,21 +372,21 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
           </div>
 
           <div className="flex-grow"></div>
-          <DrawerFooter className="flex flex-row items-center justify-left">
-            <Button
-              size={'lg'}
-              onClick={form.handleSubmit((data) => mutate(data))}
-              loading={isPending}
-            >
-              {t('Submit')}
-            </Button>
-            <DrawerClose asChild>
-              <Button variant="outline" size={'lg'}>
-                {t('Cancel')}
-              </Button>
-            </DrawerClose>
-          </DrawerFooter>
         </ScrollArea>
+        <DrawerFooter className="flex flex-row sticky bg-background border-t border-border border-t  pb-0 z-50 bottom-0 items-center  justify-left">
+          <Button
+            size="default"
+            onClick={form.handleSubmit((data) => mutate(data))}
+            loading={isPending}
+          >
+            {t('Submit')}
+          </Button>
+          <DrawerClose asChild>
+            <Button variant="outline" size="default">
+              {t('Cancel')}
+            </Button>
+          </DrawerClose>
+        </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );

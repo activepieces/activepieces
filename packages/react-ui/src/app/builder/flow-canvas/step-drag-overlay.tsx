@@ -24,7 +24,7 @@ const StepDragOverlay = ({ step }: StepDragTemplateProps) => {
   }, []);
 
   const { stepMetadata } = piecesHooks.useStepMetadata({
-    step: step!,
+    step,
   });
 
   return (

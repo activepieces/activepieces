@@ -23,6 +23,10 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import { ApFlagId } from '@activepieces/shared';
+
+import { useNewWindow } from '../../../../components/embed-provider';
+import { flagsHooks } from '../../../../hooks/flags-hooks';
 
 export enum LocalesEnum {
   DUTCH = 'nl',
@@ -61,7 +65,10 @@ export const localesMap = {
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-
+  const openNewIndow = useNewWindow();
+  const { data: showCommunity } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COMMUNITY,
+  );
   const languageWithoutLocale = i18n.language?.includes('-')
     ? i18n.language.split('-')[0]
     : i18n.language;
@@ -137,20 +144,19 @@ export function LanguageSwitcher() {
             </Command>
           </PopoverContent>
         </Popover>
-        <div className="text-sm text-muted-foreground mt-2">
-          {t('Help us translate Activepieces to your language.')}
-          <span
-            className="text-primary ml-2 cursor-pointer"
-            onClick={() =>
-              window.open(
-                'https://www.activepieces.com/docs/about/i18n',
-                '_blank',
-              )
-            }
-          >
-            {t('Learn more')}
-          </span>
-        </div>
+        {showCommunity ? (
+          <div className="text-sm text-muted-foreground mt-2">
+            {t('Help us translate Activepieces to your language.')}
+            <span
+              className="text-primary ml-2 cursor-pointer"
+              onClick={() =>
+                openNewIndow('https://www.activepieces.com/docs/about/i18n')
+              }
+            >
+              {t('Learn more')}
+            </span>
+          </div>
+        ) : null}
       </div>
     </div>
   );

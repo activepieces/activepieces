@@ -4,7 +4,6 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  KeyboardSensor,
   PointerSensor,
   TouchSensor,
   rectIntersection,
@@ -120,7 +119,6 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
         distance: 10,
       },
     }),
-    useSensor(KeyboardSensor),
     useSensor(TouchSensor),
   );
 

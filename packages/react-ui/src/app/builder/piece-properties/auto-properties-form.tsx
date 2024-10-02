@@ -272,6 +272,9 @@ const selectFormComponentForProperty = ({
               value={field.value}
               onChange={field.onChange}
               disabled={disabled}
+              type={
+                property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
+              }
             ></Input>
           )}
         </AutoFormFieldWrapper>

@@ -115,7 +115,7 @@ export const jwtUtils = {
         }
 
         return new Promise((resolve, reject) => {
-            jwtLibrary.verify(jwt, key, verifyOptions, (err, payload) => {
+            jwtLibrary.verify(jwt, key, verifyOptions, async (err, payload) => {
                 if (err) {
                     return reject(err)
                 }

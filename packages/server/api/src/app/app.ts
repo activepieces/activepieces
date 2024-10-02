@@ -165,7 +165,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.io.use((socket: Socket, next: (err?: Error) => void) => {
         accessTokenManager
-            .extractPrincipal(socket.handshake.auth.token)
+            .verifyPrincipal(socket.handshake.auth.token)
             .then(() => {
                 next()
             })

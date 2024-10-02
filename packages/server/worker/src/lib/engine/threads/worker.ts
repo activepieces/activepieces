@@ -30,7 +30,7 @@ export class EngineWorker {
     }
 
     async executeTask(operationType: EngineOperationType, operation: EngineOperation): Promise<WorkerResult> {
-        logger.debug({
+        logger.trace({
             operationType,
             operation,
         }, 'Executing operation')

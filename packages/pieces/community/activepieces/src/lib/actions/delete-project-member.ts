@@ -4,7 +4,7 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { activePieceAuth, config } from '../../index';
+import { activePieceAuth } from '../../index';
 
 export const deleteProjectMember = createAction({
   name: 'delete_project_member',
@@ -20,10 +20,10 @@ export const deleteProjectMember = createAction({
   async run({ propsValue, auth }) {
     const response = await httpClient.sendRequest<string[]>({
       method: HttpMethod.DELETE,
-      url: `${config.baseApiUrl}/project-members/${propsValue['id']}`,
+      url: `${auth.baseApiUrl}/project-members/${propsValue['id']}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth,
+        token: auth.apiKey,
       },
     });
 

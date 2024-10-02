@@ -3,7 +3,6 @@ import { isNil, isString } from '@activepieces/shared'
 import axios from 'axios'
 import isBase64 from 'is-base64'
 import mime from 'mime-types'
-import { apFileUtils } from '../../services/files.service'
 import { ProcessorFn } from './types'
 
 export const fileProcessor: ProcessorFn = async (_property, urlOrBase64) => {
@@ -11,10 +10,6 @@ export const fileProcessor: ProcessorFn = async (_property, urlOrBase64) => {
         return null
     }
     try {
-        const apFile = await apFileUtils.readApFile(urlOrBase64)
-        if (!isNil(apFile)) {
-            return apFile
-        }
         const file = handleBase64File(urlOrBase64)
         if (!isNil(file)) {
             return file

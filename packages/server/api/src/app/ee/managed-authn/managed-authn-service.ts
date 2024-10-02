@@ -11,6 +11,7 @@ import {
     spreadIfDefined,
     User,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
@@ -50,7 +51,8 @@ export const managedAuthnService = {
             platform: {
                 id: externalPrincipal.platformId,
             },
-        })
+            tokenVersion: user.tokenVersion,
+        }, dayjs.duration(7, 'day').asSeconds())
         return {
             ...user,
             token,

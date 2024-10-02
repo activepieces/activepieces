@@ -9,13 +9,17 @@ import { Skeleton } from './skeleton';
 
 const CardList = forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ children, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement> & { listClassName?: string }
+>(({ children, className, listClassName, ...props }, ref) => (
   <ScrollArea
-    className="h-full overflow-auto"
+    className={`h-full overflow-auto ${className}`}
     viewPortClassName="[&>div]:h-full"
   >
-    <div ref={ref} className="flex flex-col gap-4 h-full w-full" {...props}>
+    <div
+      ref={ref}
+      className={cn('flex flex-col gap-4 h-full w-full', listClassName)}
+      {...props}
+    >
       {children}
     </div>
     <ScrollBar orientation="horizontal" />
@@ -24,11 +28,11 @@ const CardList = forwardRef<
 CardList.displayName = 'CardList';
 export { CardList };
 
-const cardItemListVariants = cva('flex items-center gap-4 w-full p-4 ', {
+const cardItemListVariants = cva('flex items-center gap-4 w-full py-4 px-2 ', {
   variants: {
     interactive: {
       true: 'cursor-pointer hover:bg-accent hover:text-accent-foreground',
-      false: 'cursor-default',
+      false: 'cursor-default text-accent-foreground/50 font-semibold',
     },
     selected: {
       true: 'bg-accent text-accent-foreground',

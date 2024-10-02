@@ -69,7 +69,7 @@ const SignUpForm = ({
     },
   });
   const websiteName = flagsHooks.useWebsiteBranding()?.websiteName;
-  const edition = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION).data;
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const showNewsLetterCheckbox = useMemo(() => {
     if (!edition || !websiteName) {
       return false;

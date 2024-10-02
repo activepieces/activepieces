@@ -1,20 +1,15 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION,     logger,
-    RepeatableJobType } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, RepeatableJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
     ExecutionType,
     FlowRun,
-    isFailedState,
     isNil,
     PauseType,
     ProgressUpdateType,
-    RunEnvironment,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { alertsService } from '../../ee/alerts/alerts-service'
-import { issuesService } from '../../ee/issues/issues-service'
 import { eventsHooks } from '../../helper/application-events'
 import { flowQueue } from '../../workers/queue'
 import { JOB_PRIORITY } from '../../workers/queue/queue-manager'
@@ -53,18 +48,7 @@ export const flowRunSideEffects = {
     async finish({ flowRun }: { flowRun: FlowRun }): Promise<void> {
         await flowRunHooks
             .getHooks()
-            .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
-        if (flowRun.environment === RunEnvironment.PRODUCTION) {
-            if (isFailedState(flowRun.status)) {
-                const issue = await issuesService.add({
-                    flowId: flowRun.flowId,
-                    projectId: flowRun.projectId,
-                    flowRunCreatedAt: flowRun.created,
-                })
-
-                await alertsService.sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
-            }
-        }
+            .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks!, flowRun })
         eventsHooks.get().sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_FINISHED,
             data: {

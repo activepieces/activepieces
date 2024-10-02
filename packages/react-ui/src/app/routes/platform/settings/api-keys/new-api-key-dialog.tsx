@@ -62,7 +62,13 @@ export const NewApiKeyDialog = ({
   });
 
   return (
-    <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        setOpen(open);
+        form.reset();
+      }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -83,7 +89,7 @@ export const NewApiKeyDialog = ({
                   )}
                 </span>
               </span>
-              <CopyToClipboardInput textToCopy={apiKey.value} />
+              <CopyToClipboardInput useInput={true} textToCopy={apiKey.value} />
             </div>
           </div>
         )}
@@ -91,7 +97,7 @@ export const NewApiKeyDialog = ({
           <Form {...form}>
             <form
               className="grid space-y-4"
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={form.handleSubmit(() => mutate())}
             >
               <FormField
                 name="displayName"

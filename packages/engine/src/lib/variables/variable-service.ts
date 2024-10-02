@@ -208,16 +208,18 @@ export class VariableService {
         resolvedInput: StaticPropsValue<PiecePropertyMap>,
         props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
+        requireAuth: boolean,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: VariableValidationError }> {
         const processedInput = { ...resolvedInput }
         const errors: VariableValidationError = {}
 
-        const isAuthenticationProperty = auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2) && !isNil(auth.props)
+        const isAuthenticationProperty = auth && (auth.type === PropertyType.CUSTOM_AUTH || auth.type === PropertyType.OAUTH2) && !isNil(auth.props) && requireAuth
         if (isAuthenticationProperty) {
             const { processedInput: authProcessedInput, errors: authErrors } = await this.applyProcessorsAndValidators(
                 resolvedInput[AUTHENTICATION_PROPERTY_NAME],
                 auth.props,
                 undefined,
+                requireAuth,
             )
             processedInput.auth = authProcessedInput
             if (Object.keys(authErrors).length > 0) {

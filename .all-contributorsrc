@@ -1253,6 +1253,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "rSnapkoOpenOps",
+      "name": "rSnapkoOpenOps",
+      "avatar_url": "https://avatars.githubusercontent.com/u/179845343?v=4",
+      "profile": "https://github.com/rSnapkoOpenOps",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "ahronshor",
+      "name": "ahronshor",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25138831?v=4",
+      "profile": "https://github.com/ahronshor",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -73,10 +73,11 @@ export const createMockUser = (user?: Partial<User>): User => {
         password: user?.password
             ? bcrypt.hashSync(user.password, 10)
             : faker.internet.password(),
-        status: user?.status ?? faker.helpers.enumValue(UserStatus),
+        status: user?.status ?? UserStatus.ACTIVE,
         platformRole: user?.platformRole ?? faker.helpers.enumValue(PlatformRole),
         verified: user?.verified ?? faker.datatype.boolean(),
         externalId: user?.externalId,
+        tokenVersion: user?.tokenVersion ?? undefined,
         platformId: user?.platformId ?? null,
     }
 }
@@ -219,7 +220,6 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         customDomainsEnabled: platform?.customDomainsEnabled ?? faker.datatype.boolean(),
         projectRolesEnabled: platform?.projectRolesEnabled ?? faker.datatype.boolean(),
         alertsEnabled: platform?.alertsEnabled ?? faker.datatype.boolean(),
-        premiumPieces: platform?.premiumPieces ?? [],
     }
 }
 
@@ -296,9 +296,15 @@ export const createMockApiKey = (
 export const setupMockApiKeyServiceAccount = (
     params?: SetupMockApiKeyServiceAccountParams,
 ): SetupMockApiKeyServiceAccountReturn => {
+
     const { mockOwner, mockPlatform } = createMockPlatformWithOwner({
         owner: params?.owner,
         platform: params?.platform,
+    })
+
+    const mockProject = createMockProject({
+        ownerId: mockOwner.id,
+        platformId: mockPlatform.id,
     })
 
     const mockApiKey = createMockApiKey({
@@ -306,7 +312,9 @@ export const setupMockApiKeyServiceAccount = (
         platformId: mockPlatform.id,
     })
 
+
     return {
+        mockProject,
         mockOwner,
         mockPlatform,
         mockApiKey,
@@ -547,6 +555,7 @@ type SetupMockApiKeyServiceAccountParams = CreateMockPlatformWithOwnerParams & {
 }
 
 type SetupMockApiKeyServiceAccountReturn = CreateMockPlatformWithOwnerReturn & {
+    mockProject: Project
     mockApiKey: ApiKey & { value: string }
 }
 

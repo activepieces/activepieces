@@ -8,6 +8,17 @@ export function isNil<T>(value: T | null | undefined): value is null | undefined
     return value === null || value === undefined
 }
 
+export function setAtPath<T, K extends keyof any>(obj: T, path: K | K[], value: any): void {
+    const pathArray = Array.isArray(path) ? path : (path as string).match(/([^[.\]])+/g) as unknown as K[];
+  
+    pathArray.reduce((acc: any, key: K, i: number) => {
+      if (acc[key] === undefined) acc[key] = {}
+      if (i === pathArray.length - 1) acc[key] = value
+      return acc[key]
+    }, obj)
+  }
+
+  
 export function debounce<T>(func: (...args: T[]) => void, wait: number): (...args: T[]) => void {
     let timeout: NodeJS.Timeout
 

@@ -62,6 +62,7 @@ const populateTokenWithPlatformInfo = async ({
         platform: {
             id: platform.id,
         },
+        tokenVersion: user.tokenVersion,
     })
 
     return updatedToken

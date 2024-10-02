@@ -2,6 +2,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Plus, Trash } from 'lucide-react';
 import { useState } from 'react';
+import { Trans } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewSigningKeyDialog } from '@/app/routes/platform/settings/signing-keys/new-signing-key-dialog';
@@ -78,11 +80,22 @@ const SigningKeysPage = () => {
           <div className="flex justify-between flex-row w-full">
             <div className="flex flex-col gap-2">
               <h1 className="text-2xl font-bold w-full">{t('Signing Keys')}</h1>
-              <span className="text-sm text-muted-foreground max-w-[500px]">
-                {t(
-                  'Use the JavaScript SDK to authenticate users with signing keys. Refer the documentation for details.',
-                )}
-              </span>
+              <div className="text-sm text-muted-foreground  flex-col gap-2 ">
+                <Trans>
+                  Use our embedding{' '}
+                  <Link
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    className="font-medium text-primary underline underline-offset-4"
+                    to="https://www.activepieces.com/docs/embedding/provision-users"
+                  >
+                    JavaScript SDK
+                  </Link>{' '}
+                  to authenticate users with signing keys.
+                </Trans>
+
+                <div></div>
+              </div>
             </div>
             <NewSigningKeyDialog onCreate={() => setRefresh(refresh + 1)}>
               <Button

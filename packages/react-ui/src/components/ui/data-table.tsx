@@ -85,6 +85,7 @@ interface DataTableProps<
   ) => Promise<SeekPage<TData>>;
   onRowClick?: (
     row: RowDataWithActions<TData>,
+    newWindow: boolean,
     e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
   ) => void;
   filters?: F[];
@@ -303,7 +304,8 @@ export function DataTable<
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  onClick={(e) => onRowClick?.(row.original, e)}
+                  onClick={(e) => onRowClick?.(row.original, e.ctrlKey, e)}
+                  onAuxClick={(e) => onRowClick?.(row.original, true, e)}
                   key={row.id}
                   className={onRowClick ? 'cursor-pointer' : ''}
                   data-state={row.getIsSelected() && 'selected'}

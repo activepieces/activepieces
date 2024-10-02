@@ -9,7 +9,7 @@ const listener: Record<string, WebsocketListener<any>> = {}
 
 export const websocketService = {
     async init(socket: Socket): Promise<void> {
-        const principal = await accessTokenManager.extractPrincipal(socket.handshake.auth.token)
+        const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
         await socket.join(principal.projectId)
         for (const [event, handler] of Object.entries(listener)) {
             socket.on(event, handler(socket))

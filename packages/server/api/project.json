@@ -17,7 +17,8 @@
         "assets": ["packages/server/api/src/assets"],
         "webpackConfig": "packages/server/api/webpack.config.js",
         "generatePackageJson": true,
-        "babelUpwardRootMode": true
+        "babelUpwardRootMode": true,
+        "sourceMap": true
       },
       "configurations": {
         "production": {

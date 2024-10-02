@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { api } from '@/lib/api';
 import {
   DropdownState,
@@ -18,31 +20,32 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 
-import { PieceStepMetadata, StepMetadata } from './pieces-hook';
-export const PRIMITIVE_STEP_METADATA = {
+import { PieceStepMetadata, StepMetadata } from './types';
+
+export const CORE_STEP_METADATA = {
   [ActionType.CODE]: {
-    displayName: 'Code',
+    displayName: t('Code'),
     logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
-    description: 'Powerful Node.js & TypeScript code with npm',
-    type: ActionType.CODE,
+    description: t('Powerful Node.js & TypeScript code with npm'),
+    type: ActionType.CODE as const,
   },
   [ActionType.LOOP_ON_ITEMS]: {
-    displayName: 'Loop on Items',
+    displayName: t('Loop on Items'),
     logoUrl: 'https://cdn.activepieces.com/pieces/loop.svg',
     description: 'Iterate over a list of items',
-    type: ActionType.LOOP_ON_ITEMS,
+    type: ActionType.LOOP_ON_ITEMS as const,
   },
   [ActionType.BRANCH]: {
-    displayName: 'Branch',
+    displayName: t('Branch'),
     logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
-    description: 'Branch',
-    type: ActionType.BRANCH,
+    description: t('Split your flow into branches depending on condition(s)'),
+    type: ActionType.BRANCH as const,
   },
   [TriggerType.EMPTY]: {
-    displayName: 'Empty Trigger',
+    displayName: t('Empty Trigger'),
     logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
-    description: 'Empty Trigger',
-    type: TriggerType.EMPTY,
+    description: t('Empty Trigger'),
+    type: TriggerType.EMPTY as const,
   },
 };
 
@@ -78,13 +81,21 @@ export const piecesApi = {
       packageType: piece.packageType,
     };
   },
+  mapToSuggestions(
+    piece: PieceMetadataModelSummary,
+  ): Pick<PieceMetadataModelSummary, 'suggestedActions' | 'suggestedTriggers'> {
+    return {
+      suggestedActions: piece.suggestedActions,
+      suggestedTriggers: piece.suggestedTriggers,
+    };
+  },
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
     switch (step.type) {
       case ActionType.BRANCH:
       case ActionType.LOOP_ON_ITEMS:
       case ActionType.CODE:
       case TriggerType.EMPTY:
-        return PRIMITIVE_STEP_METADATA[step.type];
+        return CORE_STEP_METADATA[step.type];
       case ActionType.PIECE:
       case TriggerType.PIECE: {
         const { pieceName, pieceVersion } = step.settings;

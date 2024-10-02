@@ -25,6 +25,7 @@ export const errorHandler = async (
             [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,
             [ErrorCode.SIGN_UP_DISABLED]: StatusCodes.FORBIDDEN,
             [ErrorCode.INVALID_CREDENTIALS]: StatusCodes.UNAUTHORIZED,
+            [ErrorCode.SESSION_EXPIRED]: StatusCodes.FORBIDDEN,
             [ErrorCode.EMAIL_IS_NOT_VERIFIED]: StatusCodes.FORBIDDEN,
             [ErrorCode.USER_IS_INACTIVE]: StatusCodes.FORBIDDEN,
             [ErrorCode.DOMAIN_NOT_ALLOWED]: StatusCodes.FORBIDDEN,

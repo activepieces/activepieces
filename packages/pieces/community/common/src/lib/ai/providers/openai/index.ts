@@ -17,10 +17,12 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
         const response = await sdk.images.generate({
           model: params.model,
           prompt: params.prompt,
-          n: params.numImages,
+          quality: params.quality as any,
+          size: params.size as any,
+          response_format: 'b64_json',
         });
-        const url = response.data[0].url;
-        return url ? { url } : null;
+        const imageBase64 = response.data[0].b64_json;
+        return imageBase64 ? { image: imageBase64 } : null;
       },
     },
     chat: {
@@ -81,23 +83,22 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
           })),
         });
 
-        const toolCall = completion.choices[0].message.tool_calls?.[0]
+        const toolCall = completion.choices[0].message.tool_calls?.[0];
 
         return {
-          choices: completion.choices
-            .map((choice) => ({
-              role: AIChatRole.ASSISTANT,
-              content: choice.message.content ?? '',
-            })),
-          call: toolCall ? {
-            id: toolCall.id,
-            function: {
-              name: toolCall.function.name,
-              arguments: JSON.parse(
-                toolCall.function.arguments as string
-              ),
-            },
-          } : null,
+          choices: completion.choices.map((choice) => ({
+            role: AIChatRole.ASSISTANT,
+            content: choice.message.content ?? '',
+          })),
+          call: toolCall
+            ? {
+                id: toolCall.id,
+                function: {
+                  name: toolCall.function.name,
+                  arguments: JSON.parse(toolCall.function.arguments as string),
+                },
+              }
+            : null,
           created: completion.created,
           id: completion.id,
           model: completion.model,

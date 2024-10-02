@@ -1,11 +1,11 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, EnginePrincipal, ErrorCode, isNil, Principal, PrincipalType, ProjectId, WorkerMachineType, WorkerPrincipal } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, EnginePrincipal, ErrorCode, isNil, Principal, PrincipalType, ProjectId, UserStatus, WorkerMachineType, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { jwtUtils } from '../../helper/jwt-utils'
+import { userService } from '../../user/user-service'
 
 export const accessTokenManager = {
-    async generateToken(principal: Principal, expiresInSeconds: number = 7 * 30 * 24 * 60 * 60): Promise<string> {
+    async generateToken(principal: Principal, expiresInSeconds: number = dayjs.duration(7, 'day').asSeconds()): Promise<string> {
         const secret = await jwtUtils.getJwtSecret()
-
         return jwtUtils.sign({
             payload: principal,
             key: secret,
@@ -52,7 +52,7 @@ export const accessTokenManager = {
     },
 
 
-    async extractPrincipal(token: string): Promise<Principal> {
+    async verifyPrincipal(token: string): Promise<Principal> {
         const secret = await jwtUtils.getJwtSecret()
 
         try {
@@ -61,17 +61,36 @@ export const accessTokenManager = {
                 key: secret,
             })
             assertNotNullOrUndefined(decoded.type, 'decoded.type')
+            await assertUserSession(decoded)
             return decoded
         }
         catch (e) {
+            if (e instanceof ActivepiecesError) {
+                throw e
+            }
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_BEARER_TOKEN,
                 params: {
-                    message: 'invalid access token',
+                    message: 'invalid access token or session expired',
                 },
             })
         }
     },
+}
+
+async function assertUserSession(decoded: Principal): Promise<void> {
+    if (decoded.type !== PrincipalType.USER) return
+    
+    const user = await userService.getOneOrFail({ id: decoded.id })
+    const isExpired = (user.tokenVersion ?? null) !== (decoded.tokenVersion ?? null)
+    if (isExpired || user.status === UserStatus.INACTIVE) {
+        throw new ActivepiecesError({
+            code: ErrorCode.SESSION_EXPIRED,
+            params: {
+                message: 'The session has expired.',
+            },
+        })
+    }
 }
 
 type GenerateEngineTokenParams = {

@@ -7,6 +7,7 @@ import { markdownToHTML } from './lib/actions/markdown-to-html';
 import { replace } from './lib/actions/replace';
 import { split } from './lib/actions/split';
 import { stripHtmlContent } from './lib/actions/strip-html';
+import { slugifyAction } from './lib/actions/slugify';
 
 export const textHelper = createPiece({
   displayName: 'Text Helper',
@@ -30,6 +31,7 @@ export const textHelper = createPiece({
     markdownToHTML,
     htmlToMarkdown,
     stripHtmlContent,
+    slugifyAction,
   ],
   triggers: [],
 });

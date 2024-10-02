@@ -10,9 +10,10 @@ import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { SourceCode, deepMergeAndCast } from '@activepieces/shared';
+import { ApFlagId, SourceCode, deepMergeAndCast } from '@activepieces/shared';
 
 import { AddNpmDialog } from './add-npm-dialog';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 const styleTheme = EditorView.baseTheme({
   '&.cm-editor.cm-focused': {
@@ -41,6 +42,8 @@ const CodeEditor = ({
 
   const codeEditorTheme = theme === 'dark' ? githubDark : githubLight;
 
+  const { data: allowNpmPackagesInCodeStep } = flagsHooks.useFlag<boolean>(ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP)
+  
   const extensions = [
     styleTheme,
     EditorState.readOnly.of(readonly),
@@ -85,14 +88,16 @@ const CodeEditor = ({
           >
             {t('Code')}
           </div>
-          <div
-            className={cn('text-sm cursor-pointer', {
-              'font-bold': activeTab === 'packageJson',
-            })}
-            onClick={() => handlePackageClick()}
-          >
-            {t('Dependencies')}
-          </div>
+          {allowNpmPackagesInCodeStep && (
+            <div
+              className={cn('text-sm cursor-pointer', {
+                'font-bold': activeTab === 'packageJson',
+              })}
+              onClick={() => handlePackageClick()}
+            >
+              {t('Dependencies')}
+            </div>
+          )}
         </div>
         <div className="flex flex-grow"></div>
         {codeApplicationEnabled ? (
@@ -106,17 +111,19 @@ const CodeEditor = ({
             {t('Apply code')}
           </Button>
         ) : (
-          <AddNpmDialog onAdd={handleAddPackages}>
-            <Button
-              variant="outline"
-              className="flex gap-2"
-              size={'sm'}
-              onClick={() => {}}
-            >
-              <Package className="w-4 h-4" />
-              {t('Add package')}
-            </Button>
-          </AddNpmDialog>
+          allowNpmPackagesInCodeStep && (
+            <AddNpmDialog onAdd={handleAddPackages}>
+              <Button
+                variant="outline"
+                className="flex gap-2"
+                size={'sm'}
+                onClick={() => {}}
+              >
+                <Package className="w-4 h-4" />
+                {t('Add package')}
+              </Button>
+            </AddNpmDialog>
+          )
         )}
       </div>
       <CodeMirror

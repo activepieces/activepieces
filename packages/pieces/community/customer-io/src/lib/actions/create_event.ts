@@ -85,7 +85,7 @@ export const createEvent = createAction({
       'Content-Type': 'application/json',
     }
     const encoded_email = encodeURIComponent(context.propsValue.customer_email);
-    const url = customerIOCommon.trackUrl + 'customers/' + encoded_email + '/events';
+    const url = customerIOCommon[context.auth.region || 'us'].trackUrl + 'customers/' + encoded_email + '/events';
 
     const httprequestdata = {
       method: HttpMethod.POST,
