@@ -1,15 +1,15 @@
-import { ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { ApEdition, ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
 import { appearanceHelper } from '../helper/appearance-helper'
+import { SharedSystemProp, system } from '@activepieces/server-shared'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags = { ...flags }
-        const hostname = request.hostname
-        const hostUrl = `https://${hostname}`
+        const hostUrl = resolveHostUrl(request.hostname, request.protocol)
         const platformId = await resolvePlatformIdForRequest(request)
         if (isNil(platformId)) {
             return modifiedFlags
@@ -51,10 +51,22 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
                 ApFlagId.WEBHOOK_URL_PREFIX
             ] = `${hostUrl}/api/v1/webhooks`
             modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] =
-        flagService.getThirdPartyRedirectUrl(platform.id, hostname)
+                flagService.getThirdPartyRedirectUrl(platform.id, hostUrl)
             modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
             modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
         }
         return modifiedFlags
     },
+}
+function resolveHostUrl(hostname: string, protocol: string): string {
+    const edition = system.getEdition()
+    if (edition === ApEdition.CLOUD) {
+        return `${protocol}://${hostname}`
+    }
+    const frontendUrl = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
+    return removeTrailingSlash(frontendUrl)
+}
+
+function removeTrailingSlash(url: string): string {
+    return url.endsWith('/') ? url.slice(0, -1) : url
 }
