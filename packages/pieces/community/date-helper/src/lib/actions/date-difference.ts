@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
 import {
   optionalTimeFormats,
   timeFormat,
@@ -10,6 +11,7 @@ import {
 } from '../common';
 
 dayjs.extend(duration);
+dayjs.extend(advancedFormat);
 
 export const dateDifferenceAction = createAction({
   name: 'date_difference',

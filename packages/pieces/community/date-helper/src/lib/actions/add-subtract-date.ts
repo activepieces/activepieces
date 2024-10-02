@@ -1,5 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
 import {
   optionalTimeFormats,
   parseDate,
@@ -7,6 +8,8 @@ import {
   timeFormatDescription,
   timeParts,
 } from '../common';
+
+dayjs.extend(advancedFormat);
 
 export const addSubtractDateAction = createAction({
   name: 'add_subtract_date',
