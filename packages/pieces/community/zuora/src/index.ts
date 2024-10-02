@@ -78,7 +78,6 @@ export const zuora = createPiece({
   categories: [
     PieceCategory.SALES_AND_CRM,
     PieceCategory.PAYMENT_PROCESSING,
-    PieceCategory.PREMIUM,
   ],
   authors: ['kishanprmr'],
   actions: [
