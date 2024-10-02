@@ -46,8 +46,8 @@ export const addSubtractDateAction = createAction({
     }),
     expression: Property.LongText({
       displayName: 'Expression',
-      description: `Provide an expression to add or subtract using the following units 
-            <b>( year , month , day , hour , minute or second )</b> . <br>Examples:<br> +2 <b>second</b> +1 <b>hour</b> <br> + 1 <b>year</b> - 3 <b>day</b> - 2 <b>month</b> <br> + 5 <b>minute</b>`,
+      description: `Provide an expression to add or subtract using the following units (year , month , day , hour , minute or second).
+             \nExamples:\n+ 2 second + 1 hour \n+ 1 year - 3 day - 2 month \n+ 5 minute`,
       required: true,
     }),
   },
@@ -61,7 +61,6 @@ export const addSubtractDateAction = createAction({
     return { result: dayjs(AfterDate).format(outputFormat) };
   },
 });
-
 
 function addSubtractTime(date: Date, expression: string) {
   // remove all the spaces and line breaks from the expression
