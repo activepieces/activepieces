@@ -111,14 +111,22 @@ const calculateHeaders = (
     requestHeaders: Record<string, string | string[] | undefined>,
     aiProviderDefaultHeaders: Record<string, string>,
 ): [string, string][] => {
+    const forbiddenHeaders = [
+        'host',
+        'content-length',
+        'content-type',
+        'transfer-encoding',
+        'connection',
+        'keep-alive',
+        'upgrade',
+        'expect',
+    ]
     const cleanedHeaders = Object.entries(requestHeaders).reduce(
         (acc, [key, value]) => {
             if (
                 value !== undefined &&
-        !['authorization', 'content-length', 'host'].includes(
-            key.toLocaleLowerCase(),
-        ) &&
-        !key.startsWith('x-')
+                !forbiddenHeaders.includes(key.toLowerCase()) &&
+                !key.startsWith('x-')
             ) {
                 acc[key as keyof typeof acc] = value
             }
