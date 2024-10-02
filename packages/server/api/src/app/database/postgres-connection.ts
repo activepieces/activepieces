@@ -149,6 +149,7 @@ import { AddLogsFileIdIndex1725699690971 } from './migration/postgres/1725699690
 import { SupportS3Files1726364421096 } from './migration/postgres/1726364421096-SupportS3Files'
 import { AddAiProviderTable1726445983043 } from './migration/postgres/1726445983043-AddAiProviderTable'
 import { AddAiTokensForProjectPlan1726446092010 } from './migration/postgres/1726446092010-AddAiTokensForProjectPlan'
+import { RemovePremiumPieces1727865841722 } from './migration/postgres/1727865841722-RemovePremiumPieces'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -248,6 +249,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAiProviderTable1726445983043,
         SupportS3Files1726364421096,
         AddUserSessionId1727130193726,
+        RemovePremiumPieces1727865841722,
     ]
 
     const edition = system.getEdition()

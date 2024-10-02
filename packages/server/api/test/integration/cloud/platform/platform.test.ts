@@ -170,7 +170,7 @@ describe('Platform API', () => {
                 },
 
             }
-            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id, smtpPassword: faker.internet.password(), federatedAuthProviders: providers, flowIssuesEnabled: false, alertsEnabled: false, premiumPieces: [] })
+            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id, smtpPassword: faker.internet.password(), federatedAuthProviders: providers, flowIssuesEnabled: false, alertsEnabled: false })
             await databaseConnection().getRepository('platform').save(mockPlatform)
 
             await databaseConnection().getRepository('user').update(mockOwnerUser.id, {
@@ -200,7 +200,7 @@ describe('Platform API', () => {
             const responseBody = response?.json()
 
 
-            expect(Object.keys(responseBody).length).toBe(40)
+            expect(Object.keys(responseBody).length).toBe(39)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)
@@ -218,7 +218,6 @@ describe('Platform API', () => {
             expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
             expect(responseBody.alertsEnabled).toBe(false)
             expect(responseBody.flowIssuesEnabled).toBe(false)
-            expect(responseBody.premiumPieces).toStrictEqual([])
         })
 
 

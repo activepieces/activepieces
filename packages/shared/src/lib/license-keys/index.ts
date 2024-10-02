@@ -32,7 +32,6 @@ export const LicenseKeyEntity = Type.Object({
     projectRolesEnabled: Type.Boolean(),
     flowIssuesEnabled: Type.Boolean(),
     alertsEnabled: Type.Boolean(),
-    premiumPieces: Type.Array(Type.String()),
     analyticsEnabled: Type.Boolean(),
 })
 
