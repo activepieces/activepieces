@@ -58,6 +58,7 @@ import { LogFileRelationWithFlowRunSqlite1725637505836 } from './migration/sqlit
 import { AddLogsFileIdIndexSqlite1725699920020 } from './migration/sqlite/1725699920020-AddLogsFileIdIndexSqlite'
 import { SupportS3FilesSqlite1726363932745 } from './migration/sqlite/1726363932745-SupportS3FilesSqlite'
 import { AddAiProviderSqlite1726446345221 } from './migration/sqlite/1726446345221-AddAiProviderSqlite'
+import { RemovePremiumPiecesSqlite1727865697005 } from './migration/sqlite/1727865697005-RemovePremiumPiecesSqlite'
 
 
 const getSqliteDatabaseFilePath = (): string => {
@@ -135,6 +136,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddAiProviderSqlite1726446345221,
         SupportS3FilesSqlite1726363932745,
         AddUserSessionId1727130193726,
+        RemovePremiumPiecesSqlite1727865697005,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

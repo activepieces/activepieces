@@ -377,20 +377,11 @@
       "@activepieces/piece-messagebird": [
         "packages/pieces/community/messagebird/src/index.ts"
       ],
-      "@activepieces/piece-microsoft-dynamics-365-business-central": [
-        "packages/ee/pieces/microsoft-dynamics-365-business-central/src/index.ts"
-      ],
-      "@activepieces/piece-microsoft-dynamics-crm": [
-        "packages/ee/pieces/microsoft-dynamics-crm/src/index.ts"
-      ],
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/community/microsoft-excel-365/src/index.ts"
       ],
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
-      ],
-      "@activepieces/piece-microsoft-sharepoint": [
-        "packages/ee/pieces/sharepoint/src/index.ts"
       ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
@@ -544,9 +535,6 @@
       "@activepieces/piece-smtp": [
         "packages/pieces/community/smtp/src/index.ts"
       ],
-      "@activepieces/piece-snowflake": [
-        "packages/ee/pieces/snowflake/src/index.ts"
-      ],
       "@activepieces/piece-soap": [
         "packages/pieces/community/soap/src/index.ts"
       ],
@@ -686,7 +674,6 @@
       "@activepieces/piece-zoom": [
         "packages/pieces/community/zoom/src/index.ts"
       ],
-      "@activepieces/piece-zuora": ["packages/ee/pieces/zuora/src/index.ts"],
       "@activepieces/pieces-common": [
         "packages/pieces/community/common/src/index.ts"
       ],
@@ -697,6 +684,21 @@
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@ee/*": ["packages/ee/*"],
       "Aminos": ["packages/pieces/community/Aminos/src/index.ts"],
+      "activepieces/piece-microsoft-dynamics-365-business-central": [
+        "packages/pieces/community/microsoft-dynamics-365-business-central/src/index.ts"
+      ],
+      "activepieces/piece-microsoft-dynamics-crm": [
+        "packages/pieces/community/microsoft-dynamics-crm/src/index.ts"
+      ],
+      "activepieces/piece-microsoft-sharepoint": [
+        "packages/pieces/community/microsoft-sharepoint/src/index.ts"
+      ],
+      "activepieces/piece-snowflake": [
+        "packages/pieces/community/snowflake/src/index.ts"
+      ],
+      "activepieces/piece-zuora": [
+        "packages/pieces/community/zuora/src/index.ts"
+      ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
