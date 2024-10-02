@@ -1,10 +1,10 @@
+import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
 import { appearanceHelper } from '../helper/appearance-helper'
-import { SharedSystemProp, system } from '@activepieces/server-shared'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
