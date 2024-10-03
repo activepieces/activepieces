@@ -313,13 +313,10 @@ export const flowRunService = {
     async test({ projectId, flowVersionId }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
-        const payload =
-            flowVersion.trigger.settings.inputUiInfo.currentSelectedData
-
         return this.start({
             projectId,
             flowVersionId,
-            payload,
+            payload: flowVersion.trigger.settings.inputUiInfo.sampleData,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: webhookResponseWatcher.getServerId(),

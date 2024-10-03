@@ -40,14 +40,14 @@ type TestTriggerSectionProps = {
 };
 
 function getSelectedId(
-  currentSelectedData: unknown,
+  sampleData: unknown,
   pollResults: TriggerEvent[],
 ) {
-  if (currentSelectedData === undefined) {
+  if (sampleData === undefined) {
     return undefined;
   }
   for (let i = 0; i < pollResults.length; i++) {
-    if (deepEqual(currentSelectedData, pollResults[i].payload)) {
+    if (deepEqual(sampleData, pollResults[i].payload)) {
       return pollResults[i].id;
     }
   }
@@ -79,8 +79,7 @@ const TestTriggerSection = React.memo(
       undefined,
     );
 
-    const [currentSelectedData, setCurrentSelectedData] =
-      useState<unknown>(undefined);
+    const [sampleData, setSampleData] = useState<unknown>(undefined);
 
     const [currentSelectedId, setCurrentSelectedId] = useState<
       string | undefined
@@ -91,7 +90,7 @@ const TestTriggerSection = React.memo(
           return triggerEventsApi.saveTriggerMockdata(flowId, mockData);
         },
         onSuccess: async (result) => {
-          updateCurrentSelectedData(result);
+          updateSampleData(result);
           refetch();
         },
       });
@@ -125,7 +124,7 @@ const TestTriggerSection = React.memo(
       },
       onSuccess: async (results) => {
         if (results.length > 0) {
-          updateCurrentSelectedData(results[0]);
+          updateSampleData(results[0]);
           refetch();
           await triggerEventsApi.deleteWebhookSimulation(flowId);
         }
@@ -154,7 +153,7 @@ const TestTriggerSection = React.memo(
       },
       onSuccess: (results) => {
         if (results.data.length > 0) {
-          updateCurrentSelectedData(results.data[0]);
+          updateSampleData(results.data[0]);
           refetch();
         }
       },
@@ -168,12 +167,12 @@ const TestTriggerSection = React.memo(
       },
     });
 
-    function updateCurrentSelectedData(data: TriggerEvent) {
+    function updateSampleData(data: TriggerEvent) {
       form.setValue(
         'settings.inputUiInfo',
         {
           ...formValues.settings.inputUiInfo,
-          currentSelectedData: data.payload,
+          sampleData: data.payload,
           lastTestDate: dayjs().toISOString(),
         },
         { shouldValidate: true },
@@ -192,28 +191,27 @@ const TestTriggerSection = React.memo(
       staleTime: 0,
     });
 
-    const sampleDataSelected =
-      !isNil(currentSelectedData) || !isNil(errorMessage);
+    const sampleDataSelected = !isNil(sampleData) || !isNil(errorMessage);
     const isTestedBefore = !isNil(
       form.getValues().settings.inputUiInfo?.lastTestDate,
     );
 
     const watchSelectedData = useWatch({
-      name: 'settings.inputUiInfo.currentSelectedData',
+      name: 'settings.inputUiInfo.sampleData',
       control: form.control,
     });
 
     useEffect(() => {
       const selectedId = getSelectedId(
-        currentSelectedData,
+        sampleData,
         pollResults?.data ?? [],
       );
       setCurrentSelectedId(selectedId);
-    }, [currentSelectedData, pollResults]);
+    }, [sampleData, pollResults]);
 
     useEffect(() => {
       setErrorMessage(undefined);
-      setCurrentSelectedData(watchSelectedData);
+      setSampleData(watchSelectedData);
     }, [watchSelectedData]);
 
     if (isPieceLoading) {
@@ -228,7 +226,7 @@ const TestTriggerSection = React.memo(
             isValid={isValid}
             isSaving={isSaving}
             isTesting={isPollingTesting}
-            currentSelectedData={currentSelectedData}
+            sampleData={sampleData}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
           >
@@ -241,7 +239,7 @@ const TestTriggerSection = React.memo(
                       (triggerEvent) => triggerEvent.id === value,
                     );
                     if (triggerEvent) {
-                      updateCurrentSelectedData(triggerEvent);
+                      updateSampleData(triggerEvent);
                     }
                   }}
                 >

@@ -29,7 +29,7 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
         return async (data: CreateStepRunRequestBody) => {
             const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
             logger.debug({ data }, '[Socket#testStepRun]')
-            const stepRun = await stepRunService.create({
+            const stepRun = await stepRunService.run({
                 projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
                 stepName: data.stepName,

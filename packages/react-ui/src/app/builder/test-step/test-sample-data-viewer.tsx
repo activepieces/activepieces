@@ -14,7 +14,7 @@ type TestSampleDataViewerProps = {
   isValid: boolean;
   isSaving: boolean;
   isTesting: boolean;
-  currentSelectedData: unknown;
+  sampleData: unknown;
   errorMessage: string | undefined;
   lastTestDate: string | undefined;
   children?: React.ReactNode;
@@ -26,7 +26,7 @@ const TestSampleDataViewer = React.memo(
     isValid,
     isSaving,
     isTesting,
-    currentSelectedData,
+    sampleData,
     errorMessage,
     lastTestDate,
     children,
@@ -77,7 +77,7 @@ const TestSampleDataViewer = React.memo(
             </TestButtonTooltip>
           </div>
           <JsonViewer
-            json={errorMessage ?? currentSelectedData}
+            json={errorMessage ?? sampleData}
             title={t('Output')}
           ></JsonViewer>
         </div>

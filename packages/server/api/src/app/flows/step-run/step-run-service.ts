@@ -13,7 +13,7 @@ import { accessTokenManager } from '../../authentication/lib/access-token-manage
 import { flowVersionService } from '../flow-version/flow-version.service'
 
 export const stepRunService = {
-    async create({
+    async run({
         projectId,
         flowVersionId,
         stepName,
@@ -21,10 +21,7 @@ export const stepRunService = {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
 
-        if (
-            isNil(step) ||
-      !Object.values(ActionType).includes(step.type as ActionType)
-        ) {
+        if (isNil(step) || !flowHelper.isAction(step.type)) {
             throw new ActivepiecesError({
                 code: ErrorCode.STEP_NOT_FOUND,
                 params: {
@@ -37,11 +34,11 @@ export const stepRunService = {
         })
 
         const { result, standardError, standardOutput } =
-      await engineRunner.executeAction(engineToken, {
-          stepName,
-          flowVersion,
-          projectId,
-      })
+            await engineRunner.executeAction(engineToken, {
+                stepName,
+                flowVersion,
+                projectId,
+            })
 
         return {
             success: result.success,

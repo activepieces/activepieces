@@ -204,7 +204,7 @@ export const flowVersionService = {
                 'flow_version.updatedByUser',
                 'user',
                 'user',
-                'flow_version.updatedBy = "user"."id"',
+                'flow_version."updatedBy" = "user"."id"',
             ).where({
                 flowId,
             }),
@@ -280,7 +280,7 @@ async function applySingleOperation(
         flowVersion,
         operation,
     })
-    operation = await prepareRequest(projectId, flowVersion, operation)
+    operation = await prepareRequest(projectId, operation)
     return flowHelper.apply(flowVersion, operation)
 }
 
@@ -359,7 +359,6 @@ function handleImportFlowOperation(
 
 async function prepareRequest(
     projectId: ProjectId,
-    flowVersion: FlowVersion,
     request: FlowOperationRequest,
 ): Promise<FlowOperationRequest> {
     const clonedRequest: FlowOperationRequest = JSON.parse(

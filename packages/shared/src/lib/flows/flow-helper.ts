@@ -806,8 +806,11 @@ function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion):
         step.displayName = `${step.displayName} Copy`
         step.name = oldNameToNewName[step.name]
         if (step.settings.inputUiInfo) {
-            step.settings.inputUiInfo.currentSelectedData = undefined
-            step.settings.inputUiInfo.lastTestDate = undefined
+            step.settings.inputUiInfo = {
+                ...step.settings.inputUiInfo,
+                sampleDataUrl: undefined,
+                sampleData: undefined,
+            }
         }
         oldStepsNameToReplace.forEach((oldName) => {
             step.settings.input = applyFunctionToValuesSync(step.settings.input, (value: unknown) => {

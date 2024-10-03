@@ -39,7 +39,7 @@ const TestActionSection = React.memo(
     const [lastTestDate, setLastTestDate] = useState(
       formValues.settings.inputUiInfo?.lastTestDate,
     );
-    const { currentSelectedData } = formValues.settings.inputUiInfo ?? {};
+    const { sampleData } = formValues.settings.inputUiInfo ?? {};
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
     const socket = useSocket();
@@ -60,7 +60,7 @@ const TestActionSection = React.memo(
           setErrorMessage(undefined);
 
           form.setValue(
-            'settings.inputUiInfo.currentSelectedData',
+            'settings.inputUiInfo.sampleData',
             stepResponse.output,
             { shouldValidate: true },
           );
@@ -112,7 +112,7 @@ const TestActionSection = React.memo(
             isValid={isValid}
             isSaving={isSaving}
             isTesting={isTesting}
-            currentSelectedData={currentSelectedData}
+            sampleData={sampleData}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
           ></TestSampleDataViewer>
