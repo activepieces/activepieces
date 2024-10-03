@@ -1,5 +1,4 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
 import {
   optionalTimeFormats,
   timeFormat,
