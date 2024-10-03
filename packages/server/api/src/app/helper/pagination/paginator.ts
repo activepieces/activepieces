@@ -95,10 +95,10 @@ export default class Paginator<Entity extends ObjectLiteral> {
         return this.paginateEntities(await this.appendPagingQuery(builder).getMany())
        
     }
-    public async paginateRaw(
+    public async paginateRaw<T>(
         builder: SelectQueryBuilder<Entity>,
-    ): Promise<PagingResult<Entity>> {
-        return this.paginateEntities(await this.appendPagingQuery(builder).getRawMany())
+    ): Promise<PagingResult<T>> {
+        return this.paginateEntities(await this.appendPagingQuery(builder).getRawMany()) as unknown as PagingResult<T>
        
     }
 

@@ -1,10 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext } from 'react';
-import { create, useStore } from 'zustand';
-
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PromiseQueue } from '@/lib/promise-queue';
 import {
   Flow,
   FlowOperationRequest,
@@ -17,9 +10,16 @@ import {
   flowHelper,
   isNil,
 } from '@activepieces/shared';
+import { useMutation } from '@tanstack/react-query';
+import { createContext, useContext } from 'react';
+import { create, useStore } from 'zustand';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { useAuthorization } from '../../hooks/authorization-hooks';
+
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PromiseQueue } from '@/lib/promise-queue';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -175,7 +175,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
-      setFlow: (flow: Flow) => set({ flow }),
+      setFlow: (flow: PopulatedFlow) => set({ flow }),
       exitRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,

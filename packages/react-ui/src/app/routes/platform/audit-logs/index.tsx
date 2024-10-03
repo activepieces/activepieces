@@ -1,5 +1,13 @@
+import {
+  ApplicationEvent,
+  ApplicationEventName,
+  summarizeApplicationEvent,
+} from '@activepieces/ee-shared';
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Folder, Key, Link2, Logs, Users, Workflow } from 'lucide-react';
+
+import { TableTitle } from '../../../../components/ui/table-title';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DataTable } from '@/components/ui/data-table';
@@ -12,14 +20,6 @@ import {
 import { auditEventsApi } from '@/features/platform-admin-panel/lib/audit-events-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import {
-  ApplicationEvent,
-  ApplicationEventName,
-  summarizeApplicationEvent,
-} from '@activepieces/ee-shared';
-import { isNil } from '@activepieces/shared';
-
-import { TableTitle } from '../../../../components/ui/table-title';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
