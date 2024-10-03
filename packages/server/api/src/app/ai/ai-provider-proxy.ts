@@ -1,4 +1,4 @@
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { PrincipalType, TelemetryEventName } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
@@ -44,13 +44,10 @@ export const proxyController: FastifyPluginCallbackTypebox = (
 
         const url = buildUrl(aiProvider.baseUrl, request.params['*'])
         try {
-            logger.debug(`[AIProviderProxy#proxyRequest] url: ${request.method} ${url}`)
-            logger.debug(`[AIProviderProxy#proxyRequest] body: ${JSON.stringify(request.body)}`)
             const cleanHeaders = calculateHeaders(
                 request.headers as Record<string, string | string[] | undefined>,
                 aiProvider.config.defaultHeaders,
             )
-            logger.debug(`[AIProviderProxy#proxyRequest] cleanHeaders: ${JSON.stringify(cleanHeaders)}`)
             const response = await fetch(url, {
                 method: request.method,
                 headers: cleanHeaders,
@@ -59,18 +56,14 @@ export const proxyController: FastifyPluginCallbackTypebox = (
             const data = await response.json()
             await projectUsageService.increaseUsage(projectId, 1, 'aiTokens')
 
-            telemetry
-                .trackProject(projectId, {
-                    name: TelemetryEventName.AI_PROVIDER_USED,
-                    payload: {
-                        projectId,
-                        platformId,
-                        provider,
-                    },
-                })
-                .catch((e) =>
-                    logger.error(e, '[AIProviderProxy#telemetry] telemetry.trackProject'),
-                )
+            rejectedPromiseHandler(telemetry.trackProject(projectId, {
+                name: TelemetryEventName.AI_PROVIDER_USED,
+                payload: {
+                    projectId,
+                    platformId,
+                    provider,
+                },
+            }))
             await reply.code(response.status).send(data)
         }
         catch (error) {
