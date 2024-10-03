@@ -300,7 +300,7 @@ describe('Variable Service', () => {
                 required: true,
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(processedInput).toEqual({
             base64: null,
             base64WithMime: new ApFile('unknown.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z', 'base64'), 'png'),
@@ -321,8 +321,9 @@ describe('Variable Service', () => {
                 displayName: 'File',
                 required: true,
             }),
+        
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(processedInput.file).toBeDefined()
         expect(processedInput.file.extension).toBe('svg')
         expect(processedInput.file.filename).toBe('logo.svg')
@@ -350,7 +351,7 @@ describe('Variable Service', () => {
                 required: false,
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
 
         expect(processedInput.file).toBeDefined()
         expect(processedInput.file.extension).toBe('html')
@@ -373,6 +374,35 @@ describe('Variable Service', () => {
                 age: '12',
             },
         }
+  
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, {
+            price: Property.Number({
+                displayName: 'Price',
+                required: true,
+            }),
+        }, PieceAuth.CustomAuth({
+            required: true,
+            props: {
+                age: Property.Number({
+                    displayName: 'age',
+                    required: true,
+                }),
+            },
+        }), true)
+
+        expect(processedInput).toEqual({
+            auth: {
+                age: 12,
+            },
+            price: 0,
+        })
+        expect(errors).toEqual({})
+    })
+    
+    it('should not error if auth configured, but no auth provided in input', async () => {
+        const input = {
+            price: '0',
+        }
         const props = {
             price: Property.Number({
                 displayName: 'Price',
@@ -381,18 +411,10 @@ describe('Variable Service', () => {
         }
         const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
             required: true,
-            props: {
-                age: Property.Number({
-                    displayName: 'age',
-                    required: true,
-                }),
-            },
-        }))
+            props: {},
+        }), false)
 
         expect(processedInput).toEqual({
-            auth: {
-                age: 12,
-            },
             price: 0,
         })
         expect(errors).toEqual({})
@@ -444,7 +466,7 @@ describe('Variable Service', () => {
                     required: true,
                 }),
             },
-        }))
+        }), true)
         expect(processedInput).toEqual({
             price: NaN,
             emptyStringNumber: NaN,
@@ -529,7 +551,7 @@ describe('Variable Service', () => {
                 required: true,
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(processedInput).toEqual({
             Asana1: '2012-02-22T02:06:58.147Z',
             Asana2: '2012-02-22T00:00:00.000Z',
@@ -576,7 +598,7 @@ describe('Variable Service', () => {
                 required: true,
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
 
         expect(processedInput).toEqual({
             invalidDateString: undefined,
@@ -617,7 +639,7 @@ describe('Variable Service', () => {
                     validators: [Validators.email],
                 }),
             },
-        }))
+        }), true)
         expect(errors).toEqual({
             email: ['Invalid Email format: ap@dev&com'],
             auth: {
@@ -637,7 +659,7 @@ describe('Variable Service', () => {
                 validators: [Validators.url, Validators.oneOf(['activepieces.com', 'www.activepieces.com'])],
             }),
         }
-        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(errors).toEqual({
             text: [
                 'The value: activepiecescom. is not a valid URL',
@@ -669,10 +691,10 @@ describe('Variable Service', () => {
                 validators: [Validators.maxLength(10)],
             }),
         }
-        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(errors).toEqual({
             text1: ['The value: short must be at least 10 characters'],
-            text2: ['The value: short1234678923145678 may not be greater than 10 characters'],
+            text2: ['The value: short1234678923145678 must be less than 10 characters'],
         })
     })
 
@@ -703,7 +725,7 @@ describe('Variable Service', () => {
                 validators: [Validators.minValue(10)],
             }),
         }
-        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(errors).toEqual({
             value1: ['The value: 40 must be 2 or less', 'The 40 is not a valid value, valid choices are: 1,2'],
             value2: ['The value: 4 must be at least 5 and less than or equal 10'],

@@ -83,9 +83,7 @@ describe('User Invitation API', () => {
             })
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole: ProjectMemberRole.ADMIN,
                 email: faker.internet.email(),
-                projectId: null,
                 type: InvitationType.PLATFORM,
                 platformRole: PlatformRole.ADMIN,
             }
@@ -113,9 +111,7 @@ describe('User Invitation API', () => {
             const { mockOwnerToken, mockProject } = await createBasicEnvironment({})
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole: ProjectMemberRole.ADMIN,
                 email: faker.internet.email(),
-                projectId: null,
                 type: InvitationType.PLATFORM,
                 platformRole: PlatformRole.ADMIN,
             }
@@ -141,10 +137,8 @@ describe('User Invitation API', () => {
             const { mockApiKey, mockProject } = await createBasicEnvironment({})
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole: ProjectMemberRole.ADMIN,
                 email: faker.internet.email(),
                 type: InvitationType.PLATFORM,
-                projectId: null,
                 platformRole: PlatformRole.ADMIN,
             }
             const response = await app?.inject({

@@ -40,7 +40,7 @@ export const triggerHelper = {
             apiUrl: constants.internalApiUrl,
             projectId: params.projectId,
             engineToken: params.engineToken,
-        }).applyProcessorsAndValidators(resolvedInput, trigger.props, piece.auth)
+        }).applyProcessorsAndValidators(resolvedInput, trigger.props, piece.auth, trigger.requireAuth)
 
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors))
@@ -130,7 +130,6 @@ export const triggerHelper = {
                                 engineToken: params.engineToken!,
                                 stepName: triggerName,
                                 flowId: params.flowVersion.flowId,
-                                type: 'db',
                             }),
                         }),
                     }
@@ -185,7 +184,6 @@ export const triggerHelper = {
                         engineToken: params.engineToken!,
                         flowId: params.flowVersion.flowId,
                         stepName: triggerName,
-                        type: 'db',
                     }),
                 })
                 if (!Array.isArray(items)) {

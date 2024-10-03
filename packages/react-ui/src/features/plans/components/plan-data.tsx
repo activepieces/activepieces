@@ -32,7 +32,7 @@ const PlanData: React.FC<PlanDataProps> = ({
   ];
 
   return (
-    <div className="flex flex-col justify-center pl-[20%]">
+    <div className="flex flex-col justify-center h-full ">
       {dataArray.map((item, index) => (
         <span key={index}>
           <strong>{item.title}:</strong> {item.data}

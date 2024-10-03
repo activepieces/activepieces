@@ -6,10 +6,12 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
-import { Skeleton } from '@/components/ui/skeleton';
+import { SkeletonList } from '@/components/ui/skeleton';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
+
+import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
 
@@ -21,7 +23,7 @@ type DynamicPropertiesProps = {
 const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
   const form = useFormContext<Action | Trigger>();
-
+  const { updateFormSchema } = useStepSettingsContext();
   const isFirstRender = useRef(true);
   const previousValues = useRef<undefined | unknown[]>(undefined);
 
@@ -76,7 +78,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
       !deepEqual(previousValues.current, refresherValues)
     ) {
       // the field state won't be cleared if you only unset the parent prop value
-      if (propertyMap)
+      if (propertyMap) {
         Object.keys(propertyMap).forEach((childPropName) => {
           form.setValue(
             `settings.input.${props.propertyName}.${childPropName}` as const,
@@ -86,6 +88,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
             },
           );
         });
+      }
       form.setValue(`settings.input.${props.propertyName}` as const, null, {
         shouldValidate: true,
       });
@@ -106,8 +109,11 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
             currentValue ?? {},
           );
           setPropertyMap(response);
+          updateFormSchema(`settings.input.${props.propertyName}`, response);
+
           form.setValue(`settings.input.${props.propertyName}`, defaultValue, {
             shouldValidate: true,
+            shouldDirty: true,
           });
         },
       },
@@ -117,10 +123,8 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   return (
     <>
       {isPending && (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} className="w-full h-4" />
-          ))}
+        <div className="space-y-3">
+          <SkeletonList numberOfItems={3} className="h-7"></SkeletonList>
         </div>
       )}
       {!isPending && propertyMap && (

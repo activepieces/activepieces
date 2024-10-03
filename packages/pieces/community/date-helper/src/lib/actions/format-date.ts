@@ -1,11 +1,18 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
-  ChangeDateFormat,
   optionalTimeFormats,
   timeFormat,
   timeFormatDescription,
   timeZoneOptions,
 } from '../common';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(advancedFormat);
 
 export const formatDateAction = createAction({
   name: 'format_date',
@@ -62,32 +69,13 @@ export const formatDateAction = createAction({
   },
   async run(context) {
     const inputDate = context.propsValue.inputDate;
-    if (typeof inputDate !== 'string') {
-      throw new Error(
-        `Input date is not a string \ninput date: ${JSON.stringify(inputDate)}`
-      );
-    }
-    const inputFormat = context.propsValue.inputFormat as string;
-    if (typeof inputFormat !== 'string') {
-      throw new Error(
-        `Input format is not a string \ninput format: ${JSON.stringify(
-          inputDate
-        )}`
-      );
-    }
+    const inputFormat = context.propsValue.inputFormat;
     const inputTimeZone = context.propsValue.inputTimeZone as string;
-    const outputFormat = context.propsValue.outputFormat as string;
-    if (typeof outputFormat !== 'string') {
-      throw new Error(
-        `Output format is not a string \noutput format: ${JSON.stringify(
-          inputDate
-        )}`
-      );
-    }
+    const outputFormat = context.propsValue.outputFormat;
     const outputTimeZone = context.propsValue.outputTimeZone as string;
 
     return {
-      result: ChangeDateFormat(
+      result: changeDateFormat(
         inputDate,
         inputFormat,
         inputTimeZone,
@@ -97,3 +85,15 @@ export const formatDateAction = createAction({
     };
   },
 });
+
+
+
+function changeDateFormat(
+  inputDate: string,
+  inputFormat: string,
+  inputTimeZone: string,
+  outputFormat: string,
+  outputTimeZone: string
+): string {
+  return dayjs.tz(inputDate, inputFormat, inputTimeZone).tz(outputTimeZone).format(outputFormat);
+}

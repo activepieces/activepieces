@@ -50,7 +50,7 @@ describe('Authentication API', () => {
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
             expect(responseBody?.verified).toBe(true)
-            expect(responseBody?.email).toBe(mockSignUpRequest.email)
+            expect(responseBody?.email).toBe(mockSignUpRequest.email.toLocaleLowerCase().trim())
             expect(responseBody?.firstName).toBe(mockSignUpRequest.firstName)
             expect(responseBody?.lastName).toBe(mockSignUpRequest.lastName)
             expect(responseBody?.trackEvents).toBe(mockSignUpRequest.trackEvents)

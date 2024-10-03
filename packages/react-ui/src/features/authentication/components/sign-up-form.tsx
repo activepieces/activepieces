@@ -69,7 +69,7 @@ const SignUpForm = ({
     },
   });
   const websiteName = flagsHooks.useWebsiteBranding()?.websiteName;
-  const edition = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION).data;
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const showNewsLetterCheckbox = useMemo(() => {
     if (!edition || !websiteName) {
       return false;
@@ -112,6 +112,14 @@ const SignUpForm = ({
     onError: (error) => {
       if (api.isError(error)) {
         switch (error.response?.status) {
+          case HttpStatusCode.Forbidden: {
+            form.setError('root.serverError', {
+              message: t(
+                'Sign up is restricted. You need an invitation to join. Please contact the administrator.',
+              ),
+            });
+            break;
+          }
           case HttpStatusCode.Conflict: {
             form.setError('root.serverError', {
               message: t('Email is already used'),
@@ -328,15 +336,6 @@ const SignUpForm = ({
           .
         </div>
       )}
-      <div className="mt-4 text-center text-sm">
-        {t('Already have an account?')}
-        <Link
-          to="/sign-in"
-          className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
-        >
-          {t('Sign in')}
-        </Link>
-      </div>
     </>
   );
 };

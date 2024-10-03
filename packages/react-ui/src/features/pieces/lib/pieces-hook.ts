@@ -1,4 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 
 import {
   PieceMetadataModel,
@@ -7,15 +8,15 @@ import {
 import {
   Action,
   ActionType,
-  PackageType,
-  PieceType,
   SuggestionType,
   Trigger,
   TriggerType,
-  isNil,
 } from '@activepieces/shared';
 
-import { PRIMITIVE_STEP_METADATA, piecesApi } from './pieces-api';
+import { INTERNAL_ERROR_TOAST, toast } from '../../../components/ui/use-toast';
+
+import { CORE_STEP_METADATA, piecesApi } from './pieces-api';
+import { StepMetadata, StepMetadataWithSuggestions } from './types';
 
 type UsePieceProps = {
   name: string;
@@ -30,8 +31,8 @@ type UseMultiplePiecesProps = {
   names: string[];
 };
 
-type UsePieceMetadata = {
-  step: Action | Trigger | undefined;
+type UseStepMetadata = {
+  step: Action | Trigger;
   enabled?: boolean;
 };
 
@@ -45,27 +46,6 @@ type UseMetadataProps = {
   enabled?: boolean;
   type: 'action' | 'trigger';
 };
-
-type BaseStepMetadata = {
-  displayName: string;
-  logoUrl: string;
-  description: string;
-};
-
-export type PieceStepMetadata = BaseStepMetadata & {
-  type: ActionType.PIECE | TriggerType.PIECE;
-  pieceName: string;
-  pieceVersion: string;
-  categories: string[];
-  packageType: PackageType;
-  pieceType: PieceType;
-};
-
-export type PrimitiveStepMetadata = BaseStepMetadata & {
-  type: Omit<ActionType | TriggerType, ActionType.PIECE | TriggerType.PIECE>;
-};
-
-export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
 export const piecesHooks = {
   usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
@@ -91,14 +71,10 @@ export const piecesHooks = {
       })),
     });
   },
-  useStepMetadata: ({ step, enabled = true }: UsePieceMetadata) => {
-    const pieceName = step?.settings?.pieceName;
-    const pieceVersion = step?.settings?.pieceVersion;
+  useStepMetadata: ({ step, enabled = true }: UseStepMetadata) => {
     const query = useQuery<StepMetadata, Error>({
-      queryKey: ['piece', step?.type, pieceName, pieceVersion],
-      queryFn: () => piecesApi.getMetadata(step!),
-      staleTime: Infinity,
-      enabled: enabled && !isNil(step),
+      ...stepMetadataQueryBuilder(step),
+      enabled,
     });
     return {
       stepMetadata: query.data,
@@ -122,7 +98,7 @@ export const piecesHooks = {
     };
   },
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
-    const query = useQuery<StepMetadata[], Error>({
+    const query = useQuery<StepMetadataWithSuggestions[], Error>({
       queryKey: ['pieces-metadata', searchQuery, type],
       queryFn: async () => {
         const pieces = await piecesApi.list({
@@ -136,14 +112,23 @@ export const piecesHooks = {
               (type === 'action' && piece.actions > 0) ||
               (type === 'trigger' && piece.triggers > 0),
           )
-          .map((piece) => piecesApi.mapToMetadata(type, piece));
+          .map((piece) => {
+            const metadata = piecesApi.mapToMetadata(type, piece);
+
+            const res: StepMetadataWithSuggestions = {
+              ...metadata,
+              suggestedActions: piece.suggestedActions,
+              suggestedTriggers: piece.suggestedTriggers,
+            };
+            return res;
+          });
         switch (type) {
           case 'action': {
-            const filtersPrimitive = [
-              PRIMITIVE_STEP_METADATA[ActionType.CODE],
-              PRIMITIVE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
-              PRIMITIVE_STEP_METADATA[ActionType.BRANCH],
-              PRIMITIVE_STEP_METADATA[ActionType.ROUTER],
+            const filtersPrimitive: StepMetadataWithSuggestions[] = [
+              CORE_STEP_METADATA[ActionType.CODE],
+              CORE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
+              CORE_STEP_METADATA[ActionType.BRANCH],
+              CORE_STEP_METADATA[ActionType.ROUTER],
             ].filter((step) => passSearch(searchQuery, step));
             return [...filtersPrimitive, ...piecesMetadata];
           }
@@ -160,6 +145,53 @@ export const piecesHooks = {
       isLoading: query.isLoading,
     };
   },
+  usePieceActionsOrTriggers: ({
+    stepMetadata,
+  }: {
+    stepMetadata?: StepMetadata;
+  }) => {
+    return useQuery({
+      queryKey: [
+        'pieceMetadata',
+        stepMetadata?.type,
+        stepMetadata?.displayName,
+      ],
+      queryFn: async () => {
+        try {
+          if (!stepMetadata) {
+            return [];
+          }
+          switch (stepMetadata.type) {
+            case TriggerType.PIECE:
+            case ActionType.PIECE: {
+              const pieceMetadata = await piecesApi.get({
+                name: stepMetadata.pieceName,
+              });
+              return Object.entries(
+                stepMetadata.type === TriggerType.PIECE
+                  ? pieceMetadata.triggers
+                  : pieceMetadata.actions,
+              ).map(([actionOrTriggerName, actionOrTrigger]) => ({
+                name: actionOrTriggerName,
+                displayName: actionOrTrigger.displayName,
+                description: actionOrTrigger.description,
+              }));
+            }
+            case ActionType.CODE:
+            case ActionType.LOOP_ON_ITEMS:
+            case ActionType.BRANCH:
+              return getCoreActions(stepMetadata.type);
+            default:
+              return [];
+          }
+        } catch (e) {
+          console.error(e);
+          toast(INTERNAL_ERROR_TOAST);
+          return [];
+        }
+      },
+    });
+  },
 };
 function stepMetadataQueryBuilder(step: Step) {
   const isPieceStep =
@@ -175,7 +207,7 @@ function stepMetadataQueryBuilder(step: Step) {
 
 function passSearch(
   searchQuery: string | undefined,
-  data: PrimitiveStepMetadata,
+  data: (typeof CORE_STEP_METADATA)[keyof typeof CORE_STEP_METADATA],
 ) {
   if (!searchQuery) {
     return true;
@@ -183,4 +215,37 @@ function passSearch(
   return JSON.stringify({ data })
     .toLowerCase()
     .includes(searchQuery?.toLowerCase());
+}
+
+export function getCoreActions(
+  type: ActionType.BRANCH | ActionType.LOOP_ON_ITEMS | ActionType.CODE,
+) {
+  switch (type) {
+    case ActionType.CODE:
+      return [
+        {
+          name: 'code',
+          displayName: t('Custom Javascript Code'),
+          description: CORE_STEP_METADATA.CODE.description,
+        },
+      ];
+    case ActionType.LOOP_ON_ITEMS:
+      return [
+        {
+          name: 'loop',
+          displayName: t('Loop on Items'),
+          description: CORE_STEP_METADATA.LOOP_ON_ITEMS.description,
+        },
+      ];
+    case ActionType.BRANCH:
+      return [
+        {
+          name: 'branch',
+          displayName: t('Branch'),
+          description: t(
+            'Split your flow into branches depending on condition(s)',
+          ),
+        },
+      ];
+  }
 }

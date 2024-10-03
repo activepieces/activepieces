@@ -43,15 +43,13 @@ To achieve this, the backend will generate a signed token that contains all the 
     The signed tokens must include these claims in the payload:
     ```json
     {
+      "version": "v3",
       "externalUserId": "user_id",
       "externalProjectId": "user_project_id",
       "firstName": "John",
       "lastName": "Doe",
-      "email": "john@example.com",
       "role": "EDITOR",
-      "pieces": {
-        "filterType": "NONE"
-      },
+      "piecesFilterType": "NONE",
       "exp": 1856563200
     }
     ```
@@ -65,7 +63,8 @@ To achieve this, the backend will generate a signed token that contains all the 
     | email             | Email address of the user                        |
     | role              | Role of the user in the Activepieces project (e.g., **EDITOR**, **VIEWER**)           |
     | exp               | Expiry timestamp for the token (Unix timestamp)  |
-    | pieces            | Customize the project pieces, check the section below  |
+    | piecesFilterType  | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
+    | piecesTags        | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
     | tasks             | Customize the task limit, check the section below  |
 
     You can use any JWT library to generate the token. Here is an example using the jsonwebtoken library in Node.js:
@@ -85,15 +84,14 @@ To achieve this, the backend will generate a signed token that contains all the 
     const currentTime = Math.floor(Date.now() / 1000);
     let token = jwt.sign(
       {
+        version: "v3",
         externalUserId: "user_id",
         externalProjectId: "user_project_id",
         firstName: "John",
         lastName: "Doe",
         role: "EDITOR",
         email: "john@example.com",
-        pieces: {
-          filterType: "NONE"
-        },
+        piecesFilterType: "NONE",
         exp: currentTime + (5 * 60), // 5 minutes from now
       },
       process.env.ACTIVEPIECES_SIGNING_KEY,

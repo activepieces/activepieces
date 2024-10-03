@@ -54,6 +54,7 @@ export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
     return traverseFlow(version.trigger);
   },
+  createFocusStepInGraphParams,
 };
 
 function traverseFlow(step: Action | Trigger | undefined): ApGraph {
@@ -320,6 +321,15 @@ function mergeGraph(graph1: ApGraph, graph2: ApGraph): ApGraph {
   };
 }
 
+function createFocusStepInGraphParams(stepName: string) {
+  return {
+    nodes: [{ id: stepName }],
+    duration: 1000,
+    maxZoom: 1,
+    minZoom: 1,
+  };
+}
+
 type Step = Action | Trigger;
 
 type ApBoundingBox = {
@@ -328,7 +338,7 @@ type ApBoundingBox = {
   widthLeft: number;
   widthRight: number;
 };
-
+//TODO: ApNode data property type should be union of types not have all of its properties optional
 export type ApNode = {
   id: string;
   position: { x: number; y: number };

@@ -3,11 +3,11 @@ import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import gfm from 'remark-gfm';
 
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
-
 function applyVariables(markdown: string, variables: Record<string, string>) {
   return markdown
     .replaceAll('<br>', '\n')
@@ -19,7 +19,6 @@ function applyVariables(markdown: string, variables: Record<string, string>) {
 type MarkdownProps = {
   markdown: string | undefined;
   variables?: Record<string, string>;
-  className?: string;
   withBorder?: boolean;
 };
 
@@ -61,11 +60,14 @@ const ApMarkdown = React.memo(
     if (!markdown) {
       return null;
     }
-
-    const markdownProcessed = applyVariables(markdown, variables ?? {});
+    const markdownProcessed = applyVariables(markdown, variables ?? {})
+      .split('\n')
+      .map((line) => line.trim())
+      .join('\n');
     return (
       <Container withBorder={withBorder}>
         <ReactMarkdown
+          remarkPlugins={[gfm]}
           components={{
             code(props) {
               const isLanguageText = props.className?.includes('language-text');
@@ -75,22 +77,22 @@ const ApMarkdown = React.memo(
               const codeContent = String(props.children).trim();
               const isCopying = codeContent === copiedText;
               return (
-                <div className="relative py-2">
+                <div className="relative  w-full items-center flex bg-background border border-solid text-sm rounded block w-full gap-1 p-1.5">
                   <input
                     type="text"
-                    className="col-span-6 bg-background border border-solid text-sm rounded block w-full p-2.5"
+                    className=" grow bg-background "
                     value={codeContent}
                     disabled
                   />
                   <Button
                     variant="ghost"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-background rounded p-2 inline-flex items-center justify-center"
+                    className="bg-background rounded p-2 inline-flex items-center justify-center h-8"
                     onClick={() => copyToClipboard(codeContent)}
                   >
                     {isCopying ? (
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3 h-3" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3 h-3" />
                     )}
                   </Button>
                 </div>
@@ -98,44 +100,54 @@ const ApMarkdown = React.memo(
             },
             h1: ({ node, ...props }) => (
               <h1
-                className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
+                className="scroll-m-20 text-2xl font-extrabold tracking-tight lg:text-5xl"
                 {...props}
               />
             ),
             h2: ({ node, ...props }) => (
               <h2
-                className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0"
+                className="scroll-m-20 text-xl text-3xl font-semibold tracking-tight first:mt-0"
                 {...props}
               />
             ),
             h3: ({ node, ...props }) => (
               <h3
-                className="scroll-m-20 text-2xl font-semibold tracking-tight"
+                className="scroll-m-20 text-lg font-semibold tracking-tight"
                 {...props}
               />
             ),
             p: ({ node, ...props }) => (
-              <p className="leading-7 [&:not(:first-child)]:mt-6" {...props} />
+              <p
+                className="leading-7 [&:not(:first-child)]:mt-4 w-full"
+                {...props}
+              />
             ),
             ul: ({ node, ...props }) => (
-              <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props} />
+              <ul className="mt-4 ml-6 list-disc [&>li]:mt-4" {...props} />
             ),
             ol: ({ node, ...props }) => (
-              <ol className="my-6 ml-6 list-decimal [&>li]:mt-2" {...props} />
+              <ol className="mt-4 ml-6 list-decimal [&>li]:mt-4" {...props} />
             ),
             li: ({ node, ...props }) => <li {...props} />,
             a: ({ node, ...props }) => (
               <a
                 className="font-medium text-primary underline underline-offset-4"
+                target="_blank"
+                rel="noreferrer noopener"
                 {...props}
               />
             ),
             blockquote: ({ node, ...props }) => (
-              <blockquote className="mt-6 border-l-2 pl-6 italic" {...props} />
+              <blockquote
+                className="mt-4 first:mt-0 border-l-2 pl-6 italic"
+                {...props}
+              />
             ),
+            b: ({ node, ...props }) => <b {...props} />,
+            em: ({ node, ...props }) => <em {...props} />,
           }}
         >
-          {markdownProcessed}
+          {markdownProcessed.trim()}
         </ReactMarkdown>
       </Container>
     );

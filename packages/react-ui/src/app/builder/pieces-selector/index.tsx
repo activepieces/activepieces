@@ -1,7 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { MoveLeft, SearchX } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
@@ -17,7 +16,6 @@ import {
   CardListItemSkeleton,
   CardListItem,
 } from '@/components/ui/card-list';
-import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -25,18 +23,15 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/seperator';
-import {
-  INTERNAL_ERROR_TOAST,
-  UNSAVED_CHANGES_TOAST,
-  toast,
-} from '@/components/ui/use-toast';
+import { UNSAVED_CHANGES_TOAST, toast } from '@/components/ui/use-toast';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesApi } from '@/features/pieces/lib/pieces-api';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
-  PieceStepMetadata,
   StepMetadata,
-  piecesHooks,
-} from '@/features/pieces/lib/pieces-hook';
+  ActionOrTriggerListItem,
+  PieceSelectorOperation,
+  StepMetadataWithSuggestions,
+} from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   Action,
@@ -44,37 +39,37 @@ import {
   ApFlagId,
   FlowOperationType,
   isNil,
-  StepLocationRelativeToParent,
   supportUrl,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
 
-type ItemListMetadata = {
-  name: string;
-  displayName: string;
-  description: string;
+import { SearchInput } from '../../../components/ui/search-input';
+import { cn } from '../../../lib/utils';
+
+import { PieceSearchSuggestions } from './piece-search-suggestions';
+
+const filterOutPiecesWithNoSuggestions = (
+  metadata: StepMetadataWithSuggestions[],
+) => {
+  return metadata.filter(
+    (step) =>
+      (step.type === ActionType.PIECE &&
+        step.suggestedActions &&
+        step.suggestedActions.length > 0) ||
+      (step.type === TriggerType.PIECE &&
+        step.suggestedTriggers &&
+        step.suggestedTriggers.length > 0) ||
+      (step.type !== ActionType.PIECE && step.type !== TriggerType.PIECE),
+  );
 };
 
 type PieceSelectorProps = {
   children: React.ReactNode;
-  operation:
-    | {
-        type: FlowOperationType.ADD_ACTION;
-        actionLocation: {
-          parentStep: string;
-          stepLocationRelativeToParent: StepLocationRelativeToParent;
-        };
-      }
-    | { type: FlowOperationType.UPDATE_TRIGGER }
-    | {
-        type: FlowOperationType.UPDATE_ACTION;
-        stepName: string;
-      };
   open: boolean;
   asChild?: boolean;
   onOpenChange: (open: boolean) => void;
-};
+} & { operation: PieceSelectorOperation };
 
 const PieceSelector = ({
   children,
@@ -85,14 +80,11 @@ const PieceSelector = ({
 }: PieceSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const showRequestPieceButton = flagsHooks.useFlag<boolean>(
+  const { data: showRequestPieceButton } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
-  ).data;
+  );
   const [selectedPieceMetadata, setSelectedMetadata] = useState<
     StepMetadata | undefined
-  >(undefined);
-  const [actionsOrTriggers, setSelectedSubItems] = useState<
-    ItemListMetadata[] | undefined
   >(undefined);
 
   const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
@@ -116,26 +108,28 @@ const PieceSelector = ({
 
   const resetField = () => {
     setSearchQuery('');
-    setSelectedSubItems(undefined);
     setSelectedMetadata(undefined);
     setSelectedTag(PieceTagEnum.ALL);
   };
 
   const handleSelect = (
-    piece: StepMetadata | undefined,
-    item: ItemListMetadata,
+    stepMetadata: StepMetadata,
+    actionOrTrigger: ActionOrTriggerListItem,
   ) => {
-    if (!piece) {
+    if (!stepMetadata) {
       return;
     }
     resetField();
     onOpenChange(false);
-    const newStepName = pieceSelectorUtils.getStepName(piece, flowVersion);
+    const newStepName = pieceSelectorUtils.getStepName(
+      stepMetadata,
+      flowVersion,
+    );
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,
-      piece,
-      actionOrTriggerName: item.name,
-      displayName: item.displayName,
+      stepMetadata,
+      actionOrTriggerName: actionOrTrigger.name,
+      displayName: actionOrTrigger.displayName,
     });
 
     switch (operation.type) {
@@ -186,89 +180,31 @@ const PieceSelector = ({
     }
   };
 
-  const { mutate, isPending: isLoadingSelectedPieceMetadata } = useMutation({
-    mutationFn: async (stepMetadata: StepMetadata) => {
-      switch (stepMetadata.type) {
-        case TriggerType.PIECE:
-        case ActionType.PIECE: {
-          const pieceMetadata = await piecesApi.get({
-            name: (stepMetadata as PieceStepMetadata).pieceName,
-          });
-          return Object.entries(
-            operation.type === FlowOperationType.UPDATE_TRIGGER
-              ? pieceMetadata.triggers
-              : pieceMetadata.actions,
-          ).map(([actionOrTriggerName, actionOrTrigger]) => ({
-            name: actionOrTriggerName,
-            displayName: actionOrTrigger.displayName,
-            description: actionOrTrigger.description,
-          }));
-        }
-        case ActionType.CODE:
-          return [
-            {
-              name: 'code',
-              displayName: t('Custom Javascript Code'),
-              description: stepMetadata.description,
-            },
-          ];
-        case ActionType.LOOP_ON_ITEMS:
-          return [
-            {
-              name: 'loop',
-              displayName: t('Loop on Items'),
-              description: stepMetadata.description,
-            },
-          ];
-        case ActionType.BRANCH:
-          return [
-            {
-              name: 'branch',
-              displayName: t('Branch'),
-              description: t(
-                'Split your flow into branches depending on condition(s)',
-              ),
-            },
-          ];
-        case ActionType.ROUTER:
-          return [
-            {
-              name: 'router',
-              displayName: t('Router'),
-              description: t(
-                'Route your flow to different steps based on conditions',
-              ),
-            },
-          ]
-        case TriggerType.EMPTY:
-          throw new Error('Unsupported type: ' + stepMetadata.type);
-      }
-    },
-    onSuccess: (items) => {
-      setSelectedSubItems(items);
-    },
-    onError: (e) => {
-      console.error(e);
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
+  const { data: actionsOrTriggers, isLoading: isLoadingSelectedPieceMetadata } =
+    piecesHooks.usePieceActionsOrTriggers({
+      stepMetadata: selectedPieceMetadata,
+    });
 
-  const piecesMetadata = useMemo(
-    () =>
-      metadata?.filter((stepMetadata) => {
-        switch (selectedTag) {
-          case PieceTagEnum.CORE:
-            return pieceSelectorUtils.isCorePiece(stepMetadata);
-          case PieceTagEnum.AI:
-            return pieceSelectorUtils.isAiPiece(stepMetadata);
-          case PieceTagEnum.APPS:
-            return pieceSelectorUtils.isAppPiece(stepMetadata);
-          case PieceTagEnum.ALL:
-            return true;
-        }
-      }),
-    [metadata, selectedTag],
-  );
+  const piecesMetadata = useMemo(() => {
+    const filteredMetadataOnTag = metadata
+      ? metadata.filter((stepMetadata) => {
+          switch (selectedTag) {
+            case PieceTagEnum.CORE:
+              return pieceSelectorUtils.isCorePiece(stepMetadata);
+            case PieceTagEnum.AI:
+              return pieceSelectorUtils.isAiPiece(stepMetadata);
+            case PieceTagEnum.APPS:
+              return pieceSelectorUtils.isAppPiece(stepMetadata);
+            case PieceTagEnum.ALL:
+            default:
+              return true;
+          }
+        })
+      : [];
+    return debouncedQuery.length > 0
+      ? filterOutPiecesWithNoSuggestions(filteredMetadataOnTag)
+      : filteredMetadataOnTag;
+  }, [metadata, selectedTag]);
 
   return (
     <Popover
@@ -284,17 +220,19 @@ const PieceSelector = ({
       <PopoverTrigger asChild={asChild}>{children}</PopoverTrigger>
       <PopoverContent
         className="w-[600px] p-0 shadow-lg"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
       >
         <div className="p-2">
-          <Input
-            className="border-none"
+          <SearchInput
             placeholder={t('Search')}
             value={searchQuery}
+            showDeselect={searchQuery.length > 0}
             onChange={(e) => {
-              setSearchQuery(e.target.value);
+              setSearchQuery(e);
               setSelectedTag(PieceTagEnum.ALL);
-              setSelectedSubItems(undefined);
               setSelectedMetadata(undefined);
             }}
           />
@@ -308,52 +246,66 @@ const PieceSelector = ({
           }
           onSelectTag={(value) => {
             setSelectedTag(value);
-            setSelectedSubItems(undefined);
             setSelectedMetadata(undefined);
           }}
         />
         <Separator orientation="horizontal" />
         <div className="flex overflow-y-auto max-h-[300px] h-[300px]">
-          <CardList className="w-[250px] min-w-[250px]">
-            <ScrollArea>
-              {isLoadingPieces && (
-                <CardListItemSkeleton numberOfCards={5} withCircle={false} />
-              )}
-              {!isLoadingPieces &&
-                piecesMetadata &&
-                piecesMetadata.map((pieceMetadata) => (
+          {isLoadingPieces && (
+            <div className="flex flex-col gap-2">
+              <CardListItemSkeleton numberOfCards={2} withCircle={false} />
+            </div>
+          )}
+
+          {!isLoadingPieces && piecesMetadata && (
+            <CardList
+              className={cn('w-[250px] min-w-[250px] transition-all ', {
+                'w-full': debouncedQuery.length > 0,
+              })}
+              listClassName="gap-0"
+            >
+              {piecesMetadata.map((pieceMetadata) => (
+                <div key={pieceSelectorUtils.toKey(pieceMetadata)}>
                   <CardListItem
-                    className="p-3"
-                    key={pieceSelectorUtils.toKey(pieceMetadata)}
+                    className="flex-col p-3 gap-1 items-start"
                     selected={
                       pieceMetadata.displayName ===
-                      selectedPieceMetadata?.displayName
+                        selectedPieceMetadata?.displayName &&
+                      debouncedQuery.length === 0
                     }
-                    onClick={(e) => {
-                      if (
-                        pieceMetadata.displayName !==
-                        selectedPieceMetadata?.displayName
-                      ) {
-                        setSelectedMetadata(pieceMetadata);
-                        mutate(pieceMetadata);
-                        e.stopPropagation();
-                        e.preventDefault();
-                      }
+                    interactive={debouncedQuery.length === 0}
+                    onMouseEnter={() => {
+                      setSelectedMetadata(pieceMetadata);
                     }}
                   >
-                    <div>
+                    <div className="flex gap-2 items-center">
                       <PieceIcon
                         logoUrl={pieceMetadata.logoUrl}
                         displayName={pieceMetadata.displayName}
                         showTooltip={false}
                         size={'sm'}
                       ></PieceIcon>
-                    </div>
-                    <div className="flex-grow h-full flex items-center justify-left text-sm">
-                      {pieceMetadata.displayName}
+                      <div className="flex-grow h-full flex items-center justify-left text-sm">
+                        {pieceMetadata.displayName}
+                      </div>
                     </div>
                   </CardListItem>
-                ))}
+
+                  {debouncedQuery.length > 0 &&
+                    pieceMetadata.type !== TriggerType.EMPTY && (
+                      <div
+                        onMouseEnter={() => {
+                          setSelectedMetadata(pieceMetadata);
+                        }}
+                      >
+                        <PieceSearchSuggestions
+                          pieceMetadata={pieceMetadata}
+                          handleSelectOperationSuggestion={handleSelect}
+                        />
+                      </div>
+                    )}
+                </div>
+              ))}
 
               {!isLoadingPieces &&
                 (!piecesMetadata || piecesMetadata.length === 0) && (
@@ -374,60 +326,72 @@ const PieceSelector = ({
                     )}
                   </div>
                 )}
-            </ScrollArea>
-          </CardList>
-          <Separator orientation="vertical" className="h-full" />
-          <ScrollArea className="h-full">
-            <CardList className="w-[350px] min-w-[350px] h-full">
-              {!isLoadingPieces && (
-                <>
-                  {isLoadingSelectedPieceMetadata && (
-                    <CardListItemSkeleton
-                      numberOfCards={5}
-                      withCircle={false}
-                    />
-                  )}
-                  {!isLoadingSelectedPieceMetadata &&
-                    selectedPieceMetadata &&
-                    actionsOrTriggers &&
-                    actionsOrTriggers.map((item) => (
-                      <CardListItem
-                        className="p-2 w-full"
-                        key={item.name}
-                        onClick={() =>
-                          handleSelect(selectedPieceMetadata, item)
-                        }
-                      >
-                        <div className="flex gap-3 items-center">
-                          <div>
-                            <PieceIcon
-                              logoUrl={selectedPieceMetadata.logoUrl}
-                              displayName={selectedPieceMetadata.displayName}
-                              showTooltip={false}
-                              size={'sm'}
-                            ></PieceIcon>
-                          </div>
-                          <div className="flex flex-col gap-0.5">
-                            <div className="text-sm">{item.displayName}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {item.description}
-                            </div>
-                          </div>
-                        </div>
-                      </CardListItem>
-                    ))}
-                </>
-              )}
-              {(isNil(actionsOrTriggers) || isLoadingPieces) && (
-                <div className="flex flex-col gap-2 items-center justify-center h-[300px]">
-                  <MoveLeft className="w-10 h-10 rtl:rotate-180" />
-                  <div className="text-sm">
-                    {t('Please select a piece first')}
-                  </div>
-                </div>
-              )}
             </CardList>
-          </ScrollArea>
+          )}
+
+          {debouncedQuery.length === 0 && (
+            <>
+              <Separator orientation="vertical" className="h-full" />
+              <ScrollArea className="h-full">
+                <CardList
+                  className="w-[350px] min-w-[350px] h-full gap-0"
+                  listClassName="gap-0"
+                >
+                  {!isLoadingPieces && (
+                    <>
+                      {isLoadingSelectedPieceMetadata && (
+                        <CardListItemSkeleton
+                          numberOfCards={5}
+                          withCircle={false}
+                        />
+                      )}
+                      {!isLoadingSelectedPieceMetadata &&
+                        selectedPieceMetadata &&
+                        actionsOrTriggers &&
+                        actionsOrTriggers.map((item) => (
+                          <CardListItem
+                            className="p-2 w-full"
+                            key={item.displayName}
+                            onClick={() =>
+                              handleSelect(selectedPieceMetadata, item)
+                            }
+                          >
+                            <div className="flex gap-3 items-center">
+                              <div>
+                                <PieceIcon
+                                  logoUrl={selectedPieceMetadata.logoUrl}
+                                  displayName={
+                                    selectedPieceMetadata.displayName
+                                  }
+                                  showTooltip={false}
+                                  size={'sm'}
+                                ></PieceIcon>
+                              </div>
+                              <div className="flex flex-col gap-0.5">
+                                <div className="text-sm">
+                                  {item.displayName}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {item.description}
+                                </div>
+                              </div>
+                            </div>
+                          </CardListItem>
+                        ))}
+                    </>
+                  )}
+                  {(isNil(actionsOrTriggers) || isLoadingPieces) && (
+                    <div className="flex flex-col gap-2 items-center justify-center h-[300px]">
+                      <MoveLeft className="w-10 h-10 rtl:rotate-180" />
+                      <div className="text-sm">
+                        {t('Please select a piece first')}
+                      </div>
+                    </div>
+                  )}
+                </CardList>
+              </ScrollArea>
+            </>
+          )}
         </div>
       </PopoverContent>
     </Popover>

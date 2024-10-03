@@ -115,7 +115,6 @@ export const licenseKeysService = {
                 projectRolesEnabled: key.projectRolesEnabled,
                 flowIssuesEnabled: key.flowIssuesEnabled,
                 alertsEnabled: key.alertsEnabled,
-                premiumPieces: key.premiumPieces,
                 analyticsEnabled: key.analyticsEnabled,
             })
         }
@@ -187,6 +186,5 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     projectRolesEnabled: false,
     flowIssuesEnabled: false,
     alertsEnabled: false,
-    premiumPieces: [],
 }
 

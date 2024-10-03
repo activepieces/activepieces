@@ -57,6 +57,7 @@ type BaseTriggerParams<
   name: string
   displayName: string
   description: string
+  requireAuth?: boolean
   auth?: PieceAuth
   props: TriggerProps
   type: TS
@@ -95,6 +96,7 @@ export class ITrigger<
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
+    public readonly requireAuth: boolean,
     public readonly props: TriggerProps,
     public readonly type: TS,
     public readonly handshakeConfiguration: WebhookHandshakeConfiguration,
@@ -128,6 +130,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
+        params.requireAuth ?? true,
         params.props,
         params.type,
         params.handshakeConfiguration ?? { strategy: WebhookHandshakeStrategy.NONE },
@@ -146,6 +149,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
+        params.requireAuth ?? true,
         params.props,
         params.type,
         { strategy: WebhookHandshakeStrategy.NONE },
@@ -164,6 +168,7 @@ export const createTrigger = <
         params.name,
         params.displayName,
         params.description,
+        params.requireAuth ?? true,
         params.props,
         params.type,
         { strategy: WebhookHandshakeStrategy.NONE },

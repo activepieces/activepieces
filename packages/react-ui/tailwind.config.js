@@ -35,7 +35,6 @@ module.exports = {
         },
         border: {
           DEFAULT: 'hsl(var(--border))',
-          300: 'hsl(var(--border-300))',
         },
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -88,6 +87,10 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-sans)', ...fontFamily.sans],
       },
+      fontSize: {
+        '3xl': '1.75rem',
+        '4xl': '2rem',
+      },
       keyframes: {
         'accordion-down': {
           from: { height: '0' },
@@ -112,7 +115,7 @@ module.exports = {
         fade: 'fade 0.2s ease-out',
       },
       boxShadow: {
-        'step-container': '0px 0px 22px hsl(var(--border))',
+        'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',
         'add-button': 'var(--add-button-shadow)',
       },
     },

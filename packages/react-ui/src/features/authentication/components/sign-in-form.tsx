@@ -90,79 +90,70 @@ const SignInForm: React.FC = () => {
   }
 
   return (
-    <>
-      <Form {...form}>
-        <form className="grid space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem className="grid space-y-2">
-                <Label htmlFor="email">{t('Email')}</Label>
-                <Input
-                  {...field}
-                  required
-                  id="email"
-                  type="text"
-                  placeholder={'email@example.com'}
-                  className="rounded-sm"
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem className="grid space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">{t('Password')}</Label>
-                  {edition !== ApEdition.COMMUNITY && (
-                    <Link
-                      to="/forget-password"
-                      className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
-                    >
-                      {t('Forgot your password?')}
-                    </Link>
-                  )}
-                </div>
-                <Input
-                  {...field}
-                  required
-                  id="password"
-                  type="password"
-                  placeholder={'********'}
-                  className="rounded-sm"
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          {form?.formState?.errors?.root?.serverError && (
-            <FormMessage>
-              {form.formState.errors.root.serverError.message}
-            </FormMessage>
+    <Form {...form}>
+      <form className="grid space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem className="grid space-y-2">
+              <Label htmlFor="email">{t('Email')}</Label>
+              <Input
+                {...field}
+                required
+                id="email"
+                type="text"
+                placeholder={'email@example.com'}
+                className="rounded-sm"
+                tabIndex={1}
+              />
+              <FormMessage />
+            </FormItem>
           )}
-          <Button
-            loading={isPending}
-            onClick={(e) => form.handleSubmit(onSubmit)(e)}
-          >
-            {t('Sign in')}
-          </Button>
-        </form>
-      </Form>
-
-      <div className="mt-4 text-center text-sm">
-        {t("Don't have an account?")}
-        <Link
-          to="/sign-up"
-          className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem className="grid space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{t('Password')}</Label>
+                {edition !== ApEdition.COMMUNITY && (
+                  <Link
+                    to="/forget-password"
+                    className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
+                  >
+                    {t('Forgot your password?')}
+                  </Link>
+                )}
+              </div>
+              <Input
+                {...field}
+                required
+                id="password"
+                type="password"
+                placeholder={'********'}
+                className="rounded-sm"
+                tabIndex={2}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {form?.formState?.errors?.root?.serverError && (
+          <FormMessage>
+            {form.formState.errors.root.serverError.message}
+          </FormMessage>
+        )}
+        <Button
+          loading={isPending}
+          onClick={(e) => form.handleSubmit(onSubmit)(e)}
+          tabIndex={3}
         >
-          {t('Sign up')}
-        </Link>
-      </div>
-    </>
+          {t('Sign in')}
+        </Button>
+      </form>
+    </Form>
   );
 };
 

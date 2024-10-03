@@ -33,6 +33,7 @@ const FileButton = ({ fileUrl, handleDownloadFile }: FileButtonProps) => {
       <Button
         variant="ghost"
         size="sm"
+        disabled={readonly}
         onClick={() => handleDownloadFile(fileUrl)}
         className="flex items-center gap-2 p-2 max-h-[20px] text-xs"
       >
@@ -53,7 +54,7 @@ const removeDoubleQuotes = (str: string): string =>
 const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
   const { theme } = useTheme();
 
-  const viewerTheme = theme === 'dark' ? 'pop' : 'rjv-default';
+  const viewerTheme = theme === 'dark' ? 'bright' : 'rjv-default';
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(json, null, 2));
     toast({
@@ -137,9 +138,9 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
 
   return (
     <div className="rounded-lg border border-solid border-dividers overflow-hidden">
-      <div className="px-4 py-3 flex border-solid border-b border-dividers justfy-center items-center">
+      <div className="px-3 py-2 flex border-solid border-b border-dividers justfy-center items-center">
         <div className="flex-grow justify-center items-center">
-          <span className="text-sm">{title}</span>
+          <span className="text-md">{title}</span>
         </div>
         <div className="flex items-center gap-0">
           <Button variant={'ghost'} size={'sm'} onClick={handleDownload}>
@@ -173,6 +174,7 @@ const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
                 <ReactJson
                   style={{
                     overflowX: 'auto',
+                    padding: '0.5rem',
                   }}
                   theme={viewerTheme}
                   enableClipboard={false}

@@ -1,3 +1,4 @@
+import { logger } from '@activepieces/server-shared'
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -20,7 +21,7 @@ export const userInvitationsService = {
             projectId,
         })
     },
-    async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation | null> {
+    async getOneByInvitationTokenOrThrow(invitationToken: string): Promise<UserInvitation> {
         const decodedToken = await jwtUtils.decodeAndVerify<UserInvitationToken>({
             jwt: invitationToken,
             key: await jwtUtils.getJwtSecret(),
@@ -44,18 +45,31 @@ export const userInvitationsService = {
             email,
             platformId,
         })
+        logger.info({
+            email,
+            platformId,
+            user,
+        }, '[provisionUserInvitation]')
         if (isNil(user)) {
             return
         }
         const platform = await platformService.getOneOrThrow(platformId)
-        const invitations = await repo().findBy([
-            {
-                email,
+        const invitations = await repo().createQueryBuilder('user_invitation')
+            .where('LOWER(user_invitation.email) = :email', { email: email.toLowerCase().trim() })
+            .andWhere({
                 platformId,
                 status: InvitationStatus.ACCEPTED,
-            },
-        ])
+            })
+            .getMany()
+
+        logger.info({
+            platformId,
+            count: invitations.length,
+        }, '[provisionUserInvitation]')
         for (const invitation of invitations) {
+            logger.info({
+                invitation,
+            }, '[provisionUserInvitation] provision')
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
                     assertNotNullOrUndefined(invitation.platformRole, 'platformRole')
@@ -94,25 +108,13 @@ export const userInvitationsService = {
         invitationExpirySeconds,
         status,
     }: CreateParams): Promise<UserInvitationWithLink> {
-        const invitation = await repo().findOneBy({
-            email,
-            platformId,
-            projectId: isNil(projectId) ? IsNull() : projectId,
-        })
         const platform = await platformService.getOneOrThrow(platformId)
-
-        if (!isNil(invitation)) {
-            if (status === InvitationStatus.ACCEPTED) {
-                return invitation
-            }
-            return enrichWithInvitationLink(platform, invitation, invitationExpirySeconds)
-        }
         const id = apId()
         await repo().upsert({
             id,
             status,
             type,
-            email,
+            email: email.toLowerCase().trim(),
             platformId,
             projectRole: type === InvitationType.PLATFORM ? undefined : projectRole!,
             platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
@@ -196,11 +198,11 @@ export const userInvitationsService = {
         email,
         platformId,
     }: ProvisionUserInvitationParams): Promise<boolean> {
-        const invitations = await repo().findBy({
-            email,
+        const invitations = await repo().createQueryBuilder().where({
             platformId,
             status: InvitationStatus.ACCEPTED,
-        })
+        }).andWhere('LOWER(user_invitation.email) = :email', { email: email.toLowerCase().trim() })
+            .getMany()
         return invitations.length > 0
     },
     async getByEmailAndPlatformIdOrThrow({

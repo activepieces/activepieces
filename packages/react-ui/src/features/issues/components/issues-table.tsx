@@ -13,17 +13,13 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { PopulatedIssue } from '@activepieces/ee-shared';
-import {
-  ApEdition,
-  ApFlagId,
-  FlowRunStatus,
-  Permission,
-} from '@activepieces/shared';
+import { FlowRunStatus, Permission } from '@activepieces/shared';
 
+import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
@@ -41,8 +37,10 @@ const fetchData = async (
 
 export default function IssuesTable() {
   const navigate = useNavigate();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { refetch } = issueHooks.useIssuesNotification(edition);
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { refetch } = issueHooks.useIssuesNotification(
+    platform.flowIssuesEnabled,
+  );
 
   const handleMarkAsResolved = async (
     flowDisplayName: string,
@@ -59,6 +57,7 @@ export default function IssuesTable() {
     });
   };
   const { checkAccess } = useAuthorization();
+  const openNewWindow = useNewWindow();
   const userHasPermissionToMarkAsResolved = checkAccess(
     Permission.WRITE_ISSUES,
   );
@@ -158,20 +157,25 @@ export default function IssuesTable() {
       <DataTable
         columns={columns}
         fetchData={fetchData}
-        onRowClick={(row) =>
-          navigate({
-            pathname: '/runs',
-            search: createSearchParams({
-              flowId: row.flowId,
-              createdAfter: row.created,
-              status: [
-                FlowRunStatus.FAILED,
-                FlowRunStatus.INTERNAL_ERROR,
-                FlowRunStatus.TIMEOUT,
-              ],
-            }).toString(),
-          })
-        }
+        onRowClick={(row, newWindow) => {
+          const searchParams = createSearchParams({
+            flowId: row.flowId,
+            createdAfter: row.created,
+            status: [
+              FlowRunStatus.FAILED,
+              FlowRunStatus.INTERNAL_ERROR,
+              FlowRunStatus.TIMEOUT,
+            ],
+          }).toString();
+          if (newWindow) {
+            openNewWindow('/runs', searchParams);
+          } else {
+            navigate({
+              pathname: '/runs',
+              search: searchParams,
+            });
+          }
+        }}
       />
     </div>
   );

@@ -67,7 +67,7 @@ export const TriggerBase = Type.Composite([
     testStrategy: Type.Enum(TriggerTestStrategy),
   })
 ])
-export type TriggerBase = Omit<ActionBase, "requireAuth"> & {
+export type TriggerBase = ActionBase & {
   type: TriggerStrategy;
   sampleData: unknown,
   handshakeConfiguration?: WebhookHandshakeConfiguration;

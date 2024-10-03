@@ -120,26 +120,28 @@ export const ConfigureSamlDialog = ({
         <DialogHeader>
           <DialogTitle>{t('Configure SAML 2.0 SSO')}</DialogTitle>
         </DialogHeader>
-        <div className="mb-4">
-          <ApMarkdown
-            markdown={t(
-              `
+        {samlAcs && (
+          <div className="mb-4">
+            <ApMarkdown
+              markdown={t(
+                `
 **Setup Instructions**:
 Please check the following documentation: [SAML SSO](https://activepieces.com/docs/security/sso)
 
 **Single sign-on URL**:
 \`\`\`text
-{{samlAcs}}
+{samlAcs}
 \`\`\`
 **Audience URI (SP Entity ID)**:
 \`\`\`text
 Activepieces
 \`\`\`
 `,
-              { samlAcs },
-            )}
-          />
-        </div>
+                { samlAcs: samlAcs ?? '' },
+              )}
+            />
+          </div>
+        )}
 
         <Form {...form}>
           <form

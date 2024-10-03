@@ -4,7 +4,7 @@ import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOp
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { executionFiles } from '../execution-files'
-import { pieceEngineUtil } from '../flow-enginer-util'
+import { pieceEngineUtil } from '../flow-engine-util'
 import { EngineWorker } from './worker'
 
 const memoryLimit = Math.floor((Number(system.getOrThrow(SharedSystemProp.SANDBOX_MEMORY_LIMIT)) / 1024))
@@ -103,7 +103,7 @@ export const threadEngineRunner: EngineRunner = {
     async executeAction(engineToken, operation) {
         logger.debug({
             stepName: operation.stepName,
-            flowVersion: operation.flowVersion,
+            flowVersionId: operation.flowVersion.id,
         }, '[threadEngineRunner#executeAction]')
 
         const step = flowHelper.getStep(operation.flowVersion, operation.stepName) as (Action | undefined)
@@ -159,7 +159,6 @@ export const threadEngineRunner: EngineRunner = {
             piece: operation.piece,
             propertyName: operation.propertyName,
             stepName: operation.actionOrTriggerName,
-            flowVersion: operation.flowVersion,
         }, '[threadEngineRunner#executeProp]')
 
         const { piece } = operation
@@ -221,11 +220,6 @@ async function execute<Result extends EngineHelperResult>(operation: EngineOpera
     })
 }
 
-
-
-
-
-
 function getEnvironmentVariables(): Record<string, string | undefined> {
     const allowedEnvVariables = system.getList(SharedSystemProp.SANDBOX_PROPAGATED_ENV_VARS)
     const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
@@ -235,5 +229,6 @@ function getEnvironmentVariables(): Record<string, string | undefined> {
         AP_EXECUTION_MODE: system.getOrThrow(SharedSystemProp.EXECUTION_MODE),
         AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
         AP_BASE_CODE_DIRECTORY: `${sandboxPath}/codes`,
+        AP_MAX_FILE_SIZE_MB: system.getOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB),
     }
 }

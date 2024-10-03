@@ -58,7 +58,8 @@ const DataSelectorNodeContent = ({
       node.children &&
       node.children.length > 0 &&
       node.children[0].data.isTestStepNode
-    );
+    ) &&
+    node.data.insertable;
   const showNodeValue = !node.children && !!node.data.value;
 
   return (
@@ -67,10 +68,11 @@ const DataSelectorNodeContent = ({
       onKeyDown={handleKeyPress}
       ref={ripple}
       onClick={(e) => {
-        rippleEvent(e);
         if (node.children && node.children.length > 0) {
+          rippleEvent(e);
           setExpanded(!expanded);
-        } else if (insertMention) {
+        } else if (insertMention && node.data.insertable) {
+          rippleEvent(e);
           insertMention(node.data.propertyPath);
         }
       }}

@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import React from 'react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
-import { JsonEditor } from '@/components/custom/json-editior';
+import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { FormControl, FormField } from '@/components/ui/form';
@@ -272,6 +272,9 @@ const selectFormComponentForProperty = ({
               value={field.value}
               onChange={field.onChange}
               disabled={disabled}
+              type={
+                property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
+              }
             ></Input>
           )}
         </AutoFormFieldWrapper>

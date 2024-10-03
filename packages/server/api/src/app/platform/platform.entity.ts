@@ -1,4 +1,4 @@
-import { FilteredPieceBehavior, LocalesEnum, Platform, User } from '@activepieces/shared'
+import { FilteredPieceBehavior, Platform, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -138,7 +138,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         },
         defaultLocale: {
             type: String,
-            enum: LocalesEnum,
             nullable: true,
         },
         allowedAuthDomains: {
@@ -166,11 +165,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         },
         alertsEnabled: {
             type: Boolean,
-            nullable: false,
-        },
-        premiumPieces: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
             nullable: false,
         },
     },

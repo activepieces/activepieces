@@ -14,7 +14,11 @@ import {
   SortableItem,
 } from '@/components/ui/sortable';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
-import { ArrayProperty } from '@activepieces/pieces-framework';
+import {
+  ArrayProperty,
+  ArraySubProps,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -31,6 +35,31 @@ type ArrayField = {
   value: string | Record<string, unknown>;
 };
 
+const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
+  return Object.entries(arrayProperties).reduce((acc, [key, value]) => {
+    switch (value.type) {
+      case PropertyType.LONG_TEXT:
+      case PropertyType.SHORT_TEXT:
+      case PropertyType.NUMBER:
+        return {
+          ...acc,
+          [key]: '',
+        };
+      case PropertyType.CHECKBOX:
+        return {
+          ...acc,
+          [key]: false,
+        };
+      case PropertyType.STATIC_DROPDOWN:
+      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+      case PropertyType.MULTI_SELECT_DROPDOWN:
+        return {
+          ...acc,
+          [key]: null,
+        };
+    }
+  }, {} as Record<string, unknown>);
+};
 const ArrayPieceProperty = React.memo(
   ({
     inputName,
@@ -39,7 +68,6 @@ const ArrayPieceProperty = React.memo(
     arrayProperty,
   }: ArrayPropertyProps) => {
     const form = useFormContext();
-
     const [fields, setFields] = useState<ArrayField[]>(() => {
       const formValues = form.getValues(inputName);
       if (formValues) {
@@ -60,7 +88,11 @@ const ArrayPieceProperty = React.memo(
       );
     };
 
-    const append = (value: string | Record<string, unknown>) => {
+    const append = () => {
+      //passing empty object will result in react form putting in the initial values when the user first started editing
+      const value = arrayProperty.properties
+        ? getDefaultValuesForInputs(arrayProperty.properties)
+        : '';
       const newFields = [...fields, { id: nanoid(), value }];
       setFields(newFields);
       updateFormValue(newFields);
@@ -91,17 +123,15 @@ const ArrayPieceProperty = React.memo(
       updateFormValue(newFields);
     };
 
-    const isComplexArray = arrayProperty.properties !== undefined;
-
     return (
       <>
         <div className="flex w-full flex-col gap-4">
-          {isComplexArray ? (
+          {arrayProperty.properties ? (
             <>
-              {fields.map((_, index) => (
+              {fields.map((field, index) => (
                 <div
                   className="p-4 border rounded-md flex flex-col gap-4"
-                  key={'array-item-' + index}
+                  key={'array-item-' + field.id}
                 >
                   <div className="flex justify-between">
                     <div className="font-semibold"> #{index + 1}</div>
@@ -122,7 +152,7 @@ const ArrayPieceProperty = React.memo(
                     </Button>
                   </div>
                   <AutoPropertiesFormComponent
-                    prefixValue={`${inputName}.${index}`}
+                    prefixValue={`${inputName}.[${index}]`}
                     props={arrayProperty.properties!}
                     useMentionTextInput={useMentionTextInput}
                     allowDynamicValues={false}
@@ -229,7 +259,7 @@ const ArrayPieceProperty = React.memo(
             size="sm"
             className="mt-2"
             onClick={() => {
-              append(isComplexArray ? {} : '');
+              append();
             }}
             type="button"
           >

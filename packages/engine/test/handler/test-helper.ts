@@ -23,7 +23,6 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
             apiUrl: 'http://127.0.0.1:3000',
         }),
         params?.testSingleStepMode ?? false,
-        params?.filesServiceType ?? 'local',
         params?.progressUpdateType ?? ProgressUpdateType.NONE,
         params?.serverHandlerId ?? null,
         params?.httpRequestId ?? null,

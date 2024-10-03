@@ -26,6 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -61,7 +62,9 @@ export type FeatureKey =
   | 'ISSUES'
   | 'ANALYTICS'
   | 'ALERTS'
-  | 'ENTERPRISE_PIECES';
+  | 'ENTERPRISE_PIECES'
+  | 'UNIVERSAL_AI'
+  | 'SIGNING_KEYS';
 
 const features = [
   {
@@ -89,6 +92,14 @@ const features = [
   {
     label: t('Analytics'),
     key: `ANALYTICS`,
+  },
+  {
+    label: t('Universal AI'),
+    key: `UNIVERSAL_AI`,
+  },
+  {
+    label: t('Embedding'),
+    key: `SIGNING_KEYS`,
   },
 ];
 
@@ -225,57 +236,90 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
           {t('Request Trial')}
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="h-screen top-0 right-0 left-auto mt-0 w-[600px] rounded-none py-2 px-6 gap-6 flex">
-        <DrawerHeader className="mt-4">
-          <DrawerTitle className="text-2xl">
-            {t('14-Day Enterprise Trial')}
-          </DrawerTitle>
-        </DrawerHeader>
-        <Form {...form}>
-          <form className="space-y-2">
-            <div className="grid grid-cols-2 gap-y-2 gap-x-6">
+      <DrawerContent className="h-full top-0 right-0 left-auto mt-0 w-[620px] rounded-none py-2 ">
+        <ScrollArea
+          className="h-full w-full relative px-6 "
+          viewPortClassName="h-full"
+        >
+          <DrawerHeader className="mt-4">
+            <DrawerTitle className="text-2xl">
+              {t('14-Day Enterprise Trial')}
+            </DrawerTitle>
+          </DrawerHeader>
+          <Form {...form}>
+            <form className="space-y-2 mt-4">
+              <div className="grid grid-cols-2 gap-y-4 gap-x-6 px-0.5">
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Name')} *</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Work Email')} *</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="companyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Company Name')} *</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="numberOfEmployees"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Number of Employees')} *</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {numberOfEmployeesOptions.map((option) => (
+                                <SelectItem value={option} key={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
-                name="fullName"
+                name="goal"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('Name')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Bertram Gilfoyle" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Work Email')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder="gilfoyle@piedpiper.com" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="companyName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Company Name')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Pied Piper" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="numberOfEmployees"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Number of Employees')}</FormLabel>
+                    <FormLabel>{t('Goal')} *</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -286,9 +330,9 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            {numberOfEmployeesOptions.map((option) => (
-                              <SelectItem value={option} key={option}>
-                                {option}
+                            {goals.map((goal) => (
+                              <SelectItem value={goal.key} key={goal.key}>
+                                {goal.label}
                               </SelectItem>
                             ))}
                           </SelectGroup>
@@ -298,75 +342,47 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
                   </FormItem>
                 )}
               />
-            </div>
-            <FormField
-              control={form.control}
-              name="goal"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Goal')}</FormLabel>
-                  <FormControl>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {goals.map((goal) => (
-                            <SelectItem value={goal.key} key={goal.key}>
-                              {goal.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                </FormItem>
+              {form?.formState?.errors?.root?.serverError && (
+                <FormMessage>
+                  {form.formState.errors.root.serverError.message}
+                </FormMessage>
               )}
-            />
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
-          </form>
-        </Form>
-        <div className="flex flex-col">
-          <div className="text-lg">{t('Try Enterprise to access')}:</div>
-          <div className="grid grid-cols-2 mt-4 gap-y-2 gap-x-6">
-            {features.map((feature) => (
-              <div className="flex gap-2 items-center my-3" key={feature.key}>
-                <CheckCircle className="h-5 w-5 text-success" />
-                {feature.label}
-              </div>
-            ))}
+            </form>
+          </Form>
+          <div className="flex flex-col mt-8">
+            <div className="text-lg">{t('Try Enterprise to access')}:</div>
+            <div className="grid grid-cols-2 mt-4 gap-y-5 gap-x-6">
+              {features.map((feature) => (
+                <div className="flex gap-2 items-center " key={feature.key}>
+                  <CheckCircle className="h-5 w-5 text-success" />
+                  {feature.label}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col gap-5 mt-6 items-center justify-center">
-          <div className="text-lg text-muted-foreground font-semibold">
-            {t('Deploy your automations securely with Activepieces')}
+          <div className="flex flex-col gap-5 mt-7 items-center justify-center">
+            <div className="text-lg text-muted-foreground font-semibold">
+              {t('Deploy your automations securely with Activepieces')}
+            </div>
+            <div className="flex flex-wrap gap-5 items-center justify-center">
+              {logos.map((logo, index) => (
+                <img key={index} className="h-6" src={logo} />
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-5 items-center justify-center">
-            {logos.map((logo, index) => (
-              <img key={index} className="h-6" src={logo} />
-            ))}
-          </div>
-        </div>
 
-        <div className="flex-grow"></div>
-        <DrawerFooter className="flex flex-row items-center justify-left">
+          <div className="flex-grow"></div>
+        </ScrollArea>
+        <DrawerFooter className="flex flex-row sticky bg-background border-t border-border border-t  pb-0 z-50 bottom-0 items-center  justify-left">
           <Button
-            size={'lg'}
+            size="default"
             onClick={form.handleSubmit((data) => mutate(data))}
             loading={isPending}
           >
             {t('Submit')}
           </Button>
           <DrawerClose asChild>
-            <Button variant="outline" size={'lg'}>
+            <Button variant="outline" size="default">
               {t('Cancel')}
             </Button>
           </DrawerClose>

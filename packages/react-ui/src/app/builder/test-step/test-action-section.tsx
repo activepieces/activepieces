@@ -8,9 +8,9 @@ import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { formatUtils } from '@/lib/utils';
 import { Action, StepRunResponse, isNil } from '@activepieces/shared';
+
+import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
@@ -50,22 +50,18 @@ const TestActionSection = React.memo(
       void
     >({
       mutationFn: async () => {
-        return flowsApi.testStep(socket, {
+        return flowRunsApi.testStep(socket, {
           flowVersionId,
           stepName: formValues.name,
         });
       },
       onSuccess: (stepResponse) => {
-        const formattedResponse = formatUtils.formatStepInputAndOutput(
-          stepResponse.output,
-          null,
-        );
         if (stepResponse.success) {
           setErrorMessage(undefined);
 
           form.setValue(
             'settings.inputUiInfo.currentSelectedData',
-            formattedResponse,
+            stepResponse.output,
             { shouldValidate: true },
           );
           form.setValue(
@@ -76,7 +72,7 @@ const TestActionSection = React.memo(
         } else {
           setErrorMessage(
             testStepUtils.formatErrorMessage(
-              JSON.stringify(formattedResponse) ||
+              JSON.stringify(stepResponse.output) ||
                 t('Failed to run test step and no error message was returned'),
             ),
           );
@@ -119,7 +115,6 @@ const TestActionSection = React.memo(
             currentSelectedData={currentSelectedData}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
-            type={formValues.type}
           ></TestSampleDataViewer>
         )}
       </>

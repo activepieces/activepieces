@@ -5,7 +5,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Action, flowHelper, isNil, Trigger } from '@activepieces/shared';
+import {
+  Action,
+  ActionType,
+  flowHelper,
+  isNil,
+  Trigger,
+} from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
@@ -25,6 +31,7 @@ const createTestNode = (
     key: step.name,
     data: {
       displayName,
+      insertable: false,
       propertyPath: step.name,
     },
     children: [
@@ -33,6 +40,7 @@ const createTestNode = (
           displayName: displayName,
           propertyPath: step.name,
           isTestStepNode: true,
+          insertable: false,
         },
         key: `test_${step.name}`,
       },
@@ -84,7 +92,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
     return [];
   }
   const pathToTargetStep = flowHelper.findPathToStep({
-    targetStepName: selectedStep.stepName,
+    targetStepName: selectedStep,
     trigger: flowVersion.trigger,
   });
 
@@ -95,6 +103,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
       return createTestNode(step, displayName);
     }
     return dataSelectorUtils.traverseStepOutputAndReturnMentionTree({
+      insertable: step.type !== ActionType.LOOP_ON_ITEMS,
       stepOutput: step.settings.inputUiInfo?.currentSelectedData,
       propertyPath: step.name,
       displayName: displayName,

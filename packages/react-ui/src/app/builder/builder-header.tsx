@@ -13,9 +13,8 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
-import { ReportBugsButton } from '@/components/ui/report-bugs-button';
 import {
   Tooltip,
   TooltipContent,
@@ -34,9 +33,11 @@ import { BuilderPublishButton } from './builder-publish-button';
 export const BuilderHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const openNewWindow = useNewWindow();
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
+  const branding = flagsHooks.useWebsiteBranding();
   const isInRunsPage = useMemo(
     () => location.pathname.startsWith('/runs'),
     [location.pathname],
@@ -67,7 +68,7 @@ export const BuilderHeader = () => {
 
   return (
     <div className="bg-background ">
-      <div className=" items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
+      <div className="relative items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
         <div className="flex h-full items-center justify-center gap-2">
           {!embedState.disableNavigationInBuilder && (
             <Tooltip>
@@ -127,18 +128,25 @@ export const BuilderHeader = () => {
             <ChevronDown className="h-8 w-8" />
           </FlowActionMenu>
         </div>
-        <div className="grow"></div>
+        {!embedState.hideLogoInBuilder && (
+          <div className="absolute absolute w-full h-full left-0 top-0 flex items-center justify-center p-4 pointer-events-none">
+            <img
+              className="h-8 object-contain"
+              src={branding.logos.fullLogoUrl}
+              alt={branding.websiteName}
+            ></img>
+          </div>
+        )}
+
+        <div className="grow "></div>
         <div className="flex items-center justify-center gap-4">
-          <ReportBugsButton variant="ghost"></ReportBugsButton>
           {showSupport && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   className="gap-2 px-2"
-                  onClick={() =>
-                    window.open(supportUrl, '_blank', 'noopener noreferrer')
-                  }
+                  onClick={() => openNewWindow(supportUrl)}
                 >
                   <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
                   {t('Support')}

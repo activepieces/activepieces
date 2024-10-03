@@ -11,6 +11,7 @@ import { githubTriggers } from './lib/trigger';
 import { githubGetIssueInformation } from './lib/actions/get-issue-information';
 import { githubCreateCommentOnAIssue } from './lib/actions/create-comment-on-a-issue';
 import { githubLockIssueAction } from './lib/actions/lock-issue';
+import { githubRawGraphqlQuery } from './lib/actions/raw-graphql-query';
 
 export const githubAuth = PieceAuth.OAuth2({
   required: true,
@@ -34,6 +35,7 @@ export const github = createPiece({
     githubCreateCommentOnAIssue,
     githubLockIssueAction,
     githubUnlockIssueAction,
+    githubRawGraphqlQuery,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.github.com',
       auth: githubAuth,

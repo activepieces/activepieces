@@ -174,7 +174,7 @@ export const CopilotSidebar = () => {
     if (!selectedStep) {
       return;
     }
-    const step = flowHelper.getStep(flowVersion, selectedStep.stepName);
+    const step = flowHelper.getStep(flowVersion, selectedStep);
     if (!step) {
       return;
     }

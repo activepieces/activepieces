@@ -1,9 +1,9 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Separator } from '@radix-ui/react-dropdown-menu';
-import { Static, TObject, TSchema, Type } from '@sinclair/typebox';
+import { TSchema, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -32,34 +31,75 @@ import {
   FormResponse,
 } from '@activepieces/shared';
 
+import { Checkbox } from '../../../components/ui/checkbox';
 import { FormResult, FormResultTypes, formsApi } from '../lib/forms-api';
 
 type ApFormProps = {
   form: FormResponse;
   useDraft: boolean;
 };
+type FormInputWithName = FormInput & {
+  name: string;
+};
+/**We do this because react form inputs must not contain quotes */
+export const removeQuotations = (key: string): string => {
+  return key.replaceAll(/[\\"'’\n\r\t]/g, '');
+};
 
-function buildSchema(inputs: FormInput[]): TObject {
-  const properties = inputs.reduce<Record<string, TSchema>>((acc, input) => {
-    switch (input.type) {
-      case FormInputType.FILE:
-        acc[input.displayName] = Type.String();
-        break;
-      case FormInputType.TEXT:
-      case FormInputType.TEXT_AREA:
-        acc[input.displayName] = Type.String();
-        break;
-      case FormInputType.TOGGLE:
-        acc[input.displayName] = Type.Boolean();
-        break;
-      default:
-        break;
-    }
+const createKeyForFormInput = (displayName: string, keepQuotes = false) => {
+  const inputKey = displayName
+    .replace(/\s(.)/g, function ($1) {
+      return $1.toUpperCase();
+    })
+    .replace(/\s/g, '')
+    .replace(/^(.)/, function ($1) {
+      return $1.toLowerCase();
+    });
+
+  return keepQuotes ? inputKey : removeQuotations(inputKey);
+};
+
+/**We do this because it was the behaviour in previous versions of Activepieces.*/
+const putBackQuotesForInputNames = (
+  value: Record<string, unknown>,
+  inputs: FormInputWithName[],
+) => {
+  return inputs.reduce((acc, input) => {
+    acc[createKeyForFormInput(input.displayName, true)] =
+      value[createKeyForFormInput(input.displayName, false)];
     return acc;
-  }, {});
-  return Type.Object(properties);
-}
+  }, {} as Record<string, unknown>);
+};
 
+const requiredPropertySettings = {
+  minLength: 1,
+  errorMessage: t('This field is required'),
+};
+
+const createPropertySchema = (input: FormInputWithName) => {
+  const schemaSettings = input.required ? requiredPropertySettings : {};
+  return input.type === FormInputType.TOGGLE
+    ? Type.Boolean(schemaSettings)
+    : Type.String(schemaSettings);
+};
+
+function buildSchema(inputs: FormInputWithName[]) {
+  return {
+    properties: Type.Object(
+      inputs.reduce<Record<string, TSchema>>((acc, input) => {
+        acc[input.name] = createPropertySchema(input);
+        return acc;
+      }, {}),
+    ),
+    defaultValues: inputs.reduce<Record<string, string | boolean>>(
+      (acc, input) => {
+        acc[input.name] = input.type === FormInputType.TOGGLE ? false : '';
+        return acc;
+      },
+      {},
+    ),
+  };
+}
 const handleDownloadFile = (formResult: FormResult) => {
   const link = document.createElement('a');
   const fileBase = formResult.value as FileResponseInterface;
@@ -84,24 +124,32 @@ const fileToBase64 = (
 };
 
 const ApForm = ({ form, useDraft }: ApFormProps) => {
-  const schema = buildSchema(form.props.inputs);
+  const inputs = useRef<FormInputWithName[]>(
+    form.props.inputs.map((input) => {
+      return {
+        ...input,
+        name: createKeyForFormInput(input.displayName),
+      };
+    }),
+  );
+  const schema = buildSchema(inputs.current);
 
   const [markdownResponse, setMarkdownResponse] = useState<string | null>(null);
   const { data: showPoweredBy } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_POWERED_BY_IN_FORM,
   );
-
-  const reactForm = useForm<Static<typeof schema>>({
-    defaultValues: {},
-    resolver: typeboxResolver(schema),
+  const reactForm = useForm({
+    defaultValues: schema.defaultValues,
+    resolver: typeboxResolver(schema.properties),
   });
 
-  const { mutate: submitForm, isPending } = useMutation<
-    FormResult | null,
-    Error,
-    unknown
-  >({
-    mutationFn: async (data) => formsApi.submitForm(form, useDraft, data),
+  const { mutate, isPending } = useMutation<FormResult | null, Error>({
+    mutationFn: async () =>
+      formsApi.submitForm(
+        form,
+        useDraft,
+        putBackQuotesForInputNames(reactForm.getValues(), inputs.current),
+      ),
     onSuccess: (formResult) => {
       switch (formResult?.type) {
         case FormResultTypes.MARKDOWN:
@@ -141,34 +189,33 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
       console.error(error);
     },
   });
-
   return (
     <div className="w-full h-full flex">
       <div className="container py-20">
         <Form {...reactForm}>
-          <form onSubmit={reactForm.handleSubmit((data) => submitForm(data))}>
+          <form onSubmit={(e) => reactForm.handleSubmit(() => mutate())(e)}>
             <Card className="w-[500px] mx-auto">
               <CardHeader>
                 <CardTitle className="text-center">{form?.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid w-full items-center gap-6">
-                  {form?.props.inputs.map((input) => {
+                <div className="grid w-full items-center gap-3">
+                  {inputs.current.map((input) => {
                     return (
                       <FormField
-                        key={input.displayName}
+                        key={input.name}
                         control={reactForm.control}
-                        name={input.displayName}
+                        name={input.name}
                         render={({ field }) => (
                           <>
                             {input.type === FormInputType.TOGGLE && (
                               <FormItem className="flex items-center gap-2">
-                                <Switch
+                                <Checkbox
                                   onCheckedChange={(e) => field.onChange(e)}
                                   checked={field.value as boolean}
-                                />
+                                ></Checkbox>
                                 <FormLabel
-                                  htmlFor={input.displayName}
+                                  htmlFor={input.name}
                                   className="flex items-center justify-center"
                                 >
                                   {input.displayName}
@@ -178,15 +225,18 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                             {input.type !== FormInputType.TOGGLE && (
                               <FormItem className="flex flex-col gap-1">
                                 <FormLabel
-                                  htmlFor={input.displayName}
+                                  htmlFor={input.name}
                                   className="flex items-center justify-between"
                                 >
-                                  {input.displayName}
+                                  {input.displayName} {input.required && '*'}
                                 </FormLabel>
                                 <FormControl className="flex flex-col gap-1">
                                   <>
                                     {input.type === FormInputType.TEXT_AREA && (
                                       <Textarea
+                                        {...field}
+                                        name={input.name}
+                                        id={input.name}
                                         onChange={field.onChange}
                                         value={
                                           field.value as string | undefined
@@ -195,7 +245,10 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                     )}
                                     {input.type === FormInputType.TEXT && (
                                       <Input
+                                        {...field}
                                         onChange={field.onChange}
+                                        id={input.name}
+                                        name={input.name}
                                         value={
                                           field.value as string | undefined
                                         }
@@ -203,6 +256,8 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                     )}
                                     {input.type === FormInputType.FILE && (
                                       <Input
+                                        name={input.name}
+                                        id={input.name}
                                         onChange={(e) => {
                                           const file = e.target.files?.[0];
                                           if (file) {
@@ -244,7 +299,9 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                 )}
               </CardContent>
             </Card>
-            <ShowPoweredBy show={showPoweredBy ?? false} />
+            <div className="mt-2">
+              <ShowPoweredBy position="static" show={showPoweredBy ?? false} />
+            </div>
           </form>
         </Form>
       </div>

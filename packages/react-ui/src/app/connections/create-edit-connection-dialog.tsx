@@ -21,6 +21,7 @@ import {
 import {
   Form,
   FormControl,
+  FormError,
   FormField,
   FormItem,
   FormLabel,
@@ -324,9 +325,12 @@ const CreateOrEditConnectionDialog = React.memo(
           </ScrollArea>
 
           {errorMessage && (
-            <div className="text-left text-sm text-destructive text-sm mt-4">
+            <FormError
+              formMessageId="create-connection-server-error-message"
+              className="text-left mt-4"
+            >
               {errorMessage}
-            </div>
+            </FormError>
           )}
         </DialogContent>
       </Dialog>
@@ -387,6 +391,7 @@ function createDefaultValues(
         value: {
           type: AppConnectionType.CLOUD_OAUTH2,
           scope: piece.auth?.scope.join(' '),
+          authorization_method: piece.auth?.authorizationMethod,
           client_id: '',
           props: {},
           code: '',

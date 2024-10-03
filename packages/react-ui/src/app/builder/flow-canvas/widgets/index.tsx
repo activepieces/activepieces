@@ -17,7 +17,6 @@ const AboveFlowWidgets = React.memo(() => {
       state.selectStepByName,
       state.readonly,
     ]);
-
   return (
     <ViewportPortal>
       <div

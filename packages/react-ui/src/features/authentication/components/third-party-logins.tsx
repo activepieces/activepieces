@@ -3,7 +3,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import { HorizontalSeparatorWithText } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   ApFlagId,
@@ -23,7 +22,7 @@ const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
 };
 
-const ThirdPartyLogin = React.memo(() => {
+const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const navigate = useNavigate();
 
   const { data: thirdPartyAuthProviders } =
@@ -71,51 +70,48 @@ const ThirdPartyLogin = React.memo(() => {
     (window.location.href = '/api/v1/authn/saml/login');
 
   return (
-    <>
-      <div className="flex flex-col gap-4">
-        {thirdPartyAuthProviders?.google && (
-          <Button
-            variant="outline"
-            className="w-full rounded-sm"
-            onClick={(e) =>
-              handleProviderClick(e, ThirdPartyAuthnProviderEnum.GOOGLE)
-            }
-          >
-            <ThirdPartyIcon icon={GoogleIcon} />
-            {t(`Sign in With Google`)}
-          </Button>
-        )}
-        {thirdPartyAuthProviders?.github && (
-          <Button
-            variant="outline"
-            className="w-full rounded-sm"
-            onClick={(e) =>
-              handleProviderClick(e, ThirdPartyAuthnProviderEnum.GITHUB)
-            }
-          >
-            <ThirdPartyIcon icon={Github} />
-            {t('Sign in With GitHub')}
-          </Button>
-        )}
-        {thirdPartyAuthProviders?.saml && (
-          <Button
-            variant="outline"
-            className="w-full rounded-sm"
-            onClick={signInWithSaml}
-          >
-            <ThirdPartyIcon icon={SamlIcon} />
-            {t('Sign in With SAML')}
-          </Button>
-        )}
-      </div>
-      {thirdPartyAuthProviders?.google ||
-      thirdPartyAuthProviders?.github ||
-      thirdPartyAuthProviders?.saml ? (
-        <HorizontalSeparatorWithText className="my-4">
-          {t('OR')}
-        </HorizontalSeparatorWithText>
-      ) : null}
-    </>
+    <div className="flex flex-col gap-4">
+      {thirdPartyAuthProviders?.google && (
+        <Button
+          variant="outline"
+          className="w-full rounded-sm"
+          onClick={(e) =>
+            handleProviderClick(e, ThirdPartyAuthnProviderEnum.GOOGLE)
+          }
+        >
+          <ThirdPartyIcon icon={GoogleIcon} />
+          {isSignUp
+            ? `${t(`Sign up With`)} ${t('Google')}`
+            : `${t(`Sign in With`)} ${t('Google')}`}
+        </Button>
+      )}
+      {thirdPartyAuthProviders?.github && (
+        <Button
+          variant="outline"
+          className="w-full rounded-sm"
+          onClick={(e) =>
+            handleProviderClick(e, ThirdPartyAuthnProviderEnum.GITHUB)
+          }
+        >
+          <ThirdPartyIcon icon={Github} />
+          {isSignUp
+            ? `${t(`Sign up With`)} ${t('Github')}`
+            : `${t(`Sign in With`)} ${t('Github')}`}
+        </Button>
+      )}
+      {thirdPartyAuthProviders?.saml && (
+        <Button
+          variant="outline"
+          className="w-full rounded-sm"
+          onClick={signInWithSaml}
+        >
+          <ThirdPartyIcon icon={SamlIcon} />
+          {isSignUp
+            ? `${t(`Sign up With`)} ${t('SAML')}`
+            : `${t(`Sign in With`)} ${t('SAML')}`}
+        </Button>
+      )}
+    </div>
   );
 });
 

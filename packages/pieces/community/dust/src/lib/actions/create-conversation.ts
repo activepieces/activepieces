@@ -25,7 +25,8 @@ export const createConversation = createAction({
     assistant: assistantProp,
     username: usernameProp,
     timezone: timezoneProp,
-    query: Property.LongText({ displayName: 'Query', required: true }),
+    title: Property.ShortText({ displayName: 'Title', required: false }),
+    query: Property.LongText({ displayName: 'Query', required: false }),
     fragment: Property.File({ displayName: 'Fragment', required: false }),
     fragmentName: Property.ShortText({
       displayName: 'Fragment name',
@@ -36,8 +37,10 @@ export const createConversation = createAction({
   async run({ auth, propsValue }) {
     const payload: Record<string, any> = {
       visibility: 'unlisted',
-      title: null,
-      message: {
+      title: propsValue.title || null,
+    };
+    if (propsValue.query) {
+      payload['message'] = {
         content: propsValue.query,
         mentions: [{ configurationId: propsValue.assistant }],
         context: {
@@ -47,8 +50,8 @@ export const createConversation = createAction({
           fullName: null,
           profilePictureUrl: null,
         },
-      },
-    };
+      };
+    }
     if (propsValue.fragment) {
       const mimeType = propsValue.fragmentName
         ? mime.lookup(propsValue.fragmentName) ||
@@ -76,10 +79,14 @@ export const createConversation = createAction({
     };
     const body = (await httpClient.sendRequest(request)).body;
     const conversationId = body['conversation']['sId'];
-    return await getConversationContent(
-      conversationId,
-      propsValue.timeout,
-      auth
-    );
+    if (propsValue.query) {
+      return await getConversationContent(
+        conversationId,
+        propsValue.timeout,
+        auth
+      );
+    } else {
+      return body;
+    }
   },
 });

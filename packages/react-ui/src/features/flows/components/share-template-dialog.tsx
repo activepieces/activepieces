@@ -21,6 +21,8 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { FlowTemplate, FlowVersion, TemplateType } from '@activepieces/shared';
 
+import { useNewWindow } from '../../../components/embed-provider';
+
 const ShareTemplateSchema = Type.Object({
   description: Type.String(),
   blogUrl: Type.Optional(Type.String()),
@@ -38,7 +40,7 @@ const ShareTemplateDialog: React.FC<{
   const shareTemplateForm = useForm<ShareTemplateSchema>({
     resolver: typeboxResolver(ShareTemplateSchema),
   });
-
+  const openNewIndow = useNewWindow();
   const { mutate, isPending } = useMutation<
     FlowTemplate,
     Error,
@@ -60,7 +62,7 @@ const ShareTemplateDialog: React.FC<{
       return flowTemplate;
     },
     onSuccess: (data) => {
-      window.open(`/templates/${data.id}`, '_blank', 'noopener');
+      openNewIndow(`/templates/${data.id}`);
       setIsShareDialogOpen(false);
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),

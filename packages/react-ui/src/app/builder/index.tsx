@@ -10,6 +10,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
+import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { useSocket } from '@/components/socket-provider';
 import {
@@ -26,6 +27,7 @@ import {
   TriggerType,
   WebsocketClientEvent,
   flowHelper,
+  isNil,
 } from '@activepieces/shared';
 
 import { cn, useElementSize } from '../../lib/utils';
@@ -35,7 +37,7 @@ import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
-import { FlowRecentRunsList } from './run-list';
+import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
@@ -80,15 +82,14 @@ const BuilderPage = () => {
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
-      const stepPath = state.selectedStep;
       const flowVersion = state.flowVersion;
-      if (!stepPath || !flowVersion) {
+      if (isNil(state.selectedStep) || isNil(flowVersion)) {
         return {
           memorizedSelectedStep: undefined,
           containerKey: undefined,
         };
       }
-      const step = flowHelper.getStep(flowVersion, stepPath.stepName);
+      const step = flowHelper.getStep(flowVersion, state.selectedStep);
       const triggerOrActionName =
         step?.type === TriggerType.PIECE
           ? (step as PieceTrigger).settings.triggerName
@@ -97,7 +98,7 @@ const BuilderPage = () => {
         memorizedSelectedStep: step,
         containerKey: constructContainerKey(
           flowVersion.id,
-          stepPath.stepName,
+          state.selectedStep,
           triggerOrActionName,
         ),
       };
@@ -112,11 +113,7 @@ const BuilderPage = () => {
   const { height: builderNavbarHeight } = useElementSize(
     builderNavBarContainer,
   );
-  const {
-    pieceModel,
-    isLoading: isPieceLoading,
-    refetch: refetchPiece,
-  } = piecesHooks.usePiece({
+  const { pieceModel, refetch: refetchPiece } = piecesHooks.usePiece({
     name: memorizedSelectedStep?.settings.pieceName,
     version: memorizedSelectedStep?.settings.pieceVersion,
     enabled:
@@ -183,7 +180,7 @@ const BuilderPage = () => {
                 [animateResizeClassName]: !isDraggingHandle,
               })}
             >
-              {leftSidebar === LeftSideBarType.RUNS && <FlowRecentRunsList />}
+              {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
               {leftSidebar === LeftSideBarType.RUN_DETAILS && (
                 <FlowRunDetails />
               )}
@@ -233,13 +230,14 @@ const BuilderPage = () => {
               })}
             >
               {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
-                memorizedSelectedStep &&
-                !isPieceLoading && (
-                  <StepSettingsContainer
-                    key={containerKey}
+                memorizedSelectedStep && (
+                  <StepSettingsProvider
                     pieceModel={pieceModel}
                     selectedStep={memorizedSelectedStep}
-                  />
+                    key={containerKey + (pieceModel?.name ?? '')}
+                  >
+                    <StepSettingsContainer />
+                  </StepSettingsProvider>
                 )}
             </ResizablePanel>
           </>

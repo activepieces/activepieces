@@ -13,7 +13,7 @@ import {
 import React from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useEmbedding } from '@/components/embed-provider';
+import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,10 @@ import {
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
+import {
+  ImportFlowDialog,
+  ImportFlowDialogProps,
+} from '@/features/flows/components/import-flow-dialog';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -67,6 +70,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onDelete,
 }) => {
   const { platform } = platformHooks.useCurrentPlatform();
+  const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
     platform.gitSyncEnabled,
@@ -74,7 +78,14 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
   const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
-
+  const importFlowProps: ImportFlowDialogProps = insideBuilder
+    ? {
+        insideBuilder: true,
+        flowId: flow.id,
+      }
+    : {
+        insideBuilder: false,
+      };
   const { embedState } = useEmbedding();
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
@@ -95,7 +106,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       return updatedFlow;
     },
     onSuccess: (data) => {
-      window.open(`/flows/${data.id}`, '_blank', `noopener noreferrer`);
+      openNewWindow(`/flows/${data.id}`);
       onDuplicate();
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
@@ -196,7 +207,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >
-            <ImportFlowDialog insideBuilder={insideBuilder}>
+            <ImportFlowDialog {...importFlowProps}>
               <DropdownMenuItem
                 disabled={!userHasPermissionToUpdateFlow}
                 onSelect={(e) => e.preventDefault()}
@@ -229,46 +240,49 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </DropdownMenuItem>
           </ShareTemplateDialog>
         )}
-        {!readonly && (
-          <PermissionNeededTooltip
-            hasPermission={userHasPermissionToUpdateFlow}
-          >
-            <ConfirmationDeleteDialog
-              title={`${t('Delete')} ${flowVersion.displayName}`}
-              message={
-                <>
-                  <div>
-                    {t(
-                      'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
-                    )}
-                  </div>
-                  {isDevelopmentBranch && (
-                    <div className="font-bold mt-2">
+        {!readonly &&
+          (!embedState.isEmbedded ||
+            !embedState.disableNavigationInBuilder ||
+            !insideBuilder) && (
+            <PermissionNeededTooltip
+              hasPermission={userHasPermissionToUpdateFlow}
+            >
+              <ConfirmationDeleteDialog
+                title={`${t('Delete')} ${flowVersion.displayName}`}
+                message={
+                  <>
+                    <div>
                       {t(
-                        'You are on a development branch, this will not delete the flow from the remote repository.',
+                        'Are you sure you want to delete this flow? This will permanently delete the flow, all its data and any background runs.',
                       )}
                     </div>
-                  )}
-                </>
-              }
-              mutationFn={async () => {
-                await flowsApi.delete(flow.id);
-                onDelete();
-              }}
-              entityName={t('flow')}
-            >
-              <DropdownMenuItem
-                disabled={!userHasPermissionToUpdateFlow}
-                onSelect={(e) => e.preventDefault()}
+                    {isDevelopmentBranch && (
+                      <div className="font-bold mt-2">
+                        {t(
+                          'You are on a development branch, this will not delete the flow from the remote repository.',
+                        )}
+                      </div>
+                    )}
+                  </>
+                }
+                mutationFn={async () => {
+                  await flowsApi.delete(flow.id);
+                  onDelete();
+                }}
+                entityName={t('flow')}
               >
-                <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                  <span className="text-destructive">{t('Delete')}</span>
-                </div>
-              </DropdownMenuItem>
-            </ConfirmationDeleteDialog>
-          </PermissionNeededTooltip>
-        )}
+                <DropdownMenuItem
+                  disabled={!userHasPermissionToUpdateFlow}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <span className="text-destructive">{t('Delete')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </ConfirmationDeleteDialog>
+            </PermissionNeededTooltip>
+          )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -29,44 +29,49 @@ const EmbedPage = React.memo(() => {
       event.source === window.parent &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
-      setEmbedState({
-        hideSideNav: event.data.data.hideSidebar,
-        isEmbedded: true,
-        hideLogoInBuilder: event.data.data.hideLogoInBuilder || false,
-        hideFlowNameInBuilder: event.data.data.hideFlowNameInBuilder || false,
-        prefix: event.data.data.prefix,
-        disableNavigationInBuilder: event.data.data.disableNavigationInBuilder,
-        hideFolders: event.data.data.hideFolders || false,
-        sdkVersion: event.data.data.sdkVersion,
-      });
-      navigate('/');
+      const token =
+        event.data.data.jwtToken || getExternalTokenFromSearchQuery();
+      if (token) {
+        mutateAsync(
+          {
+            externalAccessToken: token,
+          },
+          {
+            onSuccess: (data) => {
+              authenticationSession.saveResponse(data);
+              setEmbedState({
+                hideSideNav: event.data.data.hideSidebar,
+                isEmbedded: true,
+                hideLogoInBuilder: event.data.data.hideLogoInBuilder || false,
+                hideFlowNameInBuilder:
+                  event.data.data.hideFlowNameInBuilder || false,
+                prefix: event.data.data.prefix,
+                disableNavigationInBuilder:
+                  event.data.data.disableNavigationInBuilder,
+                hideFolders: event.data.data.hideFolders || false,
+                sdkVersion: event.data.data.sdkVersion,
+              });
+              navigate('/');
+            },
+          },
+        );
+      }
     }
   };
 
-  useEffectOnce(() => {
-    const externalToken = new URLSearchParams(window.location.search).get(
+  const getExternalTokenFromSearchQuery = () => {
+    return new URLSearchParams(window.location.search).get(
       _AP_JWT_TOKEN_QUERY_PARAM_NAME,
     );
-    if (!externalToken) {
-      return;
-    }
-    mutateAsync(
-      {
-        externalAccessToken: externalToken,
-      },
-      {
-        onSuccess: (data) => {
-          authenticationSession.saveResponse(data);
-          const event: ActivepiecesClientInit = {
-            type: ActivepiecesClientEventName.CLIENT_INIT,
-            data: {},
-          };
-          window.parent.postMessage(event, '*');
-          window.addEventListener('message', initState);
-        },
-      },
-    );
+  };
 
+  useEffectOnce(() => {
+    const event: ActivepiecesClientInit = {
+      type: ActivepiecesClientEventName.CLIENT_INIT,
+      data: {},
+    };
+    window.parent.postMessage(event, '*');
+    window.addEventListener('message', initState);
     return () => {
       window.removeEventListener('message', initState);
     };

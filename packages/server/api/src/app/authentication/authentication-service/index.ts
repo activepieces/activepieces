@@ -1,4 +1,9 @@
-import { cryptoUtils, logger, SharedSystemProp, system } from '@activepieces/server-shared'
+import {
+    cryptoUtils,
+    logger,
+    SharedSystemProp,
+    system,
+} from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -13,6 +18,7 @@ import {
     UserId,
     UserStatus,
 } from '@activepieces/shared'
+import { nanoid } from 'nanoid'
 import { QueryFailedError } from 'typeorm'
 import { flagService } from '../../flags/flag.service'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -58,13 +64,11 @@ export const authenticationService = {
             platformId: params.platformId,
             email: params.email,
         })
-
         if (existingUser) {
             return this.signInResponse({
                 user: existingUser,
             })
         }
-
         const newUser = {
             email: params.email,
             verified: params.verified,
@@ -139,12 +143,14 @@ const createUser = async (params: SignUpParams): Promise<User> => {
             newsLetter: params.newsLetter,
             password: params.password,
             platformId: params.platformId,
+            tokenVersion: nanoid(),
         }
 
         return await userService.create(newUser)
     }
     catch (e: unknown) {
         if (e instanceof QueryFailedError) {
+            logger.error(e)
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
                 params: {

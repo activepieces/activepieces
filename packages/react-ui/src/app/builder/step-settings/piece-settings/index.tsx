@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   ApFlagId,
@@ -13,6 +12,7 @@ import {
 } from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
+import { useStepSettingsContext } from '../step-settings-context';
 
 import { ConnectionSelect } from './connection-select';
 
@@ -30,10 +30,7 @@ const removeAuthFromProps = (
 };
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
-  const { pieceModel, isLoading } = piecesHooks.usePiece({
-    name: props.step.settings.pieceName,
-    version: props.step.settings.pieceVersion,
-  });
+  const { pieceModel } = useStepSettingsContext();
 
   const actionName = (props.step.settings as PieceActionSettings).actionName;
   const selectedAction = actionName
@@ -63,31 +60,30 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     formUrl: `${frontendUrl}/forms/${props.flowId}`,
   };
 
+  const showAuthForAction =
+    !isNil(selectedAction) && (selectedAction.requireAuth ?? true);
+  const showAuthForTrigger =
+    !isNil(selectedTrigger) && (selectedTrigger.requireAuth ?? true);
+
   return (
     <div className="flex flex-col gap-4 w-full">
-      {isLoading && (
+      {!pieceModel && (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, index) => (
             <Skeleton key={index} className="w-full h-8" />
           ))}
         </div>
       )}
-      {selectedAction && (
-        <div className="text-sm font-medium">{selectedAction.displayName}</div>
-      )}
-      {selectedTrigger && (
-        <div className="text-sm font-medium">{selectedTrigger.displayName}</div>
-      )}
+
       {pieceModel && (
         <>
-          {pieceModel.auth &&
-            (selectedAction?.requireAuth || selectedTrigger) && (
-              <ConnectionSelect
-                isTrigger={!isNil(selectedTrigger)}
-                piece={pieceModel}
-                disabled={props.readonly}
-              ></ConnectionSelect>
-            )}
+          {pieceModel.auth && (showAuthForAction || showAuthForTrigger) && (
+            <ConnectionSelect
+              isTrigger={!isNil(selectedTrigger)}
+              piece={pieceModel}
+              disabled={props.readonly}
+            ></ConnectionSelect>
+          )}
           {selectedAction && (
             <AutoPropertiesFormComponent
               key={selectedAction.name}

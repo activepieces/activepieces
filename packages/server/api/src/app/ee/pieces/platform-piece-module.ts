@@ -30,7 +30,6 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
     done,
 ) => {
 
-
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
         if (flagService.isCloudPlatform(platformId)) {

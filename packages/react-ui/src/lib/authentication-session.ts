@@ -38,9 +38,12 @@ export const authenticationSession = {
   isLoggedIn(): boolean {
     return !!this.getToken() && !!this.getCurrentUser();
   },
-  logOut() {
+  clearSession() {
     localStorage.removeItem(tokenKey);
     localStorage.removeItem(currentUserKey);
+  },
+  logOut() {
+    this.clearSession();
     window.location.href = '/sign-in';
   },
   getCurrentUser(): AuthenticationResponse | null {

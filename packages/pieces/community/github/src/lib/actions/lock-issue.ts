@@ -1,12 +1,7 @@
+import { Octokit } from 'octokit';
 import { githubAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { githubCommon } from '../common';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
 
 export const githubLockIssueAction = createAction({
   auth: githubAuth,
@@ -20,7 +15,7 @@ export const githubLockIssueAction = createAction({
       description: 'The number of the issue to be locked',
       required: true,
     }),
-    lock_reason: Property.Dropdown({
+    lock_reason: Property.Dropdown<"off-topic" | "too heated" | "resolved" | "spam" | undefined>({
       displayName: 'Lock Reason',
       description: 'The reason for locking the issue',
       required: false,
@@ -37,31 +32,17 @@ export const githubLockIssueAction = createAction({
       },
     }),
   },
-  async run(configValue) {
-    const { issue_number } = configValue.propsValue;
-    const { owner, repo } = configValue.propsValue.repository!;
+  async run({ auth, propsValue }) {
+    const { issue_number, lock_reason } = propsValue;
+    const { owner, repo } = propsValue.repository!;
 
-    const request: HttpRequest = {
-      url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/issues/${issue_number}/lock`,
-      method: HttpMethod.PUT,
-      queryParams: {
-        owner: `${owner}`,
-        repo: `${repo}`,
-        issue_number: `${issue_number}`,
-      },
-      body: {
-        lock_reason: `${configValue.propsValue.lock_reason}`,
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: configValue.auth.access_token,
-      },
-    };
+    const client = new Octokit({ auth: auth.access_token });
+    return await client.rest.issues.lock({
+      owner,
+      repo,
+      issue_number,
+      lock_reason,
+    });
 
-    const response = await httpClient.sendRequest(request);
-
-    return {
-      success: response.status === 204,
-    };
   },
 });

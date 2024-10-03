@@ -7,6 +7,7 @@ import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifySocketIO from 'fastify-socket.io'
 import { Socket } from 'socket.io'
+import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
@@ -66,7 +67,6 @@ import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
-import { stepFileModule } from './flows/step-file/step-file.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
@@ -165,7 +165,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.io.use((socket: Socket, next: (err?: Error) => void) => {
         accessTokenManager
-            .extractPrincipal(socket.handshake.auth.token)
+            .verifyPrincipal(socket.handshake.auth.token)
             .then(() => {
                 next()
             })
@@ -207,7 +207,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(openapiModule)
     await app.register(triggerEventModule)
     await app.register(appEventRoutingModule)
-    await app.register(stepFileModule)
     await app.register(userModule)
     await app.register(authenticationModule)
     await app.register(copilotModule),
@@ -222,6 +221,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(alertsModule)
     await app.register(invitationModule)
     await app.register(workerModule)
+    await app.register(aiProviderModule)
 
     app.get(
         '/redirect',

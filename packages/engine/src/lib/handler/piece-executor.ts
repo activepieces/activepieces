@@ -8,8 +8,7 @@ import { createFilesService } from '../services/files.service'
 import { createFlowsContext } from '../services/flows.service'
 import { createContextStore } from '../services/storage.service'
 import { ActionHandler, BaseExecutor } from './base-executor'
-import { EngineConstants } from './context/engine-constants'
-import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { ExecutionVerdict } from './context/flow-execution-context'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
@@ -18,10 +17,6 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
         action,
         executionState,
         constants,
-    }: {
-        action: PieceAction
-        executionState: FlowExecutorContext
-        constants: EngineConstants
     }) {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
@@ -54,7 +49,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         stepOutput.input = censoredInput
 
-        const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
+        const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors))
         }
@@ -88,7 +83,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 engineToken: constants.engineToken,
                 stepName: action.name,
                 flowId: constants.flowId,
-                type: constants.filesServiceType,
             }),
             server: {
                 token: constants.engineToken,
@@ -182,9 +176,9 @@ const createConnectionManager = ({ engineToken, projectId, hookResponse, apiUrl 
 }
 
 function createStopHook(hookResponse: HookResponse): StopHook {
-    return (req: StopHookParams) => {
+    return (req?: StopHookParams) => {
         hookResponse.stopped = true
-        hookResponse.stopResponse = req
+        hookResponse.stopResponse = req ?? { response: {} }
     }
 }
 

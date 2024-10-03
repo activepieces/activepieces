@@ -39,6 +39,9 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         tasks: {
             type: Number,
         },
+        aiTokens: {
+            type: Number,
+        },
     },
     indices: [
         {

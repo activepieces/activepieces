@@ -1,19 +1,26 @@
 import { ActionBase, TriggerBase } from '@activepieces/pieces-framework'
-import { isNil, PieceCategory, PlatformId, SuggestionType } from '@activepieces/shared'
+
+import {
+    isNil,
+    PieceCategory,
+    PlatformId,
+    SuggestionType,
+} from '@activepieces/shared'
 import Fuse from 'fuse.js'
 import { platformService } from '../../../platform/platform.service'
 import { PieceMetadataSchema } from '../../piece-metadata-entity'
 
+const pieceFilterKeys = [
+    {
+        name: 'displayName',
+        weight: 3,
+    },
+    {
+        name: 'description',
+        weight: 1,
+    },
+]
 
-const pieceFilterKeys = [{
-    name: 'displayName',
-    weight: 3,
-}, {
-    name: 'description',
-    weight: 1,
-}]
-
-const suggestionLimit = 3
 export const filterPiecesBasedUser = async ({
     searchQuery,
     pieces,
@@ -27,10 +34,13 @@ export const filterPiecesBasedUser = async ({
     suggestionType?: SuggestionType
     platformId?: PlatformId
 }): Promise<PieceMetadataSchema[]> => {
-    return filterPiecesBasedOnFeatures(platformId, filterBasedOnCategories({
-        categories,
-        pieces: filterBasedOnSearchQuery({ searchQuery, pieces, suggestionType }),
-    }))
+    return filterPiecesBasedOnFeatures(
+        platformId,
+        filterBasedOnCategories({
+            categories,
+            pieces: filterBasedOnSearchQuery({ searchQuery, pieces, suggestionType }),
+        }),
+    )
 }
 
 export const filterPiecesBasedOnEmbedding = async ({
@@ -51,10 +61,7 @@ export const filterPiecesBasedOnEmbedding = async ({
         return pieces
     }
 
-    const isEnterprisePremiumPiece = (piece: PieceMetadataSchema) => piece.categories?.includes(PieceCategory.PREMIUM)
-    const isPieceEnabledForPlatform = (piece: PieceMetadataSchema) => isEnterprisePremiumPiece(piece) && platform.premiumPieces.includes(piece.name)
-
-    return pieces.filter(piece => !isEnterprisePremiumPiece(piece) || isPieceEnabledForPlatform(piece))
+    return pieces
 }
 
 async function filterPiecesBasedOnFeatures(
@@ -84,8 +91,16 @@ const filterBasedOnSearchQuery = ({
         const triggers = Object.values(piece.triggers)
         return {
             ...piece,
-            actions: suggestionType === SuggestionType.ACTION || suggestionType === SuggestionType.ACTION_AND_TRIGGER ? actions : [],
-            triggers: suggestionType === SuggestionType.TRIGGER || suggestionType === SuggestionType.ACTION_AND_TRIGGER ? triggers : [],
+            actions:
+        suggestionType === SuggestionType.ACTION ||
+        suggestionType === SuggestionType.ACTION_AND_TRIGGER
+            ? actions
+            : [],
+            triggers:
+        suggestionType === SuggestionType.TRIGGER ||
+        suggestionType === SuggestionType.ACTION_AND_TRIGGER
+            ? triggers
+            : [],
         }
     })
 
@@ -105,17 +120,24 @@ const filterBasedOnSearchQuery = ({
         distance: 250,
     })
 
-    return fuse
-        .search(searchQuery)
-        .map(({ item }) => {
-            const suggestedActions = searchForSuggestion(item.actions, searchQuery)
-            const suggestedTriggers = searchForSuggestion(item.triggers, searchQuery)
-            return {
-                ...item,
-                actions: suggestedActions,
-                triggers: suggestedTriggers,
-            }
-        })
+    return fuse.search(searchQuery).map(({ item }) => {
+        const suggestedActions = searchForSuggestion(
+            item.actions,
+            searchQuery,
+            item.displayName,
+        )
+        const suggestedTriggers = searchForSuggestion(
+            item.triggers,
+            searchQuery,
+            item.displayName,
+        )
+
+        return {
+            ...item,
+            actions: suggestedActions,
+            triggers: suggestedTriggers,
+        }
+    })
 }
 
 const filterBasedOnCategories = ({
@@ -134,18 +156,33 @@ const filterBasedOnCategories = ({
     })
 }
 
+function searchForSuggestion<T extends ActionBase | TriggerBase>(
+    actionsOrTriggers: T[],
+    searchQuery: string,
+    pieceDisplayName: string,
+): Record<string, T> {
+    const actionsOrTriggerWithPieceDisplayName = actionsOrTriggers.map(
+        (actionOrTrigger) => ({
+            ...actionOrTrigger,
+            pieceDisplayName,
+        }),
+    )
 
-function searchForSuggestion<T extends ActionBase | TriggerBase>(actions: T[], searchQuery: string): Record<string, T> {
-    const nestedFuse = new Fuse(actions, {
+    const nestedFuse = new Fuse(actionsOrTriggerWithPieceDisplayName, {
         isCaseSensitive: false,
         shouldSort: true,
-        keys: ['displayName', 'description'],
+        keys: ['pieceDisplayName', 'displayName', 'description'],
         threshold: 0.2,
     })
-    const suggestions = nestedFuse.search(searchQuery, { limit: suggestionLimit }).map(({ item }) => item)
-    return suggestions.reduce<Record<string, T>>((filteredSuggestions, suggestion) => {
-        filteredSuggestions[suggestion.name] = suggestion
-        return filteredSuggestions
-    }, {})
+    const suggestions = nestedFuse.search(searchQuery).map(({ item }) => item)
+    return suggestions.reduce<Record<string, T>>(
+        (filteredSuggestions, suggestion) => {
+            filteredSuggestions[suggestion.name] = {
+                ...suggestion,
+                pieceDisplayName: undefined,
+            }
+            return filteredSuggestions
+        },
+        {},
+    )
 }
-

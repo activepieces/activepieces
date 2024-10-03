@@ -19,6 +19,7 @@ import {
     assertNotNullOrUndefined,
     File,
     FileCompression,
+    FileLocation,
     FileType,
     FilteredPieceBehavior,
     Flow,
@@ -72,10 +73,11 @@ export const createMockUser = (user?: Partial<User>): User => {
         password: user?.password
             ? bcrypt.hashSync(user.password, 10)
             : faker.internet.password(),
-        status: user?.status ?? faker.helpers.enumValue(UserStatus),
+        status: user?.status ?? UserStatus.ACTIVE,
         platformRole: user?.platformRole ?? faker.helpers.enumValue(PlatformRole),
         verified: user?.verified ?? faker.datatype.boolean(),
         externalId: user?.externalId,
+        tokenVersion: user?.tokenVersion ?? undefined,
         platformId: user?.platformId ?? null,
     }
 }
@@ -120,6 +122,7 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         updated: plan?.updated ?? faker.date.recent().toISOString(),
         projectId: plan?.projectId ?? apId(),
         name: plan?.name ?? faker.lorem.word(),
+        aiTokens: plan?.aiTokens ?? 0,
         minimumPollingInterval: plan?.minimumPollingInterval ?? 0,
         connections: plan?.connections ?? 0,
         pieces: plan?.pieces ?? [],
@@ -217,7 +220,6 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         customDomainsEnabled: platform?.customDomainsEnabled ?? faker.datatype.boolean(),
         projectRolesEnabled: platform?.projectRolesEnabled ?? faker.datatype.boolean(),
         alertsEnabled: platform?.alertsEnabled ?? faker.datatype.boolean(),
-        premiumPieces: platform?.premiumPieces ?? [],
     }
 }
 
@@ -294,9 +296,15 @@ export const createMockApiKey = (
 export const setupMockApiKeyServiceAccount = (
     params?: SetupMockApiKeyServiceAccountParams,
 ): SetupMockApiKeyServiceAccountReturn => {
+
     const { mockOwner, mockPlatform } = createMockPlatformWithOwner({
         owner: params?.owner,
         platform: params?.platform,
+    })
+
+    const mockProject = createMockProject({
+        ownerId: mockOwner.id,
+        platformId: mockPlatform.id,
     })
 
     const mockApiKey = createMockApiKey({
@@ -304,7 +312,9 @@ export const setupMockApiKeyServiceAccount = (
         platformId: mockPlatform.id,
     })
 
+
     return {
+        mockProject,
         mockOwner,
         mockPlatform,
         mockApiKey,
@@ -523,6 +533,7 @@ export const createMockFile = (file?: Partial<File>): File => {
         updated: file?.updated ?? faker.date.recent().toISOString(),
         platformId: file?.platformId ?? apId(),
         projectId: file?.projectId ?? apId(),
+        location: file?.location ?? FileLocation.DB,
         compression: file?.compression ?? faker.helpers.enumValue(FileCompression),
         data: file?.data ?? Buffer.from(faker.lorem.paragraphs()),
         type: file?.type ?? faker.helpers.enumValue(FileType),
@@ -544,6 +555,7 @@ type SetupMockApiKeyServiceAccountParams = CreateMockPlatformWithOwnerParams & {
 }
 
 type SetupMockApiKeyServiceAccountReturn = CreateMockPlatformWithOwnerReturn & {
+    mockProject: Project
     mockApiKey: ApiKey & { value: string }
 }
 

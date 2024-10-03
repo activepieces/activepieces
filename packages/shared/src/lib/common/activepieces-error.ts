@@ -1,4 +1,4 @@
-import { FileId } from '../file/file'
+import { FileId } from '../file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
@@ -63,7 +63,9 @@ export type ApErrorParams =
     | ActivationKeyNotFoundParams
     | ActivationKeyNotAlreadyActivated
     | EmailAlreadyHasActivationKey
-
+    | ProviderProxyConfigNotFoundParams
+    | AITokenLimitExceededParams
+    | SessionExpiredParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -83,6 +85,10 @@ export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_
     message?: string
 }>
 
+export type SessionExpiredParams = BaseErrorParams<ErrorCode.SESSION_EXPIRED, {
+    message?: string
+}>
+
 export type FileNotFoundErrorParams = BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }>
 
 export type EmailAuthIsDisabledParams = BaseErrorParams<ErrorCode.EMAIL_AUTH_DISABLED, Record<string, never>>
@@ -94,6 +100,11 @@ Record<string, string> &
     message?: string
 }
 >
+
+export type AITokenLimitExceededParams = BaseErrorParams<ErrorCode.AI_TOKEN_LIMIT_EXCEEDED, {
+    usage: number
+    limit: number
+}> 
 
 export type PermissionDeniedErrorParams = BaseErrorParams<
 ErrorCode.PERMISSION_DENIED,
@@ -323,10 +334,16 @@ ErrorCode.INVALID_APP_CONNECTION,
 export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
-    metric: 'tasks' | 'team-members'
+    metric: 'tasks' | 'team-members' | 'ai-tokens'
     quota?: number
 }
 >
+
+export type ProviderProxyConfigNotFoundParams = BaseErrorParams<
+ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+{
+    provider: string
+}>
 
 export type FeatureDisabledErrorParams = BaseErrorParams<
 ErrorCode.FEATURE_DISABLED,
@@ -375,6 +392,7 @@ export type EmailAlreadyHasActivationKey = BaseErrorParams<ErrorCode.EMAIL_ALREA
 export enum ErrorCode {
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
+    PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
     DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED',
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
@@ -394,6 +412,7 @@ export enum ErrorCode {
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
     INVALID_BEARER_TOKEN = 'INVALID_BEARER_TOKEN',
+    SESSION_EXPIRED = 'SESSION_EXPIRED',
     INVALID_CLAIM = 'INVALID_CLAIM',
     INVALID_CLOUD_CLAIM = 'INVALID_CLOUD_CLAIM',
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
@@ -409,6 +428,7 @@ export enum ErrorCode {
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
+    AI_TOKEN_LIMIT_EXCEEDED = 'AI_TOKEN_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
