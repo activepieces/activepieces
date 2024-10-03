@@ -9,7 +9,6 @@ import {
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
-import { logger } from '../../../../../server/shared/src';
 
 const VERTICAL_OFFSET = 160;
 const HORIZONTAL_SPACE_BETWEEN_NODES = 80;
@@ -113,7 +112,6 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
     }
     case ActionType.ROUTER:
       const { nextAction, children } = step;
-      logger.error(children, 'children');
       const childrenGraphs = children.map((child) => {
         return isNil(child)
           ? buildBigButton(step.name, StepLocationRelativeToParent.INSIDE_BRANCH)
