@@ -113,6 +113,7 @@ const calculateHeaders = (
     aiProviderDefaultHeaders: Record<string, string>,
 ): [string, string][] => {
     const forbiddenHeaders = [
+        'authorization',
         'host',
         'content-length',
         'content-type',
@@ -133,7 +134,7 @@ const calculateHeaders = (
             }
             return acc
         },
-        {} as Record<string, string | string[] | undefined>,
+        {} as Record<string, string | string[]>,
     )
 
     return Object.entries({
