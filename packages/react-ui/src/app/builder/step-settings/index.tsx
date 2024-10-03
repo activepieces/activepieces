@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -183,6 +183,7 @@ const StepSettingsContainer = () => {
     inputUIInfo,
     validChange,
     displayName,
+    form.formState.isValid,
   ]);
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();

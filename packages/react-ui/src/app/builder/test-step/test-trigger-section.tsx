@@ -58,7 +58,7 @@ const TestTriggerSection = React.memo(
   ({ isSaving, flowVersionId, flowId }: TestTriggerSectionProps) => {
     const form = useFormContext<Trigger>();
     const formValues = form.getValues();
-    const [isValid, setIsValid] = useState(false);
+    const isValid = form.formState.isValid;
 
     const [lastTestDate, setLastTestDate] = useState(
       formValues.settings.inputUiInfo?.lastTestDate,
@@ -74,9 +74,6 @@ const TestTriggerSection = React.memo(
       TriggerTestStrategy.SIMULATION;
     const mockData =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
-    useEffect(() => {
-      setIsValid(form.formState.isValid);
-    }, [form.formState.isValid]);
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
