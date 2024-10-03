@@ -117,6 +117,7 @@ export type PropertyContext = {
   };
   searchValue?: string;
   flows: FlowsContext;
+  store: Store;
 };
 
 export type ServerContext = {

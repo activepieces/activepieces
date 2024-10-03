@@ -21,6 +21,7 @@ import {
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
+import { createContextStore } from '../services/storage.service'
 import { variableService } from '../variables/variable-service'
 import { pieceLoader } from './piece-loader'
 
@@ -54,6 +55,12 @@ export const pieceHelper = {
                     externalId: constants.externalProjectId,
                 },
                 flows: createFlowsContext(constants),
+                store: createContextStore({
+                    apiUrl: constants.internalApiUrl,
+                    prefix: '',
+                    flowId: constants.flowId,
+                    engineToken: params.engineToken,
+                }),
             }
 
             if (property.type === PropertyType.DYNAMIC) {
