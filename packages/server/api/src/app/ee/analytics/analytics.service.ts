@@ -1,12 +1,15 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsReportResponse, flowHelper, FlowStatus, PieceCategory, PlatformId, PopulatedFlow, ProjectId } from '@activepieces/shared'
+import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsReportResponse, flowHelper, FlowOperationType, FlowStatus, ListPlatformProjectsLeaderboardParams, PieceCategory, PlatformId, PopulatedFlow, ProjectId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { In, MoreThan } from 'typeorm'
 import { auditLogRepo } from '../../ee/audit-logs/audit-event-service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { ProjectEntity } from '../../project/project-entity'
 import { projectRepo } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
 
@@ -165,6 +168,180 @@ async function listAllFlows(platformId: PlatformId, projectId: ProjectId | undef
         projectId: project_id,
         versionId: undefined,
     })))
+}
+
+export async function generateProjectsLeaderboard(params: ListPlatformProjectsLeaderboardParams) {
+
+    const decodedCursor = paginationHelper.decodeCursor(params.cursor ?? null)
+    const paginator = buildPaginator({
+        entity: ProjectEntity,
+        query: {
+            limit: params.limit,
+            order: 'ASC',
+            afterCursor: decodedCursor.nextCursor,
+            beforeCursor: decodedCursor.previousCursor,
+        },
+    })
+
+
+
+
+    const queryBuilder = projectRepo()
+        .createQueryBuilder('project')
+        //Flows Created
+        .leftJoin(
+            (subQuery) => {
+                return subQuery
+                    .select('"audit_event"."projectId"', 'projectId')
+                    .addSelect('COUNT(audit_event.id)', 'flowsCreated')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.FLOW_CREATED]),
+                    })
+                    .groupBy('"audit_event"."projectId"')
+            },
+            'flowsCreated',
+            '"flowsCreated"."projectId" = project.id',
+        )
+        .addSelect('COALESCE("flowsCreated"."flowsCreated", 0)', 'flowsCreated')
+
+    //Runs
+
+        .leftJoin(
+            (subQuery) => {
+                return subQuery
+                    .select('"audit_event"."projectId"', 'projectId')
+                    .addSelect('COUNT(audit_event.id)', 'runsCount')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.FLOW_RUN_FINISHED]),
+                    })
+                    .groupBy('"audit_event"."projectId"')
+            },
+            'runsCount',
+            '"runsCount"."projectId" = project.id',
+        )
+        .addSelect('COALESCE("runsCount"."runsCount", 0)', 'runsCount')
+
+    //Tasks
+
+        .leftJoin(
+            (subQuery) => {
+                return subQuery
+                    .select('"audit_event"."projectId"', 'projectId')
+                    .addSelect('SUM(CAST("audit_event"."data"->\'flowRun\'->>\'tasks\' AS INTEGER))', 'tasksCount')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.FLOW_RUN_FINISHED]),
+                    })                 
+                    .groupBy('"audit_event"."projectId"')
+            },
+            'tasksCount',
+            '"tasksCount"."projectId" = project.id',
+        )
+        .addSelect('tasksCount', 'tasksCount')
+
+
+        
+        //Connection Created
+        .leftJoin(
+            (subQuery) => {
+                return subQuery
+                    .select('"audit_event"."projectId"', 'projectId')
+                    .addSelect('COUNT(audit_event.id)', 'connectionCreated')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.CONNECTION_UPSERTED]),
+                    })
+                    .groupBy('"audit_event"."projectId"')
+            },
+            'connectionCreated',
+            '"connectionCreated"."projectId" = project.id',
+        )
+        .addSelect('COALESCE("connectionCreated"."connectionCreated", 0)', 'connectionCreated')
+
+        //Flows Published
+        .leftJoin(
+            (subQuery) => {
+                return subQuery
+                    .select('"audit_event"."projectId"', 'projectId')
+                    .addSelect('COUNT(audit_event.id)', 'flowsPublished')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.FLOW_UPDATED]),
+                    })
+                    .andWhere('"audit_event"."data"->\'request\'->>\'type\' = :requestValue', { requestValue: FlowOperationType.LOCK_AND_PUBLISH })
+                    .groupBy('"audit_event"."projectId"')
+            },
+            'flowsPublished',
+            '"flowsPublished"."projectId" = project.id',
+        )
+        .addSelect('COALESCE("flowsPublished"."flowsPublished", 0)', 'flowsPublished')
+        
+    //Flows Edited
+        .leftJoin(
+            (subQuery) => {
+                return subQuery
+                    .select('"audit_event"."projectId"', 'projectId')
+                    .addSelect('COUNT(audit_event.id)', 'flowEdits')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.FLOW_UPDATED]),
+                    })
+                    .andWhere('"audit_event"."data"->\'request\'->>\'type\' NOT IN (:...excludedTypes)', { excludedTypes: [FlowOperationType.LOCK_AND_PUBLISH, FlowOperationType.LOCK_FLOW] })
+                    .groupBy('"audit_event"."projectId"')
+            },
+            'flowEdits',
+            '"flowEdits"."projectId" = project.id',
+        )
+        .addSelect('COALESCE("flowEdits"."flowEdits", 0)', 'flowEdits')
+
+        //Users
+        .leftJoin(
+            (subQuery) => {
+                return subQuery
+                    .select('"project_member"."projectId"', 'projectId')
+                    .addSelect('COUNT(project_member.id)', 'userCount')
+                    .from('project_member', 'project_member')
+                    .groupBy('"project_member"."projectId"')
+            },
+            'userCount',
+            '"userCount"."projectId" = project.id',
+        )
+        .addSelect('COALESCE("userCount"."userCount", 0)', 'users')
+
+    //Pieces Used
+
+        .leftJoin(
+            (subQuery) => {
+                const piecesUsedInEachAuditEvent = subQuery
+                    .select('"audit_event"."projectId"', 'projectId')
+                    .addSelect('jsonb_array_elements_text(audit_event.data->\'request\'->\'request\'->\'usedPieces\')', 'piece')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.FLOW_UPDATED]),
+                    })
+                    .andWhere('"audit_event"."data"->\'request\'->>\'type\' = :requestValue', { requestValue: FlowOperationType.LOCK_AND_PUBLISH })
+                return subQuery
+                    .from(`(${piecesUsedInEachAuditEvent.getQuery()})`, 'unnested_pieces')  // Use the subquery as a derived table
+                    .select('unnested_pieces."projectId"')
+                    .addSelect('COUNT(DISTINCT unnested_pieces.piece)', 'piecesUsed')
+                    .groupBy('unnested_pieces."projectId"')
+                    .setParameters(piecesUsedInEachAuditEvent.getParameters())
+            },
+            'piecesUsed',
+            '"piecesUsed"."projectId" = project.id',
+        )
+        .addSelect('COALESCE("piecesUsed"."piecesUsed", 0)', 'piecesUsed')
+
+
+
+
+    const { data, cursor } = await paginator.paginateRaw(queryBuilder)
+    return {
+        data,
+        cursor,
+    }
 }
 
 function countFlows(flows: PopulatedFlow[], status: FlowStatus | undefined) {
