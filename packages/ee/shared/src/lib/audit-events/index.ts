@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { AppConnectionWithoutSensitiveData, BaseModelSchema, Flow, FlowOperationRequest, FlowOperationType, FlowRun, FlowVersion, Folder, Project, User } from "@activepieces/shared";
+import { AppConnectionWithoutSensitiveData, BaseModelSchema, Flow, FlowOperationRequest, FlowOperationRequestForAuditEvents, FlowOperationType, FlowRun, FlowVersion, Folder, Project, User } from "@activepieces/shared";
 import { SigningKey } from "../signing-key";
 export const ListAuditEventsRequest = Type.Object({
     limit: Type.Optional(Type.Number()),
@@ -65,7 +65,7 @@ export const FlowRunEvent = Type.Object({
     ...BaseAuditEventProps,
     action: Type.Union([Type.Literal(ApplicationEventName.FLOW_RUN_STARTED), Type.Literal(ApplicationEventName.FLOW_RUN_FINISHED)]),
     data: Type.Object({
-        flowRun: Type.Pick(FlowRun, ['id', 'startTime', 'finishTime', 'duration', 'environment', 'flowId', 'flowVersionId', 'flowDisplayName', 'status']),
+        flowRun: Type.Pick(FlowRun, ['id', 'startTime', 'finishTime', 'duration', 'environment', 'flowId', 'flowVersionId', 'flowDisplayName', 'status','tasks']),
         project: Type.Optional(Type.Pick(Project, ['displayName'])),
     }),
 })
@@ -100,7 +100,7 @@ export const FlowUpdatedEvent = Type.Object({
     action: Type.Literal(ApplicationEventName.FLOW_UPDATED),
     data: Type.Object({
         flowVersion: Type.Pick(FlowVersion, ['id', 'displayName', 'flowId', 'created', 'updated']),
-        request: FlowOperationRequest,
+        request: FlowOperationRequestForAuditEvents,
         project: Type.Optional(Type.Pick(Project, ['displayName'])),
     }),
 })
@@ -111,7 +111,7 @@ export const AuthenticationEvent = Type.Object({
     ...BaseAuditEventProps,
     action: Type.Union([Type.Literal(ApplicationEventName.USER_SIGNED_IN), Type.Literal(ApplicationEventName.USER_PASSWORD_RESET), Type.Literal(ApplicationEventName.USER_EMAIL_VERIFIED)]),
     data: Type.Object({
-        user: Type.Optional(UserMeta)
+        user: Type.Optional(UserMeta),
     }),
 })
 

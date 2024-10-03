@@ -18,6 +18,7 @@ export const AnalyticsProjectReportItem = Type.Object({
     activeFlows: Type.Number(),
     totalFlows: Type.Number(),
 })
+
 export type AnalyticsProjectReportItem = Static<typeof AnalyticsProjectReportItem>
 
 export const AnalyticsProjectReport = Type.Array(AnalyticsProjectReportItem)
@@ -40,3 +41,12 @@ export const AnalyticsReportResponse = Type.Object({
     topProjects: AnalyticsProjectReport,
 })
 export type AnalyticsReportResponse = Static<typeof AnalyticsReportResponse>
+
+export const ListPlatformProjectsLeaderboardParams = Type.Object({
+    cursor: Type.Optional(Type.String()),
+    limit: Type.Optional(Type.Number()),
+    from: Type.Optional(Type.String()),
+    to: Type.Optional(Type.String()),
+})
+
+export type ListPlatformProjectsLeaderboardParams = Static<typeof ListPlatformProjectsLeaderboardParams>

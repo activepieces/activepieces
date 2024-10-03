@@ -1,11 +1,14 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
+import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
     CountFlowsRequest,
     CreateFlowRequest,
     ErrorCode,
+    flowHelper,
     FlowOperationRequest,
+    FlowOperationType,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
@@ -61,19 +64,25 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
         })
         await assertThatFlowIsNotBeingUsed(flow, userId)
-        eventsHooks.get().sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_UPDATED,
-            data: {
-                request: request.body,
-                flowVersion: flow.version,
-            },
-        })
 
         const updatedFlow = await flowService.update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
             projectId: request.principal.projectId,
             operation: request.body,
+        })
+
+        eventsHooks.get().sendUserEventFromRequest(request, {
+            action: ApplicationEventName.FLOW_UPDATED,
+            data: {
+                request: request.body.type === FlowOperationType.LOCK_AND_PUBLISH ? {
+                    request: {
+                        usedPieces: flowHelper.getUsedPieces(updatedFlow.version.trigger),
+                    },
+                    type: FlowOperationType.LOCK_AND_PUBLISH,
+                } : request.body,
+                flowVersion: flow.version,
+            },
         })
         return updatedFlow
     })
