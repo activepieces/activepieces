@@ -64,10 +64,7 @@ export default class Paginator<Entity extends ObjectLiteral> {
         this.order = order
     }
 
-    public async paginate(
-        builder: SelectQueryBuilder<Entity>,
-    ): Promise<PagingResult<Entity>> {
-        const entities = await this.appendPagingQuery(builder).getMany()
+    private async paginateEntities(entities: Entity[]): Promise<PagingResult<Entity>> {
         const hasMore = entities.length > this.limit
 
         if (hasMore) {
@@ -91,6 +88,18 @@ export default class Paginator<Entity extends ObjectLiteral> {
         }
 
         return this.toPagingResult(entities)
+    }
+    public async paginate(
+        builder: SelectQueryBuilder<Entity>,
+    ): Promise<PagingResult<Entity>> {
+        return this.paginateEntities(await this.appendPagingQuery(builder).getMany())
+       
+    }
+    public async paginateRaw(
+        builder: SelectQueryBuilder<Entity>,
+    ): Promise<PagingResult<Entity>> {
+        return this.paginateEntities(await this.appendPagingQuery(builder).getRawMany())
+       
     }
 
     private getCursor(): CursorResult {
