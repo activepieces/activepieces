@@ -14,7 +14,10 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { HttpError } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
+import {
+  MAXIMUM_ALLOWED_TASKS,
+  UpdateProjectPlatformRequest,
+} from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
 import { useNewWindow } from '../../../components/embed-provider';
@@ -204,7 +207,7 @@ const Plans: React.FC = () => {
                       type="number"
                       placeholder={'15000'}
                       className="rounded-sm w-1/4"
-                      max={200000}
+                      max={MAXIMUM_ALLOWED_TASKS}
                       min={1}
                       onChange={(e) => field.onChange(+e.target.value)}
                     />
