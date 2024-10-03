@@ -1,11 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import { AI, AIChatRole, AIFactory } from '../..';
+import mime from 'mime-types';
 
-export const anthropic: AIFactory = ({
-  proxyUrl,
-  engineToken,
-}): AI => {
+export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const sdk = new Anthropic({
     apiKey: engineToken,
     baseURL: proxyUrl,
@@ -16,7 +14,60 @@ export const anthropic: AIFactory = ({
   });
   return {
     provider: 'ANTHROPIC' as const,
-    image: undefined,
+    image: {
+      analyze: async (params) => {
+        type AllowedImageTypes =
+          | 'image/jpeg'
+          | 'image/png'
+          | 'image/gif'
+          | 'image/webp';
+
+        const response = await sdk.messages.create({
+          model: params.model,
+          max_tokens: params.maxTokens ?? 2000,
+          messages: [
+            {
+              role: AIChatRole.USER,
+              content: [
+                {
+                  type: 'image',
+                  source: {
+                    type: 'base64',
+                    media_type:
+                      ((params.image.extension &&
+                        mime.lookup(
+                          params.image.extension
+                        )) as AllowedImageTypes) || 'image/jpeg',
+                    data: params.image.base64,
+                  },
+                },
+              ],
+            },
+          ],
+        });
+
+        return {
+          choices: response.content
+            .filter((choice): choice is TextBlock => choice.type === 'text')
+            .map((choice: TextBlock) => ({
+              content: choice.text,
+              role: AIChatRole.ASSISTANT,
+            })),
+          created: new Date().getTime(),
+          id: response.id,
+          model: response.model,
+          usage: {
+            completionTokens: response.usage.output_tokens,
+            promptTokens: response.usage.input_tokens,
+            totalTokens:
+              response.usage.output_tokens + response.usage.input_tokens,
+          },
+        };
+      },
+      generate: async (params) => {
+        return null;
+      },
+    },
     chat: {
       text: async (params) => {
         const concatenatedSystemMessage = params.messages
@@ -85,7 +136,7 @@ export const anthropic: AIFactory = ({
           (choice): choice is ToolUseBlock => choice.type === 'tool_use'
         );
 
-        const toolCall = toolCallsResponse[0]
+        const toolCall = toolCallsResponse[0];
         return {
           choices: completion.content
             .filter((choice): choice is TextBlock => choice.type === 'text')
@@ -93,13 +144,15 @@ export const anthropic: AIFactory = ({
               content: choice.text,
               role: AIChatRole.ASSISTANT,
             })),
-          call: toolCall ? {
-            id: toolCall.id,
-            function: {
-              name: toolCall.name,
-              arguments: toolCall.input,
-            },
-          } : null,
+          call: toolCall
+            ? {
+                id: toolCall.id,
+                function: {
+                  name: toolCall.name,
+                  arguments: toolCall.input,
+                },
+              }
+            : null,
           id: completion.id,
           model: completion.model,
           created: new Date().getTime(),

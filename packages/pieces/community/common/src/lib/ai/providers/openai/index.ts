@@ -24,6 +24,40 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
         const imageBase64 = response.data[0].b64_json;
         return imageBase64 ? { image: imageBase64 } : null;
       },
+      analyze: async (params) => {
+        const response = await sdk.chat.completions.create({
+          model: params.model,
+          max_tokens: params.maxTokens,
+          messages: [
+            {
+              role: AIChatRole.USER,
+              content: [
+                { type: 'text', text: params.prompt },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:image/${params.image.extension};base64,${params.image.base64}`,
+                  },
+                },
+              ],
+            },
+          ],
+        });
+        return {
+          choices: response.choices.map((choice) => ({
+            role: AIChatRole.ASSISTANT,
+            content: choice.message.content ?? '',
+          })),
+          created: response.created,
+          id: response.id,
+          model: response.model,
+          usage: response.usage && {
+            completionTokens: response.usage.completion_tokens,
+            promptTokens: response.usage.prompt_tokens,
+            totalTokens: response.usage.total_tokens,
+          },
+        };
+      },
     },
     chat: {
       text: async (params) => {

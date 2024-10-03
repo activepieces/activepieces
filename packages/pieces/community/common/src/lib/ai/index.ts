@@ -1,4 +1,4 @@
-import { ServerContext } from '@activepieces/pieces-framework';
+import { ApFile, ServerContext } from '@activepieces/pieces-framework';
 import { AI_PROVIDERS, AiProvider } from './providers';
 
 export type AI = {
@@ -11,6 +11,7 @@ export type AIImage = {
   generate: (
     params: AIImageGenerateParams
   ) => Promise<AIImageCompletion | null>;
+  analyze: (params: AIAnalyzeImageParams) => Promise<AIChatCompletion>;
 };
 
 export type AIImageGenerateParams = {
@@ -31,6 +32,13 @@ export type AIChat = {
       functions: AIFunctionDefinition[];
     }
   ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
+};
+
+export type AIAnalyzeImageParams = {
+  model: string;
+  image: ApFile;
+  prompt: string;
+  maxTokens?: number;
 };
 
 export type AIChatCompletionsCreateParams = {
