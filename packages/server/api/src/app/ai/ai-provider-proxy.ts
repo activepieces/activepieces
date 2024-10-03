@@ -44,12 +44,16 @@ export const proxyController: FastifyPluginCallbackTypebox = (
 
         const url = buildUrl(aiProvider.baseUrl, request.params['*'])
         try {
+            logger.debug(`[AIProviderProxy#proxyRequest] url: ${request.method} ${url}`)
+            logger.debug(`[AIProviderProxy#proxyRequest] body: ${JSON.stringify(request.body)}`)
+            const cleanHeaders = calculateHeaders(
+                request.headers as Record<string, string | string[] | undefined>,
+                aiProvider.config.defaultHeaders,
+            )
+            logger.debug(`[AIProviderProxy#proxyRequest] cleanHeaders: ${JSON.stringify(cleanHeaders)}`)
             const response = await fetch(url, {
                 method: request.method,
-                headers: calculateHeaders(
-                    request.headers as Record<string, string | string[] | undefined>,
-                    aiProvider.config.defaultHeaders,
-                ),
+                headers: cleanHeaders,
                 body: JSON.stringify(request.body),
             })
             const data = await response.json()
@@ -116,19 +120,19 @@ const calculateHeaders = (
         'authorization',
         'host',
         'content-length',
-        'content-type',
         'transfer-encoding',
         'connection',
         'keep-alive',
         'upgrade',
         'expect',
+        'user-agent',
     ]
     const cleanedHeaders = Object.entries(requestHeaders).reduce(
         (acc, [key, value]) => {
             if (
                 value !== undefined &&
                 !forbiddenHeaders.includes(key.toLowerCase()) &&
-                !key.startsWith('x-')
+                !key.toLowerCase().startsWith('x-')
             ) {
                 acc[key as keyof typeof acc] = value
             }
