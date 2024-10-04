@@ -110,6 +110,20 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
         step.name,
       );
     }
+    case ActionType.ROUTER:
+      const { nextAction, children } = step;
+      const childrenGraphs = children.map((child) => {
+        return isNil(child)
+          ? buildBigButton(step.name, StepLocationRelativeToParent.INSIDE_BRANCH)
+          : traverseFlow(child);
+      });
+      return buildChildrenGraph(
+        childrenGraphs,
+        Array.from({ length: children.length }, () => StepLocationRelativeToParent.INSIDE_BRANCH),
+        nextAction,
+        graph,
+        step.name,
+      );
     default: {
       const { nextAction } = step;
       const childGraph = offsetGraph(traverseFlow(nextAction), {

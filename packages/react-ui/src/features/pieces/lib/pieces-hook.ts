@@ -128,6 +128,7 @@ export const piecesHooks = {
               CORE_STEP_METADATA[ActionType.CODE],
               CORE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
               CORE_STEP_METADATA[ActionType.BRANCH],
+              CORE_STEP_METADATA[ActionType.ROUTER],
             ].filter((step) => passSearch(searchQuery, step));
             return [...filtersPrimitive, ...piecesMetadata];
           }

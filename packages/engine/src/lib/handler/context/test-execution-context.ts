@@ -26,6 +26,14 @@ export const testExecutionContext = {
                         input: step.settings,
                     }))
                     break
+                case ActionType.ROUTER:
+                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
+                        input: step.settings,
+                        type: stepType,
+                        status: StepOutputStatus.SUCCEEDED,
+                        output: inputUiInfo?.currentSelectedData,
+                    }))
+                    break
                 case ActionType.LOOP_ON_ITEMS: {
                     const { resolvedInput } = await variableService({
                         apiUrl,

@@ -379,6 +379,11 @@ async function prepareRequest(
                         clonedRequest.request.action.settings,
                     )
                     break
+                case ActionType.ROUTER:
+                    clonedRequest.request.action.valid = branchSettingsValidator.Check(
+                        clonedRequest.request.action.settings,
+                    )
+                    break
                 case ActionType.PIECE:
                     clonedRequest.request.action.valid = await validateAction({
                         settings: clonedRequest.request.action.settings,
@@ -399,6 +404,11 @@ async function prepareRequest(
                     )
                     break
                 case ActionType.BRANCH:
+                    clonedRequest.request.valid = branchSettingsValidator.Check(
+                        clonedRequest.request.settings,
+                    )
+                    break
+                case ActionType.ROUTER:
                     clonedRequest.request.valid = branchSettingsValidator.Check(
                         clonedRequest.request.settings,
                     )

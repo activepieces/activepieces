@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../common'
 import {
     BranchActionSchema, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema,
+    RouterActionSchema,
 } from './actions/action'
 import { FlowStatus } from './flow'
 import { EmptyTrigger, PieceTrigger, Trigger } from './triggers/trigger'
@@ -28,6 +29,7 @@ export enum StepLocationRelativeToParent {
     INSIDE_FALSE_BRANCH = 'INSIDE_FALSE_BRANCH',
     AFTER = 'AFTER',
     INSIDE_LOOP = 'INSIDE_LOOP',
+    INSIDE_BRANCH = 'INSIDE_BRANCH',
 }
 
 export const UseAsDraftRequest = Type.Object({
@@ -66,7 +68,7 @@ export const DeleteActionRequest = Type.Object({
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>
 
-export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema])
+export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema, RouterActionSchema])
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>
 
 export const DuplicateStepRequest = Type.Object({

@@ -41,6 +41,12 @@ export const CORE_STEP_METADATA = {
     description: t('Split your flow into branches depending on condition(s)'),
     type: ActionType.BRANCH as const,
   },
+  [ActionType.ROUTER]: {
+    displayName: 'Router',
+    logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
+    description: 'Router',
+    type: ActionType.ROUTER,
+  },
   [TriggerType.EMPTY]: {
     displayName: t('Empty Trigger'),
     logoUrl: 'https://cdn.activepieces.com/pieces/empty-trigger.svg',
@@ -92,6 +98,7 @@ export const piecesApi = {
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
     switch (step.type) {
       case ActionType.BRANCH:
+      case ActionType.ROUTER:
       case ActionType.LOOP_ON_ITEMS:
       case ActionType.CODE:
       case TriggerType.EMPTY:
