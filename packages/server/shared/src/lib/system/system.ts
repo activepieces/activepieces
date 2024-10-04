@@ -67,6 +67,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SharedSystemProp.LOG_PRETTY]: 'false',
     [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: 'cache/archives',
     [SharedSystemProp.PIECES_SOURCE]: PiecesSource.DB,
+    [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SharedSystemProp.MAX_FILE_SIZE_MB]: '4',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,

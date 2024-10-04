@@ -74,6 +74,10 @@ Configure the following environment variables:
 - `AP_S3_REGION`
 - `AP_MAX_FILE_SIZE_MB`
 - `AP_FILE_STORAGE_LOCATION` (set to `S3`)
+- `AP_S3_USE_SIGNED_URLS`
+<Tip>
+**Friendly Tip #1**: If the S3 bucket is public, you can set `AP_S3_USE_SIGNED_URLS` to `true` to route traffic to S3 directly and avoid heavy traffic on your API server.
+</Tip>
 
 </Accordion>
 <Accordion title="Troubleshooting (Optional)" icon="wrench">
