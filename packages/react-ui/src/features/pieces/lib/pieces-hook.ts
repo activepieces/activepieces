@@ -166,7 +166,7 @@ export const piecesHooks = {
           }
           switch (stepMetadata.type) {
             case TriggerType.PIECE:
-            case ActionType.PIECE:
+            case ActionType.PIECE: {
               const pieceMetadata = await piecesApi.get({
                 name: stepMetadata.pieceName,
               });
@@ -175,7 +175,7 @@ export const piecesHooks = {
                   ? pieceMetadata.triggers
                   : pieceMetadata.actions,
               );
-
+            }
             case ActionType.CODE:
             case ActionType.LOOP_ON_ITEMS:
             case ActionType.BRANCH:

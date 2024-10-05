@@ -1,9 +1,14 @@
 import {
-  isItemActionOrTriggerBase,
   PieceSelectorItem,
   PieceStepMetadata,
   StepMetadata,
 } from '@/features/pieces/lib/types';
+import {
+  ActionBase,
+  PiecePropertyMap,
+  PropertyType,
+  TriggerBase,
+} from '@activepieces/pieces-framework';
 import {
   Action,
   ActionType,
@@ -20,10 +25,7 @@ import {
   spreadIfDefined,
   isNil,
 } from '@activepieces/shared';
-import {
-  PiecePropertyMap,
-  PropertyType,
-} from '../../../../../pieces/community/framework/src';
+
 import { getDefaultValueForStep } from '../piece-properties/form-utils';
 
 const defaultCode = `export const code = async (inputs) => {
@@ -71,6 +73,19 @@ const isAiPiece = (piece: StepMetadata) =>
 const isAppPiece = (piece: StepMetadata) =>
   !isAiPiece(piece) && !isCorePiece(piece);
 
+const isActionOrTrigger = (
+  item: PieceSelectorItem,
+  stepMetadata: StepMetadata,
+): item is ActionBase | TriggerBase => {
+  return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
+};
+
+const isPieceStepMetadata = (
+  stepMetadata: StepMetadata,
+): stepMetadata is PieceStepMetadata => {
+  return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
+};
+
 const getDefaultStep = ({
   stepName,
   stepMetadata,
@@ -91,9 +106,8 @@ const getDefaultStep = ({
     },
   };
   const isPieceStep =
-    isItemActionOrTriggerBase(actionOrTrigger) &&
-    (stepMetadata.type === TriggerType.PIECE ||
-      stepMetadata.type === ActionType.PIECE);
+    isActionOrTrigger(actionOrTrigger, stepMetadata) &&
+    isPieceStepMetadata(stepMetadata);
   const input = isPieceStep
     ? getDefaultValueForStep(
         actionOrTrigger.requireAuth

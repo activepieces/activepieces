@@ -3,6 +3,7 @@ import deepEqual from 'deep-equal';
 import React, { useState, useRef } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
+
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { SkeletonList } from '@/components/ui/skeleton';

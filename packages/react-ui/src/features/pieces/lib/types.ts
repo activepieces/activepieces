@@ -74,13 +74,3 @@ export type HandleSelectCallback = (
   piece: StepMetadata,
   item: PieceSelectorItem,
 ) => void;
-
-export function isItemActionOrTriggerBase(
-  item: PieceSelectorItem,
-): item is ActionBase | TriggerBase {
-  return !(
-    (item as any).type === ActionType.BRANCH ||
-    (item as any) === ActionType.CODE ||
-    (item as any) === ActionType.LOOP_ON_ITEMS
-  );
-}
