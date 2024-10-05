@@ -415,19 +415,21 @@ export const formUtils = {
   getDefaultValueForStep,
 };
 
-function getDefaultValueForStep(
+export function getDefaultValueForStep(
   props: PiecePropertyMap | OAuth2Props,
-  input: Record<string, unknown>,
+  existingInput: Record<string, unknown>,
 ): Record<string, unknown> {
   const defaultValues: Record<string, unknown> = {};
   const entries = Object.entries(props);
   for (const [name, property] of entries) {
     switch (property.type) {
       case PropertyType.CHECKBOX:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? false;
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? false;
         break;
       case PropertyType.ARRAY:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? [];
         break;
       case PropertyType.MARKDOWN:
       case PropertyType.DATE_TIME:
@@ -440,26 +442,29 @@ function getDefaultValueForStep(
       case PropertyType.CUSTOM_AUTH:
       case PropertyType.SECRET_TEXT:
       case PropertyType.OAUTH2: {
-        defaultValues[name] = input[name] ?? property.defaultValue;
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       }
       case PropertyType.JSON: {
-        defaultValues[name] = input[name] ?? property.defaultValue;
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       }
       case PropertyType.NUMBER: {
-        defaultValues[name] = input[name] ?? property.defaultValue;
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       }
       case PropertyType.MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? [];
         break;
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? [];
         break;
       case PropertyType.OBJECT:
       case PropertyType.DYNAMIC:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? {};
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? {};
         break;
     }
   }

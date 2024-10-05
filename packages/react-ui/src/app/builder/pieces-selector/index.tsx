@@ -30,6 +30,7 @@ import {
   StepMetadata,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
+  HandleSelectCallback,
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
@@ -111,9 +112,9 @@ const PieceSelector = ({
     setSelectedTag(PieceTagEnum.ALL);
   };
 
-  const handleSelect = (
-    stepMetadata: StepMetadata,
-    actionOrTrigger: ActionOrTriggerListItem,
+  const handleSelect: HandleSelectCallback = (
+    stepMetadata,
+    actionOrTrigger,
   ) => {
     if (!stepMetadata) {
       return;
@@ -124,11 +125,11 @@ const PieceSelector = ({
       stepMetadata,
       flowVersion,
     );
+
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,
       stepMetadata,
-      actionOrTriggerName: actionOrTrigger.name,
-      displayName: actionOrTrigger.displayName,
+      actionOrTrigger,
     });
 
     switch (operation.type) {

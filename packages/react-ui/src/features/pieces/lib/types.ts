@@ -1,4 +1,9 @@
-import { ActionBase, PieceMetadataModelSummary, TriggerBase } from '@activepieces/pieces-framework';
+import {
+  ActionBase,
+  PieceAuthProperty,
+  PieceMetadataModelSummary,
+  TriggerBase,
+} from '@activepieces/pieces-framework';
 import {
   ActionType,
   PackageType,
@@ -21,6 +26,7 @@ export type PieceStepMetadata = BaseStepMetadata & {
   categories: string[];
   packageType: PackageType;
   pieceType: PieceType;
+  auth: PieceAuthProperty | undefined;
 };
 
 type PrimitiveStepMetadata = BaseStepMetadata & {
@@ -40,8 +46,6 @@ export type StepMetadataWithSuggestions =
 
 export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
-
-
 export type PieceSelectorOperation =
   | {
       type: FlowOperationType.ADD_ACTION;
@@ -56,7 +60,27 @@ export type PieceSelectorOperation =
       stepName: string;
     };
 
+export type PieceSelectorItem =
+  | ActionBase
+  | TriggerBase
+  | {
+      displayName: string;
+      name: string;
+      type: ActionType.LOOP_ON_ITEMS | ActionType.BRANCH | ActionType.CODE;
+      description: string;
+    };
+
 export type HandleSelectCallback = (
-  piece: StepMetadata | undefined,
-  item: ActionBase | TriggerBase,
+  piece: StepMetadata,
+  item: PieceSelectorItem,
 ) => void;
+
+export function isItemActionOrTriggerBase(
+  item: PieceSelectorItem,
+): item is ActionBase | TriggerBase {
+  return !(
+    (item as any).type === ActionType.BRANCH ||
+    (item as any) === ActionType.CODE ||
+    (item as any) === ActionType.LOOP_ON_ITEMS
+  );
+}
