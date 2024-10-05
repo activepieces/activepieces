@@ -2,8 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import deepEqual from 'deep-equal';
 import React, { useState, useRef } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { useDeepCompareEffect } from 'react-use';
-
+import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { SkeletonList } from '@/components/ui/skeleton';
@@ -67,7 +66,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   );
   /* eslint-enable react-hooks/rules-of-hooks */
 
-  useDeepCompareEffect(() => {
+  useDeepCompareEffectNoCheck(() => {
     const input: Record<string, unknown> = {};
     newRefreshers.forEach((refresher, index) => {
       input[refresher] = refresherValues[index];

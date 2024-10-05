@@ -262,6 +262,7 @@
     "typeorm": "0.3.18",
     "url": "0.11.3",
     "use-debounce": "10.0.1",
+    "use-deep-compare-effect": "1.8.1",
     "use-ripple-hook": "1.0.24",
     "usehooks-ts": "3.1.0",
     "vaul": "0.9.1",

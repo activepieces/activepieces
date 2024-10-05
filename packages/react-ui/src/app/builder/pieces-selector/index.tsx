@@ -28,7 +28,6 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   StepMetadata,
-  ActionOrTriggerListItem,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';

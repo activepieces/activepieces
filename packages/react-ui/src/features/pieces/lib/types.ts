@@ -1,4 +1,4 @@
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { ActionBase, PieceMetadataModelSummary, TriggerBase } from '@activepieces/pieces-framework';
 import {
   ActionType,
   PackageType,
@@ -40,11 +40,7 @@ export type StepMetadataWithSuggestions =
 
 export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
-export type ActionOrTriggerListItem = {
-  name: string;
-  displayName: string;
-  description: string;
-};
+
 
 export type PieceSelectorOperation =
   | {
@@ -62,5 +58,5 @@ export type PieceSelectorOperation =
 
 export type HandleSelectCallback = (
   piece: StepMetadata | undefined,
-  item: ActionOrTriggerListItem,
+  item: ActionBase | TriggerBase,
 ) => void;
