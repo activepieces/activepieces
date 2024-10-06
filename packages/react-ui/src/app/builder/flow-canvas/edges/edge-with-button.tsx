@@ -199,6 +199,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
               parentStep: props.data.parentStep!,
               stepLocationRelativeToParent:
                 props.data.stepLocationRelativeToParent!,
+              branchIndex: props.data.branchIndex,
             },
           }}
           open={actionMenuOpen}

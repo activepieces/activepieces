@@ -28,6 +28,7 @@ type PrimitiveStepMetadata = BaseStepMetadata & {
     | ActionType.BRANCH
     | ActionType.CODE
     | ActionType.LOOP_ON_ITEMS
+    | ActionType.ROUTER
     | TriggerType.EMPTY;
 };
 
@@ -50,6 +51,7 @@ export type PieceSelectorOperation =
   | {
       type: FlowOperationType.ADD_ACTION;
       actionLocation: {
+        branchIndex: number | undefined;
         parentStep: string;
         stepLocationRelativeToParent: StepLocationRelativeToParent;
       };

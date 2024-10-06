@@ -62,6 +62,7 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
                     parentStep: data.parentStep!,
                     stepLocationRelativeToParent:
                       data.stepLocationRelativeToParent!,
+                    branchIndex: data.branchIndex,
                   },
                 }}
                 open={actionMenuOpen}

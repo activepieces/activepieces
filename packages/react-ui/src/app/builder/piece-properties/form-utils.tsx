@@ -145,6 +145,11 @@ export const formUtils = {
                   firstValue: '',
                   secondValue: '',
                   caseSensitive: false,
+                }], [{
+                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                  firstValue: '',
+                  secondValue: '',
+                  caseSensitive: false,
                 }]],
                 branchType: BranchExecutionType.CONDITION,
               }
@@ -152,7 +157,7 @@ export const formUtils = {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
             inputUiInfo: {},
           },
-          children: [],
+          children: [null, null]
         };
       case ActionType.CODE: {
         const defaultCode = `export const code = async (inputs) => {

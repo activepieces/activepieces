@@ -157,6 +157,12 @@ const getDefaultStep = ({
                   operator: BranchOperator.TEXT_CONTAINS,
                   secondValue: '',
                   caseSensitive: false,
+                }], 
+                [{
+                  firstValue: '',
+                  operator: BranchOperator.TEXT_CONTAINS,
+                  secondValue: '',
+                  caseSensitive: false,
                 }]] ,
                 branchType: BranchExecutionType.CONDITION,
               }
@@ -165,7 +171,7 @@ const getDefaultStep = ({
               customizedInputs: {},
             },
           },
-          children: [],
+          children: [null, null],
         },
         common,
       );

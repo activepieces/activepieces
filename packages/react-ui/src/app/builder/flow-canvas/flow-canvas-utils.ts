@@ -112,9 +112,9 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
     }
     case ActionType.ROUTER:
       const { nextAction, children } = step;
-      const childrenGraphs = children.map((child) => {
+      const childrenGraphs = children.map((child, index) => {
         return isNil(child)
-          ? buildBigButton(step.name, StepLocationRelativeToParent.INSIDE_BRANCH)
+          ? buildBigButton(step.name, StepLocationRelativeToParent.INSIDE_BRANCH, index)
           : traverseFlow(child);
       });
       return buildChildrenGraph(
@@ -279,6 +279,7 @@ function offsetGraph(
 function buildBigButton(
   parentStep: string,
   stepLocationRelativeToParent?: StepLocationRelativeToParent,
+  branchIndex?: number,
 ): ApGraph {
   return {
     nodes: [
@@ -289,6 +290,7 @@ function buildBigButton(
         data: {
           parentStep,
           stepLocationRelativeToParent,
+          branchIndex,
         },
       },
     ],
@@ -345,6 +347,7 @@ export type ApNode = {
     step?: Step;
     parentStep?: string;
     stepLocationRelativeToParent?: StepLocationRelativeToParent;
+    branchIndex?: number;
   };
 };
 
@@ -356,6 +359,7 @@ export type ApEdge = {
   focusable: false;
   label: string;
   data: {
+    branchIndex?: number;
     addButton: boolean;
     targetType: ApNodeType;
     stepLocationRelativeToParent: StepLocationRelativeToParent;

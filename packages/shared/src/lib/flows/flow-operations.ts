@@ -81,12 +81,14 @@ export const MoveActionRequest = Type.Object({
     name: Type.String(),
     newParentStep: Type.String(),
     stepLocationRelativeToNewParent: Type.Optional(Type.Enum(StepLocationRelativeToParent)),
+    branchIndex: Type.Optional(Type.Number()),
 })
 export type MoveActionRequest = Static<typeof MoveActionRequest>
 
 export const AddActionRequest = Type.Object({
     parentStep: Type.String(),
     stepLocationRelativeToParent: Type.Optional(Type.Enum(StepLocationRelativeToParent)),
+    branchIndex: Type.Optional(Type.Number()),
     action: UpdateActionRequest,
 })
 export type AddActionRequest = Static<typeof AddActionRequest>
