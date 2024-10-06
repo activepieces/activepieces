@@ -77,6 +77,7 @@ const getS3Client = () => {
     const secretAccessKey = system.getOrThrow<string>(AppSystemProp.S3_SECRET_ACCESS_KEY)
     return new S3({
         region,
+        forcePathStyle: endpoint ? true : undefined,
         credentials: {
             accessKeyId,
             secretAccessKey,

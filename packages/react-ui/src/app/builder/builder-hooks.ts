@@ -175,7 +175,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
-      setFlow: (flow: Flow) => set({ flow }),
+      setFlow: (flow: PopulatedFlow) => set({ flow, selectedStep: null }),
       exitRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,
@@ -264,6 +264,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         set((state) => ({
           flowVersion,
           run: null,
+          selectedStep: null,
           readonly:
             state.flow.publishedVersionId !== flowVersion.id &&
             flowVersion.state === FlowVersionState.LOCKED,

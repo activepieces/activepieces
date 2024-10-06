@@ -1,4 +1,4 @@
-import { logger } from '@activepieces/server-shared'
+import { exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { PrincipalType, TelemetryEventName } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
@@ -44,29 +44,26 @@ export const proxyController: FastifyPluginCallbackTypebox = (
 
         const url = buildUrl(aiProvider.baseUrl, request.params['*'])
         try {
+            const cleanHeaders = calculateHeaders(
+                request.headers as Record<string, string | string[] | undefined>,
+                aiProvider.config.defaultHeaders,
+            )
             const response = await fetch(url, {
                 method: request.method,
-                headers: calculateHeaders(
-                    request.headers as Record<string, string | string[] | undefined>,
-                    aiProvider.config.defaultHeaders,
-                ),
+                headers: cleanHeaders,
                 body: JSON.stringify(request.body),
             })
             const data = await response.json()
             await projectUsageService.increaseUsage(projectId, 1, 'aiTokens')
 
-            telemetry
-                .trackProject(projectId, {
-                    name: TelemetryEventName.AI_PROVIDER_USED,
-                    payload: {
-                        projectId,
-                        platformId,
-                        provider,
-                    },
-                })
-                .catch((e) =>
-                    logger.error(e, '[AIProviderProxy#telemetry] telemetry.trackProject'),
-                )
+            rejectedPromiseHandler(telemetry.trackProject(projectId, {
+                name: TelemetryEventName.AI_PROVIDER_USED,
+                payload: {
+                    projectId,
+                    platformId,
+                    provider,
+                },
+            }))
             await reply.code(response.status).send(data)
         }
         catch (error) {
@@ -75,6 +72,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                 await reply.code(error.status).send(errorData)
             }
             else {
+                exceptionHandler.handle(error)
                 await reply
                     .code(500)
                     .send({ message: 'An unexpected error occurred in the proxy' })
@@ -111,20 +109,29 @@ const calculateHeaders = (
     requestHeaders: Record<string, string | string[] | undefined>,
     aiProviderDefaultHeaders: Record<string, string>,
 ): [string, string][] => {
+    const forbiddenHeaders = [
+        'authorization',
+        'host',
+        'content-length',
+        'transfer-encoding',
+        'connection',
+        'keep-alive',
+        'upgrade',
+        'expect',
+        'user-agent',
+    ]
     const cleanedHeaders = Object.entries(requestHeaders).reduce(
         (acc, [key, value]) => {
             if (
                 value !== undefined &&
-        !['authorization', 'content-length', 'host'].includes(
-            key.toLocaleLowerCase(),
-        ) &&
-        !key.startsWith('x-')
+                !forbiddenHeaders.includes(key.toLowerCase()) &&
+                !key.toLowerCase().startsWith('x-')
             ) {
                 acc[key as keyof typeof acc] = value
             }
             return acc
         },
-        {} as Record<string, string | string[] | undefined>,
+        {} as Record<string, string | string[]>,
     )
 
     return Object.entries({

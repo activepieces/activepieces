@@ -254,7 +254,7 @@ export const flagService = {
         const isCustomerPlatform =
             platformId && !flagService.isCloudPlatform(platformId)
         if (isCustomerPlatform) {
-            return `${hostUrl}/redirect`
+            return `https://${hostUrl}/redirect`
         }
         const frontendUrl = system.get(SharedSystemProp.FRONTEND_URL)
         const trimmedFrontendUrl = frontendUrl?.endsWith('/')

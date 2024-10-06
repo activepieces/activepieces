@@ -1,4 +1,14 @@
-import { PieceStepMetadata, StepMetadata } from '@/features/pieces/lib/types';
+import {
+  PieceSelectorItem,
+  PieceStepMetadata,
+  StepMetadata,
+} from '@/features/pieces/lib/types';
+import {
+  ActionBase,
+  PiecePropertyMap,
+  PropertyType,
+  TriggerBase,
+} from '@activepieces/pieces-framework';
 import {
   Action,
   ActionType,
@@ -12,7 +22,11 @@ import {
   FlowVersion,
   flowHelper,
   PieceCategory,
+  spreadIfDefined,
+  isNil,
 } from '@activepieces/shared';
+
+import { getDefaultValueForStep } from '../piece-properties/form-utils';
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
@@ -59,16 +73,27 @@ const isAiPiece = (piece: StepMetadata) =>
 const isAppPiece = (piece: StepMetadata) =>
   !isAiPiece(piece) && !isCorePiece(piece);
 
+const isActionOrTrigger = (
+  item: PieceSelectorItem,
+  stepMetadata: StepMetadata,
+): item is ActionBase | TriggerBase => {
+  return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
+};
+
+const isPieceStepMetadata = (
+  stepMetadata: StepMetadata,
+): stepMetadata is PieceStepMetadata => {
+  return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
+};
+
 const getDefaultStep = ({
   stepName,
   stepMetadata,
-  actionOrTriggerName,
-  displayName,
+  actionOrTrigger,
 }: {
   stepName: string;
   stepMetadata: StepMetadata;
-  displayName: string;
-  actionOrTriggerName?: string;
+  actionOrTrigger: PieceSelectorItem;
 }): Action | Trigger => {
   const errorHandlingOptions = {
     continueOnFailure: {
@@ -80,12 +105,30 @@ const getDefaultStep = ({
       value: false,
     },
   };
+  const isPieceStep =
+    isActionOrTrigger(actionOrTrigger, stepMetadata) &&
+    isPieceStepMetadata(stepMetadata);
+  const input = isPieceStep
+    ? getDefaultValueForStep(
+        actionOrTrigger.requireAuth
+          ? {
+              ...spreadIfDefined('auth', stepMetadata.auth),
+              ...actionOrTrigger.props,
+            }
+          : actionOrTrigger.props,
+        {},
+      )
+    : {};
+
   const common = {
     name: stepName,
-    valid:
-      stepMetadata.type === ActionType.CODE ||
-      stepMetadata.type === ActionType.LOOP_ON_ITEMS,
-    displayName: displayName,
+    valid: isPieceStep
+      ? checkPieceInputValidity(input, actionOrTrigger.props) &&
+        (actionOrTrigger.requireAuth ? !isNil(input['auth']) : true)
+      : stepMetadata.type === ActionType.CODE
+      ? true
+      : false,
+    displayName: actionOrTrigger.displayName,
     settings: {
       inputUiInfo: {
         customizedInputs: {},
@@ -103,7 +146,7 @@ const getDefaultStep = ({
               code: defaultCode,
               packageJson: '{}',
             },
-            input: {},
+            input,
             inputUiInfo: {
               customizedInputs: {},
             },
@@ -152,9 +195,9 @@ const getDefaultStep = ({
             pieceName: stepMetadata.pieceName,
             pieceType: stepMetadata.pieceType,
             packageType: stepMetadata.packageType,
-            actionName: actionOrTriggerName,
+            actionName: actionOrTrigger.name,
             pieceVersion: stepMetadata.pieceVersion,
-            input: {},
+            input,
             errorHandlingOptions: errorHandlingOptions,
           },
         },
@@ -169,9 +212,9 @@ const getDefaultStep = ({
             pieceName: stepMetadata.pieceName,
             pieceType: stepMetadata.pieceType,
             packageType: stepMetadata.packageType,
-            triggerName: actionOrTriggerName,
+            triggerName: actionOrTrigger.name,
             pieceVersion: stepMetadata.pieceVersion,
-            input: {},
+            input,
           },
         },
         common,
@@ -182,6 +225,21 @@ const getDefaultStep = ({
   }
 };
 
+const checkPieceInputValidity = (
+  input: Record<string, unknown>,
+  props: PiecePropertyMap,
+) => {
+  return Object.entries(props).reduce((acc, [key, property]) => {
+    if (
+      property.required &&
+      property.type !== PropertyType.DYNAMIC &&
+      isNil(input[key])
+    ) {
+      return false;
+    }
+    return acc;
+  }, true);
+};
 export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
