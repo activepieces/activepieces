@@ -9,12 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { Action, StepRunResponse, isNil } from '@activepieces/shared';
-
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
-
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
+import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
+import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -39,29 +39,44 @@ const TestActionSection = React.memo(
     const [lastTestDate, setLastTestDate] = useState(
       formValues.settings.inputUiInfo?.lastTestDate,
     );
-    const { currentSelectedData } = formValues.settings.inputUiInfo ?? {};
+
+    const { data: sampleData, isLoading: isSampleDataLoading, refetch: refetchSampleData } = sampleDataHooks.useSampleData(formValues.settings.inputUiInfo?.sampleDataFileId)
+
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
     const socket = useSocket();
 
     const { mutate, isPending: isTesting } = useMutation<
-      StepRunResponse,
+      StepRunResponse & { sampleDataFileId?: string },
       Error,
       void
     >({
       mutationFn: async () => {
-        return flowRunsApi.testStep(socket, {
+        const testStepResponse = await flowRunsApi.testStep(socket, {
           flowVersionId,
           stepName: formValues.name,
         });
+        let sampleDataFileId: string | undefined = undefined;
+        if (testStepResponse.success) {
+          const sampleFile = await sampleDataApi.save({
+            flowVersionId,
+            stepName: formValues.name,
+            payload: testStepResponse.output,
+          })
+          sampleDataFileId = sampleFile.id
+        }
+        return {
+          ...testStepResponse,
+          sampleDataFileId,
+        }
       },
-      onSuccess: (stepResponse) => {
-        if (stepResponse.success) {
+      onSuccess: ({ success, output, sampleDataFileId }) => {
+        if (success) {
           setErrorMessage(undefined);
 
           form.setValue(
-            'settings.inputUiInfo.currentSelectedData',
-            stepResponse.output,
+            'settings.inputUiInfo.sampleDataFileId',
+            sampleDataFileId,
             { shouldValidate: true },
           );
           form.setValue(
@@ -72,12 +87,12 @@ const TestActionSection = React.memo(
         } else {
           setErrorMessage(
             testStepUtils.formatErrorMessage(
-              JSON.stringify(stepResponse.output) ||
-                t('Failed to run test step and no error message was returned'),
+              JSON.stringify(output) ||
+              t('Failed to run test step and no error message was returned'),
             ),
           );
         }
-
+        refetchSampleData()
         setLastTestDate(dayjs().toISOString());
       },
       onError: (error) => {
@@ -106,13 +121,13 @@ const TestActionSection = React.memo(
             </TestButtonTooltip>
           </div>
         )}
-        {sampleDataExists && (
+        {sampleDataExists && !isSampleDataLoading && (
           <TestSampleDataViewer
             onRetest={mutate}
             isValid={isValid}
             isSaving={isSaving}
             isTesting={isTesting}
-            currentSelectedData={currentSelectedData}
+            sampleData={sampleData}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
           ></TestSampleDataViewer>

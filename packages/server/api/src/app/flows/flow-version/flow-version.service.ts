@@ -6,7 +6,6 @@ import {
     apId,
     BranchActionSettingsWithValidation,
     Cursor,
-    DEFAULT_SAMPLE_DATA_SETTINGS,
     ErrorCode,
     flowHelper,
     FlowId,
@@ -88,7 +87,6 @@ export const flowVersionService = {
                     flowId: flowVersion.flowId,
                     versionId: userOperation.request.versionId,
                     removeConnectionsName: false,
-                    removeSampleData: false,
                 })
 
                 operations = handleImportFlowOperation(flowVersion, previousVersion)
@@ -204,7 +202,7 @@ export const flowVersionService = {
                 'flow_version.updatedByUser',
                 'user',
                 'user',
-                'flow_version.updatedBy = "user"."id"',
+                'flow_version."updatedBy" = "user"."id"',
             ).where({
                 flowId,
             }),
@@ -218,7 +216,6 @@ export const flowVersionService = {
         flowId,
         versionId,
         removeConnectionsName = false,
-        removeSampleData = false,
         entityManager,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
         const flowVersion: FlowVersion | null = await flowVersionRepo(entityManager).findOne({
@@ -243,7 +240,7 @@ export const flowVersionService = {
             })
         }
 
-        return removeSecretsFromFlow(flowVersion, removeConnectionsName, removeSampleData)
+        return removeSecretsFromFlow(flowVersion, removeConnectionsName)
     },
     async createEmptyVersion(
         flowId: FlowId,
@@ -280,23 +277,19 @@ async function applySingleOperation(
         flowVersion,
         operation,
     })
-    operation = await prepareRequest(projectId, flowVersion, operation)
+    operation = await prepareRequest(projectId, operation)
     return flowHelper.apply(flowVersion, operation)
 }
 
 async function removeSecretsFromFlow(
     flowVersion: FlowVersion,
     removeConnectionNames: boolean,
-    removeSampleData: boolean,
 ): Promise<FlowVersion> {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(
         JSON.stringify(flowVersion),
     )
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
     for (const step of steps) {
-        if (removeSampleData) {
-            step.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
-        }
         if (removeConnectionNames) {
             step.settings.input = replaceConnections(step.settings.input)
         }
@@ -359,7 +352,6 @@ function handleImportFlowOperation(
 
 async function prepareRequest(
     projectId: ProjectId,
-    flowVersion: FlowVersion,
     request: FlowOperationRequest,
 ): Promise<FlowOperationRequest> {
     const clonedRequest: FlowOperationRequest = JSON.parse(
@@ -611,7 +603,6 @@ type GetFlowVersionOrThrowParams = {
     flowId: FlowId
     versionId: FlowVersionId | undefined
     removeConnectionsName?: boolean
-    removeSampleData?: boolean
     entityManager?: EntityManager
 }
 

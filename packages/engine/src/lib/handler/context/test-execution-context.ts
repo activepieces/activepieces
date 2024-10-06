@@ -52,7 +52,7 @@ export const testExecutionContext = {
                         input: step.settings,
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,
-                        output: inputUiInfo?.currentSelectedData,
+                        output: inputUiInfo?.sampleData,
                     }))
                     break
             }

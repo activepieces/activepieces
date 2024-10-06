@@ -21,8 +21,8 @@ import {
     UpdateTriggerRequest,
 } from './flow-operations'
 import { FlowVersion, FlowVersionState } from './flow-version'
-import { DEFAULT_SAMPLE_DATA_SETTINGS } from './sample-data'
 import { Trigger, TriggerType } from './triggers/trigger'
+import { DEFAULT_SAMPLE_DATA_SETTINGS } from './sample-data'
 
 type Step = Action | Trigger
 
@@ -805,10 +805,6 @@ function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion):
     const duplicatedStep = transferStep(clonedStep, (step: Step) => {
         step.displayName = `${step.displayName} Copy`
         step.name = oldNameToNewName[step.name]
-        if (step.settings.inputUiInfo) {
-            step.settings.inputUiInfo.currentSelectedData = undefined
-            step.settings.inputUiInfo.lastTestDate = undefined
-        }
         oldStepsNameToReplace.forEach((oldName) => {
             step.settings.input = applyFunctionToValuesSync(step.settings.input, (value: unknown) => {
                 if (isString(value)) {

@@ -43,6 +43,7 @@ import { flowService } from '../flow/flow.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logSerializer } from './log-serializer'
+import { sampleDataService } from '../step-run/sample-data.service'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 
@@ -313,13 +314,15 @@ export const flowRunService = {
     async test({ projectId, flowVersionId }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
-        const payload =
-            flowVersion.trigger.settings.inputUiInfo.currentSelectedData
-
+        const sampleDataFileId = flowVersion.trigger.settings.inputUiInfo.sampleDataFileId
+        const sampleData = await sampleDataService.getOrThrow({
+            projectId,
+            id: sampleDataFileId,
+        })
         return this.start({
             projectId,
             flowVersionId,
-            payload,
+            payload: sampleData.data,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: webhookResponseWatcher.getServerId(),

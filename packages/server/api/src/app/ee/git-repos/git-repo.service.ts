@@ -107,7 +107,6 @@ export const gitRepoService = {
                     id: request.flowId,
                     projectId: project.id,
                     removeConnectionsName: false,
-                    removeSampleData: true,
                 })
                 const flowName = mappingState.findSourceId(request.flowId) ?? request.flowId
                 await gitSyncHelper.upsertFlowToGit(flowName, flow, flowFolderPath)
