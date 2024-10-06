@@ -80,7 +80,7 @@
     "@segment/analytics-next": "1.72.0",
     "@segment/analytics-node": "2.1.0",
     "@sendgrid/mail": "8.0.0",
-    "@sentry/node": "7.64.0",
+    "@sentry/node": "7.75.0",
     "@sinclair/typebox": "0.32.35",
     "@slack/web-api": "7.0.4",
     "@socket.io/redis-adapter": "8.2.1",
