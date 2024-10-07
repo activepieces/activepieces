@@ -53,7 +53,6 @@ export const replicate: AIFactory = ({ proxyUrl, engineToken }): AI => {
   };
 };
 
-// TODO: Support "advanced" params per model such that each model can have its own "advanced" params as action properties
 const commonImageCodec = imageCodec({
   encodeInput: async (params) => {
     const [width, height] = params.size?.split('x').map(Number) ?? [512, 512];
