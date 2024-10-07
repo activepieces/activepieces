@@ -22,7 +22,7 @@ export const googleSearchConsoleAuth = PieceAuth.OAuth2({
   9. Click on the Add Users button and add a test email You can add your own email).Then finally click Save and Continue to finish the Test Users portion.
   10. Go to **Credentials**. Click on the **Create Credentials** button and select the **OAuth client ID** option.
   11. Select the application type as **Web Application** and fill the Name field.
-  12. Add https://www.cloud.activepieces.com/redirect in **Authorized redirect URIs** field, and click on the Create button.
+  12. Add https://cloud.activepieces.com/redirect in **Authorized redirect URIs** field, and click on the Create button.
   13. Copy **Client ID** and **Client Secret**.`,
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
   tokenUrl: 'https://oauth2.googleapis.com/token',

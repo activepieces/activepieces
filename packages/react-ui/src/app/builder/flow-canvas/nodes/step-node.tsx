@@ -85,7 +85,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
   ] = useBuilderStateContext((state) => [
     state.selectStepByName,
     state.setAllowCanvasPanning,
-    state.selectedStep === data.step?.name,
+    !isNil(state.selectedStep) && state.selectedStep === data.step?.name,
     state.activeDraggingStep === data.step?.name,
     state.selectedStep,
     state.run,
