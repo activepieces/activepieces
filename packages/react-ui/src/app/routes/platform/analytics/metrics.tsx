@@ -1,15 +1,12 @@
+import { AnalyticsReportResponse } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Building, User, Workflow, Puzzle, Bot, Info } from 'lucide-react';
+import { Building, User, Workflow, Puzzle, Bot } from 'lucide-react';
 import React from 'react';
+
+import { InfoTooltip } from '../../../../components/ui/info-tooltip';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { AnalyticsReportResponse } from '@activepieces/shared';
 
 type MetricProps = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -33,12 +30,7 @@ const Metric = ({
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center space-x-2">
           <CardTitle className="text-md font-medium">{title}</CardTitle>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-muted-foreground " />
-            </TooltipTrigger>
-            <TooltipContent>{description}</TooltipContent>
-          </Tooltip>
+          <InfoTooltip>{description}</InfoTooltip>
         </div>
         <Icon className={`h-5 w-5 ${iconColor}`} />
       </CardHeader>
