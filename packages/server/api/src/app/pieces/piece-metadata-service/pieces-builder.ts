@@ -21,13 +21,16 @@ async function handleFileChange(piecePackageName: string, io: Server): Promise<v
         await mutex.acquire()
 
         logger.info(chalk.blue.bold('🤌 Building pieces... 🤌'))
-        const cmd = `nx run-many -t build --projects=${piecePackageName}`
+        if (!/^[a-z0-9-]+$/.test(piecePackageName)) {
+            throw new Error(`Piece package name contains invalid character: ${piecePackageName}`)
+        }
+        const cmd = `npx nx run-many -t build --projects=${piecePackageName}`
         await runCommandWithLiveOutput(cmd)
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
-    } 
+    }
     catch (error) {
         logger.info(chalk.red.bold('Failed to run build process...'), error)
-    } 
+    }
     finally {
         mutex.release()
         logger.info(
@@ -42,7 +45,7 @@ async function runCommandWithLiveOutput(cmd: string): Promise<void> {
     const [command, ...args] = cmd.split(' ')
 
     return new Promise<void>((resolve, reject) => {
-        const child = spawn(command, args, { stdio: 'inherit' })
+        const child = spawn(command, args, { stdio: 'inherit', shell: true })
 
         child.on('error', reject)
         child.on('close', code => {
@@ -77,6 +80,6 @@ export async function piecesBuilder(io: Server): Promise<void> {
                 debouncedHandleFileChange()
             }
         })
-        
+
     }
 }

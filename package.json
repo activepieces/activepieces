@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.33.0",
-  "rcVersion": "0.34.0-rc.0",
+  "rcVersion": "0.34.0-rc.2",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -262,6 +262,7 @@
     "typeorm": "0.3.18",
     "url": "0.11.3",
     "use-debounce": "10.0.1",
+    "use-deep-compare-effect": "1.8.1",
     "use-ripple-hook": "1.0.24",
     "usehooks-ts": "3.1.0",
     "vaul": "0.9.1",
