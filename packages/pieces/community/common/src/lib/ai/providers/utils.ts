@@ -45,7 +45,7 @@ export function model(options: {
 export interface ImageModelCodec {
   __tag: "image-codec",
   encodeInput: (input: AIImageGenerateParams) => Promise<object>;
-  decodeOutput: (output: object) => Promise<AIImageCompletion>;
+  decodeOutput: (output: object) => Promise<AIImageCompletion | null>;
   advancedOptions?: Record<string, DynamicProp>;
 }
 export interface ChatModelCodec {

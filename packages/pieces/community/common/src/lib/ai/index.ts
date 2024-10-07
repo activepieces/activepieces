@@ -16,7 +16,6 @@ export type AIImage = {
 export type AIImageGenerateParams = {
   prompt: string;
   model: string;
-  quality?: string;
   size?: string;
   advancedOptions?: Record<string, unknown>;
 };

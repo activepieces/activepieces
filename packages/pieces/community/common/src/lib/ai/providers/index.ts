@@ -7,7 +7,7 @@ import {
 import { Static, Type } from '@sinclair/typebox';
 import { httpClient, HttpMethod } from '../../http';
 import { anthropic } from './anthropic';
-import { openai } from './openai';
+import { openai, openaiModels } from './openai';
 import { replicate, replicateModels } from './replicate';
 import { authHeader, model } from './utils';
 
@@ -37,14 +37,7 @@ export const AI_PROVIDERS = [
     defaultBaseUrl: 'https://api.openai.com',
     label: 'OpenAI' as const,
     value: 'openai' as const,
-    models: [
-      model({ label: 'gpt-4o', value: 'gpt-4o', supported: ['text', 'function'] }),
-      model({ label: 'gpt-4o-mini', value: 'gpt-4o-mini', supported: ['text', 'function'] }),
-      model({ label: 'gpt-4-turbo', value: 'gpt-4-turbo', supported: ['text', 'function'] }),
-      model({ label: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo', supported: ['text'] }),
-      model({ label: 'dall-e-3', value: 'dall-e-3', supported: ['image'] }),
-      model({ label: 'dall-e-2', value: 'dall-e-2', supported: ['image'] }),
-    ],
+    models: openaiModels,
     auth: authHeader({ bearer: true }),
     factory: openai,
     instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.openai,

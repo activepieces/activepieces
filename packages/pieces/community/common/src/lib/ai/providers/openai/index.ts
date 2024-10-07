@@ -1,28 +1,23 @@
-import OpenAI from 'openai';
 import { AI, AIChatRole, AIFactory } from '../..';
+import { isNil } from '@activepieces/shared';
+import OpenAI from 'openai';
+import { imageCodec, model } from '../utils';
+import { Property } from '@activepieces/pieces-framework';
 
 export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const openaiApiVersion = 'v1';
   const sdk = new OpenAI({
     apiKey: engineToken,
     baseURL: `${proxyUrl}/${openaiApiVersion}`,
-    defaultHeaders: {
-      'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.total_tokens',
-    },
   });
   return {
     provider: 'OPENAI',
     image: {
       generate: async (params) => {
-        const response = await sdk.images.generate({
-          model: params.model,
-          prompt: params.prompt,
-          quality: params.quality as any,
-          size: params.size as any,
-          response_format: 'b64_json',
-        });
-        const imageBase64 = response.data[0].b64_json;
-        return imageBase64 ? { image: imageBase64 } : null;
+        const codec = findImageCodec(params.model);
+        const input = await codec.encodeInput(params);
+        const response = await sdk.images.generate(input as any);
+        return codec.decodeOutput(response);
       },
     },
     chat: {
@@ -112,3 +107,55 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
     },
   };
 };
+
+const findImageCodec = (model: string) => {
+  const codec = openaiModels.find(m => m.value === model)?.codec;
+  if (isNil(codec) || !("__tag" in codec) || codec.__tag !== `image-codec`) {
+    throw new Error(`OpenAI image model ${model} not found`);
+  }
+  return codec;
+};
+
+const openaiImageCodec = imageCodec({
+  encodeInput: async params => {
+    return {
+      model: params.model,
+      prompt: params.prompt,
+      quality: params.advancedOptions?.['quality'] as any,
+      size: params.size as any,
+      response_format: 'b64_json',
+    }
+  },
+  decodeOutput: async (result) => {
+    const response = result as OpenAI.Images.ImagesResponse
+    const imageBase64 = response.data[0].b64_json;
+    return imageBase64 ? { image: imageBase64 } : null;
+  },
+  advancedOptions: {
+    quality: Property.StaticDropdown({
+      options: {
+        options: [
+          { label: 'Standard', value: 'standard' },
+          { label: 'HD', value: 'hd' },
+        ],
+        disabled: false,
+        placeholder: 'Select Image Quality',
+      },
+      defaultValue: 'standard',
+      description: 'Standard images are less detailed and faster to generate, while HD images are more detailed but slower to generate.',
+      displayName: 'Image Quality',
+      required: true,
+    }),
+  },
+})
+
+export const openaiModels = [
+  model({ label: 'gpt-4o', value: 'gpt-4o', supported: ['text', 'function'] }),
+  model({ label: 'gpt-4o-mini', value: 'gpt-4o-mini', supported: ['text', 'function'] }),
+  model({ label: 'gpt-4-turbo', value: 'gpt-4-turbo', supported: ['text', 'function'] }),
+  model({ label: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo', supported: ['text'] }),
+  model({ label: 'dall-e-3', value: 'dall-e-3', supported: ['image'] })
+    .codec(openaiImageCodec),
+  model({ label: 'dall-e-2', value: 'dall-e-2', supported: ['image'] })
+    .codec(openaiImageCodec),
+]
