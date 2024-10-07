@@ -1,6 +1,6 @@
 'use client';
 
-import { SeekPage } from '@activepieces/shared';
+import { isNil, SeekPage } from '@activepieces/shared';
 import {
   ColumnDef,
   flexRender,
@@ -8,7 +8,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { t } from 'i18next';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -78,10 +78,15 @@ interface DataTableProps<
   Keys extends string,
   F extends DataTableFilter<Keys>,
 > {
+  allowOrdering?: boolean;
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
   fetchData: (
     filters: FilterRecord<Keys, F>,
     pagination: PaginationParams,
+    order?: {
+      column:string,
+      order:'DESC'| 'ASC'
+    }
   ) => Promise<SeekPage<TData>>;
   onRowClick?: (
     row: RowDataWithActions<TData>,
@@ -109,7 +114,9 @@ export function DataTable<
   actions = [],
   onSelectedRowsChange,
   hidePagination,
+  allowOrdering
 }: DataTableProps<TData, TValue, Keys, F>) {
+  
   const columns = columnsInitial.concat([
     {
       accessorKey: '__actions',
@@ -179,7 +186,7 @@ export function DataTable<
         limit: limit ? parseInt(limit) : undefined,
         createdAfter: params.get('createdAfter') ?? undefined,
         createdBefore: params.get('createdBefore') ?? undefined,
-      });
+      },orderByHeader.current);
       const newData = response.data.map((row, index) => ({
         ...row,
         delete: () => {
@@ -247,6 +254,7 @@ export function DataTable<
       ),
     );
   }, [deletedRows]);
+  const orderByHeader = useRef<{column: string, order:'ASC'| 'DESC' } | undefined>(undefined)
   return (
     <div>
       <DataTableToolbar>
@@ -268,7 +276,21 @@ export function DataTable<
               <TableRow key={headerGroup.id} hoverable={false}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead className={allowOrdering? 'cursor-pointer':''} key={header.id} onClick={()=>{
+                      if(isNil(orderByHeader.current) || orderByHeader.current.column !== header.id)
+                      {
+                        orderByHeader.current = {
+                          column: header.id,
+                          order: 'DESC'
+                        }
+                      }
+                      else 
+                      {
+                         orderByHeader.current.order = orderByHeader.current.order === 'ASC'? 'DESC': 'ASC';
+                      }                 
+                    
+                        fetchDataAndUpdateState(searchParams)
+                    }}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(

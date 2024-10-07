@@ -15,6 +15,7 @@ import { CheckIcon } from 'lucide-react';
 const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
   [
     {
+      id:'name',
       accessorKey: 'name',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Name')} />
@@ -24,6 +25,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
+      id:'users',
       accessorKey: 'users',
       header: ({ column }) => (
         <div className="flex gap-1 items-center">
@@ -38,6 +40,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
+      id:'flowsCreated',
       accessorKey: 'flowsCreated',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Flows Created')} />
@@ -47,7 +50,8 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      accessorKey: 'flowsPublished',
+      id:'publishes',
+      accessorKey: 'publishes',
       header: ({ column }) => (
         <div className="flex gap-1 items-center">
           <DataTableColumnHeader column={column} title={t('Publishes')} />
@@ -61,6 +65,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
+      id:'flowEdits',
       accessorKey: 'flowEdits',
       header: ({ column }) => (
         <div className="flex gap-1 items-center">
@@ -75,6 +80,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
+      id:'tasks',
       accessorKey: 'tasks',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Tasks')} />
@@ -84,7 +90,8 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      accessorKey: 'pieces',
+      id:'piecesUsed',
+      accessorKey: 'piecesUsed',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Pieces Used')} />
       ),
@@ -93,7 +100,8 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      accessorKey: 'connections',
+      id: 'connectionsCreated',
+      accessorKey: 'connectionsCreated',
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -102,7 +110,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       ),
       cell: ({ row }) => {
         return (
-          <div className="text-left">{row.original.connectionCreated}</div>
+          <div className="text-left">{row.original.connectionsCreated}</div>
         );
       },
     },
@@ -134,12 +142,15 @@ export const ProjectsLeaderBoard = () => {
       <DataTable
         columns={columns}
         filters={filters}
-        fetchData={(_, pagination) => {
+        allowOrdering={true}
+        fetchData={(_, pagination,order) => {
           return analyticsApi.listProjectsLeaderBoard({
             cursor: pagination.cursor,
             limit: pagination.limit ?? 10,
             createdAfter: pagination.createdAfter,
-            createdBefore: pagination.createdBefore
+            createdBefore: pagination.createdBefore,
+           orderByColumn: order?.column,
+           order: order?.order,
           });
         }}
       ></DataTable>

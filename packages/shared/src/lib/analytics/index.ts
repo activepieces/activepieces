@@ -54,7 +54,7 @@ Type.Object({
     flowsCreated: Type.String(),
     tasks: Type.String(),
     runs: Type.String(),
-    connectionCreated: Type.String(),
+    connectionsCreated: Type.String(),
     publishes: Type.String(),
     flowEdits: Type.String(),
     users: Type.String(),
@@ -71,10 +71,8 @@ export const ListPlatformProjectsLeaderboardParams = Type.Object({
     limit: Type.Optional(Type.Number()),
     createdAfter: Type.Optional(Type.String()),
     createdBefore: Type.Optional(Type.String()),
-    orderBy: Type.Optional(Type.Object({
-        column: Type.KeyOf(PlatformProjectLeaderBoardRow),
-        order: Type.TemplateLiteral('${ASC|DESC}')
-    }))
+    orderByColumn: Type.Optional(Type.String()),
+    order: Type.Optional(Type.TemplateLiteral('${ASC|DESC}'))
 })
 
 export type ListPlatformProjectsLeaderboardParams = Static<

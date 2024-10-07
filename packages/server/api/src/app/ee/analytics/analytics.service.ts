@@ -219,9 +219,10 @@ async function generateProjectsLeaderboard(
     params: ListPlatformProjectsLeaderboardParams,
     platformId: string,
 ) {
-    const orderBy = params.orderBy?? {
-        column: 'tasks',
-        order: 'DESC'
+
+    const orderBy = {
+        column: params.orderByColumn?? 'tasks',
+        order: params.order?? 'DESC'
     }
     const decodedCursor = paginationHelper.decodeCursor(params.cursor ?? null)
     const paginator = buildPaginator({
@@ -303,19 +304,19 @@ async function generateProjectsLeaderboard(
             (subQuery) => {
                 return addDateLimitsToQuery(subQuery
                     .select('"audit_event"."projectId"', 'projectId')
-                    .addSelect('COUNT(audit_event.id)', 'connectionCreated')
+                    .addSelect('COUNT(audit_event.id)', 'connectionsCreated')
                     .from('audit_event', 'audit_event')
                     .where({
                         action: In([ApplicationEventName.CONNECTION_UPSERTED]),
                     })
                     .groupBy('"audit_event"."projectId"'),params)
             },
-            'connectionCreated',
-            '"connectionCreated"."projectId" = project.id',
+            'connectionsCreated',
+            '"connectionsCreated"."projectId" = project.id',
         )
         .addSelect(
-            'COALESCE("connectionCreated"."connectionCreated", 0)',
-            'connectionCreated',
+            'COALESCE("connectionsCreated"."connectionsCreated", 0)',
+            'connectionsCreated',
         )
 
     //Flows Published
@@ -412,10 +413,10 @@ async function generateProjectsLeaderboard(
         )
         .addSelect('COALESCE("piecesUsed"."piecesUsed", 0)', 'piecesUsed')
         .orderBy({
-            [orderBy.column]: orderBy.order
+            [`"${orderBy.column}"`]: orderBy.order
         })
         
-    logger.debug(queryBuilder.getSql())
+    logger.debug(orderBy)
     const { data, cursor } = await paginator.paginateRaw<PlatformProjectLeaderBoardRow>(queryBuilder)
     return {
         data,
