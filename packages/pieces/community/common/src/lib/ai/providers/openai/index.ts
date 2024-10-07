@@ -110,5 +110,29 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
         };
       },
     },
+    voice: {
+      createSpeech: async (params) => {
+        const response = await sdk.audio.speech.create({
+          model: params.model,
+          input: params.input,
+          voice: params.voice as
+            | 'alloy'
+            | 'echo'
+            | 'fable'
+            | 'onyx'
+            | 'nova'
+            | 'shimmer',
+          speed: params.speed,
+          response_format: params.response_format as
+            | 'mp3'
+            | 'opus'
+            | 'aac'
+            | 'flac'
+            | 'wav'
+            | 'pcm',
+        });
+        return Buffer.from(await response.arrayBuffer());
+      },
+    },
   };
 };

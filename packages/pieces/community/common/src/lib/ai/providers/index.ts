@@ -38,6 +38,8 @@ export const AI_PROVIDERS = [
       { label: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo', types: ['text'] },
       { label: 'dall-e-3', value: 'dall-e-3', types: ['image'] },
       { label: 'dall-e-2', value: 'dall-e-2', types: ['image'] },
+      { label: 'tts-1', value: 'tts-1', types: ['speech'] },
+      { label: 'tts-1-hd', value: 'tts-1-hd', types: ['speech'] },
     ],
     auth: authHeader({ bearer: true }),
     factory: openai,
@@ -76,7 +78,7 @@ export const AI_PROVIDERS = [
   },
 ];
 
-export const aiProps = (type: 'text' | 'image') => ({
+export const aiProps = (type: 'text' | 'image' | 'speech') => ({
   provider: Property.Dropdown<AiProvider, true>({
     displayName: 'Provider',
     required: true,
