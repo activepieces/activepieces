@@ -1,5 +1,6 @@
 'use client';
 
+import { SeekPage } from '@activepieces/shared';
 import {
   ColumnDef,
   flexRender,
@@ -10,16 +11,6 @@ import { t } from 'i18next';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { SeekPage } from '@activepieces/shared';
 
 import { Button } from './button';
 import { DataTableColumnHeader } from './data-table-column-header';
@@ -34,6 +25,15 @@ import {
   SelectItem,
 } from './select';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 export type DataWithId = {
   id?: string;
@@ -216,15 +216,6 @@ export function DataTable<
     },
   });
 
-  useEffect(() => {
-    filters?.forEach((filter) => {
-      const column = table.getColumn(filter.accessorKey);
-      const values = searchParams.getAll(filter.accessorKey);
-      if (column && values) {
-        column.setFilterValue(values);
-      }
-    });
-  }, []);
 
   useDeepCompareEffect(() => {
     onSelectedRowsChange?.(
@@ -256,7 +247,6 @@ export function DataTable<
       ),
     );
   }, [deletedRows]);
-
   return (
     <div>
       <DataTableToolbar>
@@ -265,9 +255,9 @@ export function DataTable<
             <DataTableFacetedFilter
               key={filter.accessorKey}
               type={filter.type}
-              column={table.getColumn(filter.accessorKey)}
               title={filter.title}
               options={filter.options}
+              accessorKey={filter.accessorKey}
             />
           ))}
       </DataTableToolbar>
@@ -275,7 +265,7 @@ export function DataTable<
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-background">
+              <TableRow key={headerGroup.id} hoverable={false}>
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>

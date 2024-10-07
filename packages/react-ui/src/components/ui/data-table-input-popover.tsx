@@ -10,16 +10,17 @@ import { Separator } from './seperator';
 
 type DataTableInputPopoverProps = {
   title?: string;
-  filterValue: string;
   handleFilterChange: (filterValue: string) => void;
+  intialValue:string
 };
 
 const DataTableInputPopover = ({
   title,
-  filterValue,
   handleFilterChange,
+  intialValue
 }: DataTableInputPopoverProps) => {
-  const [searchQuery, setSearchQuery] = useState(filterValue);
+  
+  const [searchQuery, setSearchQuery] = useState(intialValue);
   const [debouncedQuery] = useDebounce(searchQuery, 300);
 
   useEffect(() => {
@@ -32,14 +33,14 @@ const DataTableInputPopover = ({
         <Button variant="outline" size="sm" className="h-8 border-dashed">
           <PlusCircledIcon className="mr-2 size-4" />
           {title}
-          {filterValue.length > 0 && (
+          {searchQuery.length > 0 && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
                 variant="secondary"
                 className="rounded-sm px-1 font-normal max-w-40 truncate"
               >
-                {filterValue}
+                {searchQuery}
               </Badge>
             </>
           )}
