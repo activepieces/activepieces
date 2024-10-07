@@ -5,7 +5,6 @@ import { analyticsService } from './analytics.service';
 import { piecesAnalyticsService } from './pieces-analytics.service';
 import {
   ListPlatformProjectsLeaderboardParams,
-  PlatfromProjectLeaderBoardRow,
   PrincipalType,
   SeekPage,
 } from '../../../../../../shared/src';
