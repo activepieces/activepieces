@@ -42,7 +42,6 @@ export type AIChatCompletionsCreateParams = {
 };
 
 export type AIChatCompletion = {
-  id: string;
   choices: AIChatMessage[];
   usage?: AIChatCompletionUsage;
 };

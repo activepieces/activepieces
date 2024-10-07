@@ -39,7 +39,6 @@ export const anthropic: AIFactory = ({
               role: AIChatRole.ASSISTANT,
             })),
           created: new Date().getTime(),
-          id: completion.id,
           model: completion.model,
           usage: {
             completionTokens: completion.usage.output_tokens,
@@ -95,7 +94,6 @@ export const anthropic: AIFactory = ({
               arguments: toolCall.input,
             },
           } : null,
-          id: completion.id,
           model: completion.model,
           created: new Date().getTime(),
           usage: {

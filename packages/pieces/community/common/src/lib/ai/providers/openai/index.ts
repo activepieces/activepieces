@@ -39,7 +39,6 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
             content: choice.message.content ?? '',
           })),
           created: completion.created,
-          id: completion.id,
           model: completion.model,
           usage: completion.usage && {
             completionTokens: completion.usage.completion_tokens,
@@ -95,7 +94,6 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
             }
             : null,
           created: completion.created,
-          id: completion.id,
           model: completion.model,
           usage: completion.usage && {
             completionTokens: completion.usage.completion_tokens,

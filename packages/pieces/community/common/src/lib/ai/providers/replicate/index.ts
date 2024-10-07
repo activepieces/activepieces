@@ -1,8 +1,8 @@
 import { Property } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 import Replicate from 'replicate';
-import { AI, AIFactory } from '@activepieces/pieces-common';
-import { ChatModelCodec, imageCodec, ImageModelCodec, model } from '../utils';
+import { AI, AIChatRole, AIFactory } from '../..';
+import { chatCodec, ChatModelCodec, imageCodec, ImageModelCodec, model } from '../utils';
 
 export const replicate: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const sdk = new Replicate({
@@ -85,7 +85,83 @@ const commonImageCodec = imageCodec({
   }
 })
 
+const llamaCodec = chatCodec({
+  encodeInput: async (params) => {
+    const concatenatedSystemMessage = params.messages
+      .filter((message) => message.role === AIChatRole.SYSTEM)
+      .map((message) => message.content)
+      .join('\n');
+    return {
+      system_prompt: concatenatedSystemMessage,
+      temperature: Math.tanh(params.creativity ?? 100),
+      prompt: params.messages
+        .filter((message) => message.role !== AIChatRole.SYSTEM)
+        .map((message) => `${message.role}: ${message.content}`)
+        .join('\n'),
+      stop_sequences: params.stop,
+      max_tokens: params.maxTokens,
+    };
+  },
+  decodeOutput: async (output) => {
+    const choices = output as Array<string>;
+    return {
+      choices: [{
+        content: choices.join(""),
+        role: AIChatRole.ASSISTANT,
+      }],
+    }
+  },
+});
+
+const mistralCodec = chatCodec({
+  encodeInput: async (params) => {
+    const concatenatedSystemMessage = params.messages
+      .filter((message) => message.role === AIChatRole.SYSTEM)
+      .map((message) => message.content)
+      .join('\n');
+    return {
+      system_prompt: concatenatedSystemMessage,
+      temperature: Math.tanh(params.creativity ?? 100),
+      prompt: params.messages
+        .filter((message) => message.role !== AIChatRole.SYSTEM)
+        .map((message) => `${message.role}: ${message.content}`)
+        .join('\n'),
+      stop_sequences: params.stop,
+      max_new_tokens: params.maxTokens,
+    };
+  },
+  decodeOutput: async (output) => {
+    const choices = output as Array<string>;
+    return {
+      choices: [{
+        content: choices.join(""),
+        role: AIChatRole.ASSISTANT,
+      }],
+    }
+  },
+});
+
 export const replicateModels = [
+  model({
+    label: "meta/meta-llama-3-70b-instruct",
+    value: "meta/meta-llama-3-70b-instruct",
+    supported: ['text']
+  }).codec(llamaCodec),
+  model({
+    label: "meta/meta-llama-3-8b-instruct",
+    value: "meta/meta-llama-3-8b-instruct",
+    supported: ['text']
+  }).codec(llamaCodec),
+  model({
+    label: "mistralai/mixtral-8x7b-instruct-v0.1",
+    value: "mistralai/mixtral-8x7b-instruct-v0.1",
+    supported: ['text']
+  }).codec(mistralCodec),
+  model({
+    label: "mistralai/mistral-7b-instruct-v0.2",
+    value: "mistralai/mistral-7b-instruct-v0.2",
+    supported: ['text']
+  }).codec(mistralCodec),
   model({ label: 'bytedance/sdxl-lightning-4step', value: 'bytedance/sdxl-lightning-4step:5599ed30703defd1d160a25a63321b4dec97101d98b4674bcc56e41f62f35637', supported: ['image'] })
     .codec(commonImageCodec),
   model({ label: 'stability-ai/stable-diffusion', value: 'stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4', supported: ['image'] })
