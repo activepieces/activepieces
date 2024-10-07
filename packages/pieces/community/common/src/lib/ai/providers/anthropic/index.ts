@@ -16,7 +16,6 @@ export const anthropic: AIFactory = ({
   });
   return {
     provider: 'ANTHROPIC' as const,
-    image: undefined,
     chat: {
       text: async (params) => {
         const concatenatedSystemMessage = params.messages

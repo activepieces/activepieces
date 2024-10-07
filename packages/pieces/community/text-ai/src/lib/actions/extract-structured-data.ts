@@ -9,10 +9,10 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 export const extractStructuredData = createAction({
   name: 'extractStructuredData',
   displayName: 'Extract Structured Data',
-  description: '',
+  description: 'Extract structured data from unstructured text',
   props: {
-    provider: aiProps('text').provider,
-    model: aiProps('text').model,
+    provider: aiProps('function').provider,
+    model: aiProps('function').model,
     text: Property.LongText({
       displayName: 'Unstructured Text',
       required: true,
@@ -65,7 +65,13 @@ export const extractStructuredData = createAction({
 
     const ai = AI({ provider, server: context.server });
 
-    const response = await ai.chat.function({
+    const functionCalling = ai.chat.function;
+
+    if (!functionCalling) {
+      throw new Error(`Function calling is not supported by provider ${provider}`);
+    }
+
+    const response = await functionCalling({
       model: context.propsValue.model,
       messages: [
         {

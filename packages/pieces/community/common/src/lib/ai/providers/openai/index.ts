@@ -92,12 +92,12 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
           })),
           call: toolCall
             ? {
-                id: toolCall.id,
-                function: {
-                  name: toolCall.function.name,
-                  arguments: JSON.parse(toolCall.function.arguments as string),
-                },
-              }
+              id: toolCall.id,
+              function: {
+                name: toolCall.function.name,
+                arguments: JSON.parse(toolCall.function.arguments as string),
+              },
+            }
             : null,
           created: completion.created,
           id: completion.id,
