@@ -1,4 +1,4 @@
-import { ServerContext } from '@activepieces/pieces-framework';
+import { ApFile, ServerContext } from '@activepieces/pieces-framework';
 import { AI_PROVIDERS, AiProvider } from './providers';
 
 export type AI = {
@@ -36,6 +36,9 @@ export type AIChat = {
 
 export type AIVoice = {
   createSpeech: (params: AISpeechCreateParams) => Promise<any>;
+  createTranscription: (
+    params: AITranscriptionCreateParams
+  ) => Promise<AITranscriptionCreateResponse>;
 };
 
 export type AISpeechCreateParams = {
@@ -44,6 +47,16 @@ export type AISpeechCreateParams = {
   voice: string;
   speed?: number;
   response_format?: string;
+};
+
+export type AITranscriptionCreateParams = {
+  audio: ApFile;
+  language: string;
+  model: string;
+};
+
+export type AITranscriptionCreateResponse = {
+  text: string;
 };
 
 export type AIChatCompletionsCreateParams = {

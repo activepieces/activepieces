@@ -40,6 +40,7 @@ export const AI_PROVIDERS = [
       { label: 'dall-e-2', value: 'dall-e-2', types: ['image'] },
       { label: 'tts-1', value: 'tts-1', types: ['speech'] },
       { label: 'tts-1-hd', value: 'tts-1-hd', types: ['speech'] },
+      { label: 'whisper-1', value: 'whisper-1', types: ['transcription'] },
     ],
     auth: authHeader({ bearer: true }),
     factory: openai,
@@ -78,7 +79,9 @@ export const AI_PROVIDERS = [
   },
 ];
 
-export const aiProps = (type: 'text' | 'image' | 'speech') => ({
+export const aiProps = (
+  type: 'text' | 'image' | 'speech' | 'transcription'
+) => ({
   provider: Property.Dropdown<AiProvider, true>({
     displayName: 'Provider',
     required: true,

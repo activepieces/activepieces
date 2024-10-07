@@ -4,7 +4,7 @@ import { AI, aiProps } from '@activepieces/pieces-common';
 export const textToSpeech = createAction({
   name: 'textToSpeech',
   displayName: 'Text to Speech',
-  description: 'Converts text to speech',
+  description: 'Converts text to speech.',
   props: {
     provider: aiProps('speech').provider,
     model: aiProps('speech').model,
@@ -114,7 +114,7 @@ export const textToSpeech = createAction({
 
     return context.files.write({
       fileName: 'audio' + context.propsValue.format,
-      data: response as Buffer,
+      data: response.data as Buffer,
     });
   },
 });
