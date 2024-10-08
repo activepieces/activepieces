@@ -2,7 +2,7 @@ import { Property } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 import Replicate from 'replicate';
 import { AI, AIChatRole, AIFactory } from '../..';
-import { chatCodec, ChatModelCodec, imageCodec, ImageModelCodec, model } from '../utils';
+import { chatMapper, ChatModelMapper, imageMapper, ImageModelMapper, model, ModelType } from '../utils';
 
 export const replicate: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const sdk = new Replicate({
@@ -10,50 +10,42 @@ export const replicate: AIFactory = ({ proxyUrl, engineToken }): AI => {
     baseUrl: `${proxyUrl}/v1`,
   });
 
-  const findCodec = (model: string, type: 'image' | 'chat') => {
-    const codec = replicateModels.find(m => m.value === model)?.codec;
-    if (isNil(codec) || codec.__tag !== `${type}-codec`) {
-      throw new Error(`Replicate ${type} model ${model} not found`);
-    }
-    return codec;
-  };
-
   return {
     provider: 'replicate',
     image: {
       generate: async (params) => {
-        const codec = findCodec(params.model, 'image') as ImageModelCodec;
+        const mapper = findMapper(params.model, ModelType.IMAGE) as ImageModelMapper;
         const modelOwner = params.model.split('/')[0];
         const modelName = params.model.split('/')[1];
         const versionId = params.model.split(':')[1];
         const prediction = await sdk.predictions.create({
           model: `${modelOwner}/${modelName}`,
           version: versionId,
-          input: await codec.encodeInput(params),
+          input: await mapper.encodeInput(params),
         });
         const result = await sdk.wait(prediction, { interval: 500, mode: "poll" });
-        return codec.decodeOutput(result.output);
+        return mapper.decodeOutput(result.output);
       },
     },
     chat: {
       text: async (params) => {
-        const codec = findCodec(params.model, 'chat') as ChatModelCodec;
+        const mapper = findMapper(params.model, ModelType.CHAT) as ChatModelMapper;
         const modelOwner = params.model.split('/')[0];
         const modelName = params.model.split('/')[1];
         const versionId = params.model.split(':')[1];
         const prediction = await sdk.predictions.create({
           model: `${modelOwner}/${modelName}`,
           version: versionId,
-          input: await codec.encodeInput(params),
+          input: await mapper.encodeInput(params),
         });
         const result = await sdk.wait(prediction, { interval: 500, mode: "poll" });
-        return codec.decodeOutput(result.output);
+        return mapper.decodeOutput(result.output);
       },
     },
   };
 };
 
-const commonImageCodec = imageCodec({
+const commonImageMapper = imageMapper({
   encodeInput: async (params) => {
     const [width, height] = params.size?.split('x').map(Number) ?? [512, 512];
     const negativePrompt = params.advancedOptions?.['negativePrompt'] ?? null;
@@ -84,7 +76,7 @@ const commonImageCodec = imageCodec({
   }
 })
 
-const llamaCodec = chatCodec({
+const llamaMapper = chatMapper({
   encodeInput: async (params) => {
     const concatenatedSystemMessage = params.messages
       .filter((message) => message.role === AIChatRole.SYSTEM)
@@ -112,7 +104,7 @@ const llamaCodec = chatCodec({
   },
 });
 
-const mistralCodec = chatCodec({
+const mistralMapper = chatMapper({
   encodeInput: async (params) => {
     const concatenatedSystemMessage = params.messages
       .filter((message) => message.role === AIChatRole.SYSTEM)
@@ -145,32 +137,32 @@ export const replicateModels = [
     label: "meta/meta-llama-3-70b-instruct",
     value: "meta/meta-llama-3-70b-instruct",
     supported: ['text']
-  }).codec(llamaCodec),
+  }).mapper(llamaMapper),
   model({
     label: "meta/meta-llama-3-8b-instruct",
     value: "meta/meta-llama-3-8b-instruct",
     supported: ['text']
-  }).codec(llamaCodec),
+  }).mapper(llamaMapper),
   model({
     label: "mistralai/mixtral-8x7b-instruct-v0.1",
     value: "mistralai/mixtral-8x7b-instruct-v0.1",
     supported: ['text']
-  }).codec(mistralCodec),
+  }).mapper(mistralMapper),
   model({
     label: "mistralai/mistral-7b-instruct-v0.2",
     value: "mistralai/mistral-7b-instruct-v0.2",
     supported: ['text']
-  }).codec(mistralCodec),
+  }).mapper(mistralMapper),
   model({ label: 'bytedance/sdxl-lightning-4step', value: 'bytedance/sdxl-lightning-4step:5599ed30703defd1d160a25a63321b4dec97101d98b4674bcc56e41f62f35637', supported: ['image'] })
-    .codec(commonImageCodec),
+    .mapper(commonImageMapper),
   model({ label: 'stability-ai/stable-diffusion', value: 'stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4', supported: ['image'] })
-    .codec(commonImageCodec),
+    .mapper(commonImageMapper),
   model({ label: 'black-forest-labs/flux-schnell', value: 'black-forest-labs/flux-schnell', supported: ['image'] })
-    .codec(imageCodec({
+    .mapper(imageMapper({
       advancedOptions: {},
-      decodeOutput: commonImageCodec.decodeOutput,
+      decodeOutput: commonImageMapper.decodeOutput,
       encodeInput: async (params) => {
-        const commonParams = await commonImageCodec.encodeInput(params) as any;
+        const commonParams = await commonImageMapper.encodeInput(params) as any;
         const width = commonParams.width as number;
         const height = commonParams.height as number;
         const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
@@ -185,3 +177,11 @@ export const replicateModels = [
       },
     })),
 ]
+
+const findMapper = (model: string, type: ModelType) => {
+  const mapper = replicateModels.find(m => m.value === model)?.mapper;
+  if (isNil(mapper) || mapper.__tag !== type) {
+    throw new Error(`${type} model ${model} not found`);
+  }
+  return mapper;
+};

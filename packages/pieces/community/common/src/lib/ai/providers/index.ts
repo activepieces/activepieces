@@ -9,7 +9,7 @@ import { httpClient, HttpMethod } from '../../http';
 import { anthropic } from './anthropic';
 import { openai, openaiModels } from './openai';
 import { replicate, replicateModels } from './replicate';
-import { authHeader, model } from './utils';
+import { authHeader, hasMapper, model } from './utils';
 
 export const AI_PROVIDERS_MAKRDOWN = {
   openai: `Follow these instructions to get your OpenAI API Key:
@@ -144,11 +144,10 @@ export const aiProps = (supported: 'text' | 'image' | 'function') => ({
       const modelMetadata = AI_PROVIDERS.find(
         (p) => p.value === provider as unknown as string
       )?.models.find((m) => m.value === model as unknown as string);
-      console.log("XXXXXXXXXX", { modelMetadata });
-      if (isNil(modelMetadata) || modelMetadata.__tag === "no-codec") {
+      if (isNil(modelMetadata) || !hasMapper(modelMetadata)) {
         return {};
       }
-      return modelMetadata.codec.advancedOptions ?? {};
+      return modelMetadata.mapper.advancedOptions ?? {};
     },
   }),
 });

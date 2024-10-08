@@ -1,7 +1,7 @@
 import { AI, AIChatRole, AIFactory } from '../..';
 import { isNil } from '@activepieces/shared';
 import OpenAI from 'openai';
-import { imageCodec, model } from '../utils';
+import { imageMapper, model, ModelType } from '../utils';
 import { Property } from '@activepieces/pieces-framework';
 
 export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
@@ -14,10 +14,10 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
     provider: 'OPENAI',
     image: {
       generate: async (params) => {
-        const codec = findImageCodec(params.model);
-        const input = await codec.encodeInput(params);
+        const mapper = findImageMapper(params.model);
+        const input = await mapper.encodeInput(params);
         const response = await sdk.images.generate(input as any);
-        return codec.decodeOutput(response);
+        return mapper.decodeOutput(response);
       },
     },
     chat: {
@@ -106,15 +106,15 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
   };
 };
 
-const findImageCodec = (model: string) => {
-  const codec = openaiModels.find(m => m.value === model)?.codec;
-  if (isNil(codec) || !("__tag" in codec) || codec.__tag !== `image-codec`) {
+const findImageMapper = (model: string) => {
+  const mapper = openaiModels.find(m => m.value === model)?.mapper;
+  if (isNil(mapper) || !("__tag" in mapper) || mapper.__tag !== ModelType.IMAGE) {
     throw new Error(`OpenAI image model ${model} not found`);
   }
-  return codec;
+  return mapper;
 };
 
-const openaiImageCodec = imageCodec({
+const openaiImageMapper = imageMapper({
   encodeInput: async params => {
     return {
       model: params.model,
@@ -153,7 +153,7 @@ export const openaiModels = [
   model({ label: 'gpt-4-turbo', value: 'gpt-4-turbo', supported: ['text', 'function'] }),
   model({ label: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo', supported: ['text'] }),
   model({ label: 'dall-e-3', value: 'dall-e-3', supported: ['image'] })
-    .codec(openaiImageCodec),
+    .mapper(openaiImageMapper),
   model({ label: 'dall-e-2', value: 'dall-e-2', supported: ['image'] })
-    .codec(openaiImageCodec),
+    .mapper(openaiImageMapper),
 ]
