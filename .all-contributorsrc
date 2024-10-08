@@ -1271,6 +1271,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "cezudas",
+      "name": "Cezar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3786138?v=4",
+      "profile": "https://github.com/cezudas",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"
