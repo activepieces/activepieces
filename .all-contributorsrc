@@ -1271,6 +1271,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "cezudas",
+      "name": "Cezar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3786138?v=4",
+      "profile": "https://github.com/cezudas",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "geekyme-fsmk",
+      "name": "Shawn Lim",
+      "avatar_url": "https://avatars.githubusercontent.com/u/100678833?v=4",
+      "profile": "https://github.com/geekyme-fsmk",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

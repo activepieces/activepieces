@@ -8,12 +8,14 @@ export const slackInfo = Property.MarkDown({
 	  2. Click on Add apps to this channel.
 	  3. Search for and add the bot.
 
-    **Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(X)** and type the name directly.
+    **Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly.
   `,
 });
 export const slackChannel = <R extends boolean>(required: R) =>
   Property.Dropdown<string, R>({
     displayName: 'Channel',
+    description:
+      "You can get the Channel ID by right-clicking on the channel and selecting 'View Channel Details.'",
     required,
     refreshers: [],
     async options({ auth }) {
@@ -124,4 +126,3 @@ export const actions = Property.Array({
   displayName: 'Action Buttons',
   required: true,
 });
-

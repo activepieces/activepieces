@@ -46,7 +46,7 @@ export const oauth2AppsHooks = {
               });
         const cloudApps = !cloudAuthEnabled
           ? {}
-          : await oauthAppsApi.listCloudOAuthApps();
+          : await oauthAppsApi.listCloudOAuthApps(edition);
         const appsMap: PieceToClientIdMap = {};
         Object.keys(cloudApps).forEach((key) => {
           appsMap[key] = {
