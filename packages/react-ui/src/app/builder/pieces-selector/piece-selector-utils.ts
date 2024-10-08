@@ -152,18 +152,21 @@ const getDefaultStep = ({
           settings: {
             branches: [
               {
-                conditions:[[{
+                conditions: [[{
+                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
                   firstValue: '',
-                  operator: BranchOperator.TEXT_CONTAINS,
                   secondValue: '',
                   caseSensitive: false,
-                }], 
-                [{
+                }]],
+                branchType: BranchExecutionType.CONDITION,
+              },
+              {
+                conditions: [[{
+                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
                   firstValue: '',
-                  operator: BranchOperator.TEXT_CONTAINS,
                   secondValue: '',
                   caseSensitive: false,
-                }]] ,
+                }]],
                 branchType: BranchExecutionType.CONDITION,
               }
             ],

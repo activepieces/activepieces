@@ -1,4 +1,4 @@
-import { ActionType, BranchStepOutput, flowHelper, FlowVersion, GenericStepOutput, LoopStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
+import { ActionType, BranchStepOutput, flowHelper, FlowVersion, GenericStepOutput, RouterStepOutput, LoopStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
 import { variableService } from '../../variables/variable-service'
 import { FlowExecutorContext } from './flow-execution-context'
 
@@ -27,7 +27,7 @@ export const testExecutionContext = {
                     }))
                     break
                 case ActionType.ROUTER:
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
+                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, RouterStepOutput.create({
                         input: step.settings,
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,

@@ -145,7 +145,11 @@ export const formUtils = {
                   firstValue: '',
                   secondValue: '',
                   caseSensitive: false,
-                }], [{
+                }]],
+                branchType: BranchExecutionType.CONDITION,
+              },
+              {
+                conditions: [[{
                   operator: BranchOperator.TEXT_EXACTLY_MATCHES,
                   firstValue: '',
                   secondValue: '',
