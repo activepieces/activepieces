@@ -14,6 +14,8 @@ export const slackInfo = Property.MarkDown({
 export const slackChannel = <R extends boolean>(required: R) =>
   Property.Dropdown<string, R>({
     displayName: 'Channel',
+    description:
+      "You can get the Channel ID by right-clicking on the channel and selecting 'View Channel Details.'",
     required,
     refreshers: [],
     async options({ auth }) {
@@ -124,4 +126,3 @@ export const actions = Property.Array({
   displayName: 'Action Buttons',
   required: true,
 });
-
