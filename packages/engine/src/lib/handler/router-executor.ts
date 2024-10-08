@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus, isNil } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'

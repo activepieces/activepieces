@@ -51,7 +51,7 @@ export type PieceSelectorOperation =
   | {
       type: FlowOperationType.ADD_ACTION;
       actionLocation: {
-        branchIndex: number | undefined;
+        branchIndex: number;
         parentStep: string;
         stepLocationRelativeToParent: StepLocationRelativeToParent;
       };

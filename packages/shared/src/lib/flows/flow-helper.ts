@@ -90,6 +90,15 @@ function deleteAction(
                 }
                 break
             }
+            case ActionType.ROUTER: {
+                parentStep.children = parentStep.children.map((child) => {
+                    if (child && child.name === request.name) {
+                        return child.nextAction ?? null
+                    }
+                    return child
+                })
+                break
+            }
             default:
                 break
         }
@@ -108,7 +117,7 @@ function getUsedPieces(trigger: Trigger): string[] {
 }
 
 function traverseInternal(
-    step: Trigger | Action | undefined,
+    step: Trigger | Action | undefined | null,
 ): (Action | Trigger)[] {
     const steps: (Action | Trigger)[] = []
     while (step !== undefined && step !== null) {
@@ -118,7 +127,7 @@ function traverseInternal(
             steps.push(...traverseInternal(step.onFailureAction))
         }
         if (step.type === ActionType.ROUTER) {
-            steps.push(...step.children.map((child) => traverseInternal(child?.nextAction)).flat())
+            steps.push(...step.children.map((child) => traverseInternal(child)).flat())
         }
         if (step.type === ActionType.LOOP_ON_ITEMS) {
             steps.push(...traverseInternal(step.firstLoopAction))
@@ -169,6 +178,14 @@ async function transferStepAsync<T extends Step>(
                 firstLoopAction,
                 transferFunction,
             )) as Action
+        }
+    }
+    else if (updatedStep.type === ActionType.ROUTER) {
+        const { children } = updatedStep
+        if (children) {
+            updatedStep.children = await Promise.all(children.map(async (child) => 
+                child ? (await transferStepAsync(child, transferFunction)) as Action : null
+            ))
         }
     }
 
@@ -432,7 +449,11 @@ function moveAction(
     })
 
     childOperation.forEach((operation) => {
-        flowVersion = flowHelper.apply(flowVersion, operation)
+        const operationWithBranchIndex = {
+            ...operation,
+            branchIndex: request.branchIndex,
+        }
+        flowVersion = flowHelper.apply(flowVersion, operationWithBranchIndex)
     })
     return flowVersion
 }
@@ -517,8 +538,6 @@ function addAction(
             parentStep.type === ActionType.ROUTER && 
         request.stepLocationRelativeToParent 
         )  {
-            console.log('parentStep', parentStep)
-            console.log('index', request.branchIndex)
             if (
                 request.stepLocationRelativeToParent ===
             StepLocationRelativeToParent.INSIDE_BRANCH &&
@@ -782,6 +801,13 @@ function removeAnySubsequentAction(action: Action): Action {
             break
         }
         case ActionType.ROUTER: {
+            console.log('clonedAction.children', clonedAction.children)
+            clonedAction.children = clonedAction.children.map((child) => {
+                if (isNil(child)) {
+                    return null
+                }
+                return removeAnySubsequentAction(child)
+            })
             break
         }
         case ActionType.LOOP_ON_ITEMS: {
@@ -936,6 +962,7 @@ function duplicateStep(
     })
     const operations = getImportOperations(duplicatedStep)
     operations.forEach((operation) => {
+        console.log('OPERATION 333', operation)
         finalFlow = flowHelper.apply(finalFlow, operation)
     })
     return finalFlow
@@ -1138,6 +1165,7 @@ export const flowHelper = {
         let clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
         switch (operation.type) {
             case FlowOperationType.MOVE_ACTION:
+                console.log('operation.request move', operation.request)
                 clonedVersion = moveAction(clonedVersion, operation.request)
                 break
             case FlowOperationType.LOCK_FLOW:
@@ -1205,4 +1233,5 @@ export const flowHelper = {
     doesActionHaveChildren,
     findPathToStep,
     updateFlowSecrets,
+    findUnusedName,
 }

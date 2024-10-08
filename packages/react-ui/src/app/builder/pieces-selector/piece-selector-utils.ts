@@ -13,6 +13,8 @@ import {
   flowHelper,
   PieceCategory,
   BranchExecutionType,
+  RouterAction,
+  RouterExecutionType,
 } from '@activepieces/shared';
 
 const defaultCode = `export const code = async (inputs) => {
@@ -41,13 +43,7 @@ const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
   if (piece.type === TriggerType.PIECE) {
     return 'trigger';
   }
-  const baseName = 'step_';
-  let number = 1;
-  const steps = flowHelper.getAllSteps(flowVersion.trigger);
-  while (steps.some((step) => step.name === `${baseName}${number}`)) {
-    number++;
-  }
-  return `${baseName}${number}`;
+  return flowHelper.findUnusedName(flowHelper.getAllSteps(flowVersion.trigger).map((f) => f.name), 'step');
 };
 
 const isAiPiece = (piece: StepMetadata) =>
@@ -146,10 +142,11 @@ const getDefaultStep = ({
         common,
       );
     case ActionType.ROUTER:
-      return deepMergeAndCast<Action>(
+      const routerSettings = deepMergeAndCast<RouterAction>(
         {
           type: ActionType.ROUTER,
           settings: {
+            executionType: RouterExecutionType.EXECUTE_ALL_MATCH,
             branches: [
               {
                 conditions: [[{
@@ -178,6 +175,7 @@ const getDefaultStep = ({
         },
         common,
       );
+      return routerSettings
     case ActionType.PIECE: {
       return deepMergeAndCast<PieceAction>(
         {

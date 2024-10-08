@@ -296,7 +296,7 @@ export type Action = Static<typeof Action>
 
 export type BranchAction = Static<typeof BranchActionSchema> & { nextAction?: Action, onFailureAction?: Action, onSuccessAction?: Action }
 
-export type RouterAction = Static<typeof RouterActionSchema> & { nextAction?: Action, children: Action[] }
+export type RouterAction = Static<typeof RouterActionSchema> & { nextAction?: Action, children: (Action | null)[] }
 
 export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & { nextAction?: Action, firstLoopAction?: Action }
 

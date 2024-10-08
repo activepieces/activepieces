@@ -105,6 +105,7 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
               newParentStep: edgeData.parentStep,
               stepLocationRelativeToNewParent:
                 edgeData.stepLocationRelativeToParent,
+              branchIndex: edgeData.branchIndex,
             },
           },
           () => toast(UNSAVED_CHANGES_TOAST),

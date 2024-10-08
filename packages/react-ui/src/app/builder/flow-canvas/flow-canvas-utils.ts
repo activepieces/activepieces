@@ -190,7 +190,7 @@ function buildChildrenGraph(
   childrenGraphs.forEach((childGraph, idx) => {
     const cbx = boundingBox(childGraph);
     graph.edges.push(
-      addEdge(graph.nodes[0], childGraph.nodes[0], locations[idx], parentStep),
+      addEdge(graph.nodes[0], childGraph.nodes[0], locations[idx], parentStep, idx),
     );
     const childGraphAfterOffset = offsetGraph(childGraph, {
       x: deltaLeftX + cbx.widthLeft,
@@ -205,6 +205,7 @@ function buildChildrenGraph(
         commonPartGraph.nodes[0],
         StepLocationRelativeToParent.AFTER,
         rootStepName,
+        idx,
       ),
     );
     deltaLeftX += cbx.width + HORIZONTAL_SPACE_BETWEEN_NODES;
@@ -218,6 +219,7 @@ function addEdge(
   nodeTwo: ApNode,
   stepLocationRelativeToParent: StepLocationRelativeToParent,
   parentStep: string,
+  branchIndex?: number,
 ): ApEdge {
   return {
     id: `${nodeOne.id}-${nodeTwo.id}`,
@@ -232,6 +234,7 @@ function addEdge(
       stepLocationRelativeToParent,
       addButton: nodeTwo.type !== ApNodeType.BIG_BUTTON,
       targetType: nodeTwo.type,
+      branchIndex,
     },
   };
 }

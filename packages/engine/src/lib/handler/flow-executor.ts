@@ -27,13 +27,13 @@ export const flowExecutor = {
         return executor
     },
     async execute({ action, constants, executionState }: {
-        action: Action
+        action: Action | null | undefined,
         executionState: FlowExecutorContext
         constants: EngineConstants
     }): Promise<FlowExecutorContext> {
         const flowStartTime = performance.now()
         let flowExecutionContext = executionState
-        let currentAction: Action | undefined = action
+        let currentAction: Action | null | undefined = action
 
         while (!isNil(currentAction)) {
             const handler = this.getExecutorForAction(currentAction.type)

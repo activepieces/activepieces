@@ -281,6 +281,7 @@ async function applySingleOperation(
         operation,
     })
     operation = await prepareRequest(projectId, flowVersion, operation)
+    console.log('OPERATION 444', operation)
     return flowHelper.apply(flowVersion, operation)
 }
 
