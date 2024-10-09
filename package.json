@@ -202,7 +202,7 @@
     "octokit": "3.2.1",
     "openai": "4.67.1",
     "pdf-parse": "1.1.1",
-    "pdf-to-img": "3.0.0",
+    "pdf-to-img": "4.0.0",
     "pg": "8.11.3",
     "pg-format": "1.0.4",
     "pickleparser": "0.1.0",
