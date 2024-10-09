@@ -298,6 +298,7 @@ export type FlagType =
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
+    | BaseFlagStructure<ApFlagId.LICENSE_KEY, string>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K
