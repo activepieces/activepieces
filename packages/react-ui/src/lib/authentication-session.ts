@@ -8,7 +8,13 @@ const currentUserKey = 'currentUser';
 export const authenticationSession = {
   saveResponse(response: AuthenticationResponse) {
     localStorage.setItem(tokenKey, response.token);
-    localStorage.setItem(currentUserKey, JSON.stringify(response));
+    localStorage.setItem(
+      currentUserKey,
+      JSON.stringify({
+        ...response,
+        token: undefined,
+      }),
+    );
     window.dispatchEvent(new Event('storage'));
   },
   getToken(): string | null {
@@ -34,6 +40,15 @@ export const authenticationSession = {
   async switchToSession(projectId: string) {
     const result = await projectApi.getTokenForProject(projectId);
     localStorage.setItem(tokenKey, result.token);
+    localStorage.setItem(
+      currentUserKey,
+      JSON.stringify({
+        ...this.getCurrentUser(),
+        projectId,
+        projectRole: result.projectRole,
+      }),
+    );
+    window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
     return !!this.getToken() && !!this.getCurrentUser();
