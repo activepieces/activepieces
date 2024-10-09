@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Key, Lock, Palette, ShieldPlus } from 'lucide-react';
+import { Key, Lock, Palette, ShieldPlus, CreditCard } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
 
@@ -25,6 +25,11 @@ const sidebarNavItems = [
     title: 'Single Sign On',
     href: '/platform/settings/sso',
     icon: <ShieldPlus size={iconSize} />,
+  },
+  {
+    title: 'License Keys',
+    href: '/platform/settings/license-keys',
+    icon: <CreditCard size={iconSize} />,
   },
 ];
 

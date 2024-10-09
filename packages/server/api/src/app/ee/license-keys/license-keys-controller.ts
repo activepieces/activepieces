@@ -1,5 +1,5 @@
 import { AppSystemProp, system } from '@activepieces/server-shared'
-import { CreateTrialLicenseKeyRequestBody, isNil, PrincipalType } from '@activepieces/shared'
+import { CreateTrialLicenseKeyRequestBody, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { licenseKeysService } from './license-keys-service'
@@ -22,6 +22,14 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
         return licenseKey
     })
 
+    app.post('/verify', VerifyLicenseKeyRequest, async (req) => {
+        const { platformId, licenseKey } = req.body
+        return licenseKeysService.verifyKeyAndApplyLimits({
+            platformId,
+            license: licenseKey,
+        })
+    })
+
 }
 
 const CreateTrialLicenseKeyRequest = {
@@ -33,5 +41,17 @@ const CreateTrialLicenseKeyRequest = {
     },
     schema: {
         body: CreateTrialLicenseKeyRequestBody,
+    },
+}
+
+const VerifyLicenseKeyRequest = {
+    config: {
+        allowedPrincipals: [
+            PrincipalType.UNKNOWN,
+            PrincipalType.USER,
+        ],
+    },
+    schema: {
+        body: VerifyLicenseKeyRequestBody,
     },
 }

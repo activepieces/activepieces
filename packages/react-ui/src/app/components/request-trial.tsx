@@ -80,6 +80,7 @@ const features = [
   },
   { label: t('Access Full API'), key: `API` },
   { label: t('Single Sign On'), key: `SSO` },
+  { label: t('License Keys'), key: `LICENSE_KEYS` },
   { label: t('Audit Logs'), key: `AUDIT_LOGS` },
   {
     label: t('Team Collaboration via Git'),

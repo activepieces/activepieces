@@ -60,6 +60,7 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
+import { LicenseKeysPage } from '../routes/platform/settings/license-keys';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -436,6 +437,18 @@ const routes = [
         <PlatformSettingsLayout>
           <PageTitle title="SSO">
             <SSOPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/license-keys',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="LicenseKeys">
+            <LicenseKeysPage />
           </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>
