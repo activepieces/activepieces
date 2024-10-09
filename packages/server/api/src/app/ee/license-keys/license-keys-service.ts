@@ -84,7 +84,6 @@ export const licenseKeysService = {
     async verifyKeyAndApplyLimits({ platformId, license }: { license: string | undefined, platformId: string }): Promise<boolean> {
         if (isNil(license)) {
             await downgradeToFreePlan(platformId)
-            console.log('BAD 1')
             return false
         }
         try {
@@ -99,7 +98,6 @@ export const licenseKeysService = {
             const isExpired = isNil(key) || dayjs(key.expiresAt).isBefore(dayjs())
             if (isExpired) {
                 await downgradeToFreePlan(platformId)
-                console.log('BAD 3')
                 return false
             }
             await platformService.update({
@@ -124,7 +122,6 @@ export const licenseKeysService = {
 
         catch (e) {
             logger.error(`[ERROR]: Failed to verify license key: ${e}`)
-            console.log('BAD 4')
             return false
         }
 
