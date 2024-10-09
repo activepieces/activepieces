@@ -2,11 +2,12 @@ import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CircleCheckBig, CircleX } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -31,23 +32,54 @@ const LICENSE_PROPS_MAP = {
   emailAuthEnabled: 'Email Authentication',
 };
 
+const LICENSE_KEY_ID = 'LICENSE_KEY';
+
 const LicenseKeysPage = () => {
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const currentPlatform = platformHooks.useCurrentPlatform();
+  const [platform, setPlatform] = useState(currentPlatform.platform);
   const [licenseKey, setLicenseKey] = useState('');
   const [isActivated, setIsActivated] = useState(false);
+  const [initLicenseKey, setInitLicenseKey] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLicenseKey = async () => {
+      const allKeys = await platformApi.getLicenseKey(LICENSE_KEY_ID);
+      if (!isNil(allKeys[ApFlagId.LICENSE_KEY])) {
+        setLicenseKey(allKeys[ApFlagId.LICENSE_KEY]);
+        setInitLicenseKey(allKeys[ApFlagId.LICENSE_KEY]);
+        const res = await platformApi.verifyLicenseKey(
+          allKeys[ApFlagId.LICENSE_KEY],
+        );
+        setPlatform(res);
+      }
+    };
+    fetchLicenseKey();
+    setIsLoading(false);
+  }, []);
 
   const { mutate: activateLicenseKey, isPending } = useMutation({
     mutationFn: async () => {
       if (licenseKey.trim() === '') {
         return;
       }
+      setIsLoading(true);
       const res = await platformApi.verifyLicenseKey(licenseKey.trim());
-      if (res) {
+      if (!isNil(res)) {
         setIsActivated(true);
+        setPlatform(res);
+        await platformApi.saveLicenseKey(licenseKey.trim());
       } else {
+        const newPlatform = { ...platform };
+        for (const key in newPlatform) {
+          if (key.endsWith('Enabled')) {
+            newPlatform[key] = false;
+          }
+        }
         setIsActivated(false);
+        setPlatform(newPlatform);
       }
-      await refetch();
+      setIsLoading(false);
     },
     onSuccess: () => {
       if (licenseKey.trim() === '') {
@@ -116,26 +148,24 @@ const LicenseKeysPage = () => {
             onClick={() => activateLicenseKey(licenseKey)}
             disabled={isPending}
           >
-            {t('Activate')}
+            {initLicenseKey !== licenseKey ? t('Activate') : t('Refresh')}
           </Button>
         </div>
       </div>
       <div>
-        {!isNil(platform) &&
-          Object.keys(platform).map((key) => {
-            if (key.endsWith('Enabled')) {
-              return (
-                <div className="flex flex-row items-center" key={key}>
-                  {platform?.[key] ? (
-                    <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
-                  ) : (
-                    <CircleX className="w-4 h-4 text-red-500 mr-2" />
-                  )}
-                  <h3 className="text-lg">{t(LICENSE_PROPS_MAP[key])}</h3>
-                </div>
-              );
-            }
-          })}
+        {isLoading && <LoadingSpinner className="w-4 h-4" />}
+        {!isLoading &&
+          !isNil(platform) &&
+          Object.entries(LICENSE_PROPS_MAP).map(([key, label]) => (
+            <div className="flex flex-row items-center" key={key}>
+              {platform?.[key] ? (
+                <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
+              ) : (
+                <CircleX className="w-4 h-4 text-red-500 mr-2" />
+              )}
+              <h3 className="text-lg">{t(label)}</h3>
+            </div>
+          ))}
       </div>
     </div>
   );

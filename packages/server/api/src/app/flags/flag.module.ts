@@ -1,5 +1,6 @@
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApFlagId } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
 import { flagService } from './flag.service'
 import { flagHooks } from './flags.hooks'
@@ -29,4 +30,25 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
             })
         },
     )
+
+    app.post<{ Body: { licenseKey: string } }>(
+        '/saveLicenseKey',
+        {
+            config: {
+                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+            },
+            schema: {
+                body: Type.Object({
+                    licenseKey: Type.String(),
+                }),
+            },
+            logLevel: 'silent',
+        },
+        async (request) => {
+            await flagService.save({ id: ApFlagId.LICENSE_KEY, value: request.body.licenseKey })
+            return { success: true }
+        },
+    )
+
+    
 }

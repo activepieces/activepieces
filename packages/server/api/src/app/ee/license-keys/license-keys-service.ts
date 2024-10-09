@@ -8,6 +8,7 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 
+
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
 const handleUnexpectedSecretsManagerError = (message: string) => {
@@ -81,10 +82,10 @@ export const licenseKeysService = {
         }
         return response.json()
     },
-    async verifyKeyAndApplyLimits({ platformId, license }: { license: string | undefined, platformId: string }): Promise<boolean> {
+    async verifyKeyAndApplyLimits({ platformId, license }: { license: string | undefined, platformId: string }) {
         if (isNil(license)) {
             await downgradeToFreePlan(platformId)
-            return false
+            return null
         }
         try {
             await this.activateKey({ key: license, platformId })
@@ -98,9 +99,9 @@ export const licenseKeysService = {
             const isExpired = isNil(key) || dayjs(key.expiresAt).isBefore(dayjs())
             if (isExpired) {
                 await downgradeToFreePlan(platformId)
-                return false
+                return null
             }
-            await platformService.update({
+            const platform = await platformService.update({
                 id: platformId,
                 ssoEnabled: key.ssoEnabled,
                 gitSyncEnabled: key.gitSyncEnabled,
@@ -118,15 +119,13 @@ export const licenseKeysService = {
                 alertsEnabled: key.alertsEnabled,
                 analyticsEnabled: key.analyticsEnabled,
             })
+            return platform
         }
 
         catch (e) {
             logger.error(`[ERROR]: Failed to verify license key: ${e}`)
-            return false
+            return null
         }
-
-        return true
-
     },
 }
 

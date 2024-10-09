@@ -12,6 +12,16 @@ export const platformApi = {
     return api.get<Platform>(`/v1/platforms/${platformId}`);
   },
 
+  saveLicenseKey(licenseKey: string) {
+    return api.post<void>(`/v1/flags/saveLicenseKey`, {
+      licenseKey,
+    });
+  },
+
+  getLicenseKey() {
+    return api.get<Record<string, unknown>>(`/v1/flags`);
+  },
+
   verifyLicenseKey(licenseKey: string) {
     const platformId = authenticationSession.getPlatformId();
     if (!platformId) {
