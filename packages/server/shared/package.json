@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "dependencies": {
     "tslib": "^2.3.0",
-    "@sentry/node": "7.75.0",
+    "@sentry/node": "7.64.0",
     "pino": "9.4.0",
     "pino-loki": "2.1.3",
     "@activepieces/shared": "*",
