@@ -1,4 +1,3 @@
-import { PieceStepMetadata, StepMetadata } from '@/features/pieces/lib/types';
 import {
   Action,
   ActionType,
@@ -13,9 +12,10 @@ import {
   flowHelper,
   PieceCategory,
   BranchExecutionType,
-  RouterAction,
   RouterExecutionType,
 } from '@activepieces/shared';
+
+import { PieceStepMetadata, StepMetadata } from '@/features/pieces/lib/types';
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
@@ -43,7 +43,10 @@ const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
   if (piece.type === TriggerType.PIECE) {
     return 'trigger';
   }
-  return flowHelper.findUnusedName(flowHelper.getAllSteps(flowVersion.trigger).map((f) => f.name), 'step');
+  return flowHelper.findUnusedName(
+    flowHelper.getAllSteps(flowVersion.trigger).map((f) => f.name),
+    'step',
+  );
 };
 
 const isAiPiece = (piece: StepMetadata) =>
@@ -142,30 +145,38 @@ const getDefaultStep = ({
         common,
       );
     case ActionType.ROUTER:
-      const routerSettings = deepMergeAndCast<RouterAction>(
+      return deepMergeAndCast<Action>(
         {
           type: ActionType.ROUTER,
           settings: {
             executionType: RouterExecutionType.EXECUTE_ALL_MATCH,
             branches: [
               {
-                conditions: [[{
-                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                  firstValue: '',
-                  secondValue: '',
-                  caseSensitive: false,
-                }]],
+                conditions: [
+                  [
+                    {
+                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                      firstValue: '',
+                      secondValue: '',
+                      caseSensitive: false,
+                    },
+                  ],
+                ],
                 branchType: BranchExecutionType.CONDITION,
               },
               {
-                conditions: [[{
-                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                  firstValue: '',
-                  secondValue: '',
-                  caseSensitive: false,
-                }]],
+                conditions: [
+                  [
+                    {
+                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                      firstValue: '',
+                      secondValue: '',
+                      caseSensitive: false,
+                    },
+                  ],
+                ],
                 branchType: BranchExecutionType.CONDITION,
-              }
+              },
             ],
             inputUiInfo: {
               customizedInputs: {},
@@ -175,7 +186,6 @@ const getDefaultStep = ({
         },
         common,
       );
-      return routerSettings
     case ActionType.PIECE: {
       return deepMergeAndCast<PieceAction>(
         {
