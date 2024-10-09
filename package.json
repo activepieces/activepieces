@@ -229,6 +229,7 @@
     "recharts": "2.12.7",
     "redlock": "5.0.0-beta.2",
     "remark-gfm": "4.0.0",
+    "replicate": "0.34.1",
     "rollup": "4.22.5",
     "rss-parser": "3.13.0",
     "rxjs": "7.8.1",
