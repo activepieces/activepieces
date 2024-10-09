@@ -1,3 +1,4 @@
+import { Column } from '@tanstack/react-table';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 import { useSearchParams } from 'react-router-dom';
@@ -5,31 +6,46 @@ import { useSearchParams } from 'react-router-dom';
 import { DataTableInputPopover } from './data-table-input-popover';
 import { DataTableSelectPopover } from './data-table-select-popover';
 import { DatePickerWithRange } from './date-picker-range';
-import { Column } from '@tanstack/react-table';
 
+export const TABLE_QUERY_PARAMS_NAME = {
+  orderByColumn: 'orderByColumn' as const,
+  order: 'order' as const,
+  cursor: 'cursor' as const,
+  limit: 'limit' as const,
+  createdBefore: 'createdBefore' as const,
+  createdAfter: 'createdAfter' as const,
+};
 type CommonFilterProps<TData, TValue> = {
-   title: string;
-   accessorKey: string
-   column?: Column<TData, TValue>
-}
+  title: string;
+  accessorKey: string;
+  column?: Column<TData, TValue>;
+};
 
-type  SelectFilterProps<TData, TValue> = CommonFilterProps<TData, TValue> & {
-    type: 'select';
+type SelectFilterProps<TData, TValue> = CommonFilterProps<TData, TValue> & {
+  type: 'select';
   options: readonly {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
-}
+};
 
-type DateOrInputFilterProps<TData, TValue> = CommonFilterProps<TData, TValue> & {
-  type: 'date' | 'input'
-}
+type DateOrInputFilterProps<TData, TValue> = CommonFilterProps<
+  TData,
+  TValue
+> & {
+  type: 'date' | 'input';
+};
 
-export type DataTableFacetedFilterProps<TData, TValue> = DateOrInputFilterProps<TData, TValue> | SelectFilterProps<TData, TValue>
+export type DataTableFacetedFilterProps<TData, TValue> =
+  | DateOrInputFilterProps<TData, TValue>
+  | SelectFilterProps<TData, TValue>;
 
-export function DataTableFacetedFilter<TData, TValue>(props: DataTableFacetedFilterProps<TData, TValue>) {
-
+export function DataTableFacetedFilter<TData, TValue>(
+  props: DataTableFacetedFilterProps<TData, TValue> & {
+    filterChanged: (searchParams: URLSearchParams) => void;
+  },
+) {
   const [searchParams, setSearchParams] = useSearchParams();
   const handleFilterChange = React.useCallback(
     (filterValue: string | string[] | DateRange | undefined) => {
@@ -39,8 +55,9 @@ export function DataTableFacetedFilter<TData, TValue>(props: DataTableFacetedFil
           newParams.delete(props.accessorKey);
           newParams.delete(`${props.accessorKey}After`);
           newParams.delete(`${props.accessorKey}Before`);
-
+          newParams.set(TABLE_QUERY_PARAMS_NAME.cursor, '');
           if (!filterValue) {
+            props.filterChanged(newParams);
             return newParams;
           }
 
@@ -65,19 +82,19 @@ export function DataTableFacetedFilter<TData, TValue>(props: DataTableFacetedFil
             newParams.append(props.accessorKey, filterValue);
           }
 
+          props.filterChanged(newParams);
+
           return newParams;
         },
         { replace: true },
       );
-
-     
     },
     [setSearchParams],
   );
 
   switch (props.type) {
     case 'input': {
-      const intialValue = searchParams.get(props.accessorKey)?? '';
+      const intialValue = searchParams.get(props.accessorKey) ?? '';
       return (
         <DataTableInputPopover
           title={props.title}
@@ -87,8 +104,7 @@ export function DataTableFacetedFilter<TData, TValue>(props: DataTableFacetedFil
       );
     }
     case 'select': {
-
-      const intialValue = searchParams.getAll(props.accessorKey)
+      const intialValue = searchParams.getAll(props.accessorKey);
       return (
         <DataTableSelectPopover
           title={props.title}

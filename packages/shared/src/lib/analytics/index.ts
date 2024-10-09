@@ -59,6 +59,7 @@ Type.Object({
     flowEdits: Type.String(),
     users: Type.String(),
     piecesUsed: Type.String(),
+    created: Type.String(),
 })
 
 export type PlatformProjectLeaderBoardRow = Static<
@@ -72,7 +73,7 @@ export const ListPlatformProjectsLeaderboardParams = Type.Object({
     createdAfter: Type.Optional(Type.String()),
     createdBefore: Type.Optional(Type.String()),
     orderByColumn: Type.Optional(Type.String()),
-    order: Type.Optional(Type.TemplateLiteral('${ASC|DESC}'))
+    order: Type.Optional(Type.TemplateLiteral('${ASC|DESC}')),
 })
 
 export type ListPlatformProjectsLeaderboardParams = Static<

@@ -1,7 +1,7 @@
 import { PlatformProjectLeaderBoardRow } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-
+import { CheckIcon } from 'lucide-react';
 
 import {
   DataTable,
@@ -10,13 +10,12 @@ import {
 import { DataTableColumnHeader } from '../../../../components/ui/data-table-column-header';
 import { InfoTooltip } from '../../../../components/ui/info-tooltip';
 import { analyticsApi } from '../../../../features/platform-admin-panel/lib/analytics-api';
-import { CheckIcon } from 'lucide-react';
 
 const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
   [
     {
-      id:'name',
-      accessorKey: 'name',
+      id: 'displayName',
+      accessorKey: 'displayName',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Name')} />
       ),
@@ -25,7 +24,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      id:'users',
+      id: 'users',
       accessorKey: 'users',
       header: ({ column }) => (
         <div className="flex gap-1 items-center">
@@ -40,7 +39,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      id:'flowsCreated',
+      id: 'flowsCreated',
       accessorKey: 'flowsCreated',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Flows Created')} />
@@ -50,7 +49,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      id:'publishes',
+      id: 'publishes',
       accessorKey: 'publishes',
       header: ({ column }) => (
         <div className="flex gap-1 items-center">
@@ -65,7 +64,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      id:'flowEdits',
+      id: 'flowEdits',
       accessorKey: 'flowEdits',
       header: ({ column }) => (
         <div className="flex gap-1 items-center">
@@ -80,7 +79,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      id:'tasks',
+      id: 'tasks',
       accessorKey: 'tasks',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Tasks')} />
@@ -90,7 +89,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      id:'piecesUsed',
+      id: 'piecesUsed',
       accessorKey: 'piecesUsed',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Pieces Used')} />
@@ -116,46 +115,40 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
     },
   ];
 
-  const filters = [
-    {
-      type: 'date',
-      title: t('Created'),
-      accessorKey: 'created',
-      options: [],
-      icon: CheckIcon,
-    } as const,
-  ]
+const filters = [
+  {
+    type: 'date',
+    title: t('Created'),
+    accessorKey: 'created',
+    options: [],
+    icon: CheckIcon,
+  } as const,
+];
 export const ProjectsLeaderBoard = () => {
-
-
   return (
-    <>
     <div>
-    <div className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row ">
+      <div className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row ">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <div className="text-xl font-semibold ">
             {t('Projects Leaderboard')}
           </div>
         </div>
-      
       </div>
       <DataTable
         columns={columns}
         filters={filters}
         allowOrdering={true}
-        fetchData={(_, pagination,order) => {
+        fetchData={(_, pagination, order) => {
           return analyticsApi.listProjectsLeaderBoard({
             cursor: pagination.cursor,
             limit: pagination.limit ?? 10,
             createdAfter: pagination.createdAfter,
             createdBefore: pagination.createdBefore,
-           orderByColumn: order?.column,
-           order: order?.order,
+            orderByColumn: order?.column,
+            order: order?.order,
           });
         }}
       ></DataTable>
     </div>
-     
-    </>
   );
 };
