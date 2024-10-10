@@ -46,7 +46,7 @@ export const SampleDataSetting = Type.Object(
         /**
          * @deprecated This field is deprecated and will be removed in 2025.
          */
-        currentSelectedData: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+        currentSelectedData: Type.Optional(Type.Unknown()),
     },
     {
         additionalProperties: true,
