@@ -1,5 +1,6 @@
 
     import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { fetchPeoplePaths } from "./lib/actions/fetch-people-paths";
 
     export const villageAuth = PieceAuth.SecretText({
       displayName: 'API Key',
@@ -12,9 +13,9 @@
       displayName: "Village",
       auth: villageAuth,
       minimumSupportedRelease: '0.20.0',
-      logoUrl: "https://cdn.activepieces.com/pieces/village.png",
+      logoUrl: "https://village.do/logo-square.png",
       authors: [],
-      actions: [],
+      actions: [fetchPeoplePaths],
       triggers: [],
     });
     
