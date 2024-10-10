@@ -1,6 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import {
-    allowWorkersOnly,
     entitiesMustBeOwnedByCurrentProject,
 } from '../authentication/authorization'
 import { storeEntryController } from './store-entry.controller'

@@ -10,9 +10,7 @@ import { StatusCodes } from 'http-status-codes'
 import sizeof from 'object-sizeof'
 import { storeEntryService } from './store-entry.service'
 
-export const storeEntryController: FastifyPluginAsyncTypebox = async (
-    fastify,
-) => {
+export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post( '/', CreateRequest, async (request, reply) => {
         const sizeOfValue = sizeof(request.body.value)
         if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
