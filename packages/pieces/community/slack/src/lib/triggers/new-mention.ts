@@ -1,29 +1,34 @@
 import {
+  OAuth2PropertyValue,
   Property,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { slackChannel, slackInfo } from '../common/props';
+import { getChannels, slackInfo, userId } from '../common/props';
 import { slackAuth } from '../../';
 import { WebClient } from '@slack/web-api';
 
 const sampleData = {
   client_msg_id: '2767cf34-0651-44e0-b9c8-1b167ce9b7a9',
   type: 'message',
-  text: 'f',
+  text: 'heeeelllo\n<@U07BN652T52>',
   user: 'U037UG6FKPU',
   ts: '1678231735.586539',
   blocks: [
     {
       type: 'rich_text',
-      block_id: '4CM',
+      block_id: 'jCFSh',
       elements: [
         {
           type: 'rich_text_section',
           elements: [
             {
               type: 'text',
-              text: 'f',
+              text: 'heeeelllo\n',
+            },
+            {
+              type: 'user',
+              user_id: 'U07BN652T52',
             },
           ],
         },
@@ -36,14 +41,38 @@ const sampleData = {
   channel_type: 'channel',
 };
 
-export const newMessage = createTrigger({
+export const newMention = createTrigger({
   auth: slackAuth,
-  name: 'new_message',
-  displayName: 'New Message',
-  description: 'Triggers when a new message is received',
+  name: 'new_mention',
+  displayName: 'New Mention',
+  description: 'Triggers when a username is mentioned.',
   props: {
     info: slackInfo,
-    channel: slackChannel(false),
+    user: userId,
+    channels: Property.MultiSelectDropdown({
+      displayName: 'Channels',
+      description:
+        'If no channel is selected, the flow will be triggered for username mentions in all channels',
+      required: false,
+      refreshers: [],
+      async options({ auth }) {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'connect slack account',
+            options: [],
+          };
+        }
+        const authentication = auth as OAuth2PropertyValue;
+        const accessToken = authentication['access_token'];
+        const channels = await getChannels(accessToken);
+        return {
+          disabled: false,
+          placeholder: 'Select channel',
+          options: channels,
+        };
+      },
+    }),
     ignoreBots: Property.Checkbox({
       displayName: 'Ignore Bot Messages ?',
       required: true,
@@ -66,23 +95,29 @@ export const newMessage = createTrigger({
   },
 
   test: async (context) => {
-    if (!context.propsValue.channel) {
+    const channels = context.propsValue.channels as string[];
+
+    if (!channels || (Array.isArray(channels) && channels.length === 0)) {
       return [sampleData];
     }
     const client = new WebClient(context.auth.access_token);
     const response = await client.conversations.history({
-      channel: context.propsValue.channel,
+      channel: channels[0],
       limit: 10,
     });
     if (!response.messages) {
       return [];
     }
     return response.messages
+      .filter(
+        (message) =>
+          message.text && message.text.includes(`<@${context.propsValue.user}>`)
+      )
       .filter((message) => !(context.propsValue.ignoreBots && message.bot_id))
       .map((message) => {
         return {
           ...message,
-          channel: context.propsValue.channel,
+          channel: channels[0],
           event_ts: '1678231735.586539',
           channel_type: 'channel',
         };
@@ -91,15 +126,20 @@ export const newMessage = createTrigger({
 
   run: async (context) => {
     const payloadBody = context.payload.body as PayloadBody;
-    if (
-      !context.propsValue.channel ||
-      payloadBody.event.channel === context.propsValue.channel
-    ) {
+    const channels = context.propsValue.channels as string[];
+
+    if (channels.length === 0 || channels.includes(payloadBody.event.channel)) {
       // check for bot messages
       if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
         return [];
       }
-      return [payloadBody.event];
+      // check for mention
+      if (
+        context.propsValue.user &&
+        payloadBody.event.text?.includes(`<@${context.propsValue.user}>`)
+      ) {
+        return [payloadBody.event];
+      }
     }
 
     return [];
@@ -110,5 +150,6 @@ type PayloadBody = {
   event: {
     channel: string;
     bot_id?: string;
+    text?: string;
   };
 };

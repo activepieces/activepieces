@@ -193,10 +193,9 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
       {...(!openPieceSelector ? listeners : {})}
     >
       <div
-        className="absolute text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
+        className="absolute text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 left-full ml-3"
         style={{
           top: `${AP_NODE_SIZE.stepNode.height / 2 - 12}px`,
-          right: `-${AP_NODE_SIZE.stepNode.width / 5}px`,
         }}
       >
         {data.step?.name}

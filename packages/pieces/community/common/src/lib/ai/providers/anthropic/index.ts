@@ -10,13 +10,11 @@ export const anthropic: AIFactory = ({
     apiKey: engineToken,
     baseURL: proxyUrl,
     defaultHeaders: {
-      'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.output_tokens+usage.input_tokens',
       Authorization: `Bearer ${engineToken}`,
-    },
+    }
   });
   return {
     provider: 'ANTHROPIC' as const,
-    image: undefined,
     chat: {
       text: async (params) => {
         const concatenatedSystemMessage = params.messages
@@ -44,7 +42,6 @@ export const anthropic: AIFactory = ({
               role: AIChatRole.ASSISTANT,
             })),
           created: new Date().getTime(),
-          id: completion.id,
           model: completion.model,
           usage: {
             completionTokens: completion.usage.output_tokens,
@@ -100,7 +97,6 @@ export const anthropic: AIFactory = ({
               arguments: toolCall.input,
             },
           } : null,
-          id: completion.id,
           model: completion.model,
           created: new Date().getTime(),
           usage: {

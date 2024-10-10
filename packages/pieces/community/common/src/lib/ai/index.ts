@@ -16,8 +16,8 @@ export type AIImage = {
 export type AIImageGenerateParams = {
   prompt: string;
   model: string;
-  quality: string;
-  size: string;
+  size?: string;
+  advancedOptions?: Record<string, unknown>;
 };
 
 export type AIImageCompletion = {
@@ -26,7 +26,7 @@ export type AIImageCompletion = {
 
 export type AIChat = {
   text: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
-  function: (
+  function?: (
     params: AIChatCompletionsCreateParams & {
       functions: AIFunctionDefinition[];
     }
@@ -42,7 +42,6 @@ export type AIChatCompletionsCreateParams = {
 };
 
 export type AIChatCompletion = {
-  id: string;
   choices: AIChatMessage[];
   usage?: AIChatCompletionUsage;
 };
@@ -105,6 +104,8 @@ export const AI = ({
     throw new Error(`AI provider ${provider} is not registered`);
   }
 
+  const functionCalling = impl.chat.function
+
   return {
     provider,
     image: impl.image,
@@ -120,9 +121,9 @@ export const AI = ({
           throw e;
         }
       },
-      function: async (params) => {
+      function: functionCalling ? async (params) => {
         try {
-          const response = await impl.chat.function(params);
+          const response = await functionCalling(params);
           return response;
         } catch (e: any) {
           if (e?.error?.error) {
@@ -130,7 +131,7 @@ export const AI = ({
           }
           throw e;
         }
-      },
+      } : undefined,
     },
   };
 };

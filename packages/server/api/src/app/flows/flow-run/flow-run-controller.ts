@@ -58,7 +58,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
         },
     )
 
-    app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req) => {
+    app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
         await flowRunService.addToQueue({
@@ -72,6 +72,9 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
             checkRequestId: true,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             executionType: ExecutionType.RESUME,
+        })
+        await reply.send({
+            message: 'Your response has been recorded. You can close this page now.',
         })
     })
 
