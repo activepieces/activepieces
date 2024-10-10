@@ -9,6 +9,9 @@ export const anthropic: AIFactory = ({
   const sdk = new Anthropic({
     apiKey: engineToken,
     baseURL: proxyUrl,
+    defaultHeaders: {
+      Authorization: `Bearer ${engineToken}`,
+    }
   });
   return {
     provider: 'ANTHROPIC' as const,
