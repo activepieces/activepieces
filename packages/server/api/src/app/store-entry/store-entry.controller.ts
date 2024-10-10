@@ -41,27 +41,28 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (
     },
     )
 
-    fastify.delete( '/', DeleteStoreRequest, async (request, reply) => {
-        if (request.principal.type !== PrincipalType.ENGINE) {
-            return reply.status(StatusCodes.FORBIDDEN)
-        }
-        else {
-            return storeEntryService.delete({
-                projectId: request.principal.projectId,
-                key: request.query.key,
-            })
-        }
+    fastify.delete( '/', DeleteStoreRequest, async (request) => {
+        return storeEntryService.delete({
+            projectId: request.principal.projectId,
+            key: request.query.key,
+        })
     },
     )
 }
 
 const CreateRequest =  {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
+    },
     schema: {
         body: PutStoreEntryRequest,
     },
 }
 
 const GetRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
+    },
     schema: {
         querystring: GetStoreEntryRequest,
     },
@@ -69,6 +70,9 @@ const GetRequest = {
 
 
 const DeleteStoreRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
+    },
     schema: {
         querystring: DeleteStoreEntryRequest,
     },
