@@ -8,6 +8,13 @@ export const SaveSampleDataRequest = Type.Object({
 })
 export type SaveSampleDataRequest = Static<typeof SaveSampleDataRequest>
 
+export const GetSampleDataRequest = Type.Object({
+    flowId: Type.String(),
+    flowVersionId: Type.String(),
+    stepName: Type.String(),
+})
+export type GetSampleDataRequest = Static<typeof GetSampleDataRequest>
+
 export const CreateStepRunRequestBody = Type.Object({
     flowVersionId: Type.String(),
     stepName: Type.String(),
@@ -36,6 +43,10 @@ export const SampleDataSetting = Type.Object(
         sampleDataFileId: Type.Optional(Type.String()),
         lastTestDate: Type.Optional(Type.String()),
         customizedInputs: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+        /**
+         * @deprecated This field is deprecated and will be removed in 2025.
+         */
+        currentSampleData: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
     },
     {
         additionalProperties: true,

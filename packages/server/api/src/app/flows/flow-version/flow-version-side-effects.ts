@@ -2,6 +2,7 @@ import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
+    flowHelper,
     FlowId,
     FlowOperationRequest,
     FlowOperationType,
@@ -9,6 +10,7 @@ import {
     ProjectId,
 } from '@activepieces/shared'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
+import { sampleDataService } from '../step-run/sample-data.service'
 
 type OnApplyOperationParams = {
     projectId: ProjectId
@@ -35,7 +37,7 @@ const deleteWebhookSimulation = async (
     catch (e: unknown) {
         const notWebhookSimulationNotFoundError = !(
             e instanceof ActivepiecesError &&
-      e.error.code === ErrorCode.ENTITY_NOT_FOUND
+            e.error.code === ErrorCode.ENTITY_NOT_FOUND
         )
         if (notWebhookSimulationNotFoundError) {
             throw e
@@ -49,17 +51,28 @@ export const flowVersionSideEffects = {
         flowVersion,
         operation,
     }: OnApplyOperationParams): Promise<void> {
-        if (operation.type === FlowOperationType.UPDATE_TRIGGER) {
-            try {
+        try {
+            if (operation.type === FlowOperationType.DELETE_ACTION) {
+                const step = flowHelper.getStep(flowVersion, operation.request.name)
+                if (step && step.settings.inputUiInfo?.sampleDataFileId) {
+                    await sampleDataService.deleteForStep({
+                        projectId,
+                        flowVersionId: flowVersion.id,
+                        flowId: flowVersion.flowId,
+                        sampleDataFileId: step.settings.inputUiInfo?.sampleDataFileId,
+                    })
+                }
+            }
+            if (operation.type === FlowOperationType.UPDATE_TRIGGER) {
                 await deleteWebhookSimulation({
                     projectId,
                     flowId: flowVersion.flowId,
                 })
             }
-            catch (e) {
-                // Ignore error and continue the operation peacefully
-                exceptionHandler.handle(e)
-            }
+        }
+        catch (e) {
+            // Ignore error and continue the operation peacefully
+            exceptionHandler.handle(e)
         }
     },
 }

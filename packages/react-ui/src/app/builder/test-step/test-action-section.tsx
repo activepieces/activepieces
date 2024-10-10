@@ -14,7 +14,7 @@ import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
-import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
+import { useBuilderStateContext } from '../builder-hooks';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -30,6 +30,12 @@ const TestActionSection = React.memo(
     const form = useFormContext<Action>();
     const formValues = form.getValues();
 
+    const { sampleData, setSampleData } = useBuilderStateContext((state) => {
+      return {
+        sampleData: state.sampleData[formValues.name],
+        setSampleData: state.setSampleData
+      };
+    });
     const [isValid, setIsValid] = useState(false);
 
     useEffect(() => {
@@ -39,8 +45,6 @@ const TestActionSection = React.memo(
     const [lastTestDate, setLastTestDate] = useState(
       formValues.settings.inputUiInfo?.lastTestDate,
     );
-
-    const { data: sampleData, isLoading: isSampleDataLoading, refetch: refetchSampleData } = sampleDataHooks.useSampleData(formValues.settings.inputUiInfo?.sampleDataFileId)
 
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
@@ -75,13 +79,13 @@ const TestActionSection = React.memo(
           setErrorMessage(undefined);
 
           form.setValue(
-            'settings.inputUiInfo.sampleDataFileId',
-            sampleDataFileId,
-            { shouldValidate: true },
-          );
-          form.setValue(
-            'settings.inputUiInfo.lastTestDate',
-            dayjs().toISOString(),
+            'settings.inputUiInfo',
+            {
+              ...formValues.settings.inputUiInfo,
+              sampleDataFileId,
+              currentSampleData: undefined,
+              lastTestDate: dayjs().toISOString(),
+            },
             { shouldValidate: true },
           );
         } else {
@@ -92,7 +96,7 @@ const TestActionSection = React.memo(
             ),
           );
         }
-        refetchSampleData()
+        setSampleData(formValues.name, output)
         setLastTestDate(dayjs().toISOString());
       },
       onError: (error) => {
@@ -121,7 +125,7 @@ const TestActionSection = React.memo(
             </TestButtonTooltip>
           </div>
         )}
-        {sampleDataExists && !isSampleDataLoading && (
+        {sampleDataExists && (
           <TestSampleDataViewer
             onRetest={mutate}
             isValid={isValid}

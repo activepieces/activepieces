@@ -20,6 +20,7 @@ async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
                 id: f.id,
                 projectId,
                 removeConnectionsName: false,
+                removeSampleData: true,
             })
         }),
     )

@@ -216,6 +216,7 @@ export const flowVersionService = {
         flowId,
         versionId,
         removeConnectionsName = false,
+        removeSampleData = false,
         entityManager,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
         const flowVersion: FlowVersion | null = await flowVersionRepo(entityManager).findOne({
@@ -240,7 +241,7 @@ export const flowVersionService = {
             })
         }
 
-        return removeSecretsFromFlow(flowVersion, removeConnectionsName)
+        return removeSecretsFromFlow(flowVersion, removeConnectionsName, removeSampleData)
     },
     async createEmptyVersion(
         flowId: FlowId,
@@ -284,6 +285,7 @@ async function applySingleOperation(
 async function removeSecretsFromFlow(
     flowVersion: FlowVersion,
     removeConnectionNames: boolean,
+    removeSampleData: boolean,
 ): Promise<FlowVersion> {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(
         JSON.stringify(flowVersion),
@@ -292,6 +294,11 @@ async function removeSecretsFromFlow(
     for (const step of steps) {
         if (removeConnectionNames) {
             step.settings.input = replaceConnections(step.settings.input)
+        }
+        if (removeSampleData) {
+            step.settings.inputUiInfo.sampleDataFileId = undefined
+            step.settings.inputUiInfo.currentSampleData = undefined
+            step.settings.inputUiInfo.lastTestDate = undefined
         }
     }
     return flowVersionWithArtifacts
@@ -603,6 +610,7 @@ type GetFlowVersionOrThrowParams = {
     flowId: FlowId
     versionId: FlowVersionId | undefined
     removeConnectionsName?: boolean
+    removeSampleData?: boolean
     entityManager?: EntityManager
 }
 

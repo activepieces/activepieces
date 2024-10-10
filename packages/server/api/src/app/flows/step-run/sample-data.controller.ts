@@ -1,9 +1,10 @@
-import { CreateStepRunRequestBody, PrincipalType, SaveSampleDataRequest, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from "@activepieces/shared"
-import { FastifyPluginAsyncTypebox, Type } from "@fastify/type-provider-typebox"
-import { websocketService } from "../../websockets/websockets.service"
-import { accessTokenManager } from "../../authentication/lib/access-token-manager"
-import { sampleDataService } from "./sample-data.service"
-import { logger } from "@sentry/utils"
+import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SaveSampleDataRequest, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { websocketService } from '../../websockets/websockets.service'
+import { flowService } from '../flow/flow.service'
+import { sampleDataService } from './sample-data.service'
+import { logger } from '@activepieces/server-shared'
 
 export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) => {
     websocketService.addListener(WebsocketServerEvent.TEST_STEP_RUN, (socket) => {
@@ -29,7 +30,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
 
 
     fastify.post('/', SaveSampleRequest, async (request) => {
-        return await sampleDataService.save({
+        return sampleDataService.save({
             projectId: request.principal.projectId,
             flowVersionId: request.body.flowVersionId,
             stepName: request.body.stepName,
@@ -37,10 +38,16 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
         })
     })
 
-    fastify.get('/:id', GetSampleDataRequestParams, async (request) => {
-        const sampleData = await sampleDataService.getOrThrow({
+    fastify.get('/', GetSampleDataRequestParams, async (request) => {
+        const flow = await flowService.getOnePopulatedOrThrow({
+            id: request.query.flowId,
             projectId: request.principal.projectId,
-            id: request.params.id,
+            versionId: request.query.flowVersionId,
+        })
+        const sampleData = await sampleDataService.getOrReturnEmpty({
+            projectId: request.principal.projectId,
+            flowVersion: flow.version,
+            stepName: request.query.stepName,
         })
         return sampleData
     })
@@ -60,8 +67,6 @@ const GetSampleDataRequestParams = {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
-        }),
+        querystring: GetSampleDataRequest,
     },
 }

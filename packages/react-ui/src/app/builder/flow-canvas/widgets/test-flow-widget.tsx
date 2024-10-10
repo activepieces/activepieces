@@ -26,7 +26,7 @@ const TestFlowWidget = ({ flowVersion, setRun }: TestFlowWidgetProps) => {
 
   const triggerHasSampleData =
     flowVersion.trigger.type === TriggerType.PIECE &&
-    !isNil(flowVersion.trigger.settings.inputUiInfo?.sampleData);
+    !isNil(flowVersion.trigger.settings.inputUiInfo?.lastTestDate);
 
   const { mutate, isPending } = useMutation<void>({
     mutationFn: () =>

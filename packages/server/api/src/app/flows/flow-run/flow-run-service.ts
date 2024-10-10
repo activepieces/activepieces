@@ -40,10 +40,10 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
 import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
+import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logSerializer } from './log-serializer'
-import { sampleDataService } from '../step-run/sample-data.service'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 
@@ -314,15 +314,15 @@ export const flowRunService = {
     async test({ projectId, flowVersionId }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
-        const sampleDataFileId = flowVersion.trigger.settings.inputUiInfo.sampleDataFileId
-        const sampleData = await sampleDataService.getOrThrow({
+        const sampleData = await sampleDataService.getOrReturnEmpty({
             projectId,
-            id: sampleDataFileId,
+            flowVersion,
+            stepName: flowVersion.trigger.name,
         })
         return this.start({
             projectId,
             flowVersionId,
-            payload: sampleData.data,
+            payload: sampleData,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: webhookResponseWatcher.getServerId(),

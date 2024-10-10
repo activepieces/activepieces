@@ -21,8 +21,8 @@ import {
     UpdateTriggerRequest,
 } from './flow-operations'
 import { FlowVersion, FlowVersionState } from './flow-version'
-import { Trigger, TriggerType } from './triggers/trigger'
 import { DEFAULT_SAMPLE_DATA_SETTINGS } from './sample-data'
+import { Trigger, TriggerType } from './triggers/trigger'
 
 type Step = Action | Trigger
 
