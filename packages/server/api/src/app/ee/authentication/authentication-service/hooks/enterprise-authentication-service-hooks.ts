@@ -1,4 +1,4 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
+import { AppSystemProp, logger, system } from '@activepieces/server-shared'
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { platformService } from '../../../../platform/platform.service'
 import { projectService } from '../../../../project/project-service'
@@ -6,6 +6,7 @@ import { userService } from '../../../../user/user-service'
 import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
 import { licenseKeysService } from '../../../license-keys/license-keys-service'
 import { authenticationHelper } from './authentication-helper'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 const DEFAULT_PLATFORM_NAME = 'Activepieces'
 
@@ -30,7 +31,10 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
     async postSignUp({ user }) {
         const platformCreated = await platformService.hasAnyPlatforms()
         if (platformCreated) {
-            await authenticationHelper.autoVerifyUserIfEligible(user)
+            logger.info({
+                email: user.email,
+                platformId: user.platformId,
+            }, '[postSignUp] provisionUserInvitation')
             await userInvitationsService.provisionUserInvitation({
                 email: user.email,
                 platformId: user.platformId!,
@@ -75,6 +79,11 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
     },
 
     async postSignIn({ user }) {
+        assertNotNullOrUndefined(user.platformId, 'Platform id is not defined')
+        await userInvitationsService.provisionUserInvitation({
+            email: user.email,
+            platformId: user.platformId,
+        })
         const result = await authenticationHelper.getProjectAndTokenOrThrow(user)
         return {
             user,
