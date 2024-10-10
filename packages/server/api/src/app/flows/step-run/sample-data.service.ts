@@ -99,9 +99,9 @@ export const sampleDataService = {
         }
 
         const sampleDataFileId = step.settings.inputUiInfo?.sampleDataFileId
-        const currentSampleData = step.settings.inputUiInfo?.currentSampleData
+        const currentSelectedData = step.settings.inputUiInfo?.currentSelectedData
 
-        if (isNil(currentSampleData) && isNil(sampleDataFileId)) {
+        if (isNil(currentSelectedData) && isNil(sampleDataFileId)) {
             return {}
         }
         if (!isNil(sampleDataFileId)) {
@@ -112,7 +112,7 @@ export const sampleDataService = {
             })
             return JSON.parse(data.toString('utf-8'))
         }
-        return currentSampleData
+        return currentSelectedData
 
     },
     async deleteForStep(params: DeleteSampleDataForStepParams): Promise<void> {
@@ -120,13 +120,13 @@ export const sampleDataService = {
             id: params.sampleDataFileId,
             projectId: params.projectId,
             type: FileType.SAMPLE_DATA,
-        }).andWhere('metadata->>flowVersionId = :flowVersionId', { flowVersionId: params.flowVersionId }).execute()
+        }).andWhere('metadata->>\'flowVersionId\' = :flowVersionId', { flowVersionId: params.flowVersionId }).execute()
     },
     async deleteForFlow(params: DeleteSampleDataParams): Promise<void> {
         await fileRepo().createQueryBuilder().delete().where({
             projectId: params.projectId,
             type: FileType.SAMPLE_DATA,
-        }).andWhere('metadata->>flowId = :flowId', { flowId: params.flowId }).execute()
+        }).andWhere('metadata->>\'flowId\' = :flowId', { flowId: params.flowId }).execute()
     },
     async getSampleDataForFlow(projectId: ProjectId, flowVersion: FlowVersion): Promise<Record<string, unknown>> {
         const steps = flowHelper.getAllSteps(flowVersion.trigger)

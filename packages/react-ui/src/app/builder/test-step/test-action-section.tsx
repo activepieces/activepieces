@@ -83,7 +83,7 @@ const TestActionSection = React.memo(
             {
               ...formValues.settings.inputUiInfo,
               sampleDataFileId,
-              currentSampleData: undefined,
+              currentSelectedData: undefined,
               lastTestDate: dayjs().toISOString(),
             },
             { shouldValidate: true },

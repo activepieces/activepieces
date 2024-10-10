@@ -297,7 +297,7 @@ async function removeSecretsFromFlow(
         }
         if (removeSampleData) {
             step.settings.inputUiInfo.sampleDataFileId = undefined
-            step.settings.inputUiInfo.currentSampleData = undefined
+            step.settings.inputUiInfo.currentSelectedData = undefined
             step.settings.inputUiInfo.lastTestDate = undefined
         }
     }

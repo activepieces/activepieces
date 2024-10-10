@@ -191,7 +191,7 @@ const TestTriggerSection = React.memo(
         {
           ...formValues.settings.inputUiInfo,
           sampleDataFileId: sampleFile.id,
-          currentSampleData: undefined,
+          currentSelectedData: undefined,
           lastTestDate: dayjs().toISOString(),
         },
         { shouldValidate: true },
@@ -211,7 +211,8 @@ const TestTriggerSection = React.memo(
       staleTime: 0,
     });
 
-    const sampleDataSelected = !isNil(sampleData) || !isNil(errorMessage);
+    const sampleDataSelected = !isNil(lastTestDate) || !isNil(errorMessage);
+    
     const isTestedBefore = !isNil(
       form.getValues().settings.inputUiInfo?.lastTestDate,
     );
