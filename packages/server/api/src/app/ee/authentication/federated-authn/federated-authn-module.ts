@@ -21,9 +21,7 @@ export const federatedAuthModule: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
-const federatedAuthnController: FastifyPluginAsyncTypebox = async (
-    app,
-) => {
+const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/login', LoginRequestSchema, async (req) => {
         const platformId = await resolvePlatformIdForRequest(req)
         assertNotNullOrUndefined(platformId, 'Platform id is not defined')

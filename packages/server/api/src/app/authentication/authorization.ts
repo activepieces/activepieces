@@ -31,6 +31,7 @@ Payload | null
         const principalProjectId = request.principal.projectId
         let verdict: AuthzVerdict = 'ALLOW'
 
+
         if ('projectId' in payload) {
             if (payload.projectId !== principalProjectId) {
                 verdict = 'DENY'
