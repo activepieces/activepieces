@@ -1,6 +1,6 @@
 import { FilesService } from '@activepieces/pieces-framework'
+import fetchRetry from 'fetch-retry'
 import { FileSizeError, FileStoreError } from '../helper/execution-errors'
-import fetchRetry from 'fetch-retry';
 
 const MAX_FILE_SIZE_MB = Number(process.env.AP_MAX_FILE_SIZE_MB)
 
@@ -21,7 +21,7 @@ export function createFilesService({ stepName, flowId, engineToken, apiUrl }: Cr
                 throw new FileSizeError(data.length / 1024 / 1024, MAX_FILE_SIZE_MB)
             }
 
-            const fetchWithRetry = fetchRetry(global.fetch);
+            const fetchWithRetry = fetchRetry(global.fetch)
 
             const response = await fetchWithRetry(apiUrl + 'v1/step-files', {
                 method: 'POST',
