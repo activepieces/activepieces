@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 
 export const returnMarkdown = createAction({
   name: 'return_markdown',
-  displayName: 'Return Form Response (Markdown)',
+  displayName: 'Respond with Markdown',
   description: 'Return a markdown as a response.',
   props: {
     markdown: Property.LongText({
