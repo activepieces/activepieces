@@ -20,9 +20,8 @@ Use this to generate sample data, views the draft version of the from.
 `;
 
 export const onFormSubmission = createTrigger({
-
   name: 'form_submission',
-  displayName: 'On Form Submission',
+  displayName: 'Form Input',
   description: 'Trigger the flow by submitting a form.',
   props: {
     about: Property.MarkDown({
@@ -31,7 +30,7 @@ export const onFormSubmission = createTrigger({
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
       description:
-        'If enabled, the form will return the flow output to the frontend. Make sure to use the Return Response action to return a response.',
+        'If enabled, the form will return the flow output to the frontend. Make sure to use the "Return Form Response" action to return a response.',
       defaultValue: false,
       required: true,
     }),
