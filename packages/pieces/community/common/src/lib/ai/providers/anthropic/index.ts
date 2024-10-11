@@ -80,7 +80,7 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
           (choice): choice is ToolUseBlock => choice.type === 'tool_use'
         );
 
-        const toolCall = toolCallsResponse[0];
+        const toolCall = toolCallsResponse?.[0];
         return {
           choices: completion.content
             .filter((choice): choice is TextBlock => choice.type === 'text')
@@ -90,12 +90,12 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
             })),
           call: toolCall
             ? {
-                id: toolCall.id,
-                function: {
-                  name: toolCall.name,
-                  arguments: toolCall.input,
-                },
-              }
+              id: toolCall.id,
+              function: {
+                name: toolCall.name,
+                arguments: toolCall.input,
+              },
+            }
             : null,
           model: completion.model,
           created: new Date().getTime(),
@@ -172,12 +172,12 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
             })),
           call: toolCall
             ? {
-                id: toolCall.id,
-                function: {
-                  name: toolCall.name,
-                  arguments: toolCall.input,
-                },
-              }
+              id: toolCall.id,
+              function: {
+                name: toolCall.name,
+                arguments: toolCall.input,
+              },
+            }
             : null,
           model: completion.model,
           created: new Date().getTime(),
