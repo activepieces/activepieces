@@ -60,6 +60,7 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
+import { ChatPage } from '@/app/routes/chat';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -105,6 +106,14 @@ const routes = [
     element: (
       <PageTitle title="Forms">
         <FormPage />
+      </PageTitle>
+    ),
+  },
+  {
+    path: '/chats/:flowId',
+    element: (
+      <PageTitle title="Chats">
+        <ChatPage />
       </PageTitle>
     ),
   },
