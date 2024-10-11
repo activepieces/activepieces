@@ -50,7 +50,7 @@ describe('List flow runs endpoint', () => {
             },
             query: {
                 projectId: mockProject.id,
-            }
+            },
         })
 
         // assert

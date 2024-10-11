@@ -18,6 +18,7 @@ import { FlowRun, SeekPage } from '@activepieces/shared';
 import { SidebarHeader } from '../sidebar-header';
 
 import { FlowRunCard } from './flow-run-card';
+import { authenticationSession } from '@/lib/authentication-session';
 
 type FlowRunsListProps = {
   recentRuns?: number;
@@ -38,6 +39,7 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
     queryFn: () =>
       flowRunsApi.list({
         flowId: [flow.id],
+        projectId: authenticationSession.getProjectId()!,
         limit: recentRuns,
         cursor: undefined,
       }),
