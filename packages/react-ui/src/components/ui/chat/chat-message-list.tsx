@@ -1,17 +1,15 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import * as React from 'react';
 
-interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> { }
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
+
+type ChatMessageListProps = React.HTMLAttributes<HTMLDivElement>;
 
 const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
   ({ className, children, ...props }, ref) => (
     <ScrollArea className="h-full w-full">
       <div
-        className={cn(
-          "flex flex-col w-full h-full p-4 gap-6",
-          className,
-        )}
+        className={cn('flex flex-col w-full h-full p-4 gap-6', className)}
         ref={ref}
         {...props}
       >
@@ -21,6 +19,6 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
   ),
 );
 
-ChatMessageList.displayName = "ChatMessageList";
+ChatMessageList.displayName = 'ChatMessageList';
 
 export { ChatMessageList };

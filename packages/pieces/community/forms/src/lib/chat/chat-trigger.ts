@@ -23,27 +23,27 @@ export const onChatSubmission = createTrigger({
   },
   sampleData,
   type: TriggerStrategy.WEBHOOK,
-  async onEnable(ctx) {
+  async onEnable() {
     return;
   },
   async onDisable() {
     return;
   },
   async run(ctx) {
-    const body = ctx.payload.body as any;
-    const chatId = body.chatId as string | undefined;
+    const body = ctx.payload.body as { chatId?: string, message?: string };
+    const chatId = body.chatId;
 
     if (!chatId) {
       throw new Error('Chat ID is required');
     }
 
-    const message = body.message as string | undefined;
+    const message = body.message;
 
     if (!message) {
       throw new Error('Message is required');
     }
 
-    const response = [{ chatId, message }]
+    const response = [{ chatId, message }];
 
     const chat = await getChat(ctx.store, chatId);
     if (!chat) {

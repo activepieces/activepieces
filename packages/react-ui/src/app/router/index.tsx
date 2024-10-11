@@ -10,6 +10,7 @@ import {
 import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
+import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
 import AIProvidersPage from '@/app/routes/platform/ai-providers';
 import AnalyticsPage from '@/app/routes/platform/analytics';
@@ -60,7 +61,6 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
-import { ChatPage } from '@/app/routes/chat';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();

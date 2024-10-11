@@ -1,23 +1,24 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
+import { useMutation } from '@tanstack/react-query';
+import { ArrowUpIcon, BotIcon, CopyIcon } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import { useEffect, useRef, useState } from 'react';
+import Markdown from 'react-markdown';
+import { Navigate, useParams } from 'react-router-dom';
+
+import { Button } from '@/components/ui/button';
 import {
   ChatBubble,
   ChatBubbleAction,
   ChatBubbleAvatar,
   ChatBubbleMessage,
-} from "@/components/ui/chat/chat-bubble";
-import { ChatInput } from "@/components/ui/chat/chat-input";
-import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
-import { chatApi } from "@/features/chat/lib/chat-api";
-import { cn } from "@/lib/utils";
-import { useMutation } from "@tanstack/react-query";
-import { ArrowUpIcon, BotIcon, CopyIcon } from "lucide-react";
-import { nanoid } from "nanoid";
-import { useEffect, useRef, useState } from "react";
-import Markdown from "react-markdown";
-import { Navigate, useParams, useSearchParams } from "react-router-dom";
-import { Chat } from "../../../../../shared/src";
+} from '@/components/ui/chat/chat-bubble';
+import { ChatInput } from '@/components/ui/chat/chat-input';
+import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
+import { chatApi } from '@/features/chat/lib/chat-api';
+import { cn } from '@/lib/utils';
+import { Chat } from '@activepieces/shared';
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -25,18 +26,12 @@ export function ChatPage() {
   const formRef = useRef<HTMLFormElement>(null);
 
   const scrollToBottom = () => {
-    messagesRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    messagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   };
 
-  const {
-    messages,
-    handleSubmit,
-    isLoading,
-    input,
-    setInput,
-  } = useChat({
+  const { messages, handleSubmit, isLoading, input, setInput } = useChat({
     onSendMessage: async () => {
-      setInput("");
+      setInput('');
       scrollToBottom();
     },
   });
@@ -50,7 +45,7 @@ export function ChatPage() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (!isLoading && input) {
         onSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
@@ -61,18 +56,20 @@ export function ChatPage() {
   if (!flowId) return <Navigate to="/404" />;
 
   return (
-    <main className={cn(
-      "flex w-full max-w-3xl flex-col items-center mx-auto py-6",
-      messages.length > 0 ? "h-screen" : "h-[calc(50vh)]",
-    )}>
+    <main
+      className={cn(
+        'flex w-full max-w-3xl flex-col items-center mx-auto py-6',
+        messages.length > 0 ? 'h-screen' : 'h-[calc(50vh)]',
+      )}
+    >
       <ChatMessageList ref={messagesRef}>
         {messages.map((message, index) => (
           <ChatBubble
             key={index}
-            variant={message.role === "user" ? "sent" : "received"}
+            variant={message.role === 'user' ? 'sent' : 'received'}
             className="flex items-center"
           >
-            {message.role === "bot" && (
+            {message.role === 'bot' && (
               <ChatBubbleAvatar
                 src=""
                 fallback={<BotIcon className="size-5" />}
@@ -81,7 +78,7 @@ export function ChatPage() {
             <ChatBubbleMessage className="flex gap-2">
               <Markdown className="bg-inherit">{message.content}</Markdown>
             </ChatBubbleMessage>
-            {message.role === "bot" && (
+            {message.role === 'bot' && (
               <div className="flex gap-1">
                 <ChatBubbleAction
                   variant="outline"
@@ -95,14 +92,19 @@ export function ChatPage() {
         ))}
         {isLoading && (
           <ChatBubble variant="received">
-            <ChatBubbleAvatar src="" fallback={<BotIcon className="size-5" />} />
+            <ChatBubbleAvatar
+              src=""
+              fallback={<BotIcon className="size-5" />}
+            />
             <ChatBubbleMessage isLoading />
           </ChatBubble>
         )}
       </ChatMessageList>
       {messages.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8">
-          <p className="text-lg text-gray-500">What can I help you with today?</p>
+          <p className="text-lg text-gray-500">
+            What can I help you with today?
+          </p>
         </div>
       )}
       <div className="w-full px-4">
@@ -142,20 +144,24 @@ const useChat = ({
   const { flowId } = useParams();
   const [chatId, setChatId] = useState<string | null>(null);
   const [chat, setChat] = useState<Chat | null>(null);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
 
   const { mutate: sendMessage, isPending: isLoading } = useMutation({
-    mutationKey: ["sendMessage", flowId, chatId],
+    mutationKey: ['sendMessage', flowId, chatId],
     mutationFn: async () => {
       if (!flowId || !chatId) return null;
       onSendMessage(input);
-      setChat(chat ? {
-        ...chat,
-        messages: [...chat.messages, { role: "user", content: input }]
-      } : {
-        id: chatId,
-        messages: [{ role: "user", content: input }],
-      });
+      setChat(
+        chat
+          ? {
+              ...chat,
+              messages: [...chat.messages, { role: 'user', content: input }],
+            }
+          : {
+              id: chatId,
+              messages: [{ role: 'user', content: input }],
+            },
+      );
       return chatApi.sendMessage(flowId, chatId, input);
     },
     onSuccess: setChat,
