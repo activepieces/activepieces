@@ -1,4 +1,8 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import {
+  Property,
+  TriggerStrategy,
+  createTrigger,
+} from '@activepieces/pieces-framework';
 import { slackChannel, slackInfo } from '../common/props';
 import { slackAuth } from '../../';
 import { WebClient } from '@slack/web-api';
@@ -40,6 +44,11 @@ export const newMessage = createTrigger({
   props: {
     info: slackInfo,
     channel: slackChannel(false),
+    ignoreBots: Property.Checkbox({
+      displayName: 'Ignore Bot Messages ?',
+      required: true,
+      defaultValue: false,
+    }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
   sampleData: sampleData,
@@ -68,14 +77,16 @@ export const newMessage = createTrigger({
     if (!response.messages) {
       return [];
     }
-    return response.messages.map((message) => {
-      return {
-        ...message,
-        channel: context.propsValue.channel,
-        event_ts: '1678231735.586539',
-        channel_type: 'channel',
-      };
-    });
+    return response.messages
+      .filter((message) => !(context.propsValue.ignoreBots && message.bot_id))
+      .map((message) => {
+        return {
+          ...message,
+          channel: context.propsValue.channel,
+          event_ts: '1678231735.586539',
+          channel_type: 'channel',
+        };
+      });
   },
 
   run: async (context) => {
@@ -84,6 +95,10 @@ export const newMessage = createTrigger({
       !context.propsValue.channel ||
       payloadBody.event.channel === context.propsValue.channel
     ) {
+      // check for bot messages
+      if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
+        return [];
+      }
       return [payloadBody.event];
     }
 
@@ -94,5 +109,6 @@ export const newMessage = createTrigger({
 type PayloadBody = {
   event: {
     channel: string;
+    bot_id?: string;
   };
 };

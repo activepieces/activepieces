@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { generateImage } from './lib/actions/generate-image';
+import { extractStructuredData } from './lib/actions/extract-data';
 import { analyzeImage } from './lib/actions/analyze-image';
 
 export const imageAi = createPiece({
@@ -10,6 +11,6 @@ export const imageAi = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/image-ai.svg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['kishanprmr'],
-  actions: [analyzeImage, generateImage],
+  actions: [analyzeImage, extractStructuredData, generateImage],
   triggers: [],
 });

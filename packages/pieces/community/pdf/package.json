@@ -1,6 +1,4 @@
 {
   "name": "@activepieces/piece-pdf",
-  "version": "0.0.1",
-  "main": "./src/index.js",
-  "type": "commonjs"
+  "version": "0.1.1"
 }
