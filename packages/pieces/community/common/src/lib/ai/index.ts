@@ -16,7 +16,7 @@ export type AIImage = {
       functions: AIFunctionDefinition[];
     } & { image: ApFile }
   ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
-  analyze: (params: AIAnalyzeImageParams) => Promise<AIChatCompletion>;
+  analyze?: (params: AIAnalyzeImageParams) => Promise<AIChatCompletion>;
 };
 
 export type AIImageGenerateParams = {

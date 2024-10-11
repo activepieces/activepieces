@@ -13,60 +13,6 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
   });
   return {
     provider: 'ANTHROPIC' as const,
-    image: {
-      analyze: async (params) => {
-        type AllowedImageTypes =
-          | 'image/jpeg'
-          | 'image/png'
-          | 'image/gif'
-          | 'image/webp';
-
-        const response = await sdk.messages.create({
-          model: params.model,
-          max_tokens: params.maxTokens ?? 2000,
-          messages: [
-            {
-              role: AIChatRole.USER,
-              content: [
-                {
-                  type: 'image',
-                  source: {
-                    type: 'base64',
-                    media_type:
-                      ((params.image.extension &&
-                        mime.lookup(
-                          params.image.extension
-                        )) as AllowedImageTypes) || 'image/jpeg',
-                    data: params.image.base64,
-                  },
-                },
-              ],
-            },
-          ],
-        });
-
-        return {
-          choices: response.content
-            .filter((choice): choice is TextBlock => choice.type === 'text')
-            .map((choice: TextBlock) => ({
-              content: choice.text,
-              role: AIChatRole.ASSISTANT,
-            })),
-          created: new Date().getTime(),
-          id: response.id,
-          model: response.model,
-          usage: {
-            completionTokens: response.usage.output_tokens,
-            promptTokens: response.usage.input_tokens,
-            totalTokens:
-              response.usage.output_tokens + response.usage.input_tokens,
-          },
-        };
-      },
-      generate: async (params) => {
-        return null;
-      },
-    },
     chat: {
       text: async (params) => {
         const concatenatedSystemMessage = params.messages
@@ -244,6 +190,55 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
         };
       },
       generate: async (parmas) => null,
+      analyze: async (params) => {
+        type AllowedImageTypes =
+          | 'image/jpeg'
+          | 'image/png'
+          | 'image/gif'
+          | 'image/webp';
+
+        const response = await sdk.messages.create({
+          model: params.model,
+          max_tokens: params.maxTokens ?? 2000,
+          messages: [
+            {
+              role: AIChatRole.USER,
+              content: [
+                {
+                  type: 'image',
+                  source: {
+                    type: 'base64',
+                    media_type:
+                      ((params.image.extension &&
+                        mime.lookup(
+                          params.image.extension
+                        )) as AllowedImageTypes) || 'image/jpeg',
+                    data: params.image.base64,
+                  },
+                },
+              ],
+            },
+          ],
+        });
+
+        return {
+          choices: response.content
+            .filter((choice): choice is TextBlock => choice.type === 'text')
+            .map((choice: TextBlock) => ({
+              content: choice.text,
+              role: AIChatRole.ASSISTANT,
+            })),
+          created: new Date().getTime(),
+          id: response.id,
+          model: response.model,
+          usage: {
+            completionTokens: response.usage.output_tokens,
+            promptTokens: response.usage.input_tokens,
+            totalTokens:
+              response.usage.output_tokens + response.usage.input_tokens,
+          },
+        };
+      },
     },
   };
 };

@@ -31,13 +31,28 @@ export const analyzeImage = createAction({
       server: context.server,
     });
 
-    const response = await ai.image?.analyze({
+    const image = ai.image?.analyze;
+
+    if (!image) {
+      throw new Error(
+        `Model ${context.propsValue.model} does not support image analysis.`
+      );
+    }
+
+    const response = await image({
       model: context.propsValue.model,
       image: context.propsValue.image,
       prompt: context.propsValue.prompt,
       maxTokens: context.propsValue.maxTokens,
     });
 
-    return response?.choices[0].content;
+    const text = response?.choices[0].content;
+    if (text) {
+      return text;
+    } else {
+      throw new Error(
+        'Unknown error occurred. Please check image configuration.'
+      );
+    }
   },
 });
