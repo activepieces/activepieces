@@ -4,18 +4,13 @@ import {
   createTrigger
 } from '@activepieces/pieces-framework';
 import { Chat } from '@activepieces/shared';
-import { getChat, saveChat } from './utils';
+import { getChat, sampleData, saveChat } from './utils';
 
 const markdown = `**Chat URL for this flow:**
 \`\`\`text
 {{chatUrl}}
 \`\`\`
 `;
-
-const sampleData = {
-  chatId: "MOCK_CHAT_ID",
-  message: "Hello, how are you?",
-};
 
 export const onChatSubmission = createTrigger({
   name: 'chat_submission',
