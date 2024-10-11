@@ -253,7 +253,7 @@ export const flagService = {
     ): string {
         const isCustomerPlatform =
             platformId && !flagService.isCloudPlatform(platformId)
-        if (isCustomerPlatform) {
+        if (isCustomerPlatform && system.getEdition() === ApEdition.CLOUD) {
             return `https://${hostUrl}/redirect`
         }
         const frontendUrl = system.get(SharedSystemProp.FRONTEND_URL)
