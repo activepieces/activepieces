@@ -9,13 +9,13 @@ import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
-import { flowRunController as controller } from './flow-run-controller'
+import { flowRunController } from './flow-run-controller'
 
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
 export const flowRunModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    await app.register(controller, { prefix: '/v1/flow-runs' })
+    await app.register(flowRunController, { prefix: '/v1/flow-runs' })
     await webhookResponseWatcher.init()
     systemJobHandlers.registerJobHandler(SystemJobName.LOGS_CLEANUP_TRIGGER, async () => {
         logger.info({

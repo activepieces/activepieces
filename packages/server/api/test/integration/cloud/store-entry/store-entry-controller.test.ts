@@ -3,7 +3,7 @@ import { FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockUser } from '../../../helpers/mocks'
+import { createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -18,33 +18,84 @@ afterAll(async () => {
 })
 
 describe('Store-entries API', () => {
-    const projectId = '10'
-    let testToken: string
+    const projectId = apId()
+    let engineToken: string
+    let userToken: string
+    let serviceToken: string
     let mockUser: User
 
     beforeEach(async () => {
         mockUser = createMockUser()
         await databaseConnection().getRepository('user').save(mockUser)
 
-        testToken = await generateMockToken({
+        const mockPlatform = createMockPlatform({
+            ownerId: mockUser.id,
+        })
+        await databaseConnection().getRepository('platform').save(mockPlatform)
+
+        const mockProject = createMockProject({
+            id: projectId,
+            platformId: mockPlatform.id,
+            ownerId: mockUser.id,
+        })
+        await databaseConnection().getRepository('project').save(mockProject)
+
+        await databaseConnection().getRepository('user').update(mockUser.id, {
+            platformId: mockPlatform.id,
+        })
+
+        engineToken = await generateMockToken({
             type: PrincipalType.ENGINE,
+            id: apId(),
+            projectId,
+        })
+
+        userToken = await generateMockToken({
+            type: PrincipalType.USER,
+            id: mockUser.id,
+            projectId,
+            platform: {
+                id: mockPlatform.id,
+            },
+        })
+
+        serviceToken = await generateMockToken({
+            type: PrincipalType.SERVICE,
             id: apId(),
             projectId,
         })
     })
 
     describe('POST /v1/store-entries', () => {
+        it('should handle token type engineToken correctly and return 200', async () => {
+            const key = 'new_key_1'
+            const response = await makePostRequest(engineToken, key, 'random_value_0')
+            expect(response?.statusCode).toBe(200)
+        })
+
+        it('should handle token type userToken correctly and return 200', async () => {
+            const key = 'new_key_2'
+            const response = await makePostRequest(userToken, key, 'random_value_0')
+            expect(response?.statusCode).toBe(200)
+        })
+
+        it('should handle token type serviceToken correctly and return 401', async () => {
+            const key = 'new_key_3'
+            const response = await makePostRequest(serviceToken, key, 'random_value_0')
+            expect(response?.statusCode).toBe(403)
+        })
+
         it('should save and update the value', async () => {
             const key = 'new_key_1'
 
-            let response = await makePostRequest(testToken, key, 'random_value_0')
+            let response = await makePostRequest(engineToken, key, 'random_value_0')
             const firstResponseBody = response?.json()
             expect(response?.statusCode).toBe(200)
             expect(firstResponseBody.key).toEqual(key)
             expect(firstResponseBody.projectId).toEqual(projectId)
             expect(firstResponseBody.value).toEqual('random_value_0')
 
-            response = await makePostRequest(testToken, key, 'random_value_1')
+            response = await makePostRequest(engineToken, key, 'random_value_1')
             const secondResponseBody = response?.json()
             expect(response?.statusCode).toBe(200)
             expect(secondResponseBody.key).toEqual(key)
@@ -55,12 +106,12 @@ describe('Store-entries API', () => {
 
         it('should return saved value', async () => {
             const key = 'new_key_2'
-            
-            let response = await makePostRequest(testToken, key, 'random_value_2')
+
+            let response = await makePostRequest(engineToken, key, 'random_value_2')
             expect(response?.statusCode).toBe(200)
             const saveResponse = response?.json()
 
-            response = await makeGetRequest(testToken, key)
+            response = await makeGetRequest(engineToken, key)
             expect(response?.statusCode).toBe(200)
             const getResponse = response?.json()
 
@@ -71,14 +122,14 @@ describe('Store-entries API', () => {
 
         it('should delete saved value', async () => {
             const key = 'new_key_3'
-            
-            let response = await makePostRequest(testToken, key, 'random_value_3')
+
+            let response = await makePostRequest(engineToken, key, 'random_value_3')
             expect(response?.statusCode).toBe(200)
 
-            response = await makeDeleteRequest(testToken, key)
+            response = await makeDeleteRequest(engineToken, key)
             expect(response?.statusCode).toBe(200)
 
-            response = await makeGetRequest(testToken, key)
+            response = await makeGetRequest(engineToken, key)
             expect(response?.statusCode).toBe(404)
         })
     })

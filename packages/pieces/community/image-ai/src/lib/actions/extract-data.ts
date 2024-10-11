@@ -2,20 +2,21 @@ import {
   AI,
   AIChatRole,
   aiProps,
-  AIFunctionArgumentDefinition
+  AIFunctionArgumentDefinition,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const extractStructuredData = createAction({
   name: 'extractStructuredData',
   displayName: 'Extract Structured Data',
-  description: 'Extract structured data from unstructured text',
+  description: 'Extract structured data from image.',
   props: {
     provider: aiProps('function').provider,
     model: aiProps('function').model,
-    text: Property.LongText({
-      displayName: 'Unstructured Text',
+    image: Property.File({
+      displayName: 'Image',
       required: true,
+      description: 'The image file you want extract data from.',
     }),
     params: Property.Array({
       displayName: 'Data Definition',
@@ -24,7 +25,7 @@ export const extractStructuredData = createAction({
         name: Property.ShortText({
           displayName: 'Name',
           description:
-            'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+            'Provide the name of the value you want to extract from the image. The name should be unique and short. ',
           required: true,
         }),
         description: Property.LongText({
@@ -65,31 +66,40 @@ export const extractStructuredData = createAction({
 
     const ai = AI({ provider, server: context.server });
 
-    const functionCalling = ai.chat.function;
+    const functionCalling = ai.image?.function;
 
     if (!functionCalling) {
-      throw new Error(`Function calling is not supported by provider ${provider}`);
+      throw new Error(
+        `Model ${context.propsValue.model} does not support image generation.`
+      );
+    }
+
+    if (!functionCalling) {
+      throw new Error(
+        `Function calling is not supported by provider ${provider}`
+      );
     }
 
     const response = await functionCalling({
       model: context.propsValue.model,
+      image: context.propsValue.image,
       messages: [
         {
           role: AIChatRole.USER,
-          content: context.propsValue.text,
+          content:
+            'Use optical character recognition (OCR) to extract from provided image.',
         },
       ],
       functions: [
         {
           name: 'extract_structured_data',
-          description:
-            'Extract the following data from the provided text.',
+          description: 'Extract the following data from the provided image.',
           arguments: context.propsValue
             .params as AIFunctionArgumentDefinition[],
-        }
-      ]
+        },
+      ],
     });
 
-    return response.call?.function.arguments
+    return response.call?.function.arguments;
   },
 });

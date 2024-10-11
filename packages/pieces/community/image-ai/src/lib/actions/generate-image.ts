@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { AI, aiProps } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const generateImage = createAction({
   name: 'generateImage',
@@ -12,6 +12,7 @@ export const generateImage = createAction({
       displayName: 'Prompt',
       required: true,
     }),
+    advancedOptions: aiProps('image').advancedOptions,
     resolution: Property.Dropdown({
       displayName: 'Resolution',
       description: 'The resolution to generate the image in.',
@@ -54,27 +55,6 @@ export const generateImage = createAction({
         };
       },
     }),
-    quality: Property.Dropdown({
-      displayName: 'Quality',
-      required: true,
-      description: 'Standard is faster, HD has better details.',
-      defaultValue: 'standard',
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            {
-              label: 'standard',
-              value: 'standard',
-            },
-            {
-              label: 'hd',
-              value: 'hd',
-            },
-          ],
-        };
-      },
-    }),
   },
   async run(context) {
     const ai = AI({
@@ -82,11 +62,21 @@ export const generateImage = createAction({
       server: context.server,
     });
 
-    const response = await ai.image?.generate({
+    const image = ai.image
+
+    if (!image) {
+      throw new Error(
+        `Model ${context.propsValue.model} does not support image generation.`
+      );
+    }
+
+    const advancedOptions = context.propsValue.advancedOptions ?? {};
+
+    const response = await image.generate({
       model: context.propsValue.model,
       prompt: context.propsValue.prompt,
       size: context.propsValue.resolution,
-      quality: context.propsValue.quality,
+      advancedOptions: advancedOptions,
     });
 
     if (response) {
