@@ -9,19 +9,19 @@ export const fetchPeoplePaths = createAction({
   displayName: 'People Paths',
   description: 'fetch people paths',
   props: {
-    userReference: Property.LongText({
+    user_identifier: Property.LongText({
       displayName: 'User Reference',
       description: `If you're a Village Partner, use this field that identifies your user`,
       required: false,
     }),
-    targetLinkedinId: Property.LongText({
-      displayName: 'Target Linkedin Identifier',
-      description: `The Linkedin Identifier (slug) of the person you're trying to find paths to.`,
+    person_linkedin_url: Property.LongText({
+      displayName: 'Target Linkedin URL',
+      description: `The Linkedin URL of the person you're trying to find paths to.`,
       required: true,
     }),
   },
   async run(context) {
-    const { targetLinkedinId, userReference } =
+    const { person_linkedin_url, user_identifier } =
     context.propsValue;
 
     const res = await httpClient.sendRequest<string[]>({
@@ -31,8 +31,8 @@ export const fetchPeoplePaths = createAction({
         'X-Village-Secret-Key': context.auth, // Pass API key in headers
       },
       body: {
-        targetLinkedinId,
-        userReference
+        person_linkedin_url,
+        user_identifier
       }
     });
     return res.body;
