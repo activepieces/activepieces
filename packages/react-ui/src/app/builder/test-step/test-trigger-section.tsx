@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
@@ -27,12 +28,11 @@ import {
   isNil,
 } from '@activepieces/shared';
 
+import { useBuilderStateContext } from '../builder-hooks';
+
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
-import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
-import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
-import { useBuilderStateContext } from '../builder-hooks';
 
 const waitFor2Seconds = () =>
   new Promise((resolve) => setTimeout(resolve, 2000));
@@ -42,10 +42,7 @@ type TestTriggerSectionProps = {
   flowId: string;
 };
 
-function getSelectedId(
-  sampleData: unknown,
-  pollResults: TriggerEvent[],
-) {
+function getSelectedId(sampleData: unknown, pollResults: TriggerEvent[]) {
   if (sampleData === undefined) {
     return undefined;
   }
@@ -84,17 +81,22 @@ const TestTriggerSection = React.memo(
 
     const { sampleData, setSampleData } = useBuilderStateContext((state) => ({
       sampleData: state.sampleData[formValues.name],
-      setSampleData: state.setSampleData
-   }))
+      setSampleData: state.setSampleData,
+    }));
 
-    const [currentSelectedId, setCurrentSelectedId] = useState<string | undefined>(undefined);
+    const [currentSelectedId, setCurrentSelectedId] = useState<
+      string | undefined
+    >(undefined);
 
     const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
       useMutation({
         mutationFn: async () => {
-          const data = await triggerEventsApi.saveTriggerMockdata(flowId, mockData);
+          const data = await triggerEventsApi.saveTriggerMockdata(
+            flowId,
+            mockData,
+          );
           await updateSampleData(data);
-          return data
+          return data;
         },
         onSuccess: async () => {
           refetch();
@@ -212,16 +214,13 @@ const TestTriggerSection = React.memo(
     });
 
     const sampleDataSelected = !isNil(lastTestDate) || !isNil(errorMessage);
-    
+
     const isTestedBefore = !isNil(
       form.getValues().settings.inputUiInfo?.lastTestDate,
     );
 
     useEffect(() => {
-      const selectedId = getSelectedId(
-        sampleData,
-        pollResults?.data ?? [],
-      );
+      const selectedId = getSelectedId(sampleData, pollResults?.data ?? []);
       setCurrentSelectedId(selectedId);
     }, [sampleData, pollResults]);
 

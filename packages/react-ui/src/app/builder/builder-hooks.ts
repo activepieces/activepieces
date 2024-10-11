@@ -6,7 +6,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
-  Flow,
   FlowOperationRequest,
   FlowRun,
   FlowVersion,
@@ -53,7 +52,7 @@ export type BuilderState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
   readonly: boolean;
-  sampleData: Record<string, unknown>
+  sampleData: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
@@ -107,10 +106,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
-            initialState.flowVersion,
-            initialState.run,
-            {},
-          )
+              initialState.flowVersion,
+              initialState.run,
+              {},
+            )
           : {},
       sampleData: initialState.sampleData,
       flow: initialState.flow,
@@ -127,7 +126,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       allowCanvasPanning: true,
       rightSidebar:
         initialState.run ||
-          initialState.flowVersion.trigger.type !== TriggerType.EMPTY
+        initialState.flowVersion.trigger.type !== TriggerType.EMPTY
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshPieceFormSettings: false,
@@ -159,7 +158,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             selectedStep: stepName,
             rightSidebar:
               stepName === 'trigger' &&
-                state.flowVersion.trigger.type === TriggerType.EMPTY
+              state.flowVersion.trigger.type === TriggerType.EMPTY
                 ? RightSideBarType.NONE
                 : RightSideBarType.PIECE_SETTINGS,
             leftSidebar: !isNil(state.run)
@@ -222,8 +221,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             rightSidebar: RightSideBarType.PIECE_SETTINGS,
             selectedStep: run.steps
               ? flowRunUtils.findFailedStepInOutput(run.steps) ??
-              state.selectedStep ??
-              'trigger'
+                state.selectedStep ??
+                'trigger'
               : 'trigger',
             readonly: true,
           };

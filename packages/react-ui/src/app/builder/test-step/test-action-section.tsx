@@ -8,13 +8,15 @@ import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
 import { Action, StepRunResponse, isNil } from '@activepieces/shared';
+
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
+import { useBuilderStateContext } from '../builder-hooks';
+
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
-import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
-import { useBuilderStateContext } from '../builder-hooks';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -33,7 +35,7 @@ const TestActionSection = React.memo(
     const { sampleData, setSampleData } = useBuilderStateContext((state) => {
       return {
         sampleData: state.sampleData[formValues.name],
-        setSampleData: state.setSampleData
+        setSampleData: state.setSampleData,
       };
     });
     const [isValid, setIsValid] = useState(false);
@@ -66,13 +68,13 @@ const TestActionSection = React.memo(
             flowVersionId,
             stepName: formValues.name,
             payload: testStepResponse.output,
-          })
-          sampleDataFileId = sampleFile.id
+          });
+          sampleDataFileId = sampleFile.id;
         }
         return {
           ...testStepResponse,
           sampleDataFileId,
-        }
+        };
       },
       onSuccess: ({ success, output, sampleDataFileId }) => {
         if (success) {
@@ -92,11 +94,11 @@ const TestActionSection = React.memo(
           setErrorMessage(
             testStepUtils.formatErrorMessage(
               JSON.stringify(output) ||
-              t('Failed to run test step and no error message was returned'),
+                t('Failed to run test step and no error message was returned'),
             ),
           );
         }
-        setSampleData(formValues.name, output)
+        setSampleData(formValues.name, output);
         setLastTestDate(dayjs().toISOString());
       },
       onError: (error) => {

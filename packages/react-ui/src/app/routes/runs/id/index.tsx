@@ -6,8 +6,8 @@ import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { FlowRun, PopulatedFlow } from '@activepieces/shared';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
+import { FlowRun, PopulatedFlow } from '@activepieces/shared';
 
 const FlowRunPage = () => {
   const { runId } = useParams();
@@ -34,8 +34,12 @@ const FlowRunPage = () => {
     enabled: runId !== undefined,
   });
 
-  const { data: sampleData, isLoading: isSampleDataLoading, isError: isSampleDataError } = sampleDataHooks.useSampleDataForFlow(data?.flow?.version)
-  
+  const {
+    data: sampleData,
+    isLoading: isSampleDataLoading,
+    isError: isSampleDataError,
+  } = sampleDataHooks.useSampleDataForFlow(data?.flow?.version);
+
   if (isLoading || isSampleDataLoading) {
     return (
       <div className="bg-background flex h-screen w-screen items-center justify-center ">
@@ -45,11 +49,7 @@ const FlowRunPage = () => {
   }
 
   if (isSampleDataError) {
-    return <>
-      <p>
-        Error loading sample data, contact support
-      </p>
-    </>
+    return <p>Error loading sample data, contact support</p>;
   }
 
   return (

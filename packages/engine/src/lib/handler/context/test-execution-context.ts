@@ -8,7 +8,7 @@ export const testExecutionContext = {
         excludedStepName?: string
         projectId: string
         apiUrl: string
-        engineToken: string,
+        engineToken: string
         sampleData: Record<string, unknown>
     }): Promise<FlowExecutorContext> {
         const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)

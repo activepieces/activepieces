@@ -95,7 +95,7 @@ const PieceSelector = ({
       state.applyOperation,
       state.selectStepByName,
       state.flowVersion,
-      state.setSampleData
+      state.setSampleData,
     ]);
 
   const { metadata, isLoading: isLoadingPieces } =
