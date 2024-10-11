@@ -82,6 +82,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     removeStepSelection,
     flowVersion,
     loopIndexes,
+    setSampleData,
   ] = useBuilderStateContext((state) => [
     state.selectStepByName,
     state.setAllowCanvasPanning,
@@ -95,11 +96,13 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
     state.removeStepSelection,
     state.flowVersion,
     state.loopsIndexes,
+    state.setSampleData,
   ]);
   const pieceSelectorOperation = useRef<
     FlowOperationType.UPDATE_ACTION | FlowOperationType.UPDATE_TRIGGER
   >(FlowOperationType.UPDATE_ACTION);
   const deleteStep = () => {
+    setSampleData(data.step!.name, undefined);
     applyOperation(
       {
         type: FlowOperationType.DELETE_ACTION,

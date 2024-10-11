@@ -49,6 +49,7 @@ export type ExecuteExtractPieceMetadata = PiecePackage
 export type ExecuteStepOperation = BaseEngineOperation &  {
     stepName: string
     flowVersion: FlowVersion
+    sampleData: Record<string, unknown>
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
@@ -57,6 +58,7 @@ export type ExecutePropsOptions = BaseEngineOperation & {
     actionOrTriggerName: string
     flowVersion: FlowVersion
     input: Record<string, unknown>
+    sampleData: Record<string, unknown>
     searchValue?: string
 }
 

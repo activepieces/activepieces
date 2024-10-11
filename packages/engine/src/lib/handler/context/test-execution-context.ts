@@ -3,18 +3,19 @@ import { variableService } from '../../variables/variable-service'
 import { FlowExecutorContext } from './flow-execution-context'
 
 export const testExecutionContext = {
-    async stateFromFlowVersion({ flowVersion, excludedStepName, projectId, engineToken, apiUrl }: {
+    async stateFromFlowVersion({ flowVersion, sampleData, excludedStepName, projectId, engineToken, apiUrl }: {
         flowVersion: FlowVersion
         excludedStepName?: string
         projectId: string
         apiUrl: string
         engineToken: string
+        sampleData: Record<string, unknown>
     }): Promise<FlowExecutorContext> {
         const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)
         let flowExecutionContext = FlowExecutorContext.empty()
 
         for (const step of flowSteps) {
-            const { name, settings: { inputUiInfo } } = step
+            const { name } = step
             if (name === excludedStepName) {
                 continue
             }
@@ -52,7 +53,7 @@ export const testExecutionContext = {
                         input: step.settings,
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,
-                        output: inputUiInfo?.currentSelectedData,
+                        output: sampleData[step.name],
                     }))
                     break
             }

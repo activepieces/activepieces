@@ -33,7 +33,6 @@ export const Flow = Type.Object({
 })
 
 export type Flow = Static<typeof Flow>
-
 export const PopulatedFlow = Type.Composite([
     Flow,
     Type.Object({

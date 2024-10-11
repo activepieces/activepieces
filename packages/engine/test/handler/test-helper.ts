@@ -102,9 +102,7 @@ export function buildPieceAction({ name, input, pieceName, actionName, nextActio
             pieceVersion: '1.0.0', // Not required since it's running in development mode
             pieceType: PieceType.OFFICIAL,
             actionName,
-            inputUiInfo: {
-                currentSelectedData: {},
-            },
+            inputUiInfo: {},
             errorHandlingOptions,
         },
         nextAction,

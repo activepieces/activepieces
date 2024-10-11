@@ -40,6 +40,7 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
 import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
+import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logSerializer } from './log-serializer'
@@ -313,13 +314,15 @@ export const flowRunService = {
     async test({ projectId, flowVersionId }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
-        const payload =
-            flowVersion.trigger.settings.inputUiInfo.currentSelectedData
-
+        const sampleData = await sampleDataService.getOrReturnEmpty({
+            projectId,
+            flowVersion,
+            stepName: flowVersion.trigger.name,
+        })
         return this.start({
             projectId,
             flowVersionId,
-            payload,
+            payload: sampleData,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: webhookResponseWatcher.getServerId(),
