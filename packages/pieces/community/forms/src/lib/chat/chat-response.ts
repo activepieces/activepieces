@@ -14,6 +14,7 @@ export const returnChatResponse = createAction({
     chatId: Property.ShortText({
       displayName: 'Chat ID',
       required: true,
+      description: "Use the `chatId` field from the chat trigger output."
     }),
   },
 

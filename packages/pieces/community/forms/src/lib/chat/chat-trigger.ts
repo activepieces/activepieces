@@ -29,13 +29,6 @@ export const onChatSubmission = createTrigger({
   sampleData,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(ctx) {
-    await saveChat(ctx.store, {
-      id: sampleData.chatId,
-      messages: [{
-        role: 'user',
-        content: sampleData.message,
-      }],
-    });
     return;
   },
   async onDisable() {
