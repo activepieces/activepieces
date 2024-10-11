@@ -6,6 +6,8 @@ import {
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
+const DEFAULT_GUIDE_PROMPT = 'Use optical character recognition (OCR) to extract from provided image.';
+
 export const extractStructuredData = createAction({
   name: 'extractStructuredData',
   displayName: 'Extract Structured Data',
@@ -17,6 +19,12 @@ export const extractStructuredData = createAction({
       displayName: 'Image',
       required: true,
       description: 'The image file you want extract data from.',
+    }),
+    guidePrompt: Property.LongText({
+      displayName: 'Guide Prompt',
+      required: false,
+      description: 'A prompt to guide the AI in extracting data from the image.',
+      defaultValue: DEFAULT_GUIDE_PROMPT,
     }),
     params: Property.Array({
       displayName: 'Data Definition',
@@ -85,9 +93,10 @@ export const extractStructuredData = createAction({
       image: context.propsValue.image,
       messages: [
         {
-          role: AIChatRole.USER,
-          content:
-            'Use optical character recognition (OCR) to extract from provided image.',
+            role: AIChatRole.USER,
+            content:
+              context.propsValue.guidePrompt ??
+              DEFAULT_GUIDE_PROMPT,
         },
       ],
       functions: [
