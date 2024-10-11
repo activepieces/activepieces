@@ -100,6 +100,13 @@ export const extractStructuredData = createAction({
       ],
     });
 
-    return response.call?.function.arguments;
+    const args = response.call?.function.arguments;
+    if (args) {
+      return args;
+    } else {
+      throw new Error(
+        'Not able to extract data from the image. Please check image configuration.'
+      );
+    }
   },
 });
