@@ -10,6 +10,7 @@ export enum SystemJobName {
     TRIAL_TRACKER = 'trial-tracker',
     TRIGGER_DATA_CLEANER = 'trigger-data-cleaner',
     ISSUES_REMINDER = 'issue-reminder',
+    RUN_TELEMETRY = 'run-telemetry',
     LOGS_CLEANUP_TRIGGER = 'logs-cleanup-trigger',
 }
 
@@ -32,6 +33,7 @@ type SystemJobDataMap = {
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.TRIGGER_DATA_CLEANER]: Record<string, never>
     [SystemJobName.LOGS_CLEANUP_TRIGGER]: Record<string, never>
+    [SystemJobName.RUN_TELEMETRY]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
