@@ -42,7 +42,6 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         },
     })
 }
-
 async function runTelemetryHandler(_job: SystemJobData<SystemJobName.RUN_TELEMETRY>) {
     if (!telemetry.isEnabled()) {
         return
@@ -53,16 +52,17 @@ async function runTelemetryHandler(_job: SystemJobData<SystemJobName.RUN_TELEMET
     const startOfDay = dayjs().startOf('day').toISOString()
     const endOfDay = dayjs().endOf('day').toISOString()
     const projectFlowCounts = await flowRunRepo().createQueryBuilder('flowRun')
-        .select('"projectId", "flowId", COUNT(*) as count')
+        .select('"projectId", "flowId", "environment", COUNT(*) as count')
         .where({
             created: Between(startOfDay, endOfDay),
         })
-        .groupBy('"projectId", "flowId"')
+        .groupBy('"projectId", "flowId", "environment"')
         .getRawMany()
-    for (const { projectId, flowId, count } of projectFlowCounts) {
+    for (const { projectId, flowId, environment, count } of projectFlowCounts) {
         logger.info({
             projectId,
             flowId,
+            environment,
             count: parseInt(count, 10),
         }, 'Tracking flow run created')
         telemetry
@@ -71,6 +71,7 @@ async function runTelemetryHandler(_job: SystemJobData<SystemJobName.RUN_TELEMET
                 payload: {
                     projectId,
                     flowId,
+                    environment,
                     count: parseInt(count, 10),
                 },
             })
