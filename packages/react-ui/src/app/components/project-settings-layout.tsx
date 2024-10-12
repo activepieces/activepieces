@@ -5,6 +5,7 @@ import {
   Puzzle,
   Settings,
   SunMoon,
+  Table,
   Users,
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
@@ -47,6 +48,11 @@ const sidebarNavItems = [
     title: t('Git Sync'),
     href: '/settings/git-sync',
     icon: <GitBranch size={iconSize} />,
+  },
+  {
+    title: t('Data Tables'),
+    href: '/settings/table',
+    icon: <Table size={iconSize} />,
   },
 ];
 

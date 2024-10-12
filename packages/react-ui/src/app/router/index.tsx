@@ -61,6 +61,7 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
+import { DataTableViewer } from '../routes/settings/table';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -291,7 +292,18 @@ const routes = [
     path: '/team',
     element: <Navigate to="/settings/team" replace></Navigate>,
   },
-
+  ...ProjectRouterWrapper({
+    path: '/settings/table',
+    element: (
+      <DashboardContainer>
+        <ProjectSettingsLayout>
+          <PageTitle title="Table">
+            <DataTableViewer />
+          </PageTitle>
+        </ProjectSettingsLayout>
+      </DashboardContainer>
+    ),
+  }),
   ...ProjectRouterWrapper({
     path: '/settings/git-sync',
     element: (
