@@ -13,12 +13,12 @@ import {
 } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { FlowRun, SeekPage } from '@activepieces/shared';
 
 import { SidebarHeader } from '../sidebar-header';
 
 import { FlowRunCard } from './flow-run-card';
-import { authenticationSession } from '@/lib/authentication-session';
 
 type FlowRunsListProps = {
   recentRuns?: number;
