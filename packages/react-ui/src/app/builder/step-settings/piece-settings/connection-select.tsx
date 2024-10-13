@@ -65,6 +65,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
   return (
     <FormField
       control={form.control}
+      key={form.getValues().settings.input.auth}
       name={'settings.input.auth'}
       render={({ field }) => (
         <>
@@ -162,7 +163,6 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 <SelectContent>
                   <SelectAction
                     onClick={() => {
-                      setReconnectConnection(null);
                       setSelectConnectionOpen(false);
                       setConnectionDialogOpen(true);
                     }}
