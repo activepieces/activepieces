@@ -1,8 +1,9 @@
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { CircleCheckBig, CircleX } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import { CircleCheckBig } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -43,8 +44,6 @@ const LICENSE_PROPS_MAP = {
   emailAuthEnabled: 'Email Authentication',
 };
 
-const LICENSE_KEY_ID = 'LICENSE_KEY';
-
 const LicenseKeysPage = () => {
   const currentPlatform = platformHooks.useCurrentPlatform();
   const [platform, setPlatform] = useState(currentPlatform.platform);
@@ -52,18 +51,22 @@ const LicenseKeysPage = () => {
   const [isActivated, setIsActivated] = useState(false);
   const [tempLicenseKey, setTempLicenseKey] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [keyData, setKeyData] = useState(null);
+  const [isOpenDialog, setIsOpenDialog] = useState(false);
   const { refetch } = platformHooks.useCurrentPlatform();
 
   useEffect(() => {
     const fetchLicenseKey = async () => {
+      setIsLoading(true);
       const allKeys = await platformApi.getLicenseKey();
       if (!isNil(allKeys[ApFlagId.LICENSE_KEY])) {
         setLicenseKey(allKeys[ApFlagId.LICENSE_KEY] as string);
         setTempLicenseKey(allKeys[ApFlagId.LICENSE_KEY] as string);
-        const res = await platformApi.verifyLicenseKey(
+        const response = await platformApi.verifyLicenseKey(
           allKeys[ApFlagId.LICENSE_KEY] as string,
         );
-        setPlatform(res);
+        setKeyData(response.key);
+        setPlatform(response.platform);
         await refetch();
       }
     };
@@ -72,30 +75,23 @@ const LicenseKeysPage = () => {
   }, []);
 
   const { mutate: activateLicenseKey, isPending } = useMutation({
-    mutationFn: async (licenseKey: string) => {
-      if (licenseKey.trim() === '') {
+    mutationFn: async () => {
+      if (tempLicenseKey.trim() === '') {
         return;
       }
-      setIsLoading(true);
-      const res = await platformApi.verifyLicenseKey(licenseKey.trim());
-      if (!isNil(res)) {
+      const response = await platformApi.verifyLicenseKey(
+        tempLicenseKey.trim(),
+      );
+      if (!isNil(response)) {
         setIsActivated(true);
-        setPlatform(res);
+        setKeyData(response.key);
+        setPlatform(response.platform);
+        setLicenseKey(tempLicenseKey.trim());
+        setIsOpenDialog(false);
+        await platformApi.saveLicenseKey(tempLicenseKey.trim());
       } else {
-        const newPlatform = { ...platform };
-        for (const key in newPlatform) {
-          if (key.endsWith('Enabled')) {
-            newPlatform[key] = false;
-          }
-        }
         setIsActivated(false);
-        setPlatform(newPlatform);
       }
-      await platformApi.saveLicenseKey(licenseKey.trim());
-      setLicenseKey(licenseKey);
-      setTempLicenseKey(licenseKey);
-      setIsLoading(false);
-      await refetch();
     },
     onSuccess: () => {
       if (licenseKey.trim() === '') {
@@ -148,6 +144,17 @@ const LicenseKeysPage = () => {
         <div className="flex justify-between flex-row w-full">
           <div className="flex flex-col gap-2">
             <h1 className="text-2xl font-bold w-full">{t('License Keys')}</h1>
+            <p className="text-md text-gray-500 w-full">
+              {t(
+                'The license key is used to activate the platform and enable enterprise features. ',
+              )}
+              {!isNil(keyData?.expiresAt) && (
+                <>
+                  {t('Expires on ')}
+                  {dayjs(keyData.expiresAt).format('MMM D, YYYY')}
+                </>
+              )}
+            </p>
           </div>
         </div>
       </div>
@@ -159,13 +166,19 @@ const LicenseKeysPage = () => {
             onChange={(e) => setLicenseKey(e.target.value)}
             placeholder="Enter your license key"
           />
-          <Dialog>
+          <Dialog open={isOpenDialog} onOpenChange={setIsOpenDialog}>
             <DialogTrigger
               disabled={!true}
               className="flex items-center justify-center gap-2"
             >
               <PermissionNeededTooltip hasPermission={true}>
-                <Button size="sm" disabled={isPending}>
+                <Button
+                  size="sm"
+                  disabled={isPending}
+                  onClick={() => {
+                    setTempLicenseKey(licenseKey);
+                  }}
+                >
                   {t('Activate')}
                 </Button>
               </PermissionNeededTooltip>
@@ -191,14 +204,16 @@ const LicenseKeysPage = () => {
                     {t('Cancel')}
                   </Button>
                 </DialogClose>
-                <DialogClose asChild>
-                  <Button
-                    disabled={tempLicenseKey.trim() === ''}
-                    onClick={() => activateLicenseKey(tempLicenseKey)}
-                  >
-                    {t('Confirm')}
-                  </Button>
-                </DialogClose>
+                <Button
+                  disabled={tempLicenseKey.trim() === ''}
+                  onClick={() => activateLicenseKey()}
+                >
+                  {isPending ? (
+                    <LoadingSpinner className="w-4 h-4" />
+                  ) : (
+                    t('Confirm')
+                  )}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -207,16 +222,14 @@ const LicenseKeysPage = () => {
       <div>
         {isLoading && <LoadingSpinner className="w-4 h-4" />}
         {!isLoading &&
-          Object.entries(LICENSE_PROPS_MAP).map(([key, label]) => (
-            <div className="flex flex-row items-center" key={key}>
-              {platform?.[key] ? (
+          Object.entries(LICENSE_PROPS_MAP).map(([key, label]) =>
+            platform?.[key as keyof typeof platform] ? (
+              <div className="flex flex-row items-center" key={key}>
                 <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
-              ) : (
-                <CircleX className="w-4 h-4 text-red-500 mr-2" />
-              )}
-              <h3 className="text-lg">{t(label)}</h3>
-            </div>
-          ))}
+                <h3 className="text-lg">{t(label)}</h3>
+              </div>
+            ) : null,
+          )}
       </div>
     </div>
   );

@@ -119,7 +119,7 @@ export const licenseKeysService = {
                 alertsEnabled: key.alertsEnabled,
                 analyticsEnabled: key.analyticsEnabled,
             })
-            return platform
+            return { platform, key }
         }
 
         catch (e) {
@@ -190,4 +190,3 @@ const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt'
     flowIssuesEnabled: false,
     alertsEnabled: false,
 }
-
