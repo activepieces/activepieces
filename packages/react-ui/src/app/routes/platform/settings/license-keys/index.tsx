@@ -6,7 +6,18 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -39,15 +50,16 @@ const LicenseKeysPage = () => {
   const [platform, setPlatform] = useState(currentPlatform.platform);
   const [licenseKey, setLicenseKey] = useState('');
   const [isActivated, setIsActivated] = useState(false);
-  const [initLicenseKey, setInitLicenseKey] = useState('');
+  const [tempLicenseKey, setTempLicenseKey] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const { refetch } = platformHooks.useCurrentPlatform();
 
   useEffect(() => {
     const fetchLicenseKey = async () => {
       const allKeys = await platformApi.getLicenseKey(LICENSE_KEY_ID);
       if (!isNil(allKeys[ApFlagId.LICENSE_KEY])) {
         setLicenseKey(allKeys[ApFlagId.LICENSE_KEY]);
-        setInitLicenseKey(allKeys[ApFlagId.LICENSE_KEY]);
+        setTempLicenseKey(allKeys[ApFlagId.LICENSE_KEY]);
         const res = await platformApi.verifyLicenseKey(
           allKeys[ApFlagId.LICENSE_KEY],
         );
@@ -59,7 +71,7 @@ const LicenseKeysPage = () => {
   }, []);
 
   const { mutate: activateLicenseKey, isPending } = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (licenseKey: string) => {
       if (licenseKey.trim() === '') {
         return;
       }
@@ -68,7 +80,6 @@ const LicenseKeysPage = () => {
       if (!isNil(res)) {
         setIsActivated(true);
         setPlatform(res);
-        await platformApi.saveLicenseKey(licenseKey.trim());
       } else {
         const newPlatform = { ...platform };
         for (const key in newPlatform) {
@@ -79,7 +90,11 @@ const LicenseKeysPage = () => {
         setIsActivated(false);
         setPlatform(newPlatform);
       }
+      await platformApi.saveLicenseKey(licenseKey.trim());
+      setLicenseKey(licenseKey);
+      setTempLicenseKey(licenseKey);
       setIsLoading(false);
+      await refetch();
     },
     onSuccess: () => {
       if (licenseKey.trim() === '') {
@@ -139,23 +154,58 @@ const LicenseKeysPage = () => {
         <div className="flex flex-row gap-2">
           <Input
             value={licenseKey}
+            disabled={true}
             onChange={(e) => setLicenseKey(e.target.value)}
             placeholder="Enter your license key"
           />
-          <Button
-            size="sm"
-            className="flex items-center justify-center gap-2"
-            onClick={() => activateLicenseKey(licenseKey)}
-            disabled={isPending}
-          >
-            {initLicenseKey !== licenseKey ? t('Activate') : t('Refresh')}
-          </Button>
+          <Dialog>
+            <DialogTrigger
+              disabled={!true}
+              className="flex items-center justify-center gap-2"
+            >
+              <PermissionNeededTooltip hasPermission={true}>
+                <Button size="sm" disabled={isPending}>
+                  {t('Activate')}
+                </Button>
+              </PermissionNeededTooltip>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t('License Key Activation')}</DialogTitle>
+                <DialogDescription>
+                  {t('Enter your license key to activate it.')}
+                </DialogDescription>
+              </DialogHeader>
+              <Input
+                value={tempLicenseKey}
+                onChange={(e) => setTempLicenseKey(e.target.value)}
+                placeholder="Enter your license key"
+              />
+              <DialogFooter className="justify-end">
+                <DialogClose asChild>
+                  <Button
+                    variant={'outline'}
+                    onClick={() => setTempLicenseKey(licenseKey)}
+                  >
+                    {t('Cancel')}
+                  </Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button
+                    disabled={tempLicenseKey.trim() === ''}
+                    onClick={() => activateLicenseKey(tempLicenseKey)}
+                  >
+                    {t('Confirm')}
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <div>
         {isLoading && <LoadingSpinner className="w-4 h-4" />}
         {!isLoading &&
-          !isNil(platform) &&
           Object.entries(LICENSE_PROPS_MAP).map(([key, label]) => (
             <div className="flex flex-row items-center" key={key}>
               {platform?.[key] ? (
