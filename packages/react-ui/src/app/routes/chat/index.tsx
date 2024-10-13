@@ -36,8 +36,6 @@ const Messages = Type.Array(
 );
 type Messages = Static<typeof Messages>;
 
-type ChatError = ApErrorParams | { code: 'no-chat-response' };
-
 export function ChatPage() {
   const { flowId } = useParams();
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -51,7 +49,7 @@ export function ChatPage() {
   const [messages, setMessages] = useState<Messages>([]);
   const [input, setInput] = useState('');
   const previousInputRef = useRef('');
-  const [error, setError] = useState<ChatError | null>(null);
+  const [error, setError] = useState<ApErrorParams | null>(null);
 
   const { data: projectId } = useQuery({
     queryKey: ['current-project-id'],
@@ -77,7 +75,8 @@ export function ChatPage() {
     onSuccess: (result) => {
       if (!result) {
         setError({
-          code: 'no-chat-response',
+          code: ErrorCode.NO_CHAT_RESPONSE,
+          params: {},
         });
       } else if ('value' in result) {
         setMessages([
@@ -223,10 +222,10 @@ export function ChatPage() {
 const formatError = (
   projectId: string | undefined | null,
   flowId: string,
-  error: ChatError,
+  error: ApErrorParams,
 ) => {
   switch (error.code) {
-    case 'no-chat-response':
+    case ErrorCode.NO_CHAT_RESPONSE:
       if (projectId) {
         return (
           <span>
