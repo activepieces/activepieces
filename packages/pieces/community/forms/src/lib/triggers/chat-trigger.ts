@@ -44,7 +44,7 @@ export const onChatSubmission = createTrigger({
     }
     const response = {
       chatId: item.chatId,
-      content: item.message,
+      message: item.message,
     }
     return [response];
   },
