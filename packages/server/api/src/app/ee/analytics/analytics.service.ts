@@ -13,9 +13,10 @@ import {
     PlatformProjectLeaderBoardRow,
     PopulatedFlow,
     ProjectId,
+    SeekPage,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { In, MoreThan, SelectQueryBuilder } from 'typeorm'
+import { In, MoreThan, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { auditLogRepo } from '../../ee/audit-logs/audit-event-service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
@@ -218,13 +219,9 @@ async function listAllFlows(
 async function generateProjectsLeaderboard(
     params: ListPlatformProjectsLeaderboardParams,
     platformId: string,
-) {
-
-    const orderBy = {
-        column: params.orderByColumn?? 'tasks',
-        order: params.order?? 'DESC'
-    }
+): Promise<SeekPage<PlatformProjectLeaderBoardRow>> {
     const decodedCursor = paginationHelper.decodeCursor(params.cursor ?? null)
+
     const paginator = buildPaginator({
         entity: ProjectEntity,
         query: {
@@ -234,7 +231,7 @@ async function generateProjectsLeaderboard(
             beforeCursor: decodedCursor.previousCursor,
         },
     })
-
+   
     const queryBuilder = projectRepo()
         .createQueryBuilder('project')
         .select('"project"."displayName"', 'displayName')
@@ -250,7 +247,7 @@ async function generateProjectsLeaderboard(
                     .where({
                         action: In([ApplicationEventName.FLOW_CREATED]),
                     })
-                    .groupBy('"audit_event"."projectId"'),params)
+                    .groupBy('"audit_event"."projectId"'), params)
             },
             'flowsCreated',
             '"flowsCreated"."projectId" = project.id',
@@ -269,7 +266,7 @@ async function generateProjectsLeaderboard(
                         action: In([ApplicationEventName.FLOW_RUN_FINISHED]),
                     })
                     .groupBy('"audit_event"."projectId"')
-                    ,params)
+                , params)
             },
             'runsCount',
             '"runsCount"."projectId" = project.id',
@@ -290,7 +287,7 @@ async function generateProjectsLeaderboard(
                     .where({
                         action: In([ApplicationEventName.FLOW_RUN_FINISHED]),
                     })
-                    .groupBy('"audit_event"."projectId"'),params)
+                    .groupBy('"audit_event"."projectId"'), params)
             },
             'tasks',
             '"tasks"."projectId" = project.id',
@@ -309,7 +306,7 @@ async function generateProjectsLeaderboard(
                     .where({
                         action: In([ApplicationEventName.CONNECTION_UPSERTED]),
                     })
-                    .groupBy('"audit_event"."projectId"'),params)
+                    .groupBy('"audit_event"."projectId"'), params)
             },
             'connectionsCreated',
             '"connectionsCreated"."projectId" = project.id',
@@ -333,7 +330,7 @@ async function generateProjectsLeaderboard(
                         '"audit_event"."data"->\'request\'->>\'type\' = :requestValue',
                         { requestValue: FlowOperationType.LOCK_AND_PUBLISH },
                     )
-                    .groupBy('"audit_event"."projectId"'),params)
+                    .groupBy('"audit_event"."projectId"'), params)
             },
             'publishes',
             '"publishes"."projectId" = project.id',
@@ -362,7 +359,7 @@ async function generateProjectsLeaderboard(
                             ],
                         },
                     )
-                    .groupBy('"audit_event"."projectId"'),params)
+                    .groupBy('"audit_event"."projectId"'), params)
             },
             'flowEdits',
             '"flowEdits"."projectId" = project.id',
@@ -376,7 +373,7 @@ async function generateProjectsLeaderboard(
                     .select('"project_member"."projectId"', 'projectId')
                     .addSelect('COUNT(project_member.id)', 'userCount')
                     .from('project_member', 'project_member')
-                    .groupBy('"project_member"."projectId"'),params)
+                    .groupBy('"project_member"."projectId"'), params)
             },
             'userCount',
             '"userCount"."projectId" = project.id',
@@ -406,36 +403,32 @@ async function generateProjectsLeaderboard(
                     .select('unnested_pieces."projectId"')
                     .addSelect('COUNT(DISTINCT unnested_pieces.piece)', 'piecesUsed')
                     .groupBy('unnested_pieces."projectId"')
-                    .setParameters(piecesUsedInEachAuditEvent.getParameters()),params)
+                    .setParameters(piecesUsedInEachAuditEvent.getParameters()), params)
             },
             'piecesUsed',
             '"piecesUsed"."projectId" = project.id',
         )
         .addSelect('COALESCE("piecesUsed"."piecesUsed", 0)', 'piecesUsed')
-        .orderBy({
-            [`"${orderBy.column}"`]: orderBy.order
-        })
+        .addSelect('"project"."created"', 'created')
+      
         
-    logger.debug(orderBy)
-    const { data, cursor } = await paginator.paginateRaw<PlatformProjectLeaderBoardRow>(queryBuilder)
-    return {
-        data,
-        cursor,
-    }
+    const { data, cursor } = await paginator.paginateRaw<PlatformProjectLeaderBoardRow>(queryBuilder, {
+        orderBy: params.orderByColumn ? `"${params.orderByColumn}" ` : 'tasks',
+        order: params.order ?? 'DESC',
+    })
+    return paginationHelper.createPage<PlatformProjectLeaderBoardRow>(data, cursor)
 }
 
-const addDateLimitsToQuery=(query:SelectQueryBuilder<any>, params:ListPlatformProjectsLeaderboardParams)=>{
+const addDateLimitsToQuery = (query: SelectQueryBuilder<ObjectLiteral>, params: ListPlatformProjectsLeaderboardParams)=>{
 
-    if(params.createdAfter)
-    {
-        query = query.andWhere("created >= :from",{from:params.createdAfter})
+    if (params.createdAfter) {
+        query = query.andWhere('created >= :from', { from: params.createdAfter })
     }
 
-    if(params.createdBefore)
-        {
-            query = query.andWhere("created <= :to",{to:params.createdBefore})
-        }
-    return query;
+    if (params.createdBefore) {
+        query = query.andWhere('created <= :to', { to: params.createdBefore })
+    }
+    return query
 }
 function countFlows(flows: PopulatedFlow[], status: FlowStatus | undefined) {
     if (status) {

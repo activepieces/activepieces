@@ -138,10 +138,11 @@ export const ProjectsLeaderBoard = () => {
         columns={columns}
         filters={filters}
         allowOrdering={true}
+        hidePagination={true}
         fetchData={(_, pagination, order) => {
           return analyticsApi.listProjectsLeaderBoard({
             cursor: pagination.cursor,
-            limit: pagination.limit ?? 10,
+            limit: 100,
             createdAfter: pagination.createdAfter,
             createdBefore: pagination.createdBefore,
             orderByColumn: order?.column,

@@ -72,7 +72,7 @@ export const ListPlatformProjectsLeaderboardParams = Type.Object({
     limit: Type.Optional(Type.Number()),
     createdAfter: Type.Optional(Type.String()),
     createdBefore: Type.Optional(Type.String()),
-    orderByColumn: Type.Optional(Type.String()),
+    orderByColumn: Type.Optional(Type.KeyOf(PlatformProjectLeaderBoardRow)),
     order: Type.Optional(Type.TemplateLiteral('${ASC|DESC}')),
 })
 

@@ -73,7 +73,7 @@ type DataTableAction<TData extends DataWithId> = (
 
 export type PaginationParams = {
   cursor?: string;
-  limit?: number;
+  limit: number;
   createdAfter?: string;
   createdBefore?: string;
 };
