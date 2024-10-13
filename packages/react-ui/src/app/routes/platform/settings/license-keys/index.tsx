@@ -1,4 +1,4 @@
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil, ErrorCode } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
@@ -54,25 +54,6 @@ const LicenseKeysPage = () => {
   const [keyData, setKeyData] = useState(null);
   const [isOpenDialog, setIsOpenDialog] = useState(false);
 
-  // useEffect(() => {
-  //   const fetchLicenseKey = async () => {
-  //     setIsLoading(true);
-  //     const allKeys = await platformApi.getLicenseKey();
-  //     if (!isNil(allKeys[ApFlagId.LICENSE_KEY])) {
-  //       setLicenseKey(allKeys[ApFlagId.LICENSE_KEY] as string);
-  //       setTempLicenseKey(allKeys[ApFlagId.LICENSE_KEY] as string);
-  //       const response = await platformApi.verifyLicenseKey(
-  //         allKeys[ApFlagId.LICENSE_KEY] as string,
-  //       );
-  //       setKeyData(response.key);
-  //       setPlatform(response.platform);
-  //       await refetch();
-  //     }
-  //   };
-  //   fetchLicenseKey();
-  //   setIsLoading(false);
-  // }, []);
-
   const { mutate: activateLicenseKey, isPending } = useMutation({
     mutationFn: async () => {
       if (tempLicenseKey.trim() === '') {
@@ -86,7 +67,6 @@ const LicenseKeysPage = () => {
         setKeyData(response);
         setLicenseKey(tempLicenseKey.trim());
         setIsOpenDialog(false);
-        await platformApi.saveLicenseKey(tempLicenseKey.trim());
         await refetch();
       } else {
         setIsActivated(false);
@@ -106,12 +86,16 @@ const LicenseKeysPage = () => {
         title: isActivated ? t('Success') : t('Error'),
         description: isActivated
           ? t('License key activated')
-          : t('License key is invalid'),
+          : t('Invalid license key'),
         duration: 3000,
       });
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
+      toast({
+        title: t('Error'),
+        description: t('Invalid license key'),
+        duration: 3000,
+      });
     },
   });
 
