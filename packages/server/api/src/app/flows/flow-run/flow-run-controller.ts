@@ -2,7 +2,6 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApId,
-    assertNotNullOrUndefined,
     ErrorCode,
     ExecutionType,
     FlowRun,
@@ -17,7 +16,7 @@ import {
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 import {
-    FastifyPluginCallbackTypebox,
+    FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -25,17 +24,10 @@ import { flowRunService } from './flow-run-service'
 
 const DEFAULT_PAGING_LIMIT = 10
 
-export const flowRunController: FastifyPluginCallbackTypebox = (
-    app,
-    _options,
-    done,
-): void => {
+export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListRequest, async (request) => {
-        // TODO project Id will be required after May 2024, this no longer needs to be optional
-        const projectId = request.query.projectId ?? (request.principal.type === PrincipalType.SERVICE ? undefined : request.principal.projectId)
-        assertNotNullOrUndefined(projectId, 'projectId')
         return flowRunService.list({
-            projectId,
+            projectId: request.query.projectId,
             flowId: request.query.flowId,
             tags: request.query.tags,
             status: request.query.status,
@@ -58,7 +50,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
         },
     )
 
-    app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req) => {
+    app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
         await flowRunService.addToQueue({
@@ -72,6 +64,9 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
             checkRequestId: true,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             executionType: ExecutionType.RESUME,
+        })
+        await reply.send({
+            message: 'Your response has been recorded. You can close this page now.',
         })
     })
 
@@ -92,7 +87,6 @@ export const flowRunController: FastifyPluginCallbackTypebox = (
         return flowRun
     })
 
-    done()
 }
 
 const FlowRunFiltered = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata'])

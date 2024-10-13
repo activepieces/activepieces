@@ -90,11 +90,12 @@ const PieceSelector = ({
   const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
     PieceTagEnum.ALL,
   );
-  const [applyOperation, selectStepByName, flowVersion] =
+  const [applyOperation, selectStepByName, flowVersion, setSampleData] =
     useBuilderStateContext((state) => [
       state.applyOperation,
       state.selectStepByName,
       state.flowVersion,
+      state.setSampleData,
     ]);
 
   const { metadata, isLoading: isLoadingPieces } =
@@ -134,6 +135,7 @@ const PieceSelector = ({
 
     switch (operation.type) {
       case FlowOperationType.UPDATE_TRIGGER: {
+        setSampleData(stepData.name, undefined);
         applyOperation(
           {
             type: FlowOperationType.UPDATE_TRIGGER,

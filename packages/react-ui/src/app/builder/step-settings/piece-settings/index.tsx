@@ -58,6 +58,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
   const markdownVariables = {
     webhookUrl: `${webhookPrefixUrl}/${props.flowId}`,
     formUrl: `${frontendUrl}/forms/${props.flowId}`,
+    chatUrl: `${frontendUrl}/chats/${props.flowId}`,
   };
 
   const showAuthForAction =

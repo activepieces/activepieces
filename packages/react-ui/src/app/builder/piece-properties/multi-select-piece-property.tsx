@@ -20,7 +20,7 @@ type MultiSelectPiecePropertyProps = {
     value: unknown;
     label: string;
   }[];
-  onChange: (value: unknown[]) => void;
+  onChange: (value: unknown[] | undefined) => void;
   initialValues?: unknown[];
   disabled?: boolean;
   showDeselect?: boolean;
@@ -63,7 +63,13 @@ const MultiSelectPieceProperty = ({
     const newSelectedIndicies = indicides.filter(
       (index) => index !== undefined,
     );
-    onChange(newSelectedIndicies.map((index) => options[Number(index)].value));
+    if (newSelectedIndicies.length === 0) {
+      onChange(undefined);
+    } else {
+      onChange(
+        newSelectedIndicies.map((index) => options[Number(index)].value),
+      );
+    }
   };
 
   return !loading ? (
@@ -76,7 +82,7 @@ const MultiSelectPieceProperty = ({
     >
       <MultiSelectTrigger
         showDeselect={showDeselect && !disabled}
-        onDeselect={() => onChange([])}
+        onDeselect={() => onChange(undefined)}
         showRefresh={showRefresh && !disabled}
         onRefresh={onRefresh}
       >

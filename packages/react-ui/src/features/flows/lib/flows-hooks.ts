@@ -12,7 +12,7 @@ export const flowsHooks = {
       queryFn: async () => {
         return await flowsApi.list({
           ...request,
-          projectId: authenticationSession.getProjectId(),
+          projectId: authenticationSession.getProjectId()!,
         });
       },
       staleTime: 5 * 1000,

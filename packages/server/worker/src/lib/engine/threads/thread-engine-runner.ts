@@ -146,6 +146,7 @@ export const threadEngineRunner: EngineRunner = {
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,
+            sampleData: operation.sampleData,
             publicUrl: await networkUtls.getPublicUrl(),
             internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
