@@ -1,14 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  EllipsisVertical,
-  Redo,
-  RefreshCw,
-  RotateCcw,
-  RotateCw,
-} from 'lucide-react';
+import { CheckIcon, Redo, RefreshCw, RotateCw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
