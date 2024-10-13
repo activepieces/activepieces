@@ -53,6 +53,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
     [SharedSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
+    [SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
     [AppSystemProp.AZURE_OPENAI_API_VERSION]: '2023-06-01-preview',
