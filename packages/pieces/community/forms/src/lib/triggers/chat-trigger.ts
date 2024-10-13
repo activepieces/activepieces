@@ -35,16 +35,16 @@ export const onChatSubmission = createTrigger({
     return;
   },
   async run(ctx) {
-    const item = ctx.payload.body as { chatId?: string, content?: string };
+    const item = ctx.payload.body as { chatId?: string, message?: string };
     if (!item.chatId) {
       throw new Error('Chat ID is required');
     }
-    if (!item.content) {
+    if (!item.message) {
       throw new Error('Message is required');
     }
     const response = {
       chatId: item.chatId,
-      content: item.content,
+      content: item.message,
     }
     return [response];
   },
