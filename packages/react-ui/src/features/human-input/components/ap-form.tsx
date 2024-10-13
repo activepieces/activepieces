@@ -32,7 +32,11 @@ import {
 } from '@activepieces/shared';
 
 import { Checkbox } from '../../../components/ui/checkbox';
-import { FormResult, FormResultTypes, formsApi } from '../lib/forms-api';
+import {
+  FormResult,
+  FormResultTypes,
+  humanInputApi,
+} from '../lib/human-input-api';
 
 type ApFormProps = {
   form: FormResponse;
@@ -145,7 +149,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
 
   const { mutate, isPending } = useMutation<FormResult | null, Error>({
     mutationFn: async () =>
-      formsApi.submitForm(
+      humanInputApi.submitForm(
         form,
         useDraft,
         putBackQuotesForInputNames(reactForm.getValues(), inputs.current),
@@ -209,18 +213,25 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                         render={({ field }) => (
                           <>
                             {input.type === FormInputType.TOGGLE && (
-                              <FormItem className="flex items-center gap-2">
-                                <Checkbox
-                                  onCheckedChange={(e) => field.onChange(e)}
-                                  checked={field.value as boolean}
-                                ></Checkbox>
-                                <FormLabel
-                                  htmlFor={input.name}
-                                  className="flex items-center justify-center"
-                                >
-                                  {input.displayName}
-                                </FormLabel>
-                              </FormItem>
+                              <>
+                                <FormItem className="flex items-center gap-2 h-full">
+                                  <FormControl>
+                                    <Checkbox
+                                      onCheckedChange={(e) => field.onChange(e)}
+                                      checked={field.value as boolean}
+                                    ></Checkbox>
+                                  </FormControl>
+                                  <FormLabel
+                                    htmlFor={input.name}
+                                    className="flex items-center"
+                                  >
+                                    {input.displayName}
+                                  </FormLabel>
+                                </FormItem>
+                                <ReadMoreDescription
+                                  text={input.description ?? ''}
+                                />
+                              </>
                             )}
                             {input.type !== FormInputType.TOGGLE && (
                               <FormItem className="flex flex-col gap-1">

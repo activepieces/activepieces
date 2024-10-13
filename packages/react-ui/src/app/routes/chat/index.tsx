@@ -1,5 +1,4 @@
-'use client';
-
+import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { ArrowUpIcon, BotIcon, CopyIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
@@ -16,9 +15,19 @@ import {
 } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
-import { chatApi } from '@/features/chat/lib/chat-api';
+import {
+  FormResultTypes,
+  humanInputApi,
+} from '@/features/human-input/lib/human-input-api';
 import { cn } from '@/lib/utils';
-import { Chat } from '@activepieces/shared';
+
+const Messages = Type.Array(
+  Type.Object({
+    role: Type.Union([Type.Literal('user'), Type.Literal('bot')]),
+    content: Type.String(),
+  }),
+);
+type Messages = Static<typeof Messages>;
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -29,12 +38,43 @@ export function ChatPage() {
     messagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   };
 
-  const { messages, handleSubmit, isLoading, input, setInput } = useChat({
-    onSendMessage: async () => {
-      setInput('');
-      scrollToBottom();
+  const chatId = useRef<string>(nanoid());
+  const [messages, setMessages] = useState<Messages>([]);
+  const [input, setInput] = useState('');
+
+  const { mutate: sendMessage, isPending: isLoading } = useMutation({
+    mutationFn: async () => {
+      if (!flowId || !chatId) return null;
+      setMessages([...messages, { role: 'user', content: input }]);
+      return humanInputApi.sendMessage({
+        flowId,
+        chatId: chatId.current,
+        message: input,
+      });
+    },
+    onSuccess: (result) => {
+      switch (result?.type) {
+        case FormResultTypes.MARKDOWN:
+          setMessages([
+            ...messages,
+            { role: 'bot', content: result.value as string },
+          ]);
+          break;
+        case FormResultTypes.FILE:
+          setMessages([
+            ...messages,
+            { role: 'bot', content: result.value as string },
+          ]);
+          break;
+      }
     },
   });
+
+  const handleSubmit = () => {
+    sendMessage();
+    setInput('');
+    scrollToBottom();
+  };
 
   useEffect(scrollToBottom, [messages, isLoading]);
 
@@ -135,47 +175,3 @@ export function ChatPage() {
     </main>
   );
 }
-
-const useChat = ({
-  onSendMessage,
-}: {
-  onSendMessage: (input: string) => Promise<void>;
-}) => {
-  const { flowId } = useParams();
-  const [chatId, setChatId] = useState<string | null>(null);
-  const [chat, setChat] = useState<Chat | null>(null);
-  const [input, setInput] = useState('');
-
-  const { mutate: sendMessage, isPending: isLoading } = useMutation({
-    mutationKey: ['sendMessage', flowId, chatId],
-    mutationFn: async () => {
-      if (!flowId || !chatId) return null;
-      onSendMessage(input);
-      setChat(
-        chat
-          ? {
-              ...chat,
-              messages: [...chat.messages, { role: 'user', content: input }],
-            }
-          : {
-              id: chatId,
-              messages: [{ role: 'user', content: input }],
-            },
-      );
-      return chatApi.sendMessage(flowId, chatId, input);
-    },
-    onSuccess: setChat,
-  });
-
-  useEffect(() => {
-    setChatId(nanoid());
-  }, []);
-
-  return {
-    messages: chat?.messages ?? [],
-    handleSubmit: sendMessage,
-    isLoading,
-    input,
-    setInput,
-  };
-};
