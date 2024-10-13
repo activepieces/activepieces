@@ -5,6 +5,7 @@ import {
   AIFunctionArgumentDefinition,
 } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
 
 const DEFAULT_GUIDE_PROMPT = 'Use optical character recognition (OCR) to extract from provided image.';
 
@@ -93,10 +94,10 @@ export const extractStructuredData = createAction({
       image: context.propsValue.image,
       messages: [
         {
-            role: AIChatRole.USER,
-            content:
-              context.propsValue.guidePrompt ??
-              DEFAULT_GUIDE_PROMPT,
+          role: AIChatRole.USER,
+          content:
+            context.propsValue.guidePrompt ??
+            DEFAULT_GUIDE_PROMPT,
         },
       ],
       functions: [
@@ -109,6 +110,13 @@ export const extractStructuredData = createAction({
       ],
     });
 
-    return response.call?.function.arguments;
+
+    const args = response.call?.function?.arguments;
+    if (isNil(args)) {
+      throw new Error(JSON.stringify({
+        message: 'Failed to extract structured data from the image.',
+      }));
+    }
+    return args;
   },
 });
