@@ -1,6 +1,13 @@
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
-import { ArrowUpIcon, BotIcon, CopyIcon } from 'lucide-react';
+import { AxiosError } from 'axios';
+import {
+  ArrowUpIcon,
+  BotIcon,
+  CircleX,
+  CopyIcon,
+  RotateCcw,
+} from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
@@ -15,11 +22,9 @@ import {
 } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
-import {
-  FormResultTypes,
-  humanInputApi,
-} from '@/features/human-input/lib/human-input-api';
+import { humanInputApi } from '@/features/human-input/lib/human-input-api';
 import { cn } from '@/lib/utils';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 const Messages = Type.Array(
   Type.Object({
@@ -41,13 +46,18 @@ export function ChatPage() {
   const chatId = useRef<string>(nanoid());
   const [messages, setMessages] = useState<Messages>([]);
   const [input, setInput] = useState('');
+  const previousInputRef = useRef('');
+  const [error, setError] = useState<ApErrorParams | null>(null);
 
   const { mutate: sendMessage, isPending: isLoading } = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
       if (!flowId || !chatId) return null;
-      const savedInput = input;
+      const savedInput = isRetrying ? previousInputRef.current : input;
+      previousInputRef.current = savedInput;
       setInput('');
-      setMessages([...messages, { role: 'user', content: savedInput }]);
+      if (!isRetrying) {
+        setMessages([...messages, { role: 'user', content: savedInput }]);
+      }
       scrollToBottom();
       return humanInputApi.sendMessage({
         flowId,
@@ -56,20 +66,17 @@ export function ChatPage() {
       });
     },
     onSuccess: (result) => {
-      switch (result?.type) {
-        case FormResultTypes.MARKDOWN:
-          setMessages([
-            ...messages,
-            { role: 'bot', content: result.value as string },
-          ]);
-          break;
-        case FormResultTypes.FILE:
-          setMessages([
-            ...messages,
-            { role: 'bot', content: result.value as string },
-          ]);
-          break;
+      setError(null);
+      if (result && 'value' in result) {
+        setMessages([
+          ...messages,
+          { role: 'bot', content: result.value as string },
+        ]);
       }
+      scrollToBottom();
+    },
+    onError: (error: AxiosError) => {
+      setError(error.response?.data as ApErrorParams);
       scrollToBottom();
     },
   });
@@ -78,7 +85,7 @@ export function ChatPage() {
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    sendMessage();
+    sendMessage({ isRetrying: false });
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -104,7 +111,7 @@ export function ChatPage() {
           <ChatBubble
             key={index}
             variant={message.role === 'user' ? 'sent' : 'received'}
-            className="flex items-center"
+            className="flex items-start"
           >
             {message.role === 'bot' && (
               <ChatBubbleAvatar
@@ -119,7 +126,7 @@ export function ChatPage() {
               <div className="flex gap-1">
                 <ChatBubbleAction
                   variant="outline"
-                  className="size-5"
+                  className="size-5 mt-2"
                   icon={<CopyIcon className="size-3" />}
                   onClick={() => navigator.clipboard.writeText(message.content)}
                 />
@@ -127,6 +134,32 @@ export function ChatPage() {
             )}
           </ChatBubble>
         ))}
+        {error && !isLoading && (
+          <ChatBubble variant="received">
+            <div className="relative">
+              <ChatBubbleAvatar
+                src=""
+                fallback={<BotIcon className="size-5" />}
+              />
+              <div className="absolute -bottom-[2px] -right-[2px]">
+                <CircleX className="size-4 text-destructive" strokeWidth={3} />
+              </div>
+            </div>
+            <ChatBubbleMessage className="text-destructive">
+              {formatError(error)}
+            </ChatBubbleMessage>
+            <div className="flex gap-1">
+              <ChatBubbleAction
+                variant="outline"
+                className="size-5 mt-2"
+                icon={<RotateCcw className="size-3" />}
+                onClick={() => {
+                  sendMessage({ isRetrying: true });
+                }}
+              />
+            </div>
+          </ChatBubble>
+        )}
         {isLoading && (
           <ChatBubble variant="received">
             <ChatBubbleAvatar
@@ -172,3 +205,14 @@ export function ChatPage() {
     </main>
   );
 }
+
+const formatError = (error: ApErrorParams) => {
+  switch (error.code) {
+    case ErrorCode.FLOW_NOT_FOUND:
+      return 'The chat flow you are trying to access no longer exists.';
+    case ErrorCode.VALIDATION:
+      return `Validation error: ${error.params.message}`;
+    default:
+      return 'Something went wrong. Please try again.';
+  }
+};
