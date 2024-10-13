@@ -56,14 +56,15 @@ const LicenseKeysPage = () => {
 
   useEffect(() => {
     const fetchLicenseKey = async () => {
-      const allKeys = await platformApi.getLicenseKey(LICENSE_KEY_ID);
+      const allKeys = await platformApi.getLicenseKey();
       if (!isNil(allKeys[ApFlagId.LICENSE_KEY])) {
-        setLicenseKey(allKeys[ApFlagId.LICENSE_KEY]);
-        setTempLicenseKey(allKeys[ApFlagId.LICENSE_KEY]);
+        setLicenseKey(allKeys[ApFlagId.LICENSE_KEY] as string);
+        setTempLicenseKey(allKeys[ApFlagId.LICENSE_KEY] as string);
         const res = await platformApi.verifyLicenseKey(
-          allKeys[ApFlagId.LICENSE_KEY],
+          allKeys[ApFlagId.LICENSE_KEY] as string,
         );
         setPlatform(res);
+        await refetch();
       }
     };
     fetchLicenseKey();
