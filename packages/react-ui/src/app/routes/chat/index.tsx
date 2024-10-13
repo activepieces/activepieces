@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import {
   ArrowUpIcon,
@@ -25,6 +25,9 @@ import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
 import { humanInputApi } from '@/features/human-input/lib/human-input-api';
 import { cn } from '@/lib/utils';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
+import { projectHooks } from '@/hooks/project-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
+import remarkGfm from 'remark-gfm';
 
 const Messages = Type.Array(
   Type.Object({
@@ -33,6 +36,8 @@ const Messages = Type.Array(
   }),
 );
 type Messages = Static<typeof Messages>;
+
+type ChatError = ApErrorParams | { code: 'no-chat-response' };
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -47,7 +52,12 @@ export function ChatPage() {
   const [messages, setMessages] = useState<Messages>([]);
   const [input, setInput] = useState('');
   const previousInputRef = useRef('');
-  const [error, setError] = useState<ApErrorParams | null>(null);
+  const [error, setError] = useState<ChatError | null>(null);
+
+  const { data: projectId } = useQuery({
+    queryKey: ['current-project-id'],
+    queryFn: () => authenticationSession.getProjectId(),
+  });
 
   const { mutate: sendMessage, isPending: isLoading } = useMutation({
     mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
@@ -66,8 +76,11 @@ export function ChatPage() {
       });
     },
     onSuccess: (result) => {
-      setError(null);
-      if (result && 'value' in result) {
+      if (!result) {
+        setError({
+          code: 'no-chat-response',
+        });
+      } else if ('value' in result) {
         setMessages([
           ...messages,
           { role: 'bot', content: result.value as string },
@@ -120,7 +133,7 @@ export function ChatPage() {
               />
             )}
             <ChatBubbleMessage className="flex gap-2">
-              <Markdown className="bg-inherit">{message.content}</Markdown>
+              <Markdown remarkPlugins={[remarkGfm]} className="bg-inherit" >{message.content}</Markdown>
             </ChatBubbleMessage>
             {message.role === 'bot' && (
               <div className="flex gap-1">
@@ -146,7 +159,7 @@ export function ChatPage() {
               </div>
             </div>
             <ChatBubbleMessage className="text-destructive">
-              {formatError(error)}
+              {formatError(projectId, flowId, error)}
             </ChatBubbleMessage>
             <div className="flex gap-1">
               <ChatBubbleAction
@@ -206,13 +219,22 @@ export function ChatPage() {
   );
 }
 
-const formatError = (error: ApErrorParams) => {
+const formatError = (
+  projectId: string | undefined | null,
+  flowId: string,
+  error: ChatError,
+) => {
   switch (error.code) {
+    case 'no-chat-response':
+      if (projectId) {
+        return <span>No response from the chatbot. Ensure that <strong>Respond on UI (Markdown)</strong> is the final step in <a href={`/projects/${projectId}/flows/${flowId}`} className="text-primary underline" target="_blank">your flow</a>.</span>;
+      }
+      return <span>The chatbot is not responding. It seems there might be an issue with how this chat was set up. Please contact the person who shared this chat link with you for assistance.</span>;
     case ErrorCode.FLOW_NOT_FOUND:
-      return 'The chat flow you are trying to access no longer exists.';
+      return <span>The chat flow you are trying to access no longer exists.</span>;
     case ErrorCode.VALIDATION:
-      return `Validation error: ${error.params.message}`;
+      return <span>{`Validation error: ${error.params.message}`}</span>;
     default:
-      return 'Something went wrong. Please try again.';
+      return <span>Something went wrong. Please try again.</span>;
   }
 };
