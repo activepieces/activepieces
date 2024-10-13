@@ -60,12 +60,11 @@ export type ApErrorParams =
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
     | ExistingAlertChannelErrorParams
-    | ActivationKeyNotFoundParams
-    | ActivationKeyNotAlreadyActivated
     | EmailAlreadyHasActivationKey
     | ProviderProxyConfigNotFoundParams
     | AITokenLimitExceededParams
     | SessionExpiredParams
+    | InvalidLicenseKeyParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -379,12 +378,10 @@ ErrorCode.EXISTING_ALERT_CHANNEL,
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
-export type ActivationKeyNotFoundParams = BaseErrorParams<ErrorCode.ACTIVATION_KEY_NOT_FOUND, {
+export type InvalidLicenseKeyParams = BaseErrorParams<ErrorCode.INVALID_LICENSE_KEY, {
     key: string
-}>
-export type ActivationKeyNotAlreadyActivated = BaseErrorParams<ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED, {
-    key: string
-}>
+}>  
+
 export type EmailAlreadyHasActivationKey = BaseErrorParams<ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY, {
     email: string
 }>
@@ -439,7 +436,6 @@ export enum ErrorCode {
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     VALIDATION = 'VALIDATION',
-    ACTIVATION_KEY_NOT_FOUND = 'ACTIVATION_KEY_NOT_FOUND',
-    ACTIVATION_KEY_ALREADY_ACTIVATED = 'ACTIVATION_KEY_ALREADY_ACTIVATED',
+    INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
 }

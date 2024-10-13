@@ -210,8 +210,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(userModule)
     await app.register(authenticationModule)
     await app.register(copilotModule),
-    await app.register(requestWriterModule),
-    await app.register(platformModule)
+        await app.register(requestWriterModule),
+        await app.register(platformModule)
     await app.register(formModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
@@ -422,10 +422,8 @@ The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as spec
         )
     }
     const oldestPlatform = await platformService.getOldestPlatform()
-    if (!isNil(oldestPlatform)) {
-        await licenseKeysService.verifyKeyAndApplyLimits({
-            platformId: oldestPlatform.id,
-            license: system.get<string>(AppSystemProp.LICENSE_KEY),
-        })
+    const key = system.get<string>(AppSystemProp.LICENSE_KEY)
+    if (!isNil(oldestPlatform) && !isNil(key)) {
+        // TODO URGENT update the license in platform.
     }
 }

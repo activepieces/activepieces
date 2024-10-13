@@ -1,5 +1,5 @@
 import { AppSystemProp, system } from '@activepieces/server-shared'
-import { CreateTrialLicenseKeyRequestBody, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { licenseKeysService } from './license-keys-service'
@@ -24,10 +24,21 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/verify', VerifyLicenseKeyRequest, async (req) => {
         const { platformId, licenseKey } = req.body
-        return licenseKeysService.verifyKeyAndApplyLimits({
+        const key = await licenseKeysService.verifyKeyOrReturnNull({
             platformId,
             license: licenseKey,
         })
+        if (isNil(key)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_LICENSE_KEY,
+                params: {
+                    key: licenseKey,
+                },
+            })
+        }
+        // TODO URGENT update the license in platform.
+        await licenseKeysService.applyLimits(platformId, key)
+        return key;
     })
 
 }

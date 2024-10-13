@@ -30,25 +30,5 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
             })
         },
     )
-
-    app.post<{ Body: { licenseKey: string } }>(
-        '/saveLicenseKey',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-            },
-            schema: {
-                body: Type.Object({
-                    licenseKey: Type.String(),
-                }),
-            },
-            logLevel: 'silent',
-        },
-        async (request) => {
-            await flagService.save({ id: ApFlagId.LICENSE_KEY, value: request.body.licenseKey })
-            return { success: true }
-        },
-    )
-
     
 }

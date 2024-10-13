@@ -77,6 +77,9 @@ export const platformService = {
         return savedPlatform
     },
 
+    async getAll(): Promise<Platform[]> {
+        return repo().find()
+    },
     async getOldestPlatform(): Promise<Platform | null> {
         return repo().findOne({
             where: {},

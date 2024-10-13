@@ -55,11 +55,6 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             platformId: platform.id,
         })
 
-        await licenseKeysService.verifyKeyAndApplyLimits({
-            platformId: platform.id,
-            license: system.get<string>(AppSystemProp.LICENSE_KEY),
-        })
-
         await userInvitationsService.provisionUserInvitation({
             email: user.email,
             platformId: user.platformId!,
