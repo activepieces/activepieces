@@ -3,8 +3,7 @@ import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsReportRe
 import dayjs from 'dayjs'
 import { In, MoreThan } from 'typeorm'
 import { auditLogRepo } from '../../ee/audit-logs/audit-event-service'
-import { flowRepo } from '../../flows/flow/flow.repo'
-import { flowService } from '../../flows/flow/flow.service'
+import { flowRepo, flowService } from '../../flows/flow/flow.service'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
@@ -156,6 +155,7 @@ async function listAllFlows(platformId: PlatformId, projectId: ProjectId | undef
         .select(['flow.id AS flow_id', 'flow."projectId" AS project_id'])
         .innerJoin('project', 'project', 'flow."projectId" = project.id')
         .andWhere('project."platformId" = :platformId', { platformId })
+        .andWhere('flow.deleted IS NULL')
     if (projectId) {
         queryBuilder.andWhere('flow."projectId" = :projectId', { projectId })
     }

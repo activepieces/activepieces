@@ -31,10 +31,10 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
-import { flowRepo } from './flow.repo'
-
+import { repoFactory } from '../../core/db/repo-factory'
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
+export const flowRepo = repoFactory(FlowEntity)
 
 
 export const flowService = {
@@ -102,7 +102,7 @@ export const flowService = {
             },
         })
 
-        const queryWhere: Record<string, unknown> = { projectId }
+        const queryWhere: Record<string, unknown> = { projectId, deleted: IsNull() }
 
         if (folderId !== undefined) {
             queryWhere.folderId = folderId === 'NULL' ? IsNull() : folderId
@@ -135,12 +135,14 @@ export const flowService = {
     async getOneById(id: string): Promise<Flow | null> {
         return flowRepo().findOneBy({
             id,
+            deleted: IsNull()
         })
     },
     async getOne({ id, projectId, entityManager }: GetOneParams): Promise<Flow | null> {
         return flowRepo(entityManager).findOneBy({
             id,
             projectId,
+            deleted: IsNull()
         })
     },
 
@@ -231,7 +233,10 @@ export const flowService = {
                 })
             }
             else if (operation.type === FlowOperationType.CHANGE_FOLDER) {
-                await flowRepo().update(id, {
+                await flowRepo().update({
+                    id,
+                    deleted: IsNull()
+                }, {
                     folderId: operation.request.folderId,
                 })
             }
@@ -353,7 +358,10 @@ export const flowService = {
             )
         }
 
-        await flowRepo().update(flowId, {
+        await flowRepo().update({
+            id: flowId,
+            deleted: IsNull()
+        }, {
             schedule: {
                 ...flow.schedule,
                 failureCount: newFailureCount,
@@ -418,7 +426,12 @@ export const flowService = {
                 flowToDelete,
             })
 
-            await flowRepo().delete({ id })
+            await flowRepo().update({
+                id,
+                deleted: IsNull()
+            }, {
+                deleted: new Date().toISOString(),
+            })
         }
         finally {
             await lock.release()
@@ -428,6 +441,7 @@ export const flowService = {
     async getAllEnabled(): Promise<Flow[]> {
         return flowRepo().findBy({
             status: FlowStatus.ENABLED,
+            deleted: IsNull()
         })
     },
 
@@ -458,12 +472,13 @@ export const flowService = {
 
     async count({ projectId, folderId }: CountParams): Promise<number> {
         if (folderId === undefined) {
-            return flowRepo().countBy({ projectId })
+            return flowRepo().countBy({ projectId, deleted: IsNull() })
         }
 
         return flowRepo().countBy({
             folderId: folderId !== 'NULL' ? folderId : IsNull(),
             projectId,
+            deleted: IsNull()
         })
     },
 
