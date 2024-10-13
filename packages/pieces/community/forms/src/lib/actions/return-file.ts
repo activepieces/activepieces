@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import mimeTypes from 'mime-types';
 export const returnFile = createAction({
   name: 'return_file',
-  displayName: 'Respond with File',
+  displayName: 'Respond on UI (File)',
   description: 'Return a file as a response.',
   props: {
     file: Property.File({

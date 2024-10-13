@@ -25,7 +25,7 @@ If **Wait for Response** is enabled, ensure the last step in the flow is either 
 
 export const onFormSubmission = createTrigger({
   name: 'form_submission',
-  displayName: 'Form Input',
+  displayName: 'Web Form',
   description: 'Trigger the flow by submitting a form.',
   props: {
     about: Property.MarkDown({
