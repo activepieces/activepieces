@@ -64,7 +64,7 @@ export const textToSpeech = createAction({
     }),
     format: Property.Dropdown({
       displayName: 'Output Format',
-      required: false,
+      required: true,
       description: 'The format you want the audio file in.',
       defaultValue: 'mp3',
       refreshers: ['provider'],
