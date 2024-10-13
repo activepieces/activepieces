@@ -56,9 +56,7 @@ const LicenseKeysPage = () => {
 
   const { mutate: activateLicenseKey, isPending } = useMutation({
     mutationFn: async () => {
-      if (tempLicenseKey.trim() === '') {
-        return;
-      }
+      if (tempLicenseKey.trim() === '') return;
       const response = await platformApi.verifyLicenseKey(
         tempLicenseKey.trim(),
       );
@@ -73,15 +71,6 @@ const LicenseKeysPage = () => {
       }
     },
     onSuccess: () => {
-      if (licenseKey.trim() === '') {
-        toast({
-          title: t('Error'),
-          description: t('License key is required'),
-          duration: 3000,
-        });
-        return;
-      }
-
       toast({
         title: isActivated ? t('Success') : t('Error'),
         description: isActivated
@@ -110,9 +99,7 @@ const LicenseKeysPage = () => {
           <Link
             className="text-blue-500"
             target="_blank"
-            to={
-              'https://www.activepieces.com/docs/install/configuration/overview'
-            }
+            to="https://www.activepieces.com/docs/install/configuration/overview"
           >
             {t('Upgrade to Enterprise')}
           </Link>
@@ -145,22 +132,17 @@ const LicenseKeysPage = () => {
         <div className="flex flex-row gap-2">
           <Input
             value={licenseKey}
-            disabled={true}
+            disabled
             onChange={(e) => setLicenseKey(e.target.value)}
             placeholder="Enter your license key"
           />
           <Dialog open={isOpenDialog} onOpenChange={setIsOpenDialog}>
-            <DialogTrigger
-              disabled={!true}
-              className="flex items-center justify-center gap-2"
-            >
+            <DialogTrigger className="flex items-center justify-center gap-2">
               <PermissionNeededTooltip hasPermission={true}>
                 <Button
                   size="sm"
                   disabled={isPending}
-                  onClick={() => {
-                    setTempLicenseKey(licenseKey);
-                  }}
+                  onClick={() => setTempLicenseKey(licenseKey)}
                 >
                   {t('Activate')}
                 </Button>
@@ -203,13 +185,14 @@ const LicenseKeysPage = () => {
         </div>
       </div>
       <div>
-        {Object.entries(LICENSE_PROPS_MAP).map(([key, label]) =>
-          platform?.[key as keyof typeof platform] ? (
-            <div className="flex flex-row items-center" key={key}>
-              <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
-              <h3 className="text-lg">{t(label)}</h3>
-            </div>
-          ) : null,
+        {Object.entries(LICENSE_PROPS_MAP).map(
+          ([key, label]) =>
+            platform?.[key as keyof typeof platform] && (
+              <div className="flex flex-row items-center" key={key}>
+                <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
+                <h3 className="text-lg">{t(label)}</h3>
+              </div>
+            ),
         )}
       </div>
     </div>

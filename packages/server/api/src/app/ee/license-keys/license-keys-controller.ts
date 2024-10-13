@@ -37,7 +37,6 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        // TODO URGENT update the license in platform.
         await platformService.update({
             id: platformId,
             licenseKey: key.key,

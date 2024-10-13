@@ -423,7 +423,6 @@ The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as spec
     const oldestPlatform = await platformService.getOldestPlatform()
     const key = system.get<string>(AppSystemProp.LICENSE_KEY)
     if (!isNil(oldestPlatform) && !isNil(key)) {
-        // TODO URGENT update the license in platform.
         await platformService.update({
             id: oldestPlatform.id,
             licenseKey: key,
