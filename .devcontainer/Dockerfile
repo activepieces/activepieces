@@ -23,6 +23,7 @@ RUN apt-get update \
     locales-all \
     libcap-dev \
  && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y poppler-utils poppler-data
 
 # Set the locale
 ENV LANG en_US.UTF-8
