@@ -12,6 +12,7 @@ import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import { Navigate, useParams } from 'react-router-dom';
+import remarkGfm from 'remark-gfm';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,11 +24,9 @@ import {
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
 import { humanInputApi } from '@/features/human-input/lib/human-input-api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
-import { projectHooks } from '@/hooks/project-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import remarkGfm from 'remark-gfm';
 
 const Messages = Type.Array(
   Type.Object({
@@ -133,7 +132,9 @@ export function ChatPage() {
               />
             )}
             <ChatBubbleMessage className="flex gap-2">
-              <Markdown remarkPlugins={[remarkGfm]} className="bg-inherit" >{message.content}</Markdown>
+              <Markdown remarkPlugins={[remarkGfm]} className="bg-inherit">
+                {message.content}
+              </Markdown>
             </ChatBubbleMessage>
             {message.role === 'bot' && (
               <div className="flex gap-1">
@@ -227,11 +228,33 @@ const formatError = (
   switch (error.code) {
     case 'no-chat-response':
       if (projectId) {
-        return <span>No response from the chatbot. Ensure that <strong>Respond on UI (Markdown)</strong> is the final step in <a href={`/projects/${projectId}/flows/${flowId}`} className="text-primary underline" target="_blank">your flow</a>.</span>;
+        return (
+          <span>
+            No response from the chatbot. Ensure that{' '}
+            <strong>Respond on UI (Markdown)</strong> is the final step in{' '}
+            <a
+              href={`/projects/${projectId}/flows/${flowId}`}
+              className="text-primary underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              your flow
+            </a>
+            .
+          </span>
+        );
       }
-      return <span>The chatbot is not responding. It seems there might be an issue with how this chat was set up. Please contact the person who shared this chat link with you for assistance.</span>;
+      return (
+        <span>
+          The chatbot is not responding. It seems there might be an issue with
+          how this chat was set up. Please contact the person who shared this
+          chat link with you for assistance.
+        </span>
+      );
     case ErrorCode.FLOW_NOT_FOUND:
-      return <span>The chat flow you are trying to access no longer exists.</span>;
+      return (
+        <span>The chat flow you are trying to access no longer exists.</span>
+      );
     case ErrorCode.VALIDATION:
       return <span>{`Validation error: ${error.params.message}`}</span>;
     default:
