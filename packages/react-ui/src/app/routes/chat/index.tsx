@@ -45,11 +45,14 @@ export function ChatPage() {
   const { mutate: sendMessage, isPending: isLoading } = useMutation({
     mutationFn: async () => {
       if (!flowId || !chatId) return null;
-      setMessages([...messages, { role: 'user', content: input }]);
+      const savedInput = input;
+      setInput('');
+      setMessages([...messages, { role: 'user', content: savedInput }]);
+      scrollToBottom();
       return humanInputApi.sendMessage({
         flowId,
         chatId: chatId.current,
-        message: input,
+        message: savedInput,
       });
     },
     onSuccess: (result) => {
@@ -67,21 +70,15 @@ export function ChatPage() {
           ]);
           break;
       }
+      scrollToBottom();
     },
   });
-
-  const handleSubmit = () => {
-    sendMessage();
-    setInput('');
-    scrollToBottom();
-  };
 
   useEffect(scrollToBottom, [messages, isLoading]);
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    handleSubmit();
-    scrollToBottom();
+    sendMessage();
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
