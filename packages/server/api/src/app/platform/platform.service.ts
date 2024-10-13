@@ -132,6 +132,7 @@ export const platformService = {
             ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
+            ...spreadIfDefined('licenseKey', params.licenseKey),
         }
 
         return repo().save(updatedPlatform)
@@ -192,5 +193,6 @@ type UpdateParams = UpdatePlatformRequestBody & {
     apiKeysEnabled?: boolean
     projectRolesEnabled?: boolean
     alertsEnabled?: boolean 
-    analyticsEnabled?: boolean  
+    analyticsEnabled?: boolean 
+    licenseKey?: string
 }

@@ -44,7 +44,6 @@ import { emailService } from './ee/helper/email/email-service'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
-import { licenseKeysService } from './ee/license-keys/license-keys-service'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -210,8 +209,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(userModule)
     await app.register(authenticationModule)
     await app.register(copilotModule),
-        await app.register(requestWriterModule),
-        await app.register(platformModule)
+    await app.register(requestWriterModule),
+    await app.register(platformModule)
     await app.register(formModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
@@ -425,5 +424,9 @@ The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as spec
     const key = system.get<string>(AppSystemProp.LICENSE_KEY)
     if (!isNil(oldestPlatform) && !isNil(key)) {
         // TODO URGENT update the license in platform.
+        await platformService.update({
+            id: oldestPlatform.id,
+            licenseKey: key,
+        })
     }
 }

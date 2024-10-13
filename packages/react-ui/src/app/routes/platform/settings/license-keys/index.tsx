@@ -45,34 +45,33 @@ const LICENSE_PROPS_MAP = {
 };
 
 const LicenseKeysPage = () => {
-  const currentPlatform = platformHooks.useCurrentPlatform();
-  const [platform, setPlatform] = useState(currentPlatform.platform);
-  const [licenseKey, setLicenseKey] = useState('');
+  const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const [licenseKey, setLicenseKey] = useState(platform.licenseKey || '');
   const [isActivated, setIsActivated] = useState(false);
-  const [tempLicenseKey, setTempLicenseKey] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [tempLicenseKey, setTempLicenseKey] = useState(
+    platform.licenseKey || '',
+  );
   const [keyData, setKeyData] = useState(null);
   const [isOpenDialog, setIsOpenDialog] = useState(false);
-  const { refetch } = platformHooks.useCurrentPlatform();
 
-  useEffect(() => {
-    const fetchLicenseKey = async () => {
-      setIsLoading(true);
-      const allKeys = await platformApi.getLicenseKey();
-      if (!isNil(allKeys[ApFlagId.LICENSE_KEY])) {
-        setLicenseKey(allKeys[ApFlagId.LICENSE_KEY] as string);
-        setTempLicenseKey(allKeys[ApFlagId.LICENSE_KEY] as string);
-        const response = await platformApi.verifyLicenseKey(
-          allKeys[ApFlagId.LICENSE_KEY] as string,
-        );
-        setKeyData(response.key);
-        setPlatform(response.platform);
-        await refetch();
-      }
-    };
-    fetchLicenseKey();
-    setIsLoading(false);
-  }, []);
+  // useEffect(() => {
+  //   const fetchLicenseKey = async () => {
+  //     setIsLoading(true);
+  //     const allKeys = await platformApi.getLicenseKey();
+  //     if (!isNil(allKeys[ApFlagId.LICENSE_KEY])) {
+  //       setLicenseKey(allKeys[ApFlagId.LICENSE_KEY] as string);
+  //       setTempLicenseKey(allKeys[ApFlagId.LICENSE_KEY] as string);
+  //       const response = await platformApi.verifyLicenseKey(
+  //         allKeys[ApFlagId.LICENSE_KEY] as string,
+  //       );
+  //       setKeyData(response.key);
+  //       setPlatform(response.platform);
+  //       await refetch();
+  //     }
+  //   };
+  //   fetchLicenseKey();
+  //   setIsLoading(false);
+  // }, []);
 
   const { mutate: activateLicenseKey, isPending } = useMutation({
     mutationFn: async () => {
@@ -84,11 +83,11 @@ const LicenseKeysPage = () => {
       );
       if (!isNil(response)) {
         setIsActivated(true);
-        setKeyData(response.key);
-        setPlatform(response.platform);
+        setKeyData(response);
         setLicenseKey(tempLicenseKey.trim());
         setIsOpenDialog(false);
         await platformApi.saveLicenseKey(tempLicenseKey.trim());
+        await refetch();
       } else {
         setIsActivated(false);
       }
@@ -220,16 +219,14 @@ const LicenseKeysPage = () => {
         </div>
       </div>
       <div>
-        {isLoading && <LoadingSpinner className="w-4 h-4" />}
-        {!isLoading &&
-          Object.entries(LICENSE_PROPS_MAP).map(([key, label]) =>
-            platform?.[key as keyof typeof platform] ? (
-              <div className="flex flex-row items-center" key={key}>
-                <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
-                <h3 className="text-lg">{t(label)}</h3>
-              </div>
-            ) : null,
-          )}
+        {Object.entries(LICENSE_PROPS_MAP).map(([key, label]) =>
+          platform?.[key as keyof typeof platform] ? (
+            <div className="flex flex-row items-center" key={key}>
+              <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
+              <h3 className="text-lg">{t(label)}</h3>
+            </div>
+          ) : null,
+        )}
       </div>
     </div>
   );

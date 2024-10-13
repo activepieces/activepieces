@@ -2,6 +2,7 @@ import { AppSystemProp, system } from '@activepieces/server-shared'
 import { ActivepiecesError, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { platformService } from '../../platform/platform.service'
 import { licenseKeysService } from './license-keys-service'
 
 const key = system.get<string>(AppSystemProp.LICENSE_KEY)
@@ -37,8 +38,12 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
         // TODO URGENT update the license in platform.
+        await platformService.update({
+            id: platformId,
+            licenseKey: key.key,
+        })
         await licenseKeysService.applyLimits(platformId, key)
-        return key;
+        return key
     })
 
 }
