@@ -10,6 +10,13 @@ type FlowValue = {
   id: string;
   exampleData: unknown;
 };
+const markdownDescription = `
+**Important Note:**
+- If **Wait for Response** is enabled, the step will fail if the flow does not respond within **{{webhookTimeoutSeconds}} seconds**.
+
+**Friendly Tip:**
+- It's best to design your flows to work asynchronously and not depend on this setting.
+`
 
 export const callFlow = createAction({
   name: 'callFlow',
@@ -27,7 +34,7 @@ export const callFlow = createAction({
             flow.status === FlowStatus.ENABLED &&
             flow.version.trigger.type === TriggerType.PIECE &&
             flow.version.trigger.settings.pieceName ==
-              '@activepieces/piece-subflows'
+            '@activepieces/piece-subflows'
         );
         return {
           options: flows.map((flow) => ({
@@ -61,9 +68,11 @@ export const callFlow = createAction({
         return props;
       },
     }),
+    tip: Property.MarkDown({
+      value: markdownDescription,
+    }),
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
-      description: 'Wait for the response from the called flow',
       required: false,
       defaultValue: false,
     }),
@@ -71,9 +80,7 @@ export const callFlow = createAction({
   async run(context) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}${
-        context.propsValue.waitForResponse ? '/sync' : ''
-      }`,
+      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}${context.propsValue.waitForResponse ? '/sync' : ''}`,
       headers: {
         'Content-Type': 'application/json',
       },

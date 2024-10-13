@@ -321,7 +321,6 @@ export const flowRunService = {
         )
 
         const { flowRunId, pauseMetadata } = params
-
         await flowRunRepo().update(flowRunId, {
             status: FlowRunStatus.PAUSED,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

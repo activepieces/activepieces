@@ -52,6 +52,14 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
 
+  const { data: pausedFlowTimeoutDays } = flagsHooks.useFlag<number>(
+    ApFlagId.PAUSED_FLOW_TIMEOUT_DAYS,
+  );
+
+  const { data: webhookTimeoutSeconds } = flagsHooks.useFlag<number>(
+    ApFlagId.WEBHOOK_TIMEOUT_SECONDS,
+  );
+
   const { data: frontendUrl } = flagsHooks.useFlag<string>(
     ApFlagId.FRONTEND_URL,
   );
@@ -59,6 +67,8 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     webhookUrl: `${webhookPrefixUrl}/${props.flowId}`,
     formUrl: `${frontendUrl}/forms/${props.flowId}`,
     chatUrl: `${frontendUrl}/chats/${props.flowId}`,
+    pausedFlowTimeoutDays: pausedFlowTimeoutDays?.toString() ?? '',
+    webhookTimeoutSeconds: webhookTimeoutSeconds?.toString() ?? '',
   };
 
   const showAuthForAction =

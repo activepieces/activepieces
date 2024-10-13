@@ -66,6 +66,12 @@ export class FileStoreError extends ExecutionError {
     }
 }
 
+export class PausedFlowTimeoutError extends ExecutionError {
+    constructor(cause?: unknown, maximumPauseDurationDays?: number) {
+        super('PausedFlowTimeoutError', `The flow cannot be paused for more than ${maximumPauseDurationDays} days`, ExecutionErrorType.USER, cause)
+    }
+}
+
 export class FileSizeError extends ExecutionError {
     constructor(currentFileSize: number, maximumSupportSize: number, cause?: unknown) {
         super('FileSizeError', JSON.stringify({
