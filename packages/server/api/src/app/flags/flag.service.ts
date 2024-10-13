@@ -219,6 +219,18 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.PAUSED_FLOW_TIMEOUT_DAYS,
+                value: system.getNumber(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.WEBHOOK_TIMEOUT_SECONDS,
+                value: system.getNumber(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CURRENT_VERSION,
                 value: currentVersion,
                 created,
