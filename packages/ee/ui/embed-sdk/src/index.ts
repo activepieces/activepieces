@@ -66,7 +66,7 @@ export interface ActivepiecesVendorInit {
     disableNavigationInBuilder: boolean;
     hideFolders?: boolean;
     sdkVersion?: string;
-    jwtToken: string; // Added jwtToken here
+    jwtToken?: string; // Added jwtToken here
     initialRoute: string
   };
 }
