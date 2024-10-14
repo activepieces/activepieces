@@ -1,7 +1,9 @@
 import { URL } from 'url'
 import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, StepOutputStatus } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
+import { PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
 import { createConnectionService } from '../services/connections.service'
 import { createFilesService } from '../services/files.service'
@@ -11,6 +13,8 @@ import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
+
+const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
 export const pieceExecutor: BaseExecutor<PieceAction> = {
     async handle({
@@ -186,11 +190,16 @@ function createPauseHook(hookResponse: HookResponse, pauseId: string): PauseHook
     return (req) => {
         hookResponse.paused = true
         switch (req.pauseMetadata.type) {
-            case PauseType.DELAY:
+            case PauseType.DELAY: {
+                const diffInDays = dayjs(req.pauseMetadata.resumeDateTime).diff(dayjs(), 'days')
+                if (diffInDays > AP_PAUSED_FLOW_TIMEOUT_DAYS) {
+                    throw new PausedFlowTimeoutError(undefined, AP_PAUSED_FLOW_TIMEOUT_DAYS)
+                }
                 hookResponse.pauseResponse = {
                     pauseMetadata: req.pauseMetadata,
                 }
                 break
+            }
             case PauseType.WEBHOOK:
                 hookResponse.pauseResponse = {
                     pauseMetadata: {

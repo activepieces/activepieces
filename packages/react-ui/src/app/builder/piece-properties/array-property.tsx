@@ -57,6 +57,11 @@ const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
           ...acc,
           [key]: null,
         };
+      case PropertyType.FILE:
+        return {
+          ...acc,
+          [key]: null,
+        };
     }
   }, {} as Record<string, unknown>);
 };
@@ -93,13 +98,27 @@ const ArrayPieceProperty = React.memo(
       const value = arrayProperty.properties
         ? getDefaultValuesForInputs(arrayProperty.properties)
         : '';
-      const newFields = [...fields, { id: nanoid(), value }];
+      const formValues = form.getValues(inputName);
+      const newFields = [
+        ...formValues.map((value: string | Record<string, unknown>) => ({
+          id: nanoid(),
+          value,
+        })),
+        { id: nanoid(), value },
+      ];
+
       setFields(newFields);
       updateFormValue(newFields);
     };
 
     const remove = (index: number) => {
-      const newFields = fields.filter((_, i) => i !== index);
+      const currentFields: ArrayField[] = form
+        .getValues(inputName)
+        .map((value: string | Record<string, unknown>) => ({
+          id: nanoid(),
+          value,
+        }));
+      const newFields = currentFields.filter((_, i) => i !== index);
       setFields(newFields);
       updateFormValue(newFields);
     };
@@ -177,7 +196,7 @@ const ArrayPieceProperty = React.memo(
             >
               {fields.map((field, index) => (
                 <SortableItem key={field.id} value={field.id} asChild>
-                  <div key={field.id} className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     <SortableDragHandle
                       variant="outline"
                       size="icon"

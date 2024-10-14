@@ -6,7 +6,6 @@ import {
     apId,
     BranchActionSettingsWithValidation,
     Cursor,
-    DEFAULT_SAMPLE_DATA_SETTINGS,
     ErrorCode,
     flowHelper,
     FlowId,
@@ -88,7 +87,6 @@ export const flowVersionService = {
                     flowId: flowVersion.flowId,
                     versionId: userOperation.request.versionId,
                     removeConnectionsName: false,
-                    removeSampleData: false,
                 })
 
                 operations = handleImportFlowOperation(flowVersion, previousVersion)
@@ -204,7 +202,7 @@ export const flowVersionService = {
                 'flow_version.updatedByUser',
                 'user',
                 'user',
-                'flow_version.updatedBy = "user"."id"',
+                'flow_version."updatedBy" = "user"."id"',
             ).where({
                 flowId,
             }),
@@ -280,7 +278,7 @@ async function applySingleOperation(
         flowVersion,
         operation,
     })
-    operation = await prepareRequest(projectId, flowVersion, operation)
+    operation = await prepareRequest(projectId, operation)
     return flowHelper.apply(flowVersion, operation)
 }
 
@@ -294,11 +292,13 @@ async function removeSecretsFromFlow(
     )
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
     for (const step of steps) {
-        if (removeSampleData) {
-            step.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
-        }
         if (removeConnectionNames) {
             step.settings.input = replaceConnections(step.settings.input)
+        }
+        if (removeSampleData) {
+            step.settings.inputUiInfo.sampleDataFileId = undefined
+            step.settings.inputUiInfo.currentSelectedData = undefined
+            step.settings.inputUiInfo.lastTestDate = undefined
         }
     }
     return flowVersionWithArtifacts
@@ -359,7 +359,6 @@ function handleImportFlowOperation(
 
 async function prepareRequest(
     projectId: ProjectId,
-    flowVersion: FlowVersion,
     request: FlowOperationRequest,
 ): Promise<FlowOperationRequest> {
     const clonedRequest: FlowOperationRequest = JSON.parse(

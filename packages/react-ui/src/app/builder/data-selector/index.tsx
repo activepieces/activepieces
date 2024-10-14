@@ -104,7 +104,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
     }
     return dataSelectorUtils.traverseStepOutputAndReturnMentionTree({
       insertable: step.type !== ActionType.LOOP_ON_ITEMS,
-      stepOutput: step.settings.inputUiInfo?.currentSelectedData,
+      stepOutput: state.sampleData[step.name],
       propertyPath: step.name,
       displayName: displayName,
     });

@@ -219,6 +219,18 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.PAUSED_FLOW_TIMEOUT_DAYS,
+                value: system.getNumber(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.WEBHOOK_TIMEOUT_SECONDS,
+                value: system.getNumber(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CURRENT_VERSION,
                 value: currentVersion,
                 created,
@@ -253,8 +265,8 @@ export const flagService = {
     ): string {
         const isCustomerPlatform =
             platformId && !flagService.isCloudPlatform(platformId)
-        if (isCustomerPlatform) {
-            return `${hostUrl}/redirect`
+        if (isCustomerPlatform && system.getEdition() === ApEdition.CLOUD) {
+            return `https://${hostUrl}/redirect`
         }
         const frontendUrl = system.get(SharedSystemProp.FRONTEND_URL)
         const trimmedFrontendUrl = frontendUrl?.endsWith('/')

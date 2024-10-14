@@ -7,10 +7,16 @@ import {
   optionalTimeFormats,
   timeFormat,
   timeFormatDescription,
-  createNewDate,
   timeZoneOptions,
-  timeDiff,
 } from '../common';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(advancedFormat);
 
 export const nextDayofWeek = createAction({
   name: 'next_day_of_week',
@@ -82,10 +88,10 @@ export const nextDayofWeek = createAction({
     const currentTime = context.propsValue.currentTime as boolean;
     let time = context.propsValue.time as string;
 
-    const nextOccurrence = new Date();
+    let nextOccurrence = dayjs().tz(timeZone);
 
     if (currentTime === true) {
-      time = `${nextOccurrence.getHours()}:${nextOccurrence.getMinutes()}`;
+      time = `${nextOccurrence.hour()}:${nextOccurrence.minute()}`;
     }
     const [hours, minutes] = time.split(':').map(Number);
 
@@ -103,35 +109,23 @@ export const nextDayofWeek = createAction({
       );
     }
 
-    if (typeof timeFormat !== 'string') {
-      throw new Error(
-        `Output format is not a string \noutput format: ${JSON.stringify(
-          timeFormat
-        )}`
-      );
-    }
+
 
     // Set the time
-    nextOccurrence.setHours(hours, minutes, 0, 0);
+    nextOccurrence = nextOccurrence.hour(hours).minute(minutes).second(0).millisecond(0);
 
     // Calculate the day difference
-    let dayDiff = dayIndex - nextOccurrence.getDay();
-    console.log('dayDiff:', dayDiff, nextOccurrence, new Date());
+    let dayDiff = dayIndex - nextOccurrence.day();
     if (
       dayDiff < 0 ||
-      (dayDiff === 0 && nextOccurrence.getTime() < new Date().getTime())
+      (dayDiff === 0 && nextOccurrence.isBefore(dayjs().tz(timeZone)))
     ) {
       // If it's a past day in the week or today but past time, move to next week
       dayDiff += 7;
     }
     // Set the date to the next occurrence of the given day
-    nextOccurrence.setDate(nextOccurrence.getDate() + dayDiff);
+    nextOccurrence = nextOccurrence.add(dayDiff, 'day');
 
-    // Set the time for the timezone
-    nextOccurrence.setMinutes(
-      nextOccurrence.getMinutes() + timeDiff('UTC', timeZone)
-    );
-
-    return { result: createNewDate(nextOccurrence, timeFormat) };
+    return { result: nextOccurrence.format(timeFormat) };
   },
 });

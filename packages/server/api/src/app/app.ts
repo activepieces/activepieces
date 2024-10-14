@@ -357,6 +357,16 @@ const validateEnvPropsOnStartup = async (): Promise<void> => {
             docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
         }))
     }
+    const isApp = system.isApp()
+    if (isApp) {
+        const rentionPeriod = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+        const maximumPausedFlowTimeout = system.getNumberOrThrow(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+        if (maximumPausedFlowTimeout > rentionPeriod) {
+            throw new Error(JSON.stringify({
+                message: 'AP_PAUSED_FLOW_TIMEOUT_DAYS can not exceed AP_EXECUTION_DATA_RETENTION_DAYS',
+            }))
+        }
+    }
 
     const jwtSecret = await jwtUtils.getJwtSecret()
     if (isNil(jwtSecret)) {
@@ -397,11 +407,11 @@ async function getAdapter() {
 export async function appPostBoot(): Promise<void> {
 
     logger.info(`
-        _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
-/\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
-/  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___
-/ /\\ \\   | |         | |      | |     \\ \\/ /   |  __|   |  ___/    | |   |  __|   | |      |  __|    \\___ \\
-/ ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
+             _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
+    /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
+   /  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___
+  / /\\ \\   | |         | |      | |     \\ \\/ /   |  __|   |  ___/    | |   |  __|   | |      |  __|    \\___ \\
+ / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
 The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.`)

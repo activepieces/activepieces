@@ -3,8 +3,8 @@ import { Navigate, useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { ApForm } from '@/features/forms/components/ap-form';
-import { formsApi } from '@/features/forms/lib/forms-api';
+import { ApForm } from '@/features/human-input/components/ap-form';
+import { humanInputApi } from '@/features/human-input/lib/human-input-api';
 import { FormResponse, isNil } from '@activepieces/shared';
 
 export const FormPage = () => {
@@ -17,7 +17,7 @@ export const FormPage = () => {
     isError,
   } = useQuery<FormResponse | null, Error>({
     queryKey: ['form', flowId],
-    queryFn: () => formsApi.get(flowId!, useDraft === 'true'),
+    queryFn: () => humanInputApi.get(flowId!, useDraft === 'true'),
     enabled: !isNil(flowId),
     staleTime: Infinity,
   });

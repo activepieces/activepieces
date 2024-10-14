@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ExecutionType, PauseType } from '@activepieces/shared';
 import dayjs from 'dayjs';
+import { markdownDescription } from '../common';
 
 export const delayUntilAction = createAction({
   name: 'delay_until',
@@ -16,6 +17,9 @@ export const delayUntilAction = createAction({
     },
   },
   props: {
+    markdown: Property.MarkDown({
+      value: markdownDescription,
+    }),
     delayUntilTimestamp: Property.DateTime({
       displayName: 'Date and Time',
       description:

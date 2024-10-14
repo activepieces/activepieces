@@ -1,4 +1,4 @@
-FROM node:18.19-bullseye-slim AS base
+FROM node:18.20.4-bullseye-slim AS base
 
 # Use a cache mount for apt to speed up the process
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -9,7 +9,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         python3 \
         g++ \
         build-essential \
-        git && \
+        git \
+        poppler-utils \
+        poppler-data && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
 

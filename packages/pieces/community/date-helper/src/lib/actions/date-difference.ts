@@ -1,13 +1,17 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
+import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
 import {
-  dateInformation,
   optionalTimeFormats,
   timeFormat,
   timeParts,
   timeFormatDescription,
-  createDateFromInfo,
-  getDateInformation,
+  parseDate,
 } from '../common';
+
+dayjs.extend(duration);
+dayjs.extend(advancedFormat);
 
 export const dateDifferenceAction = createAction({
   name: 'date_difference',
@@ -69,82 +73,35 @@ export const dateDifferenceAction = createAction({
   },
   async run(context) {
     const inputStartDate = context.propsValue.startDate;
-    if (typeof inputStartDate !== 'string') {
-      throw new Error(
-        `Input start date is not a string \ninput date: ${JSON.stringify(
-          inputStartDate
-        )}`
-      );
-    }
     const startDateFormat = context.propsValue.startDateFormat;
-    if (typeof startDateFormat !== 'string') {
-      throw new Error(
-        `Input start date format is not a string \ninput date: ${JSON.stringify(
-          startDateFormat
-        )}`
-      );
-    }
     const inputEndDate = context.propsValue.endDate;
-    if (typeof inputEndDate !== 'string') {
-      throw new Error(
-        `Input end date is not a string \ninput date: ${JSON.stringify(
-          inputEndDate
-        )}`
-      );
-    }
     const endDateFormat = context.propsValue.endDateFormat;
-    if (typeof endDateFormat !== 'string') {
-      throw new Error(
-        `Input end date format is not a string \ninput date: ${JSON.stringify(
-          endDateFormat
-        )}`
-      );
-    }
-
-    const startDateInfo = getDateInformation(
-      inputStartDate,
-      startDateFormat
-    ) as dateInformation;
-    const endDateInfo = getDateInformation(
-      inputEndDate,
-      endDateFormat
-    ) as dateInformation;
-    const startDate = createDateFromInfo(startDateInfo);
-    const endDate = createDateFromInfo(endDateInfo);
+    const startDate = parseDate(inputStartDate, startDateFormat);
+    const endDate = parseDate(inputEndDate, endDateFormat);
 
     const unitDifference = context.propsValue.unitDifference;
-    const difference = endDate.getTime() - startDate.getTime();
+    const difference = dayjs.duration(endDate.diff(startDate));
 
     const outputresponse: Record<string, number> = {};
     for (let i = 0; i < unitDifference.length; i++) {
       switch (unitDifference[i]) {
         case timeParts.year:
-          outputresponse[timeParts.year] = Math.floor(
-            difference / (1000 * 60 * 60 * 24 * 365)
-          );
+          outputresponse[timeParts.year] = difference.years();
           break;
         case timeParts.month:
-          outputresponse[timeParts.month] = Math.floor(
-            difference / (1000 * 60 * 60 * 24 * 30)
-          );
+          outputresponse[timeParts.month] = difference.months();
           break;
         case timeParts.day:
-          outputresponse[timeParts.day] = Math.floor(
-            difference / (1000 * 60 * 60 * 24)
-          );
+          outputresponse[timeParts.day] = difference.days();
           break;
         case timeParts.hour:
-          outputresponse[timeParts.hour] = Math.floor(
-            difference / (1000 * 60 * 60)
-          );
+          outputresponse[timeParts.hour] = difference.hours();
           break;
         case timeParts.minute:
-          outputresponse[timeParts.minute] = Math.floor(
-            difference / (1000 * 60)
-          );
+          outputresponse[timeParts.minute] = difference.minutes();
           break;
         case timeParts.second:
-          outputresponse[timeParts.second] = Math.floor(difference / 1000);
+          outputresponse[timeParts.second] = difference.seconds();
           break;
         default:
           throw new Error(
