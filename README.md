@@ -62,7 +62,6 @@ Your friendliest open source all-in-one automation tool, designed to be **extens
 - **🌐 Open Ecosystem:** All pieces are open source and available on npmjs.com, **60% of the pieces are contributed by the community**.
 
 - **🛠️  Pieces are written in Typescript**: Pieces are npm packages in TypeScript, offering full customization with the best developer experience, including **hot reloading** for **local** piece development on your machine. 😎
-c
 
 ![](/resources/create-action.png)
 
