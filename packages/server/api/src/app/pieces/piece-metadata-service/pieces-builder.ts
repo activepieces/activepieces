@@ -29,7 +29,7 @@ async function handleFileChange(piecePackageName: string, io: Server): Promise<v
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }
     catch (error) {
-        logger.info(chalk.red.bold('Failed to run build process...'), error)
+        logger.info(error, chalk.red.bold('Failed to run build process...'))
     }
     finally {
         mutex.release()

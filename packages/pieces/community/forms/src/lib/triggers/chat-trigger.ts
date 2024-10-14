@@ -5,7 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 const markdown = `
-This trigger sets up a chat interface. Ensure that **Respond with Markdown** is the final step in your flow.
+This trigger sets up a chat interface. Ensure that **Respond on UI (Markdown)** is the final step in your flow.
 
 **Your Chat URL:**
 \`\`\`text
