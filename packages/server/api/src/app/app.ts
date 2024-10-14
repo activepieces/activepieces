@@ -44,7 +44,6 @@ import { emailService } from './ee/helper/email/email-service'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
-import { licenseKeysService } from './ee/license-keys/license-keys-service'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -432,10 +431,11 @@ The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as spec
         )
     }
     const oldestPlatform = await platformService.getOldestPlatform()
-    if (!isNil(oldestPlatform)) {
-        await licenseKeysService.verifyKeyAndApplyLimits({
-            platformId: oldestPlatform.id,
-            license: system.get<string>(AppSystemProp.LICENSE_KEY),
+    const key = system.get<string>(AppSystemProp.LICENSE_KEY)
+    if (!isNil(oldestPlatform) && !isNil(key)) {
+        await platformService.update({
+            id: oldestPlatform.id,
+            licenseKey: key,
         })
     }
 }

@@ -16,6 +16,10 @@ export enum AppSystemProp {
     ENCRYPTION_KEY = 'ENCRYPTION_KEY',
     EXECUTION_DATA_RETENTION_DAYS = 'EXECUTION_DATA_RETENTION_DAYS',
     JWT_SECRET = 'JWT_SECRET',
+    
+    /**
+     * @deprecated this now can be done from the platform admin page.
+     */
     LICENSE_KEY = 'LICENSE_KEY',
     MAX_CONCURRENT_JOBS_PER_PROJECT = 'MAX_CONCURRENT_JOBS_PER_PROJECT',
     OPENAI_API_BASE_URL = 'OPENAI_API_BASE_URL',

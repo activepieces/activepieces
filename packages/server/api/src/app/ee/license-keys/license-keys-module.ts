@@ -1,4 +1,4 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { systemJobsSchedule } from '../../helper/system-jobs'
@@ -24,12 +24,23 @@ export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 async function licenseKeyJobHandler(): Promise<void> {
-    const platform = await platformService.getOldestPlatform()
-    if (isNil(platform)) {
-        return
+    const platforms = await platformService.getAll()
+    for (const platform of platforms) {
+        if (isNil(platform.licenseKey)) {
+            continue
+        }
+        try {
+            const key = await licenseKeysService.verifyKeyOrReturnNull({
+                platformId: platform.id,
+                license: platform.licenseKey,
+            })
+            if (isNil(key)) {
+                await licenseKeysService.downgradeToFreePlan(platform.id)
+                continue;
+            }
+            await licenseKeysService.applyLimits(platform.id, key)
+        } catch (e) {
+            exceptionHandler.handle(e)
+        }
     }
-    await licenseKeysService.verifyKeyAndApplyLimits({
-        platformId: platform.id,
-        license: system.get<string>(AppSystemProp.LICENSE_KEY),
-    })
 }

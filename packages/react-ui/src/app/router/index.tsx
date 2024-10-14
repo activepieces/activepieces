@@ -47,6 +47,7 @@ import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import AuditLogsPage from '../routes/platform/audit-logs';
 import ProjectsPage from '../routes/platform/projects';
+import { LicenseKeyPage } from '../routes/platform/settings/license-key';
 import TemplatesPage from '../routes/platform/templates';
 import UsersPage from '../routes/platform/users';
 import { FlowRunPage } from '../routes/runs/id';
@@ -445,6 +446,18 @@ const routes = [
         <PlatformSettingsLayout>
           <PageTitle title="SSO">
             <SSOPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/license-key',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="LicenseKey">
+            <LicenseKeyPage />
           </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>

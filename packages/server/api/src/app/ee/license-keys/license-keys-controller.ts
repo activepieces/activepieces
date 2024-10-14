@@ -1,8 +1,10 @@
 import { AppSystemProp, system } from '@activepieces/server-shared'
-import { CreateTrialLicenseKeyRequestBody, isNil, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { platformService } from '../../platform/platform.service'
 import { licenseKeysService } from './license-keys-service'
+import { Type } from '@sinclair/typebox'
 
 const key = system.get<string>(AppSystemProp.LICENSE_KEY)
 
@@ -22,6 +24,33 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
         return licenseKey
     })
 
+    app.get('/:licenseKey', GetLicenseKeyRequest, async (req) => {
+        const licenseKey = await licenseKeysService.getKey(req.params.licenseKey)
+        return licenseKey
+    })
+
+    app.post('/verify', VerifyLicenseKeyRequest, async (req) => {
+        const { platformId, licenseKey } = req.body
+        const key = await licenseKeysService.verifyKeyOrReturnNull({
+            platformId,
+            license: licenseKey,
+        })
+        if (isNil(key)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_LICENSE_KEY,
+                params: {
+                    key: licenseKey,
+                },
+            })
+        }
+        await platformService.update({
+            id: platformId,
+            licenseKey: key.key,
+        })
+        await licenseKeysService.applyLimits(platformId, key)
+        return key
+    })
+
 }
 
 const CreateTrialLicenseKeyRequest = {
@@ -33,5 +62,31 @@ const CreateTrialLicenseKeyRequest = {
     },
     schema: {
         body: CreateTrialLicenseKeyRequestBody,
+    },
+}
+
+const VerifyLicenseKeyRequest = {
+    config: {
+        allowedPrincipals: [
+            PrincipalType.UNKNOWN,
+            PrincipalType.USER,
+        ],
+    },
+    schema: {
+        body: VerifyLicenseKeyRequestBody,
+    },
+}
+
+const GetLicenseKeyRequest = {
+    config: {
+        allowedPrincipals: [
+            PrincipalType.UNKNOWN,
+            PrincipalType.USER,
+        ],
+    },
+    schema: {
+        params: Type.Object({
+            licenseKey: Type.String(),
+        }),
     },
 }
