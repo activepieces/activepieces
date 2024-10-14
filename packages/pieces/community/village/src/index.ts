@@ -14,7 +14,7 @@ import { fetchCompaniesPaths } from "./lib/actions/fetch-companies-paths";
       displayName: "Village",
       auth: villageAuth,
       minimumSupportedRelease: '0.20.0',
-      logoUrl: "https://village.do/logo-square.png",
+      logoUrl: "https://cdn.activepieces.com/pieces/village.png",
       authors: [],
       actions: [fetchPeoplePaths, fetchCompaniesPaths],
       triggers: [],
