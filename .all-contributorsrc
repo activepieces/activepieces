@@ -1298,6 +1298,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "pavloDeshko",
+      "name": "pavloDeshko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27104046?v=4",
+      "profile": "https://github.com/pavloDeshko",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"
