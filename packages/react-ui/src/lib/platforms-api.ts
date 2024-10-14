@@ -1,4 +1,8 @@
-import { Platform, UpdatePlatformRequestBody } from '@activepieces/shared';
+import {
+  LicenseKeyEntity,
+  Platform,
+  UpdatePlatformRequestBody,
+} from '@activepieces/shared';
 
 import { api } from './api';
 import { authenticationSession } from './authentication-session';
@@ -13,7 +17,7 @@ export const platformApi = {
   },
 
   getLicenseKey(licenseKey: string) {
-    return api.get<Record<string, unknown>>(`/v1/license-keys/${licenseKey}`);
+    return api.get<LicenseKeyEntity>(`/v1/license-keys/${licenseKey}`);
   },
 
   verifyLicenseKey(licenseKey: string) {

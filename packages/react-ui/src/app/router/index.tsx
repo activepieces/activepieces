@@ -47,6 +47,7 @@ import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import AuditLogsPage from '../routes/platform/audit-logs';
 import ProjectsPage from '../routes/platform/projects';
+import { LicenseKeyPage } from '../routes/platform/settings/license-key';
 import TemplatesPage from '../routes/platform/templates';
 import UsersPage from '../routes/platform/users';
 import { FlowRunPage } from '../routes/runs/id';
@@ -61,7 +62,6 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
-import { LicenseKeyPage } from '../routes/platform/settings/license-key';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();

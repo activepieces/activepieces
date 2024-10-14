@@ -1,46 +1,47 @@
-import { ApEdition, ApFlagId, isNil, ErrorCode } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { CircleCheckBig } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import {
+  CircleCheckBig,
+  Eye,
+  EyeOff,
+  CalendarDays,
+  Zap,
+  AlertTriangle,
+  Loader2,
+} from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
-import { Separator } from '@/components/ui/seperator';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { Separator } from '@/components/ui/seperator';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { platformApi } from '@/lib/platforms-api';
-import { useForm } from 'react-hook-form';
-import { formatUtils } from '@/lib/utils';
-import { Eye, EyeOff } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { CalendarDays } from 'lucide-react';
-import { Zap, AlertTriangle } from 'lucide-react';
-import { Loader2 } from 'lucide-react';
-
+import { toast } from '@/components/ui/use-toast';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { platformApi } from '@/lib/platforms-api';
+import { formatUtils } from '@/lib/utils';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 const LICENSE_PROPS_MAP = {
   cloudAuthEnabled: 'Cloud Authentication',
   gitSyncEnabled: 'Git Sync',
@@ -82,18 +83,18 @@ const LicenseKeyPage = () => {
   const [isOpenDialog, setIsOpenDialog] = useState(false);
   const [showLicenseKey, setShowLicenseKey] = useState(false);
 
-  const { data: keyData, isLoading } = useQuery({
+  const {
+    data: keyData,
+    isLoading,
+    refetch: refetchKeyData,
+  } = useQuery({
     queryKey: ['license-key'],
     queryFn: async () => {
+      if (isNil(platform.licenseKey)) {
+        return null;
+      }
       const response = await platformApi.getLicenseKey(platform.licenseKey);
       return response;
-    },
-    onError: (error) => {
-      toast({
-        title: t('Error'),
-        description: t('Failed to fetch license key'),
-        duration: 3000,
-      });
     },
     enabled: !isNil(platform.licenseKey),
     refetchOnWindowFocus: false,
@@ -110,16 +111,14 @@ const LicenseKeyPage = () => {
         setLicenseKey(tempLicenseKey.trim());
         setIsOpenDialog(false);
         await refetch();
-        return response; 
+        return response;
       } else {
         setIsActivated(false);
         return null;
       }
     },
     onSuccess: (data) => {
-      if (data) {
-        setKeyData(data);
-      }
+      refetchKeyData();
       toast({
         title: isActivated ? t('Success') : t('Error'),
         description: isActivated
@@ -135,14 +134,12 @@ const LicenseKeyPage = () => {
     },
   });
 
-  const onSubmit: SubmitHandler<activateLicenseKey> = (data) => {
-    form.clearErrors();
-    activateLicenseKey(data.tempLicenseKey);
-  };
-
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_PLATFORM_DEMO,
+  );
 
-  if (edition === ApEdition.COMMUNITY) {
+  if (edition === ApEdition.COMMUNITY || showPlatformDemo) {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-bold w-full">{t('License Key')}</h1>
@@ -165,6 +162,13 @@ const LicenseKeyPage = () => {
     form.reset({ tempLicenseKey: '' });
     setIsOpenDialog(true);
   };
+
+  const expired =
+    keyData?.expiresAt && dayjs(keyData.expiresAt).isBefore(dayjs());
+  const expiresSoon =
+    !expired &&
+    keyData?.expiresAt &&
+    dayjs(keyData.expiresAt).isBefore(dayjs().add(7, 'day'));
 
   return (
     <div className="flex-col w-full max-w-2xl mx-auto">
@@ -220,7 +224,12 @@ const LicenseKeyPage = () => {
               </div>
               <Dialog open={isOpenDialog} onOpenChange={setIsOpenDialog}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="w-full" disabled={isPending} onClick={handleOpenDialog}>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    disabled={isPending}
+                    onClick={handleOpenDialog}
+                  >
                     <Zap className="w-4 h-4 mr-2" />
                     {t('Activate License')}
                   </Button>
@@ -267,7 +276,12 @@ const LicenseKeyPage = () => {
                     </DialogClose>
                     <Button
                       loading={isPending}
-                      onClick={(e) => form.handleSubmit(onSubmit)(e)}
+                      onClick={(e) =>
+                        form.handleSubmit((data) => {
+                          form.clearErrors();
+                          activateLicenseKey(data.tempLicenseKey);
+                        })(e)
+                      }
                       tabIndex={3}
                     >
                       {isPending ? (
@@ -282,7 +296,7 @@ const LicenseKeyPage = () => {
             </div>
           </div>
 
-          {!isNil(keyData?.expiresAt) && (
+          {keyData && !isNil(keyData?.expiresAt) && (
             <div className="rounded-lg p-3 mt-5">
               <div className="flex items-center space-x-2">
                 <CalendarDays className="w-5 h-5" />
@@ -290,11 +304,13 @@ const LicenseKeyPage = () => {
                   <p className="font-semibold text-sm">{t('Expiration')}</p>
                   <p className="text-xs">
                     {t('Valid until')}{' '}
-                    {dayjs(keyData.expiresAt).format('MMMM D, YYYY')}
-                    {dayjs(keyData.expiresAt).isBefore(dayjs().add(7, 'day')) && (
+                    {formatUtils.formatDateOnly(
+                      dayjs(keyData.expiresAt).toDate(),
+                    )}
+                    {(expiresSoon || expired) && (
                       <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-300">
                         <AlertTriangle className="w-3 h-3 mr-1" />
-                        {t('Expires soon')}
+                        {expired ? t('Expired') : t('Expires soon')}
                       </span>
                     )}
                   </p>
@@ -313,9 +329,7 @@ const LicenseKeyPage = () => {
                   {platform?.[key as keyof typeof platform] && (
                     <>
                       <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
-                      <span className={`text-sm`}>
-                        {t(label)}
-                      </span>
+                      <span className={`text-sm`}>{t(label)}</span>
                     </>
                   )}
                 </div>
