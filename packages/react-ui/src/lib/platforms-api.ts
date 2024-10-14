@@ -12,8 +12,8 @@ export const platformApi = {
     return api.get<Platform>(`/v1/platforms/${platformId}`);
   },
 
-  getLicenseKey() {
-    return api.get<Record<string, unknown>>(`/v1/flags`);
+  getLicenseKey(licenseKey: string) {
+    return api.get<Record<string, unknown>>(`/v1/license-keys/${licenseKey}`);
   },
 
   verifyLicenseKey(licenseKey: string) {

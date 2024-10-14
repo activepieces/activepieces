@@ -60,7 +60,7 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
-import { LicenseKeysPage } from '../routes/platform/settings/license-keys';
+import { LicenseKeyPage } from '../routes/platform/settings/license-key';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -443,12 +443,12 @@ const routes = [
     ),
   },
   {
-    path: '/platform/settings/license-keys',
+    path: '/platform/settings/license-key',
     element: (
       <PlatformAdminContainer>
         <PlatformSettingsLayout>
-          <PageTitle title="LicenseKeys">
-            <LicenseKeysPage />
+          <PageTitle title="LicenseKey">
+            <LicenseKeyPage />
           </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>

@@ -28,7 +28,7 @@ const sidebarNavItems = [
   },
   {
     title: 'License Keys',
-    href: '/platform/settings/license-keys',
+    href: '/platform/settings/license-key',
     icon: <CreditCard size={iconSize} />,
   },
 ];
