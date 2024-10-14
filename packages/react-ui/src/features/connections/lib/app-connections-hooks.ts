@@ -1,9 +1,9 @@
-import { ListAppConnectionsRequestQuery } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 
-import { appConnectionsApi } from './app-connections-api';
-
 import { authenticationSession } from '@/lib/authentication-session';
+import { ListAppConnectionsRequestQuery } from '@activepieces/shared';
+
+import { appConnectionsApi } from './app-connections-api';
 
 export const appConnectionsHooks = {
   useConnections: (

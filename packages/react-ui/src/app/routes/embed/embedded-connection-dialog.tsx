@@ -1,3 +1,5 @@
+import { useRef, useState } from 'react';
+
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import {
   ActivepiecesClientConnectionNameIsInvalid,
@@ -6,7 +8,6 @@ import {
   connectionNameRegex,
   NEW_CONNECTION_QUERY_PARAMS,
 } from 'ee-embed-sdk';
-import { useRef, useState } from 'react';
 
 import { appConnectionsHooks } from '../../../features/connections/lib/app-connections-hooks';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';

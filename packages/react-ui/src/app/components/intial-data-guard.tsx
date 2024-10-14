@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
 
-import { LoadingScreen } from './loading-screen';
-
 import { flagsHooks } from '@/hooks/flags-hooks';
+
+import { LoadingScreen } from './loading-screen';
 
 type InitialDataGuardProps = {
   children: React.ReactNode;

@@ -1,4 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useEffectOnce } from 'react-use';
+
+import { useEmbedding } from '@/components/embed-provider';
+import { authenticationSession } from '@/lib/authentication-session';
+import { managedAuthApi } from '@/lib/managed-auth-api';
 import {
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
   ActivepiecesClientEventName,
@@ -7,13 +14,6 @@ import {
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
 } from 'ee-embed-sdk';
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useEffectOnce } from 'react-use';
-
-import { useEmbedding } from '@/components/embed-provider';
-import { authenticationSession } from '@/lib/authentication-session';
-import { managedAuthApi } from '@/lib/managed-auth-api';
 
 const EmbedPage = React.memo(() => {
   const navigate = useNavigate();

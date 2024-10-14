@@ -3,15 +3,15 @@ import { jwtDecode } from 'jwt-decode';
 import { Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { authenticationSession } from '../../lib/authentication-session';
-
-import { LoadingScreen } from './loading-screen';
-
 import { SocketProvider } from '@/components/socket-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+
+import { authenticationSession } from '../../lib/authentication-session';
+
+import { LoadingScreen } from './loading-screen';
 
 function isJwtExpired(token: string): boolean {
   if (!token) {
