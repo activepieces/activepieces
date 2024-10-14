@@ -90,7 +90,7 @@ const LicenseKeysPage = () => {
 
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  if (edition !== ApEdition.ENTERPRISE) {
+  if (edition === ApEdition.COMMUNITY) {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-bold w-full">{t('License Keys')}</h1>
