@@ -10,6 +10,7 @@ export type TestFlowRunRequestBody = Static<typeof TestFlowRunRequestBody>
 
 export const RetryFlowRequestBody = Type.Object({
     strategy: Type.Enum(FlowRetryStrategy),
+    projectId: ApId,
 })
 
 export type RetryFlowRequestBody = Static<typeof RetryFlowRequestBody>

@@ -151,20 +151,34 @@ export const flowRunService = {
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-    async retry({ flowRunId, strategy }: RetryParams): Promise<FlowRun | null> {
+    async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
+        const oldFlowRun = await flowRunService.getOneOrThrow({
+            id: flowRunId,
+            projectId
+        })
+
+        const newFlowRun = {
+            ...oldFlowRun,
+            id: apId(),
+            status: FlowRunStatus.RUNNING,
+            startTime: new Date().toISOString(),
+        }
+
+        const savedFlowRun = await flowRunRepo().save(newFlowRun)
+
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
                 return flowRunService.addToQueue({
-                    flowRunId,
+                    flowRunId: savedFlowRun.id,
                     executionType: ExecutionType.RESUME,
                     progressUpdateType: ProgressUpdateType.NONE,
                     checkRequestId: false,
                 })
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(flowRunId)
+                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(savedFlowRun.id)
                 return flowRunService.addToQueue({
                     payload,
-                    flowRunId,
+                    flowRunId: savedFlowRun.id,
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
                     checkRequestId: false,
@@ -464,5 +478,6 @@ type PauseParams = {
 type RetryParams = {
     flowRunId: FlowRunId
     strategy: FlowRetryStrategy
+    projectId: ProjectId
 }
 

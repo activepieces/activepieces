@@ -74,6 +74,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         const flowRun = await flowRunService.retry({
             flowRunId: req.params.id,
             strategy: req.body.strategy,
+            projectId: req.body.projectId,
         })
 
         if (isNil(flowRun)) {

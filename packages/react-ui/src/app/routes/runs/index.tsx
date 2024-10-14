@@ -32,6 +32,7 @@ import {
   FlowRunStatus,
   Permission,
   isFailedState,
+  isNil,
 } from '@activepieces/shared';
 
 import { useNewWindow } from '../../../components/embed-provider';
@@ -73,8 +74,16 @@ const FlowRunsPage = () => {
     Error,
     { row: RowDataWithActions<FlowRun>; strategy: FlowRetryStrategy }
   >({
-    mutationFn: (data) =>
-      flowRunsApi.retry(data.row.id, { strategy: data.strategy }),
+    mutationFn: (data) => {
+      const projectId = authenticationSession.getProjectId();
+      if (isNil(projectId)) {
+        throw new Error('Project ID is not found');
+      }
+      return flowRunsApi.retry(data.row.id, {
+        strategy: data.strategy,
+        projectId,
+      });
+    },
     onSuccess: (updatedRun, { row }) => {
       row.update(updatedRun);
     },
