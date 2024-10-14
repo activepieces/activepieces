@@ -30,11 +30,11 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
    <a
     href="https://www.activepieces.com/docs/developers/overview"
     target="_blank"
-  ><b>Contribute</b></a>&nbsp;&nbsp;&nbsp;🖉&nbsp;&nbsp;&nbsp;
+  ><b>Create a Piece</b></a>&nbsp;&nbsp;&nbsp;🖉&nbsp;&nbsp;&nbsp;
   <a
     href="https://www.activepieces.com/docs/install/overview"
     target="_blank"
-  ><b>Try Now</b></a>&nbsp;&nbsp;&nbsp;🔥&nbsp;&nbsp;&nbsp;
+  ><b>Deploy</b></a>&nbsp;&nbsp;&nbsp;🔥&nbsp;&nbsp;&nbsp;
   <a
     href="https://discord.gg/yvxF5k5AUb"
     target="_blank"
@@ -53,39 +53,61 @@ Your friendliest open source all-in-one automation tool, designed to be **extens
 <br>
 <br>
 
-# 🎨 Flow Builder
-<p>
-User-friendly Workflow Builder! Enjoy building fun and interactive flows with support for Branches, Loops, and Drag and Drop.
-  <br />
-</p>
+## 🔥 Why Activepieces is Different:
 
-![build](https://github.com/activepieces/activepieces/assets/1812998/e75616ce-7801-45b7-b3fa-eba778bebde3)
+- **💖 Loved by Everyone**: Intuitive interface and great experience for both technical and non-technical users with a quick learning curve.
+  
+![](/resources/templates.gif)
 
-# 🔌 Pieces
+- **🌐 Open Ecosystem:** All pieces are open source and available on npmjs.com, **60% of the pieces are contributed by the community**.
 
-Activepieces integrates Google Sheets, OpenAI, Discord, and RSS, along with 80+ other integrations. [The list of supported integrations](https://www.activepieces.com/docs/pieces/overview) continues to grow rapidly, thanks to valuable contributions from the community.
+- **🛠️  Pieces are written in Typescript**: Pieces are npm packages in TypeScript, offering full customization with the best developer experience, including **hot reloading** for **local** piece development on your machine. 😎
+c
 
-Activepieces is an **open ecosystem;** all piece source code is available in the repository, and they are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contributions.
+![](/resources/create-action.png)
 
-If you cannot find a specific piece on the pieces roadmap, please submit a request by visiting the following link: [Request Piece](https://github.com/activepieces/activepieces/issues/new/choose)
 
-Alternatively, if you are a developer, you can quickly build your own piece using our TypeScript framework. For guidance, please refer to the following guide: [Contributor's Guide](https://www.activepieces.com/docs/contributing/overview)
+- **🤖 AI-Ready**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK, and there is Copilot to help you build flows inside the builder.
+
+- **🏢 Enterprise-Ready**: Developers set up the tools, and anyone in the organization can use the no-code builder. Full customization from branding to control.
+
+- **🔒 Secure by Design**: Self-hosted and network-gapped for maximum security and control over your data.
+
+- **🧠 Human in Loop**: Delay execution for a period of time or require approval. These are just pieces built on top of the piece framework, and you can build many pieces like that. 🎨
+
+- **💻 Human Input Interfaces**: Built-in support for human input triggers like "Chat Interface" 💬 and "Form Interface" 📝
+
+
+
+## 🛠️  Builder Features:
+
+- [x] Loops
+- [x] Branches
+- [x] Auto Retries
+- [x] HTTP
+- [x] Code with **NPM**
+- [x] ASK AI in Code Piece (Non technical user can clean data without knowing to code)
+- [x] Flows are fully versioned.
+- [x] Languages Translations
+- [x] Customizable Templates
+- [X] 200+ Pieces, check https://www.activepieces.com/pieces
+
+**We release updates frequently. Check the product changelog for the latest features.**
+
+
+## 🔌 Create Your Own Piece
+
+Activepieces supports integrations with Google Sheets, OpenAI, Discord, RSS, and over 200 other services. [Check out the full list of supported integrations](https://www.activepieces.com/pieces), which is constantly expanding thanks to our community's contributions.
+
+As an **open ecosystem**, all integration source code is accessible in our repository. These integrations are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contribution.
+
+You can easily create your own integration using our TypeScript framework. For detailed instructions, please refer to our [Contributor's Guide](https://www.activepieces.com/docs/contributing/overview).
 
 <br>
 <br>
 <br>
 <br>
-<h1>
-💡 Infinite Use Cases</h1>
-<p>
-Community templates provide inspiration and enable you to effortlessly build automation in no time.
-<br />
-</p>
 
-![templates](https://github.com/activepieces/activepieces/assets/1812998/2851f96e-3d9c-42b3-b021-b1cc5153df50)
-
-<br>
-<br>
 
 # License
 
