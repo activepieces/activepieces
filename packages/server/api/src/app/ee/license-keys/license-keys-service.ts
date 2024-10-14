@@ -49,7 +49,7 @@ export const licenseKeysService = {
                 return
             }
             if (response.status === StatusCodes.NOT_FOUND) {
-                return;
+                return
             }
             if (!response.ok) {
                 const errorMessage = JSON.stringify(await response.json())
@@ -62,7 +62,8 @@ export const licenseKeysService = {
                     key: request.key,
                 },
             }))
-        } catch (e) {
+        }
+        catch (e) {
             // ignore
         }
     },

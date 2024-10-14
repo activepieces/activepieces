@@ -221,6 +221,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(invitationModule)
     await app.register(workerModule)
     await app.register(aiProviderModule)
+    await app.register(licenseKeysModule)
 
     app.get(
         '/redirect',
@@ -307,7 +308,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
-            await app.register(licenseKeysModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
@@ -324,7 +324,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
-            await app.register(licenseKeysModule)
             break
     }
 

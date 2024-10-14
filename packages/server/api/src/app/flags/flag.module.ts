@@ -1,6 +1,5 @@
-import { ALL_PRINCIPAL_TYPES, ApFlagId } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
 import { flagService } from './flag.service'
 import { flagHooks } from './flags.hooks'

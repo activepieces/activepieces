@@ -1,5 +1,5 @@
-import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import { exceptionHandler } from '@activepieces/server-shared'
+import { isEmpty, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
@@ -26,7 +26,7 @@ export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
 async function licenseKeyJobHandler(): Promise<void> {
     const platforms = await platformService.getAll()
     for (const platform of platforms) {
-        if (isNil(platform.licenseKey)) {
+        if (isNil(platform.licenseKey) || isEmpty(platform.licenseKey)) {
             continue
         }
         try {
@@ -36,10 +36,11 @@ async function licenseKeyJobHandler(): Promise<void> {
             })
             if (isNil(key)) {
                 await licenseKeysService.downgradeToFreePlan(platform.id)
-                continue;
+                continue
             }
             await licenseKeysService.applyLimits(platform.id, key)
-        } catch (e) {
+        }
+        catch (e) {
             exceptionHandler.handle(e)
         }
     }

@@ -1,10 +1,10 @@
 import { AppSystemProp, system } from '@activepieces/server-shared'
 import { ActivepiecesError, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
 import { licenseKeysService } from './license-keys-service'
-import { Type } from '@sinclair/typebox'
 
 const key = system.get<string>(AppSystemProp.LICENSE_KEY)
 

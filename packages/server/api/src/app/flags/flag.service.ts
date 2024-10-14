@@ -2,10 +2,10 @@ import { AppSystemProp, flowTimeoutSandbox, SharedSystemProp, system, webhookSec
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
 import { webhookUtils } from 'server-worker'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
-import { In } from 'typeorm'
 
 const flagRepo = repoFactory(FlagEntity)
 
@@ -62,7 +62,7 @@ export const flagService = {
                 ApFlagId.USER_CREATED,
                 ApFlagId.WEBHOOK_URL_PREFIX,
                 ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
-            ])
+            ]),
         })
         const now = new Date().toISOString()
         const created = now
