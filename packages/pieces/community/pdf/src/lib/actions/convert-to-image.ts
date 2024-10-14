@@ -5,6 +5,7 @@ import { join } from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { nanoid } from 'nanoid';
+import Jimp from 'jimp';
 
 const execPromise = promisify(exec);
 const pdftoppmPath = '/usr/bin/pdftoppm';
@@ -47,6 +48,22 @@ async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
     }
 }
 
+async function concatImagesVertically(imageBuffers: Buffer[]): Promise<Buffer> {
+    const images = await Promise.all(imageBuffers.map(buffer => Jimp.read(buffer)));
+    const totalHeight = images.reduce((sum, image) => sum + image.getHeight(), 0);
+    const maxWidth = Math.max(...images.map(image => image.getWidth()));
+
+    const finalImage = new Jimp(maxWidth, totalHeight);
+    let yOffset = 0;
+
+    for (const image of images) {
+        finalImage.composite(image, 0, yOffset);
+        yOffset += image.getHeight();
+    }
+
+    return finalImage.getBufferAsync(Jimp.MIME_PNG);
+}
+
 export const convertToImage = createAction({
     name: 'convertToImage',
     displayName: 'Convert to Image',
@@ -55,6 +72,17 @@ export const convertToImage = createAction({
         file: Property.File({
             displayName: 'PDF File or URL',
             required: true,
+        }),
+        imageOutputType: Property.StaticDropdown({
+            displayName: 'Output Image Type',
+            required: true,
+            options: {
+                options: [
+                    { label: 'Single Combined Image', value: 'single' },
+                    { label: 'Separate Image for Each Page', value: 'multiple' },
+                ],
+            },
+            defaultValue: 'multiple',
         }),
     },
     errorHandlingOptions: {
@@ -71,6 +99,7 @@ export const convertToImage = createAction({
         }
 
         const file = context.propsValue.file;
+        const returnConcatenatedImage = context.propsValue.imageOutputType === 'single';
         // To prevent a DOS attack, we limit the file size to 16MB
         if (file.data.buffer.byteLength > MAX_FILE_SIZE) {
             throw new Error(`File size exceeds the limit of ${MAX_FILE_SIZE / (1024 * 1024)} MB.`);
@@ -79,15 +108,28 @@ export const convertToImage = createAction({
         const dataBuffer = Buffer.from(file.data.buffer);
 
         const imageBuffers = await convertPdfToImages(dataBuffer);
-        const imageLinks = await Promise.all(imageBuffers.map((imageBuffer, index) =>
-            context.files.write({
-                data: imageBuffer,
-                fileName: `converted_image_page_${index + 1}.png`,
-            })
-        ));
 
-        return {
-            images: imageLinks,
-        };
+        if (returnConcatenatedImage) {
+            const finalImageBuffer = await concatImagesVertically(imageBuffers);
+            const imageLink = await context.files.write({
+                data: finalImageBuffer,
+                fileName: `converted_image.png`,
+            });
+
+            return {
+                image: imageLink,
+            };
+        } else {
+            const imageLinks = await Promise.all(imageBuffers.map((imageBuffer, index) =>
+                context.files.write({
+                    data: imageBuffer,
+                    fileName: `converted_image_page_${index + 1}.png`,
+                })
+            ));
+
+            return {
+                images: imageLinks,
+            };
+        }
     },
 });
