@@ -1,3 +1,9 @@
+import { ApFlagId } from '@activepieces/shared';
+import {
+  ActivepiecesClientEventName,
+  ActivepiecesVendorEventName,
+  ActivepiecesVendorRouteChanged,
+} from 'ee-embed-sdk';
 import { useEffect, useMemo } from 'react';
 import {
   Navigate,
@@ -7,6 +13,15 @@ import {
   useLocation,
 } from 'react-router-dom';
 
+import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
+import { DashboardContainer } from '../components/dashboard-container';
+import { PlatformAdminContainer } from '../components/platform-admin-container';
+import NotFoundPage from '../routes/404-page';
+import AuthenticatePage from '../routes/authenticate';
+import { ChangePasswordPage } from '../routes/change-password';
+import AppConnectionsPage from '../routes/connections';
+
+import { FlowsPage } from '../routes/flows';
 import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
@@ -25,21 +40,7 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { ApFlagId } from '@activepieces/shared';
-import {
-  ActivepiecesClientEventName,
-  ActivepiecesVendorEventName,
-  ActivepiecesVendorRouteChanged,
-} from 'ee-embed-sdk';
 
-import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
-import { DashboardContainer } from '../components/dashboard-container';
-import { PlatformAdminContainer } from '../components/platform-admin-container';
-import NotFoundPage from '../routes/404-page';
-import AuthenticatePage from '../routes/authenticate';
-import { ChangePasswordPage } from '../routes/change-password';
-import AppConnectionsPage from '../routes/connections';
-import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
@@ -62,6 +63,8 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
 
+import { EmbeddedConnectionDialogWrapper } from '../routes/embed/embedded-connection-dialog';
+
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -76,6 +79,12 @@ const routes = [
   {
     path: '/embed',
     element: <EmbedPage></EmbedPage>,
+  },
+  {
+    path: '/embed/connections',
+    element: (
+      <EmbeddedConnectionDialogWrapper></EmbeddedConnectionDialogWrapper>
+    ),
   },
   {
     path: '/authenticate',

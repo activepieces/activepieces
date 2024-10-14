@@ -1,3 +1,28 @@
+import {
+  BasicAuthProperty,
+  CustomAuthProperty,
+  OAuth2Property,
+  OAuth2Props,
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+  PropertyType,
+  SecretTextProperty,
+} from '@activepieces/pieces-framework';
+import {
+  ApErrorParams,
+  AppConnectionType,
+  AppConnectionWithoutSensitiveData,
+  assertNotNullOrUndefined,
+  ErrorCode,
+  isNil,
+  UpsertAppConnectionRequestBody,
+  UpsertBasicAuthRequest,
+  UpsertCloudOAuth2Request,
+  UpsertCustomAuthRequest,
+  UpsertOAuth2Request,
+  UpsertPlatformOAuth2Request,
+  UpsertSecretTextRequest,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
 import { Type } from '@sinclair/typebox';
@@ -6,6 +31,13 @@ import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
+
+import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
+
+import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
+import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
+import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
+import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -33,45 +65,16 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  BasicAuthProperty,
-  CustomAuthProperty,
-  OAuth2Property,
-  OAuth2Props,
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-  PropertyType,
-  SecretTextProperty,
-} from '@activepieces/pieces-framework';
-import {
-  ApErrorParams,
-  AppConnectionType,
-  AppConnectionWithoutSensitiveData,
-  assertNotNullOrUndefined,
-  ErrorCode,
-  isNil,
-  UpsertAppConnectionRequestBody,
-  UpsertBasicAuthRequest,
-  UpsertCloudOAuth2Request,
-  UpsertCustomAuthRequest,
-  UpsertOAuth2Request,
-  UpsertPlatformOAuth2Request,
-  UpsertSecretTextRequest,
-} from '@activepieces/shared';
-
-import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
-
-import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
-import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
-import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
-import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   open: boolean;
-  onConnectionCreated: (name: string) => void;
+  onConnectionCreated: (
+    res: Pick<AppConnectionWithoutSensitiveData, 'id' | 'name'>,
+  ) => void;
   setOpen: (open: boolean) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
+  predefinedConnectionName: string | null;
 };
 
 function buildConnectionSchema(
@@ -159,6 +162,7 @@ const CreateOrEditConnectionDialog = React.memo(
     setOpen,
     onConnectionCreated,
     reconnectConnection,
+    predefinedConnectionName,
   }: ConnectionDialogProps) => {
     const { auth } = piece;
 
@@ -172,6 +176,8 @@ const CreateOrEditConnectionDialog = React.memo(
           piece,
           reconnectConnection
             ? reconnectConnection.name
+            : predefinedConnectionName
+            ? predefinedConnectionName
             : appConnectionUtils.findName(piece.name),
         ),
       },
@@ -184,7 +190,6 @@ const CreateOrEditConnectionDialog = React.memo(
       form.trigger();
     });
     const [errorMessage, setErrorMessage] = useState('');
-
     const { mutate, isPending } = useMutation({
       mutationFn: async () => {
         setErrorMessage('');
@@ -201,10 +206,12 @@ const CreateOrEditConnectionDialog = React.memo(
         }
         return appConnectionsApi.upsert(formValues);
       },
-      onSuccess: () => {
+      onSuccess: (connection) => {
         setOpen(false);
-        const name = form.getValues().request.name;
-        onConnectionCreated(name);
+        onConnectionCreated({
+          id: connection.id,
+          name: connection.name,
+        });
         setErrorMessage('');
       },
       onError: (err) => {
@@ -274,7 +281,10 @@ const CreateOrEditConnectionDialog = React.memo(
                       </FormLabel>
                       <FormControl>
                         <Input
-                          disabled={!isNil(reconnectConnection)}
+                          disabled={
+                            !isNil(reconnectConnection) ||
+                            !isNil(predefinedConnectionName)
+                          }
                           {...field}
                           required
                           id="name"

@@ -1,7 +1,19 @@
+import {
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+} from '@activepieces/pieces-framework';
+import {
+  AppConnectionWithoutSensitiveData,
+  PieceAction,
+  PieceTrigger,
+  isNil,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { memo, useState } from 'react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
+
+import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
@@ -16,19 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { authenticationSession } from '@/lib/authentication-session';
-import {
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-} from '@activepieces/pieces-framework';
-import {
-  AppConnectionWithoutSensitiveData,
-  PieceAction,
-  PieceTrigger,
-  isNil,
-} from '@activepieces/shared';
-
-import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
 
 type ConnectionSelectProps = {
   disabled: boolean;
@@ -59,7 +58,6 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
     pieceName: params.piece.name,
     cursor: undefined,
     limit: 100,
-    projectId: authenticationSession.getProjectId() ?? '',
   });
 
   return (
@@ -88,11 +86,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
             >
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
+                predefinedConnectionName={null}
                 key={reconnectConnection?.name || 'newConnection'}
                 piece={params.piece}
-                onConnectionCreated={(connectionName) => {
+                onConnectionCreated={(connection) => {
                   refetch();
-                  field.onChange(addBrackets(connectionName));
+                  field.onChange(addBrackets(connection.name));
                 }}
                 open={connectionDialogOpen}
                 setOpen={setConnectionDialogOpen}
