@@ -39,13 +39,13 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      id: 'flowsCreated',
-      accessorKey: 'flowsCreated',
+      id: 'flows',
+      accessorKey: 'flows',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Flows Created')} />
+        <DataTableColumnHeader column={column} title={t('Flows')} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.flowsCreated}</div>;
+        return <div className="text-left">{row.original.flows}</div>;
       },
     },
     {
@@ -99,8 +99,8 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      id: 'connectionsCreated',
-      accessorKey: 'connectionsCreated',
+      id: 'connections',
+      accessorKey: 'connections',
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -108,9 +108,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
         />
       ),
       cell: ({ row }) => {
-        return (
-          <div className="text-left">{row.original.connectionsCreated}</div>
-        );
+        return <div className="text-left">{row.original.connections}</div>;
       },
     },
   ];

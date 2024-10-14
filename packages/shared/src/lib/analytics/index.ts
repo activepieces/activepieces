@@ -51,10 +51,10 @@ export const PlatformProjectLeaderBoardRow =
 Type.Object({
     id: Type.String(),
     displayName: Type.String(),
-    flowsCreated: Type.String(),
+    flows: Type.String(),
     tasks: Type.String(),
     runs: Type.String(),
-    connectionsCreated: Type.String(),
+    connections: Type.String(),
     publishes: Type.String(),
     flowEdits: Type.String(),
     users: Type.String(),

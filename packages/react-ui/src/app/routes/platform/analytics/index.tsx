@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
+import { ProjectsLeaderBoard } from './projects-leaderboard';
+
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Metrics } from '@/app/routes/platform/analytics/metrics';
 import { Reports } from '@/app/routes/platform/analytics/reports';
@@ -8,7 +10,6 @@ import { TaskUsage } from '@/app/routes/platform/analytics/task-usage';
 import { Separator } from '@/components/ui/seperator';
 import { analyticsApi } from '@/features/platform-admin-panel/lib/analytics-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ProjectsLeaderBoard } from './projects-leaderboard';
 
 export default function AnalyticsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -36,7 +37,7 @@ export default function AnalyticsPage() {
           <Separator />
           <TaskUsage report={isLoading ? undefined : data} />
           <Separator />
-    
+
           <Reports report={isLoading ? undefined : data} />
           <Separator />
           <ProjectsLeaderBoard></ProjectsLeaderBoard>

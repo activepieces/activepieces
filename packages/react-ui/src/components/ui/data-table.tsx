@@ -406,7 +406,7 @@ export function DataTable<
       </div>
       {!hidePagination && (
         <div className="flex items-center justify-end space-x-2 py-4">
-          <p className="text-sm font-medium">Rows per page</p>
+          <p className="text-sm font-medium">{t('Rows')}</p>
           <Select
             value={
               searchParams.get(TABLE_QUERY_PARAMS_NAME.limit) ?? PAGE_SIZE[0]

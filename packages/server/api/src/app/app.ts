@@ -21,6 +21,7 @@ import { securityHandlerChain } from './core/security/security-handler-chain'
 import { getRedisConnection } from './database/redis-connection'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { analyticsModule } from './ee/analytics/analytics.module'
+import { analyticsService } from './ee/analytics/analytics.service'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
@@ -328,7 +329,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(licenseKeysModule)
             break
     }
-
+    // await analyticsService.generateProjectsLeaderboardTest({}, 'lGMAsTezSD9YT3Sb7zhHG')
     app.addHook('onClose', async () => {
         logger.info('Shutting down')
         await flowConsumer.close()

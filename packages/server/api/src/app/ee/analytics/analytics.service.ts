@@ -237,23 +237,54 @@ async function generateProjectsLeaderboard(
         .select('"project"."displayName"', 'displayName')
         .addSelect('"project"."id"', 'id')
         .where('project."platformId" = :platformId', { platformId })
-    //Flows Created
+        //Flows Created
         .leftJoin(
             (subQuery) => {
                 return addDateLimitsToQuery(subQuery
-                    .select('"audit_event"."projectId"', 'projectId')
-                    .addSelect('COUNT(audit_event.id)', 'flowsCreated')
+                    .select('audit_event."projectId"', 'projectId')
+                    .addSelect('audit_event."data"->\'flow\'->>\'id\'', 'flowId')
                     .from('audit_event', 'audit_event')
                     .where({
                         action: In([ApplicationEventName.FLOW_CREATED]),
                     })
-                    .groupBy('"audit_event"."projectId"'), params)
+                , params)
             },
             'flowsCreated',
             '"flowsCreated"."projectId" = project.id',
         )
-        .addSelect('COALESCE("flowsCreated"."flowsCreated", 0)', 'flowsCreated')
-
+        //Flows Deleted
+        .leftJoin(
+            (subQuery) => {
+                return addDateLimitsToQuery(subQuery
+                    .select('"audit_event"."projectId"', 'projectId')
+                    .addSelect('audit_event."data"->\'flow\'->>\'id\'', 'flowId')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.FLOW_DELETED]),
+                    })
+                , params)
+            },
+            'flowsDeleted',
+            '"flowsDeleted"."projectId" = project.id AND "flowsDeleted"."flowId" = "flowsCreated"."flowId" ',
+        )
+        .addSelect('COUNT("flowsCreated"."flowId")', 'flows')
+        .andWhere('"flowsDeleted"."flowId" IS NULL')
+    //Connection Created
+        // .leftJoin(
+        //     (subQuery) => {
+        //         return addDateLimitsToQuery(subQuery
+        //             .select('"audit_event"."projectId"', 'projectId')
+        //             .addSelect('audit_event."data"->\'connection\'->>\'id\'', 'connectionId')
+        //             .from('audit_event', 'audit_event')
+        //             .where({
+        //                 action: In([ApplicationEventName.CONNECTION_DELETED]),
+        //             })
+        //             .groupBy('"audit_event"."projectId"'), params)
+        //     },
+        //     'connectionsCreated',
+        //     '"connectionsCreated"."projectId" = project.id',
+        // )
+        
     //Runs
 
         .leftJoin(
@@ -296,25 +327,9 @@ async function generateProjectsLeaderboard(
             'COALESCE("tasks"."tasks", 0)',
             'tasks',
         )
-    //Connection Created
-        .leftJoin(
-            (subQuery) => {
-                return addDateLimitsToQuery(subQuery
-                    .select('"audit_event"."projectId"', 'projectId')
-                    .addSelect('COUNT(audit_event.id)', 'connectionsCreated')
-                    .from('audit_event', 'audit_event')
-                    .where({
-                        action: In([ApplicationEventName.CONNECTION_UPSERTED]),
-                    })
-                    .groupBy('"audit_event"."projectId"'), params)
-            },
-            'connectionsCreated',
-            '"connectionsCreated"."projectId" = project.id',
-        )
-        .addSelect(
-            'COALESCE("connectionsCreated"."connectionsCreated", 0)',
-            'connectionsCreated',
-        )
+  
+
+    
 
     //Flows Published
         .leftJoin(
@@ -410,14 +425,27 @@ async function generateProjectsLeaderboard(
         )
         .addSelect('COALESCE("piecesUsed"."piecesUsed", 0)', 'piecesUsed')
         .addSelect('"project"."created"', 'created')
+        .groupBy(`"project"."id", 
+             "flowsCreated"."projectId",
+             "flowsDeleted"."projectId",
+             "connectionsCreated"."projectId",
+             "runsCount"."runsCount" ,
+             "piecesUsed"."piecesUsed" ,
+             "userCount"."userCount", 
+             "flowEdits"."flowEdits",
+             "publishes"."publishes",
+             "tasks"."tasks"
+           `)
       
-        
+    logger.debug(queryBuilder.getSql())  
     const { data, cursor } = await paginator.paginateRaw<PlatformProjectLeaderBoardRow>(queryBuilder, {
         orderBy: params.orderByColumn ? `"${params.orderByColumn}" ` : 'tasks',
         order: params.order ?? 'DESC',
     })
     return paginationHelper.createPage<PlatformProjectLeaderBoardRow>(data, cursor)
 }
+
+
 
 const addDateLimitsToQuery = (query: SelectQueryBuilder<ObjectLiteral>, params: ListPlatformProjectsLeaderboardParams)=>{
 
