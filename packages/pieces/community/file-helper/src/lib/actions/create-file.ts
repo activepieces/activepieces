@@ -57,9 +57,10 @@ export const createFile = createAction({
 
   },
   async run({ propsValue, files }) {
+    const encoding = propsValue.encoding as BufferEncoding ?? 'utf8';
     const fileUrl = await files.write({
       fileName: propsValue.fileName,
-      data: Buffer.from(propsValue.content, propsValue.encoding as BufferEncoding),
+      data: Buffer.from(propsValue.content, encoding),
     });
     return { fileName: propsValue.fileName, url: fileUrl };
   },
