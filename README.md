@@ -315,6 +315,8 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/geekyme-fsmk"><img src="https://avatars.githubusercontent.com/u/100678833?v=4?s=100" width="100px;" alt="Shawn Lim"/><br /><sub><b>Shawn Lim</b></sub></a><br /><a href="#plugin-geekyme-fsmk" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://shawn.storyline.io/"><img src="https://avatars.githubusercontent.com/u/977460?v=4?s=100" width="100px;" alt="Shawn Lim"/><br /><sub><b>Shawn Lim</b></sub></a><br /><a href="#plugin-geekyme" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/pavloDeshko"><img src="https://avatars.githubusercontent.com/u/27104046?v=4?s=100" width="100px;" alt="pavloDeshko"/><br /><sub><b>pavloDeshko</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3ApavloDeshko" title="Bug reports">🐛</a></td>
     </tr>
   </tbody>
 </table>

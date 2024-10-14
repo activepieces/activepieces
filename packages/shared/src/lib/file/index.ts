@@ -9,6 +9,7 @@ export enum FileType {
     FLOW_RUN_LOG = 'FLOW_RUN_LOG',
     PACKAGE_ARCHIVE = 'PACKAGE_ARCHIVE',
     FLOW_STEP_FILE = 'FLOW_STEP_FILE',
+    SAMPLE_DATA = 'SAMPLE_DATA',
 }
 export enum FileCompression {
     NONE = 'NONE',

@@ -1,22 +1,24 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { returnFile } from './lib/actions/return-file';
 import { returnMarkdown } from './lib/actions/return-markdown';
+import { onChatSubmission } from './lib/triggers/chat-trigger';
 import { onFormSubmission } from './lib/triggers/form-trigger';
-import { PieceCategory } from '@activepieces/shared';
 
 export const forms = createPiece({
-  displayName: 'Forms',
-  description: 'Trigger a flow through form interfaces.',
+  displayName: 'Human Input',
+  description: 'Trigger a flow through human input.',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.20.3',
+  minimumSupportedRelease: '0.34.2',
   categories: [PieceCategory.CORE],
-  logoUrl: 'https://cdn.activepieces.com/pieces/forms.png',
-  authors: ["MoShizzle","abuaboud"],
+  logoUrl: 'https://cdn.activepieces.com/pieces/human-input.svg',
+  authors: ["anasbarg", "MoShizzle", "abuaboud"],
   actions: [
     returnFile,
-    returnMarkdown
+    returnMarkdown,
   ],
   triggers: [
     onFormSubmission,
+    onChatSubmission,
   ],
 });

@@ -26,7 +26,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { getDefaultValueForStep } from '../piece-properties/form-utils';
+import { formUtils } from '../piece-properties/form-utils';
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
@@ -109,7 +109,7 @@ const getDefaultStep = ({
     isActionOrTrigger(actionOrTrigger, stepMetadata) &&
     isPieceStepMetadata(stepMetadata);
   const input = isPieceStep
-    ? getDefaultValueForStep(
+    ? formUtils.getDefaultValueForStep(
         actionOrTrigger.requireAuth
           ? {
               ...spreadIfDefined('auth', stepMetadata.auth),

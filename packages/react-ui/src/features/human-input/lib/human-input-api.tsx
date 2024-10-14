@@ -1,9 +1,7 @@
-import { t } from 'i18next';
-
 import { api } from '@/lib/api';
 import { FormResponse, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 
-export const formsApi = {
+export const humanInputApi = {
   get: (flowId: string, useDraft?: boolean) => {
     return api.get<FormResponse>(`/v1/forms/${flowId}`, {
       [USE_DRAFT_QUERY_PARAM_NAME]: useDraft ?? false,
@@ -20,6 +18,18 @@ export const formsApi = {
       data,
     );
   },
+  sendMessage: ({ flowId, chatId, message }: SendMessageParams) => {
+    return api.post<FormResult | null>(`/v1/webhooks/${flowId}/sync`, {
+      chatId,
+      message,
+    });
+  },
+};
+
+type SendMessageParams = {
+  flowId: string;
+  chatId: string;
+  message: string;
 };
 
 export type FormResult = {
@@ -28,6 +38,6 @@ export type FormResult = {
 };
 
 export enum FormResultTypes {
-  MARKDOWN = t('markdown'),
-  FILE = t('file'),
+  MARKDOWN = 'markdown',
+  FILE = 'file',
 }

@@ -1289,6 +1289,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "geekyme",
+      "name": "Shawn Lim",
+      "avatar_url": "https://avatars.githubusercontent.com/u/977460?v=4",
+      "profile": "https://shawn.storyline.io/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "pavloDeshko",
+      "name": "pavloDeshko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27104046?v=4",
+      "profile": "https://github.com/pavloDeshko",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"
