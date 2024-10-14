@@ -16,7 +16,7 @@ This trigger sets up a chat interface. Ensure that **Respond with Markdown** is 
 
 export const onChatSubmission = createTrigger({
   name: 'chat_submission',
-  displayName: 'Chat Input',
+  displayName: 'Chat UI',
   description: 'Trigger the flow by sending a message',
   props: {
     about: Property.MarkDown({
