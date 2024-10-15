@@ -24,6 +24,14 @@ export const response = createAction({
         message: "Please ensure the first action in the flow is Callable Flow"
       }));
     }
+    await httpClient.sendRequest<CallableFlowResponse>({
+      method: HttpMethod.POST,
+      url: callbackUrl,
+      body: {
+        data: context.propsValue.response
+      },
+      retries: 4,
+    })
     context.run.stop({
       response: {
         body: context.propsValue.response,
