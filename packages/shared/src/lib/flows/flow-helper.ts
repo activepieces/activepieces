@@ -446,12 +446,14 @@ function moveAction(
         parentStep: request.newParentStep,
         stepLocationRelativeToParent: request.stepLocationRelativeToNewParent,
         branchIndex: request.branchIndex,
+        branchName: request.branchName,
     })
 
     childOperation.forEach((operation) => {
         const operationWithBranchIndex = {
             ...operation,
             branchIndex: request.branchIndex,
+            branchName: request.branchName,
         }
         flowVersion = flowHelper.apply(flowVersion, operationWithBranchIndex)
     })
@@ -770,6 +772,7 @@ export function getImportOperations(
                                     stepLocationRelativeToParent:
                     StepLocationRelativeToParent.INSIDE_BRANCH,
                                     branchIndex: index,
+                                    branchName: 'Branch ' + index,
                                     action: removeAnySubsequentAction(child),
                                 },
                             })

@@ -61,6 +61,7 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
             branches: conditions.map((condition) => ({
                 conditions: [[condition]],
                 branchType: BranchExecutionType.CONDITION,
+                branchName: 'Test Branch',
             })),
             executionType,
             inputUiInfo: {},

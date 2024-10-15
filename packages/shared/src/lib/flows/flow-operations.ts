@@ -82,6 +82,7 @@ export const MoveActionRequest = Type.Object({
     newParentStep: Type.String(),
     stepLocationRelativeToNewParent: Type.Optional(Type.Enum(StepLocationRelativeToParent)),
     branchIndex: Type.Optional(Type.Number()),
+    branchName: Type.Optional(Type.String()),
 })
 export type MoveActionRequest = Static<typeof MoveActionRequest>
 
@@ -89,6 +90,7 @@ export const AddActionRequest = Type.Object({
     parentStep: Type.String(),
     stepLocationRelativeToParent: Type.Optional(Type.Enum(StepLocationRelativeToParent)),
     branchIndex: Type.Optional(Type.Number()),
+    branchName: Type.Optional(Type.String()),
     action: UpdateActionRequest,
 })
 export type AddActionRequest = Static<typeof AddActionRequest>

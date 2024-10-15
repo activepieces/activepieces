@@ -84,8 +84,9 @@ const RedirectToCurrentProjectRoute: React.FC<
   );
 
   const searchParamsString = searchParams.toString();
-  const pathWithParamsAndSearchParams = `${pathWithParams}${searchParamsString ? `?${searchParamsString}` : ''
-    }`;
+  const pathWithParamsAndSearchParams = `${pathWithParams}${
+    searchParamsString ? `?${searchParamsString}` : ''
+  }`;
 
   return (
     <Navigate
@@ -104,16 +105,16 @@ export const ProjectRouterWrapper = ({
   element,
   path,
 }: ProjectRouterWrapperProps) => [
-    {
-      path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
-      element: <TokenCheckerWrapper>{element}</TokenCheckerWrapper>,
-    },
-    {
-      path,
-      element: (
-        <RedirectToCurrentProjectRoute path={path}>
-          {element}
-        </RedirectToCurrentProjectRoute>
-      ),
-    },
-  ];
+  {
+    path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
+    element: <TokenCheckerWrapper>{element}</TokenCheckerWrapper>,
+  },
+  {
+    path,
+    element: (
+      <RedirectToCurrentProjectRoute path={path}>
+        {element}
+      </RedirectToCurrentProjectRoute>
+    ),
+  },
+];

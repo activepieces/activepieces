@@ -114,12 +114,20 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
       const { nextAction, children } = step;
       const childrenGraphs = children.map((child, index) => {
         return isNil(child)
-          ? buildBigButton(step.name, StepLocationRelativeToParent.INSIDE_BRANCH, index)
+          ? buildBigButton(
+              step.name,
+              StepLocationRelativeToParent.INSIDE_BRANCH,
+              index,
+              'Branch ' + index,
+            )
           : traverseFlow(child);
       });
       return buildChildrenGraph(
         childrenGraphs,
-        Array.from({ length: children.length }, () => StepLocationRelativeToParent.INSIDE_BRANCH),
+        Array.from(
+          { length: children.length },
+          () => StepLocationRelativeToParent.INSIDE_BRANCH,
+        ),
         nextAction,
         graph,
         step.name,
@@ -158,12 +166,12 @@ function buildChildrenGraph(
   const totalWidth =
     (childrenGraphs.length - 1) * HORIZONTAL_SPACE_BETWEEN_NODES +
     childrenGraphs.reduce(
-      (acc, current) => boundingBox(current).width + acc,
+      (acc, current) => boundingBox(current).width + acc ,
       0,
     );
   const maximumHeight =
     childrenGraphs.reduce(
-      (acc, current) => Math.max(acc, boundingBox(current).height),
+      (acc, current) => Math.max(acc, boundingBox(current).height) ,
       0,
     ) +
     2 * VERTICAL_OFFSET;
@@ -190,7 +198,13 @@ function buildChildrenGraph(
   childrenGraphs.forEach((childGraph, idx) => {
     const cbx = boundingBox(childGraph);
     graph.edges.push(
-      addEdge(graph.nodes[0], childGraph.nodes[0], locations[idx], parentStep, idx),
+      addEdge(
+        graph.nodes[0],
+        childGraph.nodes[0],
+        locations[idx],
+        parentStep,
+        idx,
+      ),
     );
     const childGraphAfterOffset = offsetGraph(childGraph, {
       x: deltaLeftX + cbx.widthLeft,
@@ -206,6 +220,7 @@ function buildChildrenGraph(
         StepLocationRelativeToParent.AFTER,
         rootStepName,
         idx,
+        'Path ' + idx,
       ),
     );
     deltaLeftX += cbx.width + HORIZONTAL_SPACE_BETWEEN_NODES;
@@ -220,6 +235,7 @@ function addEdge(
   stepLocationRelativeToParent: StepLocationRelativeToParent,
   parentStep: string,
   branchIndex?: number,
+  branchName?: string,
 ): ApEdge {
   return {
     id: `${nodeOne.id}-${nodeTwo.id}`,
@@ -235,6 +251,7 @@ function addEdge(
       addButton: nodeTwo.type !== ApNodeType.BIG_BUTTON,
       targetType: nodeTwo.type,
       branchIndex,
+      branchName,
     },
   };
 }
@@ -283,6 +300,7 @@ function buildBigButton(
   parentStep: string,
   stepLocationRelativeToParent?: StepLocationRelativeToParent,
   branchIndex?: number,
+  branchName?: string,
 ): ApGraph {
   return {
     nodes: [
@@ -294,6 +312,7 @@ function buildBigButton(
           parentStep,
           stepLocationRelativeToParent,
           branchIndex,
+          branchName,
         },
       },
     ],
@@ -351,6 +370,7 @@ export type ApNode = {
     parentStep?: string;
     stepLocationRelativeToParent?: StepLocationRelativeToParent;
     branchIndex?: number;
+    branchName?: string;
   };
 };
 
@@ -363,6 +383,7 @@ export type ApEdge = {
   label: string;
   data: {
     branchIndex?: number;
+    branchName?: string;
     addButton: boolean;
     targetType: ApNodeType;
     stepLocationRelativeToParent: StepLocationRelativeToParent;

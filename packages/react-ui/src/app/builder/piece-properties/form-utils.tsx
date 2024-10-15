@@ -140,28 +140,38 @@ export const formUtils = {
             ...selectedStep.settings,
             branches: [
               {
-                conditions: [[{
-                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                  firstValue: '',
-                  secondValue: '',
-                  caseSensitive: false,
-                }]],
+                conditions: [
+                  [
+                    {
+                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                      firstValue: '',
+                      secondValue: '',
+                      caseSensitive: false,
+                    },
+                  ],
+                ],
                 branchType: BranchExecutionType.CONDITION,
+                branchName: 'Path 1',
               },
               {
-                conditions: [[{
-                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                  firstValue: '',
-                  secondValue: '',
-                  caseSensitive: false,
-                }]],
+                conditions: [
+                  [
+                    {
+                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                      firstValue: '',
+                      secondValue: '',
+                      caseSensitive: false,
+                    },
+                  ],
+                ],
                 branchType: BranchExecutionType.CONDITION,
-              }
+                branchName: 'Path 2',
+              },
             ],
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
             inputUiInfo: {},
           },
-          children: [null, null]
+          children: [null, null],
         };
       case ActionType.CODE: {
         const defaultCode = `export const code = async (inputs) => {

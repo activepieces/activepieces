@@ -1,14 +1,6 @@
-import {
-  BranchOperator,
-  textConditions,
-  singleValueConditions,
-  BranchAction,
-} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Trash } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
-
-import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -16,6 +8,14 @@ import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
+import {
+  BranchOperator,
+  textConditions,
+  singleValueConditions,
+  BranchAction,
+} from '@activepieces/shared';
+
+import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
 
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: t('(Text) Contains'),

@@ -237,9 +237,11 @@ export const RouterActionSettings = Type.Object({
             Type.Object({
                 conditions: Type.Array(Type.Array(BranchConditionValid(false))),
                 branchType: Type.Literal(BranchExecutionType.CONDITION),
+                branchName: Type.String(),
             }),
             Type.Object({
                 branchType: Type.Literal(BranchExecutionType.FALLBACK),
+                branchName: Type.String(),
             }),
         ], 
         ),

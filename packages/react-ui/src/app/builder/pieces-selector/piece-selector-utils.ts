@@ -1,3 +1,4 @@
+import { PieceStepMetadata, StepMetadata } from '@/features/pieces/lib/types';
 import {
   Action,
   ActionType,
@@ -14,8 +15,6 @@ import {
   BranchExecutionType,
   RouterExecutionType,
 } from '@activepieces/shared';
-
-import { PieceStepMetadata, StepMetadata } from '@/features/pieces/lib/types';
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
@@ -163,6 +162,7 @@ const getDefaultStep = ({
                   ],
                 ],
                 branchType: BranchExecutionType.CONDITION,
+                branchName: 'Path 1',
               },
               {
                 conditions: [
@@ -176,6 +176,7 @@ const getDefaultStep = ({
                   ],
                 ],
                 branchType: BranchExecutionType.CONDITION,
+                branchName: 'Path 2',
               },
             ],
             inputUiInfo: {

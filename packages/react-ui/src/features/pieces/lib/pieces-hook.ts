@@ -220,7 +220,11 @@ function passSearch(
 }
 
 export function getCoreActions(
-  type: ActionType.BRANCH | ActionType.LOOP_ON_ITEMS | ActionType.CODE | ActionType.ROUTER,
+  type:
+    | ActionType.BRANCH
+    | ActionType.LOOP_ON_ITEMS
+    | ActionType.CODE
+    | ActionType.ROUTER,
 ) {
   switch (type) {
     case ActionType.CODE:

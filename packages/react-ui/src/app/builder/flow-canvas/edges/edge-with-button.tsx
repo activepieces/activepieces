@@ -155,6 +155,22 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
           </div>
         </foreignObject>
       )}
+      {props.data.stepLocationRelativeToParent ===
+        StepLocationRelativeToParent.INSIDE_BRANCH && (
+        <>
+          {console.log('branchName',  props.data.branchName)}
+          <foreignObject
+            width={100}
+            height={20}
+            x={buttonPosition.x - 50}
+            y={buttonPosition.y - 10}
+          >
+            <div className="text-accent-foreground text-sm text-center bg-background select-none cursor-default">
+              {props.data.branchName || 'Path ' + props.data.branchIndex}
+            </div>
+          </foreignObject>
+        </>
+      )}
       {showDropIndicator && props.data?.addButton && !readonly && (
         <foreignObject
           width={AP_NODE_SIZE.smallButton.width}
@@ -199,7 +215,8 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
               parentStep: props.data.parentStep!,
               stepLocationRelativeToParent:
                 props.data.stepLocationRelativeToParent!,
-              branchIndex: props.data.branchIndex,
+              branchIndex: props.data.branchIndex ?? 0,
+              branchName: props.data.branchName ?? 'Path ' + props.data.branchIndex,
             },
           }}
           open={actionMenuOpen}
@@ -209,7 +226,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
             width={18}
             height={18}
             x={buttonPosition.x - LINE_WIDTH / 2}
-            y={buttonPosition.y}
+            y={buttonPosition.y + 20}
             className={cn('rounded-xss cursor-pointer transition-all', {
               'shadow-add-button': actionMenuOpen,
             })}

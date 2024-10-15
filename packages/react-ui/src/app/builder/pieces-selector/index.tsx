@@ -153,6 +153,7 @@ const PieceSelector = ({
               stepLocationRelativeToParent:
                 operation.actionLocation.stepLocationRelativeToParent,
               branchIndex: operation.actionLocation?.branchIndex,
+              branchName: operation.actionLocation?.branchName,
               action: stepData as Action,
             },
           },
