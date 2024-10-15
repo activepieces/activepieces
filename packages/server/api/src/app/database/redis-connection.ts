@@ -16,7 +16,10 @@ export const createRedisClient = (params?: CreateRedisClientParams): Redis => {
     }
 
     if (sentinelList) {
-        const sentinels = JSON.parse(sentinelList)
+        const sentinels = sentinelList.split(',').map((sentinel) => {
+            const [host, port] = sentinel.split(':')
+            return { host, port: Number.parseInt(port, 10) }
+        })
         const name = sentinels[0].host
         return new Redis({
             ...config,
