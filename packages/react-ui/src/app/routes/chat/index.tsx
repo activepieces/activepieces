@@ -26,7 +26,8 @@ import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
 import { humanInputApi } from '@/features/human-input/lib/human-input-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApErrorParams, ErrorCode } from '@activepieces/shared';
+import { ApErrorParams, ErrorCode, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import { useSearchParam } from 'react-use';
 
 const Messages = Type.Array(
   Type.Object({
@@ -38,6 +39,7 @@ type Messages = Static<typeof Messages>;
 
 export function ChatPage() {
   const { flowId } = useParams();
+  const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
   const messagesRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -70,6 +72,7 @@ export function ChatPage() {
         flowId,
         chatId: chatId.current,
         message: savedInput,
+        useDraft,
       });
     },
     onSuccess: (result) => {

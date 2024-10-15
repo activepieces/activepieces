@@ -5,11 +5,11 @@ import { useSearchParam } from 'react-use';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ApForm } from '@/features/human-input/components/ap-form';
 import { humanInputApi } from '@/features/human-input/lib/human-input-api';
-import { FormResponse, isNil } from '@activepieces/shared';
+import { FormResponse, isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 
 export const FormPage = () => {
   const { flowId } = useParams();
-  const useDraft = useSearchParam('useDraft');
+  const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
 
   const {
     data: form,
@@ -17,7 +17,7 @@ export const FormPage = () => {
     isError,
   } = useQuery<FormResponse | null, Error>({
     queryKey: ['form', flowId],
-    queryFn: () => humanInputApi.get(flowId!, useDraft === 'true'),
+    queryFn: () => humanInputApi.get(flowId!, useDraft),
     enabled: !isNil(flowId),
     staleTime: Infinity,
   });
@@ -32,7 +32,7 @@ export const FormPage = () => {
       {isError && <Navigate to="/404" />}
 
       {form && !isLoading && (
-        <ApForm form={form} useDraft={useDraft === 'true'} />
+        <ApForm form={form} useDraft={useDraft} />
       )}
     </>
   );
