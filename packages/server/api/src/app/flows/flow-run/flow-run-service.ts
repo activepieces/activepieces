@@ -164,21 +164,21 @@ export const flowRunService = {
             startTime: new Date().toISOString(),
         }
 
-        const savedFlowRun = await flowRunRepo().save(newFlowRun)
+        await flowRunRepo().save(newFlowRun)
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
                 return flowRunService.addToQueue({
-                    flowRunId: savedFlowRun.id,
+                    flowRunId: newFlowRun.id,
                     executionType: ExecutionType.RESUME,
                     progressUpdateType: ProgressUpdateType.NONE,
                     checkRequestId: false,
                 })
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(savedFlowRun.id)
+                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(newFlowRun.id)
                 return flowRunService.addToQueue({
                     payload,
-                    flowRunId: savedFlowRun.id,
+                    flowRunId: newFlowRun.id,
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
                     checkRequestId: false,
