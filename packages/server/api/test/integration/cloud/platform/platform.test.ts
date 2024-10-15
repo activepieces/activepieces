@@ -200,7 +200,7 @@ describe('Platform API', () => {
             const responseBody = response?.json()
 
 
-            expect(Object.keys(responseBody).length).toBe(39)
+            expect(Object.keys(responseBody).length).toBe(40)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)
