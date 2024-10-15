@@ -1,5 +1,5 @@
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, ScheduleOptions, Trigger, TriggerHookType } from '@activepieces/shared'
+import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, isNil, PieceTrigger, ScheduleOptions, Trigger, TriggerHookType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -29,6 +29,10 @@ export const triggerHelper = {
             engineToken: constants.engineToken,
             piecesSource: constants.piecesSource,
         })
+        const isOldVersionOrNotSupported = isNil(pieceTrigger.onStart)
+        if (isOldVersionOrNotSupported) {
+            return
+        }
         const context = {
             store: createContextStore({
                 apiUrl: constants.internalApiUrl,
