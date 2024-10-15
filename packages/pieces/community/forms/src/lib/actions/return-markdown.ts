@@ -11,7 +11,14 @@ export const returnMarkdown = createAction({
       required: true,
     }),
   },
-
+  errorHandlingOptions: {
+    retryOnFailure: {
+      hide: true,
+    },
+    continueOnFailure: {
+      hide: true,
+    }
+  },
   async run({ propsValue, run }) {
 
     const response = {
