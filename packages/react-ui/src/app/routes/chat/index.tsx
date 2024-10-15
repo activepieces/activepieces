@@ -7,6 +7,7 @@ import {
   CircleX,
   CopyIcon,
   RotateCcw,
+  Download,
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
@@ -23,15 +24,20 @@ import {
 } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
-import { humanInputApi } from '@/features/human-input/lib/human-input-api';
+import { FormResultTypes, humanInputApi } from '@/features/human-input/lib/human-input-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
+import { Badge } from '@/components/ui/badge';
+import ImageWithFallback from '@/components/ui/image-with-fallback';
+import { CopyButton } from '@/components/ui/copy-button';
 
 const Messages = Type.Array(
   Type.Object({
     role: Type.Union([Type.Literal('user'), Type.Literal('bot')]),
     content: Type.String(),
+    type: Type.Optional(Type.Union([Type.Literal('text'), Type.Literal('image'), Type.Literal('file')])),
+    mimeType: Type.Optional(Type.String()),
   }),
 );
 type Messages = Static<typeof Messages>;
@@ -78,11 +84,28 @@ export function ChatPage() {
           code: ErrorCode.NO_CHAT_RESPONSE,
           params: {},
         });
-      } else if ('value' in result) {
-        setMessages([
-          ...messages,
-          { role: 'bot', content: result.value as string },
-        ]);
+      } else if ('type' in result) {
+        switch (result.type) {
+          case FormResultTypes.FILE:
+            if ('url' in result.value) {
+              const isImage = result.value.mimeType?.startsWith('image/');
+              setMessages([
+                ...messages,
+                {
+                  role: 'bot',
+                  content: result.value.url,
+                  type: isImage ? 'image' : 'file',
+                  mimeType: result.value.mimeType,
+                },
+              ]);
+            }
+            break;
+          case FormResultTypes.MARKDOWN:
+            setMessages([
+              ...messages,
+              { role: 'bot', content: result.value, type: 'text' },
+            ]);
+        }
       }
       scrollToBottom();
     },
@@ -122,7 +145,7 @@ export function ChatPage() {
           <ChatBubble
             key={index}
             variant={message.role === 'user' ? 'sent' : 'received'}
-            className="flex items-start"
+            className="flex  items-start"
           >
             {message.role === 'bot' && (
               <ChatBubbleAvatar
@@ -131,19 +154,31 @@ export function ChatPage() {
               />
             )}
             <ChatBubbleMessage className="flex gap-2">
-              <Markdown remarkPlugins={[remarkGfm]} className="bg-inherit">
-                {message.content}
-              </Markdown>
-            </ChatBubbleMessage>
-            {message.role === 'bot' && (
-              <div className="flex gap-1">
-                <ChatBubbleAction
-                  variant="outline"
-                  className="size-5 mt-2"
-                  icon={<CopyIcon className="size-3" />}
-                  onClick={() => navigator.clipboard.writeText(message.content)}
+              {message.type === 'image' ? (
+                <ImageWithFallback
+                  src={message.content}
+                  alt="Received image"
+                  className="max-w-full h-auto rounded-md"
                 />
-              </div>
+              ) : message.type === 'file' ? (
+                <Badge 
+                  variant="secondary" 
+                  className="cursor-pointer hover:bg-secondary/80"
+                  onClick={() => window.open(message.content, '_blank')}
+                >
+                  <Download className="mr-2 h-4 w-4" /> Download File
+                </Badge>
+              ) : (
+                <Markdown remarkPlugins={[remarkGfm]} className="bg-inherit">
+                  {message.content}
+                </Markdown>
+              )}
+            </ChatBubbleMessage>
+            {message.role === 'bot' && message.type === 'text' && (
+              <CopyButton
+                textToCopy={message.content}
+                className="size-6 p-1 mt-2"
+              />
             )}
           </ChatBubble>
         ))}

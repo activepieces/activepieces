@@ -34,6 +34,7 @@ import { AddDurationForRuns1716725027424 } from './migration/common/171672502742
 import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/1723549873495-ChangeEventRoutingConstraint'
 import { RemoveUniqueConstraintOnStepFile1725570317713 } from './migration/common/1725570317713-RemoveUniqueConstraintOnStepFile'
 import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-AddUserSessionId'
+import { AddLicenseKeyIntoPlatform1728827704109 } from './migration/common/1728827704109-AddLicenseKeyIntoPlatform'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -151,7 +152,6 @@ import { AddAiProviderTable1726445983043 } from './migration/postgres/1726445983
 import { AddAiTokensForProjectPlan1726446092010 } from './migration/postgres/1726446092010-AddAiTokensForProjectPlan'
 import { RemovePremiumPieces1727865841722 } from './migration/postgres/1727865841722-RemovePremiumPieces'
 
-
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
 
@@ -250,6 +250,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         SupportS3Files1726364421096,
         AddUserSessionId1727130193726,
         RemovePremiumPieces1727865841722,
+        AddLicenseKeyIntoPlatform1728827704109,
     ]
 
     const edition = system.getEdition()
