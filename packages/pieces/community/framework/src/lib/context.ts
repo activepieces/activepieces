@@ -124,6 +124,21 @@ export type ServerContext = {
   publicUrl: string;
   token: string;
 };
+
+export type RunContext = {
+  id: FlowRunId;
+  stop: StopHook;
+  pause: PauseHook;
+}
+
+export type OnStartContext<
+  PieceAuth extends PieceAuthProperty,
+  TriggerProps extends InputPropertyMap
+> = Omit<BaseContext<PieceAuth, TriggerProps>, 'flows'> & {
+   run: Pick<RunContext, 'id'>;
+   payload: unknown;
+}
+
 export type BaseActionContext<
   ET extends ExecutionType,
   PieceAuth extends PieceAuthProperty,
@@ -135,11 +150,7 @@ export type BaseActionContext<
   server: ServerContext;
   files: FilesService;
   serverUrl: string;
-  run: {
-    id: FlowRunId;
-    stop: StopHook;
-    pause: PauseHook;
-  };
+  run: RunContext;
   generateResumeUrl: (params: {
     queryParams: Record<string, string>
   }) => string;
