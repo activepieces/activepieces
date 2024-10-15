@@ -9,7 +9,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         python3 \
         g++ \
         build-essential \
-        git && \
+        git \
+        poppler-utils \
+        poppler-data && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
 

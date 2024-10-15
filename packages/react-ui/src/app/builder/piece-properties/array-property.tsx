@@ -112,7 +112,13 @@ const ArrayPieceProperty = React.memo(
     };
 
     const remove = (index: number) => {
-      const newFields = fields.filter((_, i) => i !== index);
+      const currentFields: ArrayField[] = form
+        .getValues(inputName)
+        .map((value: string | Record<string, unknown>) => ({
+          id: nanoid(),
+          value,
+        }));
+      const newFields = currentFields.filter((_, i) => i !== index);
       setFields(newFields);
       updateFormValue(newFields);
     };

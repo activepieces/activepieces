@@ -44,7 +44,6 @@ import { emailService } from './ee/helper/email/email-service'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
-import { licenseKeysService } from './ee/license-keys/license-keys-service'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { otpModule } from './ee/otp/otp-module'
@@ -222,6 +221,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(invitationModule)
     await app.register(workerModule)
     await app.register(aiProviderModule)
+    await app.register(licenseKeysModule)
 
     app.get(
         '/redirect',
@@ -308,7 +308,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
-            await app.register(licenseKeysModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
@@ -325,7 +324,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             await app.register(communityFlowTemplateModule)
-            await app.register(licenseKeysModule)
             break
     }
 
@@ -356,6 +354,16 @@ const validateEnvPropsOnStartup = async (): Promise<void> => {
             message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',
             docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
         }))
+    }
+    const isApp = system.isApp()
+    if (isApp) {
+        const rentionPeriod = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+        const maximumPausedFlowTimeout = system.getNumberOrThrow(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+        if (maximumPausedFlowTimeout > rentionPeriod) {
+            throw new Error(JSON.stringify({
+                message: 'AP_PAUSED_FLOW_TIMEOUT_DAYS can not exceed AP_EXECUTION_DATA_RETENTION_DAYS',
+            }))
+        }
     }
 
     const jwtSecret = await jwtUtils.getJwtSecret()
@@ -422,10 +430,11 @@ The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as spec
         )
     }
     const oldestPlatform = await platformService.getOldestPlatform()
-    if (!isNil(oldestPlatform)) {
-        await licenseKeysService.verifyKeyAndApplyLimits({
-            platformId: oldestPlatform.id,
-            license: system.get<string>(AppSystemProp.LICENSE_KEY),
+    const key = system.get<string>(AppSystemProp.LICENSE_KEY)
+    if (!isNil(oldestPlatform) && !isNil(key)) {
+        await platformService.update({
+            id: oldestPlatform.id,
+            licenseKey: key,
         })
     }
 }

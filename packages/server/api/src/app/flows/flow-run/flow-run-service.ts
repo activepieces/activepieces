@@ -24,7 +24,6 @@ import {
     RunEnvironment,
     SeekPage,
     spreadIfDefined,
-    TelemetryEventName,
 } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -36,10 +35,10 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
-import { telemetry } from '../../helper/telemetry.utils'
 import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
 import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
+import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logSerializer } from './log-serializer'
@@ -282,20 +281,6 @@ export const flowRunService = {
         flowRun.status = FlowRunStatus.RUNNING
 
         const savedFlowRun = await flowRunRepo().save(flowRun)
-
-        telemetry
-            .trackProject(flow.projectId, {
-                name: TelemetryEventName.FLOW_RUN_CREATED,
-                payload: {
-                    projectId: savedFlowRun.projectId,
-                    flowId: savedFlowRun.flowId,
-                    environment: savedFlowRun.environment,
-                },
-            })
-            .catch((e) =>
-                logger.error(e, '[FlowRunService#Start] telemetry.trackProject'),
-            )
-
         const priority = await getJobPriority(savedFlowRun.projectId, synchronousHandlerId)
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
@@ -313,13 +298,15 @@ export const flowRunService = {
     async test({ projectId, flowVersionId }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
-        const payload =
-            flowVersion.trigger.settings.inputUiInfo.currentSelectedData
-
+        const sampleData = await sampleDataService.getOrReturnEmpty({
+            projectId,
+            flowVersion,
+            stepName: flowVersion.trigger.name,
+        })
         return this.start({
             projectId,
             flowVersionId,
-            payload,
+            payload: sampleData,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
             synchronousHandlerId: webhookResponseWatcher.getServerId(),
@@ -334,7 +321,6 @@ export const flowRunService = {
         )
 
         const { flowRunId, pauseMetadata } = params
-
         await flowRunRepo().update(flowRunId, {
             status: FlowRunStatus.PAUSED,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

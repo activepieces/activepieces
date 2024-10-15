@@ -66,6 +66,7 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
             excludedStepName: step.name,
             projectId: input.projectId,
             engineToken: input.engineToken,
+            sampleData: input.sampleData,
         }),
         constants: EngineConstants.fromExecuteStepInput(input),
     })
@@ -136,6 +137,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                         flowVersion: input.flowVersion,
                         projectId: input.projectId,
                         engineToken: input.engineToken,
+                        sampleData: input.sampleData,
                     }),
                     searchValue: input.searchValue,
                     constants: EngineConstants.fromExecutePropertyInput(input),

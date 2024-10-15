@@ -105,6 +105,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.FLOW_RUN_LOG:
         case FileType.FLOW_STEP_FILE:
             return true
+        case FileType.SAMPLE_DATA:
         case FileType.PACKAGE_ARCHIVE:
             return false
         default:

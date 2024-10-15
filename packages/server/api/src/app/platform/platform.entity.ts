@@ -167,6 +167,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
+        licenseKey: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [],
     relations: {

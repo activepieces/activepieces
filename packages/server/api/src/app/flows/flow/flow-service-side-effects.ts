@@ -10,6 +10,7 @@ import {
 } from '@activepieces/shared'
 import { EntityManager } from 'typeorm'
 import { flowVersionService } from '../flow-version/flow-version.service'
+import { sampleDataService } from '../step-run/sample-data.service'
 import { triggerHooks } from '../trigger'
 
 export const flowSideEffects = {
@@ -127,6 +128,11 @@ export const flowSideEffects = {
             flowVersion: publishedFlowVersion,
             projectId: flowToDelete.projectId,
             simulate: false,
+        })
+
+        await sampleDataService.deleteForFlow({
+            projectId: flowToDelete.projectId,
+            flowId: flowToDelete.id,
         })
     },
 }

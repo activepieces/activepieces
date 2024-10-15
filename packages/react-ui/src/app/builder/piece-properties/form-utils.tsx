@@ -454,12 +454,10 @@ export function getDefaultValueForStep(
         break;
       }
       case PropertyType.MULTI_SELECT_DROPDOWN:
-        defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? [];
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-        defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? [];
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       case PropertyType.OBJECT:
       case PropertyType.DYNAMIC:
