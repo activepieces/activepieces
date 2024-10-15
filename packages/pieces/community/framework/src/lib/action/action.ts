@@ -7,6 +7,11 @@ import { PieceAuthProperty } from '../property/authentication';
 export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
 
+export const BulkConfiguration = Type.Object({
+  bulkInputs: Type.Array(Type.String()),
+})
+export type BulkConfiguration = Static<typeof BulkConfiguration>
+
 export const ErrorHandlingOptionsParam = Type.Object({
   retryOnFailure: Type.Object({
     defaultValue: Type.Optional(Type.Boolean()),
@@ -32,6 +37,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   test?: ActionRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
   errorHandlingOptions?: ErrorHandlingOptionsParam
+  bulkConfiguration?: BulkConfiguration
 }
 
 export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> implements ActionBase {
@@ -44,6 +50,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends In
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
     public readonly errorHandlingOptions: ErrorHandlingOptionsParam,
+    public readonly supportBulkExecution: boolean = false,
   ) { }
 }
 
@@ -74,5 +81,6 @@ export const createAction = <
         defaultValue: false,
       }
     },
+    params.supportBulkExecution ?? false,
   )
 }
