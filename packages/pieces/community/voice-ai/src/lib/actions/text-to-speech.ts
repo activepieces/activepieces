@@ -112,8 +112,10 @@ export const textToSpeech = createAction({
       response_format: context.propsValue.format,
     });
 
+    console.log(JSON.stringify(response));
+
     return context.files.write({
-      fileName: 'audio' + context.propsValue.format,
+      fileName: 'audio.' + context.propsValue.format,
       data: response.data as Buffer,
     });
   },

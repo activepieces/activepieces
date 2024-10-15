@@ -4,9 +4,9 @@ import mime from 'mime-types';
 import { httpClient, HttpMethod } from '../../../http';
 import { AuthenticationType } from '../../../authentication';
 import { isNil } from '@activepieces/shared';
-import OpenAI from 'openai';
+import OpenAI, { toFile } from 'openai';
 import { imageMapper, model, ModelType } from '../utils';
-import { Property } from '@activepieces/pieces-framework';
+import { Property, FilesService } from '@activepieces/pieces-framework';
 
 export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const openaiApiVersion = 'v1';
@@ -172,53 +172,65 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
     },
     voice: {
       createSpeech: async (params) => {
-        const response = await sdk.audio.speech.create({
-          model: params.model,
-          input: params.input,
-          voice: params.voice as
-            | 'alloy'
-            | 'echo'
-            | 'fable'
-            | 'onyx'
-            | 'nova'
-            | 'shimmer',
-          speed: params.speed,
-          response_format: params.response_format as
-            | 'mp3'
-            | 'opus'
-            | 'aac'
-            | 'flac'
-            | 'wav'
-            | 'pcm',
-        });
-        return {
-          data: Buffer.from(await response.arrayBuffer()),
-        };
+        const response = await sdk.audio.speech.create(
+          {
+            model: params.model,
+            input: params.input,
+            voice: params.voice as
+              | 'alloy'
+              | 'echo'
+              | 'fable'
+              | 'onyx'
+              | 'nova'
+              | 'shimmer',
+            speed: params.speed,
+            response_format: params.response_format as
+              | 'mp3'
+              | 'opus'
+              | 'aac'
+              | 'flac'
+              | 'wav'
+              | 'pcm',
+          },
+          { stream: true }
+        );
+        const readableStream =
+          response.body as unknown as NodeJS.ReadableStream;
+        const buffer = await streamToBuffer(readableStream);
+        return { data: buffer };
       },
       createTranscription: async (params) => {
-        const form = new FormData();
-        form.append('file', params.audio.data, {
-          filename: params.audio.filename,
-          contentType: mime.lookup(params.audio.extension || '') as string,
-        });
-        form.append('model', params.model);
-        form.append('language', params.language);
-
-        const response = await httpClient.sendRequest<{ text: string }>({
-          url: `${proxyUrl}/${openaiApiVersion}`,
-          method: HttpMethod.POST,
-          body: form,
-          headers: {
-            ...form.getHeaders(),
-            'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.total_tokens',
-          },
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: engineToken,
-          },
+        console.log(params.audio.filename, params.audio.extension);
+        const response = await sdk.audio.transcriptions.create({
+          model: params.model,
+          language: params.language,
+          file: await toFile(params.audio.data, params.audio.filename),
         });
 
-        return response.body;
+        console.log(JSON.stringify(response));
+        // const form = new FormData();
+        // form.append('file', params.audio.data, {
+        //   filename: params.audio.filename,
+        //   contentType: mime.lookup(params.audio.extension || '') as string,
+        // });
+        // form.append('model', params.model);
+        // form.append('language', params.language);
+
+        // const response = await httpClient.sendRequest<{ text: string }>({
+        //   url: `${proxyUrl}/${openaiApiVersion}/audio/transcriptions`,
+        //   method: HttpMethod.POST,
+        //   body: form,
+        //   headers: {
+        //     ...form.getHeaders(),
+        //     'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.total_tokens',
+        //   },
+        //   authentication: {
+        //     type: AuthenticationType.BEARER_TOKEN,
+        //     token: engineToken,
+        //   },
+        // });
+
+        return { text: response.text };
       },
     },
   };
@@ -234,6 +246,15 @@ const findImageMapper = (model: string) => {
     throw new Error(`OpenAI image model ${model} not found`);
   }
   return mapper;
+};
+
+const streamToBuffer = (stream: any) => {
+  const chunks: any[] = [];
+  return new Promise((resolve, reject) => {
+    stream.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
+    stream.on('error', (err: any) => reject(err));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+  });
 };
 
 const openaiImageMapper = imageMapper({
@@ -295,5 +316,9 @@ export const openaiModels = [
   ),
   model({ label: 'tts-1', value: 'tts-1', supported: ['speech'] }),
   model({ label: 'tts-1-hd', value: 'tts-1-hd', supported: ['speech'] }),
-  model({ label: 'whisper-1', value: 'whisper-1', supported: ['transcription'] }),
+  model({
+    label: 'whisper-1',
+    value: 'whisper-1',
+    supported: ['transcription'],
+  }),
 ];
