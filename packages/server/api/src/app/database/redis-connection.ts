@@ -7,11 +7,26 @@ const username = system.get(AppSystemProp.REDIS_USER)
 const password = system.get(AppSystemProp.REDIS_PASSWORD)
 const useSsl = system.getBoolean(AppSystemProp.REDIS_USE_SSL) ?? false
 const db = system.getNumber(AppSystemProp.REDIS_DB) ?? 0
+const sentinelList = system.get(AppSystemProp.REDIS_SENTINELS)
 
 export const createRedisClient = (params?: CreateRedisClientParams): Redis => {
     const config: Partial<RedisOptions> = {
         maxRetriesPerRequest: null,
         ...params,
+    }
+
+    if (sentinelList) {
+        const sentinels = sentinelList.split(',').map((sentinel) => {
+            const [host, port] = sentinel.split(':')
+            return { host, port: Number.parseInt(port, 10) }
+        })
+        const name = sentinels[0].host
+        return new Redis({
+            ...config,
+            sentinels,
+            name,
+            enableTLSForSentinelMode: useSsl ? true : undefined,
+        })
     }
 
     if (url) {
