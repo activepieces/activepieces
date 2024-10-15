@@ -24,3 +24,8 @@ export const http = createPiece({
   ],
   triggers: [],
 });
+
+
+export type HttpPieceConfig = {
+    deniedHeaders?: string[]
+}
