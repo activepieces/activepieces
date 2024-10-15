@@ -4,12 +4,12 @@ import { t } from 'i18next';
 import { XIcon } from 'lucide-react';
 import { forwardRef, useEffect, useState } from 'react';
 
+import { cn } from '@/lib/utils';
+
 import { Badge } from './badge';
 import { Button } from './button';
 import type { InputProps } from './input';
 import { ReadMoreDescription } from './read-more-description';
-
-import { cn } from '@/lib/utils';
 
 type TagInputProps = Omit<InputProps, 'value' | 'onChange'> & {
   value?: ReadonlyArray<string>;

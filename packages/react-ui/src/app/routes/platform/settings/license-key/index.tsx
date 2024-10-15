@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
@@ -25,12 +25,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 import { formatUtils } from '@/lib/utils';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+
 import { ActivateLicenseDialog } from './activate-license-dialog';
 
 const LICENSE_PROPS_MAP = {
@@ -97,19 +97,24 @@ const LicenseKeyPage = () => {
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-bold w-full">{t('License Key')}</h1>
         <p className="text-md text-gray-500 w-full">
-          {showPlatformDemo && t('This feature is not self serve in the cloud yet, please contact sales@activepieces.com. ')}
-          {edition === ApEdition.COMMUNITY && <>
-            {t('This feature is not available in your current edition. ')}
-            {
-              <Link
-                className="text-primary"
-                target="_blank"
-                to="https://www.activepieces.com/docs/install/configuration/overview"
-              >
-                {t('Learn how to upgrade')}
-              </Link>}
-          </>}
-
+          {showPlatformDemo &&
+            t(
+              'This feature is not self serve in the cloud yet, please contact sales@activepieces.com. ',
+            )}
+          {edition === ApEdition.COMMUNITY && (
+            <>
+              {t('This feature is not available in your current edition. ')}
+              {
+                <Link
+                  className="text-primary"
+                  target="_blank"
+                  to="https://www.activepieces.com/docs/install/configuration/overview"
+                >
+                  {t('Learn how to upgrade')}
+                </Link>
+              }
+            </>
+          )}
         </p>
       </div>
     );
@@ -162,35 +167,33 @@ const LicenseKeyPage = () => {
                   placeholder={t('License Key')}
                   className="pr-20 text-base"
                 />
-                {licenseKey && <div className="absolute inset-y-0 right-0 flex items-center">
-                  <TooltipProvider delayDuration={300}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowLicenseKey(!showLicenseKey)}
-                          className="mr-1"
-                        >
-                          {showLicenseKey ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-xs">
-                        {showLicenseKey ? t('Hide') : t('Show')}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>}
+                {licenseKey && (
+                  <div className="absolute inset-y-0 right-0 flex items-center">
+                    <TooltipProvider delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowLicenseKey(!showLicenseKey)}
+                            className="mr-1"
+                          >
+                            {showLicenseKey ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          {showLicenseKey ? t('Hide') : t('Show')}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                )}
               </div>
-              <Button
-                size="sm"
-                className="w-full"
-                onClick={handleOpenDialog}
-              >
+              <Button size="sm" className="w-full" onClick={handleOpenDialog}>
                 <Zap className="w-4 h-4 mr-2" />
                 {t('Activate License')}
               </Button>
