@@ -27,12 +27,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       id: 'users',
       accessorKey: 'users',
       header: ({ column }) => (
-        <div className="flex gap-1 items-center">
-          <DataTableColumnHeader column={column} title={t('Users')} />
-          <InfoTooltip>
-            {t('All users in a project, not affected by date filter')}
-          </InfoTooltip>
-        </div>
+        <DataTableColumnHeader column={column} title={t('Users')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.users}</div>;
@@ -49,26 +44,36 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       },
     },
     {
-      id: 'publishes',
-      accessorKey: 'publishes',
+      id: 'activeFlows',
+      accessorKey: 'activeFlows',
       header: ({ column }) => (
         <div className="flex gap-1 items-center">
-          <DataTableColumnHeader column={column} title={t('Publishes')} />
-          <InfoTooltip>
-            {t('Total number of times a flow has been published')}
-          </InfoTooltip>
+          <DataTableColumnHeader column={column} title={t('Active Flows')} />
         </div>
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.publishes}</div>;
+        return <div className="text-left">{row.original.activeFlows}</div>;
       },
     },
     {
-      id: 'flowEdits',
-      accessorKey: 'flowEdits',
+      id: 'issues',
+      accessorKey: 'issues',
       header: ({ column }) => (
         <div className="flex gap-1 items-center">
-          <DataTableColumnHeader column={column} title={t('Edits')} />
+          <DataTableColumnHeader column={column} title={t('Issues')} />
+          <InfoTooltip>{t('Total number of ongoing issues')}</InfoTooltip>
+        </div>
+      ),
+      cell: ({ row }) => {
+        return <div className="text-left">{row.original.issues}</div>;
+      },
+    },
+    {
+      id: 'contributions',
+      accessorKey: 'contributions',
+      header: ({ column }) => (
+        <div className="flex gap-1 items-center">
+          <DataTableColumnHeader column={column} title={t('Contributions')} />
           <InfoTooltip>
             {t('Total number of times a flow has been edited')}
           </InfoTooltip>
@@ -102,10 +107,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
       id: 'connections',
       accessorKey: 'connections',
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Connections Created')}
-        />
+        <DataTableColumnHeader column={column} title={t('Connections')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.connections}</div>;

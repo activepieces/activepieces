@@ -1,4 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
+import { ApplicationEventName, IssueStatus } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
 import {
     AnalyticsPieceReportItem,
@@ -267,23 +267,73 @@ async function generateProjectsLeaderboard(
             'flowsDeleted',
             '"flowsDeleted"."projectId" = project.id AND "flowsDeleted"."flowId" = "flowsCreated"."flowId" ',
         )
-        .addSelect('COUNT("flowsCreated"."flowId")', 'flows')
-        .andWhere('"flowsDeleted"."flowId" IS NULL')
-    //Connection Created
-        // .leftJoin(
-        //     (subQuery) => {
-        //         return addDateLimitsToQuery(subQuery
-        //             .select('"audit_event"."projectId"', 'projectId')
-        //             .addSelect('audit_event."data"->\'connection\'->>\'id\'', 'connectionId')
-        //             .from('audit_event', 'audit_event')
-        //             .where({
-        //                 action: In([ApplicationEventName.CONNECTION_DELETED]),
-        //             })
-        //             .groupBy('"audit_event"."projectId"'), params)
-        //     },
-        //     'connectionsCreated',
-        //     '"connectionsCreated"."projectId" = project.id',
-        // )
+        .addSelect('COUNT(DISTINCT "flowsCreated"."flowId")', 'flows')
+      
+
+    //Connections Created
+    // .leftJoin(
+    //     (subQuery) => {
+    //         return addDateLimitsToQuery(subQuery
+    //             .select('audit_event."projectId"', 'projectId')
+    //             .addSelect('audit_event."data"->\'connection\'->>\'id\'', 'connectionId')
+    //             .from('audit_event', 'audit_event')
+    //             .where({
+    //                 action: In([ApplicationEventName.CONNECTION_UPSERTED]),
+    //             })
+    //         , params)
+    //     },
+    //     'connectionsCreated',
+    //     '"connectionsCreated"."projectId" = project.id',
+    // )
+    //Connections Deleted
+    // .leftJoin(
+    //     (subQuery) => {
+    //         return addDateLimitsToQuery(subQuery
+    //             .select('"audit_event"."projectId"', 'projectId')
+    //             .addSelect('audit_event."data"->\'connection\'->>\'id\'', 'connectionId')
+    //             .from('audit_event', 'audit_event')
+    //             .where({
+    //                 action: In([ApplicationEventName.CONNECTION_DELETED]),
+    //             })
+    //         , params)
+    //     },
+    //     'connectionsDeleted',
+    //     '"connectionsDeleted"."projectId" = project.id AND "connectionsDeleted"."connectionId" = "connectionsCreated"."connectionId" ',
+    // )
+    // .addSelect('COUNT(DISTINCT "connectionsCreated"."connectionId")', 'connections')
+    // .andWhere('"connectionsDeleted"."connectionId" IS NULL')
+
+    //Users
+        .leftJoin(
+            (subQuery) => {
+                return addDateLimitsToQuery(subQuery
+                    .select('"audit_event"."projectId"', 'projectId')
+                    .addSelect('COUNT(audit_event.id)', 'usersCount')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.USER_SIGNED_UP]),
+                    })
+                    .groupBy('"audit_event"."projectId"'), params)
+            },
+            'usersCount',
+            '"usersCount"."projectId" = project.id',
+        )
+        .addSelect('COALESCE("usersCount"."usersCount", 0)', 'users')
+
+    //Issues
+        .leftJoin(
+            (subQuery) => {
+                return addDateLimitsToQuery(subQuery
+                    .select('"issue"."projectId"', 'projectId')
+                    .addSelect('COUNT(issue.id)', 'issuesCount')
+                    .from('issue', 'issue')
+                    .where(`issue.status = '${IssueStatus.ONGOING}'`)
+                    .groupBy('"issue"."projectId"'), params)
+            },
+            'issuesCount',
+            '"issuesCount"."projectId" = project.id',
+        )
+        .addSelect('COALESCE("issuesCount"."issuesCount", 0)', 'issues')
         
     //Runs
 
@@ -328,33 +378,61 @@ async function generateProjectsLeaderboard(
             'tasks',
         )
   
-
-    
-
     //Flows Published
-        .leftJoin(
-            (subQuery) => {
-                return addDateLimitsToQuery(subQuery
-                    .select('"audit_event"."projectId"', 'projectId')
-                    .addSelect('COUNT(audit_event.id)', 'publishes')
-                    .from('audit_event', 'audit_event')
-                    .where({
-                        action: In([ApplicationEventName.FLOW_UPDATED]),
-                    })
-                    .andWhere(
-                        '"audit_event"."data"->\'request\'->>\'type\' = :requestValue',
-                        { requestValue: FlowOperationType.LOCK_AND_PUBLISH },
-                    )
-                    .groupBy('"audit_event"."projectId"'), params)
-            },
-            'publishes',
-            '"publishes"."projectId" = project.id',
-        )
-        .addSelect(
-            'COALESCE("publishes"."publishes", 0)',
-            'publishes',
-        )
+    // .leftJoin(
+    //     (subQuery) => {
+    //         return addDateLimitsToQuery(subQuery
+    //             .select('"audit_event"."projectId"', 'projectId')
+    //             .addSelect('"audit_event"."data"->\'flowVersion\'->>\'flowId\'', 'flowId')
+    //             .addSelect('MAX("audit_event"."created")', 'created')
+    //             .from('audit_event', 'audit_event')
+    //             .where({
+    //                 action: In([ApplicationEventName.FLOW_UPDATED]),
+    //             })
+    //             .andWhere(
+    //                 '"audit_event"."data"->\'request\'->>\'type\' = :requestValue',
+    //                 { requestValue: FlowOperationType.LOCK_AND_PUBLISH },
+    //             )
+    //             .orWhere(
+    //                 '"audit_event"."data"->\'request\'->>\'type\' = :requestValue',
+    //                 { requestValue: FlowOperationType.CHANGE_STATUS },
+    //             )
+    //             .andWhere(
+    //                 '"audit_event"."data"->\'request\'->\'request\'->>\'status\' = :status',
+    //                 { status: FlowStatus.ENABLED },
+    //             )
+    //             .groupBy('"audit_event"."projectId", "flowId"'), params)
+    //     },
+    //     'flowsPublished',
+    //     '"flowsPublished"."projectId" = project.id',
+    // )
 
+    //Flows Disabled
+        // .leftJoin(
+        //     (subQuery) => {
+        //         return addDateLimitsToQuery(subQuery
+        //             .select('"audit_event"."projectId"', 'projectId')
+        //             .addSelect('"audit_event"."data"->\'flowVersion\'->>\'flowId\'', 'flowId')
+        //             .addSelect('MAX("audit_event"."created")', 'created')
+        //             .from('audit_event', 'audit_event')
+        //             .where({
+        //                 action: In([ApplicationEventName.FLOW_UPDATED]),
+        //             })
+        //             .andWhere(
+        //                 '"audit_event"."data"->\'request\'->>\'type\' = :requestValue',
+        //                 { requestValue: FlowOperationType.CHANGE_STATUS },
+        //             )
+        //             .andWhere(
+        //                 '"audit_event"."data"->\'request\'->\'request\'->>\'status\' = :status',
+        //                 { status: FlowStatus.DISABLED },
+        //             )
+        //             .groupBy('"audit_event"."projectId", "flowId"'), params)
+        //     },
+        //     'flowsDisabled',
+        //     '"flowsDisabled"."projectId" = project.id AND "flowsDisabled"."flowId" = "flowsPublished"."flowId" AND  "flowsDisabled"."created" > "flowsPublished"."created"',
+        // )
+        // .addSelect('COUNT(DISTINCT "flowsPublished"."flowId")', 'activeFlows')
+        // .andWhere('"flowsDisabled"."flowId" IS NULL')
     //Flows Edited
         .leftJoin(
             (subQuery) => {
@@ -381,19 +459,8 @@ async function generateProjectsLeaderboard(
         )
         .addSelect('COALESCE("flowEdits"."flowEdits", 0)', 'flowEdits')
 
-    //Users
-        .leftJoin(
-            (subQuery) => {
-                return addDateLimitsToQuery(subQuery
-                    .select('"project_member"."projectId"', 'projectId')
-                    .addSelect('COUNT(project_member.id)', 'userCount')
-                    .from('project_member', 'project_member')
-                    .groupBy('"project_member"."projectId"'), params)
-            },
-            'userCount',
-            '"userCount"."projectId" = project.id',
-        )
-        .addSelect('COALESCE("userCount"."userCount", 0)', 'users')
+
+   
 
     //Pieces Used
 
@@ -425,17 +492,16 @@ async function generateProjectsLeaderboard(
         )
         .addSelect('COALESCE("piecesUsed"."piecesUsed", 0)', 'piecesUsed')
         .addSelect('"project"."created"', 'created')
-        .groupBy(`"project"."id", 
-             "flowsCreated"."projectId",
-             "flowsDeleted"."projectId",
-             "connectionsCreated"."projectId",
-             "runsCount"."runsCount" ,
-             "piecesUsed"."piecesUsed" ,
-             "userCount"."userCount", 
-             "flowEdits"."flowEdits",
-             "publishes"."publishes",
-             "tasks"."tasks"
-           `)
+        .groupBy(`
+            project.id,
+            project."displayName",
+            tasks,
+            runs,
+            users,
+            issues,
+            "flowEdits",
+            "piecesUsed"
+            `)
       
     logger.debug(queryBuilder.getSql())  
     const { data, cursor } = await paginator.paginateRaw<PlatformProjectLeaderBoardRow>(queryBuilder, {
@@ -464,3 +530,5 @@ function countFlows(flows: PopulatedFlow[], status: FlowStatus | undefined) {
     }
     return flows.length
 }
+
+

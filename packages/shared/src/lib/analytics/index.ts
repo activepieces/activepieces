@@ -55,11 +55,12 @@ Type.Object({
     tasks: Type.String(),
     runs: Type.String(),
     connections: Type.String(),
-    publishes: Type.String(),
+    activeFlows: Type.String(),
     flowEdits: Type.String(),
     users: Type.String(),
     piecesUsed: Type.String(),
     created: Type.String(),
+    issues: Type.String(),
 })
 
 export type PlatformProjectLeaderBoardRow = Static<
