@@ -3,7 +3,7 @@ import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../../src/app/server'
 import { generateMockToken } from '../../../../helpers/auth'
-import { createMockUser } from '../../../../helpers/mocks'
+import { createMockPlatform, createMockProject, createMockUser } from '../../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -19,13 +19,26 @@ afterAll(async () => {
 
 describe('List flow runs endpoint', () => {
     it('should return 200', async () => {
-    // arrange
+        // arrange
         const mockUser = createMockUser()
-        await databaseConnection().getRepository('user').save(mockUser)
+        await databaseConnection().getRepository('user').save([mockUser])
+
+        const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+        await databaseConnection().getRepository('platform').save(mockPlatform)
+
+        const mockProject = createMockProject({
+            ownerId: mockUser.id,
+            platformId: mockPlatform.id,
+        })
+        await databaseConnection().getRepository('project').save([mockProject])
 
         const testToken = await generateMockToken({
             type: PrincipalType.USER,
             id: mockUser.id,
+            projectId: mockProject.id,
+            platform: {
+                id: mockPlatform.id,
+            },
         })
 
         // act
@@ -34,6 +47,9 @@ describe('List flow runs endpoint', () => {
             url: '/v1/flow-runs',
             headers: {
                 authorization: `Bearer ${testToken}`,
+            },
+            query: {
+                projectId: mockProject.id,
             },
         })
 

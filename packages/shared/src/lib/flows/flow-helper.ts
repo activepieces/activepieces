@@ -807,6 +807,7 @@ function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion):
         step.name = oldNameToNewName[step.name]
         if (step.settings.inputUiInfo) {
             step.settings.inputUiInfo.currentSelectedData = undefined
+            step.settings.inputUiInfo.sampleDataFileId = undefined
             step.settings.inputUiInfo.lastTestDate = undefined
         }
         oldStepsNameToReplace.forEach((oldName) => {

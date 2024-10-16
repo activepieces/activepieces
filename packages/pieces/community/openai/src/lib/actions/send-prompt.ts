@@ -165,10 +165,10 @@ export const askOpenAI = createAction({
       model: model,
       messages: [...roles, ...messageHistory],
       temperature: temperature,
-      max_tokens: maxTokens,
       top_p: topP,
       frequency_penalty: frequencyPenalty,
       presence_penalty: presencePenalty,
+      max_completion_tokens: maxTokens,
     });
 
     // Add response to message history

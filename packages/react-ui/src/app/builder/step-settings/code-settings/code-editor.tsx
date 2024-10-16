@@ -9,11 +9,11 @@ import { useState } from 'react';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 import { ApFlagId, SourceCode, deepMergeAndCast } from '@activepieces/shared';
 
 import { AddNpmDialog } from './add-npm-dialog';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 const styleTheme = EditorView.baseTheme({
   '&.cm-editor.cm-focused': {
@@ -42,8 +42,10 @@ const CodeEditor = ({
 
   const codeEditorTheme = theme === 'dark' ? githubDark : githubLight;
 
-  const { data: allowNpmPackagesInCodeStep } = flagsHooks.useFlag<boolean>(ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP)
-  
+  const { data: allowNpmPackagesInCodeStep } = flagsHooks.useFlag<boolean>(
+    ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
+  );
+
   const extensions = [
     styleTheme,
     EditorState.readOnly.of(readonly),

@@ -1,12 +1,10 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
-  dateInformation,
   optionalTimeFormats,
   timeFormat,
   timeParts,
   timeFormatDescription,
-  createDateFromInfo,
-  getDateInformation,
+  parseDate,
 } from '../common';
 
 export const extractDateParts = createAction({
@@ -58,59 +56,37 @@ export const extractDateParts = createAction({
   },
   async run(context) {
     const inputDate = context.propsValue.inputDate;
-    if (typeof inputDate !== 'string') {
-      throw new Error(
-        `Input date is not a string \ninput date: ${JSON.stringify(inputDate)}`
-      );
-    }
     const inputFormat = context.propsValue.inputFormat;
-    if (typeof inputFormat !== 'string') {
-      throw new Error(
-        `Input format is not a string \ninput format: ${JSON.stringify(
-          inputDate
-        )}`
-      );
-    }
     const unitExtract = context.propsValue.unitExtract;
 
-    const DateInfo = getDateInformation(
-      inputDate,
-      inputFormat
-    ) as dateInformation;
-    const BeforeDate = createDateFromInfo(DateInfo);
+    const BeforeDate = parseDate(inputDate, inputFormat);
     const outputresponse: Record<string, any> = {};
 
     for (let i = 0; i < unitExtract.length; i++) {
       switch (unitExtract[i]) {
         case timeParts.year:
-          outputresponse[timeParts.year] = DateInfo.year;
+          outputresponse[timeParts.year] = BeforeDate.year();
           break;
         case timeParts.month:
-          outputresponse[timeParts.month] = DateInfo.month;
+          outputresponse[timeParts.month] = BeforeDate.month() + 1; // dayjs months are 0-indexed
           break;
         case timeParts.day:
-          outputresponse[timeParts.day] = DateInfo.day;
+          outputresponse[timeParts.day] = BeforeDate.date();
           break;
         case timeParts.hour:
-          outputresponse[timeParts.hour] = DateInfo.hour;
+          outputresponse[timeParts.hour] = BeforeDate.hour();
           break;
         case timeParts.minute:
-          outputresponse[timeParts.minute] = DateInfo.minute;
+          outputresponse[timeParts.minute] = BeforeDate.minute();
           break;
         case timeParts.second:
-          outputresponse[timeParts.second] = DateInfo.second;
+          outputresponse[timeParts.second] = BeforeDate.second();
           break;
         case timeParts.dayOfWeek:
-          outputresponse[timeParts.dayOfWeek] = BeforeDate.toLocaleString(
-            'en-us',
-            { weekday: 'long' }
-          );
+          outputresponse[timeParts.dayOfWeek] = BeforeDate.format('dddd');
           break;
         case timeParts.monthName:
-          outputresponse[timeParts.monthName] = BeforeDate.toLocaleString(
-            'en-us',
-            { month: 'long' }
-          );
+          outputresponse[timeParts.monthName] = BeforeDate.format('MMMM');
           break;
         case timeParts.unix_time:
         default:

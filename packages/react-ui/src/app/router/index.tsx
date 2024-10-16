@@ -10,6 +10,7 @@ import {
 import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
+import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
 import AIProvidersPage from '@/app/routes/platform/ai-providers';
 import AnalyticsPage from '@/app/routes/platform/analytics';
@@ -105,6 +106,14 @@ const routes = [
     element: (
       <PageTitle title="Forms">
         <FormPage />
+      </PageTitle>
+    ),
+  },
+  {
+    path: '/chats/:flowId',
+    element: (
+      <PageTitle title="Chats">
+        <ChatPage />
       </PageTitle>
     ),
   },

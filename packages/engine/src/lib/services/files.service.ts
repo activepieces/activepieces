@@ -1,4 +1,6 @@
 import { FilesService } from '@activepieces/pieces-framework'
+import fetchRetry from 'fetch-retry'
+import { FileSizeError, FileStoreError } from '../helper/execution-errors'
 
 const MAX_FILE_SIZE_MB = Number(process.env.AP_MAX_FILE_SIZE_MB)
 
@@ -16,23 +18,23 @@ export function createFilesService({ stepName, flowId, engineToken, apiUrl }: Cr
 
             const maximumFileSizeInBytes = MAX_FILE_SIZE_MB * 1024 * 1024
             if (data.length > maximumFileSizeInBytes) {
-                throw new Error(JSON.stringify({
-                    message: 'File size is larger than maximum supported size in test step mode, please use test flow instead of step as a workaround',
-                    currentFileSize: `${(data.length / 1024 / 1024).toFixed(2)} MB`,
-                    maximumSupportSize: `${MAX_FILE_SIZE_MB.toFixed(2)} MB`,
-                }))
+                throw new FileSizeError(data.length / 1024 / 1024, MAX_FILE_SIZE_MB)
             }
 
-            const response = await fetch(apiUrl + 'v1/step-files', {
+            const fetchWithRetry = fetchRetry(global.fetch)
+
+            const response = await fetchWithRetry(apiUrl + 'v1/step-files', {
                 method: 'POST',
                 headers: {
                     Authorization: 'Bearer ' + engineToken,
                 },
+                retryDelay: 2000,
+                retries: 3,
                 body: formData,
             })
 
             if (!response.ok) {
-                throw new Error('Failed to store entry ' + response.body)
+                throw new FileStoreError(response.body)
             }
 
             const result = await response.json()

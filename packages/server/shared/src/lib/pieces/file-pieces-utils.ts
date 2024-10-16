@@ -3,7 +3,7 @@ import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
-import { ApEdition, extractPieceFromModule } from '@activepieces/shared'
+import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
 import { exceptionHandler } from '../exception-handler'
 import { logger } from '../logger'
@@ -58,9 +58,7 @@ async function findDirectoryByPackageName(packageName: string): Promise<string |
 async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
     const paths = await findAllPiecesFolder(piecesPath)
-    const enterprisePiecesPath = resolve(cwd(), 'packages', 'ee', 'pieces')
-    const enterprisePiecesPaths = await findAllPiecesFolder(enterprisePiecesPath)
-    return [...paths, ...enterprisePiecesPaths]
+    return paths
 }
 
 
@@ -73,8 +71,7 @@ async function findPieceDirectoryByFolderName(pieceName: string): Promise<string
 
 async function findAllPieces(): Promise<PieceMetadata[]> {
     const pieces = await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
-    const enterprisePieces = system.getEdition() === ApEdition.ENTERPRISE ? await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'ee', 'pieces')) : []
-    return [...pieces, ...enterprisePieces]
+    return pieces
 }
 
 

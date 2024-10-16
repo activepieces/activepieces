@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { FlowRun, SeekPage } from '@activepieces/shared';
 
 import { SidebarHeader } from '../sidebar-header';
@@ -38,6 +39,7 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
     queryFn: () =>
       flowRunsApi.list({
         flowId: [flow.id],
+        projectId: authenticationSession.getProjectId()!,
         limit: recentRuns,
         cursor: undefined,
       }),

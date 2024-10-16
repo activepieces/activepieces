@@ -66,6 +66,7 @@ export type ApErrorParams =
     | ProviderProxyConfigNotFoundParams
     | AITokenLimitExceededParams
     | SessionExpiredParams
+    | NoChatResponseParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -88,6 +89,8 @@ export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_
 export type SessionExpiredParams = BaseErrorParams<ErrorCode.SESSION_EXPIRED, {
     message?: string
 }>
+
+export type NoChatResponseParams = BaseErrorParams<ErrorCode.NO_CHAT_RESPONSE, Record<string, never>>
 
 export type FileNotFoundErrorParams = BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }>
 
@@ -390,6 +393,7 @@ export type EmailAlreadyHasActivationKey = BaseErrorParams<ErrorCode.EMAIL_ALREA
 }>
 
 export enum ErrorCode {
+    NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
     PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',

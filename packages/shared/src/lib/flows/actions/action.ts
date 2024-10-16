@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { PackageType, PieceType, VersionType } from '../../pieces'
-import { SampleDataSettingsObject } from '../sample-data'
+import { SampleDataSetting } from '../sample-data'
 import { PieceTriggerSettings } from '../triggers/trigger'
 
 export enum ActionType {
@@ -36,7 +36,7 @@ export type SourceCode = Static<typeof SourceCode>
 export const CodeActionSettings = Type.Object({
     sourceCode: SourceCode,
     input: Type.Record(Type.String({}), Type.Any()),
-    inputUiInfo: Type.Optional(SampleDataSettingsObject),
+    inputUiInfo: Type.Optional(SampleDataSetting),
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 
@@ -54,7 +54,7 @@ export const PieceActionSettings = Type.Object({
     pieceVersion: VersionType,
     actionName: Type.Optional(Type.String({})),
     input: Type.Record(Type.String({}), Type.Unknown()),
-    inputUiInfo: SampleDataSettingsObject,
+    inputUiInfo: SampleDataSetting,
     errorHandlingOptions: ActionErrorHandlingOptions,
 })
 export type PieceActionSettings = Static<typeof PieceActionSettings>
@@ -68,7 +68,7 @@ export const PieceActionSchema = Type.Object({
 // Loop Items
 export const LoopOnItemsActionSettings = Type.Object({
     items: Type.String(),
-    inputUiInfo: SampleDataSettingsObject,
+    inputUiInfo: SampleDataSetting,
 })
 export type LoopOnItemsActionSettings = Static<typeof LoopOnItemsActionSettings>
 
@@ -192,7 +192,7 @@ const BranchConditionValid = (addMinLength: boolean) => Type.Union([
 
 export const BranchActionSettingsWithValidation = Type.Object({
     conditions: Type.Array(Type.Array(BranchConditionValid(true))),
-    inputUiInfo: SampleDataSettingsObject,
+    inputUiInfo: SampleDataSetting,
 })
 
 export const ValidBranchCondition = BranchConditionValid(true)
@@ -216,7 +216,7 @@ export type BranchSingleValueCondition = Static<typeof BranchSingleValueConditio
 
 export const BranchActionSettings = Type.Object({
     conditions: Type.Array(Type.Array(BranchConditionValid(false))),
-    inputUiInfo: SampleDataSettingsObject,
+    inputUiInfo: SampleDataSetting,
 })
 export type BranchActionSettings = Static<typeof BranchActionSettings>
 

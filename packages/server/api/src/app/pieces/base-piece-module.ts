@@ -20,6 +20,7 @@ import { engineRunner } from 'server-worker'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { flagService } from '../flags/flag.service'
 import { flowService } from '../flows/flow/flow.service'
+import { sampleDataService } from '../flows/step-run/sample-data.service'
 import {
     getPiecePackage,
     pieceMetadataService,
@@ -134,12 +135,14 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const engineToken = await accessTokenManager.generateEngineToken({
                 projectId,
             })
+            const sampleData = await sampleDataService.getSampleDataForFlow(projectId, flow.version)
             const { result } = await engineRunner.executeProp(engineToken, {
                 piece: await getPiecePackage(projectId, request),
                 flowVersion: flow.version,
                 propertyName: request.propertyName,
                 actionOrTriggerName: request.actionOrTriggerName,
                 input: request.input,
+                sampleData,
                 projectId,
                 searchValue: request.searchValue,
             })

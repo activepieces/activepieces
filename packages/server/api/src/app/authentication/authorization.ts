@@ -3,21 +3,8 @@ import {
     ActivepiecesError,
     ErrorCode,
     isObject,
-    PrincipalType,
 } from '@activepieces/shared'
-import { onRequestHookHandler, preSerializationHookHandler } from 'fastify'
-
-// TODO REMOVE
-export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
-    if (request.principal.type !== PrincipalType.ENGINE) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {},
-        })
-    }
-
-    done()
-}
+import { preSerializationHookHandler } from 'fastify'
 
 export function extractResourceName(url: string): string | undefined {
     const urlPath = url.split('?')[0]
@@ -43,6 +30,7 @@ Payload | null
     if (isObject(payload)) {
         const principalProjectId = request.principal.projectId
         let verdict: AuthzVerdict = 'ALLOW'
+
 
         if ('projectId' in payload) {
             if (payload.projectId !== principalProjectId) {

@@ -48,7 +48,6 @@ export const userInvitationsService = {
         logger.info({
             email,
             platformId,
-            user,
         }, '[provisionUserInvitation]')
         if (isNil(user)) {
             return
@@ -65,7 +64,7 @@ export const userInvitationsService = {
         logger.info({
             platformId,
             count: invitations.length,
-        }, '[provisionUserInvitation]')
+        }, '[provisionUserInvitation] list invitations')
         for (const invitation of invitations) {
             logger.info({
                 invitation,

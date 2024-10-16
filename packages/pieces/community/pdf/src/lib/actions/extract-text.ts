@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { readPdfText } from 'pdf-text-reader';
+import pdfParse from 'pdf-parse';
 
 export const extractText = createAction({
   name: 'extractText',
@@ -21,7 +21,8 @@ export const extractText = createAction({
   },
   async run(context) {
     const file = context.propsValue.file;
-    const pdfText = await readPdfText({ data: file.data.buffer });
-    return pdfText;
+    const dataBuffer = Buffer.from(file.data.buffer);
+    const pdfData = await pdfParse(dataBuffer);
+    return pdfData.text;
   },
 });
