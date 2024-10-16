@@ -18,6 +18,10 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
             logLevel: 'silent',
         },
         async (request: FastifyRequest) => {
+            // Retrieve the release candidate version from environment variables
+            const releaseCandidateVersion = process.env.RELEASE_CANDIDATE_VERSION || 'unknown';
+            flags.push({ id: 'releaseCandidateVersion', value: releaseCandidateVersion });
+
             const flags = await flagService.getAll()
             const flagsMap: Record<string, unknown> = flags.reduce(
                 (map, flag) => ({ ...map, [flag.id as string]: flag.value }),
