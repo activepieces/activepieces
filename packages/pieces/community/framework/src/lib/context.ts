@@ -154,6 +154,7 @@ export type BaseActionContext<
   generateResumeUrl: (params: {
     queryParams: Record<string, string>
   }) => string;
+  pieceConfig: object;
 };
 
 type BeginExecutionActionContext<

@@ -199,6 +199,7 @@ export class IsolateSandbox {
             AP_PAUSED_FLOW_TIMEOUT_DAYS: system.getOrThrow(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
             AP_BASE_CODE_DIRECTORY: IsolateSandbox.sandboxCodesCachePath,
             AP_MAX_FILE_SIZE_MB: system.getOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB),
+            AP_PIECES_CONFIG: system.getOrThrow(SharedSystemProp.PIECES_CONFIG),
         }
     }
 
