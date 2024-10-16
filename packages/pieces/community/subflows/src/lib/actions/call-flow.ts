@@ -94,7 +94,6 @@ export const callFlow = createAction({
   async run(context) {
     if (context.executionType === ExecutionType.RESUME) {
       const response = context.resumePayload.body as CallableFlowResponse;
-      console.error("SHIT " + JSON.stringify(response))
       return {
         data: response.data
       }
