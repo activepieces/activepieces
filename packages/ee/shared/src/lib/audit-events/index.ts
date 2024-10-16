@@ -23,6 +23,7 @@ export enum ApplicationEventName {
     CONNECTION_DELETED = 'connection.deleted',
     USER_SIGNED_UP = 'user.signed.up',
     USER_SIGNED_IN = 'user.signed.in',
+    USER_DELETED = 'user.deleted',
     USER_PASSWORD_RESET = 'user.password.reset',
     USER_EMAIL_VERIFIED = 'user.email.verified',
     SIGNING_KEY_CREATED = 'signing.key.created',
@@ -117,6 +118,20 @@ export const AuthenticationEvent = Type.Object({
 
 export type AuthenticationEvent = Static<typeof AuthenticationEvent>
 
+export const DeletedUserEvent = Type.Object({
+    ...BaseAuditEventProps,
+    action: Type.Literal(ApplicationEventName.USER_DELETED),
+    data: Type.Object({
+        //the user property is for the person doing the deleting
+        deletedUser: Type.Optional(UserMeta),
+    }),
+})
+
+export type DeletedUserEvent = Static<typeof DeletedUserEvent>
+
+
+
+
 export const SignUpEvent = Type.Object({
     ...BaseAuditEventProps,
     action: Type.Literal(ApplicationEventName.USER_SIGNED_UP),
@@ -149,6 +164,7 @@ export const ApplicationEvent = Type.Union([
     FolderEvent,
     SignUpEvent,
     SigningKeyEvent,
+    DeletedUserEvent
 ])
 
 export type ApplicationEvent = Static<typeof ApplicationEvent>
@@ -187,6 +203,8 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `User ${event.data.user?.email} signed up using email from ${event.data.source}`;
         case ApplicationEventName.SIGNING_KEY_CREATED:
             return `${event.data.signingKey.displayName} is created`;
+        case ApplicationEventName.USER_DELETED: 
+        return `User ${event.data.deletedUser?.email} was deleted`;
     }
 }
 

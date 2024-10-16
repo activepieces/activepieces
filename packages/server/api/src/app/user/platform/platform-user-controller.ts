@@ -1,3 +1,5 @@
+import { ApplicationEventName } from '@activepieces/ee-shared'
+import { logger, networkUtls } from '@activepieces/server-shared'
 import {
     ApId,
     assertNotNullOrUndefined,
@@ -12,6 +14,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { eventsHooks } from '../../helper/application-events'
 import { userService } from '../user-service'
 
 export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
@@ -41,11 +44,18 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
     app.delete('/:id', DeleteUserRequest, async (req, res) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
-
+        const user = await userService.getMetaInfo({ id: req.params.id }) ?? undefined
         await userService.delete({
             id: req.params.id,
             platformId,
-        })
+        })        
+        eventsHooks.get().sendUserEventFromRequest(req
+            , {
+                action: ApplicationEventName.USER_DELETED,
+                data: {
+                    deletedUser: user,
+                },
+            })
 
         return res.status(StatusCodes.NO_CONTENT).send()
     })
