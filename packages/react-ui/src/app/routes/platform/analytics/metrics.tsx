@@ -100,14 +100,16 @@ export function Metrics({ report }: MetricsProps) {
       icon: Puzzle,
       title: t('Pieces Used'),
       value: report?.uniquePiecesUsed,
-      description: t('The number of unique pieces used across all flows'),
+      description: t(
+        'The number of unique pieces used across all active flows',
+      ),
       iconColor: 'text-green-700',
     },
     {
       icon: Bot,
       title: t('Flows with AI'),
       value: report?.activeFlowsWithAI,
-      description: t('The number of enabled flows that use AI pieces'),
+      description: t('The number of active flows that use AI pieces'),
       iconColor: 'text-purple-700',
     },
   ];
