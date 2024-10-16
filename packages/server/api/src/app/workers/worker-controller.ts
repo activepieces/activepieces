@@ -87,7 +87,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             body: SubmitPayloadsRequest,
         },
     }, async (request) => {
-        const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType } = request.body
+        const { flowVersionId, projectId, payloads, httpRequestId, synchronousHandlerId, progressUpdateType, environment } = request.body
 
         const filterPayloads = await dedupeService.filterUniquePayloads(
             flowVersionId,
@@ -95,7 +95,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         )
         const createFlowRuns = filterPayloads.map((payload) =>
             flowRunService.start({
-                environment: RunEnvironment.PRODUCTION,
+                environment: environment,
                 flowVersionId,
                 payload,
                 synchronousHandlerId,

@@ -32,6 +32,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             flowId: request.params.flowId,
             async: false,
             simulate: false,
+            useLatestFlowVersion: false,
         })
         await reply
             .status(response.status)
@@ -45,6 +46,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             flowId: request.params.flowId,
             async: true,
             simulate: false,
+            useLatestFlowVersion: false,
         })
         await reply
             .status(response.status)
@@ -58,6 +60,35 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             flowId: request.query.flowId,
             async: true,
             simulate: false,
+            useLatestFlowVersion: false,
+        })
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
+
+    app.all('/:flowId/draft/sync', WEBHOOK_PARAMS, async (request, reply) => {
+        const response = await handleWebhook({
+            request,
+            flowId: request.params.flowId,
+            async: false,
+            simulate: false,
+            useLatestFlowVersion: true,
+        })
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
+
+    app.all('/:flowId/draft/async', WEBHOOK_PARAMS, async (request, reply) => {
+        const response = await handleWebhook({
+            request,
+            flowId: request.params.flowId,
+            async: true,
+            simulate: false,
+            useLatestFlowVersion: true,
         })
         await reply
             .status(response.status)
@@ -71,6 +102,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             flowId: request.params.flowId,
             async: true,
             simulate: true,
+            useLatestFlowVersion: true,
         })
         await reply
             .status(response.status)
@@ -80,7 +112,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     )
 }
 
-async function handleWebhook({ request, flowId, async, simulate }: { request: FastifyRequest, flowId: string, async: boolean, simulate: boolean }): Promise<EngineHttpResponse> {
+async function handleWebhook({ request, flowId, async, simulate, useLatestFlowVersion }: { request: FastifyRequest, flowId: string, async: boolean, simulate: boolean, useLatestFlowVersion: boolean }): Promise<EngineHttpResponse> {
     const flow = await getFlowOrThrow(flowId)
     const payload = await convertRequest(request, flow.projectId, flow.id)
     const requestId = apId()
@@ -92,7 +124,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
             headers: {},
         }
     }
-    if (flow.status !== FlowStatus.ENABLED && !simulate) {
+    if (flow.status !== FlowStatus.ENABLED && !simulate && !useLatestFlowVersion) {
         return {
             status: StatusCodes.NOT_FOUND,
             body: {},
@@ -110,6 +142,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
             payload,
             flowId: flow.id,
             simulate,
+            useLatestFlowVersion,
         },
         priority: await getJobPriority(flow.projectId, synchronousHandlerId),
     })

@@ -16,7 +16,7 @@ Use this for production, views the published version of the form.
 \`\`\`text
 {{formUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
 \`\`\`
-Use this to generate sample data, views the draft version of the from.
+Use this to generate sample data, views the draft version of the form (the one you are editing now).
 `;
 
 const responseMarkdown = `

@@ -5,9 +5,8 @@ import {
   ArrowUpIcon,
   BotIcon,
   CircleX,
-  CopyIcon,
-  RotateCcw,
   Download,
+  RotateCcw
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
@@ -15,6 +14,7 @@ import Markdown from 'react-markdown';
 import { Navigate, useParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   ChatBubble,
@@ -24,13 +24,13 @@ import {
 } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
+import { CopyButton } from '@/components/ui/copy-button';
+import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { FormResultTypes, humanInputApi } from '@/features/human-input/lib/human-input-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApErrorParams, ErrorCode } from '@activepieces/shared';
-import { Badge } from '@/components/ui/badge';
-import ImageWithFallback from '@/components/ui/image-with-fallback';
-import { CopyButton } from '@/components/ui/copy-button';
+import { ApErrorParams, ErrorCode, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import { useSearchParam } from 'react-use';
 
 const Messages = Type.Array(
   Type.Object({
@@ -44,6 +44,7 @@ type Messages = Static<typeof Messages>;
 
 export function ChatPage() {
   const { flowId } = useParams();
+  const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
   const messagesRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -76,6 +77,7 @@ export function ChatPage() {
         flowId,
         chatId: chatId.current,
         message: savedInput,
+        useDraft,
       });
     },
     onSuccess: (result) => {

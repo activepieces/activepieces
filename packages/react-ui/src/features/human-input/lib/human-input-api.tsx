@@ -9,17 +9,20 @@ export const humanInputApi = {
   },
   submitForm: (formResult: FormResponse, useDraft: boolean, data: unknown) => {
     const suffix = useDraft
-      ? '/test'
+      ? formResult.props.waitForResponse
+        ? '/draft/sync'
+        : '/draft/async'
       : formResult.props.waitForResponse
-      ? '/sync'
-      : '';
+        ? '/sync'
+        : '';
     return api.post<FormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
       data,
     );
   },
-  sendMessage: ({ flowId, chatId, message }: SendMessageParams) => {
-    return api.post<FormResult | null>(`/v1/webhooks/${flowId}/sync`, {
+  sendMessage: ({ flowId, chatId, message, useDraft }: SendMessageParams) => {
+    const suffix = useDraft ? '/draft/sync' : '/sync';
+    return api.post<FormResult | null>(`/v1/webhooks/${flowId}${suffix}`, {
       chatId,
       message,
     });
@@ -30,6 +33,7 @@ type SendMessageParams = {
   flowId: string;
   chatId: string;
   message: string;
+  useDraft: boolean;
 };
 
 export type FormResult = {
