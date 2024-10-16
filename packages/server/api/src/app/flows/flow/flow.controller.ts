@@ -1,5 +1,4 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,

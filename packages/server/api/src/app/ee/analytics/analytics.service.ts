@@ -1,5 +1,4 @@
 import { ApplicationEventName, IssueStatus } from '@activepieces/ee-shared'
-import { logger } from '@activepieces/server-shared'
 import {
     AnalyticsPieceReportItem,
     AnalyticsProjectReportItem,

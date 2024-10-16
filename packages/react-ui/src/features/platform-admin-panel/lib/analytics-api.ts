@@ -1,11 +1,10 @@
+import { api } from '@/lib/api';
 import {
   AnalyticsReportResponse,
   ListPlatformProjectsLeaderboardParams,
   PlatformProjectLeaderBoardRow,
   SeekPage,
 } from '@activepieces/shared';
-
-import { api } from '@/lib/api';
 
 export const analyticsApi = {
   get(): Promise<AnalyticsReportResponse> {

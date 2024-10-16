@@ -11,15 +11,14 @@ import { Separator } from './seperator';
 type DataTableInputPopoverProps = {
   title?: string;
   handleFilterChange: (filterValue: string) => void;
-  intialValue:string
+  intialValue: string;
 };
 
 const DataTableInputPopover = ({
   title,
   handleFilterChange,
-  intialValue
+  intialValue,
 }: DataTableInputPopoverProps) => {
-  
   const [searchQuery, setSearchQuery] = useState(intialValue);
   const [debouncedQuery] = useDebounce(searchQuery, 300);
 

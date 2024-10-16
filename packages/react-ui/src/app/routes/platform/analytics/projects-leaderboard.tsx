@@ -1,7 +1,8 @@
-import { PlatformProjectLeaderBoardRow } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon } from 'lucide-react';
+
+import { PlatformProjectLeaderBoardRow } from '@activepieces/shared';
 
 import {
   DataTable,

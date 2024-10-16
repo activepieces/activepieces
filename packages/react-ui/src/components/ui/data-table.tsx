@@ -1,6 +1,5 @@
 'use client';
 
-import { isNil, SeekPage } from '@activepieces/shared';
 import {
   ColumnDef,
   flexRender,
@@ -12,6 +11,16 @@ import { ArrowDown, ArrowUp } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { isNil, SeekPage } from '@activepieces/shared';
 
 import { cn } from '../../lib/utils';
 
@@ -31,15 +40,6 @@ import {
   SelectItem,
 } from './select';
 import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 
 export type DataWithId = {
   id?: string;

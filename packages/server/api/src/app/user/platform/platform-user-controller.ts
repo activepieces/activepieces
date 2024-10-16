@@ -1,5 +1,4 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { logger, networkUtls } from '@activepieces/server-shared'
 import {
     ApId,
     assertNotNullOrUndefined,
@@ -32,7 +31,6 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
     app.post('/:id', UpdateUserRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
-
         return userService.update({
             id: req.params.id,
             platformId,

@@ -1,6 +1,5 @@
 'use client';
 
-import { AnalyticsReportResponse } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import * as React from 'react';
@@ -15,6 +14,7 @@ import {
 } from '@/components/ui/chart';
 import { DatePickerWithRange } from '@/components/ui/date-picker-range';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnalyticsReportResponse } from '@activepieces/shared';
 
 type TaskUsageProps = {
   report?: AnalyticsReportResponse;

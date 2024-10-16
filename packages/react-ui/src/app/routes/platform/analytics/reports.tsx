@@ -1,14 +1,14 @@
-import { AnalyticsReportResponse } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
 import React from 'react';
-
-import { LongNumber } from './long-number';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
+import { AnalyticsReportResponse } from '@activepieces/shared';
+
+import { LongNumber } from './long-number';
 
 type ReportItem = {
   name: React.ReactNode;

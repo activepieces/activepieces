@@ -1,5 +1,7 @@
 import { PlusCircledIcon } from '@radix-ui/react-icons';
+import { t } from 'i18next';
 import { CheckIcon } from 'lucide-react';
+import React from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -17,10 +19,6 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { ScrollArea } from './scroll-area';
 import { Separator } from './seperator';
-import React from 'react';
-import { t } from 'i18next';
-
-
 
 type DataTableSelectPopoverProps = {
   title?: string;
@@ -39,7 +37,7 @@ const DataTableSelectPopover = ({
   title,
   options,
   handleFilterChange,
-  initialValues
+  initialValues,
 }: DataTableSelectPopoverProps) => {
   const selectedValues = React.useRef<Set<string>>(new Set(initialValues));
 
@@ -68,7 +66,9 @@ const DataTableSelectPopover = ({
                   </Badge>
                 ) : (
                   options
-                    .filter((option) => selectedValues.current.has(option.value))
+                    .filter((option) =>
+                      selectedValues.current.has(option.value),
+                    )
                     .map((option) => (
                       <Badge
                         variant="secondary"
@@ -104,7 +104,7 @@ const DataTableSelectPopover = ({
                           selectedValues.current.add(option.value);
                         }
                         const filterValues = Array.from(selectedValues.current);
-                        
+
                         handleFilterChange(filterValues);
                       }}
                     >
@@ -124,7 +124,7 @@ const DataTableSelectPopover = ({
                       <div>
                         <span>{option.label}</span>
                         <span className="hidden">{index}</span>
-                      </div>                 
+                      </div>
                     </CommandItem>
                   );
                 })}
@@ -135,12 +135,13 @@ const DataTableSelectPopover = ({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => {handleFilterChange([]); selectedValues.current= new Set([])}}
+                    onSelect={() => {
+                      handleFilterChange([]);
+                      selectedValues.current = new Set([]);
+                    }}
                     className="justify-center text-center"
                   >
-                   {
-                    t('Clear filters')
-                   }
+                    {t('Clear filters')}
                   </CommandItem>
                 </CommandGroup>
               </>

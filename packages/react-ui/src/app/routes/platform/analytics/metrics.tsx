@@ -1,14 +1,14 @@
-import { AnalyticsReportResponse } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Building, User, Workflow, Puzzle, Bot } from 'lucide-react';
 import React from 'react';
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SkeletonList } from '@/components/ui/skeleton';
+import { AnalyticsReportResponse } from '@activepieces/shared';
+
 import { InfoTooltip } from '../../../../components/ui/info-tooltip';
 
 import { LongNumber } from './long-number';
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SkeletonList } from '@/components/ui/skeleton';
 
 type MetricProps = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
