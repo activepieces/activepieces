@@ -1,5 +1,7 @@
 import { AppSystemProp, system } from '@activepieces/server-shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { ListPlatformProjectsLeaderboardParams, PrincipalType, SeekPage } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { analyticsService } from './analytics.service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
@@ -11,7 +13,6 @@ export const analyticsModule: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
-
     app.get('/', async (request) => {
         const { platform } = request.principal
         const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
@@ -31,4 +32,38 @@ const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
         }
         return analyticsService.generateReport(platform.id)
     })
+    app.get(
+        '/leaderboards/platform-projects',
+        ListPlatformProjectsRequest,
+        async (request) => {
+            const { platform } = request.principal
+            const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
+            if (platform.id === cloudPlatformId) {
+                return {
+                    data: [],
+                    next: null,
+                    previous: null,
+                    cursor: null,
+                    limit: null,
+                }
+            }
+
+            return analyticsService.generateProjectsLeaderboard(
+                request.query,
+                platform.id,
+            )
+        },
+    )
+}
+
+const ListPlatformProjectsRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: SeekPage(Type.Any()),
+        },
+        querystring: ListPlatformProjectsLeaderboardParams,
+    },
 }

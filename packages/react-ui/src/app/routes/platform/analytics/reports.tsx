@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Download } from 'lucide-react';
 import React from 'react';
 
@@ -7,9 +8,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { AnalyticsReportResponse } from '@activepieces/shared';
 
+import { LongNumber } from './long-number';
+
 type ReportItem = {
   name: React.ReactNode;
-  value: React.ReactNode;
+  value: number;
 };
 
 type ReportProps = {
@@ -23,21 +26,32 @@ function Report({ title, data, downloadCSV }: ReportProps) {
     <Card className="h-full flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-xl">{title}</CardTitle>
-        <Button variant="outline" size="sm" onClick={downloadCSV}>
-          <Download className="mr-2 h-4 w-4" />
-          Download CSV
-        </Button>
+        {data && data.length > 0 && (
+          <Button variant="outline" size="sm" onClick={downloadCSV}>
+            <Download className="mr-2 h-4 w-4" />
+            Download CSV
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="pt-4">
         {data ? (
-          <ul className="space-y-2">
-            {data.slice(0, 10).map((item, index) => (
-              <li key={index} className="flex justify-between items-center">
-                <span>{item.name}</span>
-                <span className="text-muted-foreground">{item.value}</span>
-              </li>
-            ))}
-          </ul>
+          data.length > 0 ? (
+            <ul className="space-y-2">
+              {data.slice(0, 10).map((item, index) => (
+                <li key={index} className="flex justify-between items-center">
+                  <span>{item.name}</span>
+                  <LongNumber
+                    className="text-muted-foreground"
+                    value={item.value}
+                  ></LongNumber>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-center text-muted-foreground my-4">
+              {t('No data available currently')}
+            </p>
+          )
         ) : (
           <Skeleton className="h-24 w-full" />
         )}
@@ -103,25 +117,13 @@ function Reports({ report }: ReportsProps) {
       value: piece.usageCount,
     }));
 
-  const topProjectsData = report?.topProjects
-    .sort((a, b) => b.activeFlows - a.activeFlows)
-    .map((project) => ({
-      name: <>{project.displayName}</>,
-      value: project.activeFlows,
-    }));
-
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Report
-          title="Top pieces by active flows"
+          title={t('Most Used Pieces by Active Flows')}
           data={topPiecesData}
           downloadCSV={() => downloadCSV(report?.topPieces, 'top-pieces')}
-        />
-        <Report
-          title="Top projects by active flows"
-          data={topProjectsData}
-          downloadCSV={() => downloadCSV(report?.topProjects, 'top-projects')}
         />
       </div>
     </div>
