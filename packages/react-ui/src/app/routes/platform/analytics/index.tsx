@@ -17,7 +17,7 @@ export default function AnalyticsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['analytics'],
     queryFn: analyticsApi.get,
-    staleTime: 60 * 1000,
+    refetchOnMount: true,
     enabled: platform.analyticsEnabled,
   });
 

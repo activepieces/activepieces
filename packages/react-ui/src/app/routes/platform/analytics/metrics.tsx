@@ -5,13 +5,15 @@ import React from 'react';
 
 import { InfoTooltip } from '../../../../components/ui/info-tooltip';
 
+import { LongNumber } from './long-number';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { SkeletonList } from '@/components/ui/skeleton';
 
 type MetricProps = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   title: string;
-  value: React.ReactNode;
+  value: number;
   description: string;
   footer?: string;
   iconColor: string;
@@ -35,28 +37,12 @@ const Metric = ({
         <Icon className={`h-5 w-5 ${iconColor}`} />
       </CardHeader>
       <CardContent>
-        <div className="text-xl font-bold">{value}</div>
+        <div className="text-xl font-bold">
+          <LongNumber value={value}></LongNumber>
+        </div>
         {footer && (
           <div className="text-sm text-muted-foreground mt-2">{footer}</div>
         )}
-      </CardContent>
-    </Card>
-  );
-};
-
-const SkeletonMetric = () => {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center space-x-2">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-4 w-4 rounded-full" />
-        </div>
-        <Skeleton className="h-5 w-5" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-8 w-20 mb-2" />
-        <Skeleton className="h-4 w-32" />
       </CardContent>
     </Card>
   );
@@ -67,72 +53,78 @@ type MetricsProps = {
 };
 
 export function Metrics({ report }: MetricsProps) {
-  const metricsData = [
-    {
-      icon: Workflow,
-      title: t('Active Flows'),
-      value: report?.activeFlows,
-      description: t('The number of enabled flows in the platform'),
-      footer: report ? `Out of ${report.totalFlows} total flows` : null,
-      iconColor: 'text-cyan-700',
-    },
-    {
-      icon: Building,
-      title: t('Active Projects'),
-      value: report?.activeProjects,
-      description: t('The number of projects with at least one enabled flow'),
-      footer: report ? `Out of ${report.totalProjects} total projects` : null,
-      iconColor: 'text-pink-700',
-    },
-    {
-      icon: User,
-      title: t('Active Users'),
-      value: report?.activeUsers,
-      description: t('The number of users logged in the last 30 days'),
-      footer: report
-        ? t(`Out of {totalusers} total users`, {
-            totalusers: report.totalUsers,
-          })
-        : null,
-      iconColor: 'text-indigo-700',
-    },
-    {
-      icon: Puzzle,
-      title: t('Pieces Used'),
-      value: report?.uniquePiecesUsed,
-      description: t(
-        'The number of unique pieces used across all active flows',
-      ),
-      iconColor: 'text-green-700',
-    },
-    {
-      icon: Bot,
-      title: t('Flows with AI'),
-      value: report?.activeFlowsWithAI,
-      description: t('The number of active flows that use AI pieces'),
-      iconColor: 'text-purple-700',
-    },
-  ];
+  const metricsData = report
+    ? [
+        {
+          icon: Workflow,
+          title: t('Active Flows'),
+          value: report.activeFlows,
+          description: t('The number of enabled flows in the platform'),
+          footer: report ? `Out of ${report.totalFlows} total flows` : null,
+          iconColor: 'text-cyan-700',
+        },
+        {
+          icon: Building,
+          title: t('Active Projects'),
+          value: report.activeProjects,
+          description: t(
+            'The number of projects with at least one enabled flow',
+          ),
+          footer: report
+            ? `Out of ${report.totalProjects} total projects`
+            : null,
+          iconColor: 'text-pink-700',
+        },
+        {
+          icon: User,
+          title: t('Active Users'),
+          value: report.activeUsers,
+          description: t('The number of users logged in the last 30 days'),
+          footer: report
+            ? t(`Out of {totalusers} total users`, {
+                totalusers: report.totalUsers,
+              })
+            : null,
+          iconColor: 'text-indigo-700',
+        },
+        {
+          icon: Puzzle,
+          title: t('Pieces Used'),
+          value: report.uniquePiecesUsed,
+          description: t(
+            'The number of unique pieces used across all active flows',
+          ),
+          iconColor: 'text-green-700',
+        },
+        {
+          icon: Bot,
+          title: t('Flows with AI'),
+          value: report.activeFlowsWithAI,
+          description: t('The number of active flows that use AI pieces'),
+          iconColor: 'text-purple-700',
+        },
+      ]
+    : [];
 
   return (
     <div>
       <div className="text-xl font-semibold ">{t('Metrics')}</div>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {report
-          ? metricsData.map((metric, index) => (
-              <Metric
-                key={index}
-                icon={metric.icon}
-                title={metric.title}
-                value={metric.value}
-                description={metric.description}
-                footer={metric.footer ?? undefined}
-                iconColor={metric.iconColor}
-              />
-            ))
-          : Array.from({ length: metricsData.length }).map((_, index) => (
-              <SkeletonMetric key={index} />
-            ))}
+        {report ? (
+          metricsData.map((metric, index) => (
+            <Metric
+              key={index}
+              icon={metric.icon}
+              title={metric.title}
+              value={metric.value}
+              description={metric.description}
+              footer={metric.footer ?? undefined}
+              iconColor={metric.iconColor}
+            />
+          ))
+        ) : (
+          <SkeletonList numberOfItems={5} className="h-[138px]"></SkeletonList>
+        )}
       </div>
     </div>
   );

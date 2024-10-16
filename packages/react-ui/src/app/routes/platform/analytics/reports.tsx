@@ -3,6 +3,8 @@ import { t } from 'i18next';
 import { Download } from 'lucide-react';
 import React from 'react';
 
+import { LongNumber } from './long-number';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,7 +12,7 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 
 type ReportItem = {
   name: React.ReactNode;
-  value: React.ReactNode;
+  value: number;
 };
 
 type ReportProps = {
@@ -38,13 +40,16 @@ function Report({ title, data, downloadCSV }: ReportProps) {
               {data.slice(0, 10).map((item, index) => (
                 <li key={index} className="flex justify-between items-center">
                   <span>{item.name}</span>
-                  <span className="text-muted-foreground">{item.value}</span>
+                  <LongNumber
+                    className="text-muted-foreground"
+                    value={item.value}
+                  ></LongNumber>
                 </li>
               ))}
             </ul>
           ) : (
             <p className="text-center text-muted-foreground my-4">
-              {t('No data available yet')}
+              {t('No data available currently')}
             </p>
           )
         ) : (
@@ -116,7 +121,7 @@ function Reports({ report }: ReportsProps) {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Report
-          title={t('Top Pieces by Active Flows')}
+          title={t('Most Used Pieces by Active Flows')}
           data={topPiecesData}
           downloadCSV={() => downloadCSV(report?.topPieces, 'top-pieces')}
         />

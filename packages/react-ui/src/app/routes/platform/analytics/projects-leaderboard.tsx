@@ -11,6 +11,8 @@ import { DataTableColumnHeader } from '../../../../components/ui/data-table-colu
 import { InfoTooltip } from '../../../../components/ui/info-tooltip';
 import { analyticsApi } from '../../../../features/platform-admin-panel/lib/analytics-api';
 
+import { LongNumber } from './long-number';
+
 const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
   [
     {
@@ -30,7 +32,11 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
         <DataTableColumnHeader column={column} title={t('Users')} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.users}</div>;
+        return (
+          <div className="text-left">
+            <LongNumber value={row.original.users}></LongNumber>
+          </div>
+        );
       },
     },
     {
@@ -40,7 +46,11 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
         <DataTableColumnHeader column={column} title={t('Flows')} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.flows}</div>;
+        return (
+          <div className="text-left">
+            <LongNumber value={row.original.flows}></LongNumber>
+          </div>
+        );
       },
     },
     {
@@ -52,7 +62,11 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
         </div>
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.activeFlows}</div>;
+        return (
+          <div className="text-left">
+            <LongNumber value={row.original.activeFlows}></LongNumber>
+          </div>
+        );
       },
     },
     {
@@ -65,7 +79,11 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
         </div>
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.issues}</div>;
+        return (
+          <div className="text-left">
+            <LongNumber value={row.original.issues}></LongNumber>
+          </div>
+        );
       },
     },
     {
@@ -80,7 +98,11 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
         </div>
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.contributions}</div>;
+        return (
+          <div className="text-left">
+            <LongNumber value={row.original.contributions}></LongNumber>
+          </div>
+        );
       },
     },
     {
@@ -90,7 +112,11 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
         <DataTableColumnHeader column={column} title={t('Tasks')} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.tasks}</div>;
+        return (
+          <div className="text-left">
+            <LongNumber value={row.original.tasks}></LongNumber>
+          </div>
+        );
       },
     },
     {
@@ -100,7 +126,11 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
         <DataTableColumnHeader column={column} title={t('Pieces Used')} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.piecesUsed}</div>;
+        return (
+          <div className="text-left">
+            <LongNumber value={row.original.piecesUsed}></LongNumber>
+          </div>
+        );
       },
     },
     {
@@ -110,7 +140,11 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
         <DataTableColumnHeader column={column} title={t('Connections')} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.connections}</div>;
+        return (
+          <div className="text-left">
+            <LongNumber value={row.original.connections}></LongNumber>
+          </div>
+        );
       },
     },
   ];
