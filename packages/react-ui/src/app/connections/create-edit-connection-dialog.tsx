@@ -36,6 +36,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import {
   BasicAuthProperty,
   CustomAuthProperty,
+  CustomAuthProps,
   OAuth2Property,
   OAuth2Props,
   PieceMetadataModel,
@@ -347,7 +348,10 @@ function createDefaultValues(
 ): Partial<UpsertAppConnectionRequestBody> {
   const projectId = authenticationSession.getProjectId();
   assertNotNullOrUndefined(projectId, 'projectId');
-  switch (piece.auth?.type) {
+  if (!piece.auth) {
+    throw new Error(`Unsupported property type: ${piece.auth}`);
+  }
+  switch (piece.auth.type) {
     case PropertyType.SECRET_TEXT:
       return {
         name: suggestedConnectionName,
@@ -371,7 +375,7 @@ function createDefaultValues(
           password: '',
         },
       };
-    case PropertyType.CUSTOM_AUTH:
+    case PropertyType.CUSTOM_AUTH: {
       return {
         name: suggestedConnectionName,
         pieceName: piece.name,
@@ -379,9 +383,10 @@ function createDefaultValues(
         type: AppConnectionType.CUSTOM_AUTH,
         value: {
           type: AppConnectionType.CUSTOM_AUTH,
-          props: {},
+          props: extractDefaultPropsValues(piece.auth.props),
         },
       };
+    }
     case PropertyType.OAUTH2:
       return {
         name: suggestedConnectionName,
@@ -390,10 +395,10 @@ function createDefaultValues(
         type: AppConnectionType.CLOUD_OAUTH2,
         value: {
           type: AppConnectionType.CLOUD_OAUTH2,
-          scope: piece.auth?.scope.join(' '),
+          scope: piece.auth.scope.join(' '),
           authorization_method: piece.auth?.authorizationMethod,
           client_id: '',
-          props: {},
+          props: extractDefaultPropsValues(piece.auth.props),
           code: '',
         },
       };
@@ -401,3 +406,20 @@ function createDefaultValues(
       throw new Error(`Unsupported property type: ${piece.auth}`);
   }
 }
+
+const extractDefaultPropsValues = (
+  props: CustomAuthProps | OAuth2Props | undefined,
+) => {
+  if (!props) {
+    return {};
+  }
+  return Object.entries(props).reduce((acc, [propName, prop]) => {
+    if (prop.defaultValue) {
+      return {
+        ...acc,
+        [propName]: prop.defaultValue,
+      };
+    }
+    return acc;
+  }, {});
+};
