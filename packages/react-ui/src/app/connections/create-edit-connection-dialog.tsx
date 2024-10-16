@@ -70,9 +70,12 @@ import { SecretTextConnectionSettings } from './secret-text-connection-settings'
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   open: boolean;
-  onConnectionCreated: (name: string) => void;
+  onConnectionCreated: (
+    res: Pick<AppConnectionWithoutSensitiveData, 'id' | 'name'>,
+  ) => void;
   setOpen: (open: boolean) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
+  predefinedConnectionName: string | null;
 };
 
 function buildConnectionSchema(
@@ -160,6 +163,7 @@ const CreateOrEditConnectionDialog = React.memo(
     setOpen,
     onConnectionCreated,
     reconnectConnection,
+    predefinedConnectionName,
   }: ConnectionDialogProps) => {
     const { auth } = piece;
 
@@ -173,6 +177,8 @@ const CreateOrEditConnectionDialog = React.memo(
           piece,
           reconnectConnection
             ? reconnectConnection.name
+            : predefinedConnectionName
+            ? predefinedConnectionName
             : appConnectionUtils.findName(piece.name),
         ),
       },
@@ -185,7 +191,6 @@ const CreateOrEditConnectionDialog = React.memo(
       form.trigger();
     });
     const [errorMessage, setErrorMessage] = useState('');
-
     const { mutate, isPending } = useMutation({
       mutationFn: async () => {
         setErrorMessage('');
@@ -202,10 +207,12 @@ const CreateOrEditConnectionDialog = React.memo(
         }
         return appConnectionsApi.upsert(formValues);
       },
-      onSuccess: () => {
+      onSuccess: (connection) => {
         setOpen(false);
-        const name = form.getValues().request.name;
-        onConnectionCreated(name);
+        onConnectionCreated({
+          id: connection.id,
+          name: connection.name,
+        });
         setErrorMessage('');
       },
       onError: (err) => {
@@ -275,7 +282,10 @@ const CreateOrEditConnectionDialog = React.memo(
                       </FormLabel>
                       <FormControl>
                         <Input
-                          disabled={!isNil(reconnectConnection)}
+                          disabled={
+                            !isNil(reconnectConnection) ||
+                            !isNil(predefinedConnectionName)
+                          }
                           {...field}
                           required
                           id="name"

@@ -5,12 +5,13 @@ import { Navigate } from 'react-router-dom';
 
 import { SocketProvider } from '@/components/socket-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 
 import { authenticationSession } from '../../lib/authentication-session';
+
+import { LoadingScreen } from './loading-screen';
 
 function isJwtExpired(token: string): boolean {
   if (!token) {
@@ -48,13 +49,7 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   platformHooks.prefetchPlatform();
   flagsHooks.useFlags();
   return (
-    <Suspense
-      fallback={
-        <div className=" flex h-screen w-screen items-center justify-center ">
-          <LoadingSpinner size={50}></LoadingSpinner>
-        </div>
-      }
-    >
+    <Suspense fallback={<LoadingScreen></LoadingScreen>}>
       <SocketProvider>{children}</SocketProvider>
     </Suspense>
   );

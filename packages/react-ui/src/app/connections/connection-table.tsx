@@ -28,7 +28,7 @@ import {
 import { TableTitle } from '../../components/ui/table-title';
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
-import { NewConnectionTypeDialog } from './new-connection-type-dialog';
+import { NewConnectionDialog } from './new-connection-dialog';
 
 type PieceIconWithPieceNameProps = {
   pieceName: string;
@@ -217,7 +217,7 @@ function AppConnectionsTable() {
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToWriteAppConnection}
           >
-            <NewConnectionTypeDialog
+            <NewConnectionDialog
               onConnectionCreated={() => setRefresh(refresh + 1)}
             >
               <Button
@@ -226,7 +226,7 @@ function AppConnectionsTable() {
               >
                 {t('New Connection')}
               </Button>
-            </NewConnectionTypeDialog>
+            </NewConnectionDialog>
           </PermissionNeededTooltip>
         </div>
       </div>
