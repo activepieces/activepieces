@@ -56,7 +56,7 @@ Type.Object({
     runs: Type.String(),
     connections: Type.String(),
     activeFlows: Type.String(),
-    flowEdits: Type.String(),
+    contributions: Type.String(),
     users: Type.String(),
     piecesUsed: Type.String(),
     created: Type.String(),

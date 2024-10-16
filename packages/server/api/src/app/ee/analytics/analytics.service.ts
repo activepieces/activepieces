@@ -16,7 +16,7 @@ import {
     SeekPage,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { In, MoreThan, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { Brackets, In, MoreThan, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { auditLogRepo } from '../../ee/audit-logs/audit-event-service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
@@ -33,19 +33,18 @@ export const analyticsService = {
         platformId: PlatformId,
     ): Promise<AnalyticsReportResponse> => {
         const flows = await listAllFlows(platformId, undefined)
-        const activeFlows = countFlows(flows, FlowStatus.ENABLED)
-        const totalFlows = countFlows(flows, undefined)
+        const enabledFlows = flows.filter(f=> f.status === FlowStatus.ENABLED)
         const totalProjects = await countProjects(platformId)
         const { totalUsers, activeUsers } = await analyzeUsers(platformId)
         const tasksUsage = await tasksReport(platformId)
-        const { uniquePiecesUsed, topPieces } = await analyzePieces(flows)
-        const activeFlowsWithAI = await numberOfFlowsWithAI(flows)
+        const { uniquePiecesUsed, topPieces } = await analyzePieces(enabledFlows)
+        const activeFlowsWithAI = await numberOfFlowsWithAI(enabledFlows)
         const { topProjects, activeProjects } = await analyzeProjects(flows)
         return {
             totalUsers,
             activeUsers,
-            activeFlows,
-            totalFlows,
+            activeFlows: enabledFlows.length,
+            totalFlows: flows.length,
             totalProjects,
             uniquePiecesUsed,
             activeFlowsWithAI,
@@ -236,7 +235,9 @@ async function generateProjectsLeaderboard(
         .createQueryBuilder('project')
         .select('"project"."displayName"', 'displayName')
         .addSelect('"project"."id"', 'id')
+        .addSelect('"project"."created"', 'created')
         .where('project."platformId" = :platformId', { platformId })
+      
         //Flows Created
         .leftJoin(
             (subQuery) => {
@@ -252,6 +253,7 @@ async function generateProjectsLeaderboard(
             'flowsCreated',
             '"flowsCreated"."projectId" = project.id',
         )
+        
         //Flows Deleted
         .leftJoin(
             (subQuery) => {
@@ -267,41 +269,153 @@ async function generateProjectsLeaderboard(
             'flowsDeleted',
             '"flowsDeleted"."projectId" = project.id AND "flowsDeleted"."flowId" = "flowsCreated"."flowId" ',
         )
-        .addSelect('COUNT(DISTINCT "flowsCreated"."flowId")', 'flows')
-      
+        .addSelect('COUNT(DISTINCT "flowsCreated"."flowId") FILTER (WHERE "flowsDeleted"."flowId" IS NULL)', 'flows')
+        
 
     //Connections Created
-    // .leftJoin(
-    //     (subQuery) => {
-    //         return addDateLimitsToQuery(subQuery
-    //             .select('audit_event."projectId"', 'projectId')
-    //             .addSelect('audit_event."data"->\'connection\'->>\'id\'', 'connectionId')
-    //             .from('audit_event', 'audit_event')
-    //             .where({
-    //                 action: In([ApplicationEventName.CONNECTION_UPSERTED]),
-    //             })
-    //         , params)
-    //     },
-    //     'connectionsCreated',
-    //     '"connectionsCreated"."projectId" = project.id',
-    // )
-    //Connections Deleted
-    // .leftJoin(
-    //     (subQuery) => {
-    //         return addDateLimitsToQuery(subQuery
-    //             .select('"audit_event"."projectId"', 'projectId')
-    //             .addSelect('audit_event."data"->\'connection\'->>\'id\'', 'connectionId')
-    //             .from('audit_event', 'audit_event')
-    //             .where({
-    //                 action: In([ApplicationEventName.CONNECTION_DELETED]),
-    //             })
-    //         , params)
-    //     },
-    //     'connectionsDeleted',
-    //     '"connectionsDeleted"."projectId" = project.id AND "connectionsDeleted"."connectionId" = "connectionsCreated"."connectionId" ',
-    // )
-    // .addSelect('COUNT(DISTINCT "connectionsCreated"."connectionId")', 'connections')
-    // .andWhere('"connectionsDeleted"."connectionId" IS NULL')
+        .leftJoin(
+            (subQuery) => {
+                return addDateLimitsToQuery(subQuery
+                    .select('audit_event."projectId"', 'projectId')
+                    .addSelect('audit_event."data"->\'connection\'->>\'id\'', 'connectionId')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.CONNECTION_UPSERTED]),
+                    })
+                , params)
+            },
+            'connectionsCreated',
+            '"connectionsCreated"."projectId" = project.id',
+        )
+    // Connections Deleted
+        .leftJoin(
+            (subQuery) => {
+                return addDateLimitsToQuery(subQuery
+                    .select('"audit_event"."projectId"', 'projectId')
+                    .addSelect('audit_event."data"->\'connection\'->>\'id\'', 'connectionId')
+                    .from('audit_event', 'audit_event')
+                    .where({
+                        action: In([ApplicationEventName.CONNECTION_DELETED]),
+                    })
+                , params)
+            },
+            'connectionsDeleted',
+            '"connectionsDeleted"."projectId" = project.id AND "connectionsDeleted"."connectionId" = "connectionsCreated"."connectionId" ',
+        )
+        .addSelect('COUNT(DISTINCT "connectionsCreated"."connectionId") FILTER (WHERE "connectionsDeleted"."connectionId" IS NULL)', 'connections')
+
+    //Pieces Used
+
+        .leftJoin(
+            (subQuery) => {
+                return addDateLimitsToQuery(subQuery
+                    .select('"publishes"."projectId"', 'projectId')
+                    .addSelect('"publishes"."data"->\'flowVersion\'->>\'flowId\'', 'flowId')                    
+                    .addSelect('MAX(publishes.created)', 'created')
+                    .from('audit_event', 'publishes')                    
+                    .where(
+                        new Brackets(qb => 
+                            qb.where(`"publishes".action = '${ApplicationEventName.FLOW_UPDATED}'`)
+                                .andWhere(`"publishes"."data"->'request'->>'type' = '${FlowOperationType.CHANGE_STATUS}'`,
+                                ).andWhere(
+                                    `"publishes"."data"->'request'->'request'->>'status' = '${FlowStatus.ENABLED}'`
+                                    ,
+                                )
+                                .orWhere( `"publishes"."data"->'request'->>'type' = '${FlowOperationType.LOCK_AND_PUBLISH}'`)),
+                    )
+                    .andWhere(
+                        `"publishes"."data"->'flowVersion'->>'flowId' NOT IN (
+                            SELECT "disabled"."data"->'flowVersion'->>'flowId'
+                            FROM "audit_event" AS disabled
+                            WHERE disabled."projectId" = "publishes"."projectId"
+                            AND disabled.action = '${ApplicationEventName.FLOW_UPDATED}'
+                            AND disabled."data"->'request'->>'type' = '${FlowOperationType.CHANGE_STATUS}'
+                            AND disabled."data"->'request'->'request'->>'status' = '${FlowStatus.DISABLED}'
+                            AND disabled."created" > "publishes"."created"
+                        )`,
+                    )
+                    .andWhere(
+                        `"publishes"."data"->'flowVersion'->>'flowId' NOT IN (
+                        SELECT "deleted"."data"->'flow'->>'id'
+                        FROM "audit_event" AS deleted
+                        WHERE deleted."projectId" = "publishes"."projectId"
+                        AND deleted.action = '${ApplicationEventName.FLOW_DELETED}'
+                        AND deleted."created" > "publishes"."created"
+                    )`,
+                    ), params)
+                    .groupBy('publishes."projectId", "flowId"')
+            },
+            'activeFlows',
+            '"activeFlows"."projectId" = project.id',
+        )
+        .addSelect('COUNT(DISTINCT "activeFlows"."flowId")', 'activeFlows')
+        
+      
+        .leftJoin(
+            (subQuery) => {
+                const events = addDateLimitsToQuery(subQuery
+                    .select('"publishedEvent"."projectId"', 'projectId')
+                    .addSelect('"publishedEvent"."created"', 'created')
+                    .addSelect(
+                        'jsonb_array_elements_text("publishedEvent"."data"->\'request\'->\'request\'->\'usedPieces\')',
+                        'piece',
+                    )
+                    .from('audit_event', 'publishedEvent')   
+                    .where(`
+                        "publishedEvent"."data"->'flowVersion'->>'flowId' IN ( 
+                        WITH LatestActiveFlowEvents AS (
+                            SELECT 
+                            inner_audit_event."data" -> 'flowVersion' ->> 'flowId' AS "flowId",
+                            MAX(inner_audit_event."created") AS "latest_created"
+                        FROM 
+                            "audit_event" AS inner_audit_event 
+                        WHERE 
+                            (
+                                inner_audit_event.action = 'flow.updated' 
+                                AND (
+                                    inner_audit_event."data" -> 'request' ->> 'type' = '${FlowOperationType.CHANGE_STATUS}' 
+                                    AND inner_audit_event."data" -> 'request' -> 'request' ->> 'status' = '${FlowStatus.ENABLED}'
+                                ) 
+                                OR inner_audit_event."data" -> 'request' ->> 'type' = '${FlowOperationType.LOCK_AND_PUBLISH}' 
+                            ) 
+                            AND inner_audit_event."data" -> 'flowVersion' ->> 'flowId' NOT IN (
+                                SELECT 
+                                    "deleted"."data" -> 'flow' ->> 'id' 
+                                FROM 
+                                    "audit_event" AS "deleted" 
+                                WHERE 
+                                    "deleted"."action" = 'flow.deleted'
+                            ) 
+                            AND  "inner_audit_event"."data"->'flowVersion'->>'flowId' NOT IN (
+                            SELECT "disabled"."data"->'flowVersion'->>'flowId'
+                            FROM "audit_event" AS disabled
+                            WHERE disabled."projectId" = "inner_audit_event"."projectId"
+                            AND disabled.action = '${ApplicationEventName.FLOW_UPDATED}'
+                            AND disabled."data"->'request'->>'type' = '${FlowOperationType.CHANGE_STATUS}'
+                            AND disabled."data"->'request'->'request'->>'status' = '${FlowStatus.DISABLED}'
+                            AND disabled."created" > "inner_audit_event"."created"
+                        )    
+                        GROUP BY 
+                            inner_audit_event."data" -> 'flowVersion' ->> 'flowId'
+                    )
+
+                    SELECT 
+                        "flowId"
+                    FROM 
+                        LatestActiveFlowEvents)`),                
+                params)
+        
+                return events
+                    .from(`(${events.getQuery()})`, 'unnested_pieces') // Use the subquery as a derived table
+                    .select('unnested_pieces."projectId"')
+                    .addSelect('COUNT(DISTINCT unnested_pieces.piece)', 'piecesUsed')
+                    .groupBy('unnested_pieces."projectId"')
+                    .setParameters(events.getParameters())
+            },
+            'piecesUsed',
+            '"piecesUsed"."projectId" = project.id',
+        )
+        .addSelect('COALESCE("piecesUsed"."piecesUsed", 0)', 'piecesUsed')
 
     //Users
         .leftJoin(
@@ -310,9 +424,15 @@ async function generateProjectsLeaderboard(
                     .select('"audit_event"."projectId"', 'projectId')
                     .addSelect('COUNT(audit_event.id)', 'usersCount')
                     .from('audit_event', 'audit_event')
-                    .where({
-                        action: In([ApplicationEventName.USER_SIGNED_UP]),
-                    })
+                    .where(`
+                        audit_event.action = '${ApplicationEventName.USER_SIGNED_UP}'
+                        AND audit_event."userId" NOT IN (
+                        SELECT deleted_users.data->'deletedUser'->>'id' 
+                        FROM  audit_event AS deleted_users
+                        WHERE  deleted_users.action = '${ApplicationEventName.USER_DELETED}'
+                        )
+                        `)
+
                     .groupBy('"audit_event"."projectId"'), params)
             },
             'usersCount',
@@ -378,67 +498,13 @@ async function generateProjectsLeaderboard(
             'tasks',
         )
   
-    //Flows Published
-    // .leftJoin(
-    //     (subQuery) => {
-    //         return addDateLimitsToQuery(subQuery
-    //             .select('"audit_event"."projectId"', 'projectId')
-    //             .addSelect('"audit_event"."data"->\'flowVersion\'->>\'flowId\'', 'flowId')
-    //             .addSelect('MAX("audit_event"."created")', 'created')
-    //             .from('audit_event', 'audit_event')
-    //             .where({
-    //                 action: In([ApplicationEventName.FLOW_UPDATED]),
-    //             })
-    //             .andWhere(
-    //                 '"audit_event"."data"->\'request\'->>\'type\' = :requestValue',
-    //                 { requestValue: FlowOperationType.LOCK_AND_PUBLISH },
-    //             )
-    //             .orWhere(
-    //                 '"audit_event"."data"->\'request\'->>\'type\' = :requestValue',
-    //                 { requestValue: FlowOperationType.CHANGE_STATUS },
-    //             )
-    //             .andWhere(
-    //                 '"audit_event"."data"->\'request\'->\'request\'->>\'status\' = :status',
-    //                 { status: FlowStatus.ENABLED },
-    //             )
-    //             .groupBy('"audit_event"."projectId", "flowId"'), params)
-    //     },
-    //     'flowsPublished',
-    //     '"flowsPublished"."projectId" = project.id',
-    // )
 
-    //Flows Disabled
-        // .leftJoin(
-        //     (subQuery) => {
-        //         return addDateLimitsToQuery(subQuery
-        //             .select('"audit_event"."projectId"', 'projectId')
-        //             .addSelect('"audit_event"."data"->\'flowVersion\'->>\'flowId\'', 'flowId')
-        //             .addSelect('MAX("audit_event"."created")', 'created')
-        //             .from('audit_event', 'audit_event')
-        //             .where({
-        //                 action: In([ApplicationEventName.FLOW_UPDATED]),
-        //             })
-        //             .andWhere(
-        //                 '"audit_event"."data"->\'request\'->>\'type\' = :requestValue',
-        //                 { requestValue: FlowOperationType.CHANGE_STATUS },
-        //             )
-        //             .andWhere(
-        //                 '"audit_event"."data"->\'request\'->\'request\'->>\'status\' = :status',
-        //                 { status: FlowStatus.DISABLED },
-        //             )
-        //             .groupBy('"audit_event"."projectId", "flowId"'), params)
-        //     },
-        //     'flowsDisabled',
-        //     '"flowsDisabled"."projectId" = project.id AND "flowsDisabled"."flowId" = "flowsPublished"."flowId" AND  "flowsDisabled"."created" > "flowsPublished"."created"',
-        // )
-        // .addSelect('COUNT(DISTINCT "flowsPublished"."flowId")', 'activeFlows')
-        // .andWhere('"flowsDisabled"."flowId" IS NULL')
     //Flows Edited
         .leftJoin(
             (subQuery) => {
                 return addDateLimitsToQuery(subQuery
                     .select('"audit_event"."projectId"', 'projectId')
-                    .addSelect('COUNT(audit_event.id)', 'flowEdits')
+                    .addSelect('COUNT(audit_event.id)', 'contributions')
                     .from('audit_event', 'audit_event')
                     .where({
                         action: In([ApplicationEventName.FLOW_UPDATED]),
@@ -454,44 +520,10 @@ async function generateProjectsLeaderboard(
                     )
                     .groupBy('"audit_event"."projectId"'), params)
             },
-            'flowEdits',
-            '"flowEdits"."projectId" = project.id',
+            'contributions',
+            '"contributions"."projectId" = project.id',
         )
-        .addSelect('COALESCE("flowEdits"."flowEdits", 0)', 'flowEdits')
-
-
-   
-
-    //Pieces Used
-
-        .leftJoin(
-            (subQuery) => {
-                const piecesUsedInEachAuditEvent = subQuery
-                    .select('"audit_event"."projectId"', 'projectId')
-                    .addSelect(
-                        'jsonb_array_elements_text(audit_event.data->\'request\'->\'request\'->\'usedPieces\')',
-                        'piece',
-                    )
-                    .from('audit_event', 'audit_event')
-                    .where({
-                        action: In([ApplicationEventName.FLOW_UPDATED]),
-                    })
-                    .andWhere(
-                        '"audit_event"."data"->\'request\'->>\'type\' = :requestValue',
-                        { requestValue: FlowOperationType.LOCK_AND_PUBLISH },
-                    )
-                return addDateLimitsToQuery(subQuery
-                    .from(`(${piecesUsedInEachAuditEvent.getQuery()})`, 'unnested_pieces') // Use the subquery as a derived table
-                    .select('unnested_pieces."projectId"')
-                    .addSelect('COUNT(DISTINCT unnested_pieces.piece)', 'piecesUsed')
-                    .groupBy('unnested_pieces."projectId"')
-                    .setParameters(piecesUsedInEachAuditEvent.getParameters()), params)
-            },
-            'piecesUsed',
-            '"piecesUsed"."projectId" = project.id',
-        )
-        .addSelect('COALESCE("piecesUsed"."piecesUsed", 0)', 'piecesUsed')
-        .addSelect('"project"."created"', 'created')
+        .addSelect('COALESCE("contributions"."contributions", 0)', 'contributions')
         .groupBy(`
             project.id,
             project."displayName",
@@ -499,13 +531,16 @@ async function generateProjectsLeaderboard(
             runs,
             users,
             issues,
-            "flowEdits",
+            contributions,
             "piecesUsed"
             `)
       
-    logger.debug(queryBuilder.getSql())  
+  
+
+
+ 
     const { data, cursor } = await paginator.paginateRaw<PlatformProjectLeaderBoardRow>(queryBuilder, {
-        orderBy: params.orderByColumn ? `"${params.orderByColumn}" ` : 'tasks',
+        orderBy: params.orderByColumn ? `"${params.orderByColumn}" ` : 'contributions',
         order: params.order ?? 'DESC',
     })
     return paginationHelper.createPage<PlatformProjectLeaderBoardRow>(data, cursor)
@@ -524,11 +559,4 @@ const addDateLimitsToQuery = (query: SelectQueryBuilder<ObjectLiteral>, params: 
     }
     return query
 }
-function countFlows(flows: PopulatedFlow[], status: FlowStatus | undefined) {
-    if (status) {
-        return flows.filter((flow) => flow.status === status).length
-    }
-    return flows.length
-}
-
 

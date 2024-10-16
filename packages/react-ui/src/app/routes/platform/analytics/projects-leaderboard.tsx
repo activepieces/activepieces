@@ -80,7 +80,7 @@ const columns: ColumnDef<RowDataWithActions<PlatformProjectLeaderBoardRow>>[] =
         </div>
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.flowEdits}</div>;
+        return <div className="text-left">{row.original.contributions}</div>;
       },
     },
     {

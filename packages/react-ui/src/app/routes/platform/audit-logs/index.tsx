@@ -5,7 +5,15 @@ import {
 } from '@activepieces/ee-shared';
 import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Folder, Key, Link2, Logs, Users, Workflow } from 'lucide-react';
+import {
+  Folder,
+  Key,
+  Link2,
+  Logs,
+  UserMinus,
+  Users,
+  Workflow,
+} from 'lucide-react';
 
 import { TableTitle } from '../../../../components/ui/table-title';
 
@@ -186,6 +194,13 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Users className="size-4" />,
         tooltip: t('User'),
       };
+
+    case ApplicationEventName.USER_DELETED:
+      return {
+        icon: <UserMinus className="size-4" />,
+        tooltip: t('User'),
+      };
+
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return {
         icon: <Key className="size-4" />,
