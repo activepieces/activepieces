@@ -16,6 +16,7 @@ import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/17
 import { RemoveUniqueConstraintOnStepFile1725570317713 } from './migration/common/1725570317713-RemoveUniqueConstraintOnStepFile'
 import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-AddUserSessionId'
 import { AddLicenseKeyIntoPlatform1728827704109 } from './migration/common/1728827704109-AddLicenseKeyIntoPlatform'
+import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migration/common/1729098769827-ChangeProjectUniqueConstraintToPartialIndex'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -138,6 +139,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUserSessionId1727130193726,
         RemovePremiumPiecesSqlite1727865697005,
         AddLicenseKeyIntoPlatform1728827704109,   
+        ChangeProjectUniqueConstraintToPartialIndex1729098769827,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
