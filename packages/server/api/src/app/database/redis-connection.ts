@@ -1,34 +1,28 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import fs from 'fs'
+
+import { AppSystemProp,  RedisType, system } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import Redis, { RedisOptions } from 'ioredis'
 
+const redisConnectionMode = system.get(AppSystemProp.REDIS_TYPE)
 const url = system.get(AppSystemProp.REDIS_URL)
 const username = system.get(AppSystemProp.REDIS_USER)
-const password = system.get(AppSystemProp.REDIS_PASSWORD)
+const password = system.getOrThrow(AppSystemProp.REDIS_PASSWORD)
+const role = system.get<'master' | 'slave'>(AppSystemProp.REDIS_SENTINEL_ROLE)
 const useSsl = system.getBoolean(AppSystemProp.REDIS_USE_SSL) ?? false
+const sslCaFile = system.get(AppSystemProp.REDIS_SSL_CA_FILE)
+const sentinelList = system.get(AppSystemProp.REDIS_SENTINEL_HOSTS)
+const sentinelName = system.get(AppSystemProp.REDIS_SENTINEL_NAME)
 const db = system.getNumber(AppSystemProp.REDIS_DB) ?? 0
-const sentinelList = system.get(AppSystemProp.REDIS_SENTINELS)
 
-export const createRedisClient = (params?: CreateRedisClientParams): Redis => {
-    const config: Partial<RedisOptions> = {
-        maxRetriesPerRequest: null,
-        ...params,
+const readCAFile = (file: string | undefined): string | undefined => {
+    if (isNil(file)) {
+        return undefined
     }
+    return fs.readFileSync(file, { encoding: 'utf8' })
+}
 
-    if (sentinelList) {
-        const sentinels = sentinelList.split(',').map((sentinel) => {
-            const [host, port] = sentinel.split(':')
-            return { host, port: Number.parseInt(port, 10) }
-        })
-        const name = sentinels[0].host
-        return new Redis({
-            ...config,
-            sentinels,
-            name,
-            enableTLSForSentinelMode: useSsl ? true : undefined,
-        })
-    }
-
+const createStandaloneClient = (config: Partial<RedisOptions>): Redis => {
     if (url) {
         return new Redis(url, {
             ...config,
@@ -46,9 +40,68 @@ export const createRedisClient = (params?: CreateRedisClientParams): Redis => {
         username,
         password,
         db,
-        tls: useSsl ? {} : undefined,
+        tls: useSsl ? {
+            ca: readCAFile(sslCaFile),
+        } : undefined,
     })
 }
+
+export const createRedisClient = (params?: CreateRedisClientParams): Redis => {
+    if (url) {
+        return new Redis(url, {
+            ...params,
+        })
+    }
+    const config: Partial<RedisOptions> = {
+        maxRetriesPerRequest: null,
+        ...params,
+    }
+
+    switch (redisConnectionMode) {
+        case RedisType.SENTINEL:
+            return createSentinelClient(config)
+        case RedisType.DEFAULT:
+        default:
+            return createStandaloneClient(config)
+    }
+}
+
+
+const createSentinelClient = (config: Partial<RedisOptions>): Redis => {
+    assertNotNullOrUndefined(sentinelList, 'REDIS_SENTINEL_HOSTS')
+
+    const sentinels = sentinelList.split(',').map((sentinel) => {
+        const [host, port] = sentinel.split(':')
+        return { host, port: Number.parseInt(port, 10) }
+    })
+    const tlsCa = readCAFile(sslCaFile)
+    const redisOptions: RedisOptions = {
+        ...config,
+        ...({ sentinels }),
+        name: sentinelName,
+        password,
+        role,
+        ...getTlsOptionsForSentinel(useSsl, tlsCa),
+        lazyConnect: true,
+    }
+    return new Redis(redisOptions)
+}
+
+const getTlsOptionsForSentinel = (useSsl: boolean, tlsCa: string | undefined): Partial<RedisOptions> => {
+    if (!useSsl) {
+        return {}
+    }
+    return {
+        enableTLSForSentinelMode: true,
+        tls: {
+            ca: tlsCa,
+        },
+        sentinelTLS: {
+            ca: tlsCa,
+        },
+    }
+}
+
 
 type CreateRedisClientParams = {
     /**
