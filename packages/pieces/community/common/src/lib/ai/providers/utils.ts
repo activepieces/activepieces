@@ -39,7 +39,7 @@ export enum ModelType {
 export function model(options: {
   label: string;
   value: string;
-  supported: Array<'text' | 'image' | 'function'>;
+  supported: Array<'text' | 'image' | 'function' | 'speech' | 'transcription'>;
 }) {
   return {
     __tag: ModelType.NO_MAPPER,
