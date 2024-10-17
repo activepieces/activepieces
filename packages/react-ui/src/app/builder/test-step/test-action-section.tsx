@@ -63,7 +63,7 @@ const TestActionSection = React.memo(
           stepName: formValues.name,
         });
         let sampleDataFileId: string | undefined = undefined;
-        if (testStepResponse.success) {
+        if (testStepResponse.success && !isNil(testStepResponse.output)) {
           const sampleFile = await sampleDataApi.save({
             flowVersionId,
             stepName: formValues.name,
