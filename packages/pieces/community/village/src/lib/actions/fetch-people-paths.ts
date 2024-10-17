@@ -10,12 +10,12 @@ export const fetchPeoplePaths = createAction({
   description: 'fetch people paths',
   props: {
     user_identifier: Property.LongText({
-      displayName: 'User Reference',
+      displayName: 'User Identifier',
       description: `If you're a Village Partner, use this field that identifies your user`,
       required: false,
     }),
     person_linkedin_url: Property.LongText({
-      displayName: 'Target Linkedin URL',
+      displayName: 'Person Linkedin URL',
       description: `The Linkedin URL of the person you're trying to find paths to.`,
       required: true,
     }),
