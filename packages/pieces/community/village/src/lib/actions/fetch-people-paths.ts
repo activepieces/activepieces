@@ -6,8 +6,8 @@ import { villageAuth } from '../..';
 export const fetchPeoplePaths = createAction({
   name: 'fetchPeoplePaths',
   auth: villageAuth,
-  displayName: 'People Paths',
-  description: 'fetch people paths',
+  displayName: 'Find Person Paths',
+  description: 'Enrich a person record with all available intro paths',
   props: {
     user_identifier: Property.LongText({
       displayName: 'User Identifier',
@@ -21,8 +21,7 @@ export const fetchPeoplePaths = createAction({
     }),
   },
   async run(context) {
-    const { person_linkedin_url, user_identifier } =
-    context.propsValue;
+    const { person_linkedin_url, user_identifier } = context.propsValue;
 
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
@@ -32,8 +31,8 @@ export const fetchPeoplePaths = createAction({
       },
       body: {
         person_linkedin_url,
-        user_identifier
-      }
+        user_identifier,
+      },
     });
     return res.body;
   },
