@@ -295,7 +295,7 @@ async function removeSecretsFromFlow(
         if (removeConnectionNames) {
             step.settings.input = replaceConnections(step.settings.input)
         }
-        if (removeSampleData) {
+        if (removeSampleData && !isNil(step?.settings?.inputUiInfo)) {
             step.settings.inputUiInfo.sampleDataFileId = undefined
             step.settings.inputUiInfo.currentSelectedData = undefined
             step.settings.inputUiInfo.lastTestDate = undefined
