@@ -1,11 +1,20 @@
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
-import { ArrowUpIcon, BotIcon, CopyIcon } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
+import {
+  ArrowUpIcon,
+  BotIcon,
+  CircleX,
+  RotateCcw,
+  Download,
+} from 'lucide-react';
 import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import { Navigate, useParams } from 'react-router-dom';
+import remarkGfm from 'remark-gfm';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   ChatBubble,
@@ -15,16 +24,28 @@ import {
 } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
+import { CopyButton } from '@/components/ui/copy-button';
+import ImageWithFallback from '@/components/ui/image-with-fallback';
 import {
   FormResultTypes,
   humanInputApi,
 } from '@/features/human-input/lib/human-input-api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 const Messages = Type.Array(
   Type.Object({
     role: Type.Union([Type.Literal('user'), Type.Literal('bot')]),
     content: Type.String(),
+    type: Type.Optional(
+      Type.Union([
+        Type.Literal('text'),
+        Type.Literal('image'),
+        Type.Literal('file'),
+      ]),
+    ),
+    mimeType: Type.Optional(Type.String()),
   }),
 );
 type Messages = Static<typeof Messages>;
@@ -41,13 +62,23 @@ export function ChatPage() {
   const chatId = useRef<string>(nanoid());
   const [messages, setMessages] = useState<Messages>([]);
   const [input, setInput] = useState('');
+  const previousInputRef = useRef('');
+  const [error, setError] = useState<ApErrorParams | null>(null);
+
+  const { data: projectId } = useQuery({
+    queryKey: ['current-project-id'],
+    queryFn: () => authenticationSession.getProjectId(),
+  });
 
   const { mutate: sendMessage, isPending: isLoading } = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
       if (!flowId || !chatId) return null;
-      const savedInput = input;
+      const savedInput = isRetrying ? previousInputRef.current : input;
+      previousInputRef.current = savedInput;
       setInput('');
-      setMessages([...messages, { role: 'user', content: savedInput }]);
+      if (!isRetrying) {
+        setMessages([...messages, { role: 'user', content: savedInput }]);
+      }
       scrollToBottom();
       return humanInputApi.sendMessage({
         flowId,
@@ -56,20 +87,38 @@ export function ChatPage() {
       });
     },
     onSuccess: (result) => {
-      switch (result?.type) {
-        case FormResultTypes.MARKDOWN:
-          setMessages([
-            ...messages,
-            { role: 'bot', content: result.value as string },
-          ]);
-          break;
-        case FormResultTypes.FILE:
-          setMessages([
-            ...messages,
-            { role: 'bot', content: result.value as string },
-          ]);
-          break;
+      if (!result) {
+        setError({
+          code: ErrorCode.NO_CHAT_RESPONSE,
+          params: {},
+        });
+      } else if ('type' in result) {
+        switch (result.type) {
+          case FormResultTypes.FILE:
+            if ('url' in result.value) {
+              const isImage = result.value.mimeType?.startsWith('image/');
+              setMessages([
+                ...messages,
+                {
+                  role: 'bot',
+                  content: result.value.url,
+                  type: isImage ? 'image' : 'file',
+                  mimeType: result.value.mimeType,
+                },
+              ]);
+            }
+            break;
+          case FormResultTypes.MARKDOWN:
+            setMessages([
+              ...messages,
+              { role: 'bot', content: result.value, type: 'text' },
+            ]);
+        }
       }
+      scrollToBottom();
+    },
+    onError: (error: AxiosError) => {
+      setError(error.response?.data as ApErrorParams);
       scrollToBottom();
     },
   });
@@ -78,7 +127,7 @@ export function ChatPage() {
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    sendMessage();
+    sendMessage({ isRetrying: false });
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -104,7 +153,7 @@ export function ChatPage() {
           <ChatBubble
             key={index}
             variant={message.role === 'user' ? 'sent' : 'received'}
-            className="flex items-center"
+            className="flex  items-start"
           >
             {message.role === 'bot' && (
               <ChatBubbleAvatar
@@ -113,20 +162,60 @@ export function ChatPage() {
               />
             )}
             <ChatBubbleMessage className="flex gap-2">
-              <Markdown className="bg-inherit">{message.content}</Markdown>
-            </ChatBubbleMessage>
-            {message.role === 'bot' && (
-              <div className="flex gap-1">
-                <ChatBubbleAction
-                  variant="outline"
-                  className="size-5"
-                  icon={<CopyIcon className="size-3" />}
-                  onClick={() => navigator.clipboard.writeText(message.content)}
+              {message.type === 'image' ? (
+                <ImageWithFallback
+                  src={message.content}
+                  alt="Received image"
+                  className="max-w-full h-auto rounded-md"
                 />
-              </div>
+              ) : message.type === 'file' ? (
+                <Badge
+                  variant="secondary"
+                  className="cursor-pointer hover:bg-secondary/80"
+                  onClick={() => window.open(message.content, '_blank')}
+                >
+                  <Download className="mr-2 h-4 w-4" /> Download File
+                </Badge>
+              ) : (
+                <Markdown remarkPlugins={[remarkGfm]} className="bg-inherit">
+                  {message.content}
+                </Markdown>
+              )}
+            </ChatBubbleMessage>
+            {message.role === 'bot' && message.type === 'text' && (
+              <CopyButton
+                textToCopy={message.content}
+                className="size-6 p-1 mt-2"
+              />
             )}
           </ChatBubble>
         ))}
+        {error && !isLoading && (
+          <ChatBubble variant="received">
+            <div className="relative">
+              <ChatBubbleAvatar
+                src=""
+                fallback={<BotIcon className="size-5" />}
+              />
+              <div className="absolute -bottom-[2px] -right-[2px]">
+                <CircleX className="size-4 text-destructive" strokeWidth={3} />
+              </div>
+            </div>
+            <ChatBubbleMessage className="text-destructive">
+              {formatError(projectId, flowId, error)}
+            </ChatBubbleMessage>
+            <div className="flex gap-1">
+              <ChatBubbleAction
+                variant="outline"
+                className="size-5 mt-2"
+                icon={<RotateCcw className="size-3" />}
+                onClick={() => {
+                  sendMessage({ isRetrying: true });
+                }}
+              />
+            </div>
+          </ChatBubble>
+        )}
         {isLoading && (
           <ChatBubble variant="received">
             <ChatBubbleAvatar
@@ -172,3 +261,45 @@ export function ChatPage() {
     </main>
   );
 }
+
+const formatError = (
+  projectId: string | undefined | null,
+  flowId: string,
+  error: ApErrorParams,
+) => {
+  switch (error.code) {
+    case ErrorCode.NO_CHAT_RESPONSE:
+      if (projectId) {
+        return (
+          <span>
+            No response from the chatbot. Ensure that{' '}
+            <strong>Respond on UI (Markdown)</strong> is the final step in{' '}
+            <a
+              href={`/projects/${projectId}/flows/${flowId}`}
+              className="text-primary underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              your flow
+            </a>
+            .
+          </span>
+        );
+      }
+      return (
+        <span>
+          The chatbot is not responding. It seems there might be an issue with
+          how this chat was set up. Please contact the person who shared this
+          chat link with you for assistance.
+        </span>
+      );
+    case ErrorCode.FLOW_NOT_FOUND:
+      return (
+        <span>The chat flow you are trying to access no longer exists.</span>
+      );
+    case ErrorCode.VALIDATION:
+      return <span>{`Validation error: ${error.params.message}`}</span>;
+    default:
+      return <span>Something went wrong. Please try again.</span>;
+  }
+};

@@ -1,5 +1,9 @@
 import { api } from '@/lib/api';
-import { FormResponse, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import {
+  FileResponseInterface,
+  FormResponse,
+  USE_DRAFT_QUERY_PARAM_NAME,
+} from '@activepieces/shared';
 
 export const humanInputApi = {
   get: (flowId: string, useDraft?: boolean) => {
@@ -32,10 +36,15 @@ type SendMessageParams = {
   message: string;
 };
 
-export type FormResult = {
-  type: FormResultTypes;
-  value: unknown;
-};
+export type FormResult =
+  | {
+      type: FormResultTypes.FILE;
+      value: FileResponseInterface;
+    }
+  | {
+      type: FormResultTypes.MARKDOWN;
+      value: string;
+    };
 
 export enum FormResultTypes {
   MARKDOWN = 'markdown',

@@ -32,10 +32,10 @@ import { utils } from './utils'
 
 const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
-    const output = await flowExecutor.execute({
-        action: input.flowVersion.trigger.nextAction,
+    const output = await flowExecutor.executeFromTrigger({
         executionState: context,
         constants,
+        input,
     })
     const newContext = output.verdict === ExecutionVerdict.RUNNING ? output.setVerdict(ExecutionVerdict.SUCCEEDED, output.verdictResponse) : output
     await progressService.sendUpdate({

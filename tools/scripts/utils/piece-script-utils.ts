@@ -3,9 +3,10 @@ import { readdir, stat } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
 import { PieceMetadata } from '../../../packages/pieces/community/framework/src'
-import { PieceCategory, extractPieceFromModule } from '../../../packages/shared/src'
+import { extractPieceFromModule } from '../../../packages/shared/src'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
+import { StatusCodes } from 'http-status-codes'
 type Piece = {
     name: string;
     displayName: string;
@@ -15,8 +16,10 @@ type Piece = {
     metadata(): Omit<PieceMetadata, 'name' | 'version'>;
 };
 
+export const AP_CLOUD_API_BASE = 'https://cloud.activepieces.com/api/v1';
 export const PIECES_FOLDER = 'packages/pieces'
 export const COMMUNITY_PIECE_FOLDER = 'packages/pieces/community'
+export const NON_PIECES_PACKAGES = ['@activepieces/pieces-framework', '@activepieces/pieces-common']
 
 const validateSupportedRelease = (minRelease: string | undefined, maxRelease: string | undefined) => {
     if (minRelease !== undefined && !semver.valid(minRelease)) {
@@ -51,10 +54,6 @@ export function getCommunityPieceFolder(pieceName: string): string {
     return join(COMMUNITY_PIECE_FOLDER, pieceName)
 }
 
-export async function findPiece(pieceName: string): Promise<PieceMetadata | null> {
-    const pieces = await findAllPieces()
-    return pieces.find((p) => p.name === pieceName) ?? null
-}
 
 export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     const piecesPath = resolve(cwd(), 'packages', 'pieces')
@@ -64,10 +63,47 @@ export async function findAllPiecesDirectoryInSource(): Promise<string[]> {
     return [...paths, ...enterprisePiecesPaths]
 }
 
-export async function findPieceDirectoryInSource(pieceName: string): Promise<string | null> {
-    const piecesPath = await findAllPiecesDirectoryInSource();
-    const piecePath = piecesPath.find((p) => p.includes(pieceName))
-    return piecePath ?? null
+export const pieceMetadataExists = async (
+    pieceName: string,
+    pieceVersion: string
+): Promise<boolean> => {
+    const cloudResponse = await fetch(
+        `${AP_CLOUD_API_BASE}/pieces/${pieceName}?version=${pieceVersion}`
+    );
+
+    const pieceExist: Record<number, boolean> = {
+        [StatusCodes.OK]: true,
+        [StatusCodes.NOT_FOUND]: false
+    };
+
+    if (
+        pieceExist[cloudResponse.status] === null ||
+        pieceExist[cloudResponse.status] === undefined
+    ) {
+        throw new Error(await cloudResponse.text());
+    }
+
+    return pieceExist[cloudResponse.status];
+};
+
+export async function findNewPieces(): Promise<PieceMetadata[]> {
+    const paths = await findAllDistPaths()
+    const changedPieces = (await Promise.all(paths.map(async (folderPath) => {
+        const packageJson = await readPackageJson(folderPath);
+        if (NON_PIECES_PACKAGES.includes(packageJson.name)) {
+            return null;
+        }
+        const exists = await pieceMetadataExists(packageJson.name, packageJson.version)
+        if (!exists) {
+            try {
+                return loadPieceFromFolder(folderPath);
+            } catch (ex) {
+                return null;
+            }
+        }
+        return null;
+    }))).filter((piece): piece is PieceMetadata => piece !== null)
+    return changedPieces;
 }
 
 export async function findAllPieces(): Promise<PieceMetadata[]> {

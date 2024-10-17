@@ -1,4 +1,7 @@
 import dayjs from 'dayjs';
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+dayjs.extend(customParseFormat);
 
 export interface dateInformation {
   year: number;
@@ -66,20 +69,19 @@ export function parseDate(date: string, format: string): dayjs.Dayjs {
   }
   return djs;
 }
-
-export const timeFormatDescription = `Here's what each part of the format (eg. YYYY) means:
-\nYYYY : Year (4 digits)
-\nYY : Year (2 digits)
-\nMMMM : Month (full name)
-\nMMM : Month (short name)
-\nMM : Month (2 digits)
-\nDDDD : Day (full name)
-\nDDD : Day (short name)
-\nDD : Day (2 digits)
-\nHH : Hour (2 digits)
-\nmm : Minute (2 digits)
-\nss : Second (2 digits)
-\nX : Time in unix format`;
+export const timeFormatDescription = `Here's what each part of the format (e.g., YYYY) represents:
+\nYYYY : Year (4 digits) - Example: 2023
+\nYY : Year (2 digits) - Example: 23
+\nMMMM : Month (full name) - Example: September
+\nMMM : Month (short name) - Example: Sep
+\nMM : Month (2 digits) - Example: 09
+\nDDDD : Day (full name) - Example: Sunday
+\nDDD : Day (short name) - Example: Sun
+\nDD : Day (2 digits) - Example: 17
+\nHH : Hour (2 digits) - Example: 11
+\nmm : Minute (2 digits) - Example: 23
+\nss : Second (2 digits) - Example: 58
+\nX : Time in Unix format - Example: 1694949838`;
 
 export const optionalTimeFormats = [
   { label: timeFormatLabel.format00, value: timeFormat.format00 },

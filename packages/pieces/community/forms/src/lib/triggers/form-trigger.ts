@@ -20,7 +20,7 @@ Use this to generate sample data, views the draft version of the from.
 `;
 
 const responseMarkdown = `
-If **Wait for Response** is enabled, ensure the last step in the flow is either **Respond with Markdown** or **Respond with File**.
+If **Wait for Response** is enabled, ensure the last step in the flow is either **Respond on UI (Markdown)** or **Respond on UI (File)**.
 `;
 
 export const onFormSubmission = createTrigger({

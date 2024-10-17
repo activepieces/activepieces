@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox';
-import { TestOrRunHookContext, TriggerHookContext } from '../context';
+import { OnStartContext, ActionContext, TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
@@ -29,6 +29,8 @@ export const WebhookHandshakeConfiguration = Type.Object({
   strategy: Type.Enum(WebhookHandshakeStrategy),
   paramName: Type.Optional(Type.String()),
 })
+
+type OnStartRunner<PieceAuth extends PieceAuthProperty, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
 
 export type WebhookHandshakeConfiguration = Static<typeof WebhookHandshakeConfiguration>
 
@@ -64,7 +66,8 @@ type BaseTriggerParams<
   onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
   onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
   run: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
-  test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
+  test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
+  onStart?: OnStartRunner<PieceAuth, TriggerProps>,
   sampleData: unknown
 }
 
@@ -105,6 +108,7 @@ export class ITrigger<
     public readonly onRenew: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly onEnable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly onDisable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
+    public readonly onStart: OnStartRunner<PieceAuth, TriggerProps>,
     public readonly run: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly test: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly sampleData: unknown,
@@ -139,6 +143,7 @@ export const createTrigger = <
         params.onRenew ?? (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
+        params.onStart ?? (async () => Promise.resolve()),
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
@@ -158,6 +163,7 @@ export const createTrigger = <
         (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
+        params.onStart ?? (async () => Promise.resolve()),
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
@@ -177,6 +183,7 @@ export const createTrigger = <
         (async () => Promise.resolve()),
         params.onEnable,
         params.onDisable,
+        params.onStart ?? (async () => Promise.resolve()),
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,

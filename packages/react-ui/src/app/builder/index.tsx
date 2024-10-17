@@ -63,11 +63,11 @@ const useAnimateSidebar = (
 };
 
 const constructContainerKey = (
-  flowVersionId: string,
+  flowId: string,
   stepName: string,
   triggerOrActionName?: string,
 ) => {
-  return flowVersionId + stepName + (triggerOrActionName ?? '');
+  return flowId + stepName + (triggerOrActionName ?? '');
 };
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -97,7 +97,7 @@ const BuilderPage = () => {
       return {
         memorizedSelectedStep: step,
         containerKey: constructContainerKey(
-          flowVersion.id,
+          state.flow.id,
           state.selectedStep,
           triggerOrActionName,
         ),
