@@ -4,7 +4,7 @@ import { Static, Type } from '@sinclair/typebox'
 export const SaveSampleDataRequest = Type.Object({
     flowVersionId: Type.String(),
     stepName: Type.String(),
-    payload: Type.Optional(Type.Union([Type.Null(), Type.Unknown()])),
+    payload: Type.Unknown(),
 })
 export type SaveSampleDataRequest = Static<typeof SaveSampleDataRequest>
 
