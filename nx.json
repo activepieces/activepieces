@@ -120,7 +120,7 @@
   "tasksRunnerOptions": {
     "default": {
       "options": {
-        "useDaemonProcess": true
+        "useDaemonProcess": false
       }
     }
   },
