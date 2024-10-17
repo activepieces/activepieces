@@ -1,8 +1,10 @@
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
+
+import { CopyButton } from '../ui/copy-button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { CopyButton } from '../ui/copy-button';
+
 import { SelectUtilButton } from './select-util-button';
 
 type CopyToClipboardInputProps = {
@@ -35,11 +37,7 @@ const CopyToClipboardInput = ({
   return (
     <div className="flex gap-2 items-center bg-background border border-solid text-sm rounded-lg block w-full select-none pr-3">
       {useInput ? (
-        <Input
-          value={textToCopy}
-          className={noBorderInputClass}
-          readOnly
-        />
+        <Input value={textToCopy} className={noBorderInputClass} readOnly />
       ) : (
         <Textarea
           value={textToCopy}

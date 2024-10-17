@@ -26,7 +26,9 @@ export const callableFlow = createTrigger({
     // ignore
   },
   async test(context) {
-    return [context.propsValue.exampleData];
+    return [{
+      data: context.propsValue.exampleData
+    }];
   },
   async run(context) {
     return [context.payload.body];

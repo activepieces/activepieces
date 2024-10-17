@@ -1,16 +1,20 @@
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
-import { t } from 'i18next';
 
-import { toast } from '@/components/ui/use-toast';
 import { Button, ButtonProps } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 
 interface CopyButtonProps extends ButtonProps {
   textToCopy: string;
 }
 
-export const CopyButton = ({ textToCopy, className, ...props }: CopyButtonProps) => {
+export const CopyButton = ({
+  textToCopy,
+  className,
+  ...props
+}: CopyButtonProps) => {
   const [isCopied, setIsCopied] = useState(false);
 
   const { mutate: copyToClipboard } = useMutation({
@@ -35,11 +39,7 @@ export const CopyButton = ({ textToCopy, className, ...props }: CopyButtonProps)
       onClick={() => copyToClipboard()}
       {...props}
     >
-      {isCopied ? (
-        <Check className="h-4 w-4" />
-      ) : (
-        <Copy className="h-4 w-4" />
-      )}
+      {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
     </Button>
   );
 };

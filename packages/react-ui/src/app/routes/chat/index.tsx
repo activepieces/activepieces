@@ -5,7 +5,6 @@ import {
   ArrowUpIcon,
   BotIcon,
   CircleX,
-  CopyIcon,
   RotateCcw,
   Download,
 } from 'lucide-react';
@@ -15,6 +14,7 @@ import Markdown from 'react-markdown';
 import { Navigate, useParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   ChatBubble,
@@ -24,19 +24,27 @@ import {
 } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
-import { FormResultTypes, humanInputApi } from '@/features/human-input/lib/human-input-api';
+import { CopyButton } from '@/components/ui/copy-button';
+import ImageWithFallback from '@/components/ui/image-with-fallback';
+import {
+  FormResultTypes,
+  humanInputApi,
+} from '@/features/human-input/lib/human-input-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
-import { Badge } from '@/components/ui/badge';
-import ImageWithFallback from '@/components/ui/image-with-fallback';
-import { CopyButton } from '@/components/ui/copy-button';
 
 const Messages = Type.Array(
   Type.Object({
     role: Type.Union([Type.Literal('user'), Type.Literal('bot')]),
     content: Type.String(),
-    type: Type.Optional(Type.Union([Type.Literal('text'), Type.Literal('image'), Type.Literal('file')])),
+    type: Type.Optional(
+      Type.Union([
+        Type.Literal('text'),
+        Type.Literal('image'),
+        Type.Literal('file'),
+      ]),
+    ),
     mimeType: Type.Optional(Type.String()),
   }),
 );
@@ -161,8 +169,8 @@ export function ChatPage() {
                   className="max-w-full h-auto rounded-md"
                 />
               ) : message.type === 'file' ? (
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className="cursor-pointer hover:bg-secondary/80"
                   onClick={() => window.open(message.content, '_blank')}
                 >
