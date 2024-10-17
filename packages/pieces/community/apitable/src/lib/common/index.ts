@@ -240,6 +240,14 @@ export async function createNewFields(
         newFields[key] = field.property?.options?.filter(
           (member) => member.id === `${fields[key]}`
         );
+      } else if (
+        [AITableFieldType.MULTI_SELECT, AITableFieldType.TWO_WAY_LINK].includes(
+          field.type
+        ) &&
+        (Array.isArray(fields[key]) ||
+          (fields[key] as Array<unknown>).length > 0)
+      ) {
+        newFields[key] = fields[key];
       } else {
         newFields[key] = fields[key];
       }
