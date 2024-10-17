@@ -70,7 +70,7 @@ describe('flow execution', () => {
                     input: {
                         run_on_weekends: false,
                     },
-                    triggerName: 'everyHourTrigger',
+                    triggerName: 'every_hour',
                     'pieceType': PieceType.OFFICIAL,
                     'packageType': PackageType.REGISTRY,
                     inputUiInfo: {},
