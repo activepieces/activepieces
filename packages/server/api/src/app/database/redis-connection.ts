@@ -18,12 +18,6 @@ const readCAFile = (file: string | undefined): string | undefined => {
 }
 
 const createStandaloneClient = (config: Partial<RedisOptions>): Redis => {
-    if (url) {
-        return new Redis(url, {
-            ...config,
-        })
-    }
-
     const host = system.getOrThrow(AppSystemProp.REDIS_HOST)
     const serializedPort = system.getOrThrow(AppSystemProp.REDIS_PORT)
     const username = system.get(AppSystemProp.REDIS_USER)
@@ -44,16 +38,16 @@ const createStandaloneClient = (config: Partial<RedisOptions>): Redis => {
 }
 
 export const createRedisClient = (params?: CreateRedisClientParams): Redis => {
-    if (url) {
-        return new Redis(url, {
-            ...params,
-        })
-    }
     const config: Partial<RedisOptions> = {
         maxRetriesPerRequest: null,
         ...params,
     }
 
+    if (url) {
+        return new Redis(url, {
+            ...config,
+        })
+    }
     switch (redisConnectionMode) {
         case RedisType.SENTINEL:
             return createSentinelClient(config)
