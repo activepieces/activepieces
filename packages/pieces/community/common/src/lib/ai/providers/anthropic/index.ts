@@ -2,13 +2,21 @@ import Anthropic from '@anthropic-ai/sdk';
 import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import { AI, AIChatRole, AIFactory } from '../..';
 import mime from 'mime-types';
+import { spreadIfDefined } from '@activepieces/shared';
 
+const messageExtra = (extra: Record<string, unknown> | undefined) => {
+  return {
+    ...spreadIfDefined('cache_control', extra?.['cache_control']),
+  }
+}
 export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const sdk = new Anthropic({
     apiKey: engineToken,
     baseURL: proxyUrl,
     defaultHeaders: {
       Authorization: `Bearer ${engineToken}`,
+      'anthropic-beta': 'prompt-caching-2024-07-31',
+      'anthropic-version': '2023-06-01'
     }
   });
   return {
@@ -24,6 +32,7 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
           messages: params.messages.map((message) => ({
             role: message.role === 'user' ? 'user' : 'assistant',
             content: message.content,
+            ...messageExtra(message.extra),
           })),
           temperature: Math.tanh(params.creativity ?? 100),
           stop_sequences: params.stop,
@@ -55,6 +64,7 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
           messages: params.messages.map((message) => ({
             role: message.role === 'user' ? 'user' : 'assistant',
             content: message.content,
+            ...messageExtra(message.extra),
           })),
           max_tokens: params.maxTokens ?? 2000,
           tools: params.functions.map((functionDefinition) => ({

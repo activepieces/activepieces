@@ -89,6 +89,8 @@ export const extractStructuredData = createAction({
       );
     }
 
+    const isAnthropic = context.propsValue.provider === 'anthropic';
+
     const response = await functionCalling({
       model: context.propsValue.model,
       image: context.propsValue.image,
@@ -98,6 +100,7 @@ export const extractStructuredData = createAction({
           content:
             context.propsValue.guidePrompt ??
             DEFAULT_GUIDE_PROMPT,
+            extra: getExtra(isAnthropic),
         },
       ],
       functions: [
@@ -120,3 +123,11 @@ export const extractStructuredData = createAction({
     return args;
   },
 });
+
+function getExtra(isAnthropic: boolean) {
+  return isAnthropic
+    ? {
+      cache_control: 'ephemeral',
+    }
+    : undefined;
+}
