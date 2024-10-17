@@ -26,7 +26,7 @@ const createStandaloneClient = (config: Partial<RedisOptions>): Redis => {
 
     const host = system.getOrThrow(AppSystemProp.REDIS_HOST)
     const serializedPort = system.getOrThrow(AppSystemProp.REDIS_PORT)
-    const username = system.getOrThrow(AppSystemProp.REDIS_USER)
+    const username = system.get(AppSystemProp.REDIS_USER)
     const port = Number.parseInt(serializedPort, 10)
     const db = system.getNumber(AppSystemProp.REDIS_DB) ?? 0
 
