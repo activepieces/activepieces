@@ -60,6 +60,7 @@ export type AIChatCompletionUsage = {
 export type AIChatMessage = {
   role: AIChatRole;
   content: string;
+  extra?: Record<string, unknown>;
 };
 
 export type AIFunctionCall = {
