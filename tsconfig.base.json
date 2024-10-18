@@ -127,6 +127,9 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
+      "@activepieces/piece-confluence": [
+        "packages/pieces/community/confluence/src/index.ts"
+      ],
       "@activepieces/piece-connections": [
         "packages/pieces/community/connections/src/index.ts"
       ],
