@@ -41,12 +41,11 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
 
     app.delete('/:id', DeleteUserRequest, async (req, res) => {
         const platformId = req.principal.platform.id
-        assertNotNullOrUndefined(platformId, 'platformId')
-        const user = await userService.getMetaInfo({ id: req.params.id }) ?? undefined
+        const user = await userService.getMetaInfoOrFail({ id: req.params.id })
         await userService.delete({
             id: req.params.id,
             platformId,
-        })        
+        })
         eventsHooks.get().sendUserEventFromRequest(req
             , {
                 action: ApplicationEventName.USER_DELETED,

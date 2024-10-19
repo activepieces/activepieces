@@ -328,7 +328,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(licenseKeysModule)
             break
     }
-    // await analyticsService.generateProjectsLeaderboardTest({}, 'lGMAsTezSD9YT3Sb7zhHG')
+
     app.addHook('onClose', async () => {
         logger.info('Shutting down')
         await flowConsumer.close()

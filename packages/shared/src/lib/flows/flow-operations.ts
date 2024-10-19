@@ -99,22 +99,8 @@ export type UpdateFlowStatusRequest = Static<typeof UpdateFlowStatusRequest>
 
 export const ChangePublishedVersionIdRequest = Type.Object({})
 export type ChangePublishedVersionIdRequest = Static<typeof ChangePublishedVersionIdRequest>
-const publishAndLockOperation =  Type.Object({
-    type: Type.Literal(FlowOperationType.LOCK_AND_PUBLISH),
-    request: ChangePublishedVersionIdRequest,
-}, {
-    title: 'Lock and Publish',
-})
 
-const publishAndLockOperationForAuditEvent =  Type.Object({
-    type: Type.Literal(FlowOperationType.LOCK_AND_PUBLISH),
-    request: Type.Intersect([Type.Object({
-        usedPieces: Type.Optional(Type.Array(Type.String())),
-    }), ChangePublishedVersionIdRequest ]), 
-}, {
-    title: 'Lock and Publish',
-})
-const flowOperationsWithoutPublishAndLockOperation = [
+export const FlowOperationRequest = Type.Union([
     Type.Object({
         type: Type.Literal(FlowOperationType.MOVE_ACTION),
         request: MoveActionRequest,
@@ -126,6 +112,12 @@ const flowOperationsWithoutPublishAndLockOperation = [
         request: UpdateFlowStatusRequest,
     }, {
         title: 'Change Status',
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.LOCK_AND_PUBLISH),
+        request: ChangePublishedVersionIdRequest,
+    }, {
+        title: 'Lock and Publish',
     }),
     Type.Object({
         type: Type.Literal(FlowOperationType.USE_AS_DRAFT),
@@ -187,20 +179,7 @@ const flowOperationsWithoutPublishAndLockOperation = [
     }, {
         title: 'Duplicate Action',
     }),
-]
+])
 
-const flowOperations = [
-    ...flowOperationsWithoutPublishAndLockOperation,
-    publishAndLockOperation,
-]
-
-const flowOperationsForAuditEvents = [
-    publishAndLockOperationForAuditEvent,
-    ...flowOperationsWithoutPublishAndLockOperation,
-]
-
-export const FlowOperationRequest = Type.Union(flowOperations)
-export const FlowOperationRequestForAuditEvents = Type.Union(flowOperationsForAuditEvents)
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
-export type FlowOperationRequestForAuditEvents = Static<typeof FlowOperationRequestForAuditEvents>

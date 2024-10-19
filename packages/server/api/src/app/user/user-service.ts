@@ -1,6 +1,7 @@
 import {
     ActivepiecesError,
     apId,
+    assertNotNullOrUndefined,
     ErrorCode,
     isNil,
     PlatformId,
@@ -96,6 +97,11 @@ export const userService = {
     },
     async getOneOrFail({ id }: IdParams): Promise<User> {
         return userRepo().findOneByOrFail({ id })
+    },
+    async getMetaInfoOrFail({ id }: IdParams): Promise<UserMeta> {
+        const user = await this.getMetaInfo({ id })
+        assertNotNullOrUndefined(user, 'user')
+        return user
     },
 
     async getMetaInfo({ id }: IdParams): Promise<UserMeta | null> {

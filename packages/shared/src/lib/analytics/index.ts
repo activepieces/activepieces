@@ -1,5 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-import { Project } from '../project'
 
 export const AnalyticsPieceReportItem = Type.Object({
     name: Type.String(),
@@ -20,7 +19,7 @@ export const AnalyticsProjectReportItem = Type.Object({
 })
 
 export type AnalyticsProjectReportItem = Static<
-  typeof AnalyticsProjectReportItem
+    typeof AnalyticsProjectReportItem
 >
 
 export const AnalyticsProjectReport = Type.Array(AnalyticsProjectReportItem)
@@ -47,8 +46,7 @@ export const AnalyticsReportResponse = Type.Object({
 export type AnalyticsReportResponse = Static<typeof AnalyticsReportResponse>
 
 
-export const PlatformProjectLeaderBoardRow = 
-Type.Object({
+export const PlatformProjectLeaderBoardRow = Type.Object({
     id: Type.String(),
     displayName: Type.String(),
     flows: Type.String(),
@@ -64,7 +62,7 @@ Type.Object({
 })
 
 export type PlatformProjectLeaderBoardRow = Static<
-  typeof PlatformProjectLeaderBoardRow
+    typeof PlatformProjectLeaderBoardRow
 >
 
 
@@ -78,5 +76,5 @@ export const ListPlatformProjectsLeaderboardParams = Type.Object({
 })
 
 export type ListPlatformProjectsLeaderboardParams = Static<
-  typeof ListPlatformProjectsLeaderboardParams
+    typeof ListPlatformProjectsLeaderboardParams
 >

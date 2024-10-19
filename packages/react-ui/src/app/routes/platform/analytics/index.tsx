@@ -8,7 +8,6 @@ import { TaskUsage } from '@/app/routes/platform/analytics/task-usage';
 import { Separator } from '@/components/ui/seperator';
 import { analyticsApi } from '@/features/platform-admin-panel/lib/analytics-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-
 import { ProjectsLeaderBoard } from './projects-leaderboard';
 
 export default function AnalyticsPage() {

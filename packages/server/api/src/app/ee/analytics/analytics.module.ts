@@ -33,7 +33,7 @@ const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
         return analyticsService.generateReport(platform.id)
     })
     app.get(
-        '/leaderboards/platform-projects',
+        '/project-leaderboard',
         ListPlatformProjectsRequest,
         async (request) => {
             const { platform } = request.principal

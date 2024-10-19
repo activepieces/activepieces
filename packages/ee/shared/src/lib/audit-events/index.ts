@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { AppConnectionWithoutSensitiveData, BaseModelSchema, Flow, FlowOperationRequest, FlowOperationRequestForAuditEvents, FlowOperationType, FlowRun, FlowVersion, Folder, Project, User } from "@activepieces/shared";
+import { AppConnectionWithoutSensitiveData, BaseModelSchema, Flow, FlowOperationType, FlowRun, FlowVersion, Folder, Project, User, FlowOperationRequest } from "@activepieces/shared";
 import { SigningKey } from "../signing-key";
 export const ListAuditEventsRequest = Type.Object({
     limit: Type.Optional(Type.Number()),
@@ -101,7 +101,7 @@ export const FlowUpdatedEvent = Type.Object({
     action: Type.Literal(ApplicationEventName.FLOW_UPDATED),
     data: Type.Object({
         flowVersion: Type.Pick(FlowVersion, ['id', 'displayName', 'flowId', 'created', 'updated']),
-        request: FlowOperationRequestForAuditEvents,
+        request: FlowOperationRequest,
         project: Type.Optional(Type.Pick(Project, ['displayName'])),
     }),
 })
