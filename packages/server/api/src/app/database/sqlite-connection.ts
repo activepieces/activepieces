@@ -61,6 +61,7 @@ import { AddLogsFileIdIndexSqlite1725699920020 } from './migration/sqlite/172569
 import { SupportS3FilesSqlite1726363932745 } from './migration/sqlite/1726363932745-SupportS3FilesSqlite'
 import { AddAiProviderSqlite1726446345221 } from './migration/sqlite/1726446345221-AddAiProviderSqlite'
 import { RemovePremiumPiecesSqlite1727865697005 } from './migration/sqlite/1727865697005-RemovePremiumPiecesSqlite'
+import { UpdatePlaformInSqlite1729330108485 } from './migration/sqlite/1729330108485-UpdatePlaformInSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -138,7 +139,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         SupportS3FilesSqlite1726363932745,
         AddUserSessionId1727130193726,
         RemovePremiumPiecesSqlite1727865697005,
-        AddLicenseKeyIntoPlatform1728827704109,   
+        AddLicenseKeyIntoPlatform1728827704109,
+        UpdatePlaformInSqlite1729330108485,
         ChangeProjectUniqueConstraintToPartialIndex1729098769827,
     ]
     const edition = system.getEdition()
