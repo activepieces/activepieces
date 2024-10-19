@@ -89,6 +89,7 @@ export async function piecesBuilder(app: FastifyInstance, io: Server): Promise<v
                 pollInterval: 200
             }
         })
+        watcher.on('ready', debouncedHandleFileChange)
         watcher.on('all', (event, path) => {
             if (path.endsWith('.ts')) {
                 debouncedHandleFileChange()

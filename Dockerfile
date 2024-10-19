@@ -51,8 +51,7 @@ COPY . .
 COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production
-RUN npx nx run-many --target=build --projects=react-ui 
+RUN npx nx run-many --target=build --projects=react-ui,server-api --configuration production
 
 # Install backend production dependencies
 RUN cd dist/packages/server/api && npm install --production --force
