@@ -53,6 +53,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         {
             name: 'idx_project_platform_id_external_id',
             columns: ['platformId', 'externalId'],
+            where: 'deleted IS NULL',
             unique: true,
         },
     ],
