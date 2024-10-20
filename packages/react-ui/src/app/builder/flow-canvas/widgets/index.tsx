@@ -48,28 +48,24 @@ const AboveFlowWidgets = React.memo(() => {
   );
 });
 AboveFlowWidgets.displayName = 'AboveFlowWidgets';
-const BelowFlowWidget = React.memo(
-  ({ graphHeight }: { graphHeight: number }) => {
-    return (
-      <ViewportPortal>
+const BelowFlowWidget = React.memo(() => {
+  return (
+    <ViewportPortal>
+      <div
+        style={{
+          pointerEvents: 'auto',
+        }}
+      >
         <div
-          style={{
-            transform: `translate(0px, ${graphHeight + 18}px)`,
-            position: 'absolute',
-            pointerEvents: 'auto',
-          }}
+          className="flex items-center justify-center gap-2"
+          style={{ width: AP_NODE_SIZE.stepNode.width + 'px' }}
         >
-          <div
-            className="flex items-center justify-center gap-2"
-            style={{ width: AP_NODE_SIZE.stepNode.width + 'px' }}
-          >
-            <FlowEndWidget></FlowEndWidget>
-          </div>
+          <FlowEndWidget></FlowEndWidget>
         </div>
-      </ViewportPortal>
-    );
-  },
-);
+      </div>
+    </ViewportPortal>
+  );
+});
 
 BelowFlowWidget.displayName = 'BelowFlowWidget';
 export { AboveFlowWidgets, BelowFlowWidget };

@@ -6,6 +6,7 @@ import {
   FlowVersion,
   StepLocationRelativeToParent,
   Trigger,
+  TriggerType,
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
@@ -110,7 +111,7 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
         step.name,
       );
     }
-    case ActionType.ROUTER:
+    case ActionType.ROUTER: {
       const { nextAction, children } = step;
       const childrenGraphs = children.map((child, index) => {
         return isNil(child)
@@ -132,6 +133,7 @@ function traverseFlow(step: Action | Trigger | undefined): ApGraph {
         graph,
         step.name,
       );
+    }
     default: {
       const { nextAction } = step;
       const childGraph = offsetGraph(traverseFlow(nextAction), {
@@ -166,12 +168,12 @@ function buildChildrenGraph(
   const totalWidth =
     (childrenGraphs.length - 1) * HORIZONTAL_SPACE_BETWEEN_NODES +
     childrenGraphs.reduce(
-      (acc, current) => boundingBox(current).width + acc ,
+      (acc, current) => boundingBox(current).width + acc,
       0,
     );
   const maximumHeight =
     childrenGraphs.reduce(
-      (acc, current) => Math.max(acc, boundingBox(current).height) ,
+      (acc, current) => Math.max(acc, boundingBox(current).height),
       0,
     ) +
     2 * VERTICAL_OFFSET;

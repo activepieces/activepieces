@@ -44,7 +44,7 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
             height: `${AP_NODE_SIZE.stepNode.height}px`,
             width: `${AP_NODE_SIZE.stepNode.width}px`,
           }}
-          className="border cursor-auto border-solid border-none flex items-center justify-center relative "
+          className="border opacity-20 cursor-auto border-solid border-none flex items-center justify-center relative "
         >
           <div
             className={cn('w-[50px] h-[50px]  rounded bg-accent', {
