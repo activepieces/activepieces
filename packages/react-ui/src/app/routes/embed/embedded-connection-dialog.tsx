@@ -49,35 +49,51 @@ const EmbeddedConnectionDialogContent = ({
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const hasErrorRef = useRef(false);
 
-  const { data: connections, isLoading: isLoadingConnections } = appConnectionsHooks.useConnections({});
-  const { pieceModel, isLoading: isLoadingPiece, isSuccess } = piecesHooks.usePiece({
+  const { data: connections, isLoading: isLoadingConnections } =
+    appConnectionsHooks.useConnections({});
+  const {
+    pieceModel,
+    isLoading: isLoadingPiece,
+    isSuccess,
+  } = piecesHooks.usePiece({
     name: pieceName ?? '',
   });
 
-  const hideConnectionIframe = (connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'name'>) => {
+  const hideConnectionIframe = (
+    connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'name'>,
+  ) => {
     postMessageToParent({
       type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED,
       data: { connection },
     });
   };
 
-  const postMessageToParent = (event: ActivepiecesNewConnectionDialogClosed | ActivepiecesClientConnectionNameIsInvalid) => {
+  const postMessageToParent = (
+    event:
+      | ActivepiecesNewConnectionDialogClosed
+      | ActivepiecesClientConnectionNameIsInvalid,
+  ) => {
     window.parent.postMessage(event, '*');
   };
 
   const validateConnectionName = (
     connectionName: string,
-    existingConnections: AppConnectionWithoutSensitiveData[]
+    existingConnections: AppConnectionWithoutSensitiveData[],
   ): { isValid: boolean; error?: string } => {
     const regex = new RegExp(`^${connectionNameRegex}$`);
-    const isConnectionNameUsed = existingConnections.some((c) => c.name === connectionName);
+    const isConnectionNameUsed = existingConnections.some(
+      (c) => c.name === connectionName,
+    );
 
     if (isConnectionNameUsed) {
       return { isValid: false, error: 'Connection name is already used' };
     }
 
     if (!regex.test(connectionName)) {
-      return { isValid: false, error: `Connection name must match the following regex ${connectionNameRegex}` };
+      return {
+        isValid: false,
+        error: `Connection name must match the following regex ${connectionNameRegex}`,
+      };
     }
 
     return { isValid: true };
@@ -101,7 +117,10 @@ const EmbeddedConnectionDialogContent = ({
 
   useEffect(() => {
     if (connectionName && connections && !hasErrorRef.current) {
-      const validationResult = validateConnectionName(connectionName, connections.data);
+      const validationResult = validateConnectionName(
+        connectionName,
+        connections.data,
+      );
 
       if (!validationResult.isValid) {
         postMessageToParent({
@@ -119,7 +138,7 @@ const EmbeddedConnectionDialogContent = ({
   }
 
   if (!pieceModel) {
-    return null; 
+    return null;
   }
 
   return (

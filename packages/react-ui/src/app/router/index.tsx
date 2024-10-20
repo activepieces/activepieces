@@ -80,9 +80,7 @@ const routes = [
   },
   {
     path: '/embed/connections',
-    element: (
-      <EmbeddedConnectionDialog></EmbeddedConnectionDialog>
-    ),
+    element: <EmbeddedConnectionDialog></EmbeddedConnectionDialog>,
   },
   {
     path: '/authenticate',
