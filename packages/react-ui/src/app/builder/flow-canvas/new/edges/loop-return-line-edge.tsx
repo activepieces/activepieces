@@ -33,7 +33,7 @@ export const ApLoopReturnLineCanvasEdge = ({
   ${flowUtilConsts.ARC_RIGHT_UP} v -${verticalLineLength}
   a15,15 0 0,1 15,-15
   
-  h ${0}
+  h ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2}
   m-5 -6 l6 6  m-6 0 m6 0 l-6 6 m3 -6
 
   M ${sourceX - (horizontalLineLength / 2 + flowUtilConsts.ARC_LENGTH)} ${

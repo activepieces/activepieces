@@ -10,6 +10,7 @@ import {
   StepLocationRelativeToParent,
   Trigger,
 } from '../../../../../../shared/src';
+import { AP_NODE_SIZE } from '../flow-canvas-utils';
 import { flowUtilConsts } from './consts';
 import {
   ApBigAddButtonNode,
@@ -136,7 +137,6 @@ const buildGraph: (step: Action | Trigger | undefined) => ApGraph = (step) => {
     step.type === ActionType.LOOP_ON_ITEMS ? buildLoopChildGraph(step) : null;
   const graphWithChild = childGraph ? mergeGraph(graph, childGraph) : graph;
   const nextStepGraph = buildGraph(step.nextAction);
-
   return mergeGraph(
     graphWithChild,
     offsetGraph(nextStepGraph, {
@@ -182,23 +182,26 @@ const calculateGraphBoundingBox = (graph: ApGraph) => {
   const minX = Math.min(
     ...graph.nodes
       .filter((node) => flowUtilConsts.doesNodeAffectBoundingBox(node.type))
-      .map(
-        (node) => node.position.x - flowUtilConsts.AP_NODE_SIZE.STEP.width / 2,
-      ),
+      .map((node) => node.position.x),
   );
   const minY = Math.min(...graph.nodes.map((node) => node.position.y));
   const maxX = Math.max(
     ...graph.nodes
       .filter((node) => flowUtilConsts.doesNodeAffectBoundingBox(node.type))
-      .map(
-        (node) => node.position.x + flowUtilConsts.AP_NODE_SIZE.STEP.width / 2,
-      ),
+      .map((node) => node.position.x + flowUtilConsts.AP_NODE_SIZE.STEP.width),
   );
   const maxY = Math.max(...graph.nodes.map((node) => node.position.y));
   const width = maxX - minX;
   const height = maxY - minY;
 
-  return { width, height, left: minX, right: maxX, top: minY, bottom: maxY };
+  return {
+    width,
+    height,
+    left: minX - flowUtilConsts.AP_NODE_SIZE.STEP.width / 2,
+    right: maxX - flowUtilConsts.AP_NODE_SIZE.STEP.width / 2,
+    top: minY,
+    bottom: maxY,
+  };
 };
 
 const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
@@ -235,7 +238,9 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
 
   const childGraphBoundingBox = calculateGraphBoundingBox(childGraph);
   const childGraphAfterOffset = offsetGraph(childGraph, {
-    x: flowUtilConsts.AP_NODE_SIZE.STEP.width / 2 + childGraphBoundingBox.left,
+    x:
+      flowUtilConsts.AP_NODE_SIZE.STEP.width / 2 +
+      flowUtilConsts.HORIZONTAL_SPACE_BETWEEN_NODES,
     y:
       flowUtilConsts.VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD +
       flowUtilConsts.AP_NODE_SIZE.STEP.height,
