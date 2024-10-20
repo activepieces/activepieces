@@ -182,17 +182,21 @@ const TestTriggerSection = React.memo(
     });
 
     async function updateSampleData(data: TriggerEvent) {
-      const sampleFile = await sampleDataApi.save({
-        flowVersionId,
-        stepName: formValues.name,
-        payload: data.payload,
-      });
+      let sampleDataFileId: string | undefined = undefined;
+      if (!isNil(data.payload)) {
+        const sampleFile = await sampleDataApi.save({
+          flowVersionId,
+          stepName: formValues.name,
+          payload: data.payload,
+        });
+        sampleDataFileId = sampleFile.id;
+      }
 
       form.setValue(
         'settings.inputUiInfo',
         {
           ...formValues.settings.inputUiInfo,
-          sampleDataFileId: sampleFile.id,
+          sampleDataFileId,
           currentSelectedData: undefined,
           lastTestDate: dayjs().toISOString(),
         },

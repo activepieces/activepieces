@@ -107,13 +107,17 @@ function buildSchema(inputs: FormInputWithName[]) {
 const handleDownloadFile = (formResult: FormResult) => {
   const link = document.createElement('a');
   const fileBase = formResult.value as FileResponseInterface;
-  link.download = fileBase.fileName;
-  link.href = fileBase.base64Url;
+  if ('url' in fileBase) {
+    link.href = fileBase.url;
+  } else {
+    link.download = fileBase.fileName;
+    link.href = fileBase.base64Url;
+    URL.revokeObjectURL(fileBase.base64Url);
+  }
   link.target = '_blank';
   link.rel = 'noreferrer noopener';
 
   link.click();
-  URL.revokeObjectURL(fileBase.base64Url);
 };
 
 const fileToBase64 = (

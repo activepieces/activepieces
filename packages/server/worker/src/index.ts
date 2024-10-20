@@ -1,3 +1,4 @@
+export * from './lib/piece-manager/development/pieces-builder'
 export * from './lib/engine/engine-runner'
 export { engineRunner } from './lib/engine'
 export * from './lib/executors/flow-job-executor'

@@ -3,7 +3,7 @@ import { Key, Lock, Palette, ShieldPlus, CreditCard } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId } from '../../../../shared/src';
+import { ApFlagId } from '@activepieces/shared';
 
 const iconSize = 20;
 
@@ -14,8 +14,10 @@ interface SettingsLayoutProps {
 export default function PlatformSettingsLayout({
   children,
 }: SettingsLayoutProps) {
-  const { data: showPlatformDemo } = flagsHooks.useFlag(ApFlagId.SHOW_PLATFORM_DEMO)
-  
+  const { data: showPlatformDemo } = flagsHooks.useFlag(
+    ApFlagId.SHOW_PLATFORM_DEMO,
+  );
+
   const sidebarNavItems = [
     {
       title: t('Branding'),

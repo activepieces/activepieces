@@ -26,6 +26,13 @@ export enum PiecesSource {
     FILE = 'FILE',
 }
 
+
+export enum RedisType {
+    SENTINEL = 'SENTINEL',
+    DEFAULT = 'DEFAULT',
+}
+
+
 export enum ContainerType {
     WORKER = 'WORKER',
     APP = 'APP',
@@ -76,6 +83,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SharedSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [SharedSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
+    [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
         'https://cloud.activepieces.com/api/v1/flow-templates',
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',

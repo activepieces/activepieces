@@ -1,9 +1,7 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Copy, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 
-import { toast } from '@/components/ui/use-toast';
-
+import { CopyButton } from '../ui/copy-button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 
@@ -22,19 +20,6 @@ const CopyToClipboardInput = ({
   fileName,
   useInput,
 }: CopyToClipboardInputProps) => {
-  const { mutate: copyToClipboard, isPending } = useMutation({
-    mutationFn: async () => {
-      await navigator.clipboard.writeText(textToCopy);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    },
-    onError: () => {
-      toast({
-        title: t('Failed to copy to clipboard'),
-        duration: 3000,
-      });
-    },
-  });
-
   const downloadFile = () => {
     const blob = new Blob([textToCopy], {
       type: 'text/plain',
@@ -50,33 +35,25 @@ const CopyToClipboardInput = ({
   };
 
   return (
-    <div className=" flex gap-2 items-center bg-background border border-solid text-sm rounded-lg block w-full select-none pr-3">
+    <div className="flex gap-2 items-center bg-background border border-solid text-sm rounded-lg block w-full select-none pr-3">
       {useInput ? (
-        <Input
-          value={textToCopy}
-          className={noBorderInputClass}
-          readOnly
-        ></Input>
+        <Input value={textToCopy} className={noBorderInputClass} readOnly />
       ) : (
         <Textarea
           value={textToCopy}
           rows={6}
           className={noBorderInputClass}
           readOnly
-        ></Textarea>
+        />
       )}
       <div className="flex flex-col gap-1">
-        <SelectUtilButton
-          tooltipText={isPending ? t('Copied') : t('Copy')}
-          Icon={isPending ? Check : Copy}
-          onClick={() => copyToClipboard()}
-        ></SelectUtilButton>
+        <CopyButton textToCopy={textToCopy} />
         {fileName && (
           <SelectUtilButton
             tooltipText={t('Download')}
             Icon={Download}
             onClick={() => downloadFile()}
-          ></SelectUtilButton>
+          />
         )}
       </div>
     </div>

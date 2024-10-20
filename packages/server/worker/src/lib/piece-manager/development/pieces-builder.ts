@@ -1,15 +1,15 @@
 import { spawn } from 'child_process'
 import { Server } from 'http'
 import { resolve } from 'path'
-import { AppSystemProp, filePiecesUtils, logger, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApLock, AppSystemProp, filePiecesUtils, logger, memoryLock, SharedSystemProp, system } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, debounce, WebsocketClientEvent } from '@activepieces/shared'
-import { Mutex } from 'async-mutex'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
+import { FastifyInstance } from 'fastify'
 
-const mutex = new Mutex()
 const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 const isFilePieces = system.getOrThrow(SharedSystemProp.PIECES_SOURCE) === 'FILE'
+export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
 async function handleFileChange(piecePackageName: string, io: Server): Promise<void> {
     logger.info(
@@ -17,8 +17,9 @@ async function handleFileChange(piecePackageName: string, io: Server): Promise<v
             '👀 Detected changes in pieces. Waiting... 👀 ' + piecePackageName,
         ),
     )
+    let lock: ApLock | undefined
     try {
-        await mutex.acquire()
+        lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
 
         logger.info(chalk.blue.bold('🤌 Building pieces... 🤌'))
         if (!/^[a-z0-9-]+$/.test(piecePackageName)) {
@@ -32,7 +33,9 @@ async function handleFileChange(piecePackageName: string, io: Server): Promise<v
         logger.info(error, chalk.red.bold('Failed to run build process...'))
     }
     finally {
-        mutex.release()
+        if (lock) {
+            await lock.release()
+        }
         logger.info(
             chalk.green.bold(
                 '✨ Changes are ready! Please refresh the frontend to see the new updates. ✨',
@@ -59,9 +62,11 @@ async function runCommandWithLiveOutput(cmd: string): Promise<void> {
     })
 }
 
-export async function piecesBuilder(io: Server): Promise<void> {
+export async function piecesBuilder(app: FastifyInstance, io: Server): Promise<void> {
     // Only run this script if the pieces source is file
     if (!isFilePieces) return
+
+    const watchers: chokidar.FSWatcher[] = []
 
     for (const packageName of packages) {
         logger.info(chalk.blue(`Starting watch for package: ${packageName}`))
@@ -75,11 +80,29 @@ export async function piecesBuilder(io: Server): Promise<void> {
             handleFileChange(piecePackageName, io).catch(logger.error)
         }, 2000)
 
-        chokidar.watch(resolve(pieceDirectory), { ignored: /^\./, persistent: true }).on('all', (event, path) => {
+        const watcher = chokidar.watch(resolve(pieceDirectory), {
+            ignored: [/^\./, /node_modules/, /dist/],
+            persistent: true,
+            ignoreInitial: true,
+            awaitWriteFinish: {
+                stabilityThreshold: 2000,
+                pollInterval: 200,
+            },
+        })
+        watcher.on('ready', debouncedHandleFileChange)
+        watcher.on('all', (event, path) => {
             if (path.endsWith('.ts')) {
                 debouncedHandleFileChange()
             }
         })
 
+        watchers.push(watcher)
     }
+
+
+    app.addHook('onClose', () => {
+        for (const watcher of watchers) {
+            watcher.close().catch(logger.error)
+        }
+    })
 }
