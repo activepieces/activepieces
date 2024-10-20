@@ -1,23 +1,16 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Redo, RefreshCw, RotateCw } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { CheckIcon, PlayIcon, Redo, RotateCw, ChevronDown } from 'lucide-react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { BulkAction } from '@/components/ui/data-table'
 import {
   DataTable,
   PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
@@ -30,12 +23,16 @@ import {
   FlowRetryStrategy,
   FlowRun,
   FlowRunStatus,
-  Permission,
   isFailedState,
+  Permission,
 } from '@activepieces/shared';
 
 import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 
 const fetchData = async (
   params: {
@@ -45,6 +42,7 @@ const fetchData = async (
   },
   pagination: PaginationParams,
 ) => {
+  console.log("FETCHING DATA", params);
   const status = params.status;
   return flowRunsApi.list({
     status,
@@ -68,24 +66,30 @@ const FlowRunsPage = () => {
   const flows = data?.data;
   const { checkAccess } = useAuthorization();
   const userHasPermissionToRetryRun = checkAccess(Permission.RETRY_RUN);
-  const { mutate } = useMutation<
-    FlowRun,
-    Error,
-    { row: RowDataWithActions<FlowRun>; strategy: FlowRetryStrategy }
-  >({
-    mutationFn: (data) =>
-      flowRunsApi.retry(data.row.id, { strategy: data.strategy }),
-    onSuccess: (updatedRun, { row }) => {
-      row.update(updatedRun);
-    },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
 
   const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = useMemo(
     () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && 'indeterminate')
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+          />
+        ),
+        notClickable: true,
+      },
       {
         accessorKey: 'flowId',
         header: ({ column }) => (
@@ -143,68 +147,6 @@ const FlowRunsPage = () => {
           );
         },
       },
-      {
-        accessorKey: 'actions',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Actions')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div onClick={(e) => e.stopPropagation()}>
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger
-                  asChild
-                  className="rounded-full p-2 hover:bg-muted cursor-pointer"
-                >
-                  <RefreshCw className="h-9 w-9" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToRetryRun}
-                  >
-                    <DropdownMenuItem
-                      disabled={!userHasPermissionToRetryRun}
-                      onClick={() =>
-                        mutate({
-                          row: row.original,
-                          strategy: FlowRetryStrategy.ON_LATEST_VERSION,
-                        })
-                      }
-                    >
-                      <div className="flex flex-row gap-2 items-center">
-                        <RotateCw className="h-4 w-4" />
-
-                        <span>{t('Retry on latest version')}</span>
-                      </div>
-                    </DropdownMenuItem>
-                  </PermissionNeededTooltip>
-
-                  {isFailedState(row.original.status) && (
-                    <PermissionNeededTooltip
-                      hasPermission={userHasPermissionToRetryRun}
-                    >
-                      <DropdownMenuItem
-                        disabled={!userHasPermissionToRetryRun}
-                        onClick={() =>
-                          mutate({
-                            row: row.original,
-                            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                          })
-                        }
-                      >
-                        <div className="flex flex-row gap-2 items-center">
-                          <Redo className="h-4 w-4" />
-                          <span>{t('Retry from failed step')}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    </PermissionNeededTooltip>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          );
-        },
-      },
     ],
     [],
   );
@@ -254,6 +196,91 @@ const FlowRunsPage = () => {
     }
   }, [isFetching]);
 
+  const replayRun = useMutation({
+    mutationFn: (params: { runIds: string[]; strategy: FlowRetryStrategy }) =>
+      Promise.all(params.runIds.map(runId => flowRunsApi.retry(runId, { strategy: params.strategy }))),
+    onSuccess: () => {
+      toast({
+        title: t('Runs replayed successfully'),
+        variant: 'default',
+      });
+      setRefresh((prev) => prev + 1);
+    },
+    onError: () => {
+      toast(INTERNAL_ERROR_TOAST);
+    },
+  });
+
+  const bulkActions: BulkAction<FlowRun>[] = useMemo(() => [
+    {
+      render: (selectedRows, resetSelection) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger
+              asChild
+            >
+              <Button
+                disabled={selectedRows.length === 0 || !userHasPermissionToRetryRun}
+                className="w-full"
+              >
+                <PlayIcon className="mr-2 h-4 w-4" />
+                {selectedRows.length > 0
+                  ? `${t('Retry')} (${selectedRows.length})`
+                  : t('Retry')}
+                <ChevronDown className="h-4 w-4 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToRetryRun}
+              >
+                <DropdownMenuItem
+                  disabled={!userHasPermissionToRetryRun}
+                  onClick={() => {
+                    replayRun.mutate({ runIds: selectedRows.map(row => row.id), strategy: FlowRetryStrategy.ON_LATEST_VERSION });
+                    resetSelection();
+                  }}
+                >
+                  <div className="flex flex-row gap-2 items-center">
+                    <RotateCw className="h-4 w-4" />
+                    <span>{t('on latest version')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </PermissionNeededTooltip>
+
+              {selectedRows.some(row => isFailedState(row.status)) && (
+                <PermissionNeededTooltip
+                  hasPermission={userHasPermissionToRetryRun}
+                >
+                  <DropdownMenuItem
+                    disabled={!userHasPermissionToRetryRun}
+                    onClick={() => {  
+                      replayRun.mutate({ runIds: selectedRows.map(row => row.id), strategy: FlowRetryStrategy.FROM_FAILED_STEP });
+                      resetSelection();
+                    }}
+                  >
+                    <div className="flex flex-row gap-2 items-center">
+                      <Redo className="h-4 w-4" />
+                      <span>{t('from failed step')}</span>
+                    </div>
+                  </DropdownMenuItem>
+                </PermissionNeededTooltip>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ], [replayRun, userHasPermissionToRetryRun, t]);
+
+  const handleRowClick = useCallback((row: FlowRun, newWindow: boolean) => {
+    if (newWindow) {
+      openNewWindow(`/runs/${row.id}`);
+    } else {
+      navigate(`/runs/${row.id}`);
+    }
+  }, [navigate, openNewWindow]);
+
   return (
     <div className="flex-col w-full">
       <div className="mb-4 flex">
@@ -265,13 +292,8 @@ const FlowRunsPage = () => {
         fetchData={fetchData}
         filters={filters}
         refresh={refresh}
-        onRowClick={(row, newWindow) => {
-          if (newWindow) {
-            openNewWindow(`/runs/${row.id}`);
-          } else {
-            navigate(`/runs/${row.id}`);
-          }
-        }}
+        bulkActions={bulkActions}
+        onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
       />
     </div>
   );
@@ -279,3 +301,4 @@ const FlowRunsPage = () => {
 
 FlowRunsPage.displayName = 'FlowRunsTable';
 export { FlowRunsPage };
+

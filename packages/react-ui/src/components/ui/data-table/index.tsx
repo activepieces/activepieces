@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  ColumnDef,
+  ColumnDef as TanstackColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/table';
 import { SeekPage } from '@activepieces/shared';
 
-import { Button } from './button';
+import { Button } from '../button';
 import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
@@ -32,8 +32,9 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
-} from './select';
-import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
+} from '../select';
+import { INTERNAL_ERROR_TOAST, toast } from '../use-toast';
+import { DataTableBulkActions } from './data-table-bulk-actions';
 
 export type DataWithId = {
   id?: string;
@@ -72,6 +73,11 @@ export type PaginationParams = {
   createdBefore?: string;
 };
 
+// Extend the ColumnDef type to include the notClickable property
+type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
+  notClickable?: boolean;
+};
+
 interface DataTableProps<
   TData extends DataWithId,
   TValue,
@@ -93,6 +99,11 @@ interface DataTableProps<
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
   actions?: DataTableAction<TData>[];
   hidePagination?: boolean;
+  bulkActions?: BulkAction<TData>[];
+}
+
+export type BulkAction<TData extends DataWithId> = {
+  render: (selectedRows: RowDataWithActions<TData>[], resetSelection: () => void) => React.ReactNode;
 }
 
 export function DataTable<
@@ -109,6 +120,7 @@ export function DataTable<
   actions = [],
   onSelectedRowsChange,
   hidePagination,
+  bulkActions = [],
 }: DataTableProps<TData, TValue, Keys, F>) {
   const columns = columnsInitial.concat([
     {
@@ -257,6 +269,10 @@ export function DataTable<
     );
   }, [deletedRows]);
 
+  const resetSelection = () => {
+    table.toggleAllRowsSelected(false);
+  };
+
   return (
     <div>
       <DataTableToolbar>
@@ -271,7 +287,18 @@ export function DataTable<
             />
           ))}
       </DataTableToolbar>
-      <div className="rounded-md border">
+      
+      {bulkActions.length > 0 && (
+        <DataTableBulkActions
+          selectedRows={table.getSelectedRowModel().rows.map((row) => row.original)}
+          actions={bulkActions.map(action => ({
+            render: (selectedRows: RowDataWithActions<TData>[]) => 
+              action.render(selectedRows, resetSelection)
+          }))}
+        />
+      )}
+
+      <div className="rounded-md border m-">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -304,14 +331,30 @@ export function DataTable<
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  onClick={(e) => onRowClick?.(row.original, e.ctrlKey, e)}
-                  onAuxClick={(e) => onRowClick?.(row.original, true, e)}
+                  onClick={(e) => {
+                    // Check if the clicked cell is not clickable
+                    const clickedCellIndex = (e.target as HTMLElement).closest('td')?.cellIndex;
+                    if (clickedCellIndex !== undefined && columnsInitial[clickedCellIndex]?.notClickable) {
+                      return; // Don't trigger onRowClick for not clickable columns
+                    }
+                    onRowClick?.(row.original, e.ctrlKey, e);
+                  }}
+                  onAuxClick={(e) => {
+                    // Similar check for auxiliary click (e.g., middle mouse button)
+                    const clickedCellIndex = (e.target as HTMLElement).closest('td')?.cellIndex;
+                    if (clickedCellIndex !== undefined && columnsInitial[clickedCellIndex]?.notClickable) {
+                      return;
+                    }
+                    onRowClick?.(row.original, true, e);
+                  }}
                   key={row.id}
                   className={onRowClick ? 'cursor-pointer' : ''}
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell 
+                      key={cell.id}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),

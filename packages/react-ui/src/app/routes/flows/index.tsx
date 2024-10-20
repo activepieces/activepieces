@@ -19,7 +19,6 @@ import {
   PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +45,7 @@ import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
 import { TableTitle } from '../../../components/ui/table-title';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 
 const filters = [
   {

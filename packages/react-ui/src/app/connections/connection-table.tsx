@@ -10,7 +10,7 @@ import {
   PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';

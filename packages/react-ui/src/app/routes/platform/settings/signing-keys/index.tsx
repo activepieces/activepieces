@@ -14,7 +14,7 @@ import {
   PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { signingKeyApi } from '@/features/platform-admin-panel/lib/signing-key-api'; // Update to the correct API endpoint
 import { platformHooks } from '@/hooks/platform-hooks';
