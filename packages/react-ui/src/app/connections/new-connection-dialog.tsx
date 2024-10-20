@@ -1,6 +1,6 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,13 +19,13 @@ import { isNil } from '@activepieces/shared';
 
 import { CreateOrEditConnectionDialog } from './create-edit-connection-dialog';
 
-type NewConnectionTypeDialogProps = {
-  onConnectionCreated: () => void;
+type NewConnectionDialogProps = {
+  onConnectionCreated: (res: { name: string; id: string }) => void;
   children: React.ReactNode;
 };
 
-const NewConnectionTypeDialog = React.memo(
-  ({ onConnectionCreated, children }: NewConnectionTypeDialogProps) => {
+const NewConnectionDialog = React.memo(
+  ({ onConnectionCreated, children }: NewConnectionDialogProps) => {
     const [dialogTypesOpen, setDialogTypesOpen] = useState(false);
     const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
     const [selectedPiece, setSelectedPiece] = useState<
@@ -47,18 +47,13 @@ const NewConnectionTypeDialog = React.memo(
       setConnectionDialogOpen(true);
     };
 
-    useEffect(() => {
-      if (!dialogTypesOpen) {
-        setSearchTerm('');
-      }
-    }, [dialogTypesOpen]);
-
     return (
       <>
         {selectedPiece && (
           <CreateOrEditConnectionDialog
             reconnectConnection={null}
             piece={selectedPiece}
+            predefinedConnectionName={null}
             open={connectionDialogOpen}
             onConnectionCreated={onConnectionCreated}
             setOpen={setConnectionDialogOpen}
@@ -66,7 +61,10 @@ const NewConnectionTypeDialog = React.memo(
         )}
         <Dialog
           open={dialogTypesOpen}
-          onOpenChange={(open) => setDialogTypesOpen(open)}
+          onOpenChange={(open) => {
+            setDialogTypesOpen(open);
+            setSearchTerm('');
+          }}
         >
           <DialogTrigger asChild>{children}</DialogTrigger>
           <DialogContent className="min-w-[700px] max-w-[700px] h-[680px] max-h-[680px] flex flex-col">
@@ -119,5 +117,5 @@ const NewConnectionTypeDialog = React.memo(
   },
 );
 
-NewConnectionTypeDialog.displayName = 'NewConnectionTypeDialog';
-export { NewConnectionTypeDialog };
+NewConnectionDialog.displayName = 'NewConnectionDialog';
+export { NewConnectionDialog };

@@ -37,6 +37,7 @@ type IframeWithWindow = HTMLIFrameElement & { contentWindow: Window };
 export const NEW_CONNECTION_QUERY_PARAMS = {
   name: 'pieceName',
   connectionName: 'connectionName',
+  randomId: 'randomId'
 };
 
 export type ActivepiecesClientEvent =
@@ -66,6 +67,7 @@ export interface ActivepiecesVendorInit {
     hideFolders?: boolean;
     sdkVersion?: string;
     jwtToken?: string; // Added jwtToken here
+    initialRoute: string
   };
 }
 // We used to send JWT in query params, now we send it in local storage
@@ -129,19 +131,16 @@ class ActivepiecesEmbedded {
     this._navigationHandler = embedding?.navigation?.handler;
     if (embedding?.containerId) {
       return this._initializeBuilderAndDashboardIframe({
-        containerSelector: `#${embedding.containerId}`,
-        jwtToken,
+        containerSelector: `#${embedding.containerId}`
       });
     }
     return new Promise((resolve) => { resolve({ status: "success" }) });
   }
 
   private _initializeBuilderAndDashboardIframe = ({
-    containerSelector,
-    jwtToken,
+    containerSelector
   }: {
-    containerSelector: string;
-    jwtToken: string;
+    containerSelector: string
   }) => {
     return new Promise((resolve, reject) => {
       this._addGracePeriodBeforeMethod({
@@ -155,7 +154,8 @@ class ActivepiecesEmbedded {
               iframeContainer,
               callbackAfterAuthentication: () => {
                 resolve({ status: "success" });
-              }
+              },
+              initialRoute: '/'
             }).contentWindow;
             this._dashboardAndBuilderIframeWindow = iframeWindow;
             this._checkForClientRouteChanges(iframeWindow);
@@ -176,8 +176,9 @@ class ActivepiecesEmbedded {
 
   };
 
-  private connectToEmbed({ iframeContainer, callbackAfterAuthentication }: {
+  private connectToEmbed({ iframeContainer, initialRoute, callbackAfterAuthentication }: {
     iframeContainer: Element,
+    initialRoute: string,
     callbackAfterAuthentication?: () => void
   }
   ): IframeWithWindow {
@@ -201,6 +202,7 @@ class ActivepiecesEmbedded {
                 hideLogoInBuilder: this._hideLogoInBuilder,
                 hideFlowNameInBuilder: this._hideFlowNameInBuilder,
                 jwtToken: this._jwtToken, // Pass the token here
+                initialRoute
               },
             };
             iframeWindow.postMessage(apEvent, '*');
@@ -233,17 +235,7 @@ class ActivepiecesEmbedded {
       method: async () => {
         const connectionsIframe = this.connectToEmbed({
           iframeContainer: document.body,
-          callbackAfterAuthentication: () => {
-            const apEvent: ActivepiecesVendorRouteChanged = {
-              type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
-              data: {
-                //added date so angular queryparams will be updated and open the dialog, because if you try to create two connections with the same piece, the second one will not open the dialog
-                vendorRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`
-              },
-            };
-            connectionsIframe.contentWindow.postMessage(apEvent, '*');
-
-          }
+          initialRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`
         });
         const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
         connectionsIframe.style.cssText = connectionsIframeStyle;

@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -59,7 +58,6 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
     pieceName: params.piece.name,
     cursor: undefined,
     limit: 100,
-    projectId: authenticationSession.getProjectId() ?? '',
   });
 
   return (
@@ -88,11 +86,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
             >
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
+                predefinedConnectionName={null}
                 key={reconnectConnection?.name || 'newConnection'}
                 piece={params.piece}
-                onConnectionCreated={(connectionName) => {
+                onConnectionCreated={(connection) => {
                   refetch();
-                  field.onChange(addBrackets(connectionName));
+                  field.onChange(addBrackets(connection.name));
                 }}
                 open={connectionDialogOpen}
                 setOpen={setConnectionDialogOpen}
