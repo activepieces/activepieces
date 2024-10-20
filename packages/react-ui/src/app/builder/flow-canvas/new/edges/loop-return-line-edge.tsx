@@ -26,7 +26,7 @@ export const ApLoopReturnLineCanvasEdge = ({
     2 * flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
   const path = `
   M ${sourceX - 0.5} ${
-    sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2
+    sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2 - 1
   }
   v 1
   ${flowUtilConsts.ARC_LEFT_DOWN} h -${horizontalLineLength}
@@ -77,6 +77,7 @@ export const ApLoopReturnLineCanvasEdge = ({
           y={buttonPosition.y}
           width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
+          className="overflow-visible"
         >
           <ApAddButton
             edgeId={id}

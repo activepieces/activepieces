@@ -13,7 +13,7 @@ interface ReturnLoopedgeButtonProps {
 }
 
 const ReturnLoopedgeButton = React.memo((props: ReturnLoopedgeButtonProps) => {
-  const offset = AP_NODE_SIZE[ApNodeType.LOOP_PLACEHOLDER].height + 6;
+  const offset = AP_NODE_SIZE[ApNodeType.LOOP_PLACEHOLDER].height + 10;
 
   const ARC_UP_RIGHT = 'a15,15 0 0,1 15,-15';
   const ARC_UP_LENGTH = 15;

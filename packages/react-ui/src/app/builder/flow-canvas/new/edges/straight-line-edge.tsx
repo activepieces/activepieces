@@ -36,6 +36,7 @@ export const ApStraightLineCanvasEdge = ({
           }
           width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
+          className="overflow-visible"
         >
           <ApAddButton
             edgeId={id}

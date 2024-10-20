@@ -70,6 +70,7 @@ const createBigAddButtonGraph: (
     data: {
       drawArrowHead: false,
       hideAddButton: true,
+      parentStepName: parentStep.name,
     },
   };
   return {
@@ -107,6 +108,7 @@ const createStepGraph: (
     type: ApEdgeType.STRAIGHT_LINE as const,
     data: {
       drawArrowHead: !isNil(step.nextAction),
+      parentStepName: step.name,
     },
   };
   return {

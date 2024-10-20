@@ -36,19 +36,21 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         />
         <div
           onClick={handleDivClick}
-          className={cn(inputClass, 'cursor-pointer', className)}
+          className={cn(inputClass, 'cursor-pointer items-center ', className)}
         >
           <div
-            className={cn('grow shrink truncate flex items-center', {
+            className={cn('flex truncate ', {
               'text-muted-foreground': !fileName,
             })}
           >
             {fileName || t('Select a file')}
           </div>
-          <SelectUtilButton
-            tooltipText={t('Select a file')}
-            Icon={Paperclip}
-          ></SelectUtilButton>
+          <div className="basis-1">
+            <SelectUtilButton
+              tooltipText={t('Select a file')}
+              Icon={Paperclip}
+            ></SelectUtilButton>
+          </div>
         </div>
       </>
     ) : (

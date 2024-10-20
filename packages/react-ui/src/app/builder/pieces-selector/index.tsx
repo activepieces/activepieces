@@ -149,11 +149,7 @@ const PieceSelector = ({
           {
             type: FlowOperationType.ADD_ACTION,
             request: {
-              parentStep: operation.actionLocation.parentStep,
-              stepLocationRelativeToParent:
-                operation.actionLocation.stepLocationRelativeToParent,
-              branchIndex: operation.actionLocation?.branchIndex,
-              branchName: operation.actionLocation?.branchName,
+              ...operation.actionLocation,
               action: stepData as Action,
             },
           },

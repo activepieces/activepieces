@@ -104,6 +104,7 @@ export type ApStraightLineEdge = Edge & {
   data: {
     drawArrowHead: boolean;
     hideAddButton?: boolean;
+    parentStepName: string;
   };
 };
 

@@ -6,7 +6,11 @@ import React, { useId, useState } from 'react';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { FlowOperationType, isNil } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  isNil,
+  StepLocationRelativeToParent,
+} from '@activepieces/shared';
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { ApBigAddButtonNode } from '../types';
 import { flowUtilConsts } from '../consts';
@@ -70,16 +74,28 @@ const ApBigAddButtonCanvasNode = React.memo(
               >
                 {!showDropIndicator && (
                   <PieceSelector
-                    operation={{
-                      type: FlowOperationType.ADD_ACTION,
-                      actionLocation: {
-                        parentStep: data.parentStepName,
-                        stepLocationRelativeToParent:
-                          data.stepLocationRelativeToParent,
-                        branchIndex: -1,
-                        branchName: '',
-                      },
-                    }}
+                    operation={
+                      data.stepLocationRelativeToParent ===
+                      StepLocationRelativeToParent.INSIDE_BRANCH
+                        ? {
+                            type: FlowOperationType.ADD_ACTION,
+                            actionLocation: {
+                              parentStep: data.parentStepName,
+                              stepLocationRelativeToParent:
+                                data.stepLocationRelativeToParent,
+                              branchIndex: data.branchIndex,
+                              branchName: data.branchName,
+                            },
+                          }
+                        : {
+                            type: FlowOperationType.ADD_ACTION,
+                            actionLocation: {
+                              parentStep: data.parentStepName,
+                              stepLocationRelativeToParent:
+                                data.stepLocationRelativeToParent,
+                            },
+                          }
+                    }
                     open={actionMenuOpen}
                     onOpenChange={setActionMenuOpen}
                   >
@@ -123,6 +139,8 @@ const ApBigAddButtonCanvasNode = React.memo(
               className="border cursor-auto border-solid border-none flex items-center justify-center relative "
             >
               <svg
+                height={flowUtilConsts.AP_NODE_SIZE.STEP.height}
+                width={flowUtilConsts.AP_NODE_SIZE.STEP.width}
                 className="overflow-visible  "
                 style={{
                   stroke:
@@ -132,7 +150,14 @@ const ApBigAddButtonCanvasNode = React.memo(
               >
                 <g>
                   <path
-                    d="M 150 0 V 100"
+                    d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -${
+                      flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 5
+                    } v ${
+                      flowUtilConsts.AP_NODE_SIZE.STEP.height +
+                      2 *
+                        (flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
+                          5)
+                    }`}
                     fill="transparent"
                     strokeWidth="1.5"
                   />

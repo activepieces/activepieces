@@ -54,7 +54,17 @@ export type PieceSelectorOperation =
         branchIndex: number;
         branchName: string;
         parentStep: string;
-        stepLocationRelativeToParent: StepLocationRelativeToParent;
+        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
+      };
+    }
+  | {
+      type: FlowOperationType.ADD_ACTION;
+      actionLocation: {
+        parentStep: string;
+        stepLocationRelativeToParent: Exclude<
+          StepLocationRelativeToParent,
+          StepLocationRelativeToParent.INSIDE_BRANCH
+        >;
       };
     }
   | { type: FlowOperationType.UPDATE_TRIGGER }

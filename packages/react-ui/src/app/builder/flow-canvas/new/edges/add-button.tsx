@@ -13,9 +13,7 @@ import {
 import { ApButtonData } from '../types';
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowUtilConsts } from '../consts';
-import { Handle, Position } from '@xyflow/react';
 
-//TODO: re-add drag/drop zone for add button
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
   const [activeDraggingStep, readonly] = useBuilderStateContext((state) => [
@@ -56,46 +54,46 @@ const ApAddButton = React.memo((props: ApButtonData) => {
             width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
             height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
           }}
-          className={cn(
-            'transition-all bg-primary/90  overflow-visible  rounded-xss',
-            {
-              'shadow-add-button': isStepInsideDropZone,
-            },
-          )}
+          className={cn('transition-all bg-primary/90  rounded-xss', {
+            'shadow-add-button': isStepInsideDropZone,
+          })}
         >
           <div
-            className={cn('  rounded-xss box-content ')}
+            style={{
+              width: flowUtilConsts.AP_NODE_SIZE.STEP.width + 'px',
+              height: flowUtilConsts.AP_NODE_SIZE.STEP.height + 'px',
+              left: `${-flowUtilConsts.AP_NODE_SIZE.STEP.width / 2}px`,
+              top: `${-flowUtilConsts.AP_NODE_SIZE.STEP.height / 2}px`,
+            }}
+            className={cn(' absolute    rounded-xss box-content ')}
             ref={setNodeRef}
           ></div>
         </div>
       )}
       {!showDropIndicator && !readonly && (
         <PieceSelector
-          operation={{
-            type: FlowOperationType.ADD_ACTION,
-            actionLocation: {
-              parentStep: props.parentStepName,
-              stepLocationRelativeToParent: props.stepLocationRelativeToParent,
-              branchIndex:
-                props.stepLocationRelativeToParent ===
-                  StepLocationRelativeToParent.INSIDE_BRANCH ||
-                props.stepLocationRelativeToParent ===
-                  StepLocationRelativeToParent.INSIDE_FALSE_BRANCH ||
-                props.stepLocationRelativeToParent ===
-                  StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
-                  ? props.branchIndex
-                  : -1,
-              branchName:
-                props.stepLocationRelativeToParent ===
-                  StepLocationRelativeToParent.INSIDE_BRANCH ||
-                props.stepLocationRelativeToParent ===
-                  StepLocationRelativeToParent.INSIDE_FALSE_BRANCH ||
-                props.stepLocationRelativeToParent ===
-                  StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
-                  ? props.branchName
-                  : '',
-            },
-          }}
+          operation={
+            props.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_BRANCH
+              ? {
+                  type: FlowOperationType.ADD_ACTION,
+                  actionLocation: {
+                    parentStep: props.parentStepName,
+                    stepLocationRelativeToParent:
+                      props.stepLocationRelativeToParent,
+                    branchIndex: props.branchIndex,
+                    branchName: props.branchName,
+                  },
+                }
+              : {
+                  type: FlowOperationType.ADD_ACTION,
+                  actionLocation: {
+                    parentStep: props.parentStepName,
+                    stepLocationRelativeToParent:
+                      props.stepLocationRelativeToParent,
+                  },
+                }
+          }
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}
         >
@@ -110,7 +108,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
               }}
               className={cn(
-                'bg-[#a6b1bf] rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+                'bg-light-blue  overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
                 {
                   'bg-primary ': actionMenuOpen,
                 },

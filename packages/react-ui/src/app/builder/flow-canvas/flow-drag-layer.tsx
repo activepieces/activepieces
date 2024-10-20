@@ -13,12 +13,16 @@ import {
 import { t } from 'i18next';
 
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
-import { FlowOperationType, flowHelper } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  StepLocationRelativeToParent,
+  flowHelper,
+} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { ApEdge } from './flow-canvas-utils';
 import StepDragOverlay from './step-drag-overlay';
+import { ApButtonData } from './new/types';
 
 type FlowDragLayerProps = {
   children: React.ReactNode;
@@ -83,11 +87,16 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
       e.over.data.current &&
       e.over.data.current.accepts === e.active.data?.current?.type
     ) {
-      const edgeData: ApEdge['data'] = e.over.data.current as ApEdge['data'];
-      if (edgeData && edgeData.parentStep && draggedStep) {
+      const droppedAtNodeData: ApButtonData = e.over.data
+        .current as ApButtonData;
+      if (
+        droppedAtNodeData &&
+        droppedAtNodeData.parentStepName &&
+        draggedStep
+      ) {
         const isPartOfInnerFlow = flowHelper.isPartOfInnerFlow({
           parentStep: draggedStep,
-          childName: edgeData.parentStep,
+          childName: droppedAtNodeData.parentStepName,
         });
         if (isPartOfInnerFlow) {
           toast({
@@ -102,11 +111,19 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
             type: FlowOperationType.MOVE_ACTION,
             request: {
               name: draggedStep.name,
-              newParentStep: edgeData.parentStep,
+              newParentStep: droppedAtNodeData.parentStepName,
               stepLocationRelativeToNewParent:
-                edgeData.stepLocationRelativeToParent,
-              branchIndex: edgeData.branchIndex,
-              branchName: edgeData.branchName,
+                droppedAtNodeData.stepLocationRelativeToParent,
+              branchIndex:
+                droppedAtNodeData.stepLocationRelativeToParent ===
+                StepLocationRelativeToParent.INSIDE_BRANCH
+                  ? droppedAtNodeData.branchIndex
+                  : undefined,
+              branchName:
+                droppedAtNodeData.stepLocationRelativeToParent ===
+                StepLocationRelativeToParent.INSIDE_BRANCH
+                  ? droppedAtNodeData.branchName
+                  : undefined,
             },
           },
           () => toast(UNSAVED_CHANGES_TOAST),
