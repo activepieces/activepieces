@@ -6,7 +6,6 @@ export const LoadingScreen = () => {
   const { embedState } = useEmbedding();
   const isInEmbedding =
     window.location.pathname.startsWith('/embed') || embedState.isEmbedded;
-  console.log(isInEmbedding);
   return (
     <div
       className={cn('flex h-screen w-screen items-center justify-center ', {

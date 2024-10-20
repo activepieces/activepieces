@@ -37,7 +37,7 @@ type IframeWithWindow = HTMLIFrameElement & { contentWindow: Window };
 export const NEW_CONNECTION_QUERY_PARAMS = {
   name: 'pieceName',
   connectionName: 'connectionName',
-  date:'date'
+  randomId: 'randomId'
 };
 
 export type ActivepiecesClientEvent =
@@ -155,7 +155,7 @@ class ActivepiecesEmbedded {
               callbackAfterAuthentication: () => {
                 resolve({ status: "success" });
               },
-              initialRoute:'/'
+              initialRoute: '/'
             }).contentWindow;
             this._dashboardAndBuilderIframeWindow = iframeWindow;
             this._checkForClientRouteChanges(iframeWindow);
@@ -176,10 +176,10 @@ class ActivepiecesEmbedded {
 
   };
 
-  private connectToEmbed({ iframeContainer, initialRoute,callbackAfterAuthentication }: {
+  private connectToEmbed({ iframeContainer, initialRoute, callbackAfterAuthentication }: {
     iframeContainer: Element,
     initialRoute: string,
-    callbackAfterAuthentication?: ()=>void
+    callbackAfterAuthentication?: () => void
   }
   ): IframeWithWindow {
     const iframe = this._createIframe({ src: `${this._instanceUrl}/embed` });
@@ -235,7 +235,7 @@ class ActivepiecesEmbedded {
       method: async () => {
         const connectionsIframe = this.connectToEmbed({
           iframeContainer: document.body,
-         initialRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&date=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`
+          initialRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`
         });
         const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
         connectionsIframe.style.cssText = connectionsIframeStyle;
