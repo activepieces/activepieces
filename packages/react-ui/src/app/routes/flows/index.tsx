@@ -1,5 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   CheckIcon,
@@ -16,7 +14,6 @@ import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
-  PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import {
@@ -46,6 +43,8 @@ import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
 import { TableTitle } from '../../../components/ui/table-title';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { ColumnDef } from '@tanstack/react-table';
 
 const filters = [
   {
@@ -78,19 +77,27 @@ const FlowsPage = () => {
   const openNewWindow = useNewWindow();
   const [searchParams] = useSearchParams();
 
-  async function fetchData(
-    params: { name: string; status: FlowStatus[] },
-    pagination: PaginationParams,
-  ) {
-    return flowsApi.list({
-      projectId: authenticationSession.getProjectId()!,
-      cursor: pagination.cursor,
-      limit: pagination.limit ?? 10,
-      status: params.status,
-      name: params.name,
-      folderId: searchParams.get('folderId') ?? undefined,
-    });
-  }
+  const { data, isLoading } = useQuery({
+    queryKey: ['flow-table', window.location.search],
+    staleTime: 0,
+    queryFn: () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const name = searchParams.get('name');
+      const status = searchParams.get('status');
+      const cursor = searchParams.get('cursor');
+      const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10;
+      const folderId = searchParams.get('folderId') ?? undefined;
+
+      return flowsApi.list({
+        projectId: authenticationSession.getProjectId()!,
+        cursor: cursor ?? undefined,
+        limit,
+        name: name ?? undefined,
+        status: status ? status.split(',').map(s => s as FlowStatus) : undefined,
+        folderId,
+      });
+    },
+  });
 
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
     PopulatedFlow,
@@ -221,6 +228,7 @@ const FlowsPage = () => {
     },
   ];
 
+
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="mb-4 flex">
@@ -292,9 +300,9 @@ const FlowsPage = () => {
               (column) =>
                 !embedState.hideFolders || column.accessorKey !== 'folderId',
             )}
-            fetchData={fetchData}
+            page={data}
+            isLoading={isLoading}
             filters={filters}
-            refresh={refresh}
             onRowClick={(row, newWindow) => {
               if (newWindow) {
                 openNewWindow(`/flows/${row.id}`);

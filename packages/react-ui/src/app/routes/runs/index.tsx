@@ -1,13 +1,12 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, PlayIcon, Redo, RotateCw, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BulkAction } from '@/components/ui/data-table'
+import { useNavigate, useParams } from 'react-router-dom';
+import { BulkAction, CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM } from '@/components/ui/data-table'
 import {
   DataTable,
-  PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -34,122 +33,125 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 
-const fetchData = async (
-  params: {
-    flowId: string[];
-    status: FlowRunStatus[];
-    created: string;
-  },
-  pagination: PaginationParams,
-) => {
-  console.log("FETCHING DATA", params);
-  const status = params.status;
-  return flowRunsApi.list({
-    status,
-    projectId: authenticationSession.getProjectId()!,
-    flowId: params.flowId,
-    cursor: pagination.cursor,
-    limit: pagination.limit ?? 10,
-    createdAfter: pagination.createdAfter,
-    createdBefore: pagination.createdBefore,
-  });
-};
 
 const FlowRunsPage = () => {
+
+  const params = useParams();
+  const { data, isLoading } = useQuery({
+    queryKey: ['flow-run-table', window.location.search],
+    staleTime: 0,
+    queryFn: () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const status = searchParams.getAll('status') || params.status;
+      const flowId = searchParams.getAll('flowId') || params.flowId;
+      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+      const limit = searchParams.get(LIMIT_QUERY_PARAM) ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!) : 10;
+      const createdAfter = searchParams.get('createdAfter');
+      const createdBefore = searchParams.get('createdBefore');
+
+
+      return flowRunsApi.list({
+        status: status ? status.map(s => s as FlowRunStatus) : undefined,
+        projectId: authenticationSession.getProjectId()!,
+        flowId,
+        cursor: cursor ?? undefined,
+        limit,
+        createdAfter: createdAfter ?? undefined,
+        createdBefore: createdBefore ?? undefined,
+      });
+    },
+  });
+
+
   const navigate = useNavigate();
-  const [refresh, setRefresh] = useState(0);
-  const { data, isFetching } = flowsHooks.useFlows({
+  const { data: flowsData, isFetching: isFetchingFlows } = flowsHooks.useFlows({
     limit: 1000,
     cursor: undefined,
   });
   const openNewWindow = useNewWindow();
-  const flows = data?.data;
+  const flows = flowsData?.data;
   const { checkAccess } = useAuthorization();
   const userHasPermissionToRetryRun = checkAccess(Permission.RETRY_RUN);
 
-  const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = useMemo(
-    () => [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && 'indeterminate')
-            }
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-          />
-        ),
-        notClickable: true,
+  const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) =>
+            table.toggleAllPageRowsSelected(!!value)
+          }
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+        />
+      ),
+    },
+    {
+      accessorKey: 'flowId',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Flow')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">{row.original.flowDisplayName}</div>
+        );
       },
-      {
-        accessorKey: 'flowId',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Flow')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">{row.original.flowDisplayName}</div>
-          );
-        },
+    },
+    {
+      accessorKey: 'status',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Status')} />
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const { variant, Icon } = flowRunUtils.getStatusIcon(status);
+        return (
+          <div className="text-left">
+            <StatusIconWithText
+              icon={Icon}
+              text={formatUtils.convertEnumToHumanReadable(status)}
+              variant={variant}
+            />
+          </div>
+        );
       },
-      {
-        accessorKey: 'status',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Status')} />
-        ),
-        cell: ({ row }) => {
-          const status = row.original.status;
-          const { variant, Icon } = flowRunUtils.getStatusIcon(status);
-          return (
-            <div className="text-left">
-              <StatusIconWithText
-                icon={Icon}
-                text={formatUtils.convertEnumToHumanReadable(status)}
-                variant={variant}
-              />
-            </div>
-          );
-        },
+    },
+    {
+      accessorKey: 'created',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Start Time')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {formatUtils.formatDate(new Date(row.original.startTime))}
+          </div>
+        );
       },
-      {
-        accessorKey: 'created',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Start Time')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">
-              {formatUtils.formatDate(new Date(row.original.startTime))}
-            </div>
-          );
-        },
+    },
+    {
+      accessorKey: 'duration',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Duration')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {row.original.finishTime &&
+              formatUtils.formatDuration(row.original.duration)}
+          </div>
+        );
       },
-      {
-        accessorKey: 'duration',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Duration')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">
-              {row.original.finishTime &&
-                formatUtils.formatDuration(row.original.duration)}
-            </div>
-          );
-        },
-      },
-    ],
-    [],
-  );
+    },
+  ]
 
   const filters = useMemo(
     () => [
@@ -190,11 +192,6 @@ const FlowRunsPage = () => {
     [flows],
   );
 
-  useEffect(() => {
-    if (!isFetching) {
-      setRefresh((prev) => prev + 1);
-    }
-  }, [isFetching]);
 
   const replayRun = useMutation({
     mutationFn: (params: { runIds: string[]; strategy: FlowRetryStrategy }) =>
@@ -204,7 +201,6 @@ const FlowRunsPage = () => {
         title: t('Runs replayed successfully'),
         variant: 'default',
       });
-      setRefresh((prev) => prev + 1);
     },
     onError: () => {
       toast(INTERNAL_ERROR_TOAST);
@@ -254,7 +250,7 @@ const FlowRunsPage = () => {
                 >
                   <DropdownMenuItem
                     disabled={!userHasPermissionToRetryRun}
-                    onClick={() => {  
+                    onClick={() => {
                       replayRun.mutate({ runIds: selectedRows.map(row => row.id), strategy: FlowRetryStrategy.FROM_FAILED_STEP });
                       resetSelection();
                     }}
@@ -289,9 +285,9 @@ const FlowRunsPage = () => {
       </div>
       <DataTable
         columns={columns}
-        fetchData={fetchData}
+        page={data}
+        isLoading={isLoading || isFetchingFlows}
         filters={filters}
-        refresh={refresh}
         bulkActions={bulkActions}
         onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
       />

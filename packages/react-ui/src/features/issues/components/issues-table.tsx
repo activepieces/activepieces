@@ -6,7 +6,8 @@ import { createSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
-  PaginationParams,
+  LIMIT_QUERY_PARAM,
+  CURSOR_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -23,17 +24,10 @@ import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
+import { useMemo } from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useQuery } from '@tanstack/react-query';
 
-const fetchData = async (
-  _: Record<string, string>,
-  pagination: PaginationParams,
-) => {
-  return issuesApi.list({
-    projectId: authenticationSession.getProjectId()!,
-    cursor: pagination.cursor,
-    limit: pagination.limit,
-  });
-};
 
 export default function IssuesTable() {
   const navigate = useNavigate();
@@ -41,6 +35,21 @@ export default function IssuesTable() {
   const { refetch } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,
   );
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['issues', { platform }],
+    staleTime: 0,
+    queryFn: () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+      const limit = searchParams.get(LIMIT_QUERY_PARAM) ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!) : 10;
+      return issuesApi.list({
+        projectId: authenticationSession.getProjectId()!,
+        cursor: cursor ?? undefined,
+        limit,
+      });
+    },
+  });
 
   const handleMarkAsResolved = async (
     flowDisplayName: string,
@@ -61,7 +70,28 @@ export default function IssuesTable() {
   const userHasPermissionToMarkAsResolved = checkAccess(
     Permission.WRITE_ISSUES,
   );
-  const columns: ColumnDef<RowDataWithActions<PopulatedIssue>>[] = [
+
+  const columns: ColumnDef<RowDataWithActions<PopulatedIssue>>[] = useMemo(() => [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) =>
+            table.toggleAllPageRowsSelected(!!value)
+          }
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+        />
+      ),
+    },
     {
       accessorKey: 'flowName',
       header: ({ column }) => (
@@ -106,40 +136,8 @@ export default function IssuesTable() {
         );
       },
     },
-    {
-      accessorKey: 'actions',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="" />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="flex items-end justify-end">
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToMarkAsResolved}
-            >
-              <Button
-                disabled={!userHasPermissionToMarkAsResolved}
-                className="gap-2"
-                size={'sm'}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  console.log('resolved');
-                  row.original.delete();
-                  handleMarkAsResolved(
-                    row.original.flowDisplayName,
-                    row.original.id,
-                  );
-                }}
-              >
-                <Check className="size-4" />
-                {t('Mark as Resolved')}
-              </Button>
-            </PermissionNeededTooltip>
-          </div>
-        );
-      },
-    },
-  ];
+  ], [userHasPermissionToMarkAsResolved, handleMarkAsResolved, t]);
+
 
   return (
     <div className="flex-col w-full">
@@ -155,8 +153,38 @@ export default function IssuesTable() {
         <div className="ml-auto"></div>
       </div>
       <DataTable
+        page={data}
+        isLoading={isLoading}
         columns={columns}
-        fetchData={fetchData}
+        bulkActions={[
+          {
+            render: (selectedRows, resetSelection) => {
+              return (
+                <div className="flex items-center gap-2">
+                  <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToMarkAsResolved}
+                  >
+                    <Button
+                      disabled={!userHasPermissionToMarkAsResolved}
+                      className="gap-2"
+                      size={'sm'}
+                      onClick={(e) => {
+                        selectedRows.forEach(row => {
+                          handleMarkAsResolved(row.flowDisplayName, row.id);
+                          row.delete()
+                        });
+                        resetSelection();
+                      }}
+                    >
+                      <Check className="size-4" />
+                      {t('Mark as Resolved')} {selectedRows.length === 0 ? '' : `(${selectedRows.length})`}
+                    </Button>
+                  </PermissionNeededTooltip>
+                </div>
+              );
+            },
+          },
+        ]}
         onRowClick={(row, newWindow) => {
           const searchParams = createSearchParams({
             flowId: row.flowId,
