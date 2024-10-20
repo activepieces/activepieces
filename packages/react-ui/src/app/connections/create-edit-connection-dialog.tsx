@@ -174,11 +174,11 @@ const CreateOrEditConnectionDialog = React.memo(
       defaultValues: {
         request: createDefaultValues(
           piece,
-          reconnectConnection
-            ? reconnectConnection.name
-            : predefinedConnectionName
-            ? predefinedConnectionName
-            : appConnectionUtils.findName(piece.name),
+          getConnectionName(
+            piece,
+            reconnectConnection,
+            predefinedConnectionName,
+          ),
         ),
       },
       mode: 'onChange',
@@ -350,6 +350,20 @@ const CreateOrEditConnectionDialog = React.memo(
 
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
 export { CreateOrEditConnectionDialog };
+
+function getConnectionName(
+  piece: PieceMetadataModelSummary | PieceMetadataModel,
+  reconnectConnection: AppConnectionWithoutSensitiveData | null,
+  predefinedConnectionName: string | null,
+): string {
+  if (reconnectConnection) {
+    return reconnectConnection.name;
+  }
+  if (predefinedConnectionName) {
+    return predefinedConnectionName;
+  }
+  return appConnectionUtils.findName(piece.name);
+}
 
 function createDefaultValues(
   piece: PieceMetadataModelSummary | PieceMetadataModel,
