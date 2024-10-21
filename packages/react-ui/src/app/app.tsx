@@ -10,7 +10,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-import { InitialDataGuard } from './components/intial-data-guard';
+import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
 
 const queryClient = new QueryClient();

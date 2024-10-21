@@ -86,9 +86,10 @@ export async function piecesBuilder(app: FastifyInstance, io: Server): Promise<v
             ignoreInitial: true,
             awaitWriteFinish: {
                 stabilityThreshold: 2000,
-                pollInterval: 200
-            }
+                pollInterval: 200,
+            },
         })
+        watcher.on('ready', debouncedHandleFileChange)
         watcher.on('all', (event, path) => {
             if (path.endsWith('.ts')) {
                 debouncedHandleFileChange()
@@ -101,7 +102,7 @@ export async function piecesBuilder(app: FastifyInstance, io: Server): Promise<v
 
     app.addHook('onClose', () => {
         for (const watcher of watchers) {
-            watcher.close()
+            watcher.close().catch(logger.error)
         }
     })
 }
