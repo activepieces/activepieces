@@ -24,6 +24,6 @@ export const concat = createAction({
     }),
   },
   run: async (ctx) => {
-    return ctx.propsValue.texts.join(ctx.propsValue.separator ?? '');
+    return (ctx.propsValue.texts ?? []).join(ctx.propsValue.separator ?? '');
   },
 });
