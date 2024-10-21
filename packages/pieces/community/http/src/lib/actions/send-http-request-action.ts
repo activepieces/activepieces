@@ -15,6 +15,7 @@ import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';
+import { HttpPieceConfig } from '../../index';
 
 export const httpSendRequestAction = createAction({
   name: 'send_request',
@@ -163,6 +164,18 @@ export const httpSendRequestAction = createAction({
     assertNotNullOrUndefined(method, 'Method');
     assertNotNullOrUndefined(url, 'URL');
 
+    const pieceConfig = context.pieceConfig as HttpPieceConfig;
+    const deniedHeaders =
+      pieceConfig.deniedHeaders?.map((header) => header.toLowerCase().trim()) ||
+      [];
+    const blockedHeaders = Object.keys(headers).filter(
+      (headerName) => deniedHeaders.includes(headerName.toLowerCase().trim())
+    );
+
+    if (blockedHeaders.length > 0) {
+      throw new Error(`These headers are not allowed: ${blockedHeaders}`);
+    }
+
     const request: HttpRequest = {
       method,
       url,
@@ -197,8 +210,8 @@ export const httpSendRequestAction = createAction({
         } else {
           proxyUrl = `http://${proxySettings.proxy_host}:${proxySettings.proxy_port}`;
         }
-  
-        const httpsAgent = new HttpsProxyAgent(proxyUrl)
+
+        const httpsAgent = new HttpsProxyAgent(proxyUrl);
         const axiosClient = axios.create({
           httpsAgent,
         });

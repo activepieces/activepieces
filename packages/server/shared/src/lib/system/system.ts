@@ -90,7 +90,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
     [AppSystemProp.DEV_PIECES]: '',
-
+    [SharedSystemProp.PIECES_CONFIG]: '{}',
 }
 
 export const system = {

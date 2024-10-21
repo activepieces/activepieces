@@ -16,7 +16,7 @@ export enum AppSystemProp {
     ENCRYPTION_KEY = 'ENCRYPTION_KEY',
     EXECUTION_DATA_RETENTION_DAYS = 'EXECUTION_DATA_RETENTION_DAYS',
     JWT_SECRET = 'JWT_SECRET',
-    
+
     /**
      * @deprecated this now can be done from the platform admin page.
      */
@@ -100,7 +100,7 @@ export enum SharedSystemProp  {
     MAX_FILE_SIZE_MB = 'MAX_FILE_SIZE_MB',
 
     FRONTEND_URL = 'FRONTEND_URL',
-        
+
     // These are shared as the app is using the engine as a dependency for now.
     CACHE_PATH = 'CACHE_PATH',
     EXECUTION_MODE = 'EXECUTION_MODE',
@@ -108,6 +108,7 @@ export enum SharedSystemProp  {
     SANDBOX_MEMORY_LIMIT = 'SANDBOX_MEMORY_LIMIT',
     SANDBOX_PROPAGATED_ENV_VARS = 'SANDBOX_PROPAGATED_ENV_VARS',
     PIECES_SOURCE = 'PIECES_SOURCE',
+    PIECES_CONFIG = 'PIECES_CONFIG',
     ENGINE_EXECUTABLE_PATH = 'ENGINE_EXECUTABLE_PATH',
     ENRICH_ERROR_CONTEXT = 'ENRICH_ERROR_CONTEXT',
 
@@ -117,13 +118,14 @@ export enum SharedSystemProp  {
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
 
+
 }
 
 export enum WorkerSystemProps {
     FLOW_WORKER_CONCURRENCY = 'FLOW_WORKER_CONCURRENCY',
     SCHEDULED_WORKER_CONCURRENCY = 'SCHEDULED_WORKER_CONCURRENCY',
     SCHEDULED_POLLING_COUNT = 'SCHEDULED_POLLING_COUNT',
-    
+
     // TODO: This is currently undocumented and used for testing purposes. Please document or remove as necessary.
     POLLING_POOL_SIZE = 'POLLING_POOL_SIZE',
     WORKER_TOKEN = 'WORKER_TOKEN',
