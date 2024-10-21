@@ -16,7 +16,6 @@ export const village = createPiece({
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/village.png',
   categories: [
-    PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.PRODUCTIVITY,
     PieceCategory.SALES_AND_CRM,
   ],
