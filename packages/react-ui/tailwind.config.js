@@ -111,26 +111,33 @@ module.exports = {
         typing: {
           "0%": {
             width: "0%",
-            visibility: "hidden"
+            visibility: "hidden",
           },
           "100%": {
-            width: "100%"
-          }  
+            width: "100%",
+          }
         },
         blink: {
+          "0%": {
+            borderColor: "black",
+            backgroundColor: "black"
+          },
           "50%": {
-            borderColor: "transparent"
+            borderColor: "transparent",
+            backgroundColor: "transparent"
           },
           "100%": {
-            borderColor: "white"
-          }  
+            borderColor: "transparent",
+            backgroundColor: "transparent"
+          },
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         fade: 'fade 0.2s ease-out',
-        typing: 'typing 2s steps(20) alternate, blink infinite .7s',
+        blink: 'blink .7s steps(6, end) 3',
+        typing: 'typing 2s steps(20) alternate',
       },
       boxShadow: {
         'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',

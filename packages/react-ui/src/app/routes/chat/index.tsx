@@ -1,15 +1,7 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
-import {
-  ArrowUpIcon,
-  Download,
-  X,
-} from 'lucide-react';
-import { nanoid } from 'nanoid';
-import React, { useEffect, useRef, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { ChatBubbleAvatar } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
+import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   FormResultTypes,
@@ -17,8 +9,18 @@ import {
 } from '@/features/human-input/lib/human-input-api';
 import { cn } from '@/lib/utils';
 import { ApErrorParams, ChatUIResponse, ErrorCode, isNil } from '@activepieces/shared';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { MessagesList, Messages } from './messages-list';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
+import {
+  ArrowUpIcon,
+  BotIcon,
+  Download,
+  X,
+} from 'lucide-react';
+import { nanoid } from 'nanoid';
+import React, { useEffect, useRef, useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
+import { Messages, MessagesList } from './messages-list';
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -38,8 +40,15 @@ export function ChatPage() {
   });
 
   const scrollToBottom = () => {
-    messagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    setTimeout(() => {
+      messagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 100);
   };
+
+  // @ts-ignore
+  window.chat = {
+    scrollToBottom,
+  }
 
   const chatId = useRef<string>(nanoid());
   const [messages, setMessages] = useState<Messages>([]);
@@ -47,6 +56,8 @@ export function ChatPage() {
   const previousInputRef = useRef('');
   const [sendingError, setSendingError] = useState<ApErrorParams | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const botName = chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`
 
   const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
@@ -75,6 +86,7 @@ export function ChatPage() {
           case FormResultTypes.FILE:
             if ('url' in result.value) {
               const isImage = result.value.mimeType?.startsWith('image/');
+              setSendingError(null);
               setMessages([
                 ...messages,
                 {
@@ -87,6 +99,7 @@ export function ChatPage() {
             }
             break;
           case FormResultTypes.MARKDOWN:
+            setSendingError(null);
             setMessages([
               ...messages,
               { role: 'bot', content: result.value, type: 'text' },
@@ -139,10 +152,24 @@ export function ChatPage() {
         setSelectedImage={setSelectedImage}
       />
       {messages.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-8">
-          <p className="animate-typing overflow-hidden whitespace-nowrap border-r-2 border-r-primary pr-1 text-xl text-gray-500 leading-6">
-            {chatUI?.props.botName ? `${chatUI.props.botName}` : "What can I help you with today?"}
-          </p>
+        <div className="flex flex-col items-center justify-center">
+          <div className="flex items-center justify-center py-8 ps-4 font-bold">
+            <div className="flex flex-col items-center gap-1">
+              <ChatBubbleAvatar
+                src={chatUI?.platformLogoUrl}
+                fallback={<BotIcon className="size-5" />}
+              />
+              <div className="flex items-center gap-1 justify-center">
+                <p className="animate-typing overflow-hidden whitespace-nowrap pr-1 hidden lg:block lg:text-xl text-black leading-8">
+                  Hi I'm {botName} 👋 What can I help you with today?
+                </p>
+                <p className="overflow-hidden whitespace-nowrap pr-1 lg:hidden text-xl text-black leading-8">
+                  Hi I'm {botName} 👋
+                </p>
+                <span className="w-4 h-4 rounded-full animate-blink hidden lg:block" />
+              </div>
+            </div>
+          </div>
         </div>
       )}
       <div className="w-full px-4">
@@ -163,15 +190,15 @@ export function ChatPage() {
               disabled={!input || isSending}
               type="submit"
               size="icon"
-              className="rounded-full"
+              className="rounded-full min-w-10 min-h-10"
             >
-              <ArrowUpIcon className="w-5 h-5" />
+              <ArrowUpIcon className="w-5 h-5 size-5" />
             </Button>
           </div>
         </form>
       </div>
       <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-        <DialogContent className="bg-transparent border-none shadow-none flex items-center justify-center">
+        <DialogContent withCloseButton={false} className="bg-transparent border-none shadow-none flex items-center justify-center">
           <div className="relative">
             <img
               src={selectedImage || ''}
@@ -193,17 +220,19 @@ export function ChatPage() {
               >
                 <Download className="h-4 w-4" />
               </Button>
-              <Button
-                size="icon"
-                variant="secondary"
-                onClick={() => setSelectedImage(null)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <DialogClose>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  onClick={() => setSelectedImage(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-    </main>
+    </main >
   );
 }

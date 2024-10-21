@@ -1,18 +1,19 @@
-import React from 'react';
-import { ChatUIResponse, ApErrorParams } from '@activepieces/shared';
+import { useTheme } from '@/components/theme-provider';
+import { Badge } from '@/components/ui/badge';
 import { ChatBubble, ChatBubbleAction, ChatBubbleAvatar, ChatBubbleMessage } from '@/components/ui/chat/chat-bubble';
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
-import { BotIcon, CircleX, Download, RotateCcw } from 'lucide-react';
+import { CopyButton } from '@/components/ui/copy-button';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
-import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
+import { javascript } from '@codemirror/lang-javascript';
+import { Static, Type } from '@sinclair/typebox';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
+import ReactCodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
+import { BotIcon, CircleX, Download, RotateCcw } from 'lucide-react';
+import React from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import ReactCodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
-import { githubDark } from '@uiw/codemirror-theme-github';
-import { CopyButton } from '@/components/ui/copy-button';
-import { ErrorCode } from '@activepieces/shared';
-import { Static, Type } from '@sinclair/typebox';
-import { javascript } from '@codemirror/lang-javascript';
 
 export const Messages = Type.Array(
   Type.Object({
@@ -29,13 +30,6 @@ export const Messages = Type.Array(
   }),
 );
 export type Messages = Static<typeof Messages>;
-
-const extensions = [
-  githubDark,
-  EditorState.readOnly.of(true),
-  EditorView.editable.of(false),
-  javascript({ jsx: false, typescript: true }),
-];
 
 interface MessagesListProps {
   messagesRef: React.RefObject<HTMLDivElement>;
@@ -100,6 +94,14 @@ export const MessagesList = React.memo(({
   sendMessage,
   setSelectedImage
 }: MessagesListProps) => {
+  const { theme } = useTheme();
+  const extensions = [
+    theme === 'dark' ? githubDark : githubLight,
+    EditorState.readOnly.of(true),
+    EditorView.editable.of(false),
+    javascript({ jsx: false, typescript: true }),
+  ];
+
   return (
     <ChatMessageList ref={messagesRef}>
       {messages.map((message, index) => (
@@ -151,31 +153,45 @@ export const MessagesList = React.memo(({
                 remarkPlugins={[remarkGfm]}
                 className="bg-inherit"
                 components={{
+
                   code({ node, inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || '');
 
-                    return !inline && match ? (
-                      <ReactCodeMirror
-                        value={String(children).trim()}
-                        className="border-none"
-                        width="100%"
-                        maxWidth="100%"
-                        basicSetup={{
-                          syntaxHighlighting: true,
-                          foldGutter: false,
-                          lineNumbers: false,
-                          searchKeymap: false,
-                          lintKeymap: false,
-                          autocompletion: false,
-                        }}
-                        lang={match[1]}
-                        theme={githubDark}
-                        readOnly={true}
-                        extensions={extensions}
-                      />
+                    return !inline && match && match[1] ? (
+                      <div className="relative">
+                        <ReactCodeMirror
+                          value={String(children).trim()}
+                          className="border-none"
+                          width="100%"
+                          maxWidth="100%"
+                          minHeight="50px"
+                          basicSetup={{
+                            syntaxHighlighting: true,
+                            foldGutter: false,
+                            lineNumbers: true,
+                            searchKeymap: true,
+                            lintKeymap: true,
+                            autocompletion: true,
+                            highlightActiveLine: true,
+                            highlightActiveLineGutter: true,
+                            highlightSpecialChars: true,
+                            indentOnInput: true,
+                            bracketMatching: true,
+                            closeBrackets: true,
+                          }}
+                          lang={match[1]}
+                          theme={theme === "dark" ? githubDark : githubLight}
+                          readOnly={true}
+                          extensions={extensions}
+                        />
+                        <CopyButton
+                          textToCopy={String(children).trim()}
+                          className="absolute top-2 right-2 size-6 p-1"
+                        />
+                      </div>
                     ) : (
-                      <code className={className} {...props}>
-                        {children}
+                      <code className={cn(className, "bg-gray-200 px-[6px] py-[2px] rounded-xs font-mono text-sm")} {...props}>
+                        {String(children).trim()}
                       </code>
                     );
                   },

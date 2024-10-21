@@ -61,13 +61,14 @@ export const humanInputService = {
             })
         }
         const platformId = await projectService.getPlatformId(flow.projectId)
-        const platformLogoUrl = (await platformService.getOneOrThrow(platformId)).logoIconUrl
+        const platform = await platformService.getOneOrThrow(platformId)
         return {
             id: flow.id,
             title: flow.version.displayName,
             props: flow.version.trigger.settings.input,
             projectId: flow.projectId,
-            platformLogoUrl,
+            platformLogoUrl: platform.logoIconUrl,
+            platformName: platform.name,
         }
     }
 }

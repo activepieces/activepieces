@@ -44,7 +44,8 @@ export const ChatUIResponse = Type.Object({
     title: Type.String(),
     props: ChatUIProps,
     projectId: Type.String(),
-    platformLogoUrl: Type.Optional(Type.String()),
+    platformLogoUrl: Type.String(),
+    platformName: Type.String(),
 })
 
 export type ChatUIResponse = Static<typeof ChatUIResponse>
