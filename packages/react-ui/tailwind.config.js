@@ -138,6 +138,7 @@ module.exports = {
         fade: 'fade 0.2s ease-out',
         blink: 'blink .7s steps(6, end) 3',
         typing: 'typing 2s steps(20) alternate',
+        'typing-sm': 'typing 1s steps(10) alternate',
       },
       boxShadow: {
         'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',

@@ -163,10 +163,10 @@ export function ChatPage() {
                 <p className="animate-typing overflow-hidden whitespace-nowrap pr-1 hidden lg:block lg:text-xl text-black leading-8">
                   Hi I'm {botName} 👋 What can I help you with today?
                 </p>
-                <p className="overflow-hidden whitespace-nowrap pr-1 lg:hidden text-xl text-black leading-8">
+                <p className="animate-typing-sm overflow-hidden whitespace-nowrap pr-1 lg:hidden text-xl text-black leading-8">
                   Hi I'm {botName} 👋
                 </p>
-                <span className="w-4 h-4 rounded-full animate-blink hidden lg:block" />
+                <span className="w-4 h-4 rounded-full animate-blink" />
               </div>
             </div>
           </div>
