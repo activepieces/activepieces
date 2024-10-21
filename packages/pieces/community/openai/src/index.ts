@@ -1,11 +1,11 @@
 import {
   AI_PROVIDERS_MAKRDOWN,
   AuthenticationType,
-  HttpMethod,
   createCustomApiCallAction,
   httpClient,
+  HttpMethod,
 } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { askAssistant } from './lib/actions/ask-assistant';
 import { generateImage } from './lib/actions/generate-image';
@@ -17,20 +17,32 @@ import { visionPrompt } from './lib/actions/vision-prompt';
 import { baseUrl } from './lib/common/common';
 import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
 
-export const openaiAuth = PieceAuth.SecretText({
-  description: AI_PROVIDERS_MAKRDOWN.openai,
-  displayName: 'API Key',
-  required: true,
+export const openaiAuth = PieceAuth.CustomAuth({
+  description:"Configured to support OpenAI-compatible AI interface",
+  required:true,
+  props:{ 
+    baseURL: Property.ShortText({
+      displayName: 'API BaseURL',
+      defaultValue:baseUrl,
+      description:"The URL of the OpenAI API.eg: https://api.openai.com/v1" ,
+      required: true,
+    }),
+    apiKey:PieceAuth.SecretText({
+      description: AI_PROVIDERS_MAKRDOWN.openai,
+      displayName: 'API Key',
+      required: true
+    }),
+  },
   validate: async (auth) => {
     try {
       await httpClient.sendRequest<{
         data: { id: string }[];
       }>({
-        url: `${baseUrl}/models`,
+        url: `${auth.auth.baseURL}/models`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth as string,
+          token: auth.auth.apiKey
         },
       });
       return {
@@ -39,11 +51,11 @@ export const openaiAuth = PieceAuth.SecretText({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid API key',
+        error: 'Invalid API key/API Url',
       };
     }
   },
-});
+})
 
 export const openai = createPiece({
   displayName: 'OpenAI',
@@ -66,7 +78,7 @@ export const openai = createPiece({
       baseUrl: () => baseUrl,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${(auth as {apiKey:string}).apiKey}`,
         };
       },
     }),
@@ -81,6 +93,7 @@ export const openai = createPiece({
     'MoShizzle',
     'khaledmashaly',
     'abuaboud',
+    'liuhuapiaoyuan'
   ],
   triggers: [],
 });
