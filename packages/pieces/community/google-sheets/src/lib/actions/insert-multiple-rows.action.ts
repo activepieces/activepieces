@@ -42,11 +42,13 @@ export const insertMultipleRowsAction = createAction({
 
 				const fields: DynamicPropsValue = {};
 
+				const sheetId = Number(sheet_id)
+
 				const authentication = auth as OAuth2PropertyValue;
 				const values = await googleSheetsCommon.getValues(
 					spreadsheet_id as unknown as string,
 					getAccessTokenOrThrow(authentication),
-					sheet_id as unknown as number,
+					sheetId,
 				);
 
 				const firstRow = values?.[0]?.values ?? [];
