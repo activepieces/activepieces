@@ -13,14 +13,12 @@ export const ApLoopReturnLineCanvasEdge = ({
   id,
 }: EdgeProps & ApLoopReturnEdge) => {
   const horizontalLineLength =
-    Math.abs(sourceX - targetX) -
-    2 * flowUtilConsts.ARC_LENGTH +
-    flowUtilConsts.HORIZONTAL_SPACE_BETWEEN_NODES +
-    flowUtilConsts.AP_NODE_SIZE.STEP.width / 2;
+    Math.abs(sourceX - targetX) - 2 * flowUtilConsts.ARC_LENGTH;
+
   const verticalLineLength =
-    Math.abs(sourceY - targetY) -
-    flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
-    flowUtilConsts.AP_NODE_SIZE.STEP.height;
+    data.verticalSpaceBetweenReturnNodeStartAndEnd -
+    flowUtilConsts.ARC_LENGTH / 2;
+
   const endLineLength =
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
     2 * flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
@@ -33,10 +31,10 @@ export const ApLoopReturnLineCanvasEdge = ({
   ${flowUtilConsts.ARC_RIGHT_UP} v -${verticalLineLength}
   a15,15 0 0,1 15,-15
   
-  h ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2}
+  h ${horizontalLineLength / 2 - 2 * flowUtilConsts.ARC_LENGTH}
   m-5 -6 l6 6  m-6 0 m6 0 l-6 6 m3 -6
 
-  M ${sourceX - (horizontalLineLength / 2 + flowUtilConsts.ARC_LENGTH)} ${
+  M ${sourceX - flowUtilConsts.ARC_LENGTH - horizontalLineLength / 2} ${
     sourceY +
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
     flowUtilConsts.ARC_LENGTH / 2

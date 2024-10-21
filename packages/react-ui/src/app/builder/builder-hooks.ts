@@ -175,7 +175,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
-      setFlow: (flow: Flow) => set({ flow }),
+      setFlow: (flow: PopulatedFlow) => set({ flow }),
       exitRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,

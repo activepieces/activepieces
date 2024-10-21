@@ -2,7 +2,7 @@ import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
 import { BaseEdge } from '@xyflow/react';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { cn } from '@/lib/utils';
@@ -35,6 +35,19 @@ const BUTTON_SIZE = {
   width: 16,
   height: 16,
 };
+
+const getElementWidth = (text: string, className: string) => {
+  // Create a temporary element to calculate the pixel value
+  const tempElement = document.createElement('span');
+  tempElement.className = className; // Set the font size
+  tempElement.innerHTML = text; // Set the text content
+  document.body.appendChild(tempElement); // Append to the body to apply styles
+  const width = tempElement.getBoundingClientRect().width; // Get computed font size in pixels
+  document.body.removeChild(tempElement); // Clean up
+
+  return width; // Return the pixel value
+};
+
 function getEdgePath({
   sourceX,
   sourceY,
@@ -43,11 +56,11 @@ function getEdgePath({
   data,
 }: ApEdgeWithButtonProps) {
   const ARROW_DOWN = 'm6 -6 l-6 6 m-6 -6 l6 6';
-
+  console.log(data);
   const targetYWithPlaceHolder =
     targetY +
     (flowCanvasUtils.isPlaceHolder(data.targetType)
-      ? AP_NODE_SIZE[data.targetType].height + 10
+      ? AP_NODE_SIZE[data.targetType].height + 2
       : 0);
   if (sourceX === targetX) {
     return {
@@ -60,7 +73,11 @@ function getEdgePath({
       } ${data.targetType === ApNodeType.STEP_NODE ? ARROW_DOWN : ''}`,
     };
   }
-  const FIRST_LINE_LENGTH = 55;
+  const FIRST_LINE_LENGTH =
+    data.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_BRANCH
+      ? 50
+      : 55;
   const ARC_LEFT = 'a15,15 0 0,0 -15,15';
   const ARC_RIGHT = 'a15,15 0 0,1 15,15';
   const ARC_LEFT_DOWN = 'a15,15 0 0,1 -15,15';
@@ -90,6 +107,11 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
     state.activeDraggingStep,
     state.readonly,
   ]);
+  if (
+    props.data.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_BRANCH
+  ) {
+  }
   const { edgePath, buttonPosition } = getEdgePath(props);
   const { setNodeRef } = useDroppable({
     id: props.id,
@@ -116,6 +138,15 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
     StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
       ? -1
       : 1;
+  const labelWidth =
+    useMemo(
+      () =>
+        getElementWidth(
+          props.data.branchName || 'Path ' + (props.data.branchIndex ?? 0),
+          'text-sm',
+        ),
+      [],
+    ) ?? 14;
   return (
     <>
       <BaseEdge
@@ -158,16 +189,15 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
       {props.data.stepLocationRelativeToParent ===
         StepLocationRelativeToParent.INSIDE_BRANCH && (
         <>
-          {console.log('branchName',  props.data.branchName)}
           <foreignObject
-            width={100}
+            width={labelWidth}
             height={20}
-            x={buttonPosition.x - 50}
+            x={buttonPosition.x - labelWidth / 2 + 10}
             y={buttonPosition.y - 10}
           >
-            <div className="text-accent-foreground text-sm text-center bg-background select-none cursor-default">
+            <span className="text-accent-foreground text-sm text-center bg-background select-none cursor-default">
               {props.data.branchName || 'Path ' + props.data.branchIndex}
-            </div>
+            </span>
           </foreignObject>
         </>
       )}
@@ -216,7 +246,8 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
               stepLocationRelativeToParent:
                 props.data.stepLocationRelativeToParent!,
               branchIndex: props.data.branchIndex ?? 0,
-              branchName: props.data.branchName ?? 'Path ' + props.data.branchIndex,
+              branchName:
+                props.data.branchName ?? 'Path ' + props.data.branchIndex,
             },
           }}
           open={actionMenuOpen}
@@ -226,7 +257,7 @@ const ApEdgeWithButton = React.memo((props: ApEdgeWithButtonProps) => {
             width={18}
             height={18}
             x={buttonPosition.x - LINE_WIDTH / 2}
-            y={buttonPosition.y + 20}
+            y={buttonPosition.y}
             className={cn('rounded-xss cursor-pointer transition-all', {
               'shadow-add-button': actionMenuOpen,
             })}

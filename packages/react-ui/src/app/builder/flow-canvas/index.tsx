@@ -1,9 +1,9 @@
 import { ReactFlow, Background, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { usePrevious } from 'react-use';
 
-import { isFlowStateTerminal } from '@activepieces/shared';
+import { flowHelper, isFlowStateTerminal } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
@@ -16,10 +16,19 @@ import { newFloWUtils } from './new/new-utils';
 import { flowUtilConsts } from './new/consts';
 
 const FlowCanvas = React.memo(() => {
-  const [allowCanvasPanning, graph, run] = useBuilderStateContext((state) => {
-    const graph = newFloWUtils.convertFlowVersionToGraph(state.flowVersion);
-    return [state.allowCanvasPanning, graph, state.run];
-  });
+  const [allowCanvasPanning, graph, run, flowVersion] = useBuilderStateContext(
+    (state) => {
+      const graph = newFloWUtils.convertFlowVersionToGraph(state.flowVersion);
+      return [state.allowCanvasPanning, graph, state.run, state.flowVersion];
+    },
+  );
+  const focusableNodes = useMemo(() => {
+    //TODO: fix reset zoom + fit to view behaviours
+    const nodes = flowHelper.getAllStepsAtFirstLevel(flowVersion.trigger);
+    return nodes.map((node) => ({
+      id: node.name,
+    }));
+  }, [flowVersion]);
   const previousRun = usePrevious(run);
   const { fitView } = useReactFlow();
   if (
@@ -64,7 +73,7 @@ const FlowCanvas = React.memo(() => {
             includeHiddenNodes: false,
             minZoom: 0.5,
             maxZoom: 1.2,
-            nodes: graph.nodes.slice(0, 5),
+            nodes: focusableNodes.slice(0, 1),
             duration: 0,
           }}
         >

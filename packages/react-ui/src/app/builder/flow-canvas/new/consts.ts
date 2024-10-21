@@ -1,11 +1,13 @@
 import { ApStepCanvasNode } from './nodes/step-node';
-import { ApStraightLineCanvasEdge } from './edges/straight-line-edge';
+import { ApStraightLineCanvasEdge as ApStraightLineCanvasEdge } from './edges/straight-line-edge';
 import { ApEdgeType, ApNodeType } from './types';
 import ApGraphEndWidgetNode from './nodes/flow-end-widget-node';
-import { ApLoopStartLineCanvasEdge } from './edges/loop-start-line-edge';
+import { ApLoopStartLineCanvasEdge as ApLoopStartCanvasEdge } from './edges/loop-start-edge';
 import ApLoopReturnCanvasNode from './nodes/loop-return-node';
 import { ApBigAddButtonCanvasNode } from './nodes/big-add-button-node';
-import { ApLoopReturnLineCanvasEdge } from './edges/loop-return-line-edge';
+import { ApLoopReturnLineCanvasEdge as ApLoopReturnCanvasEdge } from './edges/loop-return-edge';
+import { ApRouterStartCanvasEdge } from './edges/router-start-edge';
+import { ApRouterEndCanvasEdge } from './edges/router-end-edge';
 
 const ARC_LENGTH = 15;
 const ARC_LEFT = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,0 -${ARC_LENGTH},${ARC_LENGTH}`;
@@ -18,7 +20,9 @@ const VERTICAL_SPACE_BETWEEN_STEP_AND_LINE = 7;
 const VERTICAL_SPACE_BETWEEN_STEPS = 85;
 const VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD =
   VERTICAL_SPACE_BETWEEN_STEPS * 1.5 + 2 * ARC_LENGTH;
-
+const LABEL_HEIGHT = 14;
+const VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD =
+  VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD + LABEL_HEIGHT;
 const LINE_WIDTH = 1.5;
 const DRAGGED_STEP_TAG = 'dragged-step';
 const HORIZONTAL_SPACE_BETWEEN_NODES = 40;
@@ -71,11 +75,15 @@ export const flowUtilConsts = {
   VERTICAL_SPACE_BETWEEN_STEPS,
   ARC_RIGHT_UP,
   LINE_WIDTH,
+  LABEL_HEIGHT,
+  VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD,
   doesNodeAffectBoundingBox: doesNodeAffectBoundingBoxWidth,
   edgeTypes: {
     [ApEdgeType.STRAIGHT_LINE]: ApStraightLineCanvasEdge,
-    [ApEdgeType.LOOP_START_EDGE]: ApLoopStartLineCanvasEdge,
-    [ApEdgeType.LOOP_RETURN_EDGE]: ApLoopReturnLineCanvasEdge,
+    [ApEdgeType.LOOP_START_EDGE]: ApLoopStartCanvasEdge,
+    [ApEdgeType.LOOP_RETURN_EDGE]: ApLoopReturnCanvasEdge,
+    [ApEdgeType.ROUTER_START_EDGE]: ApRouterStartCanvasEdge,
+    [ApEdgeType.ROUTER_END_EDGE]: ApRouterEndCanvasEdge,
   },
   nodeTypes: {
     [ApNodeType.STEP]: ApStepCanvasNode,

@@ -12,14 +12,14 @@ export const ApLoopStartLineCanvasEdge = ({
   source,
   id,
 }: EdgeProps & ApLoopStartEdge) => {
-  const startX = sourceX;
   const startY = sourceY + flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
   const verticalLineLength =
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
     2 * flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
 
-  const horizontalLineLength = targetX - startX - 2 * flowUtilConsts.ARC_LENGTH;
-  const path = `M ${startX} ${startY} v${verticalLineLength / 2}
+  const horizontalLineLength =
+    Math.abs(targetX - sourceX) - 2 * flowUtilConsts.ARC_LENGTH;
+  const path = `M ${sourceX} ${startY} v${verticalLineLength / 2}
   ${flowUtilConsts.ARC_RIGHT_DOWN} h${horizontalLineLength}
   ${flowUtilConsts.ARC_RIGHT} v${verticalLineLength}
    ${!data.isLoopEmpty ? flowUtilConsts.ARROW_DOWN : ''}`;
@@ -27,12 +27,13 @@ export const ApLoopStartLineCanvasEdge = ({
   const showDebugForLineEndPoint = false;
   const buttonPosition = {
     x:
-      startX -
+      sourceX -
       flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2 +
       horizontalLineLength +
       flowUtilConsts.ARC_LENGTH * 2,
     y: startY + verticalLineLength + flowUtilConsts.ARC_LENGTH,
   };
+
   return (
     <>
       <BaseEdge
@@ -60,7 +61,7 @@ export const ApLoopStartLineCanvasEdge = ({
 
       {showDebugForLineEndPoint && (
         <foreignObject
-          x={startX}
+          x={sourceX}
           y={startY}
           className="w-[20px] h-[20px] rounded-full bg-[red] flex items-center justify-center absolute"
         >

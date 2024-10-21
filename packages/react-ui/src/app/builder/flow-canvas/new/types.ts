@@ -40,9 +40,7 @@ export type ApLoopReturnNode = {
     x: number;
     y: number;
   };
-  data: {
-    lastChildStepName?: string;
-  };
+  data: {};
 };
 
 export type ApButtonData =
@@ -51,15 +49,14 @@ export type ApButtonData =
       parentStepName: string;
       stepLocationRelativeToParent:
         | StepLocationRelativeToParent.AFTER
-        | StepLocationRelativeToParent.INSIDE_LOOP;
+        | StepLocationRelativeToParent.INSIDE_LOOP
+        | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
+        | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
     }
   | {
       edgeId: string;
       parentStepName: string;
-      stepLocationRelativeToParent:
-        | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
-        | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH
-        | StepLocationRelativeToParent.INSIDE_BRANCH;
+      stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
       branchIndex: number;
       branchName: string;
     };
@@ -97,6 +94,8 @@ export enum ApEdgeType {
   LOOP_START_EDGE = 'ApLoopStartEdge',
   LOOP_CLOSE_EDGE = 'ApLoopCloseEdge',
   LOOP_RETURN_EDGE = 'ApLoopReturnEdge',
+  ROUTER_START_EDGE = 'ApRouterStartEdge',
+  ROUTER_END_EDGE = 'ApRouterEndEdge',
 }
 
 export type ApStraightLineEdge = Edge & {
@@ -125,10 +124,52 @@ export type ApLoopReturnEdge = Edge & {
     parentStepName: string;
     isLoopEmpty: boolean;
     drawArrowHeadAfterEnd: boolean;
+    verticalSpaceBetweenReturnNodeStartAndEnd: number;
   };
 };
 
-export type ApEdge = ApLoopStartEdge | ApLoopReturnEdge | ApStraightLineEdge;
+export type ApRouterStartEdge = Edge & {
+  type: ApEdgeType.ROUTER_START_EDGE;
+  data: {
+    drawStartingVerticalLine: boolean;
+    isBranchEmpty: boolean;
+    label: string;
+  } & (
+    | {
+        stepLocationRelativeToParent:
+          | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
+          | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
+      }
+    | {
+        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
+        branchIndex: number;
+      }
+  );
+};
+
+export type ApRouterEndEdge = Edge & {
+  type: ApEdgeType.ROUTER_END_EDGE;
+  data: {
+    verticalSpaceBetweenLastNodeInBranchAndEndLine: number;
+    drawEndingArc: boolean;
+  } & (
+    | {
+        routerOrBranchStepName: string;
+        drawEndingVerticalLine: true;
+        isNextStepEmpty: boolean;
+      }
+    | {
+        drawEndingVerticalLine: false;
+      }
+  );
+};
+
+export type ApEdge =
+  | ApLoopStartEdge
+  | ApLoopReturnEdge
+  | ApStraightLineEdge
+  | ApRouterStartEdge
+  | ApRouterEndEdge;
 export type ApGraph = {
   nodes: ApNode[];
   edges: ApEdge[];
