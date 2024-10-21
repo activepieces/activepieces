@@ -1,5 +1,7 @@
 import { PlusCircledIcon } from '@radix-ui/react-icons';
+import { t } from 'i18next';
 import { CheckIcon } from 'lucide-react';
+import React from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -20,49 +22,53 @@ import { Separator } from './seperator';
 
 type DataTableSelectPopoverProps = {
   title?: string;
-  selectedValues: Set<string>;
   options: readonly {
     label: string;
     value: string;
-    icon?: React.ComponentType<{ className?: string }>;
+    icon?: React.ComponentType<{
+      className?: string;
+    }>;
   }[];
-  facets?: Map<any, number>;
   handleFilterChange: (filterValue: string[]) => void;
+  initialValues: string[];
 };
 
 const DataTableSelectPopover = ({
   title,
-  selectedValues,
   options,
   handleFilterChange,
-  facets,
+  initialValues,
 }: DataTableSelectPopoverProps) => {
+  const selectedValues = React.useRef<Set<string>>(new Set(initialValues));
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 border-dashed">
           <PlusCircledIcon className="mr-2 size-4" />
           {title}
-          {selectedValues?.size > 0 && (
+          {selectedValues.current?.size > 0 && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
                 variant="secondary"
                 className="rounded-sm px-1 font-normal lg:hidden"
               >
-                {selectedValues.size}
+                {selectedValues.current.size}
               </Badge>
               <div className="hidden space-x-1 lg:flex">
-                {selectedValues.size > 2 ? (
+                {selectedValues.current.size > 2 ? (
                   <Badge
                     variant="secondary"
                     className="rounded-sm px-1 font-normal"
                   >
-                    {selectedValues.size} selected
+                    {selectedValues.current.size} {t('selected')}
                   </Badge>
                 ) : (
                   options
-                    .filter((option) => selectedValues.has(option.value))
+                    .filter((option) =>
+                      selectedValues.current.has(option.value),
+                    )
                     .map((option) => (
                       <Badge
                         variant="secondary"
@@ -82,22 +88,23 @@ const DataTableSelectPopover = ({
         <Command>
           <CommandInput placeholder={title} />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{t('No results found.')}</CommandEmpty>
 
             <CommandGroup>
               <ScrollArea viewPortClassName="max-h-[200px]">
                 {options.map((option, index) => {
-                  const isSelected = selectedValues.has(option.value);
+                  const isSelected = selectedValues.current.has(option.value);
                   return (
                     <CommandItem
                       key={option.value}
                       onSelect={() => {
                         if (isSelected) {
-                          selectedValues.delete(option.value);
+                          selectedValues.current.delete(option.value);
                         } else {
-                          selectedValues.add(option.value);
+                          selectedValues.current.add(option.value);
                         }
-                        const filterValues = Array.from(selectedValues);
+                        const filterValues = Array.from(selectedValues.current);
+
                         handleFilterChange(filterValues);
                       }}
                     >
@@ -118,25 +125,23 @@ const DataTableSelectPopover = ({
                         <span>{option.label}</span>
                         <span className="hidden">{index}</span>
                       </div>
-                      {facets?.get(option.value) && (
-                        <span className="ml-auto flex size-4 items-center justify-center font-mono text-xs">
-                          {facets.get(option.value)}
-                        </span>
-                      )}
                     </CommandItem>
                   );
                 })}
               </ScrollArea>
             </CommandGroup>
-            {selectedValues.size > 0 && (
+            {selectedValues.current.size > 0 && (
               <>
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => handleFilterChange([])}
+                    onSelect={() => {
+                      handleFilterChange([]);
+                      selectedValues.current = new Set([]);
+                    }}
                     className="justify-center text-center"
                   >
-                    Clear filters
+                    {t('Clear filters')}
                   </CommandItem>
                 </CommandGroup>
               </>

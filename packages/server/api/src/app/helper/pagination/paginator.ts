@@ -1,4 +1,4 @@
-import { AppSystemProp, DatabaseType, system } from '@activepieces/server-shared'
+import { AppSystemProp, DatabaseType, logger, system } from '@activepieces/server-shared'
 import {
     Brackets,
     EntitySchema,
@@ -64,12 +64,8 @@ export default class Paginator<Entity extends ObjectLiteral> {
         this.order = order
     }
 
-    public async paginate(
-        builder: SelectQueryBuilder<Entity>,
-    ): Promise<PagingResult<Entity>> {
-        const entities = await this.appendPagingQuery(builder).getMany()
+    private async paginateEntities(entities: Entity[]): Promise<PagingResult<Entity>> {
         const hasMore = entities.length > this.limit
-
         if (hasMore) {
             entities.splice(entities.length - 1, 1)
         }
@@ -89,8 +85,23 @@ export default class Paginator<Entity extends ObjectLiteral> {
         if (this.hasAfterCursor() || (hasMore && this.hasBeforeCursor())) {
             this.nextBeforeCursor = this.encode(entities[0])
         }
-
         return this.toPagingResult(entities)
+    }
+    public async paginate(
+        builder: SelectQueryBuilder<Entity>,
+    ): Promise<PagingResult<Entity>> {
+        return this.paginateEntities(await this.appendPagingQuery(builder).getMany())
+       
+    }
+    public async paginateRaw<T>(
+        builder: SelectQueryBuilder<Entity>,
+        order?: {
+            orderBy: string
+            order: 'DESC' | 'ASC'
+        },
+    ): Promise<PagingResult<T>> {
+        return this.paginateEntities(await this.appendPagingQuery(builder, order).getRawMany()) as unknown as PagingResult<T>
+       
     }
 
     private getCursor(): CursorResult {
@@ -102,6 +113,10 @@ export default class Paginator<Entity extends ObjectLiteral> {
 
     private appendPagingQuery(
         builder: SelectQueryBuilder<Entity>,
+        order?: {
+            orderBy: string
+            order: 'DESC' | 'ASC'
+        },
     ): SelectQueryBuilder<Entity> {
         const cursors: CursorParam = {}
         const clonedBuilder = new SelectQueryBuilder<Entity>(builder)
@@ -119,10 +134,17 @@ export default class Paginator<Entity extends ObjectLiteral> {
             )
         }
 
-        clonedBuilder.take(this.limit + 1)
-        for (const [key, value] of Object.entries(this.buildOrder())) {
-            clonedBuilder.addOrderBy(key, value)
+        clonedBuilder.limit(this.limit + 1)
+        if (order) {
+            clonedBuilder.addOrderBy(order.orderBy, order.order)
         }
+        else {
+            Object.entries(this.buildOrder()).forEach(([key, value])=>{
+                clonedBuilder.addOrderBy(key, value)
+            })
+            
+        }
+        
         return clonedBuilder
     }
 
@@ -193,8 +215,12 @@ export default class Paginator<Entity extends ObjectLiteral> {
         const columns = atob(cursor).split(',')
         columns.forEach((column) => {
             const [key, raw] = column.split(':')
+        
             const type = this.getEntityPropertyType(key)
             const value = decodeByType(type, raw)
+            logger.error({
+                [key]: value,
+            })
             cursors[key] = value
         })
 

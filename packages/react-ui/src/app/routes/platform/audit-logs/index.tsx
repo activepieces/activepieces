@@ -1,5 +1,13 @@
 import { t } from 'i18next';
-import { Folder, Key, Link2, Logs, Users, Workflow } from 'lucide-react';
+import {
+  Folder,
+  Key,
+  Link2,
+  Logs,
+  UserMinus,
+  Users,
+  Workflow,
+} from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DataTable } from '@/components/ui/data-table';
@@ -186,6 +194,13 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Users className="size-4" />,
         tooltip: t('User'),
       };
+
+    case ApplicationEventName.USER_DELETED:
+      return {
+        icon: <UserMinus className="size-4" />,
+        tooltip: t('User'),
+      };
+
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return {
         icon: <Key className="size-4" />,

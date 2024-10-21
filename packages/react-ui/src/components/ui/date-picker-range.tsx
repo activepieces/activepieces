@@ -40,17 +40,21 @@ export function DatePickerWithRange({
   minDate,
   presetType = 'past',
 }: DatePickerWithRangeProps) {
-  const [date, setDate] = React.useState<DateRange | undefined>();
-
-  React.useEffect(() => {
-    setDate({
-      from: from ? new Date(from) : undefined,
-      to: to ? new Date(to) : undefined,
-    });
-  }, [from, to]);
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: from ? new Date(from) : undefined,
+    to: to ? new Date(to) : undefined,
+  });
 
   const handleSelect = (selectedDate: DateRange | undefined) => {
-    setDate(selectedDate);
+    const correctedSelectedDate = {
+      from: selectedDate?.from
+        ? new Date(selectedDate.from.setHours(0, 0, 0, 0))
+        : undefined,
+      to: selectedDate?.to
+        ? new Date(selectedDate.to.setHours(23, 59, 59, 999))
+        : undefined,
+    };
+    setDate(correctedSelectedDate);
     if (selectedDate) {
       onChange(selectedDate);
     }

@@ -1,8 +1,8 @@
 import { Static, Type } from '@sinclair/typebox'
-
+import { Project } from '../project'
 
 export const AnalyticsPieceReportItem = Type.Object({
-    name: Type.String(),        
+    name: Type.String(),
     displayName: Type.String(),
     logoUrl: Type.String(),
     usageCount: Type.Number(),
@@ -18,7 +18,10 @@ export const AnalyticsProjectReportItem = Type.Object({
     activeFlows: Type.Number(),
     totalFlows: Type.Number(),
 })
-export type AnalyticsProjectReportItem = Static<typeof AnalyticsProjectReportItem>
+
+export type AnalyticsProjectReportItem = Static<
+  typeof AnalyticsProjectReportItem
+>
 
 export const AnalyticsProjectReport = Type.Array(AnalyticsProjectReportItem)
 export type AnalyticsProjectReport = Static<typeof AnalyticsProjectReport>
@@ -33,10 +36,47 @@ export const AnalyticsReportResponse = Type.Object({
     uniquePiecesUsed: Type.Number(),
     activeFlowsWithAI: Type.Number(),
     topPieces: AnalyticsPieceReport,
-    tasksUsage: Type.Array(Type.Object({
-        day: Type.String(),
-        totalTasks: Type.Number(),
-    })),
+    tasksUsage: Type.Array(
+        Type.Object({
+            day: Type.String(),
+            totalTasks: Type.Number(),
+        }),
+    ),
     topProjects: AnalyticsProjectReport,
 })
 export type AnalyticsReportResponse = Static<typeof AnalyticsReportResponse>
+
+
+export const PlatformProjectLeaderBoardRow = 
+Type.Object({
+    id: Type.String(),
+    displayName: Type.String(),
+    flows: Type.String(),
+    tasks: Type.String(),
+    runs: Type.String(),
+    connections: Type.String(),
+    activeFlows: Type.String(),
+    contributions: Type.String(),
+    users: Type.String(),
+    piecesUsed: Type.String(),
+    created: Type.String(),
+    issues: Type.String(),
+})
+
+export type PlatformProjectLeaderBoardRow = Static<
+  typeof PlatformProjectLeaderBoardRow
+>
+
+
+export const ListPlatformProjectsLeaderboardParams = Type.Object({
+    cursor: Type.Optional(Type.String()),
+    limit: Type.Optional(Type.Number()),
+    createdAfter: Type.Optional(Type.String()),
+    createdBefore: Type.Optional(Type.String()),
+    orderByColumn: Type.Optional(Type.KeyOf(PlatformProjectLeaderBoardRow)),
+    order: Type.Optional(Type.TemplateLiteral('${ASC|DESC}')),
+})
+
+export type ListPlatformProjectsLeaderboardParams = Static<
+  typeof ListPlatformProjectsLeaderboardParams
+>

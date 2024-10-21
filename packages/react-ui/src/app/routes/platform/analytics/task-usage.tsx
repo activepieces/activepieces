@@ -1,6 +1,7 @@
 'use client';
 
 import dayjs from 'dayjs';
+import { t } from 'i18next';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
@@ -54,8 +55,10 @@ export function TaskUsage({ report }: TaskUsageProps) {
     <>
       <div className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <div className="text-xl font-semibold ">Executed Tasks</div>
-          <p>Showing total executed tasks for specified time range</p>
+          <div className="text-xl font-semibold ">{t('Executed Tasks')}</div>
+          <p className="text-muted-foreground">
+            {t('Showing total executed tasks for specified time range')}
+          </p>
         </div>
         <DatePickerWithRange
           onChange={setSelectedDateRange}

@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { AppConnectionWithoutSensitiveData, BaseModelSchema, Flow, FlowOperationRequest, FlowOperationType, FlowRun, FlowVersion, Folder, Project, User } from "@activepieces/shared";
+import { AppConnectionWithoutSensitiveData, BaseModelSchema, Flow, FlowOperationRequest, FlowOperationRequestForAuditEvents, FlowOperationType, FlowRun, FlowVersion, Folder, Project, User } from "@activepieces/shared";
 import { SigningKey } from "../signing-key";
 export const ListAuditEventsRequest = Type.Object({
     limit: Type.Optional(Type.Number()),
@@ -23,6 +23,7 @@ export enum ApplicationEventName {
     CONNECTION_DELETED = 'connection.deleted',
     USER_SIGNED_UP = 'user.signed.up',
     USER_SIGNED_IN = 'user.signed.in',
+    USER_DELETED = 'user.deleted',
     USER_PASSWORD_RESET = 'user.password.reset',
     USER_EMAIL_VERIFIED = 'user.email.verified',
     SIGNING_KEY_CREATED = 'signing.key.created',
@@ -65,7 +66,7 @@ export const FlowRunEvent = Type.Object({
     ...BaseAuditEventProps,
     action: Type.Union([Type.Literal(ApplicationEventName.FLOW_RUN_STARTED), Type.Literal(ApplicationEventName.FLOW_RUN_FINISHED)]),
     data: Type.Object({
-        flowRun: Type.Pick(FlowRun, ['id', 'startTime', 'finishTime', 'duration', 'environment', 'flowId', 'flowVersionId', 'flowDisplayName', 'status']),
+        flowRun: Type.Pick(FlowRun, ['id', 'startTime', 'finishTime', 'duration', 'environment', 'flowId', 'flowVersionId', 'flowDisplayName', 'status','tasks']),
         project: Type.Optional(Type.Pick(Project, ['displayName'])),
     }),
 })
@@ -100,7 +101,7 @@ export const FlowUpdatedEvent = Type.Object({
     action: Type.Literal(ApplicationEventName.FLOW_UPDATED),
     data: Type.Object({
         flowVersion: Type.Pick(FlowVersion, ['id', 'displayName', 'flowId', 'created', 'updated']),
-        request: FlowOperationRequest,
+        request: FlowOperationRequestForAuditEvents,
         project: Type.Optional(Type.Pick(Project, ['displayName'])),
     }),
 })
@@ -111,11 +112,25 @@ export const AuthenticationEvent = Type.Object({
     ...BaseAuditEventProps,
     action: Type.Union([Type.Literal(ApplicationEventName.USER_SIGNED_IN), Type.Literal(ApplicationEventName.USER_PASSWORD_RESET), Type.Literal(ApplicationEventName.USER_EMAIL_VERIFIED)]),
     data: Type.Object({
-        user: Type.Optional(UserMeta)
+        user: Type.Optional(UserMeta),
     }),
 })
 
 export type AuthenticationEvent = Static<typeof AuthenticationEvent>
+
+export const DeletedUserEvent = Type.Object({
+    ...BaseAuditEventProps,
+    action: Type.Literal(ApplicationEventName.USER_DELETED),
+    data: Type.Object({
+        //the user property is for the person doing the deleting
+        deletedUser: Type.Optional(UserMeta),
+    }),
+})
+
+export type DeletedUserEvent = Static<typeof DeletedUserEvent>
+
+
+
 
 export const SignUpEvent = Type.Object({
     ...BaseAuditEventProps,
@@ -149,6 +164,7 @@ export const ApplicationEvent = Type.Union([
     FolderEvent,
     SignUpEvent,
     SigningKeyEvent,
+    DeletedUserEvent
 ])
 
 export type ApplicationEvent = Static<typeof ApplicationEvent>
@@ -160,9 +176,10 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return convertUpdateActionToDetails(event);
         }
         case ApplicationEventName.FLOW_RUN_STARTED:
-        case ApplicationEventName.FLOW_RUN_FINISHED: {
-            return `Flow run ${event.data.flowRun.id} is finished`;
-        }
+            return `Flow run ${event.data.flowRun.id} has started`;
+        case ApplicationEventName.FLOW_RUN_FINISHED: 
+            return `Flow run ${event.data.flowRun.id} has finished`;
+        
         case ApplicationEventName.FLOW_CREATED:
             return `Flow ${event.data.flow.id} is created`;
         case ApplicationEventName.FLOW_DELETED:
@@ -187,6 +204,8 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `User ${event.data.user?.email} signed up using email from ${event.data.source}`;
         case ApplicationEventName.SIGNING_KEY_CREATED:
             return `${event.data.signingKey.displayName} is created`;
+        case ApplicationEventName.USER_DELETED: 
+        return `User ${event.data.deletedUser?.email} was deleted`;
     }
 }
 

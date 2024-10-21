@@ -7,7 +7,8 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { t } from 'i18next';
-import React, { useState, useEffect } from 'react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -19,11 +20,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { SeekPage } from '@activepieces/shared';
+import { isNil, SeekPage } from '@activepieces/shared';
+
+import { cn } from '../../lib/utils';
 
 import { Button } from './button';
 import { DataTableColumnHeader } from './data-table-column-header';
-import { DataTableFacetedFilter } from './data-table-options-filter';
+import {
+  DataTableFacetedFilter,
+  TABLE_QUERY_PARAMS_NAME,
+} from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
 import {
@@ -49,7 +55,7 @@ type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>> = {
     : K['options'][number]['value'];
 };
 
-export type DataTableFilter<Keys extends string> = {
+export type DataTableFilter<Keys> = {
   type: 'select' | 'input' | 'date';
   title: string;
   accessorKey: Keys;
@@ -67,21 +73,27 @@ type DataTableAction<TData extends DataWithId> = (
 
 export type PaginationParams = {
   cursor?: string;
-  limit?: number;
+  limit: number;
   createdAfter?: string;
   createdBefore?: string;
 };
 
+const PAGE_SIZE = ['10', '30', '50'];
+
 interface DataTableProps<
   TData extends DataWithId,
   TValue,
-  Keys extends string,
-  F extends DataTableFilter<Keys>,
+  F extends DataTableFilter<Exclude<keyof TData, symbol | number>>,
 > {
+  allowOrdering?: boolean;
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
   fetchData: (
-    filters: FilterRecord<Keys, F>,
+    filters: FilterRecord<Exclude<keyof TData, symbol | number>, F>,
     pagination: PaginationParams,
+    order?: {
+      column: keyof TData;
+      order: 'DESC' | 'ASC';
+    },
   ) => Promise<SeekPage<TData>>;
   onRowClick?: (
     row: RowDataWithActions<TData>,
@@ -98,18 +110,18 @@ interface DataTableProps<
 export function DataTable<
   TData extends DataWithId,
   TValue,
-  Keys extends string,
-  F extends DataTableFilter<Keys>,
+  F extends DataTableFilter<Exclude<keyof TData, symbol | number>>,
 >({
   columns: columnsInitial,
   fetchData,
   onRowClick,
   filters = [] as F[],
-  refresh,
+  refresh = 0,
   actions = [],
   onSelectedRowsChange,
   hidePagination,
-}: DataTableProps<TData, TValue, Keys, F>) {
+  allowOrdering,
+}: DataTableProps<TData, TValue, F>) {
   const columns = columnsInitial.concat([
     {
       accessorKey: '__actions',
@@ -131,28 +143,25 @@ export function DataTable<
       },
     },
   ]);
-
   const [searchParams, setSearchParams] = useSearchParams();
-  const startingCursor = searchParams.get('cursor') || undefined;
-  const startingLimit = searchParams.get('limit') || '10';
-  const [currentCursor, setCurrentCursor] = useState<string | undefined>(
-    startingCursor,
-  );
-  const [nextPageCursor, setNextPageCursor] = useState<string | undefined>(
-    undefined,
-  );
-  const [previousPageCursor, setPreviousPageCursor] = useState<
-    string | undefined
-  >(undefined);
-  const [tableData, setTableData] = useState<RowDataWithActions<TData>[]>([]);
-  const [deletedRows = [], setDeletedRows] = useState<TData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const pagination = useRef<{
+    nextCursor: string | null;
+    previousCursor: string | null;
+    limit: string;
+  }>({
+    nextCursor: null,
+    previousCursor: null,
+    limit: searchParams.get(TABLE_QUERY_PARAMS_NAME.limit) ?? PAGE_SIZE[0],
+  });
 
+  const [tableData, setTableData] = useState<RowDataWithActions<TData>[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [, setReRender] = useState<boolean>(false);
+  const refreshRef = useRef<number>(0);
   const fetchDataAndUpdateState = async (params: URLSearchParams) => {
     setLoading(true);
-    setTableData([]);
     try {
-      const limit = params.get('limit') ?? undefined;
+      const limit = params.get(TABLE_QUERY_PARAMS_NAME.limit) ?? undefined;
       const filterNames = filters.map((filter) => filter.accessorKey);
       const paramsObject = filterNames
         .map((key) => [key, params.getAll(key)] as const)
@@ -172,30 +181,56 @@ export function DataTable<
             ...acc,
             [key]: '',
           };
-        }, {} as FilterRecord<Keys, F>);
+        }, {} as FilterRecord<Exclude<keyof TData, symbol | number>, F>);
 
-      const response = await fetchData(paramsObject, {
-        cursor: params.get('cursor') ?? undefined,
-        limit: limit ? parseInt(limit) : undefined,
-        createdAfter: params.get('createdAfter') ?? undefined,
-        createdBefore: params.get('createdBefore') ?? undefined,
-      });
-      const newData = response.data.map((row, index) => ({
-        ...row,
-        delete: () => {
-          setDeletedRows([...deletedRows, row]);
+      const orderParam = params.get(TABLE_QUERY_PARAMS_NAME.order);
+      const columnParam = params.get(TABLE_QUERY_PARAMS_NAME.orderByColumn);
+
+      const response = await fetchData(
+        paramsObject,
+        {
+          cursor: params.get(TABLE_QUERY_PARAMS_NAME.cursor) ?? undefined,
+          limit: parseInt(limit ?? PAGE_SIZE[0]),
+          createdAfter:
+            params.get(TABLE_QUERY_PARAMS_NAME.createdAfter) ?? undefined,
+          createdBefore:
+            params.get(TABLE_QUERY_PARAMS_NAME.createdBefore) ?? undefined,
         },
-        update: (payload: Partial<TData>) => {
-          setTableData((prevData) => {
-            const newData = [...prevData];
-            newData[index] = { ...newData[index], ...payload };
-            return newData;
-          });
-        },
-      }));
-      setTableData(newData);
-      setNextPageCursor(response.next ?? undefined);
-      setPreviousPageCursor(response.previous ?? undefined);
+        allowOrdering &&
+          (orderParam === 'ASC' || orderParam === 'DESC') &&
+          columnParam
+          ? {
+              //If column is an invalid name, server query will fail, so I need to find a way to validate the column param
+              column: columnParam as keyof TData,
+              order: orderParam,
+            }
+          : undefined,
+      );
+
+      setTableData(
+        response.data.map((row, index) => ({
+          ...row,
+          delete: () => {
+            setTableData((prev) => prev.filter((r) => row.id === r.id));
+            setReRender((val) => !val);
+          },
+          update: (payload: Partial<TData>) => {
+            setTableData((prev) => {
+              const newData = [...prev];
+              newData[index] = {
+                ...tableData[index],
+                ...payload,
+              };
+              return newData;
+            });
+          },
+        })),
+      );
+      pagination.current = {
+        ...pagination.current,
+        nextCursor: response.next,
+        previousCursor: response.previous,
+      };
     } catch (error) {
       console.error(error);
       toast(INTERNAL_ERROR_TOAST);
@@ -211,52 +246,23 @@ export function DataTable<
     getCoreRowModel: getCoreRowModel(),
     initialState: {
       pagination: {
-        pageSize: parseInt(startingLimit),
+        pageSize: 10,
       },
     },
   });
-
-  useEffect(() => {
-    filters?.forEach((filter) => {
-      const column = table.getColumn(filter.accessorKey);
-      const values = searchParams.getAll(filter.accessorKey);
-      if (column && values) {
-        column.setFilterValue(values);
-      }
-    });
-  }, []);
 
   useDeepCompareEffect(() => {
     onSelectedRowsChange?.(
       table.getSelectedRowModel().rows.map((row) => row.original),
     );
   }, [table.getSelectedRowModel().rows]);
-
-  useEffect(() => {
-    setSearchParams(
-      (prev) => {
-        const newParams = new URLSearchParams(prev);
-
-        newParams.set('cursor', currentCursor ?? '');
-        newParams.set('limit', `${table.getState().pagination.pageSize}`);
-        return newParams;
-      },
-      { replace: true },
-    );
-  }, [currentCursor, table.getState().pagination.pageSize]);
-
+  if (refresh !== refreshRef.current) {
+    refreshRef.current = refresh;
+    fetchDataAndUpdateState(searchParams);
+  }
   useEffect(() => {
     fetchDataAndUpdateState(searchParams);
-  }, [searchParams, refresh]);
-
-  useEffect(() => {
-    setTableData(
-      tableData.filter(
-        (row) => !deletedRows.some((deletedRow) => deletedRow.id === row.id),
-      ),
-    );
-  }, [deletedRows]);
-
+  }, []);
   return (
     <div>
       <DataTableToolbar>
@@ -265,9 +271,10 @@ export function DataTable<
             <DataTableFacetedFilter
               key={filter.accessorKey}
               type={filter.type}
-              column={table.getColumn(filter.accessorKey)}
               title={filter.title}
               options={filter.options}
+              accessorKey={filter.accessorKey}
+              filterChanged={fetchDataAndUpdateState}
             />
           ))}
       </DataTableToolbar>
@@ -275,16 +282,80 @@ export function DataTable<
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-background">
+              <TableRow key={headerGroup.id} hoverable={false}>
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                      <div
+                        onClick={
+                          allowOrdering
+                            ? () => {
+                                const orderParam = searchParams.get('order');
+                                const columnParam = searchParams.get(
+                                  TABLE_QUERY_PARAMS_NAME.orderByColumn,
+                                );
+
+                                setSearchParams(
+                                  (prev) => {
+                                    const newParams = new URLSearchParams(prev);
+                                    newParams.set(
+                                      TABLE_QUERY_PARAMS_NAME.cursor,
+                                      '',
+                                    );
+                                    if (columnParam !== header.id) {
+                                      newParams.set(
+                                        TABLE_QUERY_PARAMS_NAME.orderByColumn,
+                                        header.id,
+                                      );
+                                      newParams.set(
+                                        TABLE_QUERY_PARAMS_NAME.order,
+                                        'DESC',
+                                      );
+                                    } else {
+                                      newParams.set(
+                                        TABLE_QUERY_PARAMS_NAME.order,
+                                        orderParam === 'DESC' ? 'ASC' : 'DESC',
+                                      );
+                                    }
+                                    pagination.current.previousCursor = null;
+                                    pagination.current.nextCursor = null;
+                                    fetchDataAndUpdateState(newParams);
+                                    return newParams;
+                                  },
+                                  { replace: true },
+                                );
+                              }
+                            : undefined
+                        }
+                        className={cn('flex gap-1 items-center', {
+                          'underline underline-offset-4':
+                            searchParams.get(
+                              TABLE_QUERY_PARAMS_NAME.orderByColumn,
+                            ) === header.id,
+                          'cursor-pointer': allowOrdering,
+                        })}
+                      >
+                        {searchParams.get(
+                          TABLE_QUERY_PARAMS_NAME.orderByColumn,
+                        ) === header.id && (
+                          <div>
+                            {searchParams.get(TABLE_QUERY_PARAMS_NAME.order) ===
+                            'ASC' ? (
+                              <ArrowUp className="h-4 w-4 stroke-foreground"></ArrowUp>
+                            ) : (
+                              <ArrowDown className="h-4 w-4 stroke-foreground"></ArrowDown>
+                            )}
+                          </div>
+                        )}
+                        <div>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </div>
+                      </div>
                     </TableHead>
                   );
                 })}
@@ -335,19 +406,36 @@ export function DataTable<
       </div>
       {!hidePagination && (
         <div className="flex items-center justify-end space-x-2 py-4">
-          <p className="text-sm font-medium">Rows per page</p>
+          <p className="text-sm font-medium">{t('Rows')}</p>
           <Select
-            value={`${table.getState().pagination.pageSize}`}
+            value={
+              searchParams.get(TABLE_QUERY_PARAMS_NAME.limit) ?? PAGE_SIZE[0]
+            }
             onValueChange={(value) => {
-              table.setPageSize(Number(value));
-              setCurrentCursor(undefined);
+              setSearchParams(
+                (prev) => {
+                  const newParams = new URLSearchParams(prev);
+                  newParams.set('cursor', '');
+                  newParams.set('limit', value);
+                  pagination.current = {
+                    limit: value,
+                    nextCursor: null,
+                    previousCursor: null,
+                  };
+
+                  fetchDataAndUpdateState(newParams);
+
+                  return newParams;
+                },
+                { replace: true },
+              );
             }}
           >
             <SelectTrigger className="h-9 min-w-[70px] w-auto">
               <SelectValue placeholder={table.getState().pagination.pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 30, 50].map((pageSize) => (
+              {PAGE_SIZE.map((pageSize) => (
                 <SelectItem key={pageSize} value={`${pageSize}`}>
                   {pageSize}
                 </SelectItem>
@@ -357,8 +445,23 @@ export function DataTable<
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentCursor(previousPageCursor)}
-            disabled={!previousPageCursor}
+            onClick={() => {
+              setSearchParams(
+                (prev) => {
+                  const newParams = new URLSearchParams(prev);
+                  if (pagination.current.previousCursor) {
+                    newParams.set(
+                      TABLE_QUERY_PARAMS_NAME.cursor,
+                      pagination.current.previousCursor,
+                    );
+                  }
+                  fetchDataAndUpdateState(newParams);
+                  return newParams;
+                },
+                { replace: true },
+              );
+            }}
+            disabled={isNil(pagination.current.previousCursor)}
           >
             {t('Previous')}
           </Button>
@@ -366,9 +469,22 @@ export function DataTable<
             variant="outline"
             size="sm"
             onClick={() => {
-              setCurrentCursor(nextPageCursor);
+              setSearchParams(
+                (prev) => {
+                  const newParams = new URLSearchParams(prev);
+                  if (pagination.current.nextCursor) {
+                    newParams.set(
+                      TABLE_QUERY_PARAMS_NAME.cursor,
+                      pagination.current.nextCursor,
+                    );
+                  }
+                  fetchDataAndUpdateState(newParams);
+                  return newParams;
+                },
+                { replace: true },
+              );
             }}
-            disabled={!nextPageCursor}
+            disabled={isNil(pagination.current.nextCursor)}
           >
             {t('Next')}
           </Button>
