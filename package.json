@@ -359,6 +359,7 @@
     "eslint-plugin-tailwindcss": "3.17.4",
     "eslint-plugin-testing-library": "6.2.2",
     "eslint-plugin-vitest": "0.5.4",
+    "fastify-xml-body-parser": "2.2.0",
     "husky": "8.0.3",
     "i18next-parser": "9.0.2",
     "inquirer": "8.2.6",
