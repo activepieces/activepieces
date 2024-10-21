@@ -17,7 +17,7 @@ export const FormPage = () => {
     isError,
   } = useQuery<FormResponse | null, Error>({
     queryKey: ['form', flowId],
-    queryFn: () => humanInputApi.get(flowId!, useDraft === 'true'),
+    queryFn: () => humanInputApi.getForm(flowId!, useDraft === 'true'),
     enabled: !isNil(flowId),
     staleTime: Infinity,
   });

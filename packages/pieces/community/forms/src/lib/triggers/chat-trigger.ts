@@ -22,6 +22,12 @@ export const onChatSubmission = createTrigger({
     about: Property.MarkDown({
       value: markdown,
     }),
+    botName: Property.ShortText({
+      displayName: 'Bot Name',
+      description: 'The name of the chatbot',
+      required: true,
+      defaultValue: 'AI Bot',
+    }),
   },
   sampleData: {
     chatId: "MOCK_CHAT_ID",
