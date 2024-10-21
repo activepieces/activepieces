@@ -19,13 +19,14 @@ export const onChatSubmission = createTrigger({
   displayName: 'Chat UI',
   description: 'Trigger the flow by sending a message',
   props: {
+    about: Property.MarkDown({
+      value: markdown,
+    }),
     botName: Property.ShortText({
       displayName: 'Bot Name',
       description: 'The name of the chatbot',
       required: true,
-    }),
-    about: Property.MarkDown({
-      value: markdown,
+      defaultValue: 'AI Bot',
     }),
   },
   sampleData: {
