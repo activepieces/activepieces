@@ -197,7 +197,7 @@ export const httpSendRequestAction = createAction({
         } else {
           proxyUrl = `http://${proxySettings.proxy_host}:${proxySettings.proxy_port}`;
         }
-  
+
         const httpsAgent = new HttpsProxyAgent(proxyUrl)
         const axiosClient = axios.create({
           httpsAgent,
