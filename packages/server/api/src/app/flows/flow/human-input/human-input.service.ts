@@ -1,7 +1,9 @@
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
+import { ActivepiecesError, ChatUIResponse, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
 import { flowVersionService } from '../../flow-version/flow-version.service'
 import { flowRepo } from '../flow.repo'
+import { projectService } from 'packages/server/api/src/app/project/project-service'
+import { platformService } from 'packages/server/api/src/app/platform/platform.service'
 
 const FORMS_PIECE_NAME = '@activepieces/piece-forms'
 const FORM_TRIIGGER = 'form_submission'
@@ -22,7 +24,7 @@ const FORMS_TRIGGER_NAMES = [
     FILE_TRIGGER,
 ]
 
-export const formService = {
+export const humanInputService = {
     getFormByFlowIdOrThrow: async (flowId: string, useDraft: boolean): Promise<FormResponse> => {
         const flow = await getPopulatedFlowById(flowId, useDraft)
         if (!flow
@@ -45,6 +47,29 @@ export const formService = {
             projectId: flow.projectId,
         }
     },
+    getChatUIByFlowIdOrThrow: async (flowId: string, useDraft: boolean): Promise<ChatUIResponse> => {
+        const flow = await getPopulatedFlowById(flowId, useDraft)
+        if (!flow
+            || flow.version.trigger.settings.triggerName !== "chat_submission"
+            || flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_FORM_NOT_FOUND,
+                params: {
+                    flowId,
+                    message: 'Flow chat ui not found in draft version of flow.',
+                },
+            })
+        }
+        const platformId = await projectService.getPlatformId(flow.projectId)
+        const platformLogoUrl = (await platformService.getOneOrThrow(platformId)).logoIconUrl
+        return {
+            id: flow.id,
+            title: flow.version.displayName,
+            props: flow.version.trigger.settings.input,
+            projectId: flow.projectId,
+            platformLogoUrl,
+        }
+    }
 }
 
 async function getPopulatedFlowById(id: FlowId, useDraft: boolean): Promise<PopulatedFlow | null> {

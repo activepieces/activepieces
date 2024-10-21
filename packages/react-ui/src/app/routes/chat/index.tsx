@@ -5,11 +5,12 @@ import {
   ArrowUpIcon,
   BotIcon,
   CircleX,
-  RotateCcw,
   Download,
+  RotateCcw,
+  X,
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import { Navigate, useParams } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
@@ -26,13 +27,24 @@ import { ChatInput } from '@/components/ui/chat/chat-input';
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
 import { CopyButton } from '@/components/ui/copy-button';
 import ImageWithFallback from '@/components/ui/image-with-fallback';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   FormResultTypes,
   humanInputApi,
 } from '@/features/human-input/lib/human-input-api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApErrorParams, ErrorCode } from '@activepieces/shared';
+import { ApErrorParams, ChatUIResponse, ErrorCode, isNil } from '@activepieces/shared';
+import { javascript } from '@codemirror/lang-javascript';
+import { githubDark } from '@uiw/codemirror-theme-github';
+import ReactCodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+
+const extensions = [
+  githubDark,
+  EditorState.readOnly.of(true),
+  EditorView.editable.of(false),
+  javascript({ jsx: false, typescript: true }),
+];
 
 const Messages = Type.Array(
   Type.Object({
@@ -55,6 +67,18 @@ export function ChatPage() {
   const messagesRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
+  const {
+    data: chatUI,
+    isLoading,
+    isError: isLoadingError,
+  } = useQuery<ChatUIResponse | null, Error>({
+    queryKey: ['chat', flowId],
+    queryFn: () => humanInputApi.getChatUI(flowId!, false),
+    enabled: !isNil(flowId),
+    staleTime: Infinity,
+    retry: false,
+  });
+
   const scrollToBottom = () => {
     messagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   };
@@ -63,14 +87,10 @@ export function ChatPage() {
   const [messages, setMessages] = useState<Messages>([]);
   const [input, setInput] = useState('');
   const previousInputRef = useRef('');
-  const [error, setError] = useState<ApErrorParams | null>(null);
+  const [sendingError, setSendingError] = useState<ApErrorParams | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  const { data: projectId } = useQuery({
-    queryKey: ['current-project-id'],
-    queryFn: () => authenticationSession.getProjectId(),
-  });
-
-  const { mutate: sendMessage, isPending: isLoading } = useMutation({
+  const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
       if (!flowId || !chatId) return null;
       const savedInput = isRetrying ? previousInputRef.current : input;
@@ -88,7 +108,7 @@ export function ChatPage() {
     },
     onSuccess: (result) => {
       if (!result) {
-        setError({
+        setSendingError({
           code: ErrorCode.NO_CHAT_RESPONSE,
           params: {},
         });
@@ -118,12 +138,12 @@ export function ChatPage() {
       scrollToBottom();
     },
     onError: (error: AxiosError) => {
-      setError(error.response?.data as ApErrorParams);
+      setSendingError(error.response?.data as ApErrorParams);
       scrollToBottom();
     },
   });
 
-  useEffect(scrollToBottom, [messages, isLoading]);
+  useEffect(scrollToBottom, [messages, isSending]);
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -133,13 +153,15 @@ export function ChatPage() {
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!isLoading && input) {
+      if (!isSending && input) {
         onSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
       }
     }
   };
 
-  if (!flowId) return <Navigate to="/404" />;
+  if (!flowId || isLoadingError) return <Navigate to="/404" />;
+
+  if (isLoading) return <LoadingSpinner />
 
   return (
     <main
@@ -148,88 +170,20 @@ export function ChatPage() {
         messages.length > 0 ? 'h-screen' : 'h-[calc(50vh)]',
       )}
     >
-      <ChatMessageList ref={messagesRef}>
-        {messages.map((message, index) => (
-          <ChatBubble
-            key={index}
-            variant={message.role === 'user' ? 'sent' : 'received'}
-            className="flex  items-start"
-          >
-            {message.role === 'bot' && (
-              <ChatBubbleAvatar
-                src=""
-                fallback={<BotIcon className="size-5" />}
-              />
-            )}
-            <ChatBubbleMessage className="flex gap-2">
-              {message.type === 'image' ? (
-                <ImageWithFallback
-                  src={message.content}
-                  alt="Received image"
-                  className="max-w-full h-auto rounded-md"
-                />
-              ) : message.type === 'file' ? (
-                <Badge
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-secondary/80"
-                  onClick={() => window.open(message.content, '_blank')}
-                >
-                  <Download className="mr-2 h-4 w-4" /> Download File
-                </Badge>
-              ) : (
-                <Markdown remarkPlugins={[remarkGfm]} className="bg-inherit">
-                  {message.content}
-                </Markdown>
-              )}
-            </ChatBubbleMessage>
-            {message.role === 'bot' && message.type === 'text' && (
-              <CopyButton
-                textToCopy={message.content}
-                className="size-6 p-1 mt-2"
-              />
-            )}
-          </ChatBubble>
-        ))}
-        {error && !isLoading && (
-          <ChatBubble variant="received">
-            <div className="relative">
-              <ChatBubbleAvatar
-                src=""
-                fallback={<BotIcon className="size-5" />}
-              />
-              <div className="absolute -bottom-[2px] -right-[2px]">
-                <CircleX className="size-4 text-destructive" strokeWidth={3} />
-              </div>
-            </div>
-            <ChatBubbleMessage className="text-destructive">
-              {formatError(projectId, flowId, error)}
-            </ChatBubbleMessage>
-            <div className="flex gap-1">
-              <ChatBubbleAction
-                variant="outline"
-                className="size-5 mt-2"
-                icon={<RotateCcw className="size-3" />}
-                onClick={() => {
-                  sendMessage({ isRetrying: true });
-                }}
-              />
-            </div>
-          </ChatBubble>
-        )}
-        {isLoading && (
-          <ChatBubble variant="received">
-            <ChatBubbleAvatar
-              src=""
-              fallback={<BotIcon className="size-5" />}
-            />
-            <ChatBubbleMessage isLoading />
-          </ChatBubble>
-        )}
-      </ChatMessageList>
+      <MessagesList
+        messagesRef={messagesRef}
+        messages={messages}
+        chatUI={chatUI}
+        sendingError={sendingError}
+        isSending={isSending}
+        flowId={flowId}
+        sendMessage={sendMessage}
+        setSelectedImage={setSelectedImage}
+      />
       {messages.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8">
-          <p className="text-lg text-gray-500">
-            What can I help you with today?
+          <p className="animate-typing overflow-hidden whitespace-nowrap border-r-2 border-r-primary pr-1 text-xl text-gray-500 leading-6">
+            {chatUI?.props.botName ? `${chatUI.props.botName}` : "What can I help you with today?"}
           </p>
         </div>
       )}
@@ -248,7 +202,7 @@ export function ChatPage() {
               placeholder="Type your message here..."
             />
             <Button
-              disabled={!input || isLoading}
+              disabled={!input || isSending}
               type="submit"
               size="icon"
               className="rounded-full"
@@ -258,6 +212,40 @@ export function ChatPage() {
           </div>
         </form>
       </div>
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="bg-transparent border-none shadow-none flex items-center justify-center">
+          <div className="relative">
+            <img
+              src={selectedImage || ''}
+              alt="Full size image"
+              className="h-auto object-contain max-h-[90vh] sm:max-w-[90vw] shadow-sm"
+            />
+            <div className="absolute top-2 right-2 flex gap-2">
+              <Button
+                size="icon"
+                variant="secondary"
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = selectedImage || '';
+                  link.download = 'image';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="secondary"
+                onClick={() => setSelectedImage(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
@@ -303,3 +291,129 @@ const formatError = (
       return <span>Something went wrong. Please try again.</span>;
   }
 };
+
+const MessagesList = React.memo(({ messagesRef, messages, chatUI, sendingError, isSending, flowId, sendMessage, setSelectedImage }: { messagesRef: React.RefObject<HTMLDivElement>, messages: Messages, chatUI: ChatUIResponse | null | undefined, sendingError: ApErrorParams | null, isSending: boolean, flowId: string, sendMessage: (arg0: { isRetrying: boolean; }) => void, setSelectedImage: (image: string | null) => void }) => {
+  return <ChatMessageList ref={messagesRef}>
+    {messages.map((message, index) => (
+      <ChatBubble
+        key={index}
+        variant={message.role === 'user' ? 'sent' : 'received'}
+        className="flex  items-start"
+      >
+        {message.role === 'bot' && (
+          <ChatBubbleAvatar
+            src={chatUI?.platformLogoUrl}
+            fallback={<BotIcon className="size-5" />} />
+        )}
+        <ChatBubbleMessage className="flex flex-col gap-2">
+          {message.type === 'image' ? (
+            <div className="relative group">
+              <ImageWithFallback
+                src={message.content}
+                alt="Received image"
+                className="w-80 h-auto rounded-md cursor-pointer"
+                onClick={() => setSelectedImage(message.content)}
+              />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const link = document.createElement('a');
+                  link.href = message.content;
+                  link.download = 'image';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1 hover:bg-opacity-75 transition-opacity opacity-0 group-hover:opacity-100"
+              >
+                <Download className="h-4 w-4 text-white" />
+              </button>
+            </div>
+          ) : message.type === 'file' ? (
+            <Badge
+              variant="secondary"
+              className="cursor-pointer hover:bg-secondary/80"
+              onClick={() => window.open(message.content, '_blank')}
+            >
+              <Download className="mr-2 h-4 w-4" /> Download File
+            </Badge>
+          ) : (
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              className="bg-inherit"
+              components={{
+                code({ node, inline, className, children, ...props }: any) {
+                  const match = /language-(\w+)/.exec(className || '');
+
+                  return !inline && match ? (
+                    <ReactCodeMirror
+                      value={String(children).trim()}
+                      className="border-none"
+                      width="100%"
+                      maxWidth="100%"
+                      basicSetup={{
+                        syntaxHighlighting: true,
+                        foldGutter: false,
+                        lineNumbers: false,
+                        searchKeymap: false,
+                        lintKeymap: false,
+                        autocompletion: false,
+                      }}
+                      lang={match[1]}
+                      theme={githubDark}
+                      readOnly={true}
+                      extensions={extensions}
+                    />
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+              }}
+            >
+              {message.content}
+            </Markdown>
+          )}
+          {message.role === 'bot' && message.type === 'text' && (
+            <CopyButton
+              textToCopy={message.content}
+              className="size-6 p-1 mt-2" />
+          )}
+        </ChatBubbleMessage>
+      </ChatBubble>
+    ))}
+    {sendingError && !isSending && (
+      <ChatBubble variant="received">
+        <div className="relative">
+          <ChatBubbleAvatar
+            src={chatUI?.platformLogoUrl}
+            fallback={<BotIcon className="size-5" />} />
+          <div className="absolute -bottom-[2px] -right-[2px]">
+            <CircleX className="size-4 text-destructive" strokeWidth={3} />
+          </div>
+        </div>
+        <ChatBubbleMessage className="text-destructive">
+          {formatError(chatUI?.projectId, flowId, sendingError)}
+        </ChatBubbleMessage>
+        <div className="flex gap-1">
+          <ChatBubbleAction
+            variant="outline"
+            className="size-5 mt-2"
+            icon={<RotateCcw className="size-3" />}
+            onClick={() => {
+              sendMessage({ isRetrying: true });
+            }} />
+        </div>
+      </ChatBubble>
+    )}
+    {isSending && (
+      <ChatBubble variant="received">
+        <ChatBubbleAvatar
+          src={chatUI?.platformLogoUrl}
+          fallback={<BotIcon className="size-5" />} />
+        <ChatBubbleMessage isLoading />
+      </ChatBubble>
+    )}
+  </ChatMessageList>;
+})
