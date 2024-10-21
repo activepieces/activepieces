@@ -109,11 +109,12 @@ export const googleSheetsCommon = {
       ) {
         return {};
       }
+      const sheetId = Number(sheet_id);
       const authentication = auth as OAuth2PropertyValue;
       const values = await googleSheetsCommon.getValues(
         spreadsheet_id as unknown as string,
         getAccessTokenOrThrow(authentication),
-        sheet_id as unknown as number
+        sheetId
       );
 
       if (!first_row_headers) {
@@ -147,7 +148,7 @@ export const googleSheetsCommon = {
     options: async (context) => {
       const authentication = context.auth as OAuth2PropertyValue;
       const spreadsheet_id = context.spreadsheet_id as string;
-      const sheet_id = context.sheet_id as number;
+      const sheet_id = Number(context.sheet_id) as number;
       const accessToken = authentication['access_token'] ?? '';
 
       if (
