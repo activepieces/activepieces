@@ -1,0 +1,52 @@
+---
+title: "Hardware Requirements"
+icon: "server"
+description: "Specifications for hosting Activepieces"
+---
+
+More information about architecture please visit our [architecture](../architecture/overview) page.
+
+### Technical Specifications
+
+Activepieces is designed to be memory-intensive rather than CPU-intensive. A modest instance will suffice for most scenarios, but requirements can vary based on specific use cases.
+
+| Component           | Memory (RAM) | CPU Cores | Notes                                                                 |
+|---------------------|--------------|-----------|-----------------------------------------------------------------------|
+| PostgreSQL          | 1 GB         | 1         |                                                                       |
+| Redis               | 1 GB         | 1         |                                                                       |
+| Activepieces        | 8 GB         | 2         | For high availability, consider deploying across multiple machines. Set `FLOW_WORKER_CONCURRENCY` to `25` for optimal performance. |
+
+<Tip>
+The above recommendations are designed to meet the needs of the majority of use cases.
+</Tip>
+
+## Scaling Factors
+
+### Redis
+
+Redis requires minimal scaling as it primarily stores jobs during processing. Activepieces leverages BullMQ, capable of handling a substantial number of jobs per second.
+
+### PostgreSQL
+
+<Tip>
+**Scaling Tip:** Since files are stored in the database, you can alleviate the load by configuring S3 storage for file management.
+</Tip>
+
+PostgreSQL is typically not the system's bottleneck.
+
+### Activepieces Container
+
+<Tip>
+**Scaling Tip:** The Activepieces container is stateless, allowing for seamless horizontal scaling.
+</Tip>
+
+- `FLOW_WORKER_CONCURRENCY` and `SCHEDULED_WORKER_CONCURRENCY` dictate the number of concurrent jobs processed for flows and scheduled flows, respectively. By default, these are set to 20 and 10.
+
+## Expected Performance
+
+Activepieces ensures no request is lost; all requests are queued. In the event of a spike, requests will be processed later, which is acceptable as most flows are asynchronous, with synchronous flows being prioritized.
+
+It's hard to predict exact performance because flows can be very different. But running a flow doesn't slow things down, as it runs as fast as regular JavaScript.
+(Note: This applies to `SANDBOXED_CODE_ONLY` and `UNSANDBOXED` execution modes, which are recommended and used in self-hosted setups.)
+
+You can anticipate handling over **20 million executions** monthly with this setup.
