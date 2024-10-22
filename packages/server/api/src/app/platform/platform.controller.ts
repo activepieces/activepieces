@@ -2,6 +2,7 @@ import {
     ApId,
     assertEqual,
     EndpointScope,
+    Platform,
     PlatformWithoutSensitiveData,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -14,10 +15,17 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformService } from './platform.service'
+import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
+
+        const { smtp } = req.body
+        if (smtp) {
+            await smtpEmailSender.validateOrThrow(smtp)
+        }
+
         return platformService.update({
             id: req.params.id,
             ...req.body,
@@ -35,6 +43,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
         return platform
     })
 }
+
 
 const UpdatePlatformRequest = {
     schema: {
