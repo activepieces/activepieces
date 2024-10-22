@@ -100,7 +100,7 @@ export const sendFile = createAction({
           ],
        disabled : false,
       },
-      
+
     }),
   files: Property.DynamicProperties({
     description: '',
@@ -143,7 +143,7 @@ export const sendFile = createAction({
             '/'+ context.propsValue.externalId + '/files',
           body: message,
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data; boundary=------border',
             'X-Api-Key': context.auth as string,
           },
         })
