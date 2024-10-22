@@ -25,37 +25,17 @@ export const ApRouterStartCanvasEdge = ({
   source,
   id,
 }: EdgeProps & Omit<ApRouterStartEdge, 'position'>) => {
+  const labelWidth = getElementWidth(data.label);
   const verticalLineLength =
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
-    2 * flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
-
-  const startY = data.drawStartingVerticalLine
-    ? sourceY + flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE / 2
-    : sourceY + verticalLineLength / 2 + flowUtilConsts.ARC_LENGTH - 10;
-
-  const path = `
-    M ${sourceX} ${startY}
-    ${data.drawStartingVerticalLine ? `v${verticalLineLength / 2}` : ''}
-
-    ${
-      targetX > sourceX
-        ? flowUtilConsts.ARC_RIGHT_DOWN
-        : flowUtilConsts.ARC_LEFT_DOWN
-    }
-    h ${
-      (Math.abs(targetX - sourceX) - flowUtilConsts.ARC_LENGTH * 2) *
-      (targetX > sourceX ? 1 : -1)
-    }
-
-    ${targetX > sourceX ? flowUtilConsts.ARC_RIGHT : flowUtilConsts.ARC_LEFT}
-
-    v ${verticalLineLength + flowUtilConsts.LABEL_HEIGHT}
-
-    ${!data.isBranchEmpty ? flowUtilConsts.ARROW_DOWN : ''}
+    flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
+    flowUtilConsts.LABEL_HEIGHT;
+  const path = `M ${targetX} ${
+    targetY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
+  }
+      v -${verticalLineLength}     
+  
   `;
-
-  const labelWidth = getElementWidth(data.label);
-
   return (
     <>
       <BaseEdge
@@ -67,7 +47,7 @@ export const ApRouterStartCanvasEdge = ({
           x={targetX - flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2}
           y={
             targetY -
-            verticalLineLength +
+            verticalLineLength / 4 -
             flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height
           }
           width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
@@ -82,6 +62,16 @@ export const ApRouterStartCanvasEdge = ({
               parentStepName={source}
             ></ApAddButton>
           )}
+
+          {data.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_BRANCH && (
+            <ApAddButton
+              edgeId={id}
+              stepLocationRelativeToParent={data.stepLocationRelativeToParent}
+              parentStepName={source}
+              branchIndex={data.branchIndex}
+            ></ApAddButton>
+          )}
         </foreignObject>
       )}
       <foreignObject
@@ -90,9 +80,9 @@ export const ApRouterStartCanvasEdge = ({
         x={targetX - labelWidth / 2}
         y={
           targetY -
-          flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE -
-          flowUtilConsts.LABEL_HEIGHT / 2 -
-          verticalLineLength
+          verticalLineLength / 2 -
+          flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height -
+          flowUtilConsts.LABEL_HEIGHT
         }
       >
         <div

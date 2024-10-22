@@ -392,8 +392,8 @@ const ApStepCanvasNode = React.memo(
             />
             <Handle
               type="target"
-              position={Position.Top}
               style={flowUtilConsts.HANDLE_STYLING}
+              position={Position.Top}
             />
           </div>
         </div>

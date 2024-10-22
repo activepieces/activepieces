@@ -82,7 +82,6 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                     stepLocationRelativeToParent:
                       props.stepLocationRelativeToParent,
                     branchIndex: props.branchIndex,
-                    branchName: props.branchName,
                   },
                 }
               : {

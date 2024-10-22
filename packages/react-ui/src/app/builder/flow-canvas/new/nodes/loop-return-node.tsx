@@ -1,8 +1,8 @@
-import { Handle, Position } from '@xyflow/react';
+import { Handle, NodeProps, Position } from '@xyflow/react';
 import { flowUtilConsts } from '../consts';
 
 //used purely to help calculate the loop graph width
-const ApLoopReturnCanvasNode = () => {
+const ApLoopReturnCanvasNode = (props: NodeProps) => {
   return (
     <>
       <div className="w-[1px] h-[1px] "></div>

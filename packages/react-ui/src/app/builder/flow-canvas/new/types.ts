@@ -58,7 +58,6 @@ export type ApButtonData =
       parentStepName: string;
       stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
       branchIndex: number;
-      branchName: string;
     };
 
 export type ApBigAddButtonNode = {
@@ -131,7 +130,6 @@ export type ApLoopReturnEdge = Edge & {
 export type ApRouterStartEdge = Edge & {
   type: ApEdgeType.ROUTER_START_EDGE;
   data: {
-    drawStartingVerticalLine: boolean;
     isBranchEmpty: boolean;
     label: string;
   } & (
@@ -151,7 +149,6 @@ export type ApRouterEndEdge = Edge & {
   type: ApEdgeType.ROUTER_END_EDGE;
   data: {
     verticalSpaceBetweenLastNodeInBranchAndEndLine: number;
-    drawEndingArc: boolean;
   } & (
     | {
         routerOrBranchStepName: string;

@@ -33,13 +33,7 @@ export const ApRouterEndCanvasEdge = ({
        h ${horizontalLineLength}
       
 
-    ${
-      data.drawEndingArc
-        ? targetX > sourceX
-          ? flowUtilConsts.ARC_RIGHT
-          : flowUtilConsts.ARC_LEFT
-        : ''
-    }
+    ${targetX > sourceX ? flowUtilConsts.ARC_RIGHT : flowUtilConsts.ARC_LEFT}
 
     ${
       data.drawEndingVerticalLine
