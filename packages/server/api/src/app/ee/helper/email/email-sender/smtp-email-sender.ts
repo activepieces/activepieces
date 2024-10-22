@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { AppSystemProp, logger, SharedSystemProp, system } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEnvironment, assertNotNullOrUndefined, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
+import { ActivepiecesError, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
@@ -26,14 +26,15 @@ type SMTPEmailSender = EmailSender & {
 
 export const smtpEmailSender: SMTPEmailSender = {
     async validateOrThrow(smtp: SMTPInformation) {
-        const disableSmtpValidationInTesting = await system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.TESTING
+        const disableSmtpValidationInTesting = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.TESTING
         if (disableSmtpValidationInTesting) {
-            return;
+            return
         }
         const smtpClient = initSmtpClient(smtp)
         try {
             await smtpClient.verify()
-        } catch (e) {
+        }
+        catch (e) {
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_SMTP_CREDENTIALS,
                 params: {

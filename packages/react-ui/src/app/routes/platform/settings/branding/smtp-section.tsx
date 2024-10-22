@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import { CheckCircle2, Mailbox } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -22,16 +23,24 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/seperator';
-import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_MESSAGE, useToast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 import { platformApi } from '@/lib/platforms-api';
 import { ApErrorParams, ErrorCode, isNil } from '@activepieces/shared';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { api } from '@/lib/api';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-
 
 const FromSchema = Type.Object({
   host: Type.String({
@@ -98,7 +107,7 @@ export const SmtpSection = () => {
       });
     },
     onError: (e) => {
-      let message = INTERNAL_ERROR_MESSAGE
+      let message = INTERNAL_ERROR_MESSAGE;
       if (api.isError(e)) {
         const responseData = e.response?.data as ApErrorParams;
         if (responseData.code === ErrorCode.INVALID_SMTP_CREDENTIALS) {
@@ -122,9 +131,7 @@ export const SmtpSection = () => {
                 <TooltipTrigger asChild>
                   <CheckCircle2 className="w-5 h-5 text-success" />
                 </TooltipTrigger>
-                <TooltipContent>
-                  {t('SMTP is configured')}
-                </TooltipContent>
+                <TooltipContent>{t('SMTP is configured')}</TooltipContent>
               </Tooltip>
             )}
 
@@ -133,16 +140,19 @@ export const SmtpSection = () => {
           <div className="flex flex-grow  flex-col">
             <div className="text-md">Mail Server</div>
             <div className="text-sm text-muted-foreground">
-              {t('Configure SMTP settings for outgoing email')}
+              {t('Set up your SMTP settings to send emails from your domain.')}
             </div>
           </div>
           <div className="flex flex-col justify-center items-center">
-            <Dialog open={isOpen} onOpenChange={(open) => {
-              if (!open) {
-                form.reset();
-              }
-              setIsOpen(open);
-            }}>
+            <Dialog
+              open={isOpen}
+              onOpenChange={(open) => {
+                if (!open) {
+                  form.reset();
+                }
+                setIsOpen(open);
+              }}
+            >
               <DialogTrigger asChild>
                 <Button variant={'basic'}>
                   {smtpConfigured ? t('Update') : t('Configure')}
@@ -164,9 +174,7 @@ export const SmtpSection = () => {
                         name="host"
                         render={({ field }) => (
                           <FormItem className="grid space-y-2">
-                            <FormLabel htmlFor="host">
-                              {t('Host')}
-                            </FormLabel>
+                            <FormLabel htmlFor="host">{t('Host')}</FormLabel>
                             <Input
                               {...field}
                               required
@@ -183,14 +191,14 @@ export const SmtpSection = () => {
                         name="port"
                         render={({ field }) => (
                           <FormItem className="grid space-y-2">
-                            <FormLabel htmlFor="port">
-                              {t('Port')}
-                            </FormLabel>
+                            <FormLabel htmlFor="port">{t('Port')}</FormLabel>
                             <Select
                               value={field.value?.toString() ?? ''}
-                              onValueChange={(value) => field.onChange(Number(value))}
+                              onValueChange={(value) =>
+                                field.onChange(Number(value))
+                              }
                             >
-                              <SelectTrigger >
+                              <SelectTrigger>
                                 <SelectValue placeholder="Port" />
                               </SelectTrigger>
                               <SelectContent>
@@ -275,7 +283,7 @@ export const SmtpSection = () => {
                       />
 
                       {form?.formState?.errors?.root?.serverError && (
-                        <div className='w-[400px]'>
+                        <div className="w-[400px]">
                           <FormMessage>
                             {form.formState.errors.root.serverError.message}
                           </FormMessage>

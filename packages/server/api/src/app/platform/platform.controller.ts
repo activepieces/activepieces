@@ -2,7 +2,6 @@ import {
     ApId,
     assertEqual,
     EndpointScope,
-    Platform,
     PlatformWithoutSensitiveData,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -14,8 +13,8 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
-import { platformService } from './platform.service'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
+import { platformService } from './platform.service'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
