@@ -52,7 +52,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             ] = `${hostUrl}/api/v1/webhooks`
             modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] =
                 flagService.getThirdPartyRedirectUrl(platform.id, request.hostname)
-            modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
             modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
         }
         return modifiedFlags
