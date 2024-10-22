@@ -24,7 +24,6 @@ export const createWorksheetAction = createAction({
    
   },
   async run(context){
-    console.log(JSON.stringify(context.propsValue));
     const headers = context.propsValue.headers as string[] ?? [];
 
     const authClient = new OAuth2Client();
