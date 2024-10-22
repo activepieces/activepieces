@@ -12,14 +12,13 @@ export class MigrateSMTPInPlatform1729602169179 implements MigrationInterface {
             ALTER TABLE "platform"
             ADD "smtp" jsonb
         `)
-
         // Data migration
         await queryRunner.query(`
             UPDATE "platform"
             SET "smtp" = jsonb_build_object(
                 'user', "smtpUser",
                 'senderEmail', "smtpSenderEmail",
-                'senderName', "",
+                'senderName', '',
                 'password', "smtpPassword",
                 'host', "smtpHost",
                 'port', "smtpPort"
