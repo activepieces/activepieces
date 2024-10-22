@@ -80,7 +80,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SharedSystemProp.MAX_FILE_SIZE_MB]: '4',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [SharedSystemProp.SANDBOX_MEMORY_LIMIT]: '524288',
-    [SharedSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
+    [SharedSystemProp.FLOW_TIMEOUT_SECONDS]: '50',
     [SharedSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,

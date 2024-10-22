@@ -349,6 +349,21 @@ export const flowRunService = {
 
         return flowRun
     },
+    async getLogs(flowRunId: FlowRunId): Promise<any | undefined> {
+        const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
+        if (isNil(flowRun.logsFileId)) {
+            return undefined
+        }
+        const { data } = await fileService.getDataOrThrow({
+            fileId: flowRun.logsFileId,
+            projectId: flowRun.projectId,
+        })
+        
+        const jsonString = data.toString('utf-8')
+        const jsonData = JSON.parse(jsonString)
+        
+        return jsonData
+    },
     async getOnePopulatedOrThrow(params: GetOneParams): Promise<FlowRun> {
         const flowRun = await this.getOneOrThrow(params)
         let steps = {}
@@ -369,7 +384,9 @@ export const flowRunService = {
             steps,
         }
     },
+    
 }
+
 
 async function updateLogs({ flowRunId, projectId, executionState }: UpdateLogs): Promise<undefined | string> {
     if (isNil(executionState)) {
@@ -465,4 +482,5 @@ type RetryParams = {
     flowRunId: FlowRunId
     strategy: FlowRetryStrategy
 }
+
 

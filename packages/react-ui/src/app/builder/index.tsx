@@ -1,6 +1,24 @@
+import {
+  ActionType,
+  PieceTrigger,
+  TriggerType,
+  WebsocketClientEvent,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
+
+import { cn, useElementSize } from '../../lib/utils';
+
+import { BuilderHeader } from './builder-header';
+import { CopilotSidebar } from './copilot';
+import { FlowCanvas } from './flow-canvas';
+import { FlowVersionsList } from './flow-versions';
+import { FlowRunDetails } from './run-details';
+import { RunsList } from './run-list';
+import { StepSettingsContainer } from './step-settings';
 
 import {
   LeftSideBarType,
@@ -21,24 +39,6 @@ import {
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  ActionType,
-  PieceTrigger,
-  TriggerType,
-  WebsocketClientEvent,
-  flowHelper,
-  isNil,
-} from '@activepieces/shared';
-
-import { cn, useElementSize } from '../../lib/utils';
-
-import { BuilderHeader } from './builder-header';
-import { CopilotSidebar } from './copilot';
-import { FlowCanvas } from './flow-canvas';
-import { FlowVersionsList } from './flow-versions';
-import { FlowRunDetails } from './run-details';
-import { RunsList } from './run-list';
-import { StepSettingsContainer } from './step-settings';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -129,7 +129,7 @@ const BuilderPage = () => {
     });
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
-      socket.removeAllListeners(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS);
+      socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
       socket.removeAllListeners(WebsocketClientEvent.TEST_STEP_FINISHED);
       socket.removeAllListeners(WebsocketClientEvent.TEST_FLOW_RUN_STARTED);
       socket.removeAllListeners(WebsocketClientEvent.GENERATE_CODE_FINISHED);
@@ -150,7 +150,7 @@ const BuilderPage = () => {
           isLoading={isSwitchingToDraftPending}
           exitRun={() => {
             socket.removeAllListeners(
-              WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS,
+              WebsocketClientEvent.FLOW_RUN_PROGRESS,
             );
             switchToDraft();
           }}

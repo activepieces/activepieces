@@ -36,6 +36,56 @@ export function debounce<T>(func: (...args: T[]) => void, wait: number): (...arg
     }
 }
 
+export function debounceAndThrottle<T>(
+    func: (...args: T[]) => void,
+    debounceWait: number,
+    throttleWait: number,
+): (...args: T[]) => void {
+    let timeout: NodeJS.Timeout | null = null
+    let lastExecutionTime: number | null = null
+
+    console.log('executedHAZEM 1\n')
+    console.log(timeout)
+    console.log(lastExecutionTime)
+
+    return function (...args: T[]) {
+        const now = Date.now()
+
+        console.log('executedHAZEM 6\n')
+        console.log('lastExecutionTime ' + lastExecutionTime + '\n')
+
+        const executeFunction = () => {
+            func(...args)
+            lastExecutionTime = now
+            console.log('executedHAZEM 5\n')
+            console.log(timeout)
+            console.log(lastExecutionTime)
+        }
+
+        if (lastExecutionTime === null || (now - lastExecutionTime) >= throttleWait) {
+            console.log('executedHAZEM 7\n')
+            console.log('lastExecutionTime ' + lastExecutionTime + '\n')
+            executeFunction()
+            console.log('executedHAZEM 2\n')
+            console.log(timeout)
+            console.log(lastExecutionTime)
+        }
+
+        if (timeout) {
+            clearTimeout(timeout)
+            console.log('executedHAZEM 4\n')
+            console.log(timeout)
+            console.log(lastExecutionTime)
+        }
+
+        timeout = setTimeout(() => {
+            executeFunction()
+            console.log('executedHAZEM 3\n')
+            console.log(timeout)
+            console.log(lastExecutionTime)
+        }, debounceWait)
+    }
+}
 
 type DeepPartial<T> = {
     [P in keyof T]?: T[P] extends Record<string, unknown> ? DeepPartial<T[P]> : T[P];
