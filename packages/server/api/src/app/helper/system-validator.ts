@@ -1,7 +1,7 @@
-import { AppSystemProp, ContainerType, DatabaseType, PiecesSource, QueueMode, RedisType, SharedSystemProp, system, SystemProp, WorkerSystemProps } from "@activepieces/server-shared"
-import { ExecutionMode, isNil, ApEdition, PieceSyncMode, FileLocation, ApEnvironment } from "@activepieces/shared"
-import { encryptUtils } from "./encryption"
-import { jwtUtils } from "./jwt-utils"
+import { AppSystemProp, ContainerType, DatabaseType, PiecesSource, QueueMode, RedisType, SharedSystemProp, system, SystemProp, WorkerSystemProps } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
+import { encryptUtils } from './encryption'
+import { jwtUtils } from './jwt-utils'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -30,7 +30,8 @@ function urlValidator(value: string) {
     try {
         new URL(value)
         return true
-    } catch {
+    }
+    catch {
         return 'Value must be a valid URL'
     }
 }

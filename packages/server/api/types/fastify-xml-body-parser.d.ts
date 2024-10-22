@@ -1,7 +1,7 @@
 declare module 'fastify-xml-body-parser' {
-    import { FastifyPluginCallback } from 'fastify';
+    import { FastifyPluginCallback } from 'fastify'
   
-    const fastifyXmlBodyParser: FastifyPluginCallback;
+    const fastifyXmlBodyParser: FastifyPluginCallback
   
-    export default fastifyXmlBodyParser;
-  }
+    export default fastifyXmlBodyParser
+}
