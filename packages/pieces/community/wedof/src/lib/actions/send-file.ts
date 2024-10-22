@@ -1,7 +1,7 @@
 import { wedofAuth } from '../../index';
 import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { wedofCommon } from '../common/wedof';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const sendFile = createAction({
   auth: wedofAuth,
