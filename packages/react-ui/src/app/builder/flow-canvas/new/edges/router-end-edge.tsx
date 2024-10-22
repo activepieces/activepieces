@@ -19,21 +19,34 @@ export const ApRouterEndCanvasEdge = ({
   const horizontalLineLength =
     (Math.abs(targetX - sourceX) - 2 * flowUtilConsts.ARC_LENGTH) *
     (targetX > sourceX ? 1 : -1);
+
+  const distanceBetweenTargetAndSource = Math.abs(targetX - sourceX);
+
   const path = `
     M ${sourceX - 0.5} ${
     sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2
   }
     v ${data.verticalSpaceBetweenLastNodeInBranchAndEndLine}
    
-    ${
+    ${ distanceBetweenTargetAndSource>= flowUtilConsts.ARC_LENGTH ?`    ${
       targetX > sourceX
         ? flowUtilConsts.ARC_RIGHT_DOWN
         : flowUtilConsts.ARC_LEFT_DOWN
-    }
-       h ${horizontalLineLength}
-      
+    }` : ``} 
 
-    ${targetX > sourceX ? flowUtilConsts.ARC_RIGHT : flowUtilConsts.ARC_LEFT}
+
+
+       ${data.drawHorizontalLine ? `h ${horizontalLineLength}  
+
+
+        
+     ${ targetX > sourceX ? flowUtilConsts.ARC_RIGHT : flowUtilConsts.ARC_LEFT}
+        
+       
+       ` : ``
+      
+      }
+      
 
     ${
       data.drawEndingVerticalLine

@@ -119,12 +119,7 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
                 StepLocationRelativeToParent.INSIDE_BRANCH
                   ? droppedAtNodeData.branchIndex
                   : undefined,
-              branchName:
-                droppedAtNodeData.stepLocationRelativeToParent ===
-                StepLocationRelativeToParent.INSIDE_BRANCH
-                  ? droppedAtNodeData.branchName
-                  : undefined,
-            },
+                        },
           },
           () => toast(UNSAVED_CHANGES_TOAST),
         );

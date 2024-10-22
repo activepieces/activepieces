@@ -30,7 +30,7 @@ export const newFloWUtils = {
     const graph = buildGraph(version.trigger);
     const graphEndWidget = graph.nodes.findLast(
       (node) => node.type === ApNodeType.GRAPH_END_WIDGET,
-    );
+    ) as ApGraphEndNode;
     if (graphEndWidget) {
       graphEndWidget.data.showWidget = true;
     } else {
@@ -323,6 +323,7 @@ const buildBranchChildGraph = (step: BranchAction) => {
   const maxHeight = Math.max(
     ...childGraphsAfterOffset.map((cg) => calculateGraphBoundingBox(cg).height),
   );
+  const totalWidth =  childGraphsAfterOffset.reduce((acc,cg)=> acc+calculateGraphBoundingBox(cg).width , 0)
 
   const subgraphEndSubNode: ApGraphEndNode = {
     id: `${step.name}-branch-subgraph-end`,
@@ -352,6 +353,7 @@ const buildBranchChildGraph = (step: BranchAction) => {
         label: t('True'),
         isBranchEmpty: isNil(step.onSuccessAction),
         drawStartingArc: true,
+        drawHorizontalLine:true,
       },
     },
     {
@@ -366,6 +368,7 @@ const buildBranchChildGraph = (step: BranchAction) => {
         label: t('False'),
         isBranchEmpty: isNil(step.onFailureAction),
         drawStartingArc: true,
+        drawHorizontalLine:true,
       },
     },
 
@@ -383,6 +386,8 @@ const buildBranchChildGraph = (step: BranchAction) => {
           childGraphsAfterOffset[1].nodes.at(-1)!.position.y -
           flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
           flowUtilConsts.ARC_LENGTH,
+          drawHorizontalLine:true
+          
       },
     },
     {
@@ -397,6 +402,7 @@ const buildBranchChildGraph = (step: BranchAction) => {
           childGraphsAfterOffset[0].nodes.at(-1)!.position.y -
           flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
           flowUtilConsts.ARC_LENGTH,
+          drawHorizontalLine:true
       },
     },
   ];
@@ -445,18 +451,40 @@ const buildRouterChildGraph = (step: RouterAction) => {
   };
 
   const edges: ApEdge[] = childGraphsAfterOffset
-    .map((childGraph, index) => {
+    .map((childGraph, branchIndex) => {
       return [
         {
-          id: `${step.name}-branch-${index + index}-start-edge`,
+          id: `${step.name}-branch-${branchIndex}-start-edge`,
           source: step.name,
           target: `${childGraph.nodes[0].id}`,
           type: ApEdgeType.ROUTER_START_EDGE as const,
           data: {
-            isBranchEmpty: isNil(step.children[index]),
-            label: `${t('Path')} ${index + 1}`,
+            isBranchEmpty: isNil(step.children[branchIndex]),
+            label: step.settings.branches[branchIndex].branchName?? `${t('Path')} ${branchIndex + 1}`,
+            branchIndex,
+            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH as const,
+            drawHorizontalLine: branchIndex === 0 || branchIndex === childGraphsAfterOffset.length-1,
+            drawStartingVerticalLine: branchIndex === 0
           },
         },
+        {
+          id: `${step.name}-branch-${branchIndex}-end-edge`,
+          source: `${childGraph.nodes.at(-1)!.id}`,
+          target: subgraphEndSubNode.id,
+          type: ApEdgeType.ROUTER_END_EDGE as const,
+          data: {
+            drawEndingVerticalLine: branchIndex === 0,
+            verticalSpaceBetweenLastNodeInBranchAndEndLine:
+              subgraphEndSubNode.position.y -
+              childGraph.nodes.at(-1)!.position.y -
+              flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
+              flowUtilConsts.ARC_LENGTH,
+           drawHorizontalLine: branchIndex === 0 || branchIndex === childGraphsAfterOffset.length-1,
+           routerOrBranchStepName: step.name,
+           isNextStepEmpty: isNil(step.nextAction)
+          },
+        },
+     
       ];
     })
     .flat();

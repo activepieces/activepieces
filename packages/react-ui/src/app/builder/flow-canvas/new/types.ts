@@ -132,6 +132,8 @@ export type ApRouterStartEdge = Edge & {
   data: {
     isBranchEmpty: boolean;
     label: string;
+    drawHorizontalLine:boolean
+    drawStartingVerticalLine:boolean
   } & (
     | {
         stepLocationRelativeToParent:
@@ -140,7 +142,7 @@ export type ApRouterStartEdge = Edge & {
       }
     | {
         stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
-        branchIndex: number;
+        branchIndex: number; 
       }
   );
 };
@@ -148,6 +150,7 @@ export type ApRouterStartEdge = Edge & {
 export type ApRouterEndEdge = Edge & {
   type: ApEdgeType.ROUTER_END_EDGE;
   data: {
+    drawHorizontalLine:boolean;
     verticalSpaceBetweenLastNodeInBranchAndEndLine: number;
   } & (
     | {
