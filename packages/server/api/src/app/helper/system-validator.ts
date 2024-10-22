@@ -188,7 +188,7 @@ export const validateEnvPropsOnStartup = async (): Promise<void> => {
     if (!isValidHexKey) {
         throw new Error(JSON.stringify({
             message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',
-            docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
+            docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
         }))
     }
     const isApp = system.isApp()
@@ -206,7 +206,7 @@ export const validateEnvPropsOnStartup = async (): Promise<void> => {
     if (isNil(jwtSecret)) {
         throw new Error(JSON.stringify({
             message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
-            docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
+            docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
         }))
     }
 
