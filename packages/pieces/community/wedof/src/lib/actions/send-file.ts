@@ -143,7 +143,7 @@ export const sendFile = createAction({
             '/'+ context.propsValue.externalId + '/files',
           body: message,
           headers: {
-            'Content-Type': 'multipart/form-data; boundary=------border',
+            'Content-Type': 'multipart/form-data',
             'X-Api-Key': context.auth as string,
           },
         })
