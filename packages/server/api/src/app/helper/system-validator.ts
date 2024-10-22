@@ -170,6 +170,8 @@ const validateSystemPropTypes = () => {
 
 export const validateEnvPropsOnStartup = async (): Promise<void> => {
 
+    await validateSystemPropTypes()
+
     const codeSandboxType = process.env.AP_CODE_SANDBOX_TYPE
     if (!isNil(codeSandboxType)) {
         throw new Error(JSON.stringify({

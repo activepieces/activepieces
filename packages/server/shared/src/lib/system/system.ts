@@ -89,8 +89,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
-    [AppSystemProp.DEV_PIECES]: '',
-
 }
 
 export const system = {
