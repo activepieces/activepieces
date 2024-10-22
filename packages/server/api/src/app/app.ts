@@ -93,6 +93,7 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
 import { workerModule } from './workers/worker-module'
+import { validateEnvPropsOnStartup } from './helper/system-validator'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -338,54 +339,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 }
 
 
-const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const codeSandboxType = process.env.AP_CODE_SANDBOX_TYPE
-    if (!isNil(codeSandboxType)) {
-        throw new Error(JSON.stringify({
-            message: 'AP_CODE_SANDBOX_TYPE is deprecated, please use AP_EXECUTION_MODE instead',
-            docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
-        }))
-    }
-    const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-    const encryptionKey = await encryptUtils.loadEncryptionKey(queueMode)
-    const isValidHexKey = encryptionKey && /^[A-Za-z0-9]{32}$/.test(encryptionKey)
-    if (!isValidHexKey) {
-        throw new Error(JSON.stringify({
-            message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',
-            docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
-        }))
-    }
-    const isApp = system.isApp()
-    if (isApp) {
-        const rentionPeriod = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
-        const maximumPausedFlowTimeout = system.getNumberOrThrow(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-        if (maximumPausedFlowTimeout > rentionPeriod) {
-            throw new Error(JSON.stringify({
-                message: 'AP_PAUSED_FLOW_TIMEOUT_DAYS can not exceed AP_EXECUTION_DATA_RETENTION_DAYS',
-            }))
-        }
-    }
-
-    const jwtSecret = await jwtUtils.getJwtSecret()
-    if (isNil(jwtSecret)) {
-        throw new Error(JSON.stringify({
-            message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
-            docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
-        }))
-    }
-
-    const edition = system.getEdition()
-    const test = system.get(SharedSystemProp.ENVIRONMENT)
-    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && test !== ApEnvironment.TESTING) {
-        const executionMode = system.getOrThrow<ExecutionMode>(SharedSystemProp.EXECUTION_MODE)
-        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode)) {
-            throw new Error(JSON.stringify({
-                message: 'Execution mode UNSANDBOXED is no longer supported in this edition, check the documentation for recent changes',
-                docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
-            }))
-        }
-    }
-}
 
 async function getAdapter() {
     const queue = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
