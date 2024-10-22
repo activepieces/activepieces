@@ -128,7 +128,6 @@ export const formUtils = {
                 },
               ],
             ],
-            inputUiInfo: {},
           },
         };
       case ActionType.CODE: {
