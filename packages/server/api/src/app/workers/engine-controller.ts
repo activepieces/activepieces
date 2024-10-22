@@ -117,7 +117,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         }
 
         await markJobAsCompleted(populatedRun.status, populatedRun.id, request.principal as unknown as EnginePrincipal, runDetails.error)
-        app.io.to(populatedRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, populatedRun)
         return {}
     })
 

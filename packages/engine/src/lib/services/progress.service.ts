@@ -1,4 +1,4 @@
-import { UpdateRunProgressRequest } from '@activepieces/shared'
+import { isNil, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -18,7 +18,7 @@ export const progressService = {
             const now = Date.now();
             const { lastActionExecutionTime } = params;
 
-            if (lastActionExecutionTime && (now - lastActionExecutionTime > 4000)) {
+            if (isNil(lastActionExecutionTime) || (lastActionExecutionTime && (now - lastActionExecutionTime > 4000))) {
                 await sendRequest(params);
                 isRequestPending = false;
                 return;

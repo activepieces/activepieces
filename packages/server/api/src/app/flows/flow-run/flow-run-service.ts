@@ -384,9 +384,7 @@ export const flowRunService = {
             steps,
         }
     },
-    
 }
-
 
 async function updateLogs({ flowRunId, projectId, executionState }: UpdateLogs): Promise<undefined | string> {
     if (isNil(executionState)) {
@@ -482,5 +480,3 @@ type RetryParams = {
     flowRunId: FlowRunId
     strategy: FlowRetryStrategy
 }
-
-
