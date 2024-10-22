@@ -56,6 +56,7 @@ export function ChatPage() {
   const previousInputRef = useRef('');
   const [sendingError, setSendingError] = useState<ApErrorParams | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
   const botName = chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`
 
@@ -134,6 +135,15 @@ export function ChatPage() {
 
   if (isLoading) return <LoadingSpinner />
 
+  const toggleImageDialog = (imageUrl: string | null) => {
+    if (imageUrl) {
+      setImageDialogOpen(true);
+      setSelectedImage(imageUrl);
+    } else {
+      setImageDialogOpen(false);
+    }
+  }
+
   return (
     <main
       className={cn(
@@ -149,7 +159,7 @@ export function ChatPage() {
         isSending={isSending}
         flowId={flowId}
         sendMessage={sendMessage}
-        setSelectedImage={setSelectedImage}
+        setSelectedImage={toggleImageDialog}
       />
       {messages.length === 0 && (
         <div className="flex flex-col items-center justify-center">
@@ -160,10 +170,10 @@ export function ChatPage() {
                 fallback={<BotIcon className="size-5" />}
               />
               <div className="flex items-center gap-1 justify-center">
-                <p className="animate-typing overflow-hidden whitespace-nowrap pr-1 hidden lg:block lg:text-xl text-black leading-8">
+                <p className="animate-typing overflow-hidden whitespace-nowrap pr-1 hidden lg:block lg:text-xl text-foreground leading-8">
                   Hi I'm {botName} 👋 What can I help you with today?
                 </p>
-                <p className="animate-typing-sm overflow-hidden whitespace-nowrap pr-1 lg:hidden text-xl text-black leading-8">
+                <p className="animate-typing-sm overflow-hidden whitespace-nowrap pr-1 lg:hidden text-xl text-foreground leading-8">
                   Hi I'm {botName} 👋
                 </p>
                 <span className="w-4 h-4 rounded-full animate-blink" />
@@ -197,7 +207,7 @@ export function ChatPage() {
           </div>
         </form>
       </div>
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+      <Dialog open={imageDialogOpen} onOpenChange={() => toggleImageDialog(null)}>
         <DialogContent withCloseButton={false} className="bg-transparent border-none shadow-none flex items-center justify-center">
           <div className="relative">
             <img
@@ -224,7 +234,7 @@ export function ChatPage() {
                 <Button
                   size="icon"
                   variant="secondary"
-                  onClick={() => setSelectedImage(null)}
+                  onClick={() => toggleImageDialog(null)}
                 >
                   <X className="h-4 w-4" />
                 </Button>

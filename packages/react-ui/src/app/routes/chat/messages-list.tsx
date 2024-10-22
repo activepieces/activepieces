@@ -1,5 +1,6 @@
 import { useTheme } from '@/components/theme-provider';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ChatBubble, ChatBubbleAction, ChatBubbleAvatar, ChatBubbleMessage } from '@/components/ui/chat/chat-bubble';
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -10,8 +11,8 @@ import { javascript } from '@codemirror/lang-javascript';
 import { Static, Type } from '@sinclair/typebox';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import ReactCodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
-import { BotIcon, CircleX, Download, RotateCcw } from 'lucide-react';
-import React from 'react';
+import { BotIcon, CircleX, CodeIcon, Copy, Download, RotateCcw } from 'lucide-react';
+import React, { useState } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -116,29 +117,31 @@ export const MessagesList = React.memo(({
               fallback={<BotIcon className="size-5" />}
             />
           )}
-          <ChatBubbleMessage className="flex flex-col gap-2">
+          <ChatBubbleMessage className={cn("flex flex-col gap-2", message.role === "bot" ? "w-full" : "")}>
             {message.type === 'image' ? (
-              <div className="relative group">
-                <ImageWithFallback
-                  src={message.content}
-                  alt="Received image"
-                  className="w-80 h-auto rounded-md cursor-pointer"
-                  onClick={() => setSelectedImage(message.content)}
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const link = document.createElement('a');
-                    link.href = message.content;
-                    link.download = 'image';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                  className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1 hover:bg-opacity-75 transition-opacity opacity-0 group-hover:opacity-100"
-                >
-                  <Download className="h-4 w-4 text-white" />
-                </button>
+              <div className='w-fit'>
+                <div className="relative group">
+                  <ImageWithFallback
+                    src={message.content}
+                    alt="Received image"
+                    className="w-80 h-auto rounded-md cursor-pointer"
+                    onClick={() => setSelectedImage(message.content)}
+                  />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const link = document.createElement('a');
+                      link.href = message.content;
+                      link.download = 'image';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1 hover:bg-opacity-75 transition-opacity opacity-0 group-hover:opacity-100"
+                  >
+                    <Download className="h-4 w-4 text-white" />
+                  </button>
+                </div>
               </div>
             ) : message.type === 'file' ? (
               <Badge
@@ -155,39 +158,46 @@ export const MessagesList = React.memo(({
                 components={{
 
                   code({ node, inline, className, children, ...props }: any) {
+                    if (message.role === "user") {
+                      return <div className="font-mono text-sm">{children}</div>
+                    }
                     const match = /language-(\w+)/.exec(className || '');
 
                     return !inline && match && match[1] ? (
-                      <div className="relative">
+                      <div className={cn("relative border rounded-md p-4 pt-12", theme === "dark" ? "bg-[#0E1117]" : "bg-background")}>
                         <ReactCodeMirror
                           value={String(children).trim()}
                           className="border-none"
                           width="100%"
+                          minWidth="100%"
                           maxWidth="100%"
                           minHeight="50px"
                           basicSetup={{
                             syntaxHighlighting: true,
                             foldGutter: false,
-                            lineNumbers: true,
+                            lineNumbers: false,
                             searchKeymap: true,
                             lintKeymap: true,
-                            autocompletion: true,
-                            highlightActiveLine: true,
-                            highlightActiveLineGutter: true,
-                            highlightSpecialChars: true,
-                            indentOnInput: true,
-                            bracketMatching: true,
-                            closeBrackets: true,
+                            autocompletion: false,
+                            highlightActiveLine: false,
+                            highlightActiveLineGutter: false,
+                            highlightSpecialChars: false,
+                            indentOnInput: false,
+                            bracketMatching: false,
+                            closeBrackets: false,
                           }}
                           lang={match[1]}
                           theme={theme === "dark" ? githubDark : githubLight}
                           readOnly={true}
                           extensions={extensions}
                         />
-                        <CopyButton
-                          textToCopy={String(children).trim()}
-                          className="absolute top-2 right-2 size-6 p-1"
-                        />
+                        <div className="absolute top-4 left-5 text-xs text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <CodeIcon className="size-3" />
+                            <span>{match[1]}</span>
+                          </div>
+                        </div>
+                        <CopyCode textToCopy={String(children).trim()} className="absolute top-2 right-2 text-xs text-gray-500" />
                       </div>
                     ) : (
                       <code className={cn(className, "bg-gray-200 px-[6px] py-[2px] rounded-xs font-mono text-sm")} {...props}>
@@ -247,3 +257,18 @@ export const MessagesList = React.memo(({
     </ChatMessageList>
   );
 });
+
+const CopyCode = ({ textToCopy, className }: { textToCopy: string, className?: string }) => {
+  const [isCopied, setIsCopied] = useState(false);
+  return <div className={className}>
+    <Button variant="ghost" className="gap-2" size="xs" onClick={() => {
+      setIsCopied(true);
+      navigator.clipboard.writeText(textToCopy);
+      setTimeout(() => setIsCopied(false), 1500);
+    }}
+    >
+      <Copy className="size-4" />
+      <span className="text-xs">{isCopied ? "Copied!" : "Copy Code"}</span>
+    </Button>
+  </div>
+}

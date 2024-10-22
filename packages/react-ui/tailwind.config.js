@@ -119,8 +119,8 @@ module.exports = {
         },
         blink: {
           "0%": {
-            borderColor: "black",
-            backgroundColor: "black"
+            borderColor: "hsl(var(--foreground))",
+            backgroundColor: "hsl(var(--foreground))"
           },
           "50%": {
             borderColor: "transparent",

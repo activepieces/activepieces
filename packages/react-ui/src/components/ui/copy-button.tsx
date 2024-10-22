@@ -21,7 +21,7 @@ export const CopyButton = ({
     mutationFn: async () => {
       await navigator.clipboard.writeText(textToCopy);
       setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      setTimeout(() => setIsCopied(false), 1500);
     },
     onError: () => {
       toast({
