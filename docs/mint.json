@@ -243,6 +243,7 @@
         "install/configuration/overview",
         "install/configuration/environment-variables",
         "install/configuration/setup-app-webhooks",
+        "install/configuration/hardware",
         "install/configuration/setup-ssl",
         "install/configuration/troubleshooting"
       ]
