@@ -72,7 +72,7 @@ Your friendliest open source all-in-one automation tool, designed to be **extens
 
 - **🔒 Secure by Design**: Self-hosted and network-gapped for maximum security and control over your data.
 
-- **🧠 Human in Loop**: Delay execution for a period of time or require approval. These are just pieces built on top of the piece framework, and you can build many pieces like that. 🎨
+- **🧠 Human in the Loop**: Delay execution for a period of time or require approval. These are just pieces built on top of the piece framework, and you can build many pieces like that. 🎨
 
 - **💻 Human Input Interfaces**: Built-in support for human input triggers like "Chat Interface" 💬 and "Form Interface" 📝
 
