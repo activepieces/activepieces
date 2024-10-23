@@ -1,4 +1,4 @@
-import { FlowRunId, TestFlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { FlowRunRequestBody, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { websocketService } from '../websockets/websockets.service'
@@ -16,7 +16,7 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(testTriggerController, { prefix: '/v1/test-trigger' })
     await app.register(sampleDataController, { prefix: '/v1/sample-data' })
     websocketService.addListener(WebsocketServerEvent.TEST_FLOW_RUN, (socket) => {
-        return async (data: TestFlowRunRequestBody) => {
+        return async (data: FlowRunRequestBody) => {
             const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
             const flowRun = await flowRunService.test({
                 projectId: principal.projectId,

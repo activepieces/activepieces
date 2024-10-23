@@ -9,7 +9,6 @@ import { t } from 'i18next';
 import { ChevronLeft, Info } from 'lucide-react';
 import React, { useEffect, useMemo } from 'react';
 
-
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { SidebarHeader } from '../sidebar-header';
 
@@ -20,6 +19,7 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
+import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { CardList } from '@/components/ui/card-list';
 import {
@@ -28,9 +28,8 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { useSocket } from '@/components/socket-provider';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 function getMessage(run: FlowRun | null, retentionDays: number | null) {
   if (!run || run.status === FlowRunStatus.RUNNING) return null;
@@ -51,28 +50,34 @@ const FlowRunDetails = React.memo(() => {
   );
   const socket = useSocket();
 
-
-  const [setLeftSidebar, setRun, run, steps, loopsIndexes, flowVersion, selectedStep] =
-    useBuilderStateContext((state) => {
-      const steps =
-        state.run && state.run.steps ? Object.keys(state.run.steps) : [];
-      return [
-        state.setLeftSidebar,
-        state.setRun,
-        state.run,
-        steps,
-        state.loopsIndexes,
-        state.flowVersion,
-        state.selectedStep,
-      ];
-    });
+  const [
+    setLeftSidebar,
+    setRun,
+    run,
+    steps,
+    loopsIndexes,
+    flowVersion,
+    selectedStep,
+  ] = useBuilderStateContext((state) => {
+    const steps =
+      state.run && state.run.steps ? Object.keys(state.run.steps) : [];
+    return [
+      state.setLeftSidebar,
+      state.setRun,
+      state.run,
+      steps,
+      state.loopsIndexes,
+      state.flowVersion,
+      state.selectedStep,
+    ];
+  });
 
   useEffect(() => {
     if (run) {
       flowRunsApi.getPopulated(run.id).then((run) => {
         setRun(run, flowVersion);
       });
-      flowRunsApi.getLogs(socket, run.id, (run) => {
+      flowRunsApi.runFlow(socket, { flowVersionId: flowVersion.id }, (run) => {
         setRun(run, flowVersion);
       });
     }

@@ -3,12 +3,14 @@ import {
   SeekPage,
   ListFlowRunsRequestQuery,
   RetryFlowRequestBody,
-  TestFlowRunRequestBody,
+  FlowRunRequestBody,
   WebsocketServerEvent,
   WebsocketClientEvent,
   CreateStepRunRequestBody,
   StepRunResponse,
   isFlowStateTerminal,
+  FlowRunId,
+  isNil,
 } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
 import { Socket } from 'socket.io-client';
@@ -25,12 +27,15 @@ export const flowRunsApi = {
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);
   },
-  async testFlow(
+  async runFlow(
     socket: Socket,
-    request: TestFlowRunRequestBody,
+    request: FlowRunRequestBody,
     onUpdate: (response: FlowRun) => void,
+    // flowRun?: FlowRun,
   ) {
+    // if (isNil(flowRun)) {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
+    // }
     const run = await getInitialRun(socket, request.flowVersionId);
 
     onUpdate(run);
@@ -41,10 +46,7 @@ export const flowRunsApi = {
         }
         onUpdate(response);
         if (isFlowStateTerminal(response.status)) {
-          socket.off(
-            WebsocketClientEvent.FLOW_RUN_PROGRESS,
-            handleProgress,
-          );
+          socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
           socket.off('error', handleError);
           resolve();
         }
@@ -89,33 +91,6 @@ export const flowRunsApi = {
       };
 
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-      socket.on('error', handleError);
-    });
-  },
-  async getLogs(socket: Socket, flowRunId: string, onUpdate: (logs: any) => void): Promise<void> {
-    socket.emit(WebsocketServerEvent.GET_LOGS, flowRunId);
-
-    return new Promise<void>((resolve, reject) => {
-      const handleLogs = (response: any) => {
-        if (flowRunId !== response.id) {
-          return;
-        }
-        onUpdate(response);
-        if (isFlowStateTerminal(response.status)) {
-          socket.off(
-            WebsocketClientEvent.FLOW_RUN_PROGRESS,
-            handleLogs,
-          );
-          socket.off('error', handleError);
-          resolve();
-        }
-      };
-      const handleError = (error: any) => {
-        socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleLogs);
-        socket.off('error', handleError);
-        reject(error);
-      };
-      socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleLogs);
       socket.on('error', handleError);
     });
   },

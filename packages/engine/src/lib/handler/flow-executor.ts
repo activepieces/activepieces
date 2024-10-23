@@ -41,20 +41,11 @@ export const flowExecutor = {
             console.error('Error sending update:', error)
         })
 
-        const flowExecutionPromise = flowExecutor.execute({
+        return flowExecutor.execute({
             action: trigger.nextAction,
             executionState,
             constants,
         })
-
-        progressService.sendUpdate({
-            engineConstants: constants,
-            flowExecutorContext: executionState,
-        }).catch(error => {
-            console.error('Error sending update:', error)
-        })
-
-        return flowExecutionPromise
     },
     async execute({ action, constants, executionState }: {
         action: Action
