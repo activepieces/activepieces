@@ -47,7 +47,6 @@ describe('User Invitation API', () => {
                         password: faker.internet.password(),
                         senderEmail: faker.internet.email(),
                         senderName: faker.internet.userName(),
-                        useSSL: false,
                     },
                 },
             })

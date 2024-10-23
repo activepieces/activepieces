@@ -55,7 +55,6 @@ describe('Platform API', () => {
                     password: 'updated smtp password',
                     senderName: 'updated smtp sender name',
                     senderEmail: 'updated smtp sender email',
-                    useSSL: true,
                 },
                 enforceAllowedAuthDomains: true,
                 allowedAuthDomains: ['yahoo.com'],
@@ -173,7 +172,6 @@ describe('Platform API', () => {
                 password: faker.internet.password(),
                 senderEmail: faker.internet.password(),
                 senderName: faker.internet.password(),
-                useSSL: true,
             }, federatedAuthProviders: providers, flowIssuesEnabled: false, alertsEnabled: false })
             await databaseConnection().getRepository('platform').save(mockPlatform)
 
