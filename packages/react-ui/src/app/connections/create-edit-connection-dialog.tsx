@@ -115,7 +115,7 @@ function buildConnectionSchema(
     case PropertyType.CUSTOM_AUTH:
       return Type.Object({
         request: Type.Composite([
-          Type.Omit(UpsertCustomAuthRequest, ['name']),
+          Type.Omit(UpsertCustomAuthRequest, ['name', 'value']),
           connectionSchema,
           Type.Object({
             value: Type.Object({
@@ -168,7 +168,6 @@ const CreateOrEditConnectionDialog = React.memo(
     const { auth } = piece;
 
     const formSchema = buildConnectionSchema(piece);
-
     const form = useForm<{
       request: UpsertAppConnectionRequestBody;
     }>({
@@ -442,6 +441,12 @@ const extractDefaultPropsValues = (
       return {
         ...acc,
         [propName]: prop.defaultValue,
+      };
+    }
+    if (prop.type === PropertyType.CHECKBOX) {
+      return {
+        ...acc,
+        [propName]: false,
       };
     }
     return acc;
