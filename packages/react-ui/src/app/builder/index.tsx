@@ -130,18 +130,14 @@ const BuilderPage = () => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
-    if (run?.status === FlowRunStatus.RUNNING) {
-      flowRunsApi.getPopulated(run.id).then((run) => {
-        setRun(run, flowVersion);
-      });
-      flowRunsApi.runFlow(
-        socket,
-        { flowVersionId: flowVersion.id },
-        (run) => {
+
+    if (run && run.status === FlowRunStatus.RUNNING) {
+      const currentRunId = run.id;
+      socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (run) => {
+        if (run.id === currentRunId) {
           setRun(run, flowVersion);
-        },
-        run,
-      );
+        }
+      });
     }
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
@@ -153,7 +149,7 @@ const BuilderPage = () => {
         WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED,
       );
     };
-  }, [socket, refetchPiece]);
+  }, [socket, refetchPiece, run]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
 

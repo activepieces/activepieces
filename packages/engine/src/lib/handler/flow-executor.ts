@@ -34,13 +34,6 @@ export const flowExecutor = {
         if (input.executionType === ExecutionType.BEGIN) {
             await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
         }
-        progressService.sendUpdate({
-            engineConstants: constants,
-            flowExecutorContext: executionState,
-        }).catch(error => {
-            console.error('Error sending update:', error)
-        })
-
         return flowExecutor.execute({
             action: trigger.nextAction,
             executionState,
@@ -55,7 +48,6 @@ export const flowExecutor = {
         const flowStartTime = performance.now()
         let flowExecutionContext = executionState
         let currentAction: Action | undefined = action
-        let lastActionExecutionTime = performance.now()
 
         while (!isNil(currentAction)) {
             const handler = this.getExecutorForAction(currentAction.type)
@@ -64,7 +56,6 @@ export const flowExecutor = {
             progressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: flowExecutionContext,
-                lastActionExecutionTime,
             }).catch(error => {
                 console.error('Error sending update:', error)
             })
@@ -75,7 +66,6 @@ export const flowExecutor = {
                 constants,
             })
             const stepEndTime = performance.now()
-            lastActionExecutionTime = stepEndTime
             flowExecutionContext = flowExecutionContext.setStepDuration({
                 stepName: currentAction.name,
                 duration: stepEndTime - stepStartTime,

@@ -30,7 +30,7 @@ const TestFlowWidget = ({ flowVersion, setRun }: TestFlowWidgetProps) => {
 
   const { mutate, isPending } = useMutation<void>({
     mutationFn: () =>
-      flowRunsApi.runFlow(
+      flowRunsApi.testFlow(
         socket,
         {
           flowVersionId: flowVersion.id,

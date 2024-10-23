@@ -1,9 +1,11 @@
-import { exceptionHandler, OneTimeJobData } from '@activepieces/server-shared'
+import { exceptionHandler, OneTimeJobData, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
 
 type EngineConstants = 'internalApiUrl' | 'publicUrl' | 'engineToken'
+
+const timeoutFlowInSeconds = system.getNumberOrThrow(SharedSystemProp.FLOW_TIMEOUT_SECONDS) * 1000
 
 async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, engineToken: string): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
     switch (jobData.executionType) {
@@ -102,7 +104,7 @@ async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string):
     await engineApiService(engineToken).updateRunStatus({
         runDetails: {
             steps: {},
-            duration: 0,
+            duration: timeoutFlowInSeconds,
             status: FlowRunStatus.TIMEOUT,
             tasks: 0,
             tags: [],

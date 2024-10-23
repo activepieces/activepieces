@@ -3,14 +3,12 @@ import {
   SeekPage,
   ListFlowRunsRequestQuery,
   RetryFlowRequestBody,
-  FlowRunRequestBody,
+  TestFlowRunRequestBody,
   WebsocketServerEvent,
   WebsocketClientEvent,
   CreateStepRunRequestBody,
   StepRunResponse,
   isFlowStateTerminal,
-  FlowRunId,
-  isNil,
 } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
 import { Socket } from 'socket.io-client';
@@ -27,21 +25,17 @@ export const flowRunsApi = {
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);
   },
-  async runFlow(
+  async testFlow(
     socket: Socket,
-    request: FlowRunRequestBody,
+    request: TestFlowRunRequestBody,
     onUpdate: (response: FlowRun) => void,
-    flowRun?: FlowRun,
-  ) {
-    if (isNil(flowRun)) {
-      socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
-    }
-    const run = flowRun ?? (await getInitialRun(socket, request.flowVersionId));
-
-    onUpdate(run);
+  ): Promise<void> {
+    socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
+    const initalRun = await getInitialRun(socket, request.flowVersionId);
+    onUpdate(initalRun);
     return new Promise<void>((resolve, reject) => {
       const handleProgress = (response: FlowRun) => {
-        if (run.id !== response.id) {
+        if (initalRun.id !== response.id) {
           return;
         }
         onUpdate(response);
