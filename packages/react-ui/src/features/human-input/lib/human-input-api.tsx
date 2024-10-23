@@ -21,8 +21,8 @@ export const humanInputApi = {
     const suffix = useDraft
       ? '/test'
       : formResult.props.waitForResponse
-        ? '/sync'
-        : '';
+      ? '/sync'
+      : '';
     return api.post<FormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
       data,
@@ -44,13 +44,13 @@ type SendMessageParams = {
 
 export type FormResult =
   | {
-    type: FormResultTypes.FILE;
-    value: FileResponseInterface;
-  }
+      type: FormResultTypes.FILE;
+      value: FileResponseInterface;
+    }
   | {
-    type: FormResultTypes.MARKDOWN;
-    value: string;
-  };
+      type: FormResultTypes.MARKDOWN;
+      value: string;
+    };
 
 export enum FormResultTypes {
   MARKDOWN = 'markdown',

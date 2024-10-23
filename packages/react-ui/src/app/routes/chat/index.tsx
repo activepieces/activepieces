@@ -1,27 +1,28 @@
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
+import { ArrowUpIcon, BotIcon } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import React, { useEffect, useRef, useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
+
 import { Button } from '@/components/ui/button';
 import { ChatBubbleAvatar } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
-import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   FormResultTypes,
   humanInputApi,
 } from '@/features/human-input/lib/human-input-api';
 import { cn } from '@/lib/utils';
-import { ApErrorParams, ChatUIResponse, ErrorCode, isNil } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
 import {
-  ArrowUpIcon,
-  BotIcon,
-  Download,
-  X,
-} from 'lucide-react';
-import { nanoid } from 'nanoid';
-import React, { useEffect, useRef, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
-import { Messages, MessagesList } from './messages-list';
+  ApErrorParams,
+  ChatUIResponse,
+  ErrorCode,
+  isNil,
+} from '@activepieces/shared';
+
 import { ImageDialog } from './image-dialog';
+import { Messages, MessagesList } from './messages-list';
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -46,10 +47,10 @@ export function ChatPage() {
     }, 100);
   };
 
-  // @ts-ignore
+  // @ts-expect-error: Adding scrollToBottom to window object for debugging purposes
   window.chat = {
     scrollToBottom,
-  }
+  };
 
   const chatId = useRef<string>(nanoid());
   const [messages, setMessages] = useState<Messages>([]);
@@ -59,7 +60,8 @@ export function ChatPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
-  const botName = chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`
+  const botName =
+    chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`;
 
   const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
@@ -134,12 +136,12 @@ export function ChatPage() {
 
   if (!flowId || isLoadingError) return <Navigate to="/404" />;
 
-  if (isLoading) return <LoadingSpinner />
+  if (isLoading) return <LoadingSpinner />;
 
   const toggleImageDialog = (imageUrl: string | null) => {
     setImageDialogOpen(!!imageUrl);
     setSelectedImage(imageUrl);
-  }
+  };
 
   return (
     <main
@@ -168,10 +170,10 @@ export function ChatPage() {
               />
               <div className="flex items-center gap-1 justify-center">
                 <p className="animate-typing overflow-hidden whitespace-nowrap pr-1 hidden lg:block lg:text-xl text-foreground leading-8">
-                  Hi I'm {botName} 👋 What can I help you with today?
+                  Hi I&apos;m {botName} 👋 What can I help you with today?
                 </p>
                 <p className="animate-typing-sm overflow-hidden whitespace-nowrap pr-1 lg:hidden text-xl text-foreground leading-8">
-                  Hi I'm {botName} 👋
+                  Hi I&apos;m {botName} 👋
                 </p>
                 <span className="w-4 h-4 rounded-full animate-blink" />
               </div>
@@ -212,6 +214,6 @@ export function ChatPage() {
         }}
         imageUrl={selectedImage}
       />
-    </main >
+    </main>
   );
 }

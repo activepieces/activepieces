@@ -1,15 +1,19 @@
-import React from 'react';
-import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Download } from 'lucide-react';
+import React from 'react';
+
+import ImageWithFallback from '@/components/ui/image-with-fallback';
 
 interface ImageMessageProps {
   content: string;
   setSelectedImage: (image: string | null) => void;
 }
 
-export const ImageMessage: React.FC<ImageMessageProps> = ({ content, setSelectedImage }) => {
+export const ImageMessage: React.FC<ImageMessageProps> = ({
+  content,
+  setSelectedImage,
+}) => {
   return (
-    <div className='w-fit'>
+    <div className="w-fit">
       <div className="relative group">
         <ImageWithFallback
           src={content}

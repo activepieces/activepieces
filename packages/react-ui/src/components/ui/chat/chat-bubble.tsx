@@ -66,7 +66,11 @@ const ChatBubbleAvatar: React.FC<ChatBubbleAvatarProps> = ({
   className,
 }) => (
   <Avatar>
-    <AvatarImage src={src} alt="Avatar" className={cn("aspect-square p-2", className)} />
+    <AvatarImage
+      src={src}
+      alt="Avatar"
+      className={cn('aspect-square p-2', className)}
+    />
     <AvatarFallback className="bg-background border">{fallback}</AvatarFallback>
   </Avatar>
 );

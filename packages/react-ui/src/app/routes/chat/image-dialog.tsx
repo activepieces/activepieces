@@ -1,7 +1,8 @@
-import React from 'react';
-import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Download, X } from 'lucide-react';
+import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 
 interface ImageDialogProps {
   open: boolean;
@@ -9,10 +10,17 @@ interface ImageDialogProps {
   imageUrl: string | null;
 }
 
-export const ImageDialog: React.FC<ImageDialogProps> = ({ open, onOpenChange, imageUrl }) => {
+export const ImageDialog: React.FC<ImageDialogProps> = ({
+  open,
+  onOpenChange,
+  imageUrl,
+}) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent withCloseButton={false} className="bg-transparent border-none shadow-none flex items-center justify-center">
+      <DialogContent
+        withCloseButton={false}
+        className="bg-transparent border-none shadow-none flex items-center justify-center"
+      >
         <div className="relative">
           <img
             src={imageUrl || ''}

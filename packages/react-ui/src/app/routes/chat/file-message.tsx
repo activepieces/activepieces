@@ -1,6 +1,7 @@
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Download } from 'lucide-react';
+import React from 'react';
+
+import { Badge } from '@/components/ui/badge';
 
 interface FileMessageProps {
   content: string;

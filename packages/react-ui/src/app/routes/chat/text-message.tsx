@@ -1,15 +1,18 @@
+import { javascript } from '@codemirror/lang-javascript';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
+import ReactCodeMirror, {
+  EditorState,
+  EditorView,
+} from '@uiw/react-codemirror';
+import { CodeIcon, Copy } from 'lucide-react';
 import React from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { CopyButton } from '@/components/ui/copy-button';
+
 import { useTheme } from '@/components/theme-provider';
-import { cn } from '@/lib/utils';
-import ReactCodeMirror from '@uiw/react-codemirror';
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
-import { javascript } from '@codemirror/lang-javascript';
-import { EditorState, EditorView } from '@uiw/react-codemirror';
-import { CodeIcon, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
+import { cn } from '@/lib/utils';
 
 interface TextMessageProps {
   content: string;
@@ -32,13 +35,18 @@ export const TextMessage: React.FC<TextMessageProps> = ({ content, role }) => {
         className="bg-inherit"
         components={{
           code({ node, inline, className, children, ...props }: any) {
-            if (role === "user") {
-              return <div className="font-mono text-sm">{children}</div>
+            if (role === 'user') {
+              return <div className="font-mono text-sm">{children}</div>;
             }
             const match = /language-(\w+)/.exec(className || '');
 
             return !inline && match && match[1] ? (
-              <div className={cn("relative border rounded-md p-4 pt-12", theme === "dark" ? "bg-[#0E1117]" : "bg-background")}>
+              <div
+                className={cn(
+                  'relative border rounded-md p-4 pt-12',
+                  theme === 'dark' ? 'bg-[#0E1117]' : 'bg-background',
+                )}
+              >
                 <ReactCodeMirror
                   value={String(children).trim()}
                   className="border-none"
@@ -61,7 +69,7 @@ export const TextMessage: React.FC<TextMessageProps> = ({ content, role }) => {
                     closeBrackets: false,
                   }}
                   lang={match[1]}
-                  theme={theme === "dark" ? githubDark : githubLight}
+                  theme={theme === 'dark' ? githubDark : githubLight}
                   readOnly={true}
                   extensions={extensions}
                 />
@@ -71,10 +79,19 @@ export const TextMessage: React.FC<TextMessageProps> = ({ content, role }) => {
                     <span>{match[1]}</span>
                   </div>
                 </div>
-                <CopyCode textToCopy={String(children).trim()} className="absolute top-2 right-2 text-xs text-gray-500" />
+                <CopyCode
+                  textToCopy={String(children).trim()}
+                  className="absolute top-2 right-2 text-xs text-gray-500"
+                />
               </div>
             ) : (
-              <code className={cn(className, "bg-gray-200 px-[6px] py-[2px] rounded-xs font-mono text-sm")} {...props}>
+              <code
+                className={cn(
+                  className,
+                  'bg-gray-200 px-[6px] py-[2px] rounded-xs font-mono text-sm',
+                )}
+                {...props}
+              >
                 {String(children).trim()}
               </code>
             );
@@ -84,26 +101,35 @@ export const TextMessage: React.FC<TextMessageProps> = ({ content, role }) => {
         {content}
       </Markdown>
       {role === 'bot' && (
-        <CopyButton
-          textToCopy={content}
-          className="size-6 p-1 mt-2"
-        />
+        <CopyButton textToCopy={content} className="size-6 p-1 mt-2" />
       )}
     </>
   );
 };
 
-const CopyCode = ({ textToCopy, className }: { textToCopy: string, className?: string }) => {
+const CopyCode = ({
+  textToCopy,
+  className,
+}: {
+  textToCopy: string;
+  className?: string;
+}) => {
   const [isCopied, setIsCopied] = React.useState(false);
-  return <div className={className}>
-    <Button variant="ghost" className="gap-2" size="xs" onClick={() => {
-      setIsCopied(true);
-      navigator.clipboard.writeText(textToCopy);
-      setTimeout(() => setIsCopied(false), 1500);
-    }}
-    >
-      <Copy className="size-4" />
-      <span className="text-xs">{isCopied ? "Copied!" : "Copy Code"}</span>
-    </Button>
-  </div>
-}
+  return (
+    <div className={className}>
+      <Button
+        variant="ghost"
+        className="gap-2"
+        size="xs"
+        onClick={() => {
+          setIsCopied(true);
+          navigator.clipboard.writeText(textToCopy);
+          setTimeout(() => setIsCopied(false), 1500);
+        }}
+      >
+        <Copy className="size-4" />
+        <span className="text-xs">{isCopied ? 'Copied!' : 'Copy Code'}</span>
+      </Button>
+    </div>
+  );
+};

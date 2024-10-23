@@ -1,19 +1,6 @@
-import {
-  ApFlagId,
-  FlowRun,
-  FlowRunStatus,
-  isNil,
-  RunEnvironment,
-} from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft, Info } from 'lucide-react';
 import React, { useMemo } from 'react';
-
-import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
-import { SidebarHeader } from '../sidebar-header';
-
-import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
-import { FlowStepInputOutput } from './flow-step-input-output';
 
 import {
   LeftSideBarType,
@@ -28,6 +15,19 @@ import {
 } from '@/components/ui/resizable-panel';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import {
+  ApFlagId,
+  FlowRun,
+  FlowRunStatus,
+  isNil,
+  RunEnvironment,
+} from '@activepieces/shared';
+
+import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
+import { SidebarHeader } from '../sidebar-header';
+
+import { FlowStepDetailsCardItem } from './flow-step-details-card-item';
+import { FlowStepInputOutput } from './flow-step-input-output';
 
 function getMessage(run: FlowRun | null, retentionDays: number | null) {
   if (!run || run.status === FlowRunStatus.RUNNING) return null;

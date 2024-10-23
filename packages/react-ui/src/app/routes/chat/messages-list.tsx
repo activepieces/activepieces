@@ -1,14 +1,20 @@
-import { useTheme } from '@/components/theme-provider';
-import { ChatBubble, ChatBubbleAction, ChatBubbleAvatar, ChatBubbleMessage } from '@/components/ui/chat/chat-bubble';
-import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
-import { cn } from '@/lib/utils';
-import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
 import { Static, Type } from '@sinclair/typebox';
 import { BotIcon, CircleX, RotateCcw } from 'lucide-react';
 import React from 'react';
-import { TextMessage } from './text-message';
-import { ImageMessage } from './image-message';
+
+import {
+  ChatBubble,
+  ChatBubbleAction,
+  ChatBubbleAvatar,
+  ChatBubbleMessage,
+} from '@/components/ui/chat/chat-bubble';
+import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
+import { cn } from '@/lib/utils';
+import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
+
 import { FileMessage } from './file-message';
+import { ImageMessage } from './image-message';
+import { TextMessage } from './text-message';
 
 export const Messages = Type.Array(
   Type.Object({
@@ -66,7 +72,9 @@ const formatError = (
         </span>
       );
     case ErrorCode.FLOW_NOT_FOUND:
-      return <span>The chat flow you are trying to access no longer exists.</span>;
+      return (
+        <span>The chat flow you are trying to access no longer exists.</span>
+      );
     case ErrorCode.VALIDATION:
       return <span>{`Validation error: ${error.params.message}`}</span>;
     default:
@@ -74,10 +82,18 @@ const formatError = (
   }
 };
 
-const renderMessageContent = (message: Static<typeof Messages>[number], setSelectedImage: (image: string | null) => void) => {
+const renderMessageContent = (
+  message: Static<typeof Messages>[number],
+  setSelectedImage: (image: string | null) => void,
+) => {
   switch (message.type) {
     case 'image':
-      return <ImageMessage content={message.content} setSelectedImage={setSelectedImage} />;
+      return (
+        <ImageMessage
+          content={message.content}
+          setSelectedImage={setSelectedImage}
+        />
+      );
     case 'file':
       return <FileMessage content={message.content} />;
     default:
@@ -89,7 +105,7 @@ const renderErrorBubble = (
   chatUI: ChatUIResponse | null | undefined,
   flowId: string,
   sendingError: ApErrorParams,
-  sendMessage: (arg0: { isRetrying: boolean }) => void
+  sendMessage: (arg0: { isRetrying: boolean }) => void,
 ) => (
   <ChatBubble variant="received">
     <div className="relative">
@@ -127,39 +143,48 @@ const renderSendingBubble = (chatUI: ChatUIResponse | null | undefined) => (
   </ChatBubble>
 );
 
-export const MessagesList = React.memo(({
-  messagesRef,
-  messages,
-  chatUI,
-  sendingError,
-  isSending,
-  flowId,
-  sendMessage,
-  setSelectedImage
-}: MessagesListProps) => {
-  const { theme } = useTheme();
+export const MessagesList = React.memo(
+  ({
+    messagesRef,
+    messages,
+    chatUI,
+    sendingError,
+    isSending,
+    flowId,
+    sendMessage,
+    setSelectedImage,
+  }: MessagesListProps) => {
+    return (
+      <ChatMessageList ref={messagesRef}>
+        {messages.map((message, index) => (
+          <ChatBubble
+            key={index}
+            variant={message.role === 'user' ? 'sent' : 'received'}
+            className="flex items-start"
+          >
+            {message.role === 'bot' && (
+              <ChatBubbleAvatar
+                src={chatUI?.platformLogoUrl}
+                fallback={<BotIcon className="size-5" />}
+              />
+            )}
+            <ChatBubbleMessage
+              className={cn(
+                'flex flex-col gap-2',
+                message.role === 'bot' ? 'w-full' : '',
+              )}
+            >
+              {renderMessageContent(message, setSelectedImage)}
+            </ChatBubbleMessage>
+          </ChatBubble>
+        ))}
+        {sendingError &&
+          !isSending &&
+          renderErrorBubble(chatUI, flowId, sendingError, sendMessage)}
+        {isSending && renderSendingBubble(chatUI)}
+      </ChatMessageList>
+    );
+  },
+);
 
-  return (
-    <ChatMessageList ref={messagesRef}>
-      {messages.map((message, index) => (
-        <ChatBubble
-          key={index}
-          variant={message.role === 'user' ? 'sent' : 'received'}
-          className="flex items-start"
-        >
-          {message.role === 'bot' && (
-            <ChatBubbleAvatar
-              src={chatUI?.platformLogoUrl}
-              fallback={<BotIcon className="size-5" />}
-            />
-          )}
-          <ChatBubbleMessage className={cn("flex flex-col gap-2", message.role === "bot" ? "w-full" : "")}>
-            {renderMessageContent(message, setSelectedImage)}
-          </ChatBubbleMessage>
-        </ChatBubble>
-      ))}
-      {sendingError && !isSending && renderErrorBubble(chatUI, flowId, sendingError, sendMessage)}
-      {isSending && renderSendingBubble(chatUI)}
-    </ChatMessageList>
-  );
-});
+MessagesList.displayName = 'MessagesList';

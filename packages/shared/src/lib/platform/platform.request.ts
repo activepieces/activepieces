@@ -2,8 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { LocalesEnum } from '../common'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig } from '../federated-authn'
-import { FilteredPieceBehavior } from './platform.model'
-import { SMTPInformation } from './platform.model'
+import { FilteredPieceBehavior, SMTPInformation } from './platform.model'
 
 export const UpdatePlatformRequestBody = Type.Object({
     name: Type.Optional(Type.String()),
