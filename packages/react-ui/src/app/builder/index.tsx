@@ -1,6 +1,25 @@
+import {
+  ActionType,
+  FlowRunStatus,
+  PieceTrigger,
+  TriggerType,
+  WebsocketClientEvent,
+  flowHelper,
+  isNil,
+} from '@activepieces/shared';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
+
+import { cn, useElementSize } from '../../lib/utils';
+
+import { BuilderHeader } from './builder-header';
+import { CopilotSidebar } from './copilot';
+import { FlowCanvas } from './flow-canvas';
+import { FlowVersionsList } from './flow-versions';
+import { FlowRunDetails } from './run-details';
+import { RunsList } from './run-list';
+import { StepSettingsContainer } from './step-settings';
 
 import {
   LeftSideBarType,
@@ -19,26 +38,9 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  ActionType,
-  PieceTrigger,
-  TriggerType,
-  WebsocketClientEvent,
-  flowHelper,
-  isNil,
-} from '@activepieces/shared';
-
-import { cn, useElementSize } from '../../lib/utils';
-
-import { BuilderHeader } from './builder-header';
-import { CopilotSidebar } from './copilot';
-import { FlowCanvas } from './flow-canvas';
-import { FlowVersionsList } from './flow-versions';
-import { FlowRunDetails } from './run-details';
-import { RunsList } from './run-list';
-import { StepSettingsContainer } from './step-settings';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -71,14 +73,15 @@ const constructContainerKey = (
 };
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [leftSidebar, rightSidebar, run, canExitRun] = useBuilderStateContext(
-    (state) => [
+  const [setRun, flowVersion, leftSidebar, rightSidebar, run, canExitRun] =
+    useBuilderStateContext((state) => [
+      state.setRun,
+      state.flowVersion,
       state.leftSidebar,
       state.rightSidebar,
       state.run,
       state.canExitRun,
-    ],
-  );
+    ]);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
@@ -127,9 +130,18 @@ const BuilderPage = () => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
+
+    if (run && run.status === FlowRunStatus.RUNNING) {
+      const currentRunId = run.id;
+      socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (run) => {
+        if (run.id === currentRunId) {
+          setRun(run, flowVersion);
+        }
+      });
+    }
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
-      socket.removeAllListeners(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS);
+      socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
       socket.removeAllListeners(WebsocketClientEvent.TEST_STEP_FINISHED);
       socket.removeAllListeners(WebsocketClientEvent.TEST_FLOW_RUN_STARTED);
       socket.removeAllListeners(WebsocketClientEvent.GENERATE_CODE_FINISHED);
@@ -137,7 +149,7 @@ const BuilderPage = () => {
         WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED,
       );
     };
-  }, [socket, refetchPiece]);
+  }, [socket, refetchPiece, run]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
 
@@ -149,9 +161,7 @@ const BuilderPage = () => {
           run={run}
           isLoading={isSwitchingToDraftPending}
           exitRun={() => {
-            socket.removeAllListeners(
-              WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS,
-            );
+            socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
             switchToDraft();
           }}
         />

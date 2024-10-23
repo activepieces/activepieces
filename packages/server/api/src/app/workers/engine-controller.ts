@@ -103,7 +103,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        app.io.to(populatedRun.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, populatedRun)
+        app.io.to(populatedRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, populatedRun)
         if (runDetails.status === FlowRunStatus.QUOTA_EXCEEDED) {
             logger.info({
                 projectId: populatedRun.projectId,
