@@ -101,12 +101,15 @@ async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: st
     })
 }
 async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string): Promise<void> {
+    const flowRun = await engineApiService(engineToken).getRun({
+        runId: jobData.runId,
+    })
     await engineApiService(engineToken).updateRunStatus({
         runDetails: {
             steps: {},
             duration: timeoutFlowInSeconds,
             status: FlowRunStatus.TIMEOUT,
-            tasks: 0,
+            tasks: flowRun.tasks ?? 0,
             tags: [],
         },
 
