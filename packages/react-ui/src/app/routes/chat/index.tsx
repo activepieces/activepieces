@@ -21,6 +21,7 @@ import { nanoid } from 'nanoid';
 import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { Messages, MessagesList } from './messages-list';
+import { ImageDialog } from './image-dialog';
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -136,12 +137,8 @@ export function ChatPage() {
   if (isLoading) return <LoadingSpinner />
 
   const toggleImageDialog = (imageUrl: string | null) => {
-    if (imageUrl) {
-      setImageDialogOpen(true);
-      setSelectedImage(imageUrl);
-    } else {
-      setImageDialogOpen(false);
-    }
+    setImageDialogOpen(!!imageUrl);
+    setSelectedImage(imageUrl);
   }
 
   return (
@@ -207,42 +204,14 @@ export function ChatPage() {
           </div>
         </form>
       </div>
-      <Dialog open={imageDialogOpen} onOpenChange={() => toggleImageDialog(null)}>
-        <DialogContent withCloseButton={false} className="bg-transparent border-none shadow-none flex items-center justify-center">
-          <div className="relative">
-            <img
-              src={selectedImage || ''}
-              alt="Full size image"
-              className="h-auto object-contain max-h-[90vh] sm:max-w-[90vw] shadow-sm"
-            />
-            <div className="absolute top-2 right-2 flex gap-2">
-              <Button
-                size="icon"
-                variant="secondary"
-                onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = selectedImage || '';
-                  link.download = 'image';
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-              <DialogClose>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  onClick={() => toggleImageDialog(null)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </DialogClose>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ImageDialog
+        open={imageDialogOpen}
+        onOpenChange={(open) => {
+          setImageDialogOpen(open);
+          if (!open) setSelectedImage(null);
+        }}
+        imageUrl={selectedImage}
+      />
     </main >
   );
 }
