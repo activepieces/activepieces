@@ -85,10 +85,11 @@ const ApStepCanvasNode = React.memo(
       removeStepSelection,
       flowVersion,
       loopIndexes,
+      setSampleData,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.setAllowCanvasPanning,
-      state.selectedStep === data.step?.name,
+      !isNil(state.selectedStep) && state.selectedStep === data.step?.name,
       state.activeDraggingStep === data.step?.name,
       state.selectedStep,
       state.run,
@@ -98,11 +99,13 @@ const ApStepCanvasNode = React.memo(
       state.removeStepSelection,
       state.flowVersion,
       state.loopsIndexes,
+      state.setSampleData,
     ]);
     const pieceSelectorOperation = useRef<
       FlowOperationType.UPDATE_ACTION | FlowOperationType.UPDATE_TRIGGER
     >(FlowOperationType.UPDATE_ACTION);
     const deleteStep = () => {
+      setSampleData(data.step!.name, undefined);
       applyOperation(
         {
           type: FlowOperationType.DELETE_ACTION,
@@ -200,7 +203,6 @@ const ApStepCanvasNode = React.memo(
             className="absolute text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
             style={{
               top: `${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 - 12}px`,
-              right: `-${flowUtilConsts.AP_NODE_SIZE.STEP.width / 5}px`,
             }}
           >
             {data.step?.name}

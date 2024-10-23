@@ -124,7 +124,7 @@ const replaceRelativeSystemLinkWithAbsolute = async (filePath: string) => {
             const realPath = await fs.realpath(filePath)
             logger.info({ realPath, filePath }, '[link]')
             await fs.unlink(filePath)
-            await fs.symlink(realPath, filePath, 'dir')
+            await fs.symlink(realPath, filePath, 'junction')
         }
     }
     catch (error) {

@@ -38,6 +38,10 @@ type SignInSchema = Static<typeof SignInSchema>;
 const SignInForm: React.FC = () => {
   const form = useForm<SignInSchema>({
     resolver: typeboxResolver(SignInSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
     mode: 'onChange',
   });
 

@@ -28,9 +28,9 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   StepMetadata,
-  ActionOrTriggerListItem,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
+  HandleSelectCallback,
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
@@ -90,11 +90,12 @@ const PieceSelector = ({
   const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
     PieceTagEnum.ALL,
   );
-  const [applyOperation, selectStepByName, flowVersion] =
+  const [applyOperation, selectStepByName, flowVersion, setSampleData] =
     useBuilderStateContext((state) => [
       state.applyOperation,
       state.selectStepByName,
       state.flowVersion,
+      state.setSampleData,
     ]);
 
   const { metadata, isLoading: isLoadingPieces } =
@@ -112,9 +113,9 @@ const PieceSelector = ({
     setSelectedTag(PieceTagEnum.ALL);
   };
 
-  const handleSelect = (
-    stepMetadata: StepMetadata,
-    actionOrTrigger: ActionOrTriggerListItem,
+  const handleSelect: HandleSelectCallback = (
+    stepMetadata,
+    actionOrTrigger,
   ) => {
     if (!stepMetadata) {
       return;
@@ -125,15 +126,16 @@ const PieceSelector = ({
       stepMetadata,
       flowVersion,
     );
+
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,
       stepMetadata,
-      actionOrTriggerName: actionOrTrigger.name,
-      displayName: actionOrTrigger.displayName,
+      actionOrTrigger,
     });
 
     switch (operation.type) {
       case FlowOperationType.UPDATE_TRIGGER: {
+        setSampleData(stepData.name, undefined);
         applyOperation(
           {
             type: FlowOperationType.UPDATE_TRIGGER,

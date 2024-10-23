@@ -26,6 +26,13 @@ export const formatUtils = {
   formatNumber(number: number) {
     return new Intl.NumberFormat('en-US').format(number);
   },
+  formatDateOnly(date: Date) {
+    return Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(date);
+  },
   formatDate(date: Date) {
     const now = dayjs();
     const inputDate = dayjs(date);

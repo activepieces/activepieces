@@ -1,5 +1,6 @@
 import { performance } from 'node:perf_hooks'
-import { Action, ActionType, isNil, ProgressUpdateType } from '@activepieces/shared'
+import { Action, ActionType, ExecuteFlowOperation, ExecutionType, isNil, ProgressUpdateType } from '@activepieces/shared'
+import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
 import { branchExecutor } from './branch-executor'
@@ -25,6 +26,21 @@ export const flowExecutor = {
             throw new Error('Not implemented')
         }
         return executor
+    },
+    async executeFromTrigger({ executionState, constants, input }: {
+        executionState: FlowExecutorContext
+        constants: EngineConstants
+        input: ExecuteFlowOperation
+    }): Promise<FlowExecutorContext> {
+        const trigger = input.flowVersion.trigger
+        if (input.executionType === ExecutionType.BEGIN) {
+            await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
+        }
+        return flowExecutor.execute({
+            action: trigger.nextAction,
+            executionState,
+            constants,
+        })
     },
     async execute({ action, constants, executionState }: {
         action: Action | null | undefined,

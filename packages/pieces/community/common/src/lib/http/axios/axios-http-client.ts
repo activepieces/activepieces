@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
+import axiosRetry from 'axios-retry';
 import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
 import { HttpError } from '../core/http-error';
@@ -39,6 +40,16 @@ export class AxiosHttpClient extends BaseHttpClient {
         data: request.body,
         timeout,
       };
+
+      if (request.retries && request.retries > 0) {
+        axiosRetry(axios, {
+          retries: request.retries,
+          retryDelay: axiosRetry.exponentialDelay,
+          retryCondition: (error) => {
+            return axiosRetry.isNetworkOrIdempotentRequestError(error) || (error.response && error.response.status >= 500) || false;
+          },
+        });
+      }
 
       const response = await axios.request(config);
 

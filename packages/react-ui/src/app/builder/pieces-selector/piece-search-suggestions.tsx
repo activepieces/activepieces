@@ -1,18 +1,12 @@
 import { CardListItem } from '@/components/ui/card-list';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
-  StepMetadata,
-  ActionOrTriggerListItem,
+  HandleSelectCallback,
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { ActionType, TriggerType } from '@activepieces/shared';
 
 import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
-
-type HandleSelectCallback = (
-  piece: StepMetadata,
-  actionOrTrigger: ActionOrTriggerListItem,
-) => void;
 
 type PieceSearchSuggestionsProps = {
   pieceMetadata: StepMetadataWithSuggestions;

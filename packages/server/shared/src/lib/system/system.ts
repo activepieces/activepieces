@@ -26,6 +26,13 @@ export enum PiecesSource {
     FILE = 'FILE',
 }
 
+
+export enum RedisType {
+    SENTINEL = 'SENTINEL',
+    DEFAULT = 'DEFAULT',
+}
+
+
 export enum ContainerType {
     WORKER = 'WORKER',
     APP = 'APP',
@@ -53,6 +60,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
     [SharedSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
+    [SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
     [AppSystemProp.AZURE_OPENAI_API_VERSION]: '2023-06-01-preview',
@@ -67,6 +75,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SharedSystemProp.LOG_PRETTY]: 'false',
     [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: 'cache/archives',
     [SharedSystemProp.PIECES_SOURCE]: PiecesSource.DB,
+    [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SharedSystemProp.MAX_FILE_SIZE_MB]: '4',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
@@ -74,13 +83,12 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SharedSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [SharedSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
+    [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
         'https://cloud.activepieces.com/api/v1/flow-templates',
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
-    [AppSystemProp.DEV_PIECES]: '',
-
 }
 
 export const system = {

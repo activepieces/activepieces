@@ -1,5 +1,5 @@
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
-import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, PieceTrigger, ScheduleOptions, TriggerHookType } from '@activepieces/shared'
+import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, isNil, PieceTrigger, ScheduleOptions, Trigger, TriggerHookType } from '@activepieces/shared'
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -16,35 +16,59 @@ type Listener = {
 }
 
 export const triggerHelper = {
+    async executeOnStart(trigger: Trigger, constants: EngineConstants, payload: unknown) {
+        const { pieceName, pieceVersion, triggerName, input } = (trigger as PieceTrigger).settings
+        assertNotNullOrUndefined(triggerName, 'triggerName is required')
+        const { pieceTrigger, processedInput } = await prepareTriggerExecution({
+            pieceName,
+            pieceVersion,
+            triggerName,
+            input,
+            projectId: constants.projectId,
+            apiUrl: constants.internalApiUrl,
+            engineToken: constants.engineToken,
+            piecesSource: constants.piecesSource,
+        })
+        const isOldVersionOrNotSupported = isNil(pieceTrigger.onStart)
+        if (isOldVersionOrNotSupported) {
+            return
+        }
+        const context = {
+            store: createContextStore({
+                apiUrl: constants.internalApiUrl,
+                prefix: '',
+                flowId: constants.flowId,
+                engineToken: constants.engineToken,
+            }),
+            auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+            propsValue: processedInput,
+            payload,
+            run: {
+                id: constants.flowRunId,
+            },
+            project: {
+                id: constants.projectId,
+                externalId: constants.externalProjectId,
+            },
+        }
+
+        await pieceTrigger.onStart(context)
+    },
+
     async executeTrigger({ params, constants }: ExecuteTriggerParams): Promise<ExecuteTriggerResponse<TriggerHookType>> {
         const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings
-
         assertNotNullOrUndefined(triggerName, 'triggerName is required')
-        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, piecesSource: constants.piecesSource })
-        const trigger = piece.getTrigger(triggerName)
 
-        if (trigger === undefined) {
-            throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
-        }
-
-        const { resolvedInput } = await variableService({
-            apiUrl: constants.internalApiUrl,
+        const { piece, pieceTrigger, processedInput } = await prepareTriggerExecution({
+            pieceName,
+            pieceVersion,
+            triggerName,
+            input,
             projectId: params.projectId,
+            apiUrl: constants.internalApiUrl,
             engineToken: params.engineToken,
-        }).resolve<StaticPropsValue<PiecePropertyMap>>({
-            unresolvedInput: input,
-            executionState: FlowExecutorContext.empty(),
+            piecesSource: constants.piecesSource,
         })
-
-        const { processedInput, errors } = await variableService({
-            apiUrl: constants.internalApiUrl,
-            projectId: params.projectId,
-            engineToken: params.engineToken,
-        }).applyProcessorsAndValidators(resolvedInput, trigger.props, piece.auth, trigger.requireAuth)
-
-        if (Object.keys(errors).length > 0) {
-            throw new Error(JSON.stringify(errors))
-        }
 
         const appListeners: Listener[] = []
         const prefix = params.test ? 'test' : ''
@@ -88,23 +112,23 @@ export const triggerHelper = {
         }
         switch (params.hookType) {
             case TriggerHookType.ON_DISABLE:
-                await trigger.onDisable(context)
+                await pieceTrigger.onDisable(context)
                 return {}
             case TriggerHookType.ON_ENABLE:
-                await trigger.onEnable(context)
+                await pieceTrigger.onEnable(context)
                 return {
                     listeners: appListeners,
-                    scheduleOptions: trigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
+                    scheduleOptions: pieceTrigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
                 }
             case TriggerHookType.RENEW:
-                assertEqual(trigger.type, TriggerStrategy.WEBHOOK, 'triggerType', 'WEBHOOK')
-                await trigger.onRenew(context)
+                assertEqual(pieceTrigger.type, TriggerStrategy.WEBHOOK, 'triggerType', 'WEBHOOK')
+                await pieceTrigger.onRenew(context)
                 return {
                     success: true,
                 }
             case TriggerHookType.HANDSHAKE: {
                 try {
-                    const response = await trigger.onHandshake(context)
+                    const response = await pieceTrigger.onHandshake(context)
                     return {
                         success: true,
                         response,
@@ -123,7 +147,7 @@ export const triggerHelper = {
                 try {
                     return {
                         success: true,
-                        output: await trigger.test({
+                        output: await pieceTrigger.test({
                             ...context,
                             files: createFilesService({
                                 apiUrl: constants.internalApiUrl,
@@ -144,7 +168,7 @@ export const triggerHelper = {
                     }
                 }
             case TriggerHookType.RUN: {
-                if (trigger.type === TriggerStrategy.APP_WEBHOOK) {
+                if (pieceTrigger.type === TriggerStrategy.APP_WEBHOOK) {
                     if (!params.appWebhookUrl) {
                         throw new Error(`App webhook url is not available for piece name ${pieceName}`)
                     }
@@ -177,7 +201,7 @@ export const triggerHelper = {
                         }
                     }
                 }
-                const items = await trigger.run({
+                const items = await pieceTrigger.run({
                     ...context,
                     files: createFilesService({
                         apiUrl: constants.internalApiUrl,
@@ -201,4 +225,45 @@ export const triggerHelper = {
 type ExecuteTriggerParams = {
     params: ExecuteTriggerOperation<TriggerHookType>
     constants: EngineConstants
+}
+
+async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, projectId, apiUrl, engineToken, piecesSource }: PrepareTriggerExecutionParams) {
+    const { piece, pieceTrigger } = await pieceLoader.getPieceAndTriggerOrThrow({
+        pieceName,
+        pieceVersion,
+        triggerName,
+        piecesSource,
+    })
+
+    const { resolvedInput } = await variableService({
+        apiUrl,
+        projectId,
+        engineToken,
+    }).resolve<StaticPropsValue<PiecePropertyMap>>({
+        unresolvedInput: input,
+        executionState: FlowExecutorContext.empty(),
+    })
+
+    const { processedInput, errors } = await variableService({
+        apiUrl,
+        projectId,
+        engineToken,
+    }).applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth)
+
+    if (Object.keys(errors).length > 0) {
+        throw new Error(JSON.stringify(errors))
+    }
+
+    return { piece, pieceTrigger, processedInput }
+}
+
+type PrepareTriggerExecutionParams = {
+    pieceName: string
+    pieceVersion: string
+    triggerName: string
+    input: unknown
+    projectId: string
+    apiUrl: string
+    engineToken: string
+    piecesSource: string
 }

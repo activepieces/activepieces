@@ -13,6 +13,7 @@ type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
 
 export function BuilderStateProvider({
   children,
+  sampleData,
   ...props
 }: BuilderStateProviderProps) {
   const storeRef = useRef<BuilderStore>();
@@ -22,6 +23,7 @@ export function BuilderStateProvider({
     storeRef.current = createBuilderStore({
       ...props,
       readonly: !checkAccess(Permission.WRITE_FLOW) || props.readonly,
+      sampleData,
     });
   }
   return (

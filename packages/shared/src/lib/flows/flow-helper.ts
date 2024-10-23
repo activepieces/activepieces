@@ -948,6 +948,7 @@ function duplicateStep(
     step.name = oldNameToNewName[step.name];
     if (step.settings.inputUiInfo) {
       step.settings.inputUiInfo.currentSelectedData = undefined;
+      step.settings.inputUiInfo.sampleDataFileId = undefined;
       step.settings.inputUiInfo.lastTestDate = undefined;
     }
     oldStepsNameToReplace.forEach((oldName) => {
@@ -974,7 +975,6 @@ function duplicateStep(
   });
   const operations = getImportOperations(duplicatedStep);
   operations.forEach((operation) => {
-    console.log('OPERATION 333', operation);
     finalFlow = flowHelper.apply(finalFlow, operation);
   });
   return finalFlow;

@@ -1,8 +1,10 @@
 import {
   createTrigger,
   Property,
+  StoreScope,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
+import { callableFlowKey, CallableFlowRequest } from '../common';
 
 export const callableFlow = createTrigger({
   name: 'callableFlow',
@@ -24,9 +26,15 @@ export const callableFlow = createTrigger({
     // ignore
   },
   async test(context) {
-    return [context.propsValue.exampleData];
+    return [{
+      data: context.propsValue.exampleData
+    }];
   },
   async run(context) {
     return [context.payload.body];
   },
+  async onStart(context) {
+    const request = context.payload as CallableFlowRequest;
+    await context.store.put(callableFlowKey(context.run.id), request.callbackUrl, StoreScope.FLOW);
+  }
 });

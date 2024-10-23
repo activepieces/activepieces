@@ -130,7 +130,6 @@ export const formUtils = {
                 },
               ],
             ],
-            inputUiInfo: {},
           },
         };
       case ActionType.ROUTER:
@@ -194,10 +193,10 @@ export const formUtils = {
         const requireAuth = isNil(actionName)
           ? false
           : piece?.actions?.[actionName]?.requireAuth ?? true;
-        const actionPropsWithoutAuth =
-          actionName !== undefined
-            ? piece?.actions?.[actionName]?.props ?? {}
-            : {};
+
+        const actionPropsWithoutAuth = isNil(actionName)
+          ? {}
+          : piece?.actions?.[actionName]?.props ?? {};
         const props = addAuthToPieceProps(
           actionPropsWithoutAuth,
           piece?.auth,
@@ -224,11 +223,11 @@ export const formUtils = {
         const triggerName = selectedStep?.settings?.triggerName;
         const requireAuth = isNil(triggerName)
           ? false
-          : piece?.triggers?.[triggerName]?.requireAuth ?? false;
-        const triggerPropsWithoutAuth =
-          triggerName !== undefined
-            ? piece?.triggers?.[triggerName]?.props ?? {}
-            : {};
+          : piece?.triggers?.[triggerName]?.requireAuth ?? true;
+
+        const triggerPropsWithoutAuth = isNil(triggerName)
+          ? {}
+          : piece?.triggers?.[triggerName]?.props ?? {};
         const props = addAuthToPieceProps(
           triggerPropsWithoutAuth,
           piece?.auth,
@@ -467,19 +466,21 @@ export const formUtils = {
   getDefaultValueForStep,
 };
 
-function getDefaultValueForStep(
+export function getDefaultValueForStep(
   props: PiecePropertyMap | OAuth2Props,
-  input: Record<string, unknown>,
+  existingInput: Record<string, unknown>,
 ): Record<string, unknown> {
   const defaultValues: Record<string, unknown> = {};
   const entries = Object.entries(props);
   for (const [name, property] of entries) {
     switch (property.type) {
       case PropertyType.CHECKBOX:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? false;
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? false;
         break;
       case PropertyType.ARRAY:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? [];
         break;
       case PropertyType.MARKDOWN:
       case PropertyType.DATE_TIME:
@@ -492,26 +493,27 @@ function getDefaultValueForStep(
       case PropertyType.CUSTOM_AUTH:
       case PropertyType.SECRET_TEXT:
       case PropertyType.OAUTH2: {
-        defaultValues[name] = input[name] ?? property.defaultValue;
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       }
       case PropertyType.JSON: {
-        defaultValues[name] = input[name] ?? property.defaultValue;
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       }
       case PropertyType.NUMBER: {
-        defaultValues[name] = input[name] ?? property.defaultValue;
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       }
       case PropertyType.MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? [];
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       case PropertyType.OBJECT:
       case PropertyType.DYNAMIC:
-        defaultValues[name] = input[name] ?? property.defaultValue ?? {};
+        defaultValues[name] =
+          existingInput[name] ?? property.defaultValue ?? {};
         break;
     }
   }

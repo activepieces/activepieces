@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import React, { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -119,14 +119,12 @@ const StepSettingsContainer = () => {
     name: 'settings.input',
     control: form.control,
   });
-  const validChange = useWatch({
-    name: 'valid',
-    control: form.control,
-  });
+
   const itemsChange = useWatch({
     name: 'settings.items',
     control: form.control,
   });
+
   const conditionsChange = useWatch({
     name: 'settings.conditions',
     control: form.control,
@@ -152,28 +150,31 @@ const StepSettingsContainer = () => {
   const previousSavedStep = useRef<Action | Trigger | null>(null);
 
   useEffect(() => {
-    const currentStep: Trigger | Action = JSON.parse(
-      JSON.stringify(form.getValues()),
-    );
-    currentStep.valid = form.formState.isValid;
-    if (previousSavedStep.current === null) {
+    //added timeout to avoid formstate validity not being updated when values are edited
+    setTimeout(() => {
+      const currentStep: Trigger | Action = JSON.parse(
+        JSON.stringify(form.getValues()),
+      );
+      currentStep.valid = form.formState.isValid;
+      if (previousSavedStep.current === null) {
+        previousSavedStep.current = currentStep;
+        return;
+      }
+
+      if (
+        deepEqual(currentStep, previousSavedStep.current) ||
+        skipValueChangeDetection
+      ) {
+        return;
+      }
       previousSavedStep.current = currentStep;
-      return;
-    }
 
-    if (
-      deepEqual(currentStep, previousSavedStep.current) ||
-      skipValueChangeDetection
-    ) {
-      return;
-    }
-    previousSavedStep.current = currentStep;
-
-    if (currentStep.type === TriggerType.PIECE) {
-      debouncedTrigger(currentStep as Trigger);
-    } else {
-      debouncedAction(currentStep as Action);
-    }
+      if (currentStep.type === TriggerType.PIECE) {
+        debouncedTrigger(currentStep as Trigger);
+      } else {
+        debouncedAction(currentStep as Action);
+      }
+    });
   }, [
     inputChanges,
     itemsChange,
@@ -181,7 +182,6 @@ const StepSettingsContainer = () => {
     conditionsChange,
     sourceCodeChange,
     inputUIInfo,
-    validChange,
     displayName,
   ]);
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);

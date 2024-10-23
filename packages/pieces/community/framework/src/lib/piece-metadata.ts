@@ -93,14 +93,8 @@ export const PieceMetadataSummary = Type.Composite([
   Type.Object({
     actions: Type.Number(),
     triggers: Type.Number(),
-    suggestedActions: Type.Optional(Type.Array(Type.Object({
-      name: Type.String(),
-      displayName: Type.String(),
-    }))),
-    suggestedTriggers: Type.Optional(Type.Array(Type.Object({
-      name: Type.String(),
-      displayName: Type.String(),
-    }))),
+    suggestedActions: Type.Optional(Type.Array(TriggerBase)),
+    suggestedTriggers: Type.Optional(Type.Array(ActionBase)),
   })
 ])
 export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {

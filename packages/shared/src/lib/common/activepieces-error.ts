@@ -60,12 +60,13 @@ export type ApErrorParams =
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
     | ExistingAlertChannelErrorParams
-    | ActivationKeyNotFoundParams
-    | ActivationKeyNotAlreadyActivated
     | EmailAlreadyHasActivationKey
     | ProviderProxyConfigNotFoundParams
     | AITokenLimitExceededParams
     | SessionExpiredParams
+    | InvalidLicenseKeyParams
+    | NoChatResponseParams
+    | InvalidSmtpCredentialsErrorParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -88,6 +89,8 @@ export type InvalidBearerTokenParams = BaseErrorParams<ErrorCode.INVALID_BEARER_
 export type SessionExpiredParams = BaseErrorParams<ErrorCode.SESSION_EXPIRED, {
     message?: string
 }>
+
+export type NoChatResponseParams = BaseErrorParams<ErrorCode.NO_CHAT_RESPONSE, Record<string, never>>
 
 export type FileNotFoundErrorParams = BaseErrorParams<ErrorCode.FILE_NOT_FOUND, { id: FileId }>
 
@@ -379,17 +382,20 @@ ErrorCode.EXISTING_ALERT_CHANNEL,
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
-export type ActivationKeyNotFoundParams = BaseErrorParams<ErrorCode.ACTIVATION_KEY_NOT_FOUND, {
+export type InvalidLicenseKeyParams = BaseErrorParams<ErrorCode.INVALID_LICENSE_KEY, {
     key: string
-}>
-export type ActivationKeyNotAlreadyActivated = BaseErrorParams<ErrorCode.ACTIVATION_KEY_ALREADY_ACTIVATED, {
-    key: string
-}>
+}>  
+
 export type EmailAlreadyHasActivationKey = BaseErrorParams<ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY, {
     email: string
 }>
 
+export type InvalidSmtpCredentialsErrorParams = BaseErrorParams<ErrorCode.INVALID_SMTP_CREDENTIALS, {
+    message: string
+}>  
+
 export enum ErrorCode {
+    NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
     PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER = 'PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER',
@@ -439,7 +445,7 @@ export enum ErrorCode {
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
     VALIDATION = 'VALIDATION',
-    ACTIVATION_KEY_NOT_FOUND = 'ACTIVATION_KEY_NOT_FOUND',
-    ACTIVATION_KEY_ALREADY_ACTIVATED = 'ACTIVATION_KEY_ALREADY_ACTIVATED',
+    INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
+    INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
 }

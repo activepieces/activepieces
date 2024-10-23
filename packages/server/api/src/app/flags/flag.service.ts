@@ -2,6 +2,7 @@ import { AppSystemProp, flowTimeoutSandbox, SharedSystemProp, system, webhookSec
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
 import { webhookUtils } from 'server-worker'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
@@ -18,12 +19,51 @@ export const flagService = {
         })
     },
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
-        return flagRepo().findOneBy({
-            id: flagId,
-        })
+        return flagRepo().findOneBy({ id: flagId })
     },
     async getAll(): Promise<Flag[]> {
-        const flags = await flagRepo().find({})
+        const flags = await flagRepo().findBy({
+            id: In([
+                ApFlagId.SHOW_POWERED_BY_IN_FORM,
+                ApFlagId.CLOUD_AUTH_ENABLED,
+                ApFlagId.CODE_COPILOT_ENABLED,
+                ApFlagId.HTTP_REQUEST_COPILOT_ENABLED,
+                ApFlagId.PROJECT_LIMITS_ENABLED,
+                ApFlagId.CURRENT_VERSION,
+                ApFlagId.EDITION,
+                ApFlagId.IS_CLOUD_PLATFORM,
+                ApFlagId.EMAIL_AUTH_ENABLED,
+                ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
+                ApFlagId.ENVIRONMENT,
+                ApFlagId.FRONTEND_URL,
+                ApFlagId.LATEST_VERSION,
+                ApFlagId.OWN_AUTH2_ENABLED,
+                ApFlagId.PRIVACY_POLICY_URL,
+                ApFlagId.PIECES_SYNC_MODE,
+                ApFlagId.PRIVATE_PIECES_ENABLED,
+                ApFlagId.FLOW_RUN_TIME_SECONDS,
+                ApFlagId.SHOW_BILLING,
+                ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
+                ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
+                ApFlagId.SHOW_COMMUNITY,
+                ApFlagId.SHOW_COPILOTS,
+                ApFlagId.SHOW_DOCS,
+                ApFlagId.SHOW_PLATFORM_DEMO,
+                ApFlagId.SHOW_SIGN_UP_LINK,
+                ApFlagId.SHOW_REWARDS,
+                ApFlagId.SUPPORTED_APP_WEBHOOKS,
+                ApFlagId.TELEMETRY_ENABLED,
+                ApFlagId.TEMPLATES_PROJECT_ID,
+                ApFlagId.TERMS_OF_SERVICE_URL,
+                ApFlagId.THEME,
+                ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
+                ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
+                ApFlagId.SAML_AUTH_ACS_URL,
+                ApFlagId.USER_CREATED,
+                ApFlagId.WEBHOOK_URL_PREFIX,
+                ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
+            ]),
+        })
         const now = new Date().toISOString()
         const created = now
         const updated = now
@@ -219,6 +259,18 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.PAUSED_FLOW_TIMEOUT_DAYS,
+                value: system.getNumber(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.WEBHOOK_TIMEOUT_SECONDS,
+                value: system.getNumber(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CURRENT_VERSION,
                 value: currentVersion,
                 created,
@@ -253,8 +305,8 @@ export const flagService = {
     ): string {
         const isCustomerPlatform =
             platformId && !flagService.isCloudPlatform(platformId)
-        if (isCustomerPlatform) {
-            return `${hostUrl}/redirect`
+        if (isCustomerPlatform && system.getEdition() === ApEdition.CLOUD) {
+            return `https://${hostUrl}/redirect`
         }
         const frontendUrl = system.get(SharedSystemProp.FRONTEND_URL)
         const trimmedFrontendUrl = frontendUrl?.endsWith('/')

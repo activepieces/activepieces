@@ -10,6 +10,7 @@ import {
 import { PageTitle } from '@/app/components/page-title';
 import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
+import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
 import AIProvidersPage from '@/app/routes/platform/ai-providers';
 import AnalyticsPage from '@/app/routes/platform/analytics';
@@ -38,6 +39,7 @@ import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import AppConnectionsPage from '../routes/connections';
+import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
@@ -46,6 +48,7 @@ import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import AuditLogsPage from '../routes/platform/audit-logs';
 import ProjectsPage from '../routes/platform/projects';
+import { LicenseKeyPage } from '../routes/platform/settings/license-key';
 import TemplatesPage from '../routes/platform/templates';
 import UsersPage from '../routes/platform/users';
 import { FlowRunPage } from '../routes/runs/id';
@@ -77,6 +80,10 @@ const routes = [
     element: <EmbedPage></EmbedPage>,
   },
   {
+    path: '/embed/connections',
+    element: <EmbeddedConnectionDialog></EmbeddedConnectionDialog>,
+  },
+  {
     path: '/authenticate',
     element: <AuthenticatePage />,
   },
@@ -105,6 +112,14 @@ const routes = [
     element: (
       <PageTitle title="Forms">
         <FormPage />
+      </PageTitle>
+    ),
+  },
+  {
+    path: '/chats/:flowId',
+    element: (
+      <PageTitle title="Chats">
+        <ChatPage />
       </PageTitle>
     ),
   },
@@ -436,6 +451,18 @@ const routes = [
         <PlatformSettingsLayout>
           <PageTitle title="SSO">
             <SSOPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/license-key',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="LicenseKey">
+            <LicenseKeyPage />
           </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>

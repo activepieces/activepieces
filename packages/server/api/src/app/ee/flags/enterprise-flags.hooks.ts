@@ -9,7 +9,7 @@ import { appearanceHelper } from '../helper/appearance-helper'
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags = { ...flags }
-        const hostUrl = resolveHostUrl(request.hostname, request.protocol)
+        const hostUrl = resolveHostUrl(request.hostname)
         const platformId = await resolvePlatformIdForRequest(request)
         if (isNil(platformId)) {
             return modifiedFlags
@@ -51,17 +51,16 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
                 ApFlagId.WEBHOOK_URL_PREFIX
             ] = `${hostUrl}/api/v1/webhooks`
             modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] =
-                flagService.getThirdPartyRedirectUrl(platform.id, hostUrl)
-            modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
+                flagService.getThirdPartyRedirectUrl(platform.id, request.hostname)
             modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
         }
         return modifiedFlags
     },
 }
-function resolveHostUrl(hostname: string, protocol: string): string {
+function resolveHostUrl(hostname: string): string {
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
-        return `${protocol}://${hostname}`
+        return `https://${hostname}`
     }
     const frontendUrl = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
     return removeTrailingSlash(frontendUrl)

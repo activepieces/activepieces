@@ -199,16 +199,9 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         filteredPieceBehavior:
             platform?.filteredPieceBehavior ??
             faker.helpers.enumValue(FilteredPieceBehavior),
-        smtpHost: platform?.smtpHost,
-        smtpPort: platform?.smtpPort,
-        smtpUser: platform?.smtpUser,
-        smtpPassword: platform?.smtpPassword,
+        smtp: platform?.smtp,
         flowIssuesEnabled: platform?.flowIssuesEnabled ?? faker.datatype.boolean(),
-        smtpUseSSL: platform?.smtpUseSSL,
-        smtpSenderEmail: platform?.smtpSenderEmail,
-        privacyPolicyUrl: platform?.privacyPolicyUrl ?? faker.internet.url(),
         gitSyncEnabled: platform?.gitSyncEnabled ?? faker.datatype.boolean(),
-        termsOfServiceUrl: platform?.termsOfServiceUrl ?? faker.internet.url(),
         embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),

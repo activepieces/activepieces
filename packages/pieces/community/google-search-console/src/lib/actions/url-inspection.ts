@@ -24,7 +24,7 @@ export const urlInspection = createAction({
   async run(context) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: 'hhttps://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+      url: 'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,

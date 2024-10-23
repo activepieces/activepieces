@@ -16,7 +16,11 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '../../../components/ui/use-toast';
 
 import { CORE_STEP_METADATA, piecesApi } from './pieces-api';
-import { StepMetadata, StepMetadataWithSuggestions } from './types';
+import {
+  PieceSelectorItem,
+  StepMetadata,
+  StepMetadataWithSuggestions,
+} from './types';
 
 type UsePieceProps = {
   name: string;
@@ -150,7 +154,7 @@ export const piecesHooks = {
   }: {
     stepMetadata?: StepMetadata;
   }) => {
-    return useQuery({
+    return useQuery<PieceSelectorItem[], Error>({
       queryKey: [
         'pieceMetadata',
         stepMetadata?.type,
@@ -167,15 +171,11 @@ export const piecesHooks = {
               const pieceMetadata = await piecesApi.get({
                 name: stepMetadata.pieceName,
               });
-              return Object.entries(
+              return Object.values(
                 stepMetadata.type === TriggerType.PIECE
                   ? pieceMetadata.triggers
                   : pieceMetadata.actions,
-              ).map(([actionOrTriggerName, actionOrTrigger]) => ({
-                name: actionOrTriggerName,
-                displayName: actionOrTrigger.displayName,
-                description: actionOrTrigger.description,
-              }));
+              );
             }
             case ActionType.CODE:
             case ActionType.LOOP_ON_ITEMS:
@@ -233,6 +233,7 @@ export function getCoreActions(
           name: 'code',
           displayName: t('Custom Javascript Code'),
           description: CORE_STEP_METADATA.CODE.description,
+          type: ActionType.CODE as const,
         },
       ];
     case ActionType.LOOP_ON_ITEMS:
@@ -241,6 +242,7 @@ export function getCoreActions(
           name: 'loop',
           displayName: t('Loop on Items'),
           description: CORE_STEP_METADATA.LOOP_ON_ITEMS.description,
+          type: ActionType.LOOP_ON_ITEMS as const,
         },
       ];
     case ActionType.BRANCH:
@@ -251,6 +253,7 @@ export function getCoreActions(
           description: t(
             'Split your flow into branches depending on condition(s)',
           ),
+          type: ActionType.BRANCH as const,
         },
       ];
     case ActionType.ROUTER:

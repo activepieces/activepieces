@@ -5,6 +5,7 @@ import { BuilderPage } from '@/app/builder';
 import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { PopulatedFlow } from '@activepieces/shared';
 
 const FlowBuilderPage = () => {
@@ -22,11 +23,21 @@ const FlowBuilderPage = () => {
     refetchOnWindowFocus: false,
   });
 
+  const {
+    data: sampleData,
+    isLoading: isSampleDataLoading,
+    isError: isSampleDataError,
+  } = sampleDataHooks.useSampleDataForFlow(flow?.version);
+
   if (isError) {
     return <Navigate to="/404" />;
   }
 
-  if (isLoading) {
+  if (isSampleDataError) {
+    return <p>Error loading sample data, contact support</p>;
+  }
+
+  if (isLoading || isSampleDataLoading) {
     return (
       <div className="bg-background flex h-screen w-screen items-center justify-center ">
         <LoadingSpinner size={50}></LoadingSpinner>
@@ -41,6 +52,7 @@ const FlowBuilderPage = () => {
       flowVersion={flow!.version}
       readonly={false}
       run={null}
+      sampleData={sampleData ?? {}}
     >
       <BuilderPage />
     </BuilderStateProvider>
