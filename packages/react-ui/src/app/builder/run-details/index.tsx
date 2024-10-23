@@ -77,9 +77,14 @@ const FlowRunDetails = React.memo(() => {
       flowRunsApi.getPopulated(run.id).then((run) => {
         setRun(run, flowVersion);
       });
-      flowRunsApi.runFlow(socket, { flowVersionId: flowVersion.id }, (run) => {
-        setRun(run, flowVersion);
-      });
+      flowRunsApi.runFlow(
+        socket,
+        { flowVersionId: flowVersion.id },
+        (run) => {
+          setRun(run, flowVersion);
+        },
+        run,
+      );
     }
   }, []);
 

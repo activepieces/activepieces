@@ -149,9 +149,7 @@ const BuilderPage = () => {
           run={run}
           isLoading={isSwitchingToDraftPending}
           exitRun={() => {
-            socket.removeAllListeners(
-              WebsocketClientEvent.FLOW_RUN_PROGRESS,
-            );
+            socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
             switchToDraft();
           }}
         />

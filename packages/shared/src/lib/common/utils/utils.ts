@@ -36,6 +36,7 @@ export function debounce<T>(func: (...args: T[]) => void, wait: number): (...arg
     }
 }
 
+
 type DeepPartial<T> = {
     [P in keyof T]?: T[P] extends Record<string, unknown> ? DeepPartial<T[P]> : T[P];
 }

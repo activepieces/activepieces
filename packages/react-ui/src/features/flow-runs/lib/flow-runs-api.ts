@@ -31,12 +31,12 @@ export const flowRunsApi = {
     socket: Socket,
     request: FlowRunRequestBody,
     onUpdate: (response: FlowRun) => void,
-    // flowRun?: FlowRun,
+    flowRun?: FlowRun,
   ) {
-    // if (isNil(flowRun)) {
-    socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
-    // }
-    const run = await getInitialRun(socket, request.flowVersionId);
+    if (isNil(flowRun)) {
+      socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
+    }
+    const run = flowRun ?? (await getInitialRun(socket, request.flowVersionId));
 
     onUpdate(run);
     return new Promise<void>((resolve, reject) => {
