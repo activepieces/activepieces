@@ -1,5 +1,6 @@
 import {
   ActionType,
+  FlowRunStatus,
   PieceTrigger,
   TriggerType,
   WebsocketClientEvent,
@@ -37,6 +38,7 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -71,14 +73,15 @@ const constructContainerKey = (
 };
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [leftSidebar, rightSidebar, run, canExitRun] = useBuilderStateContext(
-    (state) => [
+  const [setRun, flowVersion, leftSidebar, rightSidebar, run, canExitRun] =
+    useBuilderStateContext((state) => [
+      state.setRun,
+      state.flowVersion,
       state.leftSidebar,
       state.rightSidebar,
       state.run,
       state.canExitRun,
-    ],
-  );
+    ]);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
@@ -127,6 +130,19 @@ const BuilderPage = () => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
+    if (run?.status === FlowRunStatus.RUNNING) {
+      flowRunsApi.getPopulated(run.id).then((run) => {
+        setRun(run, flowVersion);
+      });
+      flowRunsApi.runFlow(
+        socket,
+        { flowVersionId: flowVersion.id },
+        (run) => {
+          setRun(run, flowVersion);
+        },
+        run,
+      );
+    }
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
       socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
