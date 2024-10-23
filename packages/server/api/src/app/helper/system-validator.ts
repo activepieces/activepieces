@@ -122,7 +122,6 @@ const systemPropValidators: {
     [AppSystemProp.SMTP_SENDER_EMAIL]: (value: string) => value.includes('@') ? true : 'Value must be a valid email address',
     [AppSystemProp.SMTP_SENDER_NAME]: stringValidator,
     [AppSystemProp.SMTP_USERNAME]: stringValidator,
-    [AppSystemProp.SMTP_USE_SSL]: booleanValidator,
     [AppSystemProp.TELEMETRY_ENABLED]: booleanValidator,
     [AppSystemProp.TEMPLATES_SOURCE_URL]: stringValidator,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: numberValidator,
@@ -170,10 +169,8 @@ const validateSystemPropTypes = () => {
 }
 
 export const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const errors = validateSystemPropTypes()
-    if (Object.keys(errors).length > 0) {
-        throw new Error(JSON.stringify(errors))
-    }
+
+    await validateSystemPropTypes()
 
     const codeSandboxType = process.env.AP_CODE_SANDBOX_TYPE
     if (!isNil(codeSandboxType)) {

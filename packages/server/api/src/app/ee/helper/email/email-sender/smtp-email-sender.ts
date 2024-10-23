@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
-import { AppSystemProp, logger, system } from '@activepieces/server-shared'
-import { isNil, Platform } from '@activepieces/shared'
+import { AppSystemProp, logger, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
@@ -12,7 +12,7 @@ const isSmtpConfigured = (platform: Platform | null): boolean => {
         return !isNil(host) && !isNil(port) && !isNil(user) && !isNil(password)
     }
 
-    const isPlatformSmtpConfigured = !isNil(platform) && isConfigured(platform.smtpHost, platform.smtpPort?.toString(), platform.smtpUser, platform.smtpPassword)
+    const isPlatformSmtpConfigured = !isNil(platform) && !isNil(platform.smtp)
     const isSmtpSystemConfigured = isConfigured(system.get(AppSystemProp.SMTP_HOST), system.get(AppSystemProp.SMTP_PORT), system.get(AppSystemProp.SMTP_USERNAME), system.get(AppSystemProp.SMTP_PASSWORD))
 
     return isPlatformSmtpConfigured || isSmtpSystemConfigured
@@ -21,14 +21,33 @@ const isSmtpConfigured = (platform: Platform | null): boolean => {
 
 type SMTPEmailSender = EmailSender & {
     isSmtpConfigured: (platform: Platform | null) => boolean
+    validateOrThrow: (smtp: SMTPInformation) => Promise<void>
 }
 
 export const smtpEmailSender: SMTPEmailSender = {
+    async validateOrThrow(smtp: SMTPInformation) {
+        const disableSmtpValidationInTesting = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.TESTING
+        if (disableSmtpValidationInTesting) {
+            return
+        }
+        const smtpClient = initSmtpClient(smtp)
+        try {
+            await smtpClient.verify()
+        }
+        catch (e) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_SMTP_CREDENTIALS,
+                params: {
+                    message: JSON.stringify(e),
+                },
+            })
+        }
+    },
     async send({ emails, platformId, templateData }) {
         const platform = await getPlatform(platformId)
         const emailSubject = getEmailSubject(templateData.name, templateData.vars)
-        const senderName = platform?.name ?? system.get(AppSystemProp.SMTP_SENDER_NAME)
-        const senderEmail = platform?.smtpSenderEmail ?? system.get(AppSystemProp.SMTP_SENDER_EMAIL)
+        const senderName = platform?.smtp?.senderName ?? system.get(AppSystemProp.SMTP_SENDER_NAME)
+        const senderEmail = platform?.smtp?.senderEmail ?? system.get(AppSystemProp.SMTP_SENDER_EMAIL)
 
         if (!isSmtpConfigured(platform)) {
             logger.error(`SMTP isn't configured for sending the email ${emailSubject}`)
@@ -40,7 +59,7 @@ export const smtpEmailSender: SMTPEmailSender = {
             templateData,
         })
 
-        const smtpClient = initSmtpClient(platform)
+        const smtpClient = initSmtpClient(platform?.smtp)
 
         await smtpClient.sendMail({
             from: `${senderName} <${senderEmail}>`,
@@ -80,14 +99,14 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
     })
 }
 
-const initSmtpClient = (platform: Platform | null): Transporter => {
+const initSmtpClient = (smtp: SMTPInformation | undefined): Transporter => {
     return nodemailer.createTransport({
-        host: platform?.smtpHost ?? system.getOrThrow(AppSystemProp.SMTP_HOST),
-        port: platform?.smtpPort ?? Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT)),
-        secure: platform?.smtpUseSSL ?? system.getBoolean(AppSystemProp.SMTP_USE_SSL),
+        host: smtp?.host ?? system.getOrThrow(AppSystemProp.SMTP_HOST),
+        port: smtp?.port ?? Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT)),
+        secure: smtp?.port === 465,
         auth: {
-            user: platform?.smtpUser ?? system.getOrThrow(AppSystemProp.SMTP_USERNAME),
-            pass: platform?.smtpPassword ?? system.getOrThrow(AppSystemProp.SMTP_PASSWORD),
+            user: smtp?.user ?? system.getOrThrow(AppSystemProp.SMTP_USERNAME),
+            pass: smtp?.password ?? system.getOrThrow(AppSystemProp.SMTP_PASSWORD),
         },
     })
 }

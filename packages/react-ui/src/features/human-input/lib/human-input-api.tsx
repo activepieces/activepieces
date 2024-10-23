@@ -1,13 +1,19 @@
 import { api } from '@/lib/api';
 import {
+  ChatUIResponse,
   FileResponseInterface,
   FormResponse,
   USE_DRAFT_QUERY_PARAM_NAME,
 } from '@activepieces/shared';
 
 export const humanInputApi = {
-  get: (flowId: string, useDraft?: boolean) => {
-    return api.get<FormResponse>(`/v1/forms/${flowId}`, {
+  getForm: (flowId: string, useDraft?: boolean) => {
+    return api.get<FormResponse>(`/v1/human-input/form/${flowId}`, {
+      [USE_DRAFT_QUERY_PARAM_NAME]: useDraft ?? false,
+    });
+  },
+  getChatUI: (flowId: string, useDraft?: boolean) => {
+    return api.get<ChatUIResponse>(`/v1/human-input/chat/${flowId}`, {
       [USE_DRAFT_QUERY_PARAM_NAME]: useDraft ?? false,
     });
   },
@@ -15,8 +21,8 @@ export const humanInputApi = {
     const suffix = useDraft
       ? '/test'
       : formResult.props.waitForResponse
-      ? '/sync'
-      : '';
+        ? '/sync'
+        : '';
     return api.post<FormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
       data,
@@ -38,13 +44,13 @@ type SendMessageParams = {
 
 export type FormResult =
   | {
-      type: FormResultTypes.FILE;
-      value: FileResponseInterface;
-    }
+    type: FormResultTypes.FILE;
+    value: FileResponseInterface;
+  }
   | {
-      type: FormResultTypes.MARKDOWN;
-      value: string;
-    };
+    type: FormResultTypes.MARKDOWN;
+    value: string;
+  };
 
 export enum FormResultTypes {
   MARKDOWN = 'markdown',

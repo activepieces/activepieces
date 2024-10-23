@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.34.4",
+  "version": "0.34.5",
   "rcVersion": "0.35.0-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -146,6 +146,7 @@
     "fastify-plugin": "4.5.1",
     "fastify-raw-body": "4.2.0",
     "fastify-socket.io": "5.0.0",
+    "fastify-xml-body-parser": "2.2.0",
     "feedparser": "2.2.10",
     "fetch-retry": "6.0.0",
     "firebase-scrypt": "2.2.0",
@@ -359,7 +360,6 @@
     "eslint-plugin-tailwindcss": "3.17.4",
     "eslint-plugin-testing-library": "6.2.2",
     "eslint-plugin-vitest": "0.5.4",
-    "fastify-xml-body-parser": "2.2.0",
     "husky": "8.0.3",
     "i18next-parser": "9.0.2",
     "inquirer": "8.2.6",

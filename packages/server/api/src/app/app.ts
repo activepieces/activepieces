@@ -61,7 +61,7 @@ import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
-import { formModule } from './flows/flow/form/form.module'
+import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
@@ -210,7 +210,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(copilotModule),
     await app.register(requestWriterModule),
     await app.register(platformModule)
-    await app.register(formModule)
+    await app.register(humanInputModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
     await app.register(platformUserModule)
