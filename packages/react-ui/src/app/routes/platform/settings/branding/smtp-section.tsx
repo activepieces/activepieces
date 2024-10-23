@@ -194,9 +194,7 @@ export const SmtpSection = () => {
                             <FormLabel htmlFor="port">{t('Port')}</FormLabel>
                             <Select
                               value={field.value?.toString() ?? ''}
-                              onValueChange={(value) =>
-                                field.onChange(Number(value))
-                              }
+                              onValueChange={field.onChange}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Port" />
