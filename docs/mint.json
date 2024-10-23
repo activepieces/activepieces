@@ -232,7 +232,8 @@
           "pages": [
             "install/options/easypanel",
             "install/options/aws",
-            "install/options/gcp"
+            "install/options/gcp",
+            "install/options/elestio"
           ]
         }
       ]
