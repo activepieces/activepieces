@@ -200,7 +200,7 @@ const ApStepCanvasNode = React.memo(
           {...(!openPieceSelector ? listeners : {})}
         >
           <div
-            className="absolute text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
+            className="absolute left-full pl-3 text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
             style={{
               top: `${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 - 12}px`,
             }}

@@ -1,72 +1,98 @@
-import { ActionType, BranchStepOutput, flowHelper, FlowVersion, GenericStepOutput, RouterStepOutput, LoopStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
-import { variableService } from '../../variables/variable-service'
-import { FlowExecutorContext } from './flow-execution-context'
+import {
+  ActionType,
+  BranchStepOutput,
+  flowHelper,
+  FlowVersion,
+  GenericStepOutput,
+  RouterStepOutput,
+  LoopStepOutput,
+  StepOutputStatus,
+  TriggerType,
+} from '@activepieces/shared';
+import { variableService } from '../../variables/variable-service';
+import { FlowExecutorContext } from './flow-execution-context';
 
 export const testExecutionContext = {
-    async stateFromFlowVersion({ flowVersion, sampleData, excludedStepName, projectId, engineToken, apiUrl }: {
-        flowVersion: FlowVersion
-        excludedStepName?: string
-        projectId: string
-        apiUrl: string
-        engineToken: string
-        sampleData: Record<string, unknown>
-    }): Promise<FlowExecutorContext> {
-        const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)
-        let flowExecutionContext = FlowExecutorContext.empty()
+  async stateFromFlowVersion({
+    flowVersion,
+    sampleData,
+    excludedStepName,
+    projectId,
+    engineToken,
+    apiUrl,
+  }: {
+    flowVersion: FlowVersion;
+    excludedStepName?: string;
+    projectId: string;
+    apiUrl: string;
+    engineToken: string;
+    sampleData: Record<string, unknown>;
+  }): Promise<FlowExecutorContext> {
+    const flowSteps = flowHelper.getAllSteps(flowVersion.trigger);
+    let flowExecutionContext = FlowExecutorContext.empty();
 
-        for (const step of flowSteps) {
-            const { name } = step
-            if (name === excludedStepName) {
-                continue
-            }
+    for (const step of flowSteps) {
+      const { name } = step;
+      if (name === excludedStepName) {
+        continue;
+      }
 
-            const stepType = step.type
-            switch (stepType) {
-                case ActionType.BRANCH:
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, BranchStepOutput.init({
-                        input: step.settings,
-                    }))
-                    break
-                case ActionType.ROUTER:
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, RouterStepOutput.create({
-                        input: step.settings,
-                        type: stepType,
-                        status: StepOutputStatus.SUCCEEDED,
-                        output: inputUiInfo?.currentSelectedData,
-                    }))
-                    break
-                case ActionType.LOOP_ON_ITEMS: {
-                    const { resolvedInput } = await variableService({
-                        apiUrl,
-                        projectId,
-                        engineToken,
-                    }).resolve<{ items: unknown[] }>({
-                        unresolvedInput: step.settings,
-                        executionState: flowExecutionContext,
-                    })
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, LoopStepOutput.init({
-                        input: step.settings,
-                    }).setOutput({
-                        item: resolvedInput.items[0],
-                        index: 1,
-                        iterations: [],
-                    }))
-                    break
-                }
-                case ActionType.PIECE:
-                case ActionType.CODE:
-                case TriggerType.EMPTY:
-                case TriggerType.PIECE:
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
-                        input: step.settings,
-                        type: stepType,
-                        status: StepOutputStatus.SUCCEEDED,
-                        output: sampleData[step.name],
-                    }))
-                    break
-            }
+      const stepType = step.type;
+      switch (stepType) {
+        case ActionType.BRANCH:
+          flowExecutionContext = flowExecutionContext.upsertStep(
+            step.name,
+            BranchStepOutput.init({
+              input: step.settings,
+            })
+          );
+          break;
+        case ActionType.ROUTER:
+          flowExecutionContext = flowExecutionContext.upsertStep(
+            step.name,
+            RouterStepOutput.create({
+              input: step.settings,
+              type: stepType,
+              status: StepOutputStatus.SUCCEEDED,
+            })
+          );
+          break;
+        case ActionType.LOOP_ON_ITEMS: {
+          const { resolvedInput } = await variableService({
+            apiUrl,
+            projectId,
+            engineToken,
+          }).resolve<{ items: unknown[] }>({
+            unresolvedInput: step.settings,
+            executionState: flowExecutionContext,
+          });
+          flowExecutionContext = flowExecutionContext.upsertStep(
+            step.name,
+            LoopStepOutput.init({
+              input: step.settings,
+            }).setOutput({
+              item: resolvedInput.items[0],
+              index: 1,
+              iterations: [],
+            })
+          );
+          break;
         }
-        return flowExecutionContext
-    },
-}
-
+        case ActionType.PIECE:
+        case ActionType.CODE:
+        case TriggerType.EMPTY:
+        case TriggerType.PIECE:
+          flowExecutionContext = flowExecutionContext.upsertStep(
+            step.name,
+            GenericStepOutput.create({
+              input: step.settings,
+              type: stepType,
+              status: StepOutputStatus.SUCCEEDED,
+            })
+          );
+          break;
+      }
+    }
+    return flowExecutionContext;
+  },
+};

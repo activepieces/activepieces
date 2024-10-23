@@ -322,8 +322,6 @@ export const RouterActionSchema = Type.Object({
   ...commonActionProps,
   type: Type.Literal(ActionType.ROUTER),
   settings: RouterActionSettings,
-  //Can't make it action because fastify will complain about the circular schema
-  children: Type.Array(Type.Union([Type.Any(), Type.Null()])),
 });
 
 export const SingleActionSchema = Type.Union([

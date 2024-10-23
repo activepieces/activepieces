@@ -36,6 +36,7 @@ import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { useStepSettingsContext } from './step-settings-context';
+import { RouterSettings } from './router-settings';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema, skipValueChangeDetection } =
@@ -232,6 +233,9 @@ const StepSettingsContainer = () => {
                     flowId={flowVersion.flowId}
                     readonly={readonly}
                   ></PieceSettings>
+                )}
+                {modifiedStep.type === ActionType.ROUTER && modifiedStep && (
+                  <RouterSettings readonly={readonly}></RouterSettings>
                 )}
                 {modifiedStep.type === TriggerType.PIECE && modifiedStep && (
                   <PieceSettings

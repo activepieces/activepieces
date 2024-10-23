@@ -6,6 +6,8 @@ import {
   Action,
   ActionType,
   BranchAction,
+  BranchExecutionType,
+  BranchOperator,
   LoopOnItemsAction,
   RouterAction,
   SingleActionSchema,
@@ -294,7 +296,7 @@ function getAllChildSteps(
       return traverseInternal(action.firstLoopAction) as Action[];
     case ActionType.ROUTER:
       return action.children
-        .map((child) => traverseInternal(child?.nextAction))
+        .map((child) => traverseInternal((child as null | Action)?.nextAction))
         .flat() as Action[];
     default:
       return [
@@ -361,7 +363,17 @@ function updateAction(
   return transferFlow(flowVersion, (parentStep) => {
     if (parentStep.nextAction && parentStep.nextAction.name === request.name) {
       const actions = extractActions(parentStep.nextAction);
+
       parentStep.nextAction = createAction(request, actions);
+    }
+    if (parentStep.type === ActionType.ROUTER) {
+      const childIndex = parentStep.children.findIndex(
+        (child) => child?.name === request.name
+      );
+      if (childIndex > -1 && parentStep.children[childIndex]) {
+        const actions = extractActions(parentStep.children[childIndex]);
+        parentStep.children[childIndex] = createAction(request, actions);
+      }
     }
     if (parentStep.type === ActionType.BRANCH) {
       if (
@@ -577,9 +589,7 @@ function addAction(
       parentStep.nextAction = createAction(request.action, {
         nextAction: parentStep.nextAction,
         children:
-          request.action.type === ActionType.ROUTER
-            ? request.action.children
-            : undefined,
+          request.action.type === ActionType.ROUTER ? [null, null] : undefined,
       });
     }
     return parentStep;
@@ -620,11 +630,33 @@ function createAction(
       };
       break;
     case ActionType.ROUTER:
+      const routerChildren = children || [null, null];
+      if (request.deleteBranchIndex !== undefined) {
+        routerChildren.splice(request.deleteBranchIndex, 1);
+        request.settings.branches.splice(request.deleteBranchIndex, 1);
+      }
+      if (request.addBranchIndex !== undefined) {
+        routerChildren.splice(request.addBranchIndex, 0, null);
+        request.settings.branches.splice(request.addBranchIndex, 0, {
+          conditions: [
+            [
+              {
+                operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                firstValue: '',
+                secondValue: '',
+                caseSensitive: false,
+              },
+            ],
+          ],
+          branchType: BranchExecutionType.CONDITION,
+          branchName: `Path ${request.addBranchIndex + 1}`,
+        });
+      }
       action = {
         ...baseProperties,
         type: ActionType.ROUTER,
         settings: request.settings,
-        children: children || [null, null],
+        children: routerChildren,
       };
       break;
     case ActionType.LOOP_ON_ITEMS:
