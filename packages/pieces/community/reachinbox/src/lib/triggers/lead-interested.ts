@@ -6,14 +6,6 @@ import {
 
 const leadInterestedMessage = `
 
-   Follow the below steps:
-
-  **Webhook URL:**
-  \`\`\`text
-  {{webhookUrl}}
-  \`\`\`
-  <br>
-  <br>
   
   Follow the below steps:
 

@@ -6,14 +6,6 @@ import {
 
 const leadNotInterestedMessage = `
 
-  **Webhook URL:**
-  \`\`\`text
-  {{webhookUrl}}
-  \`\`\`
-  <br>
-  <br>
-  
-
   Follow the below steps:
   
   1. Login to the ReachInbox dashboard.
