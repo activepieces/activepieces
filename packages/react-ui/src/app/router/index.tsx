@@ -63,6 +63,7 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
+import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -104,6 +105,14 @@ const routes = [
         <PageTitle title="Builder">
           <FlowBuilderPage />
         </PageTitle>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/flow-import-redirect/:flowId',
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <AfterImportFlowRedirect></AfterImportFlowRedirect>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   }),

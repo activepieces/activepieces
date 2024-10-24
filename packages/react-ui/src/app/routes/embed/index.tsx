@@ -52,8 +52,11 @@ const EmbedPage = React.memo(() => {
                 hideFolders: event.data.data.hideFolders || false,
                 sdkVersion: event.data.data.sdkVersion,
               });
+
+              //previously initalRoute was optional
+              const initialRoute = event.data.data.initialRoute ?? '/'
               if (
-                event.data.data.initialRoute.startsWith('/embed/connections')
+                initialRoute.startsWith('/embed/connections')
               ) {
                 const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe =
                   {
@@ -63,7 +66,7 @@ const EmbedPage = React.memo(() => {
                 window.parent.postMessage(showConnectionIframeEvent, '*');
                 document.body.style.background = 'transparent';
               }
-              navigate(event.data.data.initialRoute ?? '/');
+              navigate(initialRoute);
             },
           },
         );
