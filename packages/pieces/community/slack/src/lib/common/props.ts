@@ -10,8 +10,7 @@ const slackChannelBotInstruction = `
 
 export const multiSelectChannelInfo = Property.MarkDown({
   value: slackChannelBotInstruction +
-    `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly in an array like this: {{ ['your_channel_id_1', 'your_channel_id_2', ...] }}
-    `,
+    `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly in an array like this: \`{\`{ ['your_channel_id_1', 'your_channel_id_2', ...] \`}\`}`,
 });
 
 export const singleSelectChannelInfo = Property.MarkDown({
