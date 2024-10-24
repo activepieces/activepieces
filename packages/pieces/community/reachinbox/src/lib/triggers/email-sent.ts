@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 const message = `
+
 Follow the below steps:
 
 1. Login to the ReachInbox dashboard.
@@ -21,6 +22,7 @@ Follow the below steps:
       \`\`\`text
       {{webhookUrl}}
       \`\`\`
+
 5. Select the event type as "Email Sent".
 6. Click on the "Test Trigger" button to simulate a test and capture the webhook response here.
 `;

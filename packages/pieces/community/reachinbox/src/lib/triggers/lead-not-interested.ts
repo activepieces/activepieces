@@ -6,6 +6,14 @@ import {
 
 const leadNotInterestedMessage = `
 
+  **Webhook URL:**
+  \`\`\`text
+  {{webhookUrl}}
+  \`\`\`
+  <br>
+  <br>
+  
+
   Follow the below steps:
   
   1. Login to the ReachInbox dashboard.
@@ -23,6 +31,7 @@ const leadNotInterestedMessage = `
       {{webhookUrl}}
       \`\`\`
       
+
   5. Select the event type as "Lead Not Interested".
   6. Click on the "Test Trigger" button to simulate a test and capture the webhook response here.
   `;
