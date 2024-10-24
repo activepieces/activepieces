@@ -56,6 +56,7 @@ type BranchSingleConditionProps = {
   conditionIndex: number;
   readonly: boolean;
   deleteClick: () => void;
+  fieldName: `settings.conditions` | `settings.branches[${number}].conditions`;
 };
 
 const BranchSingleCondition = ({
@@ -64,11 +65,14 @@ const BranchSingleCondition = ({
   conditionIndex,
   showDelete,
   readonly,
+  fieldName,
 }: BranchSingleConditionProps) => {
   const form = useFormContext<BranchAction>();
 
-  const condition =
-    form.getValues().settings.conditions[groupIndex][conditionIndex];
+  const condition = form.getValues(
+    `${fieldName}.${groupIndex}.${conditionIndex}`,
+  );
+
   const isTextCondition =
     condition.operator && textConditions.includes(condition?.operator);
   const isSingleValueCondition =
@@ -82,7 +86,7 @@ const BranchSingleCondition = ({
         })}
       >
         <FormField
-          name={`settings.conditions.${groupIndex}.${conditionIndex}.firstValue`}
+          name={`${fieldName}.${groupIndex}.${conditionIndex}.firstValue`}
           control={form.control}
           render={({ field }) => (
             <FormItem>
@@ -97,7 +101,7 @@ const BranchSingleCondition = ({
           )}
         />
         <FormField
-          name={`settings.conditions.${groupIndex}.${conditionIndex}.operator`}
+          name={`${fieldName}.${groupIndex}.${conditionIndex}.operator`}
           control={form.control}
           render={({ field }) => (
             <FormItem>
@@ -114,7 +118,7 @@ const BranchSingleCondition = ({
         />
         {!isSingleValueCondition && (
           <FormField
-            name={`settings.conditions.${groupIndex}.${conditionIndex}.secondValue`}
+            name={`${fieldName}.${groupIndex}.${conditionIndex}.secondValue`}
             control={form.control}
             render={({ field }) => (
               <FormItem>
@@ -134,7 +138,7 @@ const BranchSingleCondition = ({
       <div className="flex justify-start items-center gap-2 mt-2">
         {isTextCondition && (
           <FormField
-            name={`settings.conditions.${groupIndex}.${conditionIndex}.caseSensitive`}
+            name={`${fieldName}.${groupIndex}.${conditionIndex}.caseSensitive`}
             control={form.control}
             render={({ field }) => (
               <FormItem>
@@ -155,7 +159,12 @@ const BranchSingleCondition = ({
         <div className="flex-grow"></div>
         <div>
           {showDelete && (
-            <Button variant={'basic'} size={'sm'} onClick={deleteClick}>
+            <Button
+              variant={'basic'}
+              className="text-destructive gap-2 items-center"
+              size={'sm'}
+              onClick={deleteClick}
+            >
               <Trash className="w-4 h-4"></Trash> {t('Remove')}
             </Button>
           )}

@@ -363,7 +363,6 @@ function updateAction(
   return transferFlow(flowVersion, (parentStep) => {
     if (parentStep.nextAction && parentStep.nextAction.name === request.name) {
       const actions = extractActions(parentStep.nextAction);
-
       parentStep.nextAction = createAction(request, actions);
     }
     if (parentStep.type === ActionType.ROUTER) {
@@ -631,33 +630,13 @@ function createAction(
       break;
     case ActionType.ROUTER:
       const routerChildren = children || [null, null];
-      if (request.deleteBranchIndex !== undefined) {
-        routerChildren.splice(request.deleteBranchIndex, 1);
-        request.settings.branches.splice(request.deleteBranchIndex, 1);
-      }
-      if (request.addBranchIndex !== undefined) {
-        routerChildren.splice(request.addBranchIndex, 0, null);
-        request.settings.branches.splice(request.addBranchIndex, 0, {
-          conditions: [
-            [
-              {
-                operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                firstValue: '',
-                secondValue: '',
-                caseSensitive: false,
-              },
-            ],
-          ],
-          branchType: BranchExecutionType.CONDITION,
-          branchName: `Path ${request.addBranchIndex + 1}`,
-        });
-      }
       action = {
         ...baseProperties,
         type: ActionType.ROUTER,
         settings: request.settings,
         children: routerChildren,
       };
+
       break;
     case ActionType.LOOP_ON_ITEMS:
       action = {
@@ -1238,6 +1217,7 @@ export const flowHelper = {
           (step) => upgradePiece(step, operation.request.name)
         );
         break;
+
       case FlowOperationType.UPDATE_TRIGGER:
         clonedVersion.trigger = createTrigger(
           clonedVersion.trigger.name,
@@ -1253,6 +1233,59 @@ export const flowHelper = {
           operation.request.stepName,
           clonedVersion
         );
+        break;
+      }
+      case FlowOperationType.DELETE_PATH: {
+        clonedVersion = transferFlow(flowVersion, (parentStep) => {
+          if (
+            parentStep.nextAction?.name === operation.request.stepName &&
+            parentStep.nextAction?.type === ActionType.ROUTER
+          ) {
+            (parentStep.nextAction as RouterAction).settings.branches.splice(
+              operation.request.pathIndex,
+              1
+            );
+            (parentStep.nextAction as RouterAction).children.splice(
+              operation.request.pathIndex,
+              1
+            );
+          }
+          return parentStep;
+        });
+        break;
+      }
+      case FlowOperationType.ADD_PATH: {
+        clonedVersion = transferFlow(flowVersion, (parentStep) => {
+          if (
+            parentStep.nextAction?.name === operation.request.stepName &&
+            parentStep.nextAction?.type === ActionType.ROUTER
+          ) {
+            (parentStep.nextAction as RouterAction).settings.branches.splice(
+              operation.request.pathIndex,
+              0,
+              {
+                conditions: [
+                  [
+                    {
+                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                      firstValue: '',
+                      secondValue: '',
+                      caseSensitive: false,
+                    },
+                  ],
+                ],
+                branchType: BranchExecutionType.CONDITION,
+                branchName: `Path ${operation.request.pathIndex + 1}`,
+              }
+            );
+            (parentStep.nextAction as RouterAction).children.splice(
+              operation.request.pathIndex,
+              0,
+              null
+            );
+          }
+          return parentStep;
+        });
         break;
       }
       default:

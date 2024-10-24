@@ -249,11 +249,11 @@ export const BranchActionSettings = Type.Object({
 });
 export type BranchActionSettings = Static<typeof BranchActionSettings>;
 
-export const RouterActionSettings = Type.Object({
-  branches: Type.Array(
+export const RouterBranchesSchema = (addMinLength: boolean) =>
+  Type.Array(
     Type.Union([
       Type.Object({
-        conditions: Type.Array(Type.Array(BranchConditionValid(false))),
+        conditions: Type.Array(Type.Array(BranchConditionValid(addMinLength))),
         branchType: Type.Literal(BranchExecutionType.CONDITION),
         branchName: Type.String(),
       }),
@@ -262,7 +262,10 @@ export const RouterActionSettings = Type.Object({
         branchName: Type.String(),
       }),
     ])
-  ),
+  );
+
+export const RouterActionSettings = Type.Object({
+  branches: RouterBranchesSchema(false),
   executionType: Type.Enum(RouterExecutionType),
   inputUiInfo: SampleDataSetting,
 });
@@ -329,6 +332,7 @@ export const SingleActionSchema = Type.Union([
   PieceActionSchema,
   LoopOnItemsActionSchema,
   BranchActionSchema,
+  RouterActionSchema,
 ]);
 export type Action = Static<typeof Action>;
 

@@ -129,7 +129,6 @@ export const flowVersionService = {
         break;
       }
     }
-
     for (const operation of operations) {
       mutatedFlowVersion = await applySingleOperation(
         projectId,

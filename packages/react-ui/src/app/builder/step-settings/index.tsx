@@ -130,6 +130,12 @@ const StepSettingsContainer = () => {
     name: 'settings.conditions',
     control: form.control,
   });
+
+  const pathChange = useWatch({
+    name: 'settings.branches',
+    control: form.control,
+  });
+
   const sourceCodeChange = useWatch({
     name: 'settings.sourceCode',
     control: form.control,
@@ -157,6 +163,7 @@ const StepSettingsContainer = () => {
         JSON.stringify(form.getValues()),
       );
       currentStep.valid = form.formState.isValid;
+
       if (previousSavedStep.current === null) {
         previousSavedStep.current = currentStep;
         return;
@@ -184,6 +191,7 @@ const StepSettingsContainer = () => {
     sourceCodeChange,
     inputUIInfo,
     displayName,
+    pathChange,
   ]);
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();

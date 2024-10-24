@@ -1,4 +1,4 @@
-import { TSchema, Type } from '@sinclair/typebox';
+import { Static, TSchema, Type } from '@sinclair/typebox';
 
 import {
   CONNECTION_REGEX,
@@ -13,7 +13,6 @@ import {
   Action,
   ActionType,
   BranchActionSchema,
-  BranchExecutionType,
   BranchOperator,
   CodeActionSchema,
   isEmpty,
@@ -22,12 +21,15 @@ import {
   PieceActionSettings,
   PieceTrigger,
   PieceTriggerSettings,
-  RouterExecutionType,
   Trigger,
   TriggerType,
   ValidBranchCondition,
   isNil,
   spreadIfDefined,
+  RouterActionSchema,
+  RouterBranchesSchema,
+  SampleDataSetting,
+  RouterExecutionType,
 } from '@activepieces/shared';
 
 function addAuthToPieceProps(
@@ -135,42 +137,6 @@ export const formUtils = {
       case ActionType.ROUTER:
         return {
           ...selectedStep,
-          settings: {
-            ...selectedStep.settings,
-            branches: [
-              {
-                conditions: [
-                  [
-                    {
-                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                      firstValue: '',
-                      secondValue: '',
-                      caseSensitive: false,
-                    },
-                  ],
-                ],
-                branchType: BranchExecutionType.CONDITION,
-                branchName: 'Path 1',
-              },
-              {
-                conditions: [
-                  [
-                    {
-                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                      firstValue: '',
-                      secondValue: '',
-                      caseSensitive: false,
-                    },
-                  ],
-                ],
-                branchType: BranchExecutionType.CONDITION,
-                branchName: 'Path 2',
-              },
-            ],
-            executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-            inputUiInfo: {},
-          },
-          children: [null, null],
         };
       case ActionType.CODE: {
         const defaultCode = `export const code = async (inputs) => {
@@ -281,12 +247,13 @@ export const formUtils = {
           }),
         ]);
       case ActionType.ROUTER:
-        return Type.Composite([
-          Type.Omit(BranchActionSchema, ['conditions']),
+        return Type.Intersect([
+          Type.Omit(RouterActionSchema, ['settings']),
           Type.Object({
             settings: Type.Object({
-              branches: Type.Array(BranchActionSchema),
+              branches: RouterBranchesSchema(true),
               executionType: Type.Enum(RouterExecutionType),
+              inputUiInfo: SampleDataSetting,
             }),
           }),
         ]);
