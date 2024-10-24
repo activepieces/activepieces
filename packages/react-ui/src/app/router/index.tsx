@@ -39,6 +39,7 @@ import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import AppConnectionsPage from '../routes/connections';
+import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
@@ -77,6 +78,10 @@ const routes = [
   {
     path: '/embed',
     element: <EmbedPage></EmbedPage>,
+  },
+  {
+    path: '/embed/connections',
+    element: <EmbeddedConnectionDialog></EmbeddedConnectionDialog>,
   },
   {
     path: '/authenticate',

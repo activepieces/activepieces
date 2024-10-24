@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks'
-import { Action, ActionType, ExecuteFlowOperation, ExecutionType, isNil, ProgressUpdateType } from '@activepieces/shared'
+import { Action, ActionType, ExecuteFlowOperation, ExecutionType, isNil } from '@activepieces/shared'
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
@@ -53,13 +53,19 @@ export const flowExecutor = {
             const handler = this.getExecutorForAction(currentAction.type)
 
             const stepStartTime = performance.now()
+            progressService.sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: flowExecutionContext,
+            }).catch(error => {
+                console.error('Error sending update:', error)
+            })
+
             flowExecutionContext = await handler.handle({
                 action: currentAction,
                 executionState: flowExecutionContext,
                 constants,
             })
             const stepEndTime = performance.now()
-
             flowExecutionContext = flowExecutionContext.setStepDuration({
                 stepName: currentAction.name,
                 duration: stepEndTime - stepStartTime,
@@ -67,18 +73,6 @@ export const flowExecutor = {
 
             if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 break
-            }
-
-            const isNotNested = flowExecutionContext.currentPath.path.length === 0
-            const sendContinuousProgress = isNotNested
-                && constants.progressUpdateType === ProgressUpdateType.TEST_FLOW
-            if (sendContinuousProgress) {
-                progressService.sendUpdate({
-                    engineConstants: constants,
-                    flowExecutorContext: flowExecutionContext,
-                }).catch((error) => {
-                    console.error('Error sending progress update', error)
-                })
             }
 
             currentAction = currentAction.nextAction

@@ -22,6 +22,7 @@ import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/post
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { commonProperties } from './database-connection'
+import { MigrateSMTPInPlatform1729602169179 } from './migration/1729602169179-MigrateSMTPInPlatform'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -35,6 +36,7 @@ import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/17
 import { RemoveUniqueConstraintOnStepFile1725570317713 } from './migration/common/1725570317713-RemoveUniqueConstraintOnStepFile'
 import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-AddUserSessionId'
 import { AddLicenseKeyIntoPlatform1728827704109 } from './migration/common/1728827704109-AddLicenseKeyIntoPlatform'
+import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migration/common/1729098769827-ChangeProjectUniqueConstraintToPartialIndex'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -251,6 +253,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUserSessionId1727130193726,
         RemovePremiumPieces1727865841722,
         AddLicenseKeyIntoPlatform1728827704109,
+        ChangeProjectUniqueConstraintToPartialIndex1729098769827,
+        MigrateSMTPInPlatform1729602169179,
     ]
 
     const edition = system.getEdition()

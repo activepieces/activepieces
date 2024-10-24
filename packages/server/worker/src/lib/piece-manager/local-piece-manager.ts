@@ -2,8 +2,8 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { ApLock, filePiecesUtils, logger, memoryLock, packageManager } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, PackageType, PiecePackage } from '@activepieces/shared'
-import { PieceManager } from './piece-manager'
 import { PIECES_BUILDER_MUTEX_KEY } from './development/pieces-builder'
+import { PieceManager } from './piece-manager'
 
 
 export class LocalPieceManager extends PieceManager {
@@ -44,7 +44,8 @@ export class LocalPieceManager extends PieceManager {
                     linkPath: directoryPath,
                 })
             }
-        } finally {
+        }
+        finally {
             if (lock) {
                 await lock.release()
             }

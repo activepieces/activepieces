@@ -1,4 +1,4 @@
-FROM node:18.20.4-bullseye-slim AS base
+FROM node:20.18-bullseye-slim AS base
 
 # Use a cache mount for apt to speed up the process
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -14,11 +14,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         poppler-data && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
-
-RUN npm i -g \
-  npm@9.3.1 \
-  pnpm@7.28.0 \
-  cross-env@7.0.3
+RUN npm i -g npm@9.3.1 pnpm@9.12.1 cross-env@7.0.3
 
 # Set the locale
 ENV LANG en_US.UTF-8
@@ -36,10 +32,12 @@ RUN apt-get update \
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
 RUN cd /usr/src && npm i isolated-vm@5.0.1
 
-RUN pnpm store add \
-  @tsconfig/node18@1.0.0 \
-  @types/node@18.17.1 \
-  typescript@4.8.4
+RUN pnpm store add @tsconfig/node20@20.1.4
+
+RUN pnpm store add @types/node@20.14.8
+
+RUN pnpm store add typescript@4.9.4
+
 
 ### STAGE 1: Build ###
 FROM base AS build
@@ -51,8 +49,7 @@ COPY . .
 COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production
-RUN npx nx run-many --target=build --projects=react-ui 
+RUN npx nx run-many --target=build --projects=react-ui,server-api --configuration production
 
 # Install backend production dependencies
 RUN cd dist/packages/server/api && npm install --production --force

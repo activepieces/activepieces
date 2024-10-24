@@ -72,7 +72,7 @@ Your friendliest open source all-in-one automation tool, designed to be **extens
 
 - **🔒 Secure by Design**: Self-hosted and network-gapped for maximum security and control over your data.
 
-- **🧠 Human in Loop**: Delay execution for a period of time or require approval. These are just pieces built on top of the piece framework, and you can build many pieces like that. 🎨
+- **🧠 Human in the Loop**: Delay execution for a period of time or require approval. These are just pieces built on top of the piece framework, and you can build many pieces like that. 🎨
 
 - **💻 Human Input Interfaces**: Built-in support for human input triggers like "Chat Interface" 💬 and "Form Interface" 📝
 
@@ -338,6 +338,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/geekyme-fsmk"><img src="https://avatars.githubusercontent.com/u/100678833?v=4?s=100" width="100px;" alt="Shawn Lim"/><br /><sub><b>Shawn Lim</b></sub></a><br /><a href="#plugin-geekyme-fsmk" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://shawn.storyline.io/"><img src="https://avatars.githubusercontent.com/u/977460?v=4?s=100" width="100px;" alt="Shawn Lim"/><br /><sub><b>Shawn Lim</b></sub></a><br /><a href="#plugin-geekyme" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pavloDeshko"><img src="https://avatars.githubusercontent.com/u/27104046?v=4?s=100" width="100px;" alt="pavloDeshko"/><br /><sub><b>pavloDeshko</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3ApavloDeshko" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/liuhuapiaoyuan"><img src="https://avatars.githubusercontent.com/u/8020726?v=4?s=100" width="100px;" alt="abc"/><br /><sub><b>abc</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=liuhuapiaoyuan" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

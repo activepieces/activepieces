@@ -65,7 +65,7 @@ function ProjectSwitcher() {
           aria-label="Select a project"
           className="w-[200px] justify-between"
         >
-          {currentProject?.displayName}
+          <span className="truncate">{currentProject?.displayName}</span>
           <CaretSortIcon className="ml-auto size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

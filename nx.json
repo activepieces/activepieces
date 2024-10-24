@@ -117,6 +117,13 @@
       }
     }
   ],
+  "tasksRunnerOptions": {
+    "default": {
+      "options": {
+        "useDaemonProcess": false
+      }
+    }
+  },
   "release": {
     "version": {
       "preVersionCommand": "npx nx run-many -t build"

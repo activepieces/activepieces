@@ -40,12 +40,14 @@ describe('User Invitation API', () => {
         it('should not return invitation link when smtp is configured', async () => {
             const { mockApiKey, mockProject } = await createBasicEnvironment({
                 platform: {
-                    smtpHost: faker.internet.domainName(),
-                    smtpPort: faker.internet.port(),
-                    smtpUser: faker.internet.email(),
-                    smtpPassword: faker.internet.password(),
-                    smtpSenderEmail: faker.internet.email(),
-                    smtpUseSSL: false,
+                    smtp: {
+                        host: faker.internet.domainName(),
+                        port: faker.internet.port(),
+                        user: faker.internet.email(),
+                        password: faker.internet.password(),
+                        senderEmail: faker.internet.email(),
+                        senderName: faker.internet.userName(),
+                    },
                 },
             })
 
@@ -73,12 +75,7 @@ describe('User Invitation API', () => {
         it('should return invitation link when smtp is not configured', async () => {
             const { mockApiKey, mockProject } = await createBasicEnvironment({
                 platform: {
-                    smtpHost: undefined,
-                    smtpPort: undefined,
-                    smtpUser: undefined,
-                    smtpPassword: undefined,
-                    smtpSenderEmail: undefined,
-                    smtpUseSSL: undefined,
+                    smtp: undefined,
                 },
             })
 

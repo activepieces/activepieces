@@ -4,8 +4,8 @@
   "sourceRoot": "packages/pieces/community/gravityforms/src",
   "projectType": "library",
   "targets": {
-    "build": {
-      "executor": "@nrwl/js:tsc",
+    "build": {      
+      "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/community/gravityforms",
