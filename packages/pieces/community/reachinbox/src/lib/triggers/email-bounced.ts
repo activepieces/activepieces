@@ -5,19 +5,22 @@ import {
 } from '@activepieces/pieces-framework';
 
 const emailBouncedMessage = `
-  **Webhook URL:**
-  \`\`\`text
-  {{webhookUrl}}
-  \`\`\`
-  <br>
-  <br>
-  
   Follow the below steps:
   
   1. Login to the ReachInbox dashboard.
   2. Go to the "Profile" section and navigate to the "Settings" tab.
   3. Click on the "Integrations" and go to the "Webhooks". Click on the "Add Webhook" button.
   4. Copy the above webhook URL and paste it into the "Webhook URL" field.
+
+  **Test URL (only generate sample data)**:
+      \`\`\`text
+      {{webhookUrl}}/test
+      \`\`\`
+
+    **Trigger Flow URL**:
+      \`\`\`text
+      {{webhookUrl}}
+      \`\`\`
   5. Select the event type as "Email Bounced".
   6. Click on the "Test Trigger" button to simulate a test and capture the webhook response here.
   `;
