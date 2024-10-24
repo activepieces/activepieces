@@ -45,9 +45,6 @@ export const workerApiService = (workerToken: string) => {
         async resumeRun(request: ResumeRunRequest): Promise<void> {
             await client.post<unknown>('/v1/workers/resume-run', request)
         },
-        async deleteWebhookSimulation(request: DeleteWebhookSimulationRequest): Promise<void> {
-            await client.post('/v1/workers/delete-webhook-simulation', request)
-        },
         async savePayloadsAsSampleData(request: SavePayloadRequest): Promise<void> {
             await client.post('/v1/workers/save-payloads', request)
         },
