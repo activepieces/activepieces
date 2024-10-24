@@ -54,10 +54,8 @@ const EmbedPage = React.memo(() => {
               });
 
               //previously initalRoute was optional
-              const initialRoute = event.data.data.initialRoute ?? '/'
-              if (
-                initialRoute.startsWith('/embed/connections')
-              ) {
+              const initialRoute = event.data.data.initialRoute ?? '/';
+              if (initialRoute.startsWith('/embed/connections')) {
                 const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe =
                   {
                     type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,

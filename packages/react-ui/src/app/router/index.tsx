@@ -61,9 +61,9 @@ import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 
+import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
-import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
