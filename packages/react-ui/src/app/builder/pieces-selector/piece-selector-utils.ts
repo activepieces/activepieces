@@ -2,6 +2,7 @@ import {
   PieceSelectorItem,
   PieceStepMetadata,
   StepMetadata,
+  StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import {
   ActionBase,
@@ -66,8 +67,8 @@ const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
 const isAiPiece = (piece: StepMetadata) =>
   piece.type === TriggerType.PIECE || piece.type === ActionType.PIECE
     ? (piece as PieceStepMetadata).categories.includes(
-        PieceCategory.ARTIFICIAL_INTELLIGENCE,
-      )
+      PieceCategory.ARTIFICIAL_INTELLIGENCE,
+    )
     : false;
 
 const isAppPiece = (piece: StepMetadata) =>
@@ -84,6 +85,13 @@ const isPieceStepMetadata = (
   stepMetadata: StepMetadata,
 ): stepMetadata is PieceStepMetadata => {
   return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
+};
+
+const isPinnedPiece = (stepMetadata: StepMetadataWithSuggestions, pinnedPiecesNames: string[]) => {
+  if (stepMetadata.type !== TriggerType.PIECE && stepMetadata.type !== ActionType.PIECE) {
+    return true;
+  }
+  return pinnedPiecesNames.includes((stepMetadata as PieceStepMetadata).pieceName);
 };
 
 const getDefaultStep = ({
@@ -110,24 +118,24 @@ const getDefaultStep = ({
     isPieceStepMetadata(stepMetadata);
   const input = isPieceStep
     ? formUtils.getDefaultValueForStep(
-        actionOrTrigger.requireAuth
-          ? {
-              ...spreadIfDefined('auth', stepMetadata.auth),
-              ...actionOrTrigger.props,
-            }
-          : actionOrTrigger.props,
-        {},
-      )
+      actionOrTrigger.requireAuth
+        ? {
+          ...spreadIfDefined('auth', stepMetadata.auth),
+          ...actionOrTrigger.props,
+        }
+        : actionOrTrigger.props,
+      {},
+    )
     : {};
 
   const common = {
     name: stepName,
     valid: isPieceStep
       ? checkPieceInputValidity(input, actionOrTrigger.props) &&
-        (actionOrTrigger.requireAuth ? !isNil(input['auth']) : true)
+      (actionOrTrigger.requireAuth ? !isNil(input['auth']) : true)
       : stepMetadata.type === ActionType.CODE
-      ? true
-      : false,
+        ? true
+        : false,
     displayName: actionOrTrigger.displayName,
     settings: {
       inputUiInfo: {
@@ -247,4 +255,5 @@ export const pieceSelectorUtils = {
   isAiPiece,
   isAppPiece,
   toKey,
+  isPinnedPiece,
 };

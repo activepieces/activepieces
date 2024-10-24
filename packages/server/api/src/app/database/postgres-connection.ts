@@ -153,6 +153,7 @@ import { SupportS3Files1726364421096 } from './migration/postgres/1726364421096-
 import { AddAiProviderTable1726445983043 } from './migration/postgres/1726445983043-AddAiProviderTable'
 import { AddAiTokensForProjectPlan1726446092010 } from './migration/postgres/1726446092010-AddAiTokensForProjectPlan'
 import { RemovePremiumPieces1727865841722 } from './migration/postgres/1727865841722-RemovePremiumPieces'
+import { AddPinnedPieces1729776414647 } from './migration/1729776414647-AddPinnedPieces'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -255,6 +256,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddLicenseKeyIntoPlatform1728827704109,
         ChangeProjectUniqueConstraintToPartialIndex1729098769827,
         MigrateSMTPInPlatform1729602169179,
+        AddPinnedPieces1729776414647,
     ]
 
     const edition = system.getEdition()
