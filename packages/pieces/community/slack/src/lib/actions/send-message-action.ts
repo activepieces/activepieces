@@ -4,7 +4,7 @@ import {
   slackChannel,
   username,
   blocks,
-  slackInfo,
+  singleSelectChannelInfo,
 } from '../common/props';
 import { processMessageTimestamp, slackSendMessage } from '../common/utils';
 import { slackAuth } from '../../';
@@ -15,7 +15,7 @@ export const slackSendMessageAction = createAction({
   displayName: 'Send Message To A Channel',
   description: 'Send message to a channel',
   props: {
-    info: slackInfo,
+    info: singleSelectChannelInfo,
     channel: slackChannel(true),
     text: Property.LongText({
       displayName: 'Message',

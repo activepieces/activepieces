@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
-import { blocks, slackChannel, slackInfo } from '../common/props';
+import { blocks, singleSelectChannelInfo, slackChannel } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
 import { Block, WebClient } from '@slack/web-api';
 
@@ -11,7 +11,7 @@ export const updateMessage = createAction({
   description: 'Update an existing message',
   auth: slackAuth,
   props: {
-    info: slackInfo,
+    info: singleSelectChannelInfo,
     channel: slackChannel(true),
     ts: Property.ShortText({
       displayName: 'Message Timestamp',
