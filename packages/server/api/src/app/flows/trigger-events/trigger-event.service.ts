@@ -15,9 +15,7 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { engineRunner, webhookUtils } from 'server-worker'
-import { LessThan } from 'typeorm'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -26,18 +24,14 @@ import { Order } from '../../helper/pagination/paginator'
 import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
 
-export const triggerEventRepo = repoFactory(TriggerEventEntity)
+const triggerEventRepo = repoFactory(TriggerEventEntity)
 
 export const triggerEventService = {
     async saveEvent({
         projectId,
         flowId,
         payload,
-    }: {
-        projectId: ProjectId
-        flowId: FlowId
-        payload: unknown
-    }): Promise<TriggerEvent> {
+    }: SaveEventParams): Promise<TriggerEvent> {
         const flow = await flowService.getOnePopulatedOrThrow({
             id: flowId,
             projectId,
@@ -57,10 +51,7 @@ export const triggerEventService = {
     async test({
         projectId,
         flow,
-    }: {
-        projectId: ProjectId
-        flow: PopulatedFlow
-    }): Promise<SeekPage<unknown>> {
+    }: TestParams): Promise<SeekPage<unknown>> {
         const trigger = flow.version.trigger
         const emptyPage = paginationHelper.createPage<TriggerEvent>([], null)
         switch (trigger.type) {
@@ -137,12 +128,6 @@ export const triggerEventService = {
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<TriggerEvent>(data, newCursor)
     },
-    async deleteEventsOlderThanFourteenDay(): Promise<void> {
-        const fourteenDayAgo = dayjs().subtract(14, 'day').toDate()
-        await triggerEventRepo().delete({
-            created: LessThan(fourteenDayAgo.toISOString()),
-        })
-    },
 }
 
 function getSourceName(trigger: Trigger): string {
@@ -162,6 +147,15 @@ function getSourceName(trigger: Trigger): string {
     }
 }
 
+type TestParams = {
+    projectId: ProjectId
+    flow: PopulatedFlow
+}
+type SaveEventParams = {
+    projectId: ProjectId
+    flowId: FlowId
+    payload: unknown
+}
 type ListParams = {
     projectId: ProjectId
     flow: PopulatedFlow

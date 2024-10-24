@@ -34,14 +34,6 @@ export const webhookExecutor = {
             return
         }
 
-        if (populatedFlow.status !== FlowStatus.ENABLED && !simulate) {
-            await stopAndReply(workerToken, data, {
-                status: StatusCodes.NOT_FOUND,
-                body: {},
-                headers: {},
-            })
-            return
-        }
         const filteredPayloads = await webhookUtils.extractPayloadAndSave({
             engineToken,
             workerToken,
@@ -50,6 +42,15 @@ export const webhookExecutor = {
             projectId: populatedFlow.projectId,
         })
 
+
+        if (populatedFlow.status !== FlowStatus.ENABLED && !simulate) {
+            await stopAndReply(workerToken, data, {
+                status: StatusCodes.NOT_FOUND,
+                body: {},
+                headers: {},
+            })
+            return
+        }
 
         if (simulate) {
             await workerApiService(workerToken).deleteWebhookSimulation({
@@ -63,6 +64,7 @@ export const webhookExecutor = {
             })
             return
         }
+
         const runs = await workerApiService(workerToken).startRuns({
             flowVersionId: populatedFlow.version.id,
             projectId: populatedFlow.projectId,

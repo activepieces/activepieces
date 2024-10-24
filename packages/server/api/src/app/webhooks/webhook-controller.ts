@@ -23,6 +23,7 @@ import { flowService } from '../flows/flow/flow.service'
 import { webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
 import { flowQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
+import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -31,7 +32,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             request,
             flowId: request.params.flowId,
             async: false,
-            simulate: false,
         })
         await reply
             .status(response.status)
@@ -44,7 +44,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             request,
             flowId: request.params.flowId,
             async: true,
-            simulate: false,
         })
         await reply
             .status(response.status)
@@ -57,7 +56,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             request,
             flowId: request.query.flowId,
             async: true,
-            simulate: false,
         })
         await reply
             .status(response.status)
@@ -70,7 +68,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             request,
             flowId: request.params.flowId,
             async: true,
-            simulate: true,
         })
         await reply
             .status(response.status)
@@ -80,7 +77,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     )
 }
 
-async function handleWebhook({ request, flowId, async, simulate }: { request: FastifyRequest, flowId: string, async: boolean, simulate: boolean }): Promise<EngineHttpResponse> {
+async function handleWebhook({ request, flowId, async }: { request: FastifyRequest, flowId: string, async: boolean}): Promise<EngineHttpResponse> {
     const flow = await getFlowOrThrow(flowId)
     const payload = await convertRequest(request, flow.projectId, flow.id)
     const requestId = apId()
@@ -92,7 +89,11 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
             headers: {},
         }
     }
-    if (flow.status !== FlowStatus.ENABLED && !simulate) {
+    const saveSampleData = await webhookSimulationService.exists({
+        flowId,
+        projectId: flow.projectId,
+    })
+    if (flow.status !== FlowStatus.ENABLED && !saveSampleData) {
         return {
             status: StatusCodes.NOT_FOUND,
             body: {},
@@ -109,7 +110,7 @@ async function handleWebhook({ request, flowId, async, simulate }: { request: Fa
             synchronousHandlerId,
             payload,
             flowId: flow.id,
-            simulate,
+            simulate: saveSampleData,
         },
         priority: await getJobPriority(flow.projectId, synchronousHandlerId),
     })

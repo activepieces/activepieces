@@ -79,6 +79,14 @@ export const webhookSimulationService = {
             await lock.release()
         }
     },
+    async exists(params: GetParams): Promise<boolean> {
+        return await webhookSimulationRepo().exists({
+            where: {
+                flowId: params.flowId,
+                projectId: params.projectId,
+            },
+        })
+    },
     async get(params: GetParams): Promise<WebhookSimulation | null> {
         logger.debug(params, '[WebhookSimulationService#getByFlowId] params')
 

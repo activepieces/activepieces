@@ -1,14 +1,14 @@
-import { Flow, Project, TriggerEvent } from '@activepieces/shared'
+import { File, Flow, Project, TriggerEvent } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
 type TriggerEventSchema = {
     flow: Flow
     project: Project
+    file: File
 } & TriggerEvent
 
 export const TriggerEventEntity = new EntitySchema<TriggerEventSchema>({
@@ -20,10 +20,10 @@ export const TriggerEventEntity = new EntitySchema<TriggerEventSchema>({
         sourceName: {
             type: String,
         },
-        payload: {
-            type: JSONB_COLUMN_TYPE,
+        fileId: {
+            type: String,
             nullable: true,
-        },
+        }
     },
     indices: [
         {
@@ -41,6 +41,16 @@ export const TriggerEventEntity = new EntitySchema<TriggerEventSchema>({
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_trigger_event_project_id',
+            },
+        },
+        file: {
+            type: 'many-to-one',
+            target: 'file',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'fileId',
+                foreignKeyConstraintName: 'fk_trigger_event_file_id',
             },
         },
         flow: {

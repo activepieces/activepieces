@@ -53,7 +53,6 @@ export const workerApiService = (workerToken: string) => {
         },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
             return client.post<FlowRun[]>('/v1/workers/submit-payloads', request)
-
         },
         async sendWebhookUpdate(request: SendWebhookUpdateRequest): Promise<void> {
             await client.post('/v1/workers/send-webhook-update', request)

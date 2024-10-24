@@ -1,4 +1,5 @@
 import {
+    FileType,
     ListTriggerEventsRequest,
     TestPollingTriggerRequest,
 } from '@activepieces/shared'
@@ -8,12 +9,14 @@ import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { flowService } from '../flow/flow.service'
 import { triggerEventService } from './trigger-event.service'
+import { fileService } from '../../file/file.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
 export const triggerEventModule: FastifyPluginAsyncTypebox = async (app) => {
-    systemJobHandlers.registerJobHandler(SystemJobName.TRIGGER_DATA_CLEANER, async function triggerDataCleanerJobHandler(): Promise<void> {
-        await triggerEventService.deleteEventsOlderThanFourteenDay()
+    systemJobHandlers.registerJobHandler(SystemJobName.TRIGGER_DATA_CLEANER, async () => {
+        // The trigger event file will be deleted by relationship in the database.
+        await fileService.deleteStaleBulk(FileType.TRIGGER_EVENT_FILE)
     })
     await app.register(triggerEventController, { prefix: '/v1/trigger-events' })
     await systemJobsSchedule.upsertJob({

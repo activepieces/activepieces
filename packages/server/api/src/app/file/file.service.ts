@@ -1,4 +1,4 @@
-import { AppSystemProp, fileCompressor, system } from '@activepieces/server-shared'
+import { AppSystemProp, fileCompressor, logger, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -14,8 +14,12 @@ import {
 import { repoFactory } from '../core/db/repo-factory'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
+import dayjs from 'dayjs'
+import { In, LessThanOrEqual } from 'typeorm'
 
 export const fileRepo = repoFactory<File>(FileEntity)
+
+const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
 export const fileService = {
     async save(params: SaveParams): Promise<File> {
@@ -86,6 +90,32 @@ export const fileService = {
             fileName: file.fileName,
         }
     },
+    async deleteStaleBulk(type: FileType) {
+        const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
+        const maximumFilesToDeletePerIteration = 4000
+        let affected: undefined | number = undefined
+        let totalAffected = 0
+        while (isNil(affected) || affected === maximumFilesToDeletePerIteration) {
+            const logsFileIds = await fileRepo().find({
+                select: ['id', 'created'],
+                where: {
+                    type,
+                    created: LessThanOrEqual(retentionDateBoundary),
+                },
+                take: maximumFilesToDeletePerIteration,
+            })
+            const result = await fileRepo().delete({
+                type,
+                created: LessThanOrEqual(retentionDateBoundary),
+                id: In(logsFileIds.map(log => log.id)),
+            })
+            affected = result.affected || 0
+            totalAffected += affected
+            logger.info({
+                counts: affected,
+            }, '[FileService#deleteStaleBulk] iteration completed')
+        }
+    }
 }
 
 type GetDataResponse = {
