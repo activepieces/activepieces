@@ -18,6 +18,7 @@ export const UpdatePlatformRequestBody = Type.Object({
     emailAuthEnabled: Type.Optional(Type.Boolean()),
     allowedAuthDomains: Type.Optional(Type.Array(Type.String())),
     enforceAllowedAuthDomains: Type.Optional(Type.Boolean()),
+    pinnedPieces: Type.Optional(Type.Array(Type.String())),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),
 })
 

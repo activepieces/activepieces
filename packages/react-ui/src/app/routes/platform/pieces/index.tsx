@@ -5,7 +5,6 @@ import { useMemo, useState } from 'react';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ApplyTags } from '@/app/routes/platform/pieces/apply-tags';
 import { SyncPiecesButton } from '@/app/routes/platform/pieces/sync-pieces';
-import { TogglePieceButton } from '@/app/routes/platform/pieces/toggle-piece-button';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/pieces/update-oauth2-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -22,6 +21,7 @@ import {
 import { PieceScope } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/ui/table-title';
+import { PieceActions } from '@/app/routes/platform/pieces/piece-actions';
 
 const PlatformPiecesPage = () => {
   const [refresh, setRefresh] = useState(0);
@@ -115,6 +115,19 @@ const PlatformPiecesPage = () => {
             );
           },
         },
+        {
+          id: 'actions',
+          cell: ({ row }) => {
+            return (
+              <div className="flex justify-end">
+                {row.original.auth && row.original.auth.type === PropertyType.OAUTH2 && (
+                  <ConfigurePieceOAuth2Dialog pieceName={row.original.name} />
+                )}
+                <PieceActions pieceName={row.original.name} />
+              </div>
+            );
+          },
+        },
       ],
       [],
     );
@@ -167,15 +180,6 @@ const PlatformPiecesPage = () => {
           </div>
           <DataTable
             columns={columns}
-            actions={[
-              (row) => {
-                if (row.auth && row.auth.type === PropertyType.OAUTH2) {
-                  return <ConfigurePieceOAuth2Dialog pieceName={row.name} />;
-                }
-                return <></>;
-              },
-              (row) => <TogglePieceButton pieceName={row.name} />,
-            ]}
             refresh={refresh}
             fetchData={fetchData}
             onSelectedRowsChange={setSelectedPieces}
