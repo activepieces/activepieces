@@ -4,7 +4,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { getChannels, slackInfo, userId } from '../common/props';
+import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { slackAuth } from '../../';
 import { WebClient } from '@slack/web-api';
 
@@ -47,7 +47,7 @@ export const newMention = createTrigger({
   displayName: 'New Mention',
   description: 'Triggers when a username is mentioned.',
   props: {
-    info: slackInfo,
+    info: multiSelectChannelInfo,
     user: userId,
     channels: Property.MultiSelectDropdown({
       displayName: 'Channels',

@@ -8,8 +8,8 @@ import {
 } from '@activepieces/shared';
 import {
   profilePicture,
+  singleSelectChannelInfo,
   slackChannel,
-  slackInfo,
   text,
   username,
 } from '../common/props';
@@ -21,7 +21,7 @@ export const requestSendApprovalMessageAction = createAction({
   description:
     'Send approval message to a channel and then wait until the message is approved or disapproved',
   props: {
-    info: slackInfo,
+    info: singleSelectChannelInfo,
     channel: slackChannel(true),
     text,
     username,
