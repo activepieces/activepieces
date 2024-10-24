@@ -4,6 +4,7 @@ import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-sh
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { commonProperties } from './database-connection'
+import { MigrateSMTPInPlatformSqlite1729601402320 } from './migration/1729601402320-MigrateSMTPInPlatformSqlite'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
@@ -16,6 +17,7 @@ import { ChangeEventRoutingConstraint1723549873495 } from './migration/common/17
 import { RemoveUniqueConstraintOnStepFile1725570317713 } from './migration/common/1725570317713-RemoveUniqueConstraintOnStepFile'
 import { AddUserSessionId1727130193726 } from './migration/common/1727130193726-AddUserSessionId'
 import { AddLicenseKeyIntoPlatform1728827704109 } from './migration/common/1728827704109-AddLicenseKeyIntoPlatform'
+import { ChangeProjectUniqueConstraintToPartialIndex1729098769827 } from './migration/common/1729098769827-ChangeProjectUniqueConstraintToPartialIndex'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -60,6 +62,7 @@ import { AddLogsFileIdIndexSqlite1725699920020 } from './migration/sqlite/172569
 import { SupportS3FilesSqlite1726363932745 } from './migration/sqlite/1726363932745-SupportS3FilesSqlite'
 import { AddAiProviderSqlite1726446345221 } from './migration/sqlite/1726446345221-AddAiProviderSqlite'
 import { RemovePremiumPiecesSqlite1727865697005 } from './migration/sqlite/1727865697005-RemovePremiumPiecesSqlite'
+import { UpdatePlaformInSqlite1729330108485 } from './migration/sqlite/1729330108485-UpdatePlaformInSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -137,7 +140,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         SupportS3FilesSqlite1726363932745,
         AddUserSessionId1727130193726,
         RemovePremiumPiecesSqlite1727865697005,
-        AddLicenseKeyIntoPlatform1728827704109,   
+        AddLicenseKeyIntoPlatform1728827704109,
+        UpdatePlaformInSqlite1729330108485,
+        ChangeProjectUniqueConstraintToPartialIndex1729098769827,
+        MigrateSMTPInPlatformSqlite1729601402320,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

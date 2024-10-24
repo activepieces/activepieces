@@ -19,11 +19,12 @@ export const workerApiService = (workerToken: string) => {
             const request: WorkerMachineHealthcheckRequest = await heartbeat.getSystemInfo()
             try {
                 await client.post('/v1/worker-machines/heartbeat', request)
-            } catch (error) {
+            }
+            catch (error) {
                 if (ApAxiosClient.isApAxiosError(error) && error.error.code === 'ECONNREFUSED') {
-                    return;
+                    return
                 }
-                throw error;
+                throw error
             }
         },
         async poll(queueName: QueueName): Promise<ApQueueJob | null> {

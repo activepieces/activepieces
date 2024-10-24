@@ -235,7 +235,7 @@ export const flowRunService = {
 
         await flowRunRepo().update(flowRunId, {
             status,
-            tasks,
+            ...spreadIfDefined('tasks', tasks),
             ...spreadIfDefined('duration', duration ? Math.floor(Number(duration)) : undefined),
             ...spreadIfDefined('logsFileId', logFileId),
             terminationReason: undefined,
@@ -408,7 +408,7 @@ type FinishParams = {
     flowRunId: FlowRunId
     projectId: string
     status: FlowRunStatus
-    tasks: number
+    tasks: number | undefined
     duration: number | undefined
     executionState: ExecutionState | null
     tags: string[]
@@ -465,4 +465,3 @@ type RetryParams = {
     flowRunId: FlowRunId
     strategy: FlowRetryStrategy
 }
-

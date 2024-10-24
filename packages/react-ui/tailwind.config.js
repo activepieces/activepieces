@@ -108,11 +108,37 @@ module.exports = {
             opacity: 1,
           },
         },
+        typing: {
+          "0%": {
+            width: "0%",
+            visibility: "hidden",
+          },
+          "100%": {
+            width: "100%",
+          }
+        },
+        blink: {
+          "0%": {
+            borderColor: "hsl(var(--foreground))",
+            backgroundColor: "hsl(var(--foreground))"
+          },
+          "50%": {
+            borderColor: "transparent",
+            backgroundColor: "transparent"
+          },
+          "100%": {
+            borderColor: "transparent",
+            backgroundColor: "transparent"
+          },
+        }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         fade: 'fade 0.2s ease-out',
+        blink: 'blink .7s steps(6, end) 3',
+        typing: 'typing 2s steps(20) alternate',
+        'typing-sm': 'typing 1s steps(10) alternate',
       },
       boxShadow: {
         'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',

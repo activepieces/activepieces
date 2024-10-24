@@ -11,6 +11,17 @@ export enum FilteredPieceBehavior {
     BLOCKED = 'BLOCKED',
 }
 
+export const SMTPInformation = Type.Object({
+    user: Type.String(),
+    senderEmail: Type.String(),
+    senderName: Type.String(),
+    password: Type.String(),
+    host: Type.String(),
+    port: Type.Number(),
+})
+
+export type SMTPInformation = Static<typeof SMTPInformation>
+
 export const Platform = Type.Object({
     ...BaseModelSchema,
     ownerId: ApId,
@@ -27,14 +38,7 @@ export const Platform = Type.Object({
     * @deprecated Use projects filter instead.
     */
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
-    smtpHost: Type.Optional(Type.String()),
-    smtpPort: Type.Optional(Type.Number()),
-    smtpUser: Type.Optional(Type.String()),
-    smtpPassword: Type.Optional(Type.String()),
-    smtpSenderEmail: Type.Optional(Type.String()),
-    smtpUseSSL: Type.Optional(Type.Boolean()),
-    privacyPolicyUrl: Type.Optional(Type.String()),
-    termsOfServiceUrl: Type.Optional(Type.String()),
+    smtp: Type.Optional(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
     gitSyncEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
@@ -64,6 +68,7 @@ export type Platform = Static<typeof Platform>
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: FederatedAuthnProviderConfigWithoutSensitiveData,
     defaultLocale: Nullable(Type.String()),
-}), Type.Omit(Platform, ['smtpPassword', 'federatedAuthProviders', 'defaultLocale'])])
+    smtp: Type.Optional(Type.Object({})),
+}), Type.Omit(Platform, ['smtp', 'federatedAuthProviders', 'defaultLocale'])])
 
 export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiveData>

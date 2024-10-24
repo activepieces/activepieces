@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { LocalesEnum } from '../common'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig } from '../federated-authn'
-import { FilteredPieceBehavior } from './platform.model'
+import { FilteredPieceBehavior, SMTPInformation } from './platform.model'
 
 export const UpdatePlatformRequestBody = Type.Object({
     name: Type.Optional(Type.String()),
@@ -12,12 +12,7 @@ export const UpdatePlatformRequestBody = Type.Object({
     favIconUrl: Type.Optional(Type.String()),
     filteredPieceNames: Type.Optional(Type.Array(Type.String())),
     filteredPieceBehavior: Type.Optional(Type.Enum(FilteredPieceBehavior)),
-    smtpHost: Type.Optional(Type.String()),
-    smtpPort: Type.Optional(Type.Number()),
-    smtpUser: Type.Optional(Type.String()),
-    smtpPassword: Type.Optional(Type.String()),
-    smtpSenderEmail: Type.Optional(Type.String()),
-    smtpUseSSL: Type.Optional(Type.Boolean()),
+    smtp: Type.Optional(SMTPInformation),
     federatedAuthProviders: Type.Optional(FederatedAuthnProviderConfig),
     cloudAuthEnabled: Type.Optional(Type.Boolean()),
     emailAuthEnabled: Type.Optional(Type.Boolean()),
