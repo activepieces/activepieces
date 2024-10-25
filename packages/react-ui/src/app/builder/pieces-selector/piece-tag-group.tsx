@@ -3,6 +3,8 @@ import { PieceTag } from '@/app/builder/pieces-selector/piece-tag';
 import construction from '@/assets/img/custom/construction.png';
 import link from '@/assets/img/custom/link.png';
 import magic from '@/assets/img/custom/magic.png';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { t } from 'i18next';
 export enum PieceTagEnum {
   CORE = 'CORE',
   AI = 'AI',
@@ -19,26 +21,26 @@ const tags: Record<
   }
 > = {
   [PieceTagEnum.ALL]: {
-    title: 'All',
+    title: t('All'),
     color: 'blue',
   },
   [PieceTagEnum.AI]: {
     icon: magic,
-    title: 'AI',
+    title: t('AI'),
     color: 'purple',
   },
   [PieceTagEnum.CORE]: {
     icon: construction,
-    title: 'Core',
+    title: t('Core'),
     color: 'pink',
   },
-
   [PieceTagEnum.APPS]: {
     icon: link,
-    title: 'Apps',
+    title: t('Apps'),
     color: 'yellow',
   },
 };
+
 type PieceTagGroupProps = {
   type: 'action' | 'trigger';
   selectedTag?: PieceTagEnum;
@@ -52,19 +54,22 @@ const PieceTagGroup = ({
 }: PieceTagGroupProps) => {
   return (
     <div className="flex py-2 px-2 gap-2 items-center">
-      {Object.entries(tags)
-        .filter(([tag]) => !(type === 'trigger' && tag === PieceTagEnum.AI))
-        .map(([tag, tagData]) => (
+      {Object.entries(tags).map(([tag, tagData]) => {
+        const isDisabled = type === 'trigger' && tag === PieceTagEnum.AI;
+        const tagComponent = (
           <PieceTag
-            key={tagData.title}
+            key={tag}
             variant={tagData.color}
             onClick={(e) => {
-              onSelectTag(
-                selectedTag === tag ? PieceTagEnum.ALL : (tag as PieceTagEnum),
-              );
-              e.stopPropagation();
+              if (!isDisabled) {
+                onSelectTag(
+                  selectedTag === tag ? PieceTagEnum.ALL : (tag as PieceTagEnum),
+                );
+                e.stopPropagation();
+              }
             }}
             selected={selectedTag === tag}
+            disabled={isDisabled}
           >
             <div className="flex items-center gap-2">
               {tagData.icon && (
@@ -77,7 +82,21 @@ const PieceTagGroup = ({
               {tagData.title}
             </div>
           </PieceTag>
-        ))}
+        );
+
+        return isDisabled ? (
+          <Tooltip key={tag}>
+            <TooltipTrigger asChild>
+              <div className="inline-flex">{tagComponent}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {type === 'trigger' ? t('Not available as trigger') : t('Not available as action')}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          tagComponent
+        );
+      })}
     </div>
   );
 };

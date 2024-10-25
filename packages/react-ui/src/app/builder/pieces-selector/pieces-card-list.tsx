@@ -42,9 +42,10 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
 
     const { platform } = platformHooks.useCurrentPlatform();
 
+    const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
     const { metadata, isLoading: isLoadingPieces } = piecesHooks.useAllStepsMetadata({
         searchQuery: debouncedQuery,
-        type: operation.type === FlowOperationType.UPDATE_TRIGGER ? 'trigger' : 'action',
+        type: isTrigger ? 'trigger' : 'action',
     });
 
     const pieceGroups = React.useMemo(() => {
@@ -69,13 +70,20 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
             : filteredMetadataOnTag;
 
         const sortedPiecesMetadata = piecesMetadata.sort((a, b) => a.displayName.localeCompare(b.displayName));
-        const pinnedPiecesNames = platform.pinnedPieces ?? [];
-        const pinnedPieces = sortedPiecesMetadata.filter(piece => pieceSelectorUtils.isPinnedPiece(piece, pinnedPiecesNames));
-        const otherPieces = sortedPiecesMetadata.filter(piece => !pieceSelectorUtils.isPinnedPiece(piece, pinnedPiecesNames));
+        const flowControllerPieces = sortedPiecesMetadata.filter(pieceSelectorUtils.isFlowController);
+        const universalAiPieces = sortedPiecesMetadata.filter(pieceSelectorUtils.isUniversalAiPiece);
+        const utilityCorePieces = sortedPiecesMetadata.filter((p) => pieceSelectorUtils.isUtilityCorePiece(p, platform, isTrigger));
+        const popularPieces = sortedPiecesMetadata.filter((p) => pieceSelectorUtils.isPopularPieces(p, platform));
+        const other = sortedPiecesMetadata.filter((p) =>
+            !popularPieces.includes(p) && !utilityCorePieces.includes(p) && !flowControllerPieces.includes(p) && !universalAiPieces.includes(p)
+        );
 
         const groups: PieceGroup[] = [
-            { title: 'Pinned', pieces: pinnedPieces },
-            { title: 'Others', pieces: otherPieces }
+            { title: 'Popular', pieces: popularPieces },
+            { title: 'Flow Controller', pieces: flowControllerPieces },
+            { title: 'Utility', pieces: utilityCorePieces },
+            { title: 'Universal AI', pieces: universalAiPieces },
+            { title: 'Other', pieces: other },
         ];
 
         return groups.filter(group => group.pieces.length > 0);

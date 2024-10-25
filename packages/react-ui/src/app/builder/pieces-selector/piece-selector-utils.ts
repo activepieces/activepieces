@@ -25,6 +25,7 @@ import {
   PieceCategory,
   spreadIfDefined,
   isNil,
+  Platform,
 } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
@@ -87,12 +88,48 @@ const isPieceStepMetadata = (
   return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
 };
 
-const isPinnedPiece = (stepMetadata: StepMetadataWithSuggestions, pinnedPiecesNames: string[]) => {
+const isPopularPieces = (stepMetadata: StepMetadataWithSuggestions, platform: Platform) => {
   if (stepMetadata.type !== TriggerType.PIECE && stepMetadata.type !== ActionType.PIECE) {
+    return false;
+  }
+  const popularPieces = ['@activepieces/piece-google-gmail',
+    '@activepieces/piece-google-sheets',
+    '@activepieces/piece-openai',
+    '@activepieces/piece-schedule',
+    '@activepieces/piece-webhook',
+    '@activepieces/piece-http',
+    '@activepieces/piece-forms',
+    '@activepieces/piece-slack'
+  ]
+  return popularPieces.includes((stepMetadata as PieceStepMetadata).pieceName);
+};
+
+const isFlowController = (stepMetadata: StepMetadata) => {
+  if (stepMetadata.type === ActionType.PIECE) {
+    return (stepMetadata as PieceStepMetadata).categories.includes(PieceCategory.FLOW_CONTROL);
+  }
+  return [ActionType.LOOP_ON_ITEMS, ActionType.BRANCH].includes(stepMetadata.type as ActionType);
+}
+
+const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
+  if (stepMetadata.type === ActionType.PIECE) {
+    return (stepMetadata as PieceStepMetadata).categories.includes(PieceCategory.UNIVERSAL_AI);
+  }
+  return false;
+}
+
+const isUtilityCorePiece = (stepMetadata: StepMetadata, platform: Platform, triggerView: boolean) => {
+  if (triggerView) {
+    return false;
+  }
+  if (stepMetadata.type === ActionType.CODE) {
     return true;
   }
-  return pinnedPiecesNames.includes((stepMetadata as PieceStepMetadata).pieceName);
-};
+  if (!isCorePiece(stepMetadata)) {
+    return false;
+  }
+  return !isFlowController(stepMetadata) && !isPopularPieces(stepMetadata, platform);
+}
 
 const getDefaultStep = ({
   stepName,
@@ -255,5 +292,8 @@ export const pieceSelectorUtils = {
   isAiPiece,
   isAppPiece,
   toKey,
-  isPinnedPiece,
+  isPopularPieces,
+  isUtilityCorePiece,
+  isFlowController,
+  isUniversalAiPiece,
 };
