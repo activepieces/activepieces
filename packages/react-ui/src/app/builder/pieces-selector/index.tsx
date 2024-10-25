@@ -106,6 +106,12 @@ const PieceSelector = ({
     const sortedPiecesMetadata = piecesMetadata.sort((a, b) =>
       a.displayName.localeCompare(b.displayName),
     );
+
+    const hideGroups = debouncedQuery.length > 0;
+    if (hideGroups) {
+      return [{ title: 'Search Results', pieces: sortedPiecesMetadata }];
+    }
+
     const flowControllerPieces = sortedPiecesMetadata.filter(
       (p) => pieceSelectorUtils.isFlowController(p) && !isTrigger,
     );

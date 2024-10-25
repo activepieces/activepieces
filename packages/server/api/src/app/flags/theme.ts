@@ -115,8 +115,6 @@ export function generateTheme({
             favIconUrl,
             logoIconUrl,
         },
-        materialPrimaryPalette: generateColors(primaryColor),
-        materialWarnPalette: {
             '50': '#fee5e5',
             '100': '#fcbebe',
             '200': '#fa9393',
@@ -147,7 +145,6 @@ export function generateTheme({
                 A400: '#000000',
                 A700: '#000000',
             },
-        },
     }
 }
 

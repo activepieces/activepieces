@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddPinnedPiecesSqlite1729774033945 implements MigrationInterface {
     name = 'AddPinnedPiecesSqlite1729774033945'
@@ -63,7 +63,7 @@ export class AddPinnedPiecesSqlite1729774033945 implements MigrationInterface {
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId"),
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
@@ -138,21 +138,21 @@ export class AddPinnedPiecesSqlite1729774033945 implements MigrationInterface {
                 "smtp",
                 '[]'
             FROM "platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "platform"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -211,7 +211,7 @@ export class AddPinnedPiecesSqlite1729774033945 implements MigrationInterface {
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId"),
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
@@ -284,10 +284,10 @@ export class AddPinnedPiecesSqlite1729774033945 implements MigrationInterface {
                 "licenseKey",
                 "smtp"
             FROM "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_platform"
-        `);
+        `)
     }
 
 }
