@@ -130,7 +130,7 @@ const PieceSelector = ({
 
     const groups: PieceGroup[] = [
       { title: 'Popular', pieces: popularPieces },
-      { title: 'Flow Controller', pieces: flowControllerPieces },
+      { title: 'Flow Control', pieces: flowControllerPieces },
       { title: 'Utility', pieces: utilityCorePieces },
       { title: 'Universal AI', pieces: universalAiPieces },
       { title: 'Other', pieces: other },
