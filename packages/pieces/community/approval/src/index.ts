@@ -11,7 +11,7 @@ export const approval = createPiece({
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/approval.svg',
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
-  categories: [PieceCategory.CORE],
+  categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],
   actions: [waitForApprovalLink, createApprovalLink],
   triggers: [],
 });
