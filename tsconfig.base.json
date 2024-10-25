@@ -36,6 +36,9 @@
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
+      "@activepieces/piece-ai-utility": [
+        "packages/pieces/community/ai-utility/src/index.ts"
+      ],
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
@@ -474,6 +477,9 @@
       "@activepieces/piece-razorpay": [
         "packages/pieces/community/razorpay/src/index.ts"
       ],
+      "@activepieces/piece-reachinbox": [
+        "packages/pieces/community/reachinbox/src/index.ts"
+      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
@@ -704,9 +710,6 @@
       ],
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
-      ],
-      "@activepieces/piece-reachinbox": [
-        "packages/pieces/community/reachinbox/src/index.ts"
       ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
