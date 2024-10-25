@@ -218,6 +218,11 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 : pieceSelectorOperation.current,
               stepName: data.step!.name!,
             }}
+            initalSelectedPiece={
+              data.step?.type === TriggerType.EMPTY
+                ? undefined
+                : stepMetadata?.displayName
+            }
             open={openPieceSelector || isEmptyTriggerSelected}
             onOpenChange={(open) => {
               setOpenPieceSelector(open);

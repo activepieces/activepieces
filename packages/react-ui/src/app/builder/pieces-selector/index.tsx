@@ -39,6 +39,7 @@ type PieceSelectorProps = {
   children: React.ReactNode;
   open: boolean;
   asChild?: boolean;
+  initalSelectedPiece?: string | undefined;
   onOpenChange: (open: boolean) => void;
 } & { operation: PieceSelectorOperation };
 
@@ -53,6 +54,7 @@ const PieceSelector = ({
   asChild = true,
   onOpenChange,
   operation,
+  initalSelectedPiece,
 }: PieceSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
@@ -106,6 +108,9 @@ const PieceSelector = ({
     const sortedPiecesMetadata = piecesMetadata.sort((a, b) =>
       a.displayName.localeCompare(b.displayName),
     );
+    setSelectedMetadata(
+      sortedPiecesMetadata.find((p) => p.displayName === initalSelectedPiece),
+    );
 
     const hideGroups = debouncedQuery.length > 0;
     if (hideGroups) {
@@ -143,7 +148,14 @@ const PieceSelector = ({
     ];
 
     return groups.filter((group) => group.pieces.length > 0);
-  }, [metadata, selectedTag, debouncedQuery, platform, isTrigger]);
+  }, [
+    metadata,
+    selectedTag,
+    debouncedQuery,
+    platform,
+    isTrigger,
+    initalSelectedPiece,
+  ]);
 
   const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
   const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
