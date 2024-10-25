@@ -218,7 +218,7 @@ const ApStepNode = React.memo(({ data }: { data: ApNode['data'] }) => {
                 : pieceSelectorOperation.current,
               stepName: data.step!.name!,
             }}
-            initalSelectedPiece={
+            initialSelectedPiece={
               data.step?.type === TriggerType.EMPTY
                 ? undefined
                 : stepMetadata?.displayName
