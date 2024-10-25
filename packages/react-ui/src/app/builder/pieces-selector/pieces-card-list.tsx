@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { SearchX } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
@@ -58,6 +58,17 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
     ApFlagId.SHOW_COMMUNITY,
   );
 
+  const selectedItemRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (piecesIsLoaded && selectedItemRef.current) {
+      selectedItemRef.current?.scrollIntoView({
+        behavior: 'auto',
+        block: 'nearest',
+      });
+    }
+  }, [piecesIsLoaded, selectedPieceMetadata]);
+
   return (
     <CardList
       className={cn('w-[250px] min-w-[250px] transition-all ', {
@@ -93,6 +104,12 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                 debouncedQuery={debouncedQuery}
                 setSelectedMetadata={setSelectedMetadata}
                 handleSelect={handleSelect}
+                ref={
+                  pieceMetadata.displayName ===
+                  selectedPieceMetadata?.displayName
+                    ? selectedItemRef
+                    : null
+                }
               />
             ))}
           </React.Fragment>
@@ -118,72 +135,82 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   );
 };
 
-const PieceCardListItem: React.FC<{
-  pieceMetadata: StepMetadataWithSuggestions;
-  selectedPieceMetadata: StepMetadata | undefined;
-  debouncedQuery: string;
-  setSelectedMetadata: (metadata: StepMetadata) => void;
-  handleSelect: HandleSelectCallback;
-}> = ({
-  pieceMetadata,
-  selectedPieceMetadata,
-  debouncedQuery,
-  setSelectedMetadata,
-  handleSelect,
-}) => {
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+const PieceCardListItem = React.forwardRef<
+  HTMLDivElement,
+  {
+    pieceMetadata: StepMetadataWithSuggestions;
+    selectedPieceMetadata: StepMetadata | undefined;
+    debouncedQuery: string;
+    setSelectedMetadata: (metadata: StepMetadata) => void;
+    handleSelect: HandleSelectCallback;
+  }
+>(
+  (
+    {
+      pieceMetadata,
+      selectedPieceMetadata,
+      debouncedQuery,
+      setSelectedMetadata,
+      handleSelect,
+    },
+    ref,
+  ) => {
+    const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const handleMouseEnter = (element: HTMLDivElement) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    timeoutRef.current = setTimeout(() => {
-      if (element.matches(':hover')) {
-        setSelectedMetadata(pieceMetadata);
+    const handleMouseEnter = (element: HTMLDivElement) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
-    }, 150);
-  };
 
-  const handleMouseLeave = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-  };
-
-  return (
-    <div onMouseLeave={handleMouseLeave}>
-      <CardListItem
-        className="flex-col p-3 gap-1 items-start"
-        selected={
-          pieceMetadata.displayName === selectedPieceMetadata?.displayName &&
-          debouncedQuery.length === 0
+      timeoutRef.current = setTimeout(() => {
+        if (element.matches(':hover')) {
+          setSelectedMetadata(pieceMetadata);
         }
-        interactive={debouncedQuery.length === 0}
-        onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
-      >
-        <div className="flex gap-2 items-center">
-          <PieceIcon
-            logoUrl={pieceMetadata.logoUrl}
-            displayName={pieceMetadata.displayName}
-            showTooltip={false}
-            size={'sm'}
-          />
-          <div className="flex-grow h-full flex items-center justify-left text-sm">
-            {pieceMetadata.displayName}
-          </div>
-        </div>
-      </CardListItem>
+      }, 150);
+    };
 
-      {debouncedQuery.length > 0 &&
-        pieceMetadata.type !== TriggerType.EMPTY && (
-          <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
-            <PieceSearchSuggestions
-              pieceMetadata={pieceMetadata}
-              handleSelectOperationSuggestion={handleSelect}
+    const handleMouseLeave = () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+
+    return (
+      <div onMouseLeave={handleMouseLeave} ref={ref}>
+        <CardListItem
+          className="flex-col p-3 gap-1 items-start"
+          selected={
+            pieceMetadata.displayName === selectedPieceMetadata?.displayName &&
+            debouncedQuery.length === 0
+          }
+          interactive={debouncedQuery.length === 0}
+          onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
+        >
+          <div className="flex gap-2 items-center">
+            <PieceIcon
+              logoUrl={pieceMetadata.logoUrl}
+              displayName={pieceMetadata.displayName}
+              showTooltip={false}
+              size={'sm'}
             />
+            <div className="flex-grow h-full flex items-center justify-left text-sm">
+              {pieceMetadata.displayName}
+            </div>
           </div>
-        )}
-    </div>
-  );
-};
+        </CardListItem>
+
+        {debouncedQuery.length > 0 &&
+          pieceMetadata.type !== TriggerType.EMPTY && (
+            <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
+              <PieceSearchSuggestions
+                pieceMetadata={pieceMetadata}
+                handleSelectOperationSuggestion={handleSelect}
+              />
+            </div>
+          )}
+      </div>
+    );
+  },
+);
+
+PieceCardListItem.displayName = 'PieceCardListItem';
