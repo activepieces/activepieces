@@ -222,7 +222,14 @@ const CountFlowsRequestOptions = {
 }
 
 const GetFlowTemplateRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_FLOW,
+    },
     schema: {
+        tags: ['flows'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Export flow as template',
         params: Type.Object({
             id: ApId,
         }),
