@@ -1,7 +1,7 @@
 import { ConversationsHistoryResponse, WebClient } from '@slack/web-api';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
-import { slackChannel, slackInfo } from '../common/props';
+import { singleSelectChannelInfo, slackChannel } from '../common/props';
 
 export const getChannelHistory = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -11,7 +11,7 @@ export const getChannelHistory = createAction({
   description:
     'Retrieve all messages from a specific channel ("conversation") between specified timestamps',
   props: {
-    info: slackInfo,
+    info: singleSelectChannelInfo,
     channel: slackChannel(true),
     oldest: Property.Number({
       displayName: 'Oldest',
