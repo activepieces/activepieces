@@ -5,6 +5,7 @@ import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { commonProperties } from './database-connection'
 import { MigrateSMTPInPlatformSqlite1729601402320 } from './migration/1729601402320-MigrateSMTPInPlatformSqlite'
+import { AddPinnedPiecesSqlite1729774033945 } from './migration/1729774033945-AddPinnedPiecesSqlite'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
@@ -144,6 +145,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         UpdatePlaformInSqlite1729330108485,
         ChangeProjectUniqueConstraintToPartialIndex1729098769827,
         MigrateSMTPInPlatformSqlite1729601402320,
+        AddPinnedPiecesSqlite1729774033945,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

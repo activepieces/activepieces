@@ -143,6 +143,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: true,
         },
+        pinnedPieces: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
+        },
     },
     indices: [],
     relations: {

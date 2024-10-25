@@ -23,6 +23,7 @@ import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/169
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { commonProperties } from './database-connection'
 import { MigrateSMTPInPlatform1729602169179 } from './migration/1729602169179-MigrateSMTPInPlatform'
+import { AddPinnedPieces1729776414647 } from './migration/1729776414647-AddPinnedPieces'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -255,6 +256,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddLicenseKeyIntoPlatform1728827704109,
         ChangeProjectUniqueConstraintToPartialIndex1729098769827,
         MigrateSMTPInPlatform1729602169179,
+        AddPinnedPieces1729776414647,
     ]
 
     const edition = system.getEdition()

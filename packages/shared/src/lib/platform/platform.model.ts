@@ -61,6 +61,7 @@ export const Platform = Type.Object({
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: Type.Boolean(),
     licenseKey: Type.Optional(Type.String()),
+    pinnedPieces: Type.Array(Type.String()),
 })
 
 export type Platform = Static<typeof Platform>
