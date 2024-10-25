@@ -27,10 +27,18 @@ export interface PieceTagProps extends VariantProps<typeof tagVariants> {
   disabled?: boolean;
 }
 
-const PieceTag = ({ variant, children, selected, onClick, disabled }: PieceTagProps) => {
+const PieceTag = ({
+  variant,
+  children,
+  selected,
+  onClick,
+  disabled,
+}: PieceTagProps) => {
   return (
     <span
-      className={cn(tagVariants({ variant }), { 'cursor-not-allowed opacity-50': disabled })}
+      className={cn(tagVariants({ variant }), {
+        'cursor-not-allowed opacity-50': disabled,
+      })}
       data-selected={selected}
       data-disabled={disabled}
       onClick={disabled ? undefined : onClick}

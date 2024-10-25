@@ -1,10 +1,15 @@
+import { t } from 'i18next';
+
 import { PieceTag } from '@/app/builder/pieces-selector/piece-tag';
 // icons from google font noto
 import construction from '@/assets/img/custom/construction.png';
 import link from '@/assets/img/custom/link.png';
 import magic from '@/assets/img/custom/magic.png';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { t } from 'i18next';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 export enum PieceTagEnum {
   CORE = 'CORE',
   AI = 'AI',
@@ -63,7 +68,9 @@ const PieceTagGroup = ({
             onClick={(e) => {
               if (!isDisabled) {
                 onSelectTag(
-                  selectedTag === tag ? PieceTagEnum.ALL : (tag as PieceTagEnum),
+                  selectedTag === tag
+                    ? PieceTagEnum.ALL
+                    : (tag as PieceTagEnum),
                 );
                 e.stopPropagation();
               }
@@ -90,7 +97,9 @@ const PieceTagGroup = ({
               <div className="inline-flex">{tagComponent}</div>
             </TooltipTrigger>
             <TooltipContent>
-              {type === 'trigger' ? t('Not available as trigger') : t('Not available as action')}
+              {type === 'trigger'
+                ? t('Not available as trigger')
+                : t('Not available as action')}
             </TooltipContent>
           </Tooltip>
         ) : (

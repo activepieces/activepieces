@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ApplyTags } from '@/app/routes/platform/pieces/apply-tags';
+import { PieceActions } from '@/app/routes/platform/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/pieces/update-oauth2-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +22,6 @@ import {
 import { PieceScope } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/ui/table-title';
-import { PieceActions } from '@/app/routes/platform/pieces/piece-actions';
 
 const PlatformPiecesPage = () => {
   const [refresh, setRefresh] = useState(0);
@@ -120,9 +120,10 @@ const PlatformPiecesPage = () => {
           cell: ({ row }) => {
             return (
               <div className="flex justify-end">
-                {row.original.auth && row.original.auth.type === PropertyType.OAUTH2 && (
-                  <ConfigurePieceOAuth2Dialog pieceName={row.original.name} />
-                )}
+                {row.original.auth &&
+                  row.original.auth.type === PropertyType.OAUTH2 && (
+                    <ConfigurePieceOAuth2Dialog pieceName={row.original.name} />
+                  )}
                 <PieceActions pieceName={row.original.name} />
               </div>
             );

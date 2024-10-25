@@ -50,7 +50,8 @@ const PieceActions = ({ pieceName }: PieceActionsProps) => {
         ? platform.pinnedPieces.filter((name) => name !== piecename)
         : [...platform.pinnedPieces, piecename];
 
-      await platformApi.update({
+      await platformApi.update(
+        {
           pinnedPieces: newPinnedPieces,
         },
         platform.id,

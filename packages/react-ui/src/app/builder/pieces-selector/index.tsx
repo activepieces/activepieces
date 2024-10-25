@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -7,24 +7,33 @@ import {
   PieceTagEnum,
   PieceTagGroup,
 } from '@/app/builder/pieces-selector/piece-tag-group';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Separator } from '@/components/ui/seperator';
 import { UNSAVED_CHANGES_TOAST, toast } from '@/components/ui/use-toast';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   StepMetadata,
   PieceSelectorOperation,
   HandleSelectCallback,
+  StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
+import { platformHooks } from '@/hooks/platform-hooks';
 import {
   Action,
+  ActionType,
   FlowOperationType,
   Trigger,
+  TriggerType,
 } from '@activepieces/shared';
 
 import { SearchInput } from '../../../components/ui/search-input';
 
 import { PiecesCardList } from './pieces-card-list';
 import { StepsCardList } from './steps-card-list';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -32,6 +41,11 @@ type PieceSelectorProps = {
   asChild?: boolean;
   onOpenChange: (open: boolean) => void;
 } & { operation: PieceSelectorOperation };
+
+type PieceGroup = {
+  title: string;
+  pieces: StepMetadataWithSuggestions[];
+};
 
 const PieceSelector = ({
   children,
@@ -57,6 +71,76 @@ const PieceSelector = ({
       state.flowVersion,
       state.setSampleData,
     ]);
+
+  const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
+  const { metadata, isLoading: isLoadingPieces } =
+    piecesHooks.useAllStepsMetadata({
+      searchQuery: debouncedQuery,
+      type: isTrigger ? 'trigger' : 'action',
+    });
+
+  const { platform } = platformHooks.useCurrentPlatform();
+
+  const pieceGroups = useMemo(() => {
+    if (!metadata) return [];
+
+    const filteredMetadataOnTag = metadata.filter((stepMetadata) => {
+      switch (selectedTag) {
+        case PieceTagEnum.CORE:
+          return pieceSelectorUtils.isCorePiece(stepMetadata);
+        case PieceTagEnum.AI:
+          return pieceSelectorUtils.isAiPiece(stepMetadata);
+        case PieceTagEnum.APPS:
+          return pieceSelectorUtils.isAppPiece(stepMetadata);
+        case PieceTagEnum.ALL:
+        default:
+          return true;
+      }
+    });
+
+    const piecesMetadata =
+      debouncedQuery.length > 0
+        ? filterOutPiecesWithNoSuggestions(filteredMetadataOnTag)
+        : filteredMetadataOnTag;
+
+    const sortedPiecesMetadata = piecesMetadata.sort((a, b) =>
+      a.displayName.localeCompare(b.displayName),
+    );
+    const flowControllerPieces = sortedPiecesMetadata.filter(
+      (p) => pieceSelectorUtils.isFlowController(p) && !isTrigger,
+    );
+    const universalAiPieces = sortedPiecesMetadata.filter(
+      (p) => pieceSelectorUtils.isUniversalAiPiece(p) && !isTrigger,
+    );
+    const utilityCorePieces = sortedPiecesMetadata.filter(
+      (p) => pieceSelectorUtils.isUtilityCorePiece(p, platform) && !isTrigger,
+    );
+    const popularPieces = sortedPiecesMetadata.filter(
+      (p) =>
+        pieceSelectorUtils.isPopularPieces(p, platform) &&
+        selectedTag !== PieceTagEnum.AI,
+    );
+    const other = sortedPiecesMetadata.filter(
+      (p) =>
+        !popularPieces.includes(p) &&
+        !utilityCorePieces.includes(p) &&
+        !flowControllerPieces.includes(p) &&
+        !universalAiPieces.includes(p),
+    );
+
+    const groups: PieceGroup[] = [
+      { title: 'Popular', pieces: popularPieces },
+      { title: 'Flow Controller', pieces: flowControllerPieces },
+      { title: 'Utility', pieces: utilityCorePieces },
+      { title: 'Universal AI', pieces: universalAiPieces },
+      { title: 'Other', pieces: other },
+    ];
+
+    return groups.filter((group) => group.pieces.length > 0);
+  }, [metadata, selectedTag, debouncedQuery, platform, isTrigger]);
+
+  const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
+  const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
 
   const resetField = () => {
     setSearchQuery('');
@@ -133,7 +217,6 @@ const PieceSelector = ({
     }
   };
 
-
   return (
     <Popover
       open={open}
@@ -178,16 +261,20 @@ const PieceSelector = ({
           }}
         />
         <Separator orientation="horizontal" />
-        <div className="flex overflow-y-auto max-h-[350px] h-[35`0px]">
+        <div className="flex overflow-y-auto max-h-[320px] h-[320px]">
           <PiecesCardList
             debouncedQuery={debouncedQuery}
             selectedTag={selectedTag}
+            piecesIsLoaded={piecesIsLoaded}
+            noResultsFound={noResultsFound}
             selectedPieceMetadata={selectedPieceMetadata}
             setSelectedMetadata={setSelectedMetadata}
             operation={operation}
             handleSelect={handleSelect}
+            pieceGroups={pieceGroups}
+            isLoadingPieces={isLoadingPieces}
           />
-          {debouncedQuery.length === 0 && (
+          {debouncedQuery.length === 0 && piecesIsLoaded && !noResultsFound && (
             <>
               <Separator orientation="vertical" className="h-full" />
               <StepsCardList
@@ -203,3 +290,24 @@ const PieceSelector = ({
 };
 
 export { PieceSelector };
+
+function filterOutPiecesWithNoSuggestions(
+  metadata: StepMetadataWithSuggestions[],
+) {
+  return metadata.filter((step) => {
+    const isActionWithSuggestions =
+      step.type === ActionType.PIECE &&
+      step.suggestedActions &&
+      step.suggestedActions.length > 0;
+    const isTriggerWithSuggestions =
+      step.type === TriggerType.PIECE &&
+      step.suggestedTriggers &&
+      step.suggestedTriggers.length > 0;
+    const isNotPieceType =
+      step.type !== ActionType.PIECE && step.type !== TriggerType.PIECE;
+
+    return (
+      isActionWithSuggestions || isTriggerWithSuggestions || isNotPieceType
+    );
+  });
+}
