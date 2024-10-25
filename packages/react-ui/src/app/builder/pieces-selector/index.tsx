@@ -178,7 +178,7 @@ const PieceSelector = ({
           }}
         />
         <Separator orientation="horizontal" />
-        <div className="flex overflow-y-auto max-h-[300px] h-[300px]">
+        <div className="flex overflow-y-auto max-h-[350px] h-[35`0px]">
           <PiecesCardList
             debouncedQuery={debouncedQuery}
             selectedTag={selectedTag}
