@@ -4,7 +4,7 @@ import {
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
-import { AnalyticsReportResponse, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 import {
   AI,
   AIChatRole,
