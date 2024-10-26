@@ -52,27 +52,20 @@ export const classifyTextOrImage = createAction({
           role: AIChatRole.USER,
           content: `As a text classifier, your task is to assign one of the following categories to the provided text: ${categories.join(
             ', '
-          )}. 
-                    Please respond with a JSON object containing the category as follows:
-                    {
-                        "category": "YOUR_SELECTED_CATEGORY"
-                    }
-
-                    Text to classify: "${context.propsValue.body}"`,
+          )}. Please respond with only the selected category as a single word, and nothing else.
+          Text to classify: "${context.propsValue.body}"`,
         },
       ],
     });
 
-    // Parse the JSON response
     const result = response.choices[0].content.trim();
-    const jsonResponse = JSON.parse(result);
 
-    if (!categories.includes(jsonResponse.category)) {
+    if (!categories.includes(result)) {
       throw new Error(
         'Unable to classify the text into the provided categories.'
       );
     }
 
-    return jsonResponse;
+    return result;
   },
 });
