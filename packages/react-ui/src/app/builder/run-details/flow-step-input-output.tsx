@@ -1,3 +1,4 @@
+import { flowHelper, StepOutput } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Timer } from 'lucide-react';
 import React from 'react';
@@ -7,11 +8,10 @@ import { JsonViewer } from '@/components/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
-import { flowHelper, StepOutput } from '@activepieces/shared';
 
 const FlowStepInputOutput = React.memo(
   ({ stepDetails }: { stepDetails: StepOutput }) => {
-    const stepOutput = stepDetails.output ?? stepDetails.errorMessage;
+    const stepOutput = stepDetails.errorMessage ?? stepDetails.output;
 
     const [flowVersion, selectedStepName] = useBuilderStateContext((state) => [
       state.flowVersion,
