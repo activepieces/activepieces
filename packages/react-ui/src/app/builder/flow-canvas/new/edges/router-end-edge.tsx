@@ -28,24 +28,32 @@ export const ApRouterEndCanvasEdge = ({
   }
     v ${data.verticalSpaceBetweenLastNodeInBranchAndEndLine}
    
-    ${ distanceBetweenTargetAndSource>= flowUtilConsts.ARC_LENGTH ?`    ${
-      targetX > sourceX
-        ? flowUtilConsts.ARC_RIGHT_DOWN
-        : flowUtilConsts.ARC_LEFT_DOWN
-    }` : ``} 
+    ${
+      distanceBetweenTargetAndSource >= flowUtilConsts.ARC_LENGTH
+        ? `${
+            targetX > sourceX
+              ? flowUtilConsts.ARC_RIGHT_DOWN
+              : flowUtilConsts.ARC_LEFT_DOWN
+          }`
+        : `
+     v ${flowUtilConsts.ARC_LENGTH}
+    `
+    } 
 
 
 
-       ${data.drawHorizontalLine ? `h ${horizontalLineLength}  
+       ${
+         data.drawHorizontalLine
+           ? `h ${horizontalLineLength}  
 
 
         
-     ${ targetX > sourceX ? flowUtilConsts.ARC_RIGHT : flowUtilConsts.ARC_LEFT}
+     ${targetX > sourceX ? flowUtilConsts.ARC_RIGHT : flowUtilConsts.ARC_LEFT}
         
        
-       ` : ``
-      
-      }
+       `
+           : ``
+       }
       
 
     ${

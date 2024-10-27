@@ -208,18 +208,8 @@ const getDefaultStep = ({
                 branchName: 'Path 1',
               },
               {
-                conditions: [
-                  [
-                    {
-                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                      firstValue: '',
-                      secondValue: '',
-                      caseSensitive: false,
-                    },
-                  ],
-                ],
-                branchType: BranchExecutionType.CONDITION,
-                branchName: 'Path 2',
+                branchType: BranchExecutionType.FALLBACK,
+                branchName: 'Fallback',
               },
             ],
             inputUiInfo: {

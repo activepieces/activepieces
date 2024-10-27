@@ -269,6 +269,13 @@ export const RouterActionSettings = Type.Object({
   executionType: Type.Enum(RouterExecutionType),
   inputUiInfo: SampleDataSetting,
 });
+
+export const RouterActionSettingsWithValidation = Type.Object({
+  branches: RouterBranchesSchema(true),
+  executionType: Type.Enum(RouterExecutionType),
+  inputUiInfo: SampleDataSetting,
+});
+
 export type RouterActionSettings = Static<typeof RouterActionSettings>;
 
 export const BranchActionSchema = Type.Object({
@@ -366,3 +373,10 @@ export type StepSettings =
   | PieceTriggerSettings
   | BranchActionSettings
   | LoopOnItemsActionSettings;
+
+export const emptyCondition: ValidBranchCondition = {
+  firstValue: '',
+  secondValue: '',
+  operator: BranchOperator.TEXT_CONTAINS,
+  caseSensitive: false,
+};

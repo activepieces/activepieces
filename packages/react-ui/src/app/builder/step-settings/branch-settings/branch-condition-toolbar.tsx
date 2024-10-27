@@ -12,7 +12,7 @@ type BranchConditionToolbarProps = {
 
 const BranchConditionToolbar = (props: BranchConditionToolbarProps) => {
   return (
-    <div className="flex gap-2 text-center justify-start">
+    <div className="flex gap-2 text-center justify-end">
       {props.showAnd && (
         <Button
           variant="basic"

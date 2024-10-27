@@ -1,13 +1,13 @@
-import { BaseEdge, EdgeProps } from "@xyflow/react";
-import { ApRouterStartEdge } from "../types";
-import { flowUtilConsts } from "../consts";
-import { ApAddButton } from "./add-button";
-import { StepLocationRelativeToParent } from "../../../../../../../shared/src";
+import { BaseEdge, EdgeProps } from '@xyflow/react';
+import { ApRouterStartEdge } from '../types';
+import { flowUtilConsts } from '../consts';
+import { ApAddButton } from './add-button';
+import { StepLocationRelativeToParent } from '../../../../../../../shared/src';
 
 const getElementWidth = (text: string) => {
   // Create a temporary element to calculate the pixel value
-  const tempElement = document.createElement("span");
-  tempElement.style.fontSize = flowUtilConsts.LABEL_HEIGHT + "px"; // Set the font size
+  const tempElement = document.createElement('span');
+  tempElement.style.fontSize = flowUtilConsts.LABEL_HEIGHT + 'px'; // Set the font size
   tempElement.innerHTML = text; // Set the text content
   document.body.appendChild(tempElement); // Append to the body to apply styles
   const width = tempElement.getBoundingClientRect().width; // Get computed font size in pixels
@@ -18,13 +18,12 @@ const getElementWidth = (text: string) => {
 
 export const ApRouterStartCanvasEdge = ({
   sourceX,
-  sourceY,
   targetX,
   targetY,
   data,
   source,
   id,
-}: EdgeProps & Omit<ApRouterStartEdge, "position">) => {
+}: EdgeProps & Omit<ApRouterStartEdge, 'position'>) => {
   const labelWidth = getElementWidth(data.label);
   const verticalLineLength =
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
@@ -41,8 +40,8 @@ export const ApRouterStartCanvasEdge = ({
       ${
         distanceBetweenSourceAndTarget >= flowUtilConsts.ARC_LENGTH
           ? sourceX > targetX
-            ? " a12,12 0 0,1 12,-12"
-            : " a-12,-12 0 0,0 -12,-12"
+            ? ' a12,12 0 0,1 12,-12'
+            : ' a-12,-12 0 0,0 -12,-12'
           : `
         v -${flowUtilConsts.ARC_LENGTH / 2}`
       } 
@@ -121,16 +120,21 @@ export const ApRouterStartCanvasEdge = ({
         </foreignObject>
       )}
       <foreignObject
-        width={labelWidth + "px"}
-        height={flowUtilConsts.LABEL_HEIGHT + 2 + "px"}
+        width={labelWidth + 'px'}
+        height={flowUtilConsts.LABEL_HEIGHT + 2 + 'px'}
         x={targetX - labelWidth / 2}
-        y={targetY - verticalLineLength}
+        y={
+          targetY -
+          verticalLineLength / 2 -
+          flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height -
+          15
+        }
       >
         <div
           className="text-foreground bg-background select-none cursor-default py-[1px]"
           style={{
-            fontSize: flowUtilConsts.LABEL_HEIGHT + "px",
-            lineHeight: flowUtilConsts.LABEL_HEIGHT + "px",
+            fontSize: flowUtilConsts.LABEL_HEIGHT + 'px',
+            lineHeight: flowUtilConsts.LABEL_HEIGHT + 'px',
           }}
         >
           {data.label}

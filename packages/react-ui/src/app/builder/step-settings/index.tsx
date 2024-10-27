@@ -136,6 +136,10 @@ const StepSettingsContainer = () => {
     control: form.control,
   });
 
+  const excutionTypeChange = useWatch({
+    name: 'settings.executionType',
+    control: form.control,
+  });
   const sourceCodeChange = useWatch({
     name: 'settings.sourceCode',
     control: form.control,
@@ -149,6 +153,7 @@ const StepSettingsContainer = () => {
     name: 'settings.errorHandlingOptions',
     control: form.control,
   });
+
   const displayName = useWatch({
     name: 'displayName',
     control: form.control,
@@ -176,7 +181,6 @@ const StepSettingsContainer = () => {
         return;
       }
       previousSavedStep.current = currentStep;
-
       if (currentStep.type === TriggerType.PIECE) {
         debouncedTrigger(currentStep as Trigger);
       } else {
@@ -192,6 +196,7 @@ const StepSettingsContainer = () => {
     inputUIInfo,
     displayName,
     pathChange,
+    excutionTypeChange,
   ]);
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();

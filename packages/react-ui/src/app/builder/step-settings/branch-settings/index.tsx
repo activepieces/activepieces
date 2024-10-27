@@ -8,14 +8,8 @@ import {
   BranchOperator,
   RouterAction,
   ValidBranchCondition,
+  emptyCondition,
 } from '@activepieces/shared';
-
-const emptyCondition: ValidBranchCondition = {
-  firstValue: '',
-  secondValue: '',
-  operator: BranchOperator.TEXT_CONTAINS,
-  caseSensitive: false,
-};
 
 type BranchSettingsProps = {
   readonly: boolean;
@@ -24,12 +18,11 @@ type BranchSettingsProps = {
 
 const BranchSettings = React.memo(
   ({ readonly, fieldName = 'settings.conditions' }: BranchSettingsProps) => {
-    const form = useFormContext<BranchAction | RouterAction>();
+    const form = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
       control: form.control,
       name: fieldName,
     });
-    console.log(fields);
 
     const handleDelete = (groupIndex: number, conditionIndex: number) => {
       const conditions = form.getValues(fieldName);
@@ -62,7 +55,7 @@ const BranchSettings = React.memo(
         <div className="text-md">
           {fieldName === 'settings.conditions'
             ? t('Continue If')
-            : t('Enter Path If')}
+            : t('Excute Path If')}
         </div>
         {fields.map((fieldGroup, groupIndex) => (
           <BranchConditionGroup

@@ -20,6 +20,7 @@ import {
   PieceActionSettings,
   PieceTriggerSettings,
   ProjectId,
+  RouterActionSettingsWithValidation,
   sanitizeObjectForPostgresql,
   SeekPage,
   TriggerType,
@@ -40,6 +41,9 @@ const branchSettingsValidator = TypeCompiler.Compile(
   BranchActionSettingsWithValidation
 );
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettings);
+const routerSettingsValidator = TypeCompiler.Compile(
+  RouterActionSettingsWithValidation
+);
 const flowVersionRepo = repoFactory(FlowVersionEntity);
 
 export const flowVersionService = {
@@ -394,7 +398,7 @@ async function prepareRequest(
           });
           break;
         case ActionType.ROUTER:
-          clonedRequest.request.action.valid = branchSettingsValidator.Check(
+          clonedRequest.request.action.valid = routerSettingsValidator.Check(
             clonedRequest.request.action.settings
           );
           break;
@@ -424,7 +428,7 @@ async function prepareRequest(
           break;
         }
         case ActionType.ROUTER:
-          clonedRequest.request.valid = branchSettingsValidator.Check(
+          clonedRequest.request.valid = routerSettingsValidator.Check(
             clonedRequest.request.settings
           );
           break;

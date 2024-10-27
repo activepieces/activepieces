@@ -8,6 +8,7 @@ import {
   BranchAction,
   BranchExecutionType,
   BranchOperator,
+  emptyCondition,
   LoopOnItemsAction,
   RouterAction,
   SingleActionSchema,
@@ -661,6 +662,7 @@ function createAction(
       };
       break;
   }
+  console.log(actionSchemaValidator.Check(action));
   return {
     ...action,
     valid:
@@ -1182,6 +1184,13 @@ function findPathToStep({
     })
     .filter((step) => step.name !== targetStepName);
 }
+const createEmptyPath = (pathNumber: number) => {
+  return {
+    conditions: [[emptyCondition]],
+    branchType: BranchExecutionType.CONDITION,
+    branchName: `Path ${pathNumber}`,
+  };
+};
 
 export const flowHelper = {
   isValid,
@@ -1263,20 +1272,9 @@ export const flowHelper = {
             (parentStep.nextAction as RouterAction).settings.branches.splice(
               operation.request.pathIndex,
               0,
-              {
-                conditions: [
-                  [
-                    {
-                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                      firstValue: '',
-                      secondValue: '',
-                      caseSensitive: false,
-                    },
-                  ],
-                ],
-                branchType: BranchExecutionType.CONDITION,
-                branchName: `Path ${operation.request.pathIndex + 1}`,
-              }
+              createEmptyPath(
+                (parentStep.nextAction as RouterAction).settings.branches.length
+              )
             );
             (parentStep.nextAction as RouterAction).children.splice(
               operation.request.pathIndex,
@@ -1315,4 +1313,5 @@ export const flowHelper = {
   findPathToStep,
   updateFlowSecrets,
   findUnusedName,
+  createEmptyPath,
 };
