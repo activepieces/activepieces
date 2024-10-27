@@ -18,34 +18,39 @@ export const humanInputApi = {
     });
   },
   submitForm: (formResult: FormResponse, useDraft: boolean, data: unknown) => {
-    const suffix = useDraft
-      ? '/test'
-      : formResult.props.waitForResponse
-      ? '/sync'
-      : '';
+    const suffix = getSuffix(useDraft, formResult.props.waitForResponse);
     return api.post<FormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
       data,
     );
   },
-  sendMessage: async ({ flowId, chatId, message, files }: SendMessageParams) => {
+  sendMessage: async ({ flowId, chatId, message, files, useDraft }: SendMessageParams) => {
     const formData = new FormData();
     formData.append('chatId', chatId);
     formData.append('message', message);
     files.forEach(async (file, index) => {
       formData.append(`file[${index}]`, new Blob([file]));
     });
-    return api.post<FormResult | null>(`/v1/webhooks/${flowId}/sync`, formData, undefined, {
+    const suffix = getSuffix(useDraft, true);
+    return api.post<FormResult | null>(`/v1/webhooks/${flowId}${suffix}`, formData, undefined, {
       'Content-Type': 'multipart/form-data',
     });
   },
 };
+
+function getSuffix(useDraft: boolean, waitForResponse: boolean): string {
+  if (useDraft) {
+    return waitForResponse ? '/draft/sync' : '/draft';
+  }
+  return waitForResponse ? '/sync' : '';
+}
 
 type SendMessageParams = {
   flowId: string;
   chatId: string;
   message: string;
   files: File[];
+  useDraft: boolean;
 };
 
 export type FormResult =

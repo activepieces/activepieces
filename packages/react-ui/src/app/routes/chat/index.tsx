@@ -1,5 +1,13 @@
 import { LoadingScreen } from '@/app/components/loading-screen';
 import { FileInputPreview } from '@/app/routes/chat/file-input-preview';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
+import { ArrowUpIcon } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import React, { useEffect, useRef, useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
+import { useSearchParam } from 'react-use';
+
 import { Button } from '@/components/ui/button';
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import {
@@ -7,21 +15,17 @@ import {
   humanInputApi,
 } from '@/features/human-input/lib/human-input-api';
 import { cn } from '@/lib/utils';
-import { ApErrorParams, ChatUIResponse, ErrorCode, isNil } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
+import { ApErrorParams, ChatUIResponse, ErrorCode, isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 import {
-  ArrowUpIcon,
   Paperclip
 } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import React, { useEffect, useRef, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+
 import { ImageDialog } from './image-dialog';
 import { Messages, MessagesList } from './messages-list';
 
 export function ChatPage() {
   const { flowId } = useParams();
+  const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
   const messagesRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -31,7 +35,7 @@ export function ChatPage() {
     isError: isLoadingError,
   } = useQuery<ChatUIResponse | null, Error>({
     queryKey: ['chat', flowId],
-    queryFn: () => humanInputApi.getChatUI(flowId!, false),
+    queryFn: () => humanInputApi.getChatUI(flowId!, useDraft),
     enabled: !isNil(flowId),
     staleTime: Infinity,
     retry: false,
@@ -89,6 +93,7 @@ export function ChatPage() {
         chatId: chatId.current,
         message: savedInput,
         files: savedFiles,
+        useDraft,
       });
     },
     onSuccess: (result) => {
