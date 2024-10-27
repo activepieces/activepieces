@@ -20,10 +20,11 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_MESSAGE, INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -34,9 +35,11 @@ import {
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
+import { api } from '@/lib/api';
+import { ApErrorParams, ErrorCode } from '../../../../../shared/src';
 
 const ConnectGitDialog = () => {
-  const projectId = authenticationSession.getProjectId();
+  const projectId = authenticationSession.getProjectId()!;
   const { platform } = platformHooks.useCurrentPlatform();
 
   const form = useForm<ConfigureRepoRequest>({
@@ -69,10 +72,21 @@ const ConnectGitDialog = () => {
       });
     },
     onError: (error) => {
-      toast(INTERNAL_ERROR_TOAST);
-      console.error(error);
-    },
+      let message = INTERNAL_ERROR_MESSAGE;
+      
+      if (api.isError(error)) {
+        const responseData = error.response?.data as ApErrorParams;
+        if (responseData.code === ErrorCode.INVALID_GIT_CREDENTIALS) {
+          message = `Invalid git credentials, please check the credentials, \n ${responseData.params.message}`;
+        }
+      }
+      form.setError('root.serverError', {
+        message: message,
+      });
+      return;
+    }
   });
+
   return (
     <Form {...form}>
       <form
@@ -157,6 +171,11 @@ const ConnectGitDialog = () => {
                   </FormItem>
                 )}
               />
+              {form?.formState?.errors?.root?.serverError && (
+                <FormMessage>
+                  {form.formState.errors.root.serverError.message}
+                </FormMessage>
+              )}
             </div>
 
             <DialogFooter>

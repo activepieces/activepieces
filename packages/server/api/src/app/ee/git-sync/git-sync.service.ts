@@ -23,7 +23,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
 import { gitHelper } from './git-helper'
-import { GitRepoEntity } from './git-repo.entity'
+import { GitRepoEntity } from './git-sync.entity'
 import { gitSyncHelper } from './git-sync-helper'
 import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
@@ -32,6 +32,8 @@ const repo = repoFactory(GitRepoEntity)
 
 export const gitRepoService = {
     async upsert(request: ConfigureRepoRequest): Promise<GitRepo> {
+        await gitHelper.validateConnection(request)
+
         const existingRepo = await repo().findOneBy({ projectId: request.projectId })
         const id = existingRepo?.id ?? apId()
         await repo().upsert(

@@ -16,7 +16,7 @@ import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { platformService } from '../../platform/platform.service'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
-import { gitRepoService } from './git-repo.service'
+import { gitRepoService } from './git-sync.service'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
@@ -42,9 +42,10 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     })
 
     app.post('/', ConfigureRepoRequestSchema, async (request, reply) => {
+        const gitSync = await gitRepoService.upsert(request.body)
         await reply
             .status(StatusCodes.CREATED)
-            .send(await gitRepoService.upsert(request.body))
+            .send(gitSync)
     })
 
     app.get('/', ListRepoRequestSchema, async (request) => {
@@ -179,4 +180,3 @@ const ListRepoRequestSchema = {
         },
     },
 }
-
