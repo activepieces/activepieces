@@ -226,7 +226,7 @@ export function ChatPage() {
           ref={formRef}
           onSubmit={onSubmit}
         >
-          <div className="flex flex-col items-center justify-between pe-1 pt-0 rounded-3xl bg-muted">
+          <div className="flex flex-col items-center justify-between pe-2 pt-0 rounded-3xl bg-muted">
             {files.length > 0 && (
               <div className="px-4 py-3 w-full">
                 <div className="flex items-start gap-3 overflow-x-auto">
@@ -265,9 +265,9 @@ export function ChatPage() {
                 disabled={!input || isSending}
                 type="submit"
                 size="icon"
-                className="rounded-full min-w-10 min-h-10"
+                className="rounded-full min-w-8 min-h-8 h-8 w-8"
               >
-                <ArrowUpIcon className="w-5 h-5 size-5" />
+                <ArrowUpIcon className="w-4 h-4 size-4" />
               </Button>
             </div>
           </div>
