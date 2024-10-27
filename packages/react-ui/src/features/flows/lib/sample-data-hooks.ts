@@ -10,6 +10,7 @@ export const sampleDataHooks = {
       queryKey: ['sampleData', flowVersion?.id],
       enabled: !!flowVersion,
       staleTime: 0,
+      refetchOnWindowFocus: false,
       queryFn: async () => {
         const steps = flowHelper.getAllSteps(flowVersion!.trigger);
         const singleStepSampleData = await Promise.all(
