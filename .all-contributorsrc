@@ -1307,6 +1307,24 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "liuhuapiaoyuan",
+      "name": "abc",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8020726?v=4",
+      "profile": "https://github.com/liuhuapiaoyuan",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "manojkum-d",
+      "name": "manoj kumar d",
+      "avatar_url": "https://avatars.githubusercontent.com/u/141437046?v=4",
+      "profile": "https://github.com/manojkum-d",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -10,6 +10,7 @@ import {
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
   ActivepiecesClientEventName,
   ActivepiecesClientInit,
+  ActivepiecesClientShowConnectionIframe,
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
 } from 'ee-embed-sdk';
@@ -23,7 +24,6 @@ const EmbedPage = React.memo(() => {
       console.error(error);
     },
   });
-
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
     if (
       event.source === window.parent &&
@@ -31,6 +31,7 @@ const EmbedPage = React.memo(() => {
     ) {
       const token =
         event.data.data.jwtToken || getExternalTokenFromSearchQuery();
+
       if (token) {
         mutateAsync(
           {
@@ -51,7 +52,19 @@ const EmbedPage = React.memo(() => {
                 hideFolders: event.data.data.hideFolders || false,
                 sdkVersion: event.data.data.sdkVersion,
               });
-              navigate('/');
+
+              //previously initialRoute was optional
+              const initialRoute = event.data.data.initialRoute ?? '/';
+              if (initialRoute.startsWith('/embed/connections')) {
+                const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe =
+                  {
+                    type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
+                    data: {},
+                  };
+                window.parent.postMessage(showConnectionIframeEvent, '*');
+                document.body.style.background = 'transparent';
+              }
+              navigate(initialRoute);
             },
           },
         );
@@ -77,7 +90,7 @@ const EmbedPage = React.memo(() => {
     };
   });
 
-  return <div></div>;
+  return <></>;
 });
 
 EmbedPage.displayName = 'EmbedPage';

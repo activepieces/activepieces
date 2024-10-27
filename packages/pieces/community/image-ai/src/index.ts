@@ -8,7 +8,7 @@ export const imageAi = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/image-ai.svg',
-  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.UNIVERSAL_AI],
   authors: ['kishanprmr'],
   actions: [extractStructuredData, generateImage],
   triggers: [],

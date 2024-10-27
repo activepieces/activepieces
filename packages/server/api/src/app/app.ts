@@ -1,7 +1,7 @@
 import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, initializeSentry, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ExecutionMode, Flow, FlowRun, FlowTemplate, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
@@ -39,7 +39,7 @@ import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
-import { gitRepoModule } from './ee/git-repos/git-repo.module'
+import { gitRepoModule } from './ee/git-sync/git-sync.module'
 import { emailService } from './ee/helper/email/email-service'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
@@ -61,7 +61,7 @@ import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
-import { formModule } from './flows/flow/form/form.module'
+import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
@@ -69,12 +69,11 @@ import { folderModule } from './flows/folder/folder.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
-import { encryptUtils } from './helper/encryption'
-import { jwtUtils } from './helper/jwt-utils'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { systemJobsSchedule } from './helper/system-jobs'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
+import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
@@ -211,7 +210,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(copilotModule),
     await app.register(requestWriterModule),
     await app.register(platformModule)
-    await app.register(formModule)
+    await app.register(humanInputModule)
     await app.register(tagsModule)
     await pieceSyncService.setup()
     await app.register(platformUserModule)
@@ -338,54 +337,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 }
 
 
-const validateEnvPropsOnStartup = async (): Promise<void> => {
-    const codeSandboxType = process.env.AP_CODE_SANDBOX_TYPE
-    if (!isNil(codeSandboxType)) {
-        throw new Error(JSON.stringify({
-            message: 'AP_CODE_SANDBOX_TYPE is deprecated, please use AP_EXECUTION_MODE instead',
-            docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
-        }))
-    }
-    const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
-    const encryptionKey = await encryptUtils.loadEncryptionKey(queueMode)
-    const isValidHexKey = encryptionKey && /^[A-Za-z0-9]{32}$/.test(encryptionKey)
-    if (!isValidHexKey) {
-        throw new Error(JSON.stringify({
-            message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',
-            docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
-        }))
-    }
-    const isApp = system.isApp()
-    if (isApp) {
-        const rentionPeriod = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
-        const maximumPausedFlowTimeout = system.getNumberOrThrow(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-        if (maximumPausedFlowTimeout > rentionPeriod) {
-            throw new Error(JSON.stringify({
-                message: 'AP_PAUSED_FLOW_TIMEOUT_DAYS can not exceed AP_EXECUTION_DATA_RETENTION_DAYS',
-            }))
-        }
-    }
-
-    const jwtSecret = await jwtUtils.getJwtSecret()
-    if (isNil(jwtSecret)) {
-        throw new Error(JSON.stringify({
-            message: 'AP_JWT_SECRET is undefined, please define it in the environment variables',
-            docUrl: 'https://www.activepieces.com/docs/install/configurations/environment-variables',
-        }))
-    }
-
-    const edition = system.getEdition()
-    const test = system.get(SharedSystemProp.ENVIRONMENT)
-    if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && test !== ApEnvironment.TESTING) {
-        const executionMode = system.getOrThrow<ExecutionMode>(SharedSystemProp.EXECUTION_MODE)
-        if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode)) {
-            throw new Error(JSON.stringify({
-                message: 'Execution mode UNSANDBOXED is no longer supported in this edition, check the documentation for recent changes',
-                docUrl: 'https://www.activepieces.com/docs/install/configuration/overview',
-            }))
-        }
-    }
-}
 
 async function getAdapter() {
     const queue = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)

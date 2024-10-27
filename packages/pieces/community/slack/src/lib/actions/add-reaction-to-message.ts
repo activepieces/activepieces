@@ -1,6 +1,6 @@
 import { slackAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { slackChannel, slackInfo } from '../common/props';
+import { singleSelectChannelInfo, slackChannel } from '../common/props';
 
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
@@ -12,7 +12,7 @@ export const addRectionToMessageAction = createAction({
   description: 'Add an emoji reaction to a message.',
 
   props: {
-    info: slackInfo,
+    info: singleSelectChannelInfo,
     channel: slackChannel(true),
     ts: Property.ShortText({
       displayName: 'Message Timestamp',

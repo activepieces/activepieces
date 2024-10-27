@@ -1,5 +1,5 @@
-# [Choice] Node.js version (use -bullseye variants on local arm64/Apple Silicon): 18, 16, 14, 18-bullseye, 16-bullseye, 14-bullseye, 18-buster, 16-buster, 14-buster
-ARG VARIANT=18-bullseye
+# [Choice] Node.js version (use -bullseye variants on local arm64/Apple Silicon): 20, 18, 16, 14, 20-bullseye, 18-bullseye, 16-bullseye, 14-bullseye, 20-buster, 18-buster, 16-buster, 14-buster
+ARG VARIANT=20-bullseye
 FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-${VARIANT}
 
 # [Optional] Uncomment this section to install additional OS packages.
@@ -32,12 +32,12 @@ ENV LC_ALL en_US.UTF-8
 
 COPY default.cf /usr/local/etc/isolate
 
-RUN npm i -g pnpm@7.28.0
+RUN npm i -g pnpm@9.12.1
 RUN npm i -g cross-env@7.0.3
 
 RUN pnpm config set store-dir /root/.local/share/pnpm/store
 
-RUN pnpm store add \
-  @tsconfig/node18@1.0.0 \
-  @types/node@18.17.1 \
-  typescript@4.8.4
+# Update to use Node.js 20 packages
+RUN pnpm store add @tsconfig/node20@20.1.4
+RUN pnpm store add @types/node@20.14.8
+RUN pnpm store add typescript@4.9.4

@@ -1,9 +1,19 @@
 import { api } from '@/lib/api';
-import { FileResponseInterface, FormResponse, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import {
+  ChatUIResponse,
+  FileResponseInterface,
+  FormResponse,
+  USE_DRAFT_QUERY_PARAM_NAME,
+} from '@activepieces/shared';
 
 export const humanInputApi = {
-  get: (flowId: string, useDraft?: boolean) => {
-    return api.get<FormResponse>(`/v1/forms/${flowId}`, {
+  getForm: (flowId: string, useDraft?: boolean) => {
+    return api.get<FormResponse>(`/v1/human-input/form/${flowId}`, {
+      [USE_DRAFT_QUERY_PARAM_NAME]: useDraft ?? false,
+    });
+  },
+  getChatUI: (flowId: string, useDraft?: boolean) => {
+    return api.get<ChatUIResponse>(`/v1/human-input/chat/${flowId}`, {
       [USE_DRAFT_QUERY_PARAM_NAME]: useDraft ?? false,
     });
   },
@@ -37,13 +47,15 @@ type SendMessageParams = {
   useDraft: boolean;
 };
 
-export type FormResult = {
-  type: FormResultTypes.FILE;
-  value: FileResponseInterface;
-} | {
-  type: FormResultTypes.MARKDOWN;
-  value: string;
-};
+export type FormResult =
+  | {
+      type: FormResultTypes.FILE;
+      value: FileResponseInterface;
+    }
+  | {
+      type: FormResultTypes.MARKDOWN;
+      value: string;
+    };
 
 export enum FormResultTypes {
   MARKDOWN = 'markdown',

@@ -29,34 +29,30 @@ export const flowRunsApi = {
     socket: Socket,
     request: TestFlowRunRequestBody,
     onUpdate: (response: FlowRun) => void,
-  ) {
+  ): Promise<void> {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
-    const run = await getInitialRun(socket, request.flowVersionId);
-
-    onUpdate(run);
+    const initalRun = await getInitialRun(socket, request.flowVersionId);
+    onUpdate(initalRun);
     return new Promise<void>((resolve, reject) => {
       const handleProgress = (response: FlowRun) => {
-        if (run.id !== response.id) {
+        if (initalRun.id !== response.id) {
           return;
         }
         onUpdate(response);
         if (isFlowStateTerminal(response.status)) {
-          socket.off(
-            WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS,
-            handleProgress,
-          );
+          socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
           socket.off('error', handleError);
           resolve();
         }
       };
 
       const handleError = (error: any) => {
-        socket.off(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, handleProgress);
+        socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
         socket.off('error', handleError);
         reject(error);
       };
 
-      socket.on(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, handleProgress);
+      socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
       socket.on('error', handleError);
     });
   },

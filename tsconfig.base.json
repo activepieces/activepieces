@@ -127,6 +127,9 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
+      "@activepieces/piece-confluence": [
+        "packages/pieces/community/confluence/src/index.ts"
+      ],
       "@activepieces/piece-connections": [
         "packages/pieces/community/connections/src/index.ts"
       ],
@@ -619,6 +622,9 @@
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"
       ],
+      "@activepieces/piece-village": [
+        "packages/pieces/community/village/src/index.ts"
+      ],
       "@activepieces/piece-vtex": [
         "packages/pieces/community/vtex/src/index.ts"
       ],
@@ -698,6 +704,9 @@
       ],
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
+      ],
+      "@activepieces/piece-reachinbox": [
+        "packages/pieces/community/reachinbox/src/index.ts"
       ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
