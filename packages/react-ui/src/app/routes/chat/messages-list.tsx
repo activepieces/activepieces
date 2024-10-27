@@ -103,7 +103,7 @@ const ErrorBubble = ({
   sendingError: ApErrorParams,
   sendMessage: (arg0: { isRetrying: boolean }) => void
 }) => (
-  <ChatBubble variant="received">
+  <ChatBubble variant="received" className="pb-8">
     <div className="relative">
       <ChatBubbleAvatar
         src={chatUI?.platformLogoUrl}
@@ -130,7 +130,7 @@ const ErrorBubble = ({
 );
 
 const SendingBubble = ({ chatUI }: { chatUI: ChatUIResponse | null | undefined }) => (
-  <ChatBubble variant="received">
+  <ChatBubble variant="received" className="pb-8">
     <ChatBubbleAvatar
       src={chatUI?.platformLogoUrl}
       fallback={<BotIcon className="size-5" />}
@@ -150,27 +150,32 @@ export const MessagesList = React.memo(({
   setSelectedImage
 }: MessagesListProps) => {
   return (
-    <ChatMessageList ref={messagesRef}>
-      {messages.map((message, index) => (
-        <ChatBubble
-          id={index === messages.length - 1 ? "last-message" : undefined}
-          key={message.content}
-          variant={message.role === 'user' ? 'sent' : 'received'}
-          className="flex items-start"
-        >
-          {message.role === 'bot' && (
-            <ChatBubbleAvatar
-              src={chatUI?.platformLogoUrl}
-              fallback={<BotIcon className="size-5" />}
-            />
-          )}
-          <ChatBubbleMessage className={cn("flex flex-col gap-2", message.role === "bot" ? "w-full" : "", message.type && message.type !== "text" ? "bg-transparent px-0" : "")}>
-            <MessageContent message={message} setSelectedImage={setSelectedImage} />
-          </ChatBubbleMessage>
-        </ChatBubble>
-      ))}
+    <ChatMessageList ref={messagesRef} className="w-full max-w-3xl">
+      {messages.map((message, index) => {
+        const isLastMessage = index === messages.length - 1;
+        return (
+          <ChatBubble
+            id={isLastMessage ? "last-message" : undefined}
+            key={index}
+            variant={message.role === 'user' ? 'sent' : 'received'}
+            className={cn("flex items-start", isLastMessage ? "pb-8" : "")}
+          >
+            {message.role === 'bot' && (
+              <ChatBubbleAvatar
+                src={chatUI?.platformLogoUrl}
+                fallback={<BotIcon className="size-5" />}
+              />
+            )}
+            <ChatBubbleMessage className={cn("flex flex-col gap-2", message.role === "bot" ? "w-full" : "", message.type && message.type !== "text" ? "bg-transparent px-0" : "")}>
+              <MessageContent message={message} setSelectedImage={setSelectedImage} />
+            </ChatBubbleMessage>
+          </ChatBubble>
+        )
+      })}
       {sendingError && !isSending && <ErrorBubble chatUI={chatUI} flowId={flowId} sendingError={sendingError} sendMessage={sendMessage} />}
       {isSending && <SendingBubble chatUI={chatUI} />}
     </ChatMessageList>
   );
+}, (prevProps, nextProps) => {
+  return prevProps.messages.length === nextProps.messages.length && prevProps.sendingError === nextProps.sendingError && prevProps.isSending === nextProps.isSending;
 });

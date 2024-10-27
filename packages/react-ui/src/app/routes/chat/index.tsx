@@ -41,13 +41,11 @@ export function ChatPage() {
 
   const scrollToBottom = () => {
     setTimeout(() => {
-      messagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      const lastMessage = document.getElementById('last-message');
+      if (lastMessage) {
+        lastMessage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }, 100);
-  };
-
-  // @ts-expect-error: Adding scrollToBottom to window object for debugging purposes
-  window.chat = {
-    scrollToBottom,
   };
 
   const chatId = useRef<string>(nanoid());
@@ -162,7 +160,6 @@ export function ChatPage() {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      const files = [...previousFilesRef.current, ...Array.from(event.target.files!)]
       setFiles(prevFiles => [...prevFiles, ...Array.from(event.target.files!)]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -186,7 +183,7 @@ export function ChatPage() {
   return (
     <main
       className={cn(
-        'flex w-full max-w-3xl flex-col items-center mx-auto py-6',
+        'flex w-full flex-col items-center justify-center py-6',
         messages.length > 0 ? 'h-screen' : 'h-[calc(50vh)]',
       )}
     >
@@ -224,7 +221,7 @@ export function ChatPage() {
           </div>
         </div>
       )}
-      <div className="w-full px-4">
+      <div className="w-full px-4 max-w-3xl">
         <form
           ref={formRef}
           onSubmit={onSubmit}
@@ -235,6 +232,7 @@ export function ChatPage() {
                 <div className="flex items-start gap-3 overflow-x-auto">
                   {files.map((file, index) => (
                     <FileInputPreview
+                      key={`${file.name}-${index}`}
                       file={file}
                       index={index}
                       onRemove={removeFile}

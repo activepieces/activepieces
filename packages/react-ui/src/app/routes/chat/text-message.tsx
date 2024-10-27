@@ -17,7 +17,7 @@ interface TextMessageProps {
   attachments?: FileResponseInterface[]
 }
 
-export const TextMessage: React.FC<TextMessageProps> = ({ content, role }) => {
+export const TextMessage: React.FC<TextMessageProps> = React.memo(({ content, role }) => {
   const { theme } = useTheme();
   const extensions = [
     theme === 'dark' ? githubDark : githubLight,
@@ -103,7 +103,9 @@ export const TextMessage: React.FC<TextMessageProps> = ({ content, role }) => {
       )}
     </>
   );
-};
+}, (prevProps, nextProps) => {
+  return prevProps.content === nextProps.content && prevProps.role === nextProps.role;
+});
 
 const CopyCode = ({
   textToCopy,

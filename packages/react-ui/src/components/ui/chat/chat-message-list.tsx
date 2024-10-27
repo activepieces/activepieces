@@ -7,7 +7,7 @@ type ChatMessageListProps = React.HTMLAttributes<HTMLDivElement>;
 
 const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
   ({ className, children, ...props }, ref) => (
-    <ScrollArea className="h-full w-full">
+    <div className="h-full w-full flex items-center justify-center overflow-y-auto">
       <div
         className={cn('flex flex-col w-full h-full p-4 gap-2', className)}
         ref={ref}
@@ -15,7 +15,7 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
       >
         {children}
       </div>
-    </ScrollArea>
+    </div>
   ),
 );
 
