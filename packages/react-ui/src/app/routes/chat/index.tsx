@@ -1,23 +1,30 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import {
-  ArrowUpIcon,
-  BotIcon,
-} from 'lucide-react';
+import { ArrowUpIcon, BotIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
+import { useSearchParam } from 'react-use';
 
 import { Button } from '@/components/ui/button';
 import { ChatBubbleAvatar } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
-import { FormResultTypes, humanInputApi } from '@/features/human-input/lib/human-input-api';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import {
+  FormResultTypes,
+  humanInputApi,
+} from '@/features/human-input/lib/human-input-api';
 import { cn } from '@/lib/utils';
-import { ApErrorParams, ChatUIResponse, ErrorCode, USE_DRAFT_QUERY_PARAM_NAME, isNil } from '@activepieces/shared';
-import { useSearchParam } from 'react-use';
+import {
+  ApErrorParams,
+  ChatUIResponse,
+  ErrorCode,
+  USE_DRAFT_QUERY_PARAM_NAME,
+  isNil,
+} from '@activepieces/shared';
+
 import { ImageDialog } from './image-dialog';
 import { Messages, MessagesList } from './messages-list';
-import { LoadingSpinner } from '@/components/ui/spinner';
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -31,7 +38,7 @@ export function ChatPage() {
     isError: isLoadingError,
   } = useQuery<ChatUIResponse | null, Error>({
     queryKey: ['chat', flowId],
-    queryFn: () => humanInputApi.getChatUI(flowId!, false),
+    queryFn: () => humanInputApi.getChatUI(flowId!, useDraft),
     enabled: !isNil(flowId),
     staleTime: Infinity,
     retry: false,

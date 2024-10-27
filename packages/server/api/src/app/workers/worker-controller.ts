@@ -95,7 +95,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         )
         const createFlowRuns = filterPayloads.map((payload) =>
             flowRunService.start({
-                environment: environment,
+                environment,
                 flowVersionId,
                 payload,
                 synchronousHandlerId,
