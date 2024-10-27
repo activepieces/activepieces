@@ -9,7 +9,7 @@ const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
   ({ className, children, ...props }, ref) => (
     <ScrollArea className="h-full w-full">
       <div
-        className={cn('flex flex-col w-full h-full p-4 gap-6', className)}
+        className={cn('flex flex-col w-full h-full p-4 gap-2', className)}
         ref={ref}
         {...props}
       >

@@ -1,22 +1,20 @@
+import { useTheme } from '@/components/theme-provider';
+import { Button } from '@/components/ui/button';
+import { CopyButton } from '@/components/ui/copy-button';
+import { cn } from '@/lib/utils';
+import { FileResponseInterface } from '@activepieces/shared';
 import { javascript } from '@codemirror/lang-javascript';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
-import ReactCodeMirror, {
-  EditorState,
-  EditorView,
-} from '@uiw/react-codemirror';
+import ReactCodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import { CodeIcon, Copy } from 'lucide-react';
 import React from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { useTheme } from '@/components/theme-provider';
-import { Button } from '@/components/ui/button';
-import { CopyButton } from '@/components/ui/copy-button';
-import { cn } from '@/lib/utils';
-
 interface TextMessageProps {
   content: string;
   role: 'user' | 'bot';
+  attachments?: FileResponseInterface[]
 }
 
 export const TextMessage: React.FC<TextMessageProps> = ({ content, role }) => {

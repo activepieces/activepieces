@@ -1,10 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
-import { ArrowUpIcon, BotIcon } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import React, { useEffect, useRef, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
-
+import { FileInputPreview } from '@/app/routes/chat/file-input-preview';
 import { Button } from '@/components/ui/button';
 import { ChatBubbleAvatar } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
@@ -14,13 +8,17 @@ import {
   humanInputApi,
 } from '@/features/human-input/lib/human-input-api';
 import { cn } from '@/lib/utils';
+import { ApErrorParams, ChatUIResponse, ErrorCode, isNil } from '@activepieces/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import {
-  ApErrorParams,
-  ChatUIResponse,
-  ErrorCode,
-  isNil,
-} from '@activepieces/shared';
-
+  ArrowUpIcon,
+  BotIcon,
+  Paperclip
+} from 'lucide-react';
+import { nanoid } from 'nanoid';
+import React, { useEffect, useRef, useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
 import { ImageDialog } from './image-dialog';
 import { Messages, MessagesList } from './messages-list';
 
@@ -60,23 +58,41 @@ export function ChatPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
-  const botName =
-    chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`;
+  const [files, setFiles] = useState<File[]>([]);
+  const previousFilesRef = useRef<File[]>([]);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const botName = chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`
 
   const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
       if (!flowId || !chatId) return null;
       const savedInput = isRetrying ? previousInputRef.current : input;
+      const savedFiles = isRetrying ? previousFilesRef.current : files;
       previousInputRef.current = savedInput;
+      previousFilesRef.current = savedFiles;
       setInput('');
+      setFiles([]);
       if (!isRetrying) {
-        setMessages([...messages, { role: 'user', content: savedInput }]);
+        const fileMessages: Messages = savedFiles.map(file => {
+          const isImage = file.type.startsWith('image/');
+          return ({
+            role: 'user' as const,
+            content: URL.createObjectURL(file),
+            type: isImage ? 'image' as const : 'file' as const,
+            mimeType: file.type,
+            fileName: file.name,
+          })
+        })
+        setMessages([...messages, ...fileMessages, { role: 'user', content: savedInput, }]);
       }
       scrollToBottom();
       return humanInputApi.sendMessage({
         flowId,
         chatId: chatId.current,
         message: savedInput,
+        files: savedFiles,
       });
     },
     onSuccess: (result) => {
@@ -106,7 +122,17 @@ export function ChatPage() {
             setSendingError(null);
             setMessages([
               ...messages,
-              { role: 'bot', content: result.value, type: 'text' },
+              { role: 'bot', content: result.value, type: 'text' as const },
+              ...(result.files ?? []).map(file => {
+                const isImage = "mimeType" in file ? file.mimeType?.startsWith('image/') : false;
+                return ({
+                  role: 'bot' as const,
+                  content: "url" in file ? file.url : file.base64Url,
+                  type: isImage ? 'image' as const : 'file' as const,
+                  mimeType: "mimeType" in file ? file.mimeType : undefined,
+                  fileName: "fileName" in file ? file.fileName : undefined,
+                })
+              }),
             ]);
         }
       }
@@ -132,6 +158,20 @@ export function ChatPage() {
         onSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
       }
     }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const files = [...previousFilesRef.current, ...Array.from(event.target.files!)]
+      setFiles(prevFiles => [...prevFiles, ...Array.from(event.target.files!)]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
   };
 
   if (!flowId || isLoadingError) return <Navigate to="/404" />;
@@ -185,24 +225,51 @@ export function ChatPage() {
         <form
           ref={formRef}
           onSubmit={onSubmit}
-          className="relative rounded-full border bg-background"
         >
-          <div className="flex items-center justify-between pe-1 pt-0">
-            <ChatInput
-              autoFocus
-              value={input}
-              onKeyDown={onKeyDown}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message here..."
-            />
-            <Button
-              disabled={!input || isSending}
-              type="submit"
-              size="icon"
-              className="rounded-full min-w-10 min-h-10"
-            >
-              <ArrowUpIcon className="w-5 h-5 size-5" />
-            </Button>
+          <div className="flex flex-col items-center justify-between pe-1 pt-0 rounded-3xl bg-muted">
+            {files.length > 0 && (
+              <div className="px-4 py-3 w-full">
+                <div className="flex items-start gap-3 overflow-x-auto">
+                  {files.map((file, index) => (
+                    <FileInputPreview
+                      file={file}
+                      index={index}
+                      onRemove={removeFile}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex-grow flex items-center w-full">
+              <div className="flex items-center ps-2">
+                <label htmlFor="file-upload" className="cursor-pointer p-2">
+                  <Paperclip className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+                </label>
+                <input
+                  ref={fileInputRef}
+                  id="file-upload"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+              <ChatInput
+                autoFocus
+                value={input}
+                onKeyDown={onKeyDown}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your message here..."
+              />
+              <Button
+                disabled={!input || isSending}
+                type="submit"
+                size="icon"
+                className="rounded-full min-w-10 min-h-10"
+              >
+                <ArrowUpIcon className="w-5 h-5 size-5" />
+              </Button>
+            </div>
           </div>
         </form>
       </div>
