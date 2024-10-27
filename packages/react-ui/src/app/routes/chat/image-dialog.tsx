@@ -31,7 +31,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
         if (e.key === 'Escape') onOpenChange(false);
       }}
     >
-      <div className="bg-transparent border-none shadow-none flex items-center justify-center">
+      <div className="bg-transparent border-none shadow-none flex items-center justify-center px-4">
         <div className="relative">
           <img
             src={imageUrl || ''}
