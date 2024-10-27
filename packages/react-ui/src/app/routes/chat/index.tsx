@@ -4,6 +4,7 @@ import { ArrowUpIcon, BotIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
+import { useSearchParam } from 'react-use';
 
 import { Button } from '@/components/ui/button';
 import { ChatBubbleAvatar } from '@/components/ui/chat/chat-bubble';
@@ -18,6 +19,7 @@ import {
   ApErrorParams,
   ChatUIResponse,
   ErrorCode,
+  USE_DRAFT_QUERY_PARAM_NAME,
   isNil,
 } from '@activepieces/shared';
 
@@ -26,6 +28,7 @@ import { Messages, MessagesList } from './messages-list';
 
 export function ChatPage() {
   const { flowId } = useParams();
+  const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
   const messagesRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -35,7 +38,7 @@ export function ChatPage() {
     isError: isLoadingError,
   } = useQuery<ChatUIResponse | null, Error>({
     queryKey: ['chat', flowId],
-    queryFn: () => humanInputApi.getChatUI(flowId!, false),
+    queryFn: () => humanInputApi.getChatUI(flowId!, useDraft),
     enabled: !isNil(flowId),
     staleTime: Infinity,
     retry: false,
@@ -77,6 +80,7 @@ export function ChatPage() {
         flowId,
         chatId: chatId.current,
         message: savedInput,
+        useDraft,
       });
     },
     onSuccess: (result) => {

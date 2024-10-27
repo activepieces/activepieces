@@ -2,6 +2,7 @@ import {
     EngineHttpResponse,
     EngineOperationType,
     ProgressUpdateType,
+    RunEnvironment,
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { system } from '../system/system'
@@ -86,6 +87,7 @@ export const SubmitPayloadsRequest = Type.Object({
     synchronousHandlerId: Type.Optional(Type.String()),
     httpRequestId: Type.Optional(Type.String()),
     payloads: Type.Array(Type.Unknown()),
+    environment: Type.Enum(RunEnvironment),
 })
 
 export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>
