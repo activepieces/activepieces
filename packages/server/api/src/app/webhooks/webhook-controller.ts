@@ -54,20 +54,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             .send(response.body)
     })
 
-    app.all('/', WEBHOOK_QUERY_PARAMS, async (request, reply) => {
-        const response = await handleWebhook({
-            request,
-            flowId: request.query.flowId,
-            async: true,
-            simulate: false,
-            useLatestFlowVersion: false,
-        })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
-    })
-
     app.all('/:flowId/draft/sync', WEBHOOK_PARAMS, async (request, reply) => {
         const response = await handleWebhook({
             request,
@@ -82,7 +68,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             .send(response.body)
     })
 
-    app.all('/:flowId/draft/async', WEBHOOK_PARAMS, async (request, reply) => {
+    app.all('/:flowId/draft', WEBHOOK_PARAMS, async (request, reply) => {
         const response = await handleWebhook({
             request,
             flowId: request.params.flowId,
@@ -110,6 +96,21 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             .send(response.body)
     },
     )
+
+    // @deprecated this format was changed in early 2023 to include flowId in the path
+    app.all('/', WEBHOOK_QUERY_PARAMS, async (request, reply) => {
+        const response = await handleWebhook({
+            request,
+            flowId: request.query.flowId,
+            async: true,
+            simulate: false,
+            useLatestFlowVersion: false,
+        })
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
 }
 
 async function handleWebhook({ request, flowId, async, simulate, useLatestFlowVersion }: { request: FastifyRequest, flowId: string, async: boolean, simulate: boolean, useLatestFlowVersion: boolean }): Promise<EngineHttpResponse> {

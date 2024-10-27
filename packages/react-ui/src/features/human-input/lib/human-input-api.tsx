@@ -8,26 +8,27 @@ export const humanInputApi = {
     });
   },
   submitForm: (formResult: FormResponse, useDraft: boolean, data: unknown) => {
-    const suffix = useDraft
-      ? formResult.props.waitForResponse
-        ? '/draft/sync'
-        : '/draft/async'
-      : formResult.props.waitForResponse
-        ? '/sync'
-        : '';
+    const suffix = getSuffix(useDraft, formResult.props.waitForResponse);
     return api.post<FormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
       data,
     );
   },
   sendMessage: ({ flowId, chatId, message, useDraft }: SendMessageParams) => {
-    const suffix = useDraft ? '/draft/sync' : '/sync';
+    const suffix = getSuffix(useDraft, true);
     return api.post<FormResult | null>(`/v1/webhooks/${flowId}${suffix}`, {
       chatId,
       message,
     });
   },
 };
+
+function getSuffix(useDraft: boolean, waitForResponse: boolean): string {
+  if (useDraft) {
+    return waitForResponse ? '/draft/sync' : '/draft';
+  }
+  return waitForResponse ? '/sync' : '';
+}
 
 type SendMessageParams = {
   flowId: string;
