@@ -2,7 +2,6 @@
 
 import {
   CaretSortIcon,
-  CheckIcon,
   ChevronDownIcon,
   ChevronUpIcon,
 } from '@radix-ui/react-icons';
@@ -12,6 +11,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 import { LoadingSpinner } from './spinner';
+import { Check } from 'lucide-react';
 
 const Select = SelectPrimitive.Root;
 
@@ -132,7 +132,7 @@ const SelectItem = React.forwardRef<
   >
     <span className="absolute right-2 flex size-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <CheckIcon className="size-4" />
+        <Check className="size-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

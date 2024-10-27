@@ -3,13 +3,7 @@ import React from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 
 import { BranchConditionGroup } from '@/app/builder/step-settings/branch-settings/branch-condition-group';
-import {
-  BranchAction,
-  BranchOperator,
-  RouterAction,
-  ValidBranchCondition,
-  emptyCondition,
-} from '@activepieces/shared';
+import { emptyCondition } from '@activepieces/shared';
 
 type BranchSettingsProps = {
   readonly: boolean;
@@ -23,6 +17,7 @@ const BranchSettings = React.memo(
       control: form.control,
       name: fieldName,
     });
+
 
     const handleDelete = (groupIndex: number, conditionIndex: number) => {
       const conditions = form.getValues(fieldName);

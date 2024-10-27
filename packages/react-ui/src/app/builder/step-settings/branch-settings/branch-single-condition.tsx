@@ -88,17 +88,19 @@ const BranchSingleCondition = ({
         <FormField
           name={`${fieldName}.${groupIndex}.${conditionIndex}.firstValue`}
           control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <TextInputWithMentions
-                disabled={readonly}
-                placeholder={t('First value')}
-                onChange={field.onChange}
-                initialValue={field.value}
-              ></TextInputWithMentions>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            return (
+              <FormItem>
+                <TextInputWithMentions
+                  disabled={readonly}
+                  placeholder={t('First value')}
+                  onChange={field.onChange}
+                  initialValue={field.value}
+                ></TextInputWithMentions>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
         <FormField
           name={`${fieldName}.${groupIndex}.${conditionIndex}.operator`}

@@ -662,7 +662,6 @@ function createAction(
       };
       break;
   }
-  console.log(actionSchemaValidator.Check(action));
   return {
     ...action,
     valid:
