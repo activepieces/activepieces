@@ -1,11 +1,10 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { GitRepo } from '@activepieces/ee-shared'
-import simpleGit, { SimpleGit } from 'simple-git'
-import { userService } from '../../user/user-service'
-import { ConfigureRepoRequest } from '@activepieces/ee-shared'
+import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
+import simpleGit, { SimpleGit } from 'simple-git'
+import { userService } from '../../user/user-service'
 
 export const gitHelper = {
     commitAndPush,

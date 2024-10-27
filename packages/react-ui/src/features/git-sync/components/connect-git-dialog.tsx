@@ -24,19 +24,19 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { INTERNAL_ERROR_MESSAGE, INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_MESSAGE, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   ConfigureRepoRequest,
   GitBranchType,
   GitRepo,
 } from '@activepieces/ee-shared';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
-import { api } from '@/lib/api';
-import { ApErrorParams, ErrorCode } from '../../../../../shared/src';
 
 const ConnectGitDialog = () => {
   const projectId = authenticationSession.getProjectId()!;
@@ -73,7 +73,7 @@ const ConnectGitDialog = () => {
     },
     onError: (error) => {
       let message = INTERNAL_ERROR_MESSAGE;
-      
+
       if (api.isError(error)) {
         const responseData = error.response?.data as ApErrorParams;
         if (responseData.code === ErrorCode.INVALID_GIT_CREDENTIALS) {
@@ -84,7 +84,7 @@ const ConnectGitDialog = () => {
         message: message,
       });
       return;
-    }
+    },
   });
 
   return (
