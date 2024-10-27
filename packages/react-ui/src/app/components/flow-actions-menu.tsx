@@ -231,7 +231,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </div>
         </DropdownMenuItem>
         {!embedState.isEmbedded && (
-          <ShareTemplateDialog flowId={flow.id} flowVersion={flowVersion}>
+          <ShareTemplateDialog flowId={flow.id} flowVersionId={flowVersion.id}>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
               <div className="flex cursor-pointer  flex-row gap-2 items-center">
                 <Share2 className="h-4 w-4" />

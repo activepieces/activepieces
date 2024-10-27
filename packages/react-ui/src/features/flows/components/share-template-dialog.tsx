@@ -34,8 +34,8 @@ type ShareTemplateSchema = Static<typeof ShareTemplateSchema>;
 const ShareTemplateDialog: React.FC<{
   children: React.ReactNode;
   flowId: string;
-  flowVersion: FlowVersion;
-}> = ({ children, flowId, flowVersion }) => {
+  flowVersionId: string;
+}> = ({ children, flowId, flowVersionId }) => {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const shareTemplateForm = useForm<ShareTemplateSchema>({
     resolver: typeboxResolver(ShareTemplateSchema),
@@ -48,11 +48,11 @@ const ShareTemplateDialog: React.FC<{
   >({
     mutationFn: async () => {
       const template = await flowsApi.getTemplate(flowId, {
-        versionId: flowVersion.id,
+        versionId: flowVersionId,
       });
 
       const flowTemplate = await templatesApi.create({
-        template: flowVersion,
+        template: template.template,
         type: TemplateType.PROJECT,
         blogUrl: template.blogUrl,
         tags: template.tags,
