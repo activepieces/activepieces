@@ -21,6 +21,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { ImageDialog } from './image-dialog';
 import { Messages, MessagesList } from './messages-list';
+import { LoadingScreen } from '@/app/components/loading-screen';
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -173,7 +174,7 @@ export function ChatPage() {
 
   if (!flowId || isLoadingError) return <Navigate to="/404" />;
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) return <LoadingScreen />;
 
   const toggleImageDialog = (imageUrl: string | null) => {
     setImageDialogOpen(!!imageUrl);
