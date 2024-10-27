@@ -22,6 +22,7 @@ export const importTransaction = createAction({
       displayName: 'Date',
       description: 'Date the transaction took place',
       required: true,
+      validators: [Validators.datetimeIso]
     }),
     payee_name: Property.ShortText({
       displayName: 'Payee Name',
@@ -72,7 +73,7 @@ export const importTransaction = createAction({
     const transaction: Transaction = {
       payee_name,
       date: formattedDate,
-      amount: amount !== undefined ? Math.round(amount * 100) : undefined,
+      amount: amount !== undefined ? api.utils.amountToInteger(amount): undefined,
       category,
       account: account_id,
       notes,
