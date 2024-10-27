@@ -1,8 +1,7 @@
+import { LoadingScreen } from '@/app/components/loading-screen';
 import { FileInputPreview } from '@/app/routes/chat/file-input-preview';
 import { Button } from '@/components/ui/button';
-import { ChatBubbleAvatar } from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   FormResultTypes,
   humanInputApi,
@@ -13,7 +12,6 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import {
   ArrowUpIcon,
-  BotIcon,
   Paperclip
 } from 'lucide-react';
 import { nanoid } from 'nanoid';
@@ -21,7 +19,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { ImageDialog } from './image-dialog';
 import { Messages, MessagesList } from './messages-list';
-import { LoadingScreen } from '@/app/components/loading-screen';
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -160,8 +157,12 @@ export function ChatPage() {
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setFiles(prevFiles => [...prevFiles, ...Array.from(event.target.files!)]);
+    const selectedFiles = event.target.files && Array.from(event.target.files);
+    if (selectedFiles) {
+      setFiles(prevFiles => {
+        const newFiles = [...prevFiles, ...selectedFiles]
+        return newFiles
+      });
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
