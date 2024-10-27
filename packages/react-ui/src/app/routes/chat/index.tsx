@@ -185,7 +185,7 @@ export function ChatPage() {
   return (
     <main
       className={cn(
-        'flex w-full flex-col items-center justify-center py-6',
+        'flex w-full flex-col items-center justify-center pb-6',
         messages.length > 0 ? 'h-screen' : 'h-[calc(50vh)]',
       )}
     >
