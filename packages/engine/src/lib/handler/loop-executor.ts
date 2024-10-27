@@ -1,4 +1,4 @@
-import { isNil, LoopOnItemsAction, LoopStepOutput } from '@activepieces/shared'
+import { FlowRunStatus, isNil, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
@@ -24,6 +24,16 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             input: censoredInput,
         })
         let newExecutionContext = executionState.upsertStep(action.name, stepOutput)
+
+        if (!Array.isArray(resolvedInput.items)) {
+            const failedStepOutput = stepOutput
+                .setStatus(StepOutputStatus.FAILED)
+                .setErrorMessage(JSON.stringify({
+                    message: 'The items you have selected must be a list.',
+                }))
+            return newExecutionContext.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED)
+        }
+
         const firstLoopAction = action.firstLoopAction
 
 
