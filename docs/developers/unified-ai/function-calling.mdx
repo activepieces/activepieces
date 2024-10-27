@@ -1,0 +1,57 @@
+---
+title: "Function Calling"  
+icon: "toolbox"  
+description: "Learn how to use function calling AI in actions"  
+---
+
+### Chat-based Function Calling
+
+The code snippet below shows how to use a function call to extract structured data directly from a text input:
+
+```typescript
+const chatResponse = await ai.chat.function({
+    model: context.propsValue.model,
+    messages: [
+        {
+            role: AIChatRole.USER,
+            content: context.propsValue.text,
+        },
+    ],
+    functions: [
+        {
+            name: 'extract_structured_data',
+            description: 'Extract the following data from the provided text.',
+            arguments: [
+                { name: 'customerName', type: 'string', description: 'The customer\'s name.', isRequired: true },
+                { name: 'orderId', type: 'string', description: 'Unique order identifier.', isRequired: true },
+                { name: 'purchaseDate', type: 'string', description: 'Date of purchase (YYYY-MM-DD).', isRequired: false },
+                { name: 'totalAmount', type: 'number', description: 'Total transaction amount in dollars.', isRequired: false },
+            ],
+        }
+    ]
+});
+```
+
+### Image-based Function Calling
+
+To extract structured data from an image, use this function call:
+
+```typescript
+const imageResponse = await ai.image.function({
+    model: context.propsValue.imageModel,
+    image: context.propsValue.imageData,
+    functions: [
+        {
+            name: 'extract_structured_data',
+            description: 'Extract the following data from the image text.',
+            arguments: [
+                { name: 'customerName', type: 'string', description: 'The customer\'s name.', isRequired: true },
+                { name: 'orderId', type: 'string', description: 'Unique order identifier.', isRequired: true },
+                { name: 'purchaseDate', type: 'string', description: 'Date of purchase (YYYY-MM-DD).', isRequired: false },
+                { name: 'totalAmount', type: 'number', description: 'Total transaction amount in dollars.', isRequired: false },
+            ],
+        }
+    ]
+});
+```
+
