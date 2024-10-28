@@ -30,13 +30,13 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX CONCURRENTLY "public"."idx_run_logs_file_id"
+            DROP INDEX CONCURRENTLY "idx_run_logs_file_id"
         `)
         await queryRunner.query(`
-            DROP INDEX CONCURRENTLY "public"."idx_file_type_created_desc"
+            DROP INDEX CONCURRENTLY "idx_file_type_created_desc"
         `)
         await queryRunner.query(`
-            DROP INDEX CONCURRENTLY "public"."idx_file_project_id"
+            DROP INDEX CONCURRENTLY ""idx_file_project_id"
         `)
         logger.info({
             name: this.name,
