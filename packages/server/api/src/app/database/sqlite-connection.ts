@@ -64,6 +64,7 @@ import { SupportS3FilesSqlite1726363932745 } from './migration/sqlite/1726363932
 import { AddAiProviderSqlite1726446345221 } from './migration/sqlite/1726446345221-AddAiProviderSqlite'
 import { RemovePremiumPiecesSqlite1727865697005 } from './migration/sqlite/1727865697005-RemovePremiumPiecesSqlite'
 import { UpdatePlaformInSqlite1729330108485 } from './migration/sqlite/1729330108485-UpdatePlaformInSqlite'
+import { AddConnectionOwnerSqlite1730121414658 } from './migration/sqlite/1730121414658-AddConnectionOwnerSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -146,6 +147,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeProjectUniqueConstraintToPartialIndex1729098769827,
         MigrateSMTPInPlatformSqlite1729601402320,
         AddPinnedPiecesSqlite1729774033945,
+        AddConnectionOwnerSqlite1730121414658,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
