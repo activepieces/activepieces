@@ -316,6 +316,15 @@
       ]
     },
     {
+      "group": "Unified AI",
+      "pages": [
+        "developers/unified-ai/overview",
+        "developers/unified-ai/chat",
+        "developers/unified-ai/function-calling",
+        "developers/unified-ai/image"
+      ]
+    },
+    {
       "group": "Misc",
       "pages": [
         "developers/misc/create-new-ai-provider",

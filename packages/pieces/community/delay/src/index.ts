@@ -9,7 +9,7 @@ export const delay = createPiece({
   minimumSupportedRelease: '0.34.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/delay.png',
   authors: ["Nilesh","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
-  categories: [PieceCategory.CORE],
+  categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],
   auth: PieceAuth.None(),
   actions: [
     delayForAction, // Delay for a fixed duration

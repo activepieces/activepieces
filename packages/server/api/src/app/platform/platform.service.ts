@@ -64,6 +64,7 @@ export const platformService = {
             apiKeysEnabled: false,
             customAppearanceEnabled: false,
             alertsEnabled: false,
+            pinnedPieces: [],
         }
 
         const savedPlatform = await repo().save(newPlatform)
@@ -128,6 +129,7 @@ export const platformService = {
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
             ...spreadIfDefined('licenseKey', params.licenseKey),
+            ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
 
         return repo().save(updatedPlatform)

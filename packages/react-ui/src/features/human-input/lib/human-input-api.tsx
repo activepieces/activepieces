@@ -18,28 +18,33 @@ export const humanInputApi = {
     });
   },
   submitForm: (formResult: FormResponse, useDraft: boolean, data: unknown) => {
-    const suffix = useDraft
-      ? '/test'
-      : formResult.props.waitForResponse
-      ? '/sync'
-      : '';
+    const suffix = getSuffix(useDraft, formResult.props.waitForResponse);
     return api.post<FormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
       data,
     );
   },
-  sendMessage: ({ flowId, chatId, message }: SendMessageParams) => {
-    return api.post<FormResult | null>(`/v1/webhooks/${flowId}/sync`, {
+  sendMessage: ({ flowId, chatId, message, useDraft }: SendMessageParams) => {
+    const suffix = getSuffix(useDraft, true);
+    return api.post<FormResult | null>(`/v1/webhooks/${flowId}${suffix}`, {
       chatId,
       message,
     });
   },
 };
 
+function getSuffix(useDraft: boolean, waitForResponse: boolean): string {
+  if (useDraft) {
+    return waitForResponse ? '/draft/sync' : '/draft';
+  }
+  return waitForResponse ? '/sync' : '';
+}
+
 type SendMessageParams = {
   flowId: string;
   chatId: string;
   message: string;
+  useDraft: boolean;
 };
 
 export type FormResult =
