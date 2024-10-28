@@ -32,7 +32,6 @@ const BranchConditionGroup = React.memo(
       control: form.control,
       name: `${fieldName}.${groupIndex}`,
     });
-
     return (
       <div className="flex flex-col gap-4">
         {groupIndex > 0 && (

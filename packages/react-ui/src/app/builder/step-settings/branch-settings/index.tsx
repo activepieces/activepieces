@@ -18,7 +18,6 @@ const BranchSettings = React.memo(
       name: fieldName,
     });
 
-
     const handleDelete = (groupIndex: number, conditionIndex: number) => {
       const conditions = form.getValues(fieldName);
       const newConditionsGroup = [...conditions[groupIndex]];
@@ -47,10 +46,10 @@ const BranchSettings = React.memo(
 
     return (
       <div className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
-        <div className="text-md">
+        <div className="text-md ">
           {fieldName === 'settings.conditions'
             ? t('Continue If')
-            : t('Excute Path If')}
+            : t('Execute If')}
         </div>
         {fields.map((fieldGroup, groupIndex) => (
           <BranchConditionGroup

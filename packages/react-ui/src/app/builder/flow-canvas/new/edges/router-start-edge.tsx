@@ -120,9 +120,9 @@ export const ApRouterStartCanvasEdge = ({
         </foreignObject>
       )}
       <foreignObject
-        width={labelWidth + 'px'}
+        width={Math.min(labelWidth, 300) + 'px'}
         height={flowUtilConsts.LABEL_HEIGHT + 2 + 'px'}
-        x={targetX - labelWidth / 2}
+        x={targetX - Math.min(labelWidth, 300) / 2}
         y={
           targetY -
           verticalLineLength / 2 -
@@ -131,7 +131,7 @@ export const ApRouterStartCanvasEdge = ({
         }
       >
         <div
-          className="text-foreground bg-background select-none cursor-default py-[1px]"
+          className="text-foreground bg-background select-none cursor-default py-[1px] max-w-[300px] truncate"
           style={{
             fontSize: flowUtilConsts.LABEL_HEIGHT + 'px',
             lineHeight: flowUtilConsts.LABEL_HEIGHT + 'px',

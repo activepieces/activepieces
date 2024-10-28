@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -23,6 +23,7 @@ import {
   Trigger,
   TriggerType,
   debounce,
+  isNil,
 } from '@activepieces/shared';
 
 import { PieceCardInfo } from '../../../features/pieces/components/piece-card';
@@ -37,6 +38,7 @@ import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { useStepSettingsContext } from './step-settings-context';
 import { RouterSettings } from './router-settings';
+import { Pencil } from 'lucide-react';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema, skipValueChangeDetection } =
@@ -48,6 +50,8 @@ const StepSettingsContainer = () => {
     saving,
     flowVersion,
     refreshPieceFormSettings,
+    selectedBranchIndex,
+    setSelectedBranchIndex,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -55,6 +59,8 @@ const StepSettingsContainer = () => {
     state.saving,
     state.flowVersion,
     state.refreshPieceFormSettings,
+    state.selectedBranchIndex,
+    state.setSelectedBranchIndex,
   ]);
 
   const defaultValues = useMemo(() => {
@@ -200,6 +206,8 @@ const StepSettingsContainer = () => {
   ]);
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
+  const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
+    useState(false);
   return (
     <Form {...form}>
       <form
@@ -209,15 +217,63 @@ const StepSettingsContainer = () => {
       >
         <div ref={sidebarHeaderContainerRef}>
           <SidebarHeader onClose={() => exitStepSettings()}>
-            <EditableText
-              containerRef={sidebarHeaderContainerRef}
-              onValueChange={(value) => {
-                form.setValue('displayName', value);
-              }}
-              readonly={readonly}
-              value={modifiedStep.displayName}
-              tooltipContent={t('Edit Step Name')}
-            ></EditableText>
+            {isNil(selectedBranchIndex) ? (
+              <EditableText
+                onValueChange={(value) => {
+                  if (value) {
+                    form.setValue('displayName', value);
+                  }
+                }}
+                readonly={readonly}
+                value={modifiedStep.displayName}
+                tooltipContent={t('Edit Step Name')}
+                isEditing={isEditingStepOrBranchName}
+                setIsEditing={setIsEditingStepOrBranchName}
+              ></EditableText>
+            ) : (
+              <>
+                <div
+                  className="truncate cursor-pointer hover:underline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedBranchIndex(null);
+                  }}
+                >
+                  {modifiedStep.displayName}
+                </div>
+                /
+                <EditableText
+                  key={
+                    modifiedStep.settings.branches?.[selectedBranchIndex]
+                      ?.branchName
+                  }
+                  onValueChange={(value) => {
+                    if (value) {
+                      form.setValue(
+                        `settings.branches[${selectedBranchIndex}].branchName`,
+                        value,
+                      );
+                    }
+                  }}
+                  readonly={readonly}
+                  value={
+                    modifiedStep.settings.branches?.[selectedBranchIndex]
+                      ?.branchName
+                  }
+                  tooltipContent={t('Edit Branch Name')}
+                  isEditing={isEditingStepOrBranchName}
+                  setIsEditing={setIsEditingStepOrBranchName}
+                ></EditableText>
+              </>
+            )}
+            {!isEditingStepOrBranchName && (
+              <Pencil
+                className="h-4 w-4 shrink-0"
+                onClick={() => {
+                  setIsEditingStepOrBranchName(true);
+                }}
+              />
+            )}
           </SidebarHeader>
         </div>
 

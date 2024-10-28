@@ -191,7 +191,7 @@ const getDefaultStep = ({
         {
           type: ActionType.ROUTER,
           settings: {
-            executionType: RouterExecutionType.EXECUTE_ALL_MATCH,
+            executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
             branches: [
               {
                 conditions: [
@@ -209,7 +209,7 @@ const getDefaultStep = ({
               },
               {
                 branchType: BranchExecutionType.FALLBACK,
-                branchName: 'Fallback',
+                branchName: 'Otherwise',
               },
             ],
             inputUiInfo: {

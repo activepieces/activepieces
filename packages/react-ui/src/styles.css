@@ -123,3 +123,8 @@
   --selection-border-default: 0px solid #b1b1b7;
   --node-border-default: 0px solid #b1b1b7;
 }
+
+.react-flow__edge.selectable > path {
+  /* If necessary, add !important to the rule */
+  pointer-events: none !important;
+}

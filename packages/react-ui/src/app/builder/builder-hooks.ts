@@ -63,7 +63,9 @@ export type BuilderState = {
   allowCanvasPanning: boolean;
   saving: boolean;
   refreshPieceFormSettings: boolean;
+  selectedBranchIndex: number | null;
   refreshSettings: () => void;
+  setSelectedBranchIndex: (index: number | null) => void;
   exitRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
@@ -103,6 +105,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
       : null;
     return {
+      selectedBranchIndex: null,
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
@@ -132,7 +135,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       refreshPieceFormSettings: false,
 
       removeStepSelection: () =>
-        set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
+        set({
+          selectedStep: null,
+          rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
+        }),
       setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
         set({
           allowCanvasPanning,
@@ -140,6 +147,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       setActiveDraggingStep: (stepName: string | null) =>
         set({
           activeDraggingStep: stepName,
+        }),
+      setSelectedBranchIndex: (branchIndex: number | null) =>
+        set({
+          selectedBranchIndex: branchIndex,
         }),
       setReadOnly: (readonly: boolean) => set({ readonly }),
       renameFlowClientSide: (newName: string) => {
@@ -164,6 +175,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             leftSidebar: !isNil(state.run)
               ? LeftSideBarType.RUN_DETAILS
               : LeftSideBarType.NONE,
+            selectedBranchIndex: null,
           };
         });
       },
@@ -194,15 +206,18 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           loopsIndexes: {},
           leftSidebar: LeftSideBarType.NONE,
           rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
         }),
       exitStepSettings: () =>
         set({
           rightSidebar: RightSideBarType.NONE,
           selectedStep: null,
+          selectedBranchIndex: null,
         }),
       exitPieceSelector: () =>
         set({
           rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
         }),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
@@ -281,6 +296,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             flowVersion.state === FlowVersionState.LOCKED,
           leftSidebar: LeftSideBarType.NONE,
           rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
         }));
       },
       insertMention: null,
