@@ -1,4 +1,4 @@
-import { ServerContext } from '@activepieces/pieces-framework';
+import { ApFile, ServerContext } from '@activepieces/pieces-framework';
 import { AI_PROVIDERS, AiProvider } from './providers';
 
 export type AI = {
@@ -11,6 +11,11 @@ export type AIImage = {
   generate: (
     params: AIImageGenerateParams
   ) => Promise<AIImageCompletion | null>;
+  function?: (
+    params: AIChatCompletionsCreateParams & {
+      functions: AIFunctionDefinition[];
+    } & { image: ApFile }
+  ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
 };
 
 export type AIImageGenerateParams = {
@@ -104,7 +109,7 @@ export const AI = ({
     throw new Error(`AI provider ${provider} is not registered`);
   }
 
-  const functionCalling = impl.chat.function
+  const functionCalling = impl.chat.function;
 
   return {
     provider,
@@ -121,17 +126,19 @@ export const AI = ({
           throw e;
         }
       },
-      function: functionCalling ? async (params) => {
-        try {
-          const response = await functionCalling(params);
-          return response;
-        } catch (e: any) {
-          if (e?.error?.error) {
-            throw e.error.error;
+      function: functionCalling
+        ? async (params) => {
+            try {
+              const response = await functionCalling(params);
+              return response;
+            } catch (e: any) {
+              if (e?.error?.error) {
+                throw e.error.error;
+              }
+              throw e;
+            }
           }
-          throw e;
-        }
-      } : undefined,
+        : undefined,
     },
   };
 };

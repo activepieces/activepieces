@@ -46,6 +46,7 @@ export const telemetry = {
             logger.error(e, '[Telemetry#trackProject] this.trackUser'),
         )
     },
+    isEnabled: () => telemetryEnabled,
     async trackUser(userId: UserId, event: TelemetryEvent): Promise<void> {
         if (!telemetryEnabled) {
             return

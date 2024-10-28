@@ -3,7 +3,7 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { slackChannel, slackInfo } from '../common/props';
+import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { slackAuth } from '../../';
 import { WebClient } from '@slack/web-api';
 
@@ -42,7 +42,7 @@ export const newMessage = createTrigger({
   displayName: 'New Message',
   description: 'Triggers when a new message is received',
   props: {
-    info: slackInfo,
+    info: singleSelectChannelInfo,
     channel: slackChannel(false),
     ignoreBots: Property.Checkbox({
       displayName: 'Ignore Bot Messages ?',

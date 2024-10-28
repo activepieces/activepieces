@@ -1289,6 +1289,42 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "geekyme",
+      "name": "Shawn Lim",
+      "avatar_url": "https://avatars.githubusercontent.com/u/977460?v=4",
+      "profile": "https://shawn.storyline.io/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "pavloDeshko",
+      "name": "pavloDeshko",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27104046?v=4",
+      "profile": "https://github.com/pavloDeshko",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "liuhuapiaoyuan",
+      "name": "abc",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8020726?v=4",
+      "profile": "https://github.com/liuhuapiaoyuan",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "manojkum-d",
+      "name": "manoj kumar d",
+      "avatar_url": "https://avatars.githubusercontent.com/u/141437046?v=4",
+      "profile": "https://github.com/manojkum-d",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

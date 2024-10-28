@@ -8,7 +8,7 @@ export const activepiecesAi = createPiece({
   displayName: 'Text AI',
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.32.0',
-  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.UNIVERSAL_AI],
   logoUrl: 'https://cdn.activepieces.com/pieces/text-ai.svg',
   authors: ['anasbarg'],
   actions: [askAi, extractStructuredData, summarizeText],

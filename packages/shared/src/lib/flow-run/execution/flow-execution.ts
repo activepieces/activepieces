@@ -55,9 +55,9 @@ export const FlowError = Type.Object({
 export type FlowError = Static<typeof FlowError>
 
 const BaseExecutionResponse = {
-    steps: Type.Record(Type.String(), Type.Unknown()),
+    steps: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
     duration: Type.Number(),
-    tasks: Type.Number(),
+    tasks: Type.Optional(Type.Number()),
     tags: Type.Optional(Type.Array(Type.String())),
     error: Type.Optional(FlowError),
     stopResponse: Type.Optional(StopResponse),

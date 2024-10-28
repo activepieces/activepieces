@@ -10,8 +10,7 @@ export const ListFlowRunsRequestQuery = Type.Object({
     cursor: Type.Optional(Type.String({})),
     createdAfter: Type.Optional(Type.String({})),
     createdBefore: Type.Optional(Type.String({})),
-    // TODO make this required after May 2024
-    projectId: Type.Optional(ApId),
+    projectId: ApId,
 })
 
 export type ListFlowRunsRequestQuery = Static<typeof ListFlowRunsRequestQuery>

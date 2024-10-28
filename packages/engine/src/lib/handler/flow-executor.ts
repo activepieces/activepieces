@@ -1,5 +1,6 @@
 import { performance } from 'node:perf_hooks'
-import { Action, ActionType, isNil, ProgressUpdateType } from '@activepieces/shared'
+import { Action, ActionType, ExecuteFlowOperation, ExecutionType, isNil } from '@activepieces/shared'
+import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
 import { branchExecutor } from './branch-executor'
@@ -24,6 +25,21 @@ export const flowExecutor = {
         }
         return executor
     },
+    async executeFromTrigger({ executionState, constants, input }: {
+        executionState: FlowExecutorContext
+        constants: EngineConstants
+        input: ExecuteFlowOperation
+    }): Promise<FlowExecutorContext> {
+        const trigger = input.flowVersion.trigger
+        if (input.executionType === ExecutionType.BEGIN) {
+            await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
+        }
+        return flowExecutor.execute({
+            action: trigger.nextAction,
+            executionState,
+            constants,
+        })
+    },
     async execute({ action, constants, executionState }: {
         action: Action
         executionState: FlowExecutorContext
@@ -37,13 +53,19 @@ export const flowExecutor = {
             const handler = this.getExecutorForAction(currentAction.type)
 
             const stepStartTime = performance.now()
+            progressService.sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: flowExecutionContext,
+            }).catch(error => {
+                console.error('Error sending update:', error)
+            })
+
             flowExecutionContext = await handler.handle({
                 action: currentAction,
                 executionState: flowExecutionContext,
                 constants,
             })
             const stepEndTime = performance.now()
-
             flowExecutionContext = flowExecutionContext.setStepDuration({
                 stepName: currentAction.name,
                 duration: stepEndTime - stepStartTime,
@@ -51,18 +73,6 @@ export const flowExecutor = {
 
             if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 break
-            }
-
-            const isNotNested = flowExecutionContext.currentPath.path.length === 0
-            const sendContinuousProgress = isNotNested
-                && constants.progressUpdateType === ProgressUpdateType.TEST_FLOW
-            if (sendContinuousProgress) {
-                progressService.sendUpdate({
-                    engineConstants: constants,
-                    flowExecutorContext: flowExecutionContext,
-                }).catch((error) => {
-                    console.error('Error sending progress update', error)
-                })
             }
 
             currentAction = currentAction.nextAction

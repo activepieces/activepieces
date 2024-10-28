@@ -1,16 +1,24 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
 
-export const slackInfo = Property.MarkDown({
-  value: `
+const slackChannelBotInstruction = `
 	Please make sure add the bot to the channel by following these steps:
 	  1. Type /invite in the channel's chat.
 	  2. Click on Add apps to this channel.
 	  3. Search for and add the bot.
+  `
 
-    **Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly.
+export const multiSelectChannelInfo = Property.MarkDown({
+  value: slackChannelBotInstruction +
+    `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly in an array like this: \`{\`{ ['your_channel_id_1', 'your_channel_id_2', ...] \`}\`}`,
+});
+
+export const singleSelectChannelInfo = Property.MarkDown({
+  value: slackChannelBotInstruction +
+    `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly.
   `,
 });
+
 export const slackChannel = <R extends boolean>(required: R) =>
   Property.Dropdown<string, R>({
     displayName: 'Channel',

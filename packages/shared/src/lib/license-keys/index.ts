@@ -10,6 +10,13 @@ export const CreateTrialLicenseKeyRequestBody = Type.Object({
 
 export type CreateTrialLicenseKeyRequestBody = Static<typeof CreateTrialLicenseKeyRequestBody>
 
+export const VerifyLicenseKeyRequestBody = Type.Object({
+    licenseKey: Type.String(),
+    platformId: Type.String(),
+})
+
+export type VerifyLicenseKeyRequestBody = Static<typeof VerifyLicenseKeyRequestBody>
+
 export const LicenseKeyEntity = Type.Object({
     id: Type.String(),
     email: Type.String(),

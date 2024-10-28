@@ -3,15 +3,22 @@ import { StatusCodes } from 'http-status-codes';
 
 export const returnMarkdown = createAction({
   name: 'return_markdown',
-  displayName: 'Respond with a Markdown',
-  description: 'Display a markdown as a response.',
+  displayName: 'Respond on UI (Markdown)',
+  description: 'Return a markdown as a response.',
   props: {
     markdown: Property.LongText({
       displayName: 'Markdown',
       required: true,
     }),
   },
-
+  errorHandlingOptions: {
+    retryOnFailure: {
+      hide: true,
+    },
+    continueOnFailure: {
+      hide: true,
+    }
+  },
   async run({ propsValue, run }) {
 
     const response = {

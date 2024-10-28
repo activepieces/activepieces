@@ -312,6 +312,67 @@ describe('Variable Service', () => {
         })
     })
 
+    it('should resolve files inside the array properties', async () => {
+        const input = {
+            documents: [
+                {
+                    file: 'https://cdn.activepieces.com/brand/logo.svg?token=123',
+                },
+            ],
+        }
+        const props = {
+            documents: Property.Array({
+                displayName: 'Documents',
+                required: true,
+                properties: {
+                    file: Property.File({
+                        displayName: 'File',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        expect(processedInput.documents[0].file).toBeDefined()
+        expect(processedInput.documents[0].file.extension).toBe('svg')
+        expect(processedInput.documents[0].file.filename).toBe('logo.svg')
+        expect(errors).toEqual({})
+    })
+
+    it('should return error for invalid file inside the array properties', async () => {
+        const input = {
+            documents: [
+                {
+                    file: 'invalid-url',
+                },
+            ],
+        }
+        const props = {
+            documents: Property.Array({
+                displayName: 'Documents',
+                required: true,
+                properties: {
+                    file: Property.File({
+                        displayName: 'File',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        expect(processedInput.documents[0].file).toBeNull()
+        expect(errors).toEqual({
+            'documents': {
+                properties: [{
+                    file: [
+                        'Expected file url or base64 with mimeType, but found value: invalid-url',
+                    ],
+                }],
+            },
+        })
+    })
     it('should return images for image url', async () => {
         const input = {
             file: 'https://cdn.activepieces.com/brand/logo.svg?token=123',
@@ -321,7 +382,7 @@ describe('Variable Service', () => {
                 displayName: 'File',
                 required: true,
             }),
-        
+
         }
         const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(processedInput.file).toBeDefined()
@@ -374,7 +435,7 @@ describe('Variable Service', () => {
                 age: '12',
             },
         }
-  
+
         const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, {
             price: Property.Number({
                 displayName: 'Price',
@@ -398,7 +459,7 @@ describe('Variable Service', () => {
         })
         expect(errors).toEqual({})
     })
-    
+
     it('should not error if auth configured, but no auth provided in input', async () => {
         const input = {
             price: '0',

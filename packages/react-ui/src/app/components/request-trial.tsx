@@ -73,7 +73,6 @@ const features = [
   },
   { label: t('Brand Activepieces'), key: 'BRANDING' },
   { label: t('Control Pieces'), key: 'PIECES' },
-  { label: t('Enterprise Pieces'), key: 'ENTERPRISE_PIECES' },
   {
     label: t('Custom Templates'),
     key: `TEMPLATES`,

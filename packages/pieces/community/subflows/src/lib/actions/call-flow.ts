@@ -4,7 +4,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { FlowStatus, isNil, TriggerType } from '@activepieces/shared';
+import { ExecutionType, FlowStatus, isNil, PauseType, TriggerType } from '@activepieces/shared';
+import { CallableFlowRequest, CallableFlowResponse } from '../common';
 
 type FlowValue = {
   id: string;
@@ -27,7 +28,7 @@ export const callFlow = createAction({
             flow.status === FlowStatus.ENABLED &&
             flow.version.trigger.type === TriggerType.PIECE &&
             flow.version.trigger.settings.pieceName ==
-              '@activepieces/piece-subflows'
+            '@activepieces/piece-subflows'
         );
         return {
           options: flows.map((flow) => ({
@@ -63,22 +64,62 @@ export const callFlow = createAction({
     }),
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
-      description: 'Wait for the response from the called flow',
       required: false,
       defaultValue: false,
     }),
+    testingProps: Property.DynamicProperties({
+      description: '',
+      displayName: '',
+      required: true,
+      refreshers: ['waitForResponse'],
+      props: async (propsValue) => {
+        const props: Record<string, DynamicProp> = {};
+        if (!propsValue['waitForResponse']) {
+          return props;
+        }
+        props['data'] = Property.Json({
+          displayName: 'Example Response (For Testing)',
+          required: true,
+          description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow'
+        })
+        return props;
+      }
+    })
+  },
+  async test(context) {
+    return {
+      data: context.propsValue?.testingProps?.['data'] ?? {}
+    };
   },
   async run(context) {
-    const response = await httpClient.sendRequest({
+    if (context.executionType === ExecutionType.RESUME) {
+      const response = context.resumePayload.body as CallableFlowResponse;
+      return {
+        data: response.data
+      }
+    }
+    const payload = context.propsValue.flowProps['payload'];
+    const response = await httpClient.sendRequest<CallableFlowRequest>({
       method: HttpMethod.POST,
-      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}${
-        context.propsValue.waitForResponse ? '/sync' : ''
-      }`,
+      url: `${context.serverUrl}v1/webhooks/${context.propsValue.flow?.id}`,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(context.propsValue.flowProps['payload']),
+      body: {
+        data: payload,
+        callbackUrl: context.generateResumeUrl({
+          queryParams: {}
+        }),
+      },
     });
+    if (context.propsValue.waitForResponse) {
+      context.run.pause({
+        pauseMetadata: {
+          type: PauseType.WEBHOOK,
+          response: {},
+        }
+      })
+    }
     return response.body;
   },
 });

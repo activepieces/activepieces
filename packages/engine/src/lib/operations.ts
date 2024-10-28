@@ -32,15 +32,16 @@ import { utils } from './utils'
 
 const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<Pick<FlowRunResponse, 'status' | 'error'>>> => {
     const constants = EngineConstants.fromExecuteFlowInput(input)
-    const output = await flowExecutor.execute({
-        action: input.flowVersion.trigger.nextAction,
+    const output = await flowExecutor.executeFromTrigger({
         executionState: context,
         constants,
+        input,
     })
     const newContext = output.verdict === ExecutionVerdict.RUNNING ? output.setVerdict(ExecutionVerdict.SUCCEEDED, output.verdictResponse) : output
     await progressService.sendUpdate({
         engineConstants: constants,
         flowExecutorContext: newContext,
+        updateImmediate: true,
     })
     const response = await newContext.toResponse()
     return {
@@ -66,6 +67,7 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
             excludedStepName: step.name,
             projectId: input.projectId,
             engineToken: input.engineToken,
+            sampleData: input.sampleData,
         }),
         constants: EngineConstants.fromExecuteStepInput(input),
     })
@@ -76,13 +78,16 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
 }
 
 function cleanSampleData(stepOutput: StepOutput) {
+    if (stepOutput.status === StepOutputStatus.FAILED) {
+        return stepOutput.errorMessage
+    }
     if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
         return {
             item: stepOutput.output?.item,
             index: stepOutput.output?.index,
         }
     }
-    return stepOutput.output ?? stepOutput.errorMessage
+    return stepOutput.output
 }
 
 function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext {
@@ -136,6 +141,7 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                         flowVersion: input.flowVersion,
                         projectId: input.projectId,
                         engineToken: input.engineToken,
+                        sampleData: input.sampleData,
                     }),
                     searchValue: input.searchValue,
                     constants: EngineConstants.fromExecutePropertyInput(input),

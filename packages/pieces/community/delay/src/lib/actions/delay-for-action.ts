@@ -4,6 +4,7 @@ import {
   Validators,
 } from '@activepieces/pieces-framework';
 import { ExecutionType, PauseType } from '@activepieces/shared';
+import { markdownDescription } from '../common';
 
 enum TimeUnit {
   SECONDS = 'seconds',
@@ -11,6 +12,7 @@ enum TimeUnit {
   HOURS = 'hours',
   DAYS = 'days',
 }
+
 export const delayForAction = createAction({
   name: 'delayFor',
   displayName: 'Delay For',
@@ -24,6 +26,9 @@ export const delayForAction = createAction({
     },
   },
   props: {
+    markdown: Property.MarkDown({
+      value: markdownDescription,
+    }),
     unit: Property.StaticDropdown({
       displayName: 'Unit',
       description: 'The unit of time to delay the execution of the next action',

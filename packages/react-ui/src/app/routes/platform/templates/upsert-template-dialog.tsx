@@ -1,4 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -20,8 +21,25 @@ import { TagInput } from '@/components/ui/tag-input';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
-import { FlowTemplate, TemplateType } from '@activepieces/shared';
+import {
+  FlowTemplate,
+  FlowVersionTemplate,
+  TemplateType,
+} from '@activepieces/shared';
 
+import { Textarea } from '../../../../components/ui/textarea';
+
+const UpsertFlowTemplateSchema = Type.Object({
+  displayName: Type.String({
+    minLength: 1,
+    errorMessage: t('Name is required'),
+  }),
+  description: Type.String(),
+  blogUrl: Type.String(),
+  template: Type.Optional(FlowVersionTemplate),
+  tags: Type.Optional(Type.Array(Type.String())),
+});
+type UpsertFlowTemplateSchema = Static<typeof UpsertFlowTemplateSchema>;
 export const UpsertTemplateDialog = ({
   children,
   onDone,
@@ -32,19 +50,35 @@ export const UpsertTemplateDialog = ({
   template?: CreateFlowTemplateRequest;
 }) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<CreateFlowTemplateRequest>({
+  const form = useForm<UpsertFlowTemplateSchema>({
     defaultValues: {
-      ...template,
-      type: TemplateType.PLATFORM,
+      displayName: template?.template.displayName || '',
+      blogUrl: template?.blogUrl || '',
+      description: template?.description || '',
+      tags: template?.tags || [],
+      template: template?.template,
     },
-    resolver: typeboxResolver(CreateFlowTemplateRequest),
+    resolver: typeboxResolver(UpsertFlowTemplateSchema),
   });
 
   const { toast } = useToast();
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['create-template'],
-    mutationFn: () => templatesApi.create(form.getValues()),
+    mutationFn: () => {
+      const formValue = form.getValues();
+      return templatesApi.create({
+        template: {
+          ...formValue.template,
+          displayName: formValue.displayName,
+        },
+        type: TemplateType.PLATFORM,
+        blogUrl: formValue.blogUrl,
+        description: formValue.description,
+        id: template?.id,
+        tags: formValue.tags,
+      });
+    },
     onSuccess: () => {
       onDone();
       setOpen(false);
@@ -54,6 +88,17 @@ export const UpsertTemplateDialog = ({
       setOpen(false);
     },
   });
+
+  const onSubmit = () => {
+    if (!form.getValues().template) {
+      form.setError('template', {
+        message: t('Template is required'),
+      });
+      return;
+    }
+
+    mutate();
+  };
 
   return (
     <Dialog
@@ -66,15 +111,20 @@ export const UpsertTemplateDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Create New Template')}</DialogTitle>
+          <DialogTitle>
+            {template ? t('Update New Template') : t('Create New Template')}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
             <FormField
-              name="template.displayName"
+              name="displayName"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="name">{t('Name')}</Label>
+                  <Label htmlFor="name">
+                    {t('Name')}{' '}
+                    <span className="text-destructive-300">{'*'}</span>
+                  </Label>
                   <Input
                     {...field}
                     required
@@ -91,13 +141,15 @@ export const UpsertTemplateDialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="description">{t('Description')}</Label>
-                  <Input
+
+                  <Textarea
                     {...field}
                     required
                     id="description"
-                    placeholder={t('Template Description')}
                     className="rounded-sm"
+                    placeholder={t('Template Description')}
                   />
+
                   <FormMessage />
                 </FormItem>
               )}
@@ -122,23 +174,31 @@ export const UpsertTemplateDialog = ({
               name="template"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="flow">{t('Flow')}</Label>
+                  <Label htmlFor="template">
+                    {t('Template')}
+                    {!template && (
+                      <span className="text-destructive-300">{' *'} </span>
+                    )}
+                  </Label>
                   <Input
                     type="file"
                     accept=".json"
                     onChange={(e) => {
                       e.target.files &&
                         e.target.files[0].text().then((text) => {
-                          const json = JSON.parse(text) as FlowTemplate;
-                          json.template.displayName =
-                            form.getValues().template.displayName;
-                          field.onChange(json.template);
-                          console.log(json.template);
+                          try {
+                            const json = JSON.parse(text) as FlowTemplate;
+                            field.onChange(json.template);
+                          } catch (e) {
+                            form.setError('template', {
+                              message: t('Invalid JSON'),
+                            });
+                          }
                         });
                     }}
                     required
-                    id="flow"
-                    placeholder={t('Template Flow')}
+                    id="template"
+                    placeholder={t('Template')}
                     className="rounded-sm"
                   />
                   <FormMessage />
@@ -158,11 +218,6 @@ export const UpsertTemplateDialog = ({
                 </FormItem>
               )}
             />
-            {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
-            )}
           </form>
         </Form>
         <DialogFooter>
@@ -177,12 +232,10 @@ export const UpsertTemplateDialog = ({
             {t('Cancel')}
           </Button>
           <Button
-            disabled={isPending || !form.formState.isValid}
+            disabled={isPending}
             loading={isPending}
             onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              mutate();
+              form.handleSubmit(onSubmit)(e);
             }}
           >
             {t('Save')}

@@ -64,6 +64,7 @@ export const platformService = {
             apiKeysEnabled: false,
             customAppearanceEnabled: false,
             alertsEnabled: false,
+            pinnedPieces: [],
         }
 
         const savedPlatform = await repo().save(newPlatform)
@@ -77,6 +78,9 @@ export const platformService = {
         return savedPlatform
     },
 
+    async getAll(): Promise<Platform[]> {
+        return repo().find()
+    },
     async getOldestPlatform(): Promise<Platform | null> {
         return repo().findOne({
             where: {},
@@ -97,17 +101,12 @@ export const platformService = {
             ...spreadIfDefined('favIconUrl', params.favIconUrl),
             ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
-            ...spreadIfDefined('smtpHost', params.smtpHost),
-            ...spreadIfDefined('smtpPort', params.smtpPort),
+            ...spreadIfDefined('smtp', params.smtp),
             ...spreadIfDefined('analyticsEnabled', params.analyticsEnabled),
             ...spreadIfDefined(
                 'federatedAuthProviders',
                 params.federatedAuthProviders,
             ),
-            ...spreadIfDefined('smtpUser', params.smtpUser),
-            ...spreadIfDefined('smtpPassword', params.smtpPassword),
-            ...spreadIfDefined('smtpSenderEmail', params.smtpSenderEmail),
-            ...spreadIfDefined('smtpUseSSL', params.smtpUseSSL),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
@@ -129,6 +128,8 @@ export const platformService = {
             ...spreadIfDefined('customDomainsEnabled', params.customDomainsEnabled),
             ...spreadIfDefined('customAppearanceEnabled', params.customAppearanceEnabled),
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
+            ...spreadIfDefined('licenseKey', params.licenseKey),
+            ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
 
         return repo().save(updatedPlatform)
@@ -189,5 +190,6 @@ type UpdateParams = UpdatePlatformRequestBody & {
     apiKeysEnabled?: boolean
     projectRolesEnabled?: boolean
     alertsEnabled?: boolean 
-    analyticsEnabled?: boolean  
+    analyticsEnabled?: boolean 
+    licenseKey?: string
 }

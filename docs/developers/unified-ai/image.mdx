@@ -1,0 +1,27 @@
+---
+title: 'Image AI'
+icon: 'image'
+description: 'Learn how to use image AI in actions'
+---
+
+The following snippet shows how to use image generation to create an image using AI.
+
+```typescript
+const ai = AI({
+  provider: context.propsValue.provider,
+  server: context.server,
+});
+
+const response = await image.generate({
+  // The model to use for image generation
+  model: context.propsValue.model,
+  // The prompt to guide the image generation
+  prompt: context.propsValue.prompt,
+  // The resolution of the generated image
+  size: "1024x1024",
+  // Any advanced options for the image generation
+  advancedOptions: {},
+});
+
+```
+

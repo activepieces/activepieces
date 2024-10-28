@@ -16,13 +16,16 @@ Use this for production, views the published version of the form.
 \`\`\`text
 {{formUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
 \`\`\`
-Use this to generate sample data, views the draft version of the from.
+Use this to generate sample data, views the draft version of the form (the one you are editing now).
+`;
+
+const responseMarkdown = `
+If **Wait for Response** is enabled, ensure the last step in the flow is either **Respond on UI (Markdown)** or **Respond on UI (File)**.
 `;
 
 export const onFormSubmission = createTrigger({
-
   name: 'form_submission',
-  displayName: 'On Form Submission',
+  displayName: 'Web Form',
   description: 'Trigger the flow by submitting a form.',
   props: {
     about: Property.MarkDown({
@@ -30,10 +33,11 @@ export const onFormSubmission = createTrigger({
     }),
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
-      description:
-        'If enabled, the form will return the flow output to the frontend. Make sure to use the Return Response action to return a response.',
       defaultValue: false,
       required: true,
+    }),
+    response: Property.MarkDown({
+      value: responseMarkdown,
     }),
     inputs: Property.Array({
       displayName: 'Inputs',

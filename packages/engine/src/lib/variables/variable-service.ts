@@ -20,7 +20,7 @@ import { createConnectionService } from '../services/connections.service'
 import { processors } from './processors'
 
 type VariableValidationError = {
-    [key: string]: string[] | VariableValidationError
+    [key: string]: string[] | VariableValidationError | VariableValidationError[]
 }
 
 export class VariableService {
@@ -231,6 +231,28 @@ export class VariableService {
             const property = props[key]
             if (isNil(property)) {
                 continue
+            }
+            if (property.type === PropertyType.ARRAY && property.properties) {
+                const arrayOfObjects = value
+                const processedArray = []
+                const processedErrors = []
+                for (const item of arrayOfObjects) {
+                    const { processedInput: itemProcessedInput, errors: itemErrors } = await this.applyProcessorsAndValidators(
+                        item,
+                        property.properties,
+                        undefined,
+                        false,
+                    )
+                    processedArray.push(itemProcessedInput)
+                    processedErrors.push(itemErrors)
+                }
+                processedInput[key] = processedArray
+                const isThereErrors = processedErrors.some(error => Object.keys(error).length > 0)
+                if (isThereErrors) {
+                    errors[key] = {
+                        properties: processedErrors,
+                    }
+                }
             }
             const processor = processors[property.type]
             if (processor) {

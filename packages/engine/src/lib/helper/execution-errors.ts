@@ -60,6 +60,28 @@ export class StorageError extends ExecutionError {
     }
 }
 
+export class FileStoreError extends ExecutionError {
+    constructor(cause?: unknown) {
+        super('FileStoreError', formatMessage(`Failed to store file due to ${JSON.stringify(cause)}`), ExecutionErrorType.ENGINE, cause)
+    }
+}
+
+export class PausedFlowTimeoutError extends ExecutionError {
+    constructor(cause?: unknown, maximumPauseDurationDays?: number) {
+        super('PausedFlowTimeoutError', `The flow cannot be paused for more than ${maximumPauseDurationDays} days`, ExecutionErrorType.USER, cause)
+    }
+}
+
+export class FileSizeError extends ExecutionError {
+    constructor(currentFileSize: number, maximumSupportSize: number, cause?: unknown) {
+        super('FileSizeError', JSON.stringify({
+            message: 'File size is larger than maximum supported size',
+            currentFileSize: `${currentFileSize} MB`,
+            maximumSupportSize: `${maximumSupportSize} MB`,
+        }), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class FetchError extends ExecutionError {
     constructor(url: string, cause?: unknown) {
         super('FetchError', formatMessage(`Failed to fetch from ${url}`), ExecutionErrorType.ENGINE, cause)

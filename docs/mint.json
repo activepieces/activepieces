@@ -232,7 +232,8 @@
           "pages": [
             "install/options/easypanel",
             "install/options/aws",
-            "install/options/gcp"
+            "install/options/gcp",
+            "install/options/elestio"
           ]
         }
       ]
@@ -243,6 +244,7 @@
         "install/configuration/overview",
         "install/configuration/environment-variables",
         "install/configuration/setup-app-webhooks",
+        "install/configuration/hardware",
         "install/configuration/setup-ssl",
         "install/configuration/troubleshooting"
       ]
@@ -314,11 +316,19 @@
       ]
     },
     {
+      "group": "Unified AI",
+      "pages": [
+        "developers/unified-ai/overview",
+        "developers/unified-ai/chat",
+        "developers/unified-ai/function-calling",
+        "developers/unified-ai/image"
+      ]
+    },
+    {
       "group": "Misc",
       "pages": [
         "developers/misc/create-new-ai-provider",
         "developers/misc/pieces-ci-cd",
-        "developers/misc/scale-pieces",
         "developers/misc/private-fork"
       ]
     },

@@ -2,6 +2,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
   PieceAuth,
+  PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
@@ -9,6 +10,7 @@ import { createRecordAction } from './lib/actions/create-record';
 import { findRecordAction } from './lib/actions/find-record';
 import { updateRecordAction } from './lib/actions/update-record';
 import { newRecordTrigger } from './lib/triggers/new-record';
+import { makeClient } from './lib/common';
 
 export const APITableAuth = PieceAuth.CustomAuth({
   required: true,
@@ -35,6 +37,22 @@ export const APITableAuth = PieceAuth.CustomAuth({
       required: true,
       defaultValue: 'https://api.aitable.ai',
     }),
+  },
+  validate: async ({ auth }) => {
+    try {
+      const client = makeClient(
+        auth as PiecePropValueSchema<typeof APITableAuth>
+      );
+      await client.listSpaces();
+      return {
+        valid: true,
+      };
+    } catch (e) {
+      return {
+        valid: false,
+        error: 'Invalid Token or Instance URL.',
+      };
+    }
   },
 });
 

@@ -152,7 +152,10 @@ const FormError = React.forwardRef<
     <p
       ref={ref}
       id={props.formMessageId}
-      className={cn('text-sm font-medium text-destructive', className)}
+      className={cn(
+        'text-sm font-medium text-destructive break-words',
+        className,
+      )}
       {...props}
     >
       {children}

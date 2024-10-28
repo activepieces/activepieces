@@ -2,6 +2,7 @@ import {
   PieceSelectorItem,
   PieceStepMetadata,
   StepMetadata,
+  StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import {
   ActionBase,
@@ -24,9 +25,10 @@ import {
   PieceCategory,
   spreadIfDefined,
   isNil,
+  Platform,
 } from '@activepieces/shared';
 
-import { getDefaultValueForStep } from '../piece-properties/form-utils';
+import { formUtils } from '../piece-properties/form-utils';
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
@@ -86,6 +88,61 @@ const isPieceStepMetadata = (
   return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
 };
 
+const isPopularPieces = (
+  stepMetadata: StepMetadataWithSuggestions,
+  platform: Platform,
+) => {
+  if (
+    stepMetadata.type !== TriggerType.PIECE &&
+    stepMetadata.type !== ActionType.PIECE
+  ) {
+    return false;
+  }
+  const popularPieces = [
+    '@activepieces/piece-gmail',
+    '@activepieces/piece-google-sheets',
+    '@activepieces/piece-openai',
+    '@activepieces/piece-schedule',
+    '@activepieces/piece-webhook',
+    '@activepieces/piece-http',
+    '@activepieces/piece-forms',
+    '@activepieces/piece-slack',
+  ];
+  return popularPieces.includes((stepMetadata as PieceStepMetadata).pieceName);
+};
+
+const isFlowController = (stepMetadata: StepMetadata) => {
+  if (stepMetadata.type === ActionType.PIECE) {
+    return (stepMetadata as PieceStepMetadata).categories.includes(
+      PieceCategory.FLOW_CONTROL,
+    );
+  }
+  return [ActionType.LOOP_ON_ITEMS, ActionType.BRANCH].includes(
+    stepMetadata.type as ActionType,
+  );
+};
+
+const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
+  if (stepMetadata.type === ActionType.PIECE) {
+    return (stepMetadata as PieceStepMetadata).categories.includes(
+      PieceCategory.UNIVERSAL_AI,
+    );
+  }
+  return false;
+};
+
+const isUtilityCorePiece = (stepMetadata: StepMetadata, platform: Platform) => {
+  if (stepMetadata.type === ActionType.CODE) {
+    return true;
+  }
+  if (!isCorePiece(stepMetadata)) {
+    return false;
+  }
+  return (
+    !isFlowController(stepMetadata) && !isPopularPieces(stepMetadata, platform)
+  );
+};
+
 const getDefaultStep = ({
   stepName,
   stepMetadata,
@@ -109,7 +166,7 @@ const getDefaultStep = ({
     isActionOrTrigger(actionOrTrigger, stepMetadata) &&
     isPieceStepMetadata(stepMetadata);
   const input = isPieceStep
-    ? getDefaultValueForStep(
+    ? formUtils.getDefaultValueForStep(
         actionOrTrigger.requireAuth
           ? {
               ...spreadIfDefined('auth', stepMetadata.auth),
@@ -247,4 +304,8 @@ export const pieceSelectorUtils = {
   isAiPiece,
   isAppPiece,
   toKey,
+  isPopularPieces,
+  isUtilityCorePiece,
+  isFlowController,
+  isUniversalAiPiece,
 };
