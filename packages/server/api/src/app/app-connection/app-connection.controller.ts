@@ -60,7 +60,6 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
                 ...appConnections,
                 data: appConnections.data.map(removeSensitiveData),
             }
-
             return appConnectionsWithoutSensitiveData
         },
     )
