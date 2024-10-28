@@ -24,7 +24,13 @@ export const humanInputApi = {
       data,
     );
   },
-  sendMessage: async ({ flowId, chatId, message, files, useDraft }: SendMessageParams) => {
+  sendMessage: async ({
+    flowId,
+    chatId,
+    message,
+    files,
+    useDraft,
+  }: SendMessageParams) => {
     const formData = new FormData();
     formData.append('chatId', chatId);
     formData.append('message', message);
@@ -32,9 +38,14 @@ export const humanInputApi = {
       formData.append(`file[${index}]`, file);
     });
     const suffix = getSuffix(useDraft, true);
-    return api.post<FormResult | null>(`/v1/webhooks/${flowId}${suffix}`, formData, undefined, {
-      'Content-Type': 'multipart/form-data',
-    });
+    return api.post<FormResult | null>(
+      `/v1/webhooks/${flowId}${suffix}`,
+      formData,
+      undefined,
+      {
+        'Content-Type': 'multipart/form-data',
+      },
+    );
   },
 };
 
@@ -59,10 +70,10 @@ export type FormResult =
       value: FileResponseInterface;
     }
   | {
-    type: FormResultTypes.MARKDOWN;
-    value: string;
-    files?: FileResponseInterface[];
-  };
+      type: FormResultTypes.MARKDOWN;
+      value: string;
+      files?: FileResponseInterface[];
+    };
 
 export enum FormResultTypes {
   MARKDOWN = 'markdown',

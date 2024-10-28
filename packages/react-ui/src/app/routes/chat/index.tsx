@@ -1,13 +1,13 @@
-import { LoadingScreen } from '@/app/components/loading-screen';
-import { FileInputPreview } from '@/app/routes/chat/file-input-preview';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import { ArrowUpIcon } from 'lucide-react';
+import { ArrowUpIcon, Paperclip } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
+import { LoadingScreen } from '@/app/components/loading-screen';
+import { FileInputPreview } from '@/app/routes/chat/file-input-preview';
 import { Button } from '@/components/ui/button';
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import {
@@ -15,10 +15,13 @@ import {
   humanInputApi,
 } from '@/features/human-input/lib/human-input-api';
 import { cn } from '@/lib/utils';
-import { ApErrorParams, ChatUIResponse, ErrorCode, isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 import {
-  Paperclip
-} from 'lucide-react';
+  ApErrorParams,
+  ChatUIResponse,
+  ErrorCode,
+  isNil,
+  USE_DRAFT_QUERY_PARAM_NAME,
+} from '@activepieces/shared';
 
 import { ImageDialog } from './image-dialog';
 import { Messages, MessagesList } from './messages-list';
@@ -63,7 +66,8 @@ export function ChatPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const botName = chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`
+  const botName =
+    chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`;
 
   const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
@@ -75,17 +79,21 @@ export function ChatPage() {
       setInput('');
       setFiles([]);
       if (!isRetrying) {
-        const fileMessages: Messages = savedFiles.map(file => {
+        const fileMessages: Messages = savedFiles.map((file) => {
           const isImage = file.type.startsWith('image/');
-          return ({
+          return {
             role: 'user' as const,
             content: URL.createObjectURL(file),
-            type: isImage ? 'image' as const : 'file' as const,
+            type: isImage ? ('image' as const) : ('file' as const),
             mimeType: file.type,
             fileName: file.name,
-          })
-        })
-        setMessages([...messages, ...fileMessages, { role: 'user', content: savedInput, }]);
+          };
+        });
+        setMessages([
+          ...messages,
+          ...fileMessages,
+          { role: 'user', content: savedInput },
+        ]);
       }
       scrollToBottom();
       return humanInputApi.sendMessage({
@@ -124,15 +132,18 @@ export function ChatPage() {
             setMessages([
               ...messages,
               { role: 'bot', content: result.value, type: 'text' as const },
-              ...(result.files ?? []).map(file => {
-                const isImage = "mimeType" in file ? file.mimeType?.startsWith('image/') : false;
-                return ({
+              ...(result.files ?? []).map((file) => {
+                const isImage =
+                  'mimeType' in file
+                    ? file.mimeType?.startsWith('image/')
+                    : false;
+                return {
                   role: 'bot' as const,
-                  content: "url" in file ? file.url : file.base64Url,
-                  type: isImage ? 'image' as const : 'file' as const,
-                  mimeType: "mimeType" in file ? file.mimeType : undefined,
-                  fileName: "fileName" in file ? file.fileName : undefined,
-                })
+                  content: 'url' in file ? file.url : file.base64Url,
+                  type: isImage ? ('image' as const) : ('file' as const),
+                  mimeType: 'mimeType' in file ? file.mimeType : undefined,
+                  fileName: 'fileName' in file ? file.fileName : undefined,
+                };
               }),
             ]);
         }
@@ -164,9 +175,9 @@ export function ChatPage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = event.target.files && Array.from(event.target.files);
     if (selectedFiles) {
-      setFiles(prevFiles => {
-        const newFiles = [...prevFiles, ...selectedFiles]
-        return newFiles
+      setFiles((prevFiles) => {
+        const newFiles = [...prevFiles, ...selectedFiles];
+        return newFiles;
       });
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -175,7 +186,7 @@ export function ChatPage() {
   };
 
   const removeFile = (index: number) => {
-    setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
 
   if (!flowId || isLoadingError) return <Navigate to="/404" />;
@@ -229,10 +240,7 @@ export function ChatPage() {
         </div>
       )}
       <div className="w-full px-4 max-w-3xl">
-        <form
-          ref={formRef}
-          onSubmit={onSubmit}
-        >
+        <form ref={formRef} onSubmit={onSubmit}>
           <div className="flex flex-col items-center justify-between pe-2 pt-0 rounded-3xl bg-muted">
             {files.length > 0 && (
               <div className="px-4 py-3 w-full">

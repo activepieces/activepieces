@@ -1,10 +1,17 @@
-import { ChatBubble, ChatBubbleAction, ChatBubbleAvatar, ChatBubbleMessage } from '@/components/ui/chat/chat-bubble';
-import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
-import { cn } from '@/lib/utils';
-import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
 import { Static, Type } from '@sinclair/typebox';
 import { BotIcon, CircleX, RotateCcw } from 'lucide-react';
 import React from 'react';
+
+import {
+  ChatBubble,
+  ChatBubbleAction,
+  ChatBubbleAvatar,
+  ChatBubbleMessage,
+} from '@/components/ui/chat/chat-bubble';
+import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
+import { cn } from '@/lib/utils';
+import { ApErrorParams, ChatUIResponse, ErrorCode } from '@activepieces/shared';
+
 import { FileMessage } from './file-message';
 import { ImageMessage } from './image-message';
 import { TextMessage } from './text-message';
@@ -76,32 +83,47 @@ const formatError = (
   }
 };
 
-const MessageContent = React.memo(({ message, setSelectedImage }: { message: Static<typeof Messages>[number], setSelectedImage: (image: string | null) => void }) => {
-  switch (message.type) {
-    case 'image':
-      return (
-        <ImageMessage
-          content={message.content}
-          setSelectedImage={setSelectedImage}
-        />
-      );
-    case 'file':
-      return <FileMessage content={message.content} mimeType={message.mimeType} fileName={message.fileName} role={message.role} />;
-    default:
-      return <TextMessage content={message.content} role={message.role} />;
-  }
-});
-
+const MessageContent = React.memo(
+  ({
+    message,
+    setSelectedImage,
+  }: {
+    message: Static<typeof Messages>[number];
+    setSelectedImage: (image: string | null) => void;
+  }) => {
+    switch (message.type) {
+      case 'image':
+        return (
+          <ImageMessage
+            content={message.content}
+            setSelectedImage={setSelectedImage}
+          />
+        );
+      case 'file':
+        return (
+          <FileMessage
+            content={message.content}
+            mimeType={message.mimeType}
+            fileName={message.fileName}
+            role={message.role}
+          />
+        );
+      default:
+        return <TextMessage content={message.content} role={message.role} />;
+    }
+  },
+);
+MessageContent.displayName = 'MessageContent';
 const ErrorBubble = ({
   chatUI,
   flowId,
   sendingError,
-  sendMessage
+  sendMessage,
 }: {
-  chatUI: ChatUIResponse | null | undefined,
-  flowId: string,
-  sendingError: ApErrorParams,
-  sendMessage: (arg0: { isRetrying: boolean }) => void
+  chatUI: ChatUIResponse | null | undefined;
+  flowId: string;
+  sendingError: ApErrorParams;
+  sendMessage: (arg0: { isRetrying: boolean }) => void;
 }) => (
   <ChatBubble variant="received" className="pb-8">
     <div className="relative">
@@ -128,8 +150,13 @@ const ErrorBubble = ({
     </div>
   </ChatBubble>
 );
+ErrorBubble.displayName = 'ErrorBubble';
 
-const SendingBubble = ({ chatUI }: { chatUI: ChatUIResponse | null | undefined }) => (
+const SendingBubble = ({
+  chatUI,
+}: {
+  chatUI: ChatUIResponse | null | undefined;
+}) => (
   <ChatBubble variant="received" className="pb-8">
     <ChatBubbleAvatar
       src={chatUI?.platformLogoUrl}
@@ -138,44 +165,71 @@ const SendingBubble = ({ chatUI }: { chatUI: ChatUIResponse | null | undefined }
     <ChatBubbleMessage isLoading />
   </ChatBubble>
 );
+SendingBubble.displayName = 'SendingBubble';
 
-export const MessagesList = React.memo(({
-  messagesRef,
-  messages,
-  chatUI,
-  sendingError,
-  isSending,
-  flowId,
-  sendMessage,
-  setSelectedImage
-}: MessagesListProps) => {
-  return (
-    <ChatMessageList ref={messagesRef} className="w-full max-w-3xl">
-      {messages.map((message, index) => {
-        const isLastMessage = index === messages.length - 1;
-        return (
-          <ChatBubble
-            id={isLastMessage ? "last-message" : undefined}
-            key={index}
-            variant={message.role === 'user' ? 'sent' : 'received'}
-            className={cn("flex items-start", isLastMessage ? "pb-8" : "")}
-          >
-            {message.role === 'bot' && (
-              <ChatBubbleAvatar
-                src={chatUI?.platformLogoUrl}
-                fallback={<BotIcon className="size-5" />}
-              />
-            )}
-            <ChatBubbleMessage className={cn("flex flex-col gap-2", message.role === "bot" ? "w-full" : "", message.type && message.type !== "text" ? "bg-transparent px-0" : "")}>
-              <MessageContent message={message} setSelectedImage={setSelectedImage} />
-            </ChatBubbleMessage>
-          </ChatBubble>
-        )
-      })}
-      {sendingError && !isSending && <ErrorBubble chatUI={chatUI} flowId={flowId} sendingError={sendingError} sendMessage={sendMessage} />}
-      {isSending && <SendingBubble chatUI={chatUI} />}
-    </ChatMessageList>
-  );
-}, (prevProps, nextProps) => {
-  return prevProps.messages.length === nextProps.messages.length && prevProps.sendingError === nextProps.sendingError && prevProps.isSending === nextProps.isSending;
-});
+export const MessagesList = React.memo(
+  ({
+    messagesRef,
+    messages,
+    chatUI,
+    sendingError,
+    isSending,
+    flowId,
+    sendMessage,
+    setSelectedImage,
+  }: MessagesListProps) => {
+    return (
+      <ChatMessageList ref={messagesRef} className="w-full max-w-3xl">
+        {messages.map((message, index) => {
+          const isLastMessage = index === messages.length - 1;
+          return (
+            <ChatBubble
+              id={isLastMessage ? 'last-message' : undefined}
+              key={index}
+              variant={message.role === 'user' ? 'sent' : 'received'}
+              className={cn('flex items-start', isLastMessage ? 'pb-8' : '')}
+            >
+              {message.role === 'bot' && (
+                <ChatBubbleAvatar
+                  src={chatUI?.platformLogoUrl}
+                  fallback={<BotIcon className="size-5" />}
+                />
+              )}
+              <ChatBubbleMessage
+                className={cn(
+                  'flex flex-col gap-2',
+                  message.role === 'bot' ? 'w-full' : '',
+                  message.type && message.type !== 'text'
+                    ? 'bg-transparent px-0'
+                    : '',
+                )}
+              >
+                <MessageContent
+                  message={message}
+                  setSelectedImage={setSelectedImage}
+                />
+              </ChatBubbleMessage>
+            </ChatBubble>
+          );
+        })}
+        {sendingError && !isSending && (
+          <ErrorBubble
+            chatUI={chatUI}
+            flowId={flowId}
+            sendingError={sendingError}
+            sendMessage={sendMessage}
+          />
+        )}
+        {isSending && <SendingBubble chatUI={chatUI} />}
+      </ChatMessageList>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.messages.length === nextProps.messages.length &&
+      prevProps.sendingError === nextProps.sendingError &&
+      prevProps.isSending === nextProps.isSending
+    );
+  },
+);
+MessagesList.displayName = 'MessagesList';
