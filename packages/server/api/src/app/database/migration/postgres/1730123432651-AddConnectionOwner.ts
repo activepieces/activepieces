@@ -12,27 +12,27 @@ export class AddConnectionOwner1730123432651 implements MigrationInterface {
         await queryRunner.query(`
             CREATE INDEX "idx_app_connection_owner_id" ON "app_connection" ("ownerId")
         `)
-        const tableExists = await queryRunner.hasTable('audit_event')
-        if (tableExists) {
-            await queryRunner.query(`
-                WITH latest_events AS (
-                    SELECT DISTINCT ON ((data->'connection'->>'id')::text)  
-                        (data->'connection'->>'id')::text AS connection_id,
-                        "userId",
-                        created
-                    FROM audit_event
-                    WHERE action = 'connection.upserted'
-                    AND data->'connection' IS NOT NULL
-                    AND data->'connection'->>'id' IS NOT NULL
-                    AND "userId" IS NOT NULL
-                    ORDER BY (data->'connection'->>'id')::text, created DESC
-                )
-                UPDATE app_connection
-                SET "ownerId" = latest_events."userId"
-                FROM latest_events
-                WHERE app_connection.id = latest_events.connection_id
-            `)
-        }
+        /*   const tableExists = await queryRunner.hasTable('audit_event')
+           if (tableExists) {
+               await queryRunner.query(`
+                   WITH latest_events AS (
+                       SELECT DISTINCT ON ((data->'connection'->>'id')::text)  
+                           (data->'connection'->>'id')::text AS connection_id,
+                           "userId",
+                           created
+                       FROM audit_event
+                       WHERE action = 'connection.upserted'
+                       AND data->'connection' IS NOT NULL
+                       AND data->'connection'->>'id' IS NOT NULL
+                       AND "userId" IS NOT NULL
+                       ORDER BY (data->'connection'->>'id')::text, created DESC
+                   )
+                   UPDATE app_connection
+                   SET "ownerId" = latest_events."userId"
+                   FROM latest_events
+                   WHERE app_connection.id = latest_events.connection_id
+               `)
+           }*/
         await queryRunner.query(`
             ALTER TABLE "app_connection"
             ADD CONSTRAINT "fk_app_connection_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
