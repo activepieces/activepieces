@@ -28,8 +28,8 @@ export const humanInputApi = {
     const formData = new FormData();
     formData.append('chatId', chatId);
     formData.append('message', message);
-    files.forEach(async (file, index) => {
-      formData.append(`file[${index}]`, new Blob([file]));
+    files.forEach((file, index) => {
+      formData.append(`file[${index}]`, file);
     });
     const suffix = getSuffix(useDraft, true);
     return api.post<FormResult | null>(`/v1/webhooks/${flowId}${suffix}`, formData, undefined, {

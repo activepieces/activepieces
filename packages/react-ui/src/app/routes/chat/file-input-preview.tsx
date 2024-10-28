@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { FileIcon, X } from "lucide-react";
 
-export const FileInputPreview = ({ file, index, onRemove }: { file: File, index: number, onRemove: (index: number) => void }) => {
+type FileInputPreviewProps = {
+  file: File;
+  index: number;
+  onRemove: (index: number) => void;
+};
+
+export const FileInputPreview = ({ file, index, onRemove }: FileInputPreviewProps) => {
   const isImage = file.type.startsWith('image/');
   const isVideo = file.type.startsWith('video/');
 
