@@ -94,13 +94,17 @@ export const sendFile = createAction({
               label: 'Attacher un document',
             },
             {
+              value: "fileUrl",
+              label: 'Ajouter un lien',
+            },
+            {
               value: "url",
               label: "Ajouter à partir d'un lien",
             },
           ],
        disabled : false,
       },
-
+      
     }),
   files: Property.DynamicProperties({
     description: '',
@@ -113,7 +117,13 @@ export const sendFile = createAction({
       if (_type === "url") {
         props['fileToDownload'] = Property.LongText({
           displayName: "Lien vers le document",
-           description: 'URL du fichier à télécharger',
+          description: 'URL du fichier à télécharger',
+          required: true,
+      });
+      } else if (_type === "fileUrl") {
+        props['file'] = Property.LongText({
+          displayName: "Lien a envoyer",
+          description: 'URL du fichier',
           required: true,
       });
       } else if (_type === "file") {
