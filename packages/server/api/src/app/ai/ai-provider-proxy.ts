@@ -53,7 +53,17 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                 headers: cleanHeaders,
                 body: JSON.stringify(request.body),
             })
-            const data = await response.json()
+
+            const responseContentType = response.headers.get('content-type')
+
+            const data = responseContentType?.includes('application/json')
+                ? await response.json()
+                : responseContentType?.includes('application/octet-stream')
+                    ? await response.blob()
+                    : responseContentType?.includes('audio/') || responseContentType?.includes('video/') || responseContentType?.includes('image/')
+                        ? Buffer.from(await response.arrayBuffer())
+                        : await response.text()
+
             await projectUsageService.increaseUsage(projectId, 1, 'aiTokens')
 
             rejectedPromiseHandler(telemetry.trackProject(projectId, {
@@ -64,7 +74,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                     provider,
                 },
             }))
-            await reply.code(response.status).send(data)
+            await reply.code(response.status).type(responseContentType ?? 'text/plain').send(data)
         }
         catch (error) {
             if (error instanceof Response) {
