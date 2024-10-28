@@ -59,7 +59,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
             const data = responseContentType?.includes('application/json')
                 ? await response.json()
                 : responseContentType?.includes('application/octet-stream')
-                    ? await response.blob()
+                    ? await Buffer.from(await response.arrayBuffer())
                     : responseContentType?.includes('audio/') || responseContentType?.includes('video/') || responseContentType?.includes('image/')
                         ? Buffer.from(await response.arrayBuffer())
                         : await response.text()
