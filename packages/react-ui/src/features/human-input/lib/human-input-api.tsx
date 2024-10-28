@@ -24,12 +24,28 @@ export const humanInputApi = {
       data,
     );
   },
-  sendMessage: ({ flowId, chatId, message, useDraft }: SendMessageParams) => {
-    const suffix = getSuffix(useDraft, true);
-    return api.post<FormResult | null>(`/v1/webhooks/${flowId}${suffix}`, {
-      chatId,
-      message,
+  sendMessage: async ({
+    flowId,
+    chatId,
+    message,
+    files,
+    useDraft,
+  }: SendMessageParams) => {
+    const formData = new FormData();
+    formData.append('chatId', chatId);
+    formData.append('message', message);
+    files.forEach((file, index) => {
+      formData.append(`file[${index}]`, file);
     });
+    const suffix = getSuffix(useDraft, true);
+    return api.post<FormResult | null>(
+      `/v1/webhooks/${flowId}${suffix}`,
+      formData,
+      undefined,
+      {
+        'Content-Type': 'multipart/form-data',
+      },
+    );
   },
 };
 
@@ -44,6 +60,7 @@ type SendMessageParams = {
   flowId: string;
   chatId: string;
   message: string;
+  files: File[];
   useDraft: boolean;
 };
 
@@ -55,6 +72,7 @@ export type FormResult =
   | {
       type: FormResultTypes.MARKDOWN;
       value: string;
+      files?: FileResponseInterface[];
     };
 
 export enum FormResultTypes {
