@@ -90,6 +90,8 @@ export type BuilderState = {
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
   setLoopIndex: (stepName: string, index: number) => void;
+  branchDeletedCallback: ((branchIndex:number,stepName:string) => void )| null;
+  setBranchDeletedCallback: (callback:((branchIndex:number,stepName:string) => void )| null) => void
 };
 
 export type BuilderInitialState = Pick<
@@ -105,6 +107,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
       : null;
     return {
+      setBranchDeletedCallback: (callback)=>set({
+        branchDeletedCallback: callback
+      }),
+      branchDeletedCallback:null,
       selectedBranchIndex: null,
       loopsIndexes:
         initialState.run && initialState.run.steps

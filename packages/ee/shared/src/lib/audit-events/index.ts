@@ -276,16 +276,16 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
       return `Updated trigger in "${event.data.flowVersion.displayName}" Flow to "${event.data.request.request.displayName}".`;
     case FlowOperationType.CHANGE_FOLDER:
       return `Moved flow "${event.data.flowVersion.displayName}" to folder id ${event.data.request.request.folderId}.`;
-    case FlowOperationType.DELETE_PATH: {
-      return `Deleted path number ${
-        event.data.request.request.pathIndex + 1
+    case FlowOperationType.DELETE_BRANCH: {
+      return `Deleted branch number ${
+        event.data.request.request.branchIndex + 1
       } in flow "${event.data.flowVersion.displayName}" for the step "${
         event.data.request.request.stepName
       }".`;
     }
-    case FlowOperationType.ADD_PATH:
-      return `Added path number ${
-        event.data.request.request.pathIndex + 1
+    case FlowOperationType.ADD_BRANCH:
+      return `Added branch number ${
+        event.data.request.request.branchIndex + 1
       } in flow "${event.data.flowVersion.displayName}" for the step "${
         event.data.request.request.stepName
       }".`;

@@ -1183,11 +1183,11 @@ function findPathToStep({
     })
     .filter((step) => step.name !== targetStepName);
 }
-const createEmptyPath = (pathNumber: number) => {
+const createEmptyBranch = (pathNumber: number) => {
   return {
     conditions: [[emptyCondition]],
     branchType: BranchExecutionType.CONDITION,
-    branchName: `Path ${pathNumber}`,
+    branchName: `Branch ${pathNumber}`,
   };
 };
 
@@ -1243,18 +1243,18 @@ export const flowHelper = {
         );
         break;
       }
-      case FlowOperationType.DELETE_PATH: {
+      case FlowOperationType.DELETE_BRANCH: {
         clonedVersion = transferFlow(flowVersion, (parentStep) => {
           if (
             parentStep.nextAction?.name === operation.request.stepName &&
             parentStep.nextAction?.type === ActionType.ROUTER
           ) {
             (parentStep.nextAction as RouterAction).settings.branches.splice(
-              operation.request.pathIndex,
+              operation.request.branchIndex,
               1
             );
             (parentStep.nextAction as RouterAction).children.splice(
-              operation.request.pathIndex,
+              operation.request.branchIndex,
               1
             );
           }
@@ -1262,21 +1262,22 @@ export const flowHelper = {
         });
         break;
       }
-      case FlowOperationType.ADD_PATH: {
+      case FlowOperationType.ADD_BRANCH: {
         clonedVersion = transferFlow(flowVersion, (parentStep) => {
           if (
             parentStep.nextAction?.name === operation.request.stepName &&
             parentStep.nextAction?.type === ActionType.ROUTER
           ) {
+            debugger;
             (parentStep.nextAction as RouterAction).settings.branches.splice(
-              operation.request.pathIndex,
+              operation.request.branchIndex,
               0,
-              createEmptyPath(
+              createEmptyBranch(
                 (parentStep.nextAction as RouterAction).settings.branches.length
               )
             );
             (parentStep.nextAction as RouterAction).children.splice(
-              operation.request.pathIndex,
+              operation.request.branchIndex,
               0,
               null
             );
@@ -1312,5 +1313,5 @@ export const flowHelper = {
   findPathToStep,
   updateFlowSecrets,
   findUnusedName,
-  createEmptyPath,
+  createEmptyPath: createEmptyBranch,
 };

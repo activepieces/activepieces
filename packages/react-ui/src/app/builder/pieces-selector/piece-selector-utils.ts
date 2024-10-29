@@ -205,7 +205,7 @@ const getDefaultStep = ({
                   ],
                 ],
                 branchType: BranchExecutionType.CONDITION,
-                branchName: 'Path 1',
+                branchName: 'Branch 1',
               },
               {
                 branchType: BranchExecutionType.FALLBACK,

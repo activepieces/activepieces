@@ -20,6 +20,7 @@ export const ApStraightLineCanvasEdge = ({
   const path = `M ${lineStartX} ${lineStartY} v${lineLength}
    ${data.drawArrowHead ? flowUtilConsts.ARROW_DOWN : ''}`;
   const showDebugForLineEndPoint = false;
+
   return (
     <>
       <BaseEdge

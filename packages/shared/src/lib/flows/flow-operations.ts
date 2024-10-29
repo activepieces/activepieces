@@ -24,21 +24,21 @@ export enum FlowOperationType {
   DELETE_ACTION = 'DELETE_ACTION',
   DUPLICATE_ACTION = 'DUPLICATE_ACTION',
   USE_AS_DRAFT = 'USE_AS_DRAFT',
-  DELETE_PATH = 'DELETE_PATH',
-  ADD_PATH = 'ADD_PATH',
+  DELETE_BRANCH = 'DELETE_BRANCH',
+  ADD_BRANCH = 'ADD_BRANCH',
 }
 
-export const DeletePathRequest = Type.Object({
-  pathIndex: Type.Number(),
+export const DeleteBranchRequest = Type.Object({
+  branchIndex: Type.Number(),
   stepName: Type.String(),
 });
-export const AddPathRequest = Type.Object({
-  pathIndex: Type.Number(),
+export const AddBranchRequest = Type.Object({
+  branchIndex: Type.Number(),
   stepName: Type.String(),
 });
 
-export type DeletePathRequest = Static<typeof DeletePathRequest>;
-export type AddPathRequest = Static<typeof AddPathRequest>;
+export type DeletePathRequest = Static<typeof DeleteBranchRequest>;
+export type AddPathRequest = Static<typeof AddBranchRequest>;
 
 export enum StepLocationRelativeToParent {
   INSIDE_TRUE_BRANCH = 'INSIDE_TRUE_BRANCH',
@@ -253,20 +253,20 @@ export const FlowOperationRequest = Type.Union([
   ),
   Type.Object(
     {
-      type: Type.Literal(FlowOperationType.DELETE_PATH),
-      request: DeletePathRequest,
+      type: Type.Literal(FlowOperationType.DELETE_BRANCH),
+      request: DeleteBranchRequest,
     },
     {
-      title: 'Delete Path',
+      title: 'Delete Branch',
     }
   ),
   Type.Object(
     {
-      type: Type.Literal(FlowOperationType.ADD_PATH),
-      request: AddPathRequest,
+      type: Type.Literal(FlowOperationType.ADD_BRANCH),
+      request: AddBranchRequest,
     },
     {
-      title: 'Add Path',
+      title: 'Add Branch',
     }
   ),
 ]);

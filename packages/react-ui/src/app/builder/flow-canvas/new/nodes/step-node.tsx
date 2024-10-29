@@ -1,6 +1,6 @@
 import { useDraggable } from '@dnd-kit/core';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
-import { Handle, NodeProps, Position } from '@xyflow/react';
+import { Handle, NodeProps, Position, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import {
   ArrowRightLeft,
@@ -41,6 +41,7 @@ import {
 import { StepStatusIcon } from '../../../../../features/flow-runs/components/step-status-icon';
 import { ApStepNode } from '../types';
 import { flowUtilConsts } from '../consts';
+import { newFloWUtils } from '../new-utils';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -158,12 +159,13 @@ const ApStepCanvasNode = React.memo(
     }, [data.step!.name, run, loopIndexes, flowVersion]);
     const showRunningIcon =
       isNil(stepOutputStatus) && run?.status === FlowRunStatus.RUNNING;
-
+    const { fitView } = useReactFlow();
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
       const { name } = data.step!;
       selectStepByName(name);
+      fitView(newFloWUtils.createFocusStepInGraphParams(name));
       e.preventDefault();
       e.stopPropagation();
     };

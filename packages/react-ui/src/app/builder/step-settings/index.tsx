@@ -118,8 +118,8 @@ const StepSettingsContainer = () => {
   const actionOrTriggerDisplayName = selectedStep.settings.actionName
     ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
     : selectedStep.settings.triggerName
-    ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
-    : null;
+      ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
+      : null;
 
   // Watch changes in form execluding actionName or triggerName from watching //
   const inputChanges = useWatch({
@@ -137,7 +137,7 @@ const StepSettingsContainer = () => {
     control: form.control,
   });
 
-  const pathChange = useWatch({
+  const branchesChange = useWatch({
     name: 'settings.branches',
     control: form.control,
   });
@@ -175,10 +175,15 @@ const StepSettingsContainer = () => {
       );
       currentStep.valid = form.formState.isValid;
 
-      if (previousSavedStep.current === null) {
+      if (previousSavedStep.current === null ||
+        (previousSavedStep.current.name === currentStep.name &&
+          previousSavedStep.current.type === ActionType.ROUTER &&
+          currentStep.type === ActionType.ROUTER &&
+          currentStep.settings.branches.length !== previousSavedStep.current.settings.branches.length)) {
         previousSavedStep.current = currentStep;
         return;
       }
+
 
       if (
         deepEqual(currentStep, previousSavedStep.current) ||
@@ -201,7 +206,7 @@ const StepSettingsContainer = () => {
     sourceCodeChange,
     inputUIInfo,
     displayName,
-    pathChange,
+    branchesChange,
     excutionTypeChange,
   ]);
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
@@ -316,18 +321,18 @@ const StepSettingsContainer = () => {
                 {[ActionType.CODE, ActionType.PIECE].includes(
                   modifiedStep.type as ActionType,
                 ) && (
-                  <ActionErrorHandlingForm
-                    hideContinueOnFailure={
-                      modifiedStep.settings.errorHandlingOptions
-                        ?.continueOnFailure?.hide
-                    }
-                    disabled={readonly}
-                    hideRetryOnFailure={
-                      modifiedStep.settings.errorHandlingOptions?.retryOnFailure
-                        ?.hide
-                    }
-                  ></ActionErrorHandlingForm>
-                )}
+                    <ActionErrorHandlingForm
+                      hideContinueOnFailure={
+                        modifiedStep.settings.errorHandlingOptions
+                          ?.continueOnFailure?.hide
+                      }
+                      disabled={readonly}
+                      hideRetryOnFailure={
+                        modifiedStep.settings.errorHandlingOptions?.retryOnFailure
+                          ?.hide
+                      }
+                    ></ActionErrorHandlingForm>
+                  )}
               </div>
             </ScrollArea>
           </ResizablePanel>

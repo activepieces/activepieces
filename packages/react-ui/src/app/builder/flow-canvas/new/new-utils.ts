@@ -3,15 +3,13 @@ import {
   Action,
   ActionType,
   BranchAction,
-  flowHelper,
   FlowVersion,
   isNil,
   LoopOnItemsAction,
   RouterAction,
   StepLocationRelativeToParent,
   Trigger,
-} from '../../../../../../shared/src';
-import { AP_NODE_SIZE } from '../flow-canvas-utils';
+} from '@activepieces/shared';
 import { flowUtilConsts } from './consts';
 import {
   ApBigAddButtonNode,
@@ -183,8 +181,8 @@ function createFocusStepInGraphParams(stepName: string) {
   return {
     nodes: [{ id: stepName }],
     duration: 1000,
-    maxZoom: 1,
-    minZoom: 1,
+    maxZoom: 1.25,
+    minZoom: 1.25,
   };
 }
 
@@ -214,6 +212,9 @@ const calculateGraphBoundingBox = (graph: ApGraph) => {
   };
 };
 
+
+
+
 const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
   const childGraph = step.firstLoopAction
     ? buildGraph(step.firstLoopAction)
@@ -224,6 +225,8 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
       });
 
   const childGraphBoundingBox = calculateGraphBoundingBox(childGraph);
+
+
   const childGraphAfterOffset = offsetGraph(childGraph, {
     x:
       childGraphBoundingBox.width / 2 +
@@ -323,7 +326,6 @@ const buildBranchChildGraph = (step: BranchAction) => {
   const maxHeight = Math.max(
     ...childGraphsAfterOffset.map((cg) => calculateGraphBoundingBox(cg).height),
   );
-  const totalWidth =  childGraphsAfterOffset.reduce((acc,cg)=> acc+calculateGraphBoundingBox(cg).width , 0)
 
   const subgraphEndSubNode: ApGraphEndNode = {
     id: `${step.name}-branch-subgraph-end`,
@@ -353,7 +355,7 @@ const buildBranchChildGraph = (step: BranchAction) => {
         label: t('True'),
         isBranchEmpty: isNil(step.onSuccessAction),
         drawStartingArc: true,
-        drawHorizontalLine:true,
+        drawHorizontalLine: true,
       },
     },
     {
@@ -368,7 +370,7 @@ const buildBranchChildGraph = (step: BranchAction) => {
         label: t('False'),
         isBranchEmpty: isNil(step.onFailureAction),
         drawStartingArc: true,
-        drawHorizontalLine:true,
+        drawHorizontalLine: true,
       },
     },
 
@@ -386,8 +388,7 @@ const buildBranchChildGraph = (step: BranchAction) => {
           childGraphsAfterOffset[1].nodes.at(-1)!.position.y -
           flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
           flowUtilConsts.ARC_LENGTH,
-          drawHorizontalLine:true
-          
+        drawHorizontalLine: true,
       },
     },
     {
@@ -402,7 +403,7 @@ const buildBranchChildGraph = (step: BranchAction) => {
           childGraphsAfterOffset[0].nodes.at(-1)!.position.y -
           flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
           flowUtilConsts.ARC_LENGTH,
-          drawHorizontalLine:true
+        drawHorizontalLine: true,
       },
     },
   ];
@@ -460,11 +461,16 @@ const buildRouterChildGraph = (step: RouterAction) => {
           type: ApEdgeType.ROUTER_START_EDGE as const,
           data: {
             isBranchEmpty: isNil(step.children[branchIndex]),
-            label: step.settings.branches[branchIndex].branchName?? `${t('Path')} ${branchIndex + 1}`,
+            label:
+              step.settings.branches[branchIndex].branchName ??
+              `${t('Path')} ${branchIndex + 1}`,
             branchIndex,
-            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH as const,
-            drawHorizontalLine: branchIndex === 0 || branchIndex === childGraphsAfterOffset.length-1,
-            drawStartingVerticalLine: branchIndex === 0
+            stepLocationRelativeToParent:
+              StepLocationRelativeToParent.INSIDE_BRANCH as const,
+            drawHorizontalLine:
+              branchIndex === 0 ||
+              branchIndex === childGraphsAfterOffset.length - 1,
+            drawStartingVerticalLine: branchIndex === 0,
           },
         },
         {
@@ -479,12 +485,13 @@ const buildRouterChildGraph = (step: RouterAction) => {
               childGraph.nodes.at(-1)!.position.y -
               flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
               flowUtilConsts.ARC_LENGTH,
-           drawHorizontalLine: branchIndex === 0 || branchIndex === childGraphsAfterOffset.length-1,
-           routerOrBranchStepName: step.name,
-           isNextStepEmpty: isNil(step.nextAction)
+            drawHorizontalLine:
+              branchIndex === 0 ||
+              branchIndex === childGraphsAfterOffset.length - 1,
+            routerOrBranchStepName: step.name,
+            isNextStepEmpty: isNil(step.nextAction),
           },
         },
-     
       ];
     })
     .flat();

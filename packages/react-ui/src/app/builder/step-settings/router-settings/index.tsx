@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { t } from 'i18next';
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
@@ -22,9 +22,11 @@ import {
 } from '../../../../components/ui/select';
 import { Label } from '../../../../components/ui/label';
 import { Split } from 'lucide-react';
+import { useReactFlow } from '@xyflow/react';
+import { newFloWUtils } from '../../flow-canvas/new/new-utils';
 
 export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
-  const [step, applyOperation, setSelectedBranchIndex, selectedBranchIndex] =
+  const [step, applyOperation, setSelectedBranchIndex, selectedBranchIndex, setBranchDeletedCallback] =
     useBuilderStateContext((state) => [
       flowHelper.getStep(
         state.flowVersion,
@@ -33,7 +35,10 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       state.applyOperation,
       state.setSelectedBranchIndex,
       state.selectedBranchIndex,
+      state.setBranchDeletedCallback,
+
     ]);
+  const { fitView } = useReactFlow();
 
   const { control, setValue, formState, getValues } =
     useFormContext<Omit<RouterAction, 'children' | 'nextAction'>>();
@@ -46,18 +51,31 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   const deleteBranch = (index: number) => {
     applyOperation(
       {
-        type: FlowOperationType.DELETE_PATH,
+        type: FlowOperationType.DELETE_BRANCH,
         request: {
           stepName: step.name,
-          pathIndex: index,
+          branchIndex: index,
         },
       },
-      () => {},
+      () => { },
     );
     remove(index);
     setSelectedBranchIndex(null);
+    fitView(newFloWUtils.createFocusStepInGraphParams(step.name));
   };
 
+  useEffect(() => {
+    setBranchDeletedCallback((branchIndex: number, stepName: string) => {
+      if (step.name === stepName) {
+        remove(branchIndex);
+      }
+    })
+
+    return () => {
+      setBranchDeletedCallback(null);
+    }
+
+  }, [])
   return (
     <>
       {isNil(selectedBranchIndex) && (
@@ -100,9 +118,22 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               setValue(`settings.branches[${index}].branchName`, name);
             }}
             deleteBranch={deleteBranch}
-            duplicateBranch={(index) => {}}
+            duplicateBranch={(index) => { }}
             setSelectedBranchIndex={(index) => {
               setSelectedBranchIndex(index);
+              if (step.children[index]) {
+                fitView(
+                  newFloWUtils.createFocusStepInGraphParams(
+                    step.children[index].name,
+                  ),
+                );
+              } else {
+                fitView(
+                  newFloWUtils.createFocusStepInGraphParams(
+                    `${step.name}-big-add-button-${step.name}-branch-${index}-start-edge`,
+                  ),
+                );
+              }
             }}
           ></BranchesList>
           {!readonly && (
@@ -111,13 +142,13 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                 addButtonClicked={() => {
                   applyOperation(
                     {
-                      type: FlowOperationType.ADD_PATH,
+                      type: FlowOperationType.ADD_BRANCH,
                       request: {
                         stepName: step.name,
-                        pathIndex: step.settings.branches.length - 1,
+                        branchIndex: step.settings.branches.length - 1,
                       },
                     },
-                    () => {},
+                    () => { },
                   );
 
                   insert(

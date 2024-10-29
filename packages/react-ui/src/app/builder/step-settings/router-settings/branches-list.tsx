@@ -83,7 +83,7 @@ type BranchListItemProps = {
   branch: RouterActionSettings['branches'][number];
   branchIndex: number;
   readonly: boolean;
-  onClick?: () => void;
+  onClick: () => void;
   errors: unknown[];
   duplicateBranch: () => void;
   deleteBranch: () => void;
@@ -108,14 +108,9 @@ export const BranchListItem = ({
 }: BranchListItemProps) => {
   return (
     <div
-      className={cn(
-        'flex items-center gap-2  has-[div.button-group:hover]:bg-background  text-sm',
-        {
-          'hover:bg-gray-100 px-2 cursor-pointer': !isNil(onClick),
-        },
-      )}
+      className={'flex items-center gap-2 transition-all   has-[div.button-group:hover]:bg-background  text-sm hover:bg-gray-100 px-2 cursor-pointer'}
       onClick={() => {
-        onClick?.();
+        onClick();
       }}
     >
       <EditableText

@@ -16,16 +16,16 @@ import { ApBigAddButtonNode } from '../types';
 import { flowUtilConsts } from '../consts';
 
 const ApBigAddButtonCanvasNode = React.memo(
-  ({ data }: Omit<ApBigAddButtonNode, 'position'>) => {
+  ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
     const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);
     const [actionMenuOpen, setActionMenuOpen] = useState(false);
     const [readonly, activeDraggingStep] = useBuilderStateContext((state) => [
       state.readonly,
       state.activeDraggingStep,
     ]);
-    const id = useId();
+    const draggableId = useId();
     const { setNodeRef } = useDroppable({
-      id,
+      id: draggableId,
       data: {
         accepts: flowUtilConsts.DRAGGED_STEP_TAG,
         ...data,
@@ -35,7 +35,7 @@ const ApBigAddButtonCanvasNode = React.memo(
 
     useDndMonitor({
       onDragMove(event: DragMoveEvent) {
-        setIsStepInsideDropzone(event.over?.id === id);
+        setIsStepInsideDropzone(event.over?.id === draggableId);
       },
       onDragEnd() {
         setIsStepInsideDropzone(false);
@@ -63,6 +63,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                   height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
                   width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                 }}
+                id={id}
                 className={cn('  rounded bg-accent', {
                   'bg-primary/80': showDropIndicator || actionMenuOpen,
                   'shadow-add-button': isIsStepInsideDropzone || actionMenuOpen,
