@@ -11,17 +11,14 @@ export const checkModeration = createAction({
     model: aiProps('moderation').model,
     text: Property.LongText({
       displayName: 'Text',
-      description: 'Text to check moderation for.',
       required: false,
     }),
     images: Property.Array({
       displayName: 'Images',
-      description: 'Images to check moderation for.',
       required: false,
       properties: {
         file: Property.File({
           displayName: 'Image File',
-          description: 'Image to check moderation for.',
           required: true,
         }),
       },

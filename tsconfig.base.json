@@ -36,9 +36,6 @@
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
-      "@activepieces/piece-ai-utility": [
-        "packages/pieces/community/ai-utility/src/index.ts"
-      ],
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
@@ -624,6 +621,9 @@
       ],
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
+      ],
+      "@activepieces/piece-utility-ai": [
+        "packages/pieces/community/utility-ai/src/index.ts"
       ],
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"

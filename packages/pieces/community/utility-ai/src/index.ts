@@ -5,7 +5,7 @@ import { classifyText } from './lib/actions/classify-text';
 import { checkModeration } from './lib/actions/check-moderation';
 
 export const aiUtility = createPiece({
-  displayName: 'AI Utility',
+  displayName: 'Utility AI',
   auth: PieceAuth.None(),
   categories: [
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
