@@ -1,15 +1,11 @@
-import {
-  ApFile,
-  createAction,
-  DynamicPropsValue,
-  Property,
-} from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import { AI, aiProps } from '@activepieces/pieces-common';
 
 export const checkModeration = createAction({
   name: 'checkModeration',
   displayName: 'Check Moderation',
-  description: 'Classifies if text or image is potentially harmful.',
+  description:
+    'Classifies if text or image contains hate, hate/threatening, self-harm, sexual, sexual/minors, violence, or violence/graphic content.',
   props: {
     provider: aiProps('moderation').provider,
     model: aiProps('moderation').model,
@@ -30,43 +26,6 @@ export const checkModeration = createAction({
         }),
       },
     }),
-    // inputType: Property.StaticDropdown({
-    //   displayName: 'Input Type',
-    //   description: 'Type of input to check moderation for.',
-    //   required: true,
-    //   defaultValue: 'text',
-    //   options: {
-    //     disabled: false,
-    //     options: [
-    //       { label: 'Text', value: 'text' },
-    //       { label: 'Image', value: 'image' },
-    //     ],
-    //   },
-    // }),
-    // body: Property.DynamicProperties({
-    //   displayName: 'Body',
-    //   required: true,
-    //   refreshers: ['inputType'],
-    //   props: async ({ inputType }) => {
-    //     const type = inputType as unknown as string;
-    //     const fields: DynamicPropsValue = {};
-
-    //     if (type === 'text') {
-    //       fields['input'] = Property.LongText({
-    //         displayName: 'Input',
-    //         required: true,
-    //       });
-    //     } else if (type === 'image') {
-    //       fields['input'] = Property.File({
-    //         displayName: 'Image',
-    //         description: 'The image file to check moderation for.',
-    //         required: true,
-    //       });
-    //     }
-
-    //     return fields;
-    //   },
-    // }),
   },
   async run(context) {
     const text = context.propsValue.text;

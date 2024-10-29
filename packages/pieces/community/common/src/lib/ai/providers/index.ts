@@ -91,6 +91,7 @@ export const aiProps = (
   provider: Property.Dropdown<AiProvider, true>({
     displayName: 'Provider',
     required: true,
+    defaultValue: 'openai',
     refreshers: [],
     options: async (_, ctx) => {
       const providers = await httpClient.sendRequest<
@@ -122,6 +123,7 @@ export const aiProps = (
         return [
           {
             value: providerMetadata.value,
+
             label: providerMetadata.label,
             models: providerMetadata.models,
           },
@@ -138,11 +140,13 @@ export const aiProps = (
   model: Property.Dropdown<string, true>({
     displayName: 'Model',
     required: true,
+    defaultValue: 'gpt-4o',
     refreshers: ['provider'],
     options: async ({ provider }) => {
       if (isNil(provider)) {
         return {
           disabled: true,
+
           options: [],
           placeholder: 'Select AI Provider',
         };

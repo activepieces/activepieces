@@ -1,7 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { extractStructuredData } from './lib/actions/extract-structured-data';
-import { classifyTextOrImage } from './lib/actions/classify-text-or-image';
+import { classifyText } from './lib/actions/classify-text';
 import { checkModeration } from './lib/actions/check-moderation';
 
 export const aiUtility = createPiece({
@@ -9,8 +9,8 @@ export const aiUtility = createPiece({
   auth: PieceAuth.None(),
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   minimumSupportedRelease: '0.20.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/ai-utility.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/ai-utility.svg',
   authors: ['kishanprmr'],
-  actions: [checkModeration, classifyTextOrImage, extractStructuredData],
+  actions: [checkModeration, classifyText, extractStructuredData],
   triggers: [],
 });

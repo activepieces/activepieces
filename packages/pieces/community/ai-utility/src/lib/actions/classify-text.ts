@@ -1,27 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { AI, AIChatRole, aiProps } from '@activepieces/pieces-common';
 
-export const classifyTextOrImage = createAction({
-  name: 'classifyTextOrImage',
+export const classifyText = createAction({
+  name: 'classifyText',
   displayName: 'Classify Text',
   description: 'Classify your text into one of your provided categories.',
   props: {
     provider: aiProps('text').provider,
     model: aiProps('text').model,
-    // inputType: Property.StaticDropdown({
-    //   displayName: 'Input Type',
-    //   description: 'Type of input to be classify.',
-    //   required: true,
-    //   defaultValue: 'text',
-    //   options: {
-    //     disabled: false,
-    //     options: [
-    //       { label: 'Text', value: 'text' },
-    //       { label: 'Image', value: 'image' },
-    //     ],
-    //   },
-    // }),
-    body: Property.LongText({
+    text: Property.LongText({
       displayName: 'Text to Classify',
       required: true,
     }),
@@ -53,7 +40,7 @@ export const classifyTextOrImage = createAction({
           content: `As a text classifier, your task is to assign one of the following categories to the provided text: ${categories.join(
             ', '
           )}. Please respond with only the selected category as a single word, and nothing else.
-          Text to classify: "${context.propsValue.body}"`,
+          Text to classify: "${context.propsValue.text}"`,
         },
       ],
     });

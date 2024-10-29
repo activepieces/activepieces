@@ -27,60 +27,9 @@ export const extractStructuredData = createAction({
     prompt: Property.LongText({
       displayName: 'Guide Prompt',
       description: 'Prompt to guide the AI.',
+      defaultValue: 'Extract the following data from the provided text.',
       required: false,
     }),
-    // inputType: Property.StaticDropdown({
-    //   displayName: 'Input Type',
-    //   description: 'Type of input to be extract information from.',
-    //   required: true,
-    //   defaultValue: 'text',
-    //   options: {
-    //     disabled: false,
-    //     options: [
-    //       { label: 'Text', value: 'text' },
-    //       { label: 'Image', value: 'image' },
-    //     ],
-    //   },
-    // }),
-    // body: Property.DynamicProperties({
-    //   displayName: 'Body',
-    //   required: true,
-    //   refreshers: ['inputType'],
-    //   props: async ({ inputType }) => {
-    //     const type = inputType as unknown as string;
-    //     const fields: DynamicPropsValue = {};
-
-    //     if (type === 'text') {
-    //       fields['input'] = Property.LongText({
-    //         displayName: 'Unstructured Text',
-    //         required: true,
-    //       });
-    //       fields['prompt'] = Property.LongText({
-    //         displayName: 'Guide Prompt',
-    //         description:
-    //           'A prompt to guide the AI in extracting data from the text.',
-    //         required: false,
-    //         defaultValue: 'Extract the following data from the provided text.',
-    //       });
-    //     } else if (type === 'image') {
-    //       fields['input'] = Property.File({
-    //         displayName: 'Image',
-    //         description: 'The image file you want extract data from.',
-    //         required: true,
-    //       });
-    //       fields['prompt'] = Property.LongText({
-    //         displayName: 'Guide Prompt',
-    //         description:
-    //           'A prompt to guide the AI in extracting data from the image.',
-    //         required: false,
-    //         defaultValue:
-    //           'Use optical character recognition (OCR) to extract from provided image.',
-    //       });
-    //     }
-
-    //     return fields;
-    //   },
-    // }),
     params: Property.Array({
       displayName: 'Data Definition',
       required: true,
