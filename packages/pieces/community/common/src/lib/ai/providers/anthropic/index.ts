@@ -9,7 +9,7 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
     baseURL: proxyUrl,
     defaultHeaders: {
       Authorization: `Bearer ${engineToken}`,
-    }
+    },
   });
   return {
     provider: 'ANTHROPIC' as const,
@@ -90,12 +90,12 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
             })),
           call: toolCall
             ? {
-              id: toolCall.id,
-              function: {
-                name: toolCall.name,
-                arguments: toolCall.input,
-              },
-            }
+                id: toolCall.id,
+                function: {
+                  name: toolCall.name,
+                  arguments: toolCall.input,
+                },
+              }
             : null,
           model: completion.model,
           created: new Date().getTime(),
@@ -172,12 +172,12 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
             })),
           call: toolCall
             ? {
-              id: toolCall.id,
-              function: {
-                name: toolCall.name,
-                arguments: toolCall.input,
-              },
-            }
+                id: toolCall.id,
+                function: {
+                  name: toolCall.name,
+                  arguments: toolCall.input,
+                },
+              }
             : null,
           model: completion.model,
           created: new Date().getTime(),
