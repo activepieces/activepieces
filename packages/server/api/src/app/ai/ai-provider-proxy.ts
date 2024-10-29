@@ -56,13 +56,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
 
             const responseContentType = response.headers.get('content-type')
 
-            const data = responseContentType?.includes('application/json')
-                ? await response.json()
-                : responseContentType?.includes('application/octet-stream')
-                    ? await Buffer.from(await response.arrayBuffer())
-                    : responseContentType?.includes('audio/') || responseContentType?.includes('video/') || responseContentType?.includes('image/')
-                        ? Buffer.from(await response.arrayBuffer())
-                        : await response.text()
+            const data = await parseResponseData(response, responseContentType)
 
             await projectUsageService.increaseUsage(projectId, 1, 'aiTokens')
 
@@ -90,6 +84,19 @@ export const proxyController: FastifyPluginCallbackTypebox = (
         }
     })
     done()
+}
+
+async function parseResponseData(response: Response, responseContentType: string | null) {
+    if (responseContentType?.includes('application/json')) {
+        return response.json()
+    }
+    if (responseContentType?.includes('application/octet-stream')) {
+        return Buffer.from(await response.arrayBuffer())
+    }
+    if (responseContentType?.includes('audio/') || responseContentType?.includes('video/') || responseContentType?.includes('image/')) {
+        return Buffer.from(await response.arrayBuffer())
+    }
+    return response.text()
 }
 
 function makeOpenAiResponse(
