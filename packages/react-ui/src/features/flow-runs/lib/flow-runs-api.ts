@@ -1,7 +1,3 @@
-import { nanoid } from 'nanoid';
-import { Socket } from 'socket.io-client';
-
-import { api } from '@/lib/api';
 import {
   FlowRun,
   SeekPage,
@@ -13,7 +9,12 @@ import {
   CreateStepRunRequestBody,
   StepRunResponse,
   isFlowStateTerminal,
+  BulkRetryFlowRequestBody,
 } from '@activepieces/shared';
+import { nanoid } from 'nanoid';
+import { Socket } from 'socket.io-client';
+
+import { api } from '@/lib/api';
 
 export const flowRunsApi = {
   list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {
@@ -21,6 +22,9 @@ export const flowRunsApi = {
   },
   getPopulated(id: string): Promise<FlowRun> {
     return api.get<FlowRun>(`/v1/flow-runs/${id}`);
+  },
+  bulkRetry(request: BulkRetryFlowRequestBody): Promise<FlowRun[]> {
+    return api.post<FlowRun[]>('/v1/flow-runs/bulk-retry', request);
   },
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);

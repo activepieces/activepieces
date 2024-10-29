@@ -1,5 +1,6 @@
 'use client';
 
+import { SeekPage } from '@activepieces/shared';
 import {
   ColumnDef as TanstackColumnDef,
   flexRender,
@@ -11,6 +12,21 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 
+import { Button } from '../button';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../select';
+
+import { DataTableBulkActions } from './data-table-bulk-actions';
+import { DataTableColumnHeader } from './data-table-column-header';
+import { DataTableFacetedFilter } from './data-table-options-filter';
+import { DataTableSkeleton } from './data-table-skeleton';
+import { DataTableToolbar } from './data-table-toolbar';
+
 import {
   Table,
   TableBody,
@@ -19,21 +35,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { SeekPage } from '@activepieces/shared';
-
-import { Button } from '../button';
-import { DataTableColumnHeader } from './data-table-column-header';
-import { DataTableFacetedFilter } from './data-table-options-filter';
-import { DataTableSkeleton } from './data-table-skeleton';
-import { DataTableToolbar } from './data-table-toolbar';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '../select';
-import { DataTableBulkActions } from './data-table-bulk-actions';
 
 export type DataWithId = {
   id?: string;
@@ -89,8 +90,11 @@ interface DataTableProps<
 }
 
 export type BulkAction<TData extends DataWithId> = {
-  render: (selectedRows: RowDataWithActions<TData>[], resetSelection: () => void) => React.ReactNode;
-}
+  render: (
+    selectedRows: RowDataWithActions<TData>[],
+    resetSelection: () => void,
+  ) => React.ReactNode;
+};
 
 export function DataTable<
   TData extends DataWithId,
@@ -139,10 +143,9 @@ export function DataTable<
   const [nextPageCursor, setNextPageCursor] = useState<string | undefined>(
     page?.next ?? undefined,
   );
-  const [previousPageCursor, setPreviousPageCursor] = useState<string | undefined>(
-    page?.previous ?? undefined,
-  );
-
+  const [previousPageCursor, setPreviousPageCursor] = useState<
+    string | undefined
+  >(page?.previous ?? undefined);
 
   const enrichPageData = (data: TData[]) => {
     return data.map((row, index) => ({
@@ -227,27 +230,32 @@ export function DataTable<
   return (
     <div>
       <DataTableToolbar>
-        {filters &&
-          filters.map((filter) => (
-            <DataTableFacetedFilter
-              key={filter.accessorKey}
-              type={filter.type}
-              column={table.getColumn(filter.accessorKey)}
-              title={filter.title}
-              options={filter.options}
+        <div className="w-full flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {filters &&
+              filters.map((filter) => (
+                <DataTableFacetedFilter
+                  key={filter.accessorKey}
+                  type={filter.type}
+                  column={table.getColumn(filter.accessorKey)}
+                  title={filter.title}
+                  options={filter.options}
+                />
+              ))}
+          </div>
+          {bulkActions.length > 0 && (
+            <DataTableBulkActions
+              selectedRows={table
+                .getSelectedRowModel()
+                .rows.map((row) => row.original)}
+              actions={bulkActions.map((action) => ({
+                render: (selectedRows: RowDataWithActions<TData>[]) =>
+                  action.render(selectedRows, resetSelection),
+              }))}
             />
-          ))}
+          )}
+        </div>
       </DataTableToolbar>
-
-      {bulkActions.length > 0 && (
-        <DataTableBulkActions
-          selectedRows={table.getSelectedRowModel().rows.map((row) => row.original)}
-          actions={bulkActions.map(action => ({
-            render: (selectedRows: RowDataWithActions<TData>[]) =>
-              action.render(selectedRows, resetSelection)
-          }))}
-        />
-      )}
 
       <div className="rounded-md border m-">
         <Table>
@@ -260,9 +268,9 @@ export function DataTable<
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </TableHead>
                   );
                 })}
@@ -284,16 +292,34 @@ export function DataTable<
                 <TableRow
                   onClick={(e) => {
                     // Check if the clicked cell is not clickable
-                    const clickedCellIndex = (e.target as HTMLElement).closest('td')?.cellIndex;
-                    if (clickedCellIndex !== undefined && columnsInitial[clickedCellIndex]?.notClickable) {
+                    const clickedCellIndex = (e.target as HTMLElement).closest(
+                      'td',
+                    )?.cellIndex;
+                    console.log('row', row);
+                    console.log('clickedCellIndex', clickedCellIndex);
+                    console.log('columnsInitial', columnsInitial);
+                    console.log(
+                      'not clickable',
+                      columnsInitial[clickedCellIndex]?.notClickable,
+                    );
+                    if (
+                      clickedCellIndex !== undefined &&
+                      (columnsInitial[clickedCellIndex]?.notClickable ||
+                        columnsInitial[clickedCellIndex]?.id === 'select')
+                    ) {
                       return; // Don't trigger onRowClick for not clickable columns
                     }
                     onRowClick?.(row.original, e.ctrlKey, e);
                   }}
                   onAuxClick={(e) => {
                     // Similar check for auxiliary click (e.g., middle mouse button)
-                    const clickedCellIndex = (e.target as HTMLElement).closest('td')?.cellIndex;
-                    if (clickedCellIndex !== undefined && columnsInitial[clickedCellIndex]?.notClickable) {
+                    const clickedCellIndex = (e.target as HTMLElement).closest(
+                      'td',
+                    )?.cellIndex;
+                    if (
+                      clickedCellIndex !== undefined &&
+                      columnsInitial[clickedCellIndex]?.notClickable
+                    ) {
                       return;
                     }
                     onRowClick?.(row.original, true, e);
@@ -303,9 +329,7 @@ export function DataTable<
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                    >
+                    <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
