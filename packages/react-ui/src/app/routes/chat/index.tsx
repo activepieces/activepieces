@@ -1,94 +1,112 @@
-import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import {
-  ArrowUpIcon,
-  BotIcon,
-  CircleX,
-  RotateCcw,
-  Download,
-} from 'lucide-react';
+import { ArrowUpIcon, Paperclip } from 'lucide-react';
 import { nanoid } from 'nanoid';
-import { useEffect, useRef, useState } from 'react';
-import Markdown from 'react-markdown';
+import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import remarkGfm from 'remark-gfm';
+import { useSearchParam } from 'react-use';
 
-import { Badge } from '@/components/ui/badge';
+import { LoadingScreen } from '@/app/components/loading-screen';
+import { FileInputPreview } from '@/app/routes/chat/file-input-preview';
 import { Button } from '@/components/ui/button';
-import {
-  ChatBubble,
-  ChatBubbleAction,
-  ChatBubbleAvatar,
-  ChatBubbleMessage,
-} from '@/components/ui/chat/chat-bubble';
 import { ChatInput } from '@/components/ui/chat/chat-input';
-import { ChatMessageList } from '@/components/ui/chat/chat-message-list';
-import { CopyButton } from '@/components/ui/copy-button';
-import ImageWithFallback from '@/components/ui/image-with-fallback';
 import {
   FormResultTypes,
   humanInputApi,
 } from '@/features/human-input/lib/human-input-api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApErrorParams, ErrorCode } from '@activepieces/shared';
+import {
+  ApErrorParams,
+  ChatUIResponse,
+  ErrorCode,
+  isNil,
+  USE_DRAFT_QUERY_PARAM_NAME,
+} from '@activepieces/shared';
 
-const Messages = Type.Array(
-  Type.Object({
-    role: Type.Union([Type.Literal('user'), Type.Literal('bot')]),
-    content: Type.String(),
-    type: Type.Optional(
-      Type.Union([
-        Type.Literal('text'),
-        Type.Literal('image'),
-        Type.Literal('file'),
-      ]),
-    ),
-    mimeType: Type.Optional(Type.String()),
-  }),
-);
-type Messages = Static<typeof Messages>;
+import { ImageDialog } from './image-dialog';
+import { Messages, MessagesList } from './messages-list';
 
 export function ChatPage() {
   const { flowId } = useParams();
+  const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
   const messagesRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
+  const {
+    data: chatUI,
+    isLoading,
+    isError: isLoadingError,
+  } = useQuery<ChatUIResponse | null, Error>({
+    queryKey: ['chat', flowId],
+    queryFn: () => humanInputApi.getChatUI(flowId!, useDraft),
+    enabled: !isNil(flowId),
+    staleTime: Infinity,
+    retry: false,
+  });
+
   const scrollToBottom = () => {
-    messagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    setTimeout(() => {
+      const lastMessage = document.getElementById('last-message');
+      if (lastMessage) {
+        lastMessage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const chatId = useRef<string>(nanoid());
   const [messages, setMessages] = useState<Messages>([]);
   const [input, setInput] = useState('');
   const previousInputRef = useRef('');
-  const [error, setError] = useState<ApErrorParams | null>(null);
+  const [sendingError, setSendingError] = useState<ApErrorParams | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
-  const { data: projectId } = useQuery({
-    queryKey: ['current-project-id'],
-    queryFn: () => authenticationSession.getProjectId(),
-  });
+  const [files, setFiles] = useState<File[]>([]);
+  const previousFilesRef = useRef<File[]>([]);
 
-  const { mutate: sendMessage, isPending: isLoading } = useMutation({
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const botName =
+    chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`;
+
+  const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
       if (!flowId || !chatId) return null;
       const savedInput = isRetrying ? previousInputRef.current : input;
+      const savedFiles = isRetrying ? previousFilesRef.current : files;
       previousInputRef.current = savedInput;
+      previousFilesRef.current = savedFiles;
       setInput('');
+      setFiles([]);
       if (!isRetrying) {
-        setMessages([...messages, { role: 'user', content: savedInput }]);
+        const fileMessages: Messages = savedFiles.map((file) => {
+          const isImage = file.type.startsWith('image/');
+          return {
+            role: 'user' as const,
+            content: URL.createObjectURL(file),
+            type: isImage ? ('image' as const) : ('file' as const),
+            mimeType: file.type,
+            fileName: file.name,
+          };
+        });
+        setMessages([
+          ...messages,
+          ...fileMessages,
+          { role: 'user', content: savedInput },
+        ]);
       }
       scrollToBottom();
       return humanInputApi.sendMessage({
         flowId,
         chatId: chatId.current,
         message: savedInput,
+        files: savedFiles,
+        useDraft,
       });
     },
     onSuccess: (result) => {
       if (!result) {
-        setError({
+        setSendingError({
           code: ErrorCode.NO_CHAT_RESPONSE,
           params: {},
         });
@@ -97,6 +115,7 @@ export function ChatPage() {
           case FormResultTypes.FILE:
             if ('url' in result.value) {
               const isImage = result.value.mimeType?.startsWith('image/');
+              setSendingError(null);
               setMessages([
                 ...messages,
                 {
@@ -109,21 +128,35 @@ export function ChatPage() {
             }
             break;
           case FormResultTypes.MARKDOWN:
+            setSendingError(null);
             setMessages([
               ...messages,
-              { role: 'bot', content: result.value, type: 'text' },
+              { role: 'bot', content: result.value, type: 'text' as const },
+              ...(result.files ?? []).map((file) => {
+                const isImage =
+                  'mimeType' in file
+                    ? file.mimeType?.startsWith('image/')
+                    : false;
+                return {
+                  role: 'bot' as const,
+                  content: 'url' in file ? file.url : file.base64Url,
+                  type: isImage ? ('image' as const) : ('file' as const),
+                  mimeType: 'mimeType' in file ? file.mimeType : undefined,
+                  fileName: 'fileName' in file ? file.fileName : undefined,
+                };
+              }),
             ]);
         }
       }
       scrollToBottom();
     },
     onError: (error: AxiosError) => {
-      setError(error.response?.data as ApErrorParams);
+      setSendingError(error.response?.data as ApErrorParams);
       scrollToBottom();
     },
   });
 
-  useEffect(scrollToBottom, [messages, isLoading]);
+  useEffect(scrollToBottom, [messages, isSending]);
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -133,173 +166,137 @@ export function ChatPage() {
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!isLoading && input) {
+      if (!isSending && input) {
         onSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
       }
     }
   };
 
-  if (!flowId) return <Navigate to="/404" />;
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = event.target.files && Array.from(event.target.files);
+    if (selectedFiles) {
+      setFiles((prevFiles) => {
+        const newFiles = [...prevFiles, ...selectedFiles];
+        return newFiles;
+      });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+  };
+
+  if (!flowId || isLoadingError) return <Navigate to="/404" />;
+
+  if (isLoading) return <LoadingScreen />;
+
+  const toggleImageDialog = (imageUrl: string | null) => {
+    setImageDialogOpen(!!imageUrl);
+    setSelectedImage(imageUrl);
+  };
 
   return (
     <main
       className={cn(
-        'flex w-full max-w-3xl flex-col items-center mx-auto py-6',
+        'flex w-full flex-col items-center justify-center pb-6',
         messages.length > 0 ? 'h-screen' : 'h-[calc(50vh)]',
       )}
     >
-      <ChatMessageList ref={messagesRef}>
-        {messages.map((message, index) => (
-          <ChatBubble
-            key={index}
-            variant={message.role === 'user' ? 'sent' : 'received'}
-            className="flex  items-start"
-          >
-            {message.role === 'bot' && (
-              <ChatBubbleAvatar
-                src=""
-                fallback={<BotIcon className="size-5" />}
-              />
-            )}
-            <ChatBubbleMessage className="flex gap-2">
-              {message.type === 'image' ? (
-                <ImageWithFallback
-                  src={message.content}
-                  alt="Received image"
-                  className="max-w-full h-auto rounded-md"
+      <MessagesList
+        messagesRef={messagesRef}
+        messages={messages}
+        chatUI={chatUI}
+        sendingError={sendingError}
+        isSending={isSending}
+        flowId={flowId}
+        sendMessage={sendMessage}
+        setSelectedImage={toggleImageDialog}
+      />
+      {messages.length === 0 && (
+        <div className="flex flex-col items-center justify-center">
+          <div className="flex items-center justify-center py-8 ps-4 font-bold">
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center justify-center p-3 rounded-full">
+                <img
+                  src={chatUI?.platformLogoUrl}
+                  alt="Bot Avatar"
+                  className="w-10 h-10"
                 />
-              ) : message.type === 'file' ? (
-                <Badge
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-secondary/80"
-                  onClick={() => window.open(message.content, '_blank')}
-                >
-                  <Download className="mr-2 h-4 w-4" /> Download File
-                </Badge>
-              ) : (
-                <Markdown remarkPlugins={[remarkGfm]} className="bg-inherit">
-                  {message.content}
-                </Markdown>
-              )}
-            </ChatBubbleMessage>
-            {message.role === 'bot' && message.type === 'text' && (
-              <CopyButton
-                textToCopy={message.content}
-                className="size-6 p-1 mt-2"
-              />
-            )}
-          </ChatBubble>
-        ))}
-        {error && !isLoading && (
-          <ChatBubble variant="received">
-            <div className="relative">
-              <ChatBubbleAvatar
-                src=""
-                fallback={<BotIcon className="size-5" />}
-              />
-              <div className="absolute -bottom-[2px] -right-[2px]">
-                <CircleX className="size-4 text-destructive" strokeWidth={3} />
+              </div>
+              <div className="flex items-center gap-1 justify-center">
+                <p className="animate-typing overflow-hidden whitespace-nowrap pr-1 hidden lg:block lg:text-xl text-foreground leading-8">
+                  Hi I&apos;m {botName} 👋 What can I help you with today?
+                </p>
+                <p className="animate-typing-sm overflow-hidden whitespace-nowrap pr-1 lg:hidden text-xl text-foreground leading-8">
+                  Hi I&apos;m {botName} 👋
+                </p>
+                <span className="w-4 h-4 rounded-full bg-foreground animate-[fade_0.15s_ease-out_forwards_0.7s_reverse]" />
               </div>
             </div>
-            <ChatBubbleMessage className="text-destructive">
-              {formatError(projectId, flowId, error)}
-            </ChatBubbleMessage>
-            <div className="flex gap-1">
-              <ChatBubbleAction
-                variant="outline"
-                className="size-5 mt-2"
-                icon={<RotateCcw className="size-3" />}
-                onClick={() => {
-                  sendMessage({ isRetrying: true });
-                }}
-              />
-            </div>
-          </ChatBubble>
-        )}
-        {isLoading && (
-          <ChatBubble variant="received">
-            <ChatBubbleAvatar
-              src=""
-              fallback={<BotIcon className="size-5" />}
-            />
-            <ChatBubbleMessage isLoading />
-          </ChatBubble>
-        )}
-      </ChatMessageList>
-      {messages.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-8">
-          <p className="text-lg text-gray-500">
-            What can I help you with today?
-          </p>
+          </div>
         </div>
       )}
-      <div className="w-full px-4">
-        <form
-          ref={formRef}
-          onSubmit={onSubmit}
-          className="relative rounded-full border bg-background"
-        >
-          <div className="flex items-center justify-between pe-1 pt-0">
-            <ChatInput
-              autoFocus
-              value={input}
-              onKeyDown={onKeyDown}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message here..."
-            />
-            <Button
-              disabled={!input || isLoading}
-              type="submit"
-              size="icon"
-              className="rounded-full"
-            >
-              <ArrowUpIcon className="w-5 h-5" />
-            </Button>
+      <div className="w-full px-4 max-w-3xl">
+        <form ref={formRef} onSubmit={onSubmit}>
+          <div className="flex flex-col items-center justify-between pe-2 pt-0 rounded-3xl bg-muted">
+            {files.length > 0 && (
+              <div className="px-4 py-3 w-full">
+                <div className="flex items-start gap-3 overflow-x-auto">
+                  {files.map((file, index) => (
+                    <FileInputPreview
+                      key={`${file.name}-${index}`}
+                      file={file}
+                      index={index}
+                      onRemove={removeFile}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex-grow flex items-center w-full">
+              <div className="flex items-center ps-2">
+                <label htmlFor="file-upload" className="cursor-pointer p-2">
+                  <Paperclip className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+                </label>
+                <input
+                  ref={fileInputRef}
+                  id="file-upload"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+              <ChatInput
+                autoFocus
+                value={input}
+                onKeyDown={onKeyDown}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your message here..."
+              />
+              <Button
+                disabled={!input || isSending}
+                type="submit"
+                size="icon"
+                className="rounded-full min-w-8 min-h-8 h-8 w-8"
+              >
+                <ArrowUpIcon className="w-4 h-4 size-4" />
+              </Button>
+            </div>
           </div>
         </form>
       </div>
+      <ImageDialog
+        open={imageDialogOpen}
+        onOpenChange={(open) => {
+          setImageDialogOpen(open);
+          if (!open) setSelectedImage(null);
+        }}
+        imageUrl={selectedImage}
+      />
     </main>
   );
 }
-
-const formatError = (
-  projectId: string | undefined | null,
-  flowId: string,
-  error: ApErrorParams,
-) => {
-  switch (error.code) {
-    case ErrorCode.NO_CHAT_RESPONSE:
-      if (projectId) {
-        return (
-          <span>
-            No response from the chatbot. Ensure that{' '}
-            <strong>Respond on UI (Markdown)</strong> is the final step in{' '}
-            <a
-              href={`/projects/${projectId}/flows/${flowId}`}
-              className="text-primary underline"
-              target="_blank"
-              rel="noreferrer"
-            >
-              your flow
-            </a>
-            .
-          </span>
-        );
-      }
-      return (
-        <span>
-          The chatbot is not responding. It seems there might be an issue with
-          how this chat was set up. Please contact the person who shared this
-          chat link with you for assistance.
-        </span>
-      );
-    case ErrorCode.FLOW_NOT_FOUND:
-      return (
-        <span>The chat flow you are trying to access no longer exists.</span>
-      );
-    case ErrorCode.VALIDATION:
-      return <span>{`Validation error: ${error.params.message}`}</span>;
-    default:
-      return <span>Something went wrong. Please try again.</span>;
-  }
-};

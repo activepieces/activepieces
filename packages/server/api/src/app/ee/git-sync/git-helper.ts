@@ -1,12 +1,15 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { GitRepo } from '@activepieces/ee-shared'
+import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { nanoid } from 'nanoid'
 import simpleGit, { SimpleGit } from 'simple-git'
 import { userService } from '../../user/user-service'
 
 export const gitHelper = {
     commitAndPush,
     createGitRepoAndReturnPaths,
+    validateConnection,
 }
 
 async function commitAndPush(
@@ -18,7 +21,6 @@ async function commitAndPush(
     await git.commit(commitMessage)
     await git.push('origin', gitRepo.branch)
 }
-
 
 async function createGitRepoAndReturnPaths(
     gitRepo: GitRepo,
@@ -45,7 +47,10 @@ async function createGitRepoAndReturnPaths(
         'state',
     )
     await fs.mkdir(stateFolderPath, { recursive: true })
-    const git = await initGitRepo(gitRepo, tmpFolder)
+    const keyPath = path.resolve(path.join('tmp', 'keys', gitRepo.id))
+    await createOrGetSshKeyPath({ keyPath, sshPrivateKey: gitRepo.sshPrivateKey })
+    const git = await initGitRepo(keyPath, gitRepo.remoteUrl, tmpFolder, gitRepo.branch)
+    await git.pull('origin', gitRepo.branch)
 
     const { email, firstName, lastName } = await userService.getOneOrFail({
         id: userId,
@@ -59,26 +64,50 @@ async function createGitRepoAndReturnPaths(
     }
 }
 
-async function createOrGetSshKeyPath(gitRepo: GitRepo): Promise<string> {
-    const keyPath = path.resolve(path.join('tmp', 'keys', gitRepo.id))
+async function createOrGetSshKeyPath({ keyPath, sshPrivateKey }: { keyPath: string, sshPrivateKey: string }): Promise<void> {
     await fs.mkdir(path.dirname(keyPath), { recursive: true })
-    await fs.writeFile(keyPath, gitRepo.sshPrivateKey)
+    await fs.writeFile(keyPath, sshPrivateKey)
     await fs.chmod(keyPath, 0o600)
-    return keyPath
 }
 
 async function initGitRepo(
-    gitRepo: GitRepo,
+    keyPath: string,
+    remoteUrl: string,
     baseDir: string,
+    branch: string,
 ): Promise<SimpleGit> {
-    const keyPath = await createOrGetSshKeyPath(gitRepo)
     const git = simpleGit({
         baseDir,
         binary: 'git',
     }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no`)
     await git.init()
-    await git.addRemote('origin', gitRepo.remoteUrl)
-    await git.branch(['-M', gitRepo.branch])
-    await git.pull('origin', gitRepo.branch)
+    await git.addRemote('origin', remoteUrl)
+    await git.branch(['-M', branch])
+    await git.pull('origin', branch)
     return git
+}
+
+async function validateConnection(request: ConfigureRepoRequest): Promise<void> {
+    const { remoteUrl, sshPrivateKey, branch } = request
+
+    const tmpFolder = path.join('/', 'tmp', 'repo', nanoid(), 'validate')
+    const keyPath = path.resolve(path.join('tmp', 'keys', nanoid()))
+
+    try {
+        await fs.mkdir(tmpFolder, { recursive: true })
+        await createOrGetSshKeyPath({ keyPath, sshPrivateKey })
+        await initGitRepo(keyPath, remoteUrl, tmpFolder, branch)
+    }
+    catch (error) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_GIT_CREDENTIALS,
+            params: {
+                message: (error as Error).message,
+            },
+        })
+    }
+    finally {
+        await fs.rmdir(tmpFolder, { recursive: true })
+        await fs.unlink(keyPath)
+    }
 }

@@ -75,7 +75,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/update-run', UpdateStepProgress, async (request) => {
         const { runId, workerHandlerId, runDetails, httpRequestId } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
-        if (progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
+        if (runDetails.status !== FlowRunStatus.RUNNING && progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
             await webhookResponseWatcher.publish(
                 httpRequestId,
                 workerHandlerId,
@@ -103,7 +103,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        app.io.to(populatedRun.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_PROGRESS, populatedRun)
+        app.io.to(populatedRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, populatedRun)
         if (runDetails.status === FlowRunStatus.QUOTA_EXCEEDED) {
             logger.info({
                 projectId: populatedRun.projectId,

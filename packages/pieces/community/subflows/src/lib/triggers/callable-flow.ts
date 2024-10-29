@@ -35,6 +35,8 @@ export const callableFlow = createTrigger({
   },
   async onStart(context) {
     const request = context.payload as CallableFlowRequest;
-    await context.store.put(callableFlowKey(context.run.id), request.callbackUrl, StoreScope.FLOW);
+    if (request.callbackUrl) {
+      await context.store.put(callableFlowKey(context.run.id), request.callbackUrl, StoreScope.FLOW);
+    }
   }
 });

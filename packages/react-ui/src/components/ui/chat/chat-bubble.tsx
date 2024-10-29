@@ -66,17 +66,21 @@ const ChatBubbleAvatar: React.FC<ChatBubbleAvatarProps> = ({
   className,
 }) => (
   <Avatar>
-    <AvatarImage src={src} alt="Avatar" />
+    <AvatarImage
+      src={src}
+      alt="Avatar"
+      className={cn('aspect-square p-2', className)}
+    />
     <AvatarFallback className="bg-background border">{fallback}</AvatarFallback>
   </Avatar>
 );
 
 // ChatBubbleMessage
-const chatBubbleMessageVariants = cva('px-5', {
+const chatBubbleMessageVariants = cva('px-1', {
   variants: {
     variant: {
       received: 'bg-background text-foreground rounded-3xl py-2',
-      sent: 'bg-secondary text-secondary-foreground rounded-3xl py-3',
+      sent: 'bg-secondary text-secondary-foreground rounded-3xl py-3 px-5',
     },
     layout: {
       default: '',

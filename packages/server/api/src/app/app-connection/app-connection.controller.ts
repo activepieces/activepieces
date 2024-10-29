@@ -16,6 +16,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { eventsHooks } from '../helper/application-events'
+import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (
@@ -27,6 +28,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
         const appConnection = await appConnectionService.upsert({
             projectId: request.principal.projectId,
             request: request.body,
+            ownerId: await securityHelper.getUserIdFromRequest(request),
         })
         eventsHooks.get().sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
@@ -58,7 +60,6 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
                 ...appConnections,
                 data: appConnections.data.map(removeSensitiveData),
             }
-
             return appConnectionsWithoutSensitiveData
         },
     )

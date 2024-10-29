@@ -1,6 +1,6 @@
 
 import { DelayedJobData, logger, RenewWebhookJobData, RepeatableJobType, RepeatingJobData, ScheduledJobData } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, FlowStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, PopulatedFlow, ProgressUpdateType, TriggerPayload } from '@activepieces/shared'
+import { assertNotNullOrUndefined, FlowStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, PopulatedFlow, ProgressUpdateType, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { engineApiService, workerApiService } from '../api/server-api.service'
 import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
 
@@ -72,6 +72,7 @@ const consumePieceTrigger = async (data: RepeatingJobData, flowVersion: FlowVers
         progressUpdateType: ProgressUpdateType.NONE,
         projectId: data.projectId,
         payloads,
+        environment: RunEnvironment.PRODUCTION,
     })
 }
 

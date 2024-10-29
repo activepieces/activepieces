@@ -12,6 +12,8 @@ import { googleSheetsCommon } from './lib/common/common';
 import { newRowAddedTrigger } from './lib/triggers/new-row-added-webhook';
 import { newOrUpdatedRowTrigger } from './lib/triggers/new-or-updated-row.trigger';
 import { insertMultipleRowsAction } from './lib/actions/insert-multiple-rows.action';
+import { createWorksheetAction } from './lib/actions/create-worksheet';
+import { createSpreadsheetAction } from './lib/actions/create-spreadsheet';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
 	description: '',
@@ -46,6 +48,8 @@ export const googleSheets = createPiece({
 		deleteRowAction,
 		updateRowAction,
 		findRowsAction,
+		createSpreadsheetAction,
+		createWorksheetAction,
 		clearSheetAction,
 		findRowByNumAction,
 		getRowsAction,

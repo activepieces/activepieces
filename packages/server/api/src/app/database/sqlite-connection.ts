@@ -4,6 +4,8 @@ import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-sh
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { commonProperties } from './database-connection'
+import { MigrateSMTPInPlatformSqlite1729601402320 } from './migration/1729601402320-MigrateSMTPInPlatformSqlite'
+import { AddPinnedPiecesSqlite1729774033945 } from './migration/1729774033945-AddPinnedPiecesSqlite'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
@@ -62,6 +64,7 @@ import { SupportS3FilesSqlite1726363932745 } from './migration/sqlite/1726363932
 import { AddAiProviderSqlite1726446345221 } from './migration/sqlite/1726446345221-AddAiProviderSqlite'
 import { RemovePremiumPiecesSqlite1727865697005 } from './migration/sqlite/1727865697005-RemovePremiumPiecesSqlite'
 import { UpdatePlaformInSqlite1729330108485 } from './migration/sqlite/1729330108485-UpdatePlaformInSqlite'
+import { AddConnectionOwnerSqlite1730121414658 } from './migration/sqlite/1730121414658-AddConnectionOwnerSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -142,6 +145,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddLicenseKeyIntoPlatform1728827704109,
         UpdatePlaformInSqlite1729330108485,
         ChangeProjectUniqueConstraintToPartialIndex1729098769827,
+        MigrateSMTPInPlatformSqlite1729601402320,
+        AddPinnedPiecesSqlite1729774033945,
+        AddConnectionOwnerSqlite1730121414658,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
