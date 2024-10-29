@@ -38,7 +38,7 @@ import { PieceSettings } from './piece-settings';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
-  const { selectedStep, pieceModel, formSchema, skipValueChangeDetection } =
+  const { selectedStep, pieceModel, formSchema } =
     useStepSettingsContext();
   const [
     readonly,
@@ -162,8 +162,7 @@ const StepSettingsContainer = () => {
       }
 
       if (
-        deepEqual(currentStep, previousSavedStep.current) ||
-        skipValueChangeDetection
+        deepEqual(currentStep, previousSavedStep.current)
       ) {
         return;
       }
