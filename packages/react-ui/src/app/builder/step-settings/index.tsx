@@ -38,7 +38,8 @@ import { PieceSettings } from './piece-settings';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
-  const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
+  const { selectedStep, pieceModel, formSchema } =
+    useStepSettingsContext();
   const [
     readonly,
     exitStepSettings,
@@ -149,28 +150,30 @@ const StepSettingsContainer = () => {
   const previousSavedStep = useRef<Action | Trigger | null>(null);
 
   useEffect(() => {
-    if (form.formState.isValidating) {
-      return;
-    }
-    const currentStep: Trigger | Action = JSON.parse(
-      JSON.stringify(form.getValues()),
-    );
-    currentStep.valid = form.formState.isValid;
-    if (previousSavedStep.current === null) {
+    //added timeout to avoid formstate validity not being updated when values are edited
+    setTimeout(() => {
+      const currentStep: Trigger | Action = JSON.parse(
+        JSON.stringify(form.getValues()),
+      );
+      currentStep.valid = form.formState.isValid;
+      if (previousSavedStep.current === null) {
+        previousSavedStep.current = currentStep;
+        return;
+      }
+
+      if (
+        deepEqual(currentStep, previousSavedStep.current)
+      ) {
+        return;
+      }
       previousSavedStep.current = currentStep;
-      return;
-    }
 
-    if (deepEqual(currentStep, previousSavedStep.current)) {
-      return;
-    }
-    previousSavedStep.current = currentStep;
-
-    if (currentStep.type === TriggerType.PIECE) {
-      debouncedTrigger(currentStep as Trigger);
-    } else {
-      debouncedAction(currentStep as Action);
-    }
+      if (currentStep.type === TriggerType.PIECE) {
+        debouncedTrigger(currentStep as Trigger);
+      } else {
+        debouncedAction(currentStep as Action);
+      }
+    });
   }, [
     inputChanges,
     itemsChange,
@@ -179,8 +182,6 @@ const StepSettingsContainer = () => {
     sourceCodeChange,
     inputUIInfo,
     displayName,
-    form.formState.isValid,
-    form.formState.isValidating,
   ]);
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
