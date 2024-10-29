@@ -56,10 +56,15 @@ export const onChatSubmission = createTrigger({
     if (!item.message) {
       throw new Error('Message is required');
     }
-    const response = {
+    const files = Object.entries(item).filter(([key]) => key.startsWith('file')).map(([key, value]) => {
+      const index = Number(key.split('[')[1].split(']')[0]);
+      return [index, value] as const;
+    }).sort(([indexA], [indexB]) => indexA - indexB).map(([_, value]) => value);
+
+    return [{
       chatId: item.chatId,
       message: item.message,
-    }
-    return [response];
+      files,
+    }];
   },
 });

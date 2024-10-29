@@ -3,7 +3,6 @@ import { type VariantProps, cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 import { Avatar, AvatarFallback } from './avatar';
-import { Button } from './button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 const avatarLetterVariants = cva('l', {
@@ -35,12 +34,10 @@ const AvatarLetter = ({
     <AvatarFallback>
       {!disablePopup && (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <span className="text-xs text-background">
-                {email.charAt(0).toLocaleUpperCase()}
-              </span>
-            </Button>
+          <TooltipTrigger>
+            <span className="text-xs text-background">
+              {email.charAt(0).toLocaleUpperCase()}
+            </span>
           </TooltipTrigger>
           <TooltipContent>
             <span className="text-xs">

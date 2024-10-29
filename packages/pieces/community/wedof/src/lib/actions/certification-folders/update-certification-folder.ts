@@ -46,11 +46,11 @@ export const updateCertificationFolder = createAction({
                 options: [
                   {
                     label: "Non",
-                    value: 'false',
+                    value: false,
                   },
                   {
                     label: 'Oui',
-                    value: 'true',
+                    value: true,
                   },
                 ],
               },

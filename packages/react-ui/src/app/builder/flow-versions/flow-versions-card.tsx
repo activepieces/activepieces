@@ -210,12 +210,14 @@ const FlowVersionDetailsCard = React.memo(
           {flowVersion.state === FlowVersionState.DRAFT && (
             <FlowVersionStateDot
               state={flowVersion.state}
+              versionId={flowVersion.id}
             ></FlowVersionStateDot>
           )}
 
           {published && flowVersion.state === FlowVersionState.LOCKED && (
             <FlowVersionStateDot
               state={flowVersion.state}
+              versionId={flowVersion.id}
             ></FlowVersionStateDot>
           )}
 
