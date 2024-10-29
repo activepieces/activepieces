@@ -30,7 +30,7 @@ export class AddAiProviderTable1726445983043 implements MigrationInterface {
             ALTER TABLE "ai_provider" DROP CONSTRAINT "fk_ai_provider_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_provider_platform_id_provider"
+            DROP INDEX "idx_ai_provider_platform_id_provider"
         `)
         await queryRunner.query(`
             DROP TABLE "ai_provider"

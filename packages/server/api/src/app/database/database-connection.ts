@@ -19,7 +19,7 @@ import { ProjectBillingEntity } from '../ee/billing/project-billing/project-bill
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
-import { GitRepoEntity } from '../ee/git-repos/git-repo.entity'
+import { GitRepoEntity } from '../ee/git-sync/git-sync.entity'
 import { IssueEntity } from '../ee/issues/issues-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'

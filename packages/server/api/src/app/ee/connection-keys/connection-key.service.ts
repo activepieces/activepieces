@@ -84,6 +84,7 @@ export const connectionKeyService = {
                             secret_text: apiRequest.apiKey,
                         },
                     },
+                    ownerId: null,
                 })
             }
             case AppCredentialType.OAUTH2: {
@@ -105,6 +106,7 @@ export const connectionKeyService = {
                             client_secret: appCredential.settings.clientSecret!,
                         },
                     },
+                    ownerId: null,
                 })
             }
         }

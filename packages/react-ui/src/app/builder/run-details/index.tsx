@@ -31,9 +31,7 @@ import { FlowStepInputOutput } from './flow-step-input-output';
 
 function getMessage(run: FlowRun | null, retentionDays: number | null) {
   if (!run || run.status === FlowRunStatus.RUNNING) return null;
-  if (
-    [FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT].includes(run.status)
-  ) {
+  if ([FlowRunStatus.INTERNAL_ERROR].includes(run.status)) {
     return t('There are no logs captured for this run.');
   }
   if (isNil(run.logsFileId)) {
@@ -48,6 +46,7 @@ const FlowRunDetails = React.memo(() => {
   const { data: rententionDays } = flagsHooks.useFlag<number>(
     ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
   );
+
   const [setLeftSidebar, run, steps, loopsIndexes, flowVersion, selectedStep] =
     useBuilderStateContext((state) => {
       const steps =

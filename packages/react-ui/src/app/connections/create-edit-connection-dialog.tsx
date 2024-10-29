@@ -70,9 +70,12 @@ import { SecretTextConnectionSettings } from './secret-text-connection-settings'
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   open: boolean;
-  onConnectionCreated: (name: string) => void;
+  onConnectionCreated: (
+    res: Pick<AppConnectionWithoutSensitiveData, 'id' | 'name'>,
+  ) => void;
   setOpen: (open: boolean) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
+  predefinedConnectionName: string | null;
 };
 
 function buildConnectionSchema(
@@ -112,7 +115,7 @@ function buildConnectionSchema(
     case PropertyType.CUSTOM_AUTH:
       return Type.Object({
         request: Type.Composite([
-          Type.Omit(UpsertCustomAuthRequest, ['name']),
+          Type.Omit(UpsertCustomAuthRequest, ['name', 'value']),
           connectionSchema,
           Type.Object({
             value: Type.Object({
@@ -160,20 +163,22 @@ const CreateOrEditConnectionDialog = React.memo(
     setOpen,
     onConnectionCreated,
     reconnectConnection,
+    predefinedConnectionName,
   }: ConnectionDialogProps) => {
     const { auth } = piece;
 
     const formSchema = buildConnectionSchema(piece);
-
     const form = useForm<{
       request: UpsertAppConnectionRequestBody;
     }>({
       defaultValues: {
         request: createDefaultValues(
           piece,
-          reconnectConnection
-            ? reconnectConnection.name
-            : appConnectionUtils.findName(piece.name),
+          getConnectionName(
+            piece,
+            reconnectConnection,
+            predefinedConnectionName,
+          ),
         ),
       },
       mode: 'onChange',
@@ -185,7 +190,6 @@ const CreateOrEditConnectionDialog = React.memo(
       form.trigger();
     });
     const [errorMessage, setErrorMessage] = useState('');
-
     const { mutate, isPending } = useMutation({
       mutationFn: async () => {
         setErrorMessage('');
@@ -202,10 +206,12 @@ const CreateOrEditConnectionDialog = React.memo(
         }
         return appConnectionsApi.upsert(formValues);
       },
-      onSuccess: () => {
+      onSuccess: (connection) => {
         setOpen(false);
-        const name = form.getValues().request.name;
-        onConnectionCreated(name);
+        onConnectionCreated({
+          id: connection.id,
+          name: connection.name,
+        });
         setErrorMessage('');
       },
       onError: (err) => {
@@ -275,7 +281,10 @@ const CreateOrEditConnectionDialog = React.memo(
                       </FormLabel>
                       <FormControl>
                         <Input
-                          disabled={!isNil(reconnectConnection)}
+                          disabled={
+                            !isNil(reconnectConnection) ||
+                            !isNil(predefinedConnectionName)
+                          }
                           {...field}
                           required
                           id="name"
@@ -341,6 +350,20 @@ const CreateOrEditConnectionDialog = React.memo(
 
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
 export { CreateOrEditConnectionDialog };
+
+function getConnectionName(
+  piece: PieceMetadataModelSummary | PieceMetadataModel,
+  reconnectConnection: AppConnectionWithoutSensitiveData | null,
+  predefinedConnectionName: string | null,
+): string {
+  if (reconnectConnection) {
+    return reconnectConnection.name;
+  }
+  if (predefinedConnectionName) {
+    return predefinedConnectionName;
+  }
+  return appConnectionUtils.findName(piece.name);
+}
 
 function createDefaultValues(
   piece: PieceMetadataModelSummary | PieceMetadataModel,
@@ -418,6 +441,12 @@ const extractDefaultPropsValues = (
       return {
         ...acc,
         [propName]: prop.defaultValue,
+      };
+    }
+    if (prop.type === PropertyType.CHECKBOX) {
+      return {
+        ...acc,
+        [propName]: false,
       };
     }
     return acc;

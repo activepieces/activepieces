@@ -13,6 +13,7 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import { UserFullName } from '@/components/ui/user-fullname';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -20,15 +21,15 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
-  AppConnection,
   AppConnectionStatus,
+  AppConnectionWithoutSensitiveData,
   Permission,
 } from '@activepieces/shared';
 
 import { TableTitle } from '../../components/ui/table-title';
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
-import { NewConnectionTypeDialog } from './new-connection-type-dialog';
+import { NewConnectionDialog } from './new-connection-dialog';
 
 type PieceIconWithPieceNameProps = {
   pieceName: string;
@@ -54,7 +55,7 @@ const DeleteConnectionColumn = ({
   row,
   setRefresh,
 }: {
-  row: RowDataWithActions<AppConnection>;
+  row: RowDataWithActions<AppConnectionWithoutSensitiveData>;
   setRefresh: Dispatch<SetStateAction<number>>;
 }) => {
   const { checkAccess } = useAuthorization();
@@ -93,7 +94,9 @@ const DeleteConnectionColumn = ({
 };
 const columns: (
   setRefresh: Dispatch<SetStateAction<number>>,
-) => ColumnDef<RowDataWithActions<AppConnection>>[] = (setRefresh) => {
+) => ColumnDef<RowDataWithActions<AppConnectionWithoutSensitiveData>>[] = (
+  setRefresh,
+) => {
   return [
     {
       accessorKey: 'pieceName',
@@ -164,6 +167,26 @@ const columns: (
       },
     },
     {
+      accessorKey: 'owner',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Owner')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {row.original.owner && (
+              <UserFullName
+                firstName={row.original.owner.firstName}
+                lastName={row.original.owner.lastName}
+                email={row.original.owner.email}
+              />
+            )}
+            {!row.original.owner && <div className="text-left">-</div>}
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: 'actions',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="" />
@@ -196,7 +219,7 @@ const fetchData = async (
   pagination: PaginationParams,
 ) => {
   return appConnectionsApi.list({
-    projectId: authenticationSession.getProjectId(),
+    projectId: authenticationSession.getProjectId()!,
     cursor: pagination.cursor,
     limit: pagination.limit ?? 10,
     status: params.status,
@@ -217,7 +240,7 @@ function AppConnectionsTable() {
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToWriteAppConnection}
           >
-            <NewConnectionTypeDialog
+            <NewConnectionDialog
               onConnectionCreated={() => setRefresh(refresh + 1)}
             >
               <Button
@@ -226,7 +249,7 @@ function AppConnectionsTable() {
               >
                 {t('New Connection')}
               </Button>
-            </NewConnectionTypeDialog>
+            </NewConnectionDialog>
           </PermissionNeededTooltip>
         </div>
       </div>

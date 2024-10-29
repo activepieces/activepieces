@@ -41,6 +41,7 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
     await progressService.sendUpdate({
         engineConstants: constants,
         flowExecutorContext: newContext,
+        updateImmediate: true,
     })
     const response = await newContext.toResponse()
     return {
@@ -77,13 +78,16 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
 }
 
 function cleanSampleData(stepOutput: StepOutput) {
+    if (stepOutput.status === StepOutputStatus.FAILED) {
+        return stepOutput.errorMessage
+    }
     if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
         return {
             item: stepOutput.output?.item,
             index: stepOutput.output?.index,
         }
     }
-    return stepOutput.output ?? stepOutput.errorMessage
+    return stepOutput.output
 }
 
 function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext {

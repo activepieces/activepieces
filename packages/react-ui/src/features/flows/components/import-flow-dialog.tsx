@@ -96,11 +96,7 @@ const ImportFlowDialog = (
             : 'inside dashboard',
         },
       });
-      if (!props.insideBuilder) {
-        navigate(`/flows/${flow.id}`);
-      } else {
-        window.location.reload();
-      }
+      navigate(`/flow-import-redirect/${flow.id}`, { replace: true });
     },
     onError: (err) => {
       if (

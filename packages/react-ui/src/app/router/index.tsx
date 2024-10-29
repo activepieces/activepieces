@@ -39,6 +39,7 @@ import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import AppConnectionsPage from '../routes/connections';
+import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
@@ -60,6 +61,7 @@ import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 
+import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
 
@@ -77,6 +79,10 @@ const routes = [
   {
     path: '/embed',
     element: <EmbedPage></EmbedPage>,
+  },
+  {
+    path: '/embed/connections',
+    element: <EmbeddedConnectionDialog></EmbeddedConnectionDialog>,
   },
   {
     path: '/authenticate',
@@ -99,6 +105,14 @@ const routes = [
         <PageTitle title="Builder">
           <FlowBuilderPage />
         </PageTitle>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/flow-import-redirect/:flowId',
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <AfterImportFlowRedirect></AfterImportFlowRedirect>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   }),
