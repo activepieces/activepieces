@@ -171,14 +171,10 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
       create: async (params) => {
         const inputs: ModerationMultiModalInput[] = [];
 
-        if (params.inputType === 'text') {
-          inputs.push({
-            type: 'text',
-            text: params.input as string,
-          });
-        } else if (params.inputType === 'image') {
-          const image = params.input as ApFile;
-
+        if (params.text) {
+          inputs.push({ type: 'text', text: params.text });
+        }
+        for (const image of params.images ?? []) {
           inputs.push({
             type: 'image_url',
             image_url: {

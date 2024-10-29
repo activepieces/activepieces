@@ -13,45 +13,64 @@ export const checkModeration = createAction({
   props: {
     provider: aiProps('moderation').provider,
     model: aiProps('moderation').model,
-    inputType: Property.StaticDropdown({
-      displayName: 'Input Type',
-      description: 'Type of input to check moderation for.',
-      required: true,
-      defaultValue: 'text',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Text', value: 'text' },
-          { label: 'Image', value: 'image' },
-        ],
+    text: Property.LongText({
+      displayName: 'Text',
+      description: 'Text to check moderation for.',
+      required: false,
+    }),
+    images: Property.Array({
+      displayName: 'Images',
+      description: 'Images to check moderation for.',
+      required: false,
+      properties: {
+        file: Property.File({
+          displayName: 'Image File',
+          description: 'Image to check moderation for.',
+          required: true,
+        }),
       },
     }),
-    body: Property.DynamicProperties({
-      displayName: 'Body',
-      required: true,
-      refreshers: ['inputType'],
-      props: async ({ inputType }) => {
-        const type = inputType as unknown as string;
-        const fields: DynamicPropsValue = {};
+    // inputType: Property.StaticDropdown({
+    //   displayName: 'Input Type',
+    //   description: 'Type of input to check moderation for.',
+    //   required: true,
+    //   defaultValue: 'text',
+    //   options: {
+    //     disabled: false,
+    //     options: [
+    //       { label: 'Text', value: 'text' },
+    //       { label: 'Image', value: 'image' },
+    //     ],
+    //   },
+    // }),
+    // body: Property.DynamicProperties({
+    //   displayName: 'Body',
+    //   required: true,
+    //   refreshers: ['inputType'],
+    //   props: async ({ inputType }) => {
+    //     const type = inputType as unknown as string;
+    //     const fields: DynamicPropsValue = {};
 
-        if (type === 'text') {
-          fields['input'] = Property.LongText({
-            displayName: 'Input',
-            required: true,
-          });
-        } else if (type === 'image') {
-          fields['input'] = Property.File({
-            displayName: 'Image',
-            description: 'The image file to check moderation for.',
-            required: true,
-          });
-        }
+    //     if (type === 'text') {
+    //       fields['input'] = Property.LongText({
+    //         displayName: 'Input',
+    //         required: true,
+    //       });
+    //     } else if (type === 'image') {
+    //       fields['input'] = Property.File({
+    //         displayName: 'Image',
+    //         description: 'The image file to check moderation for.',
+    //         required: true,
+    //       });
+    //     }
 
-        return fields;
-      },
-    }),
+    //     return fields;
+    //   },
+    // }),
   },
   async run(context) {
+    const text = context.propsValue.text;
+    const images = (context.propsValue.images as Array<{ file: ApFile }>) ?? [];
     const ai = AI({
       provider: context.propsValue.provider,
       server: context.server,
@@ -64,10 +83,14 @@ export const checkModeration = createAction({
       );
     }
 
+    if (!text && !images.length) {
+      throw new Error('Please provide text or images to check moderation');
+    }
+
     const response = await moderation({
       model: context.propsValue.model,
-      inputType: context.propsValue.inputType as 'text' | 'image',
-      input: context.propsValue.body['input'] as string | ApFile,
+      text,
+      images: images.map((image) => image.file),
     });
 
     return response;

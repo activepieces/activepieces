@@ -14,8 +14,8 @@ export type AIModeration = {
 
 export type AIModerationCreateParams = {
   model: string;
-  inputType: 'text' | 'image';
-  input: string | ApFile;
+  text?: string;
+  images?: ApFile[];
   maxTokens?: number;
 };
 
