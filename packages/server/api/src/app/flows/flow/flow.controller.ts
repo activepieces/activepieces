@@ -26,7 +26,7 @@ import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware'
-import { gitRepoService } from '../../ee/git-repos/git-repo.service'
+import { gitRepoService } from '../../ee/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { projectService } from '../../project/project-service'
 import { flowService } from './flow.service'
@@ -222,7 +222,14 @@ const CountFlowsRequestOptions = {
 }
 
 const GetFlowTemplateRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_FLOW,
+    },
     schema: {
+        tags: ['flows'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Export flow as template',
         params: Type.Object({
             id: ApId,
         }),

@@ -17,7 +17,15 @@ export const workerApiService = (workerToken: string) => {
     return {
         async heartbeat(): Promise<void> {
             const request: WorkerMachineHealthcheckRequest = await heartbeat.getSystemInfo()
-            await client.post('/v1/worker-machines/heartbeat', request)
+            try {
+                await client.post('/v1/worker-machines/heartbeat', request)
+            }
+            catch (error) {
+                if (ApAxiosClient.isApAxiosError(error) && error.error.code === 'ECONNREFUSED') {
+                    return
+                }
+                throw error
+            }
         },
         async poll(queueName: QueueName): Promise<ApQueueJob | null> {
             try {
@@ -28,14 +36,14 @@ export const workerApiService = (workerToken: string) => {
                     params: request,
                 })
                 return response
-            } 
+            }
             catch (error) {
                 await new Promise((resolve) => setTimeout(resolve, 2000))
                 return null
             }
         },
         async resumeRun(request: ResumeRunRequest): Promise<void> {
-            await client.post<unknown>('/v1/workers/resume-run', request)   
+            await client.post<unknown>('/v1/workers/resume-run', request)
         },
         async deleteWebhookSimulation(request: DeleteWebhookSimulationRequest): Promise<void> {
             await client.post('/v1/workers/delete-webhook-simulation', request)
@@ -44,7 +52,7 @@ export const workerApiService = (workerToken: string) => {
             await client.post('/v1/workers/save-payloads', request)
         },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            return  client.post<FlowRun[]>('/v1/workers/submit-payloads', request)
+            return client.post<FlowRun[]>('/v1/workers/submit-payloads', request)
 
         },
         async sendWebhookUpdate(request: SendWebhookUpdateRequest): Promise<void> {

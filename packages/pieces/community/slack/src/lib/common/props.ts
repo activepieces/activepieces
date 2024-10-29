@@ -1,19 +1,29 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
 
-export const slackInfo = Property.MarkDown({
-  value: `
+const slackChannelBotInstruction = `
 	Please make sure add the bot to the channel by following these steps:
 	  1. Type /invite in the channel's chat.
 	  2. Click on Add apps to this channel.
 	  3. Search for and add the bot.
+  `
 
-    **Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(X)** and type the name directly.
+export const multiSelectChannelInfo = Property.MarkDown({
+  value: slackChannelBotInstruction +
+    `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly in an array like this: \`{\`{ ['your_channel_id_1', 'your_channel_id_2', ...] \`}\`}`,
+});
+
+export const singleSelectChannelInfo = Property.MarkDown({
+  value: slackChannelBotInstruction +
+    `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly.
   `,
 });
+
 export const slackChannel = <R extends boolean>(required: R) =>
   Property.Dropdown<string, R>({
     displayName: 'Channel',
+    description:
+      "You can get the Channel ID by right-clicking on the channel and selecting 'View Channel Details.'",
     required,
     refreshers: [],
     async options({ auth }) {
@@ -26,29 +36,8 @@ export const slackChannel = <R extends boolean>(required: R) =>
       }
       const authentication = auth as OAuth2PropertyValue;
       const accessToken = authentication['access_token'];
-      const client = new WebClient(accessToken);
-      const channels: { label: string; value: string }[] = [];
-      const CHANNELS_LIMIT = 2000;
 
-      let cursor;
-      do {
-        const response = await client.conversations.list({
-          types: 'public_channel,private_channel',
-          exclude_archived: true,
-          limit: 1000,
-          cursor,
-        });
-
-        if (response.channels) {
-          channels.push(
-            ...response.channels.map((channel) => {
-              return { label: channel.name || '', value: channel.id || '' };
-            })
-          );
-        }
-
-        cursor = response.response_metadata?.next_cursor;
-      } while (cursor && channels.length < CHANNELS_LIMIT);
+      const channels = await getChannels(accessToken);
 
       return {
         disabled: false,
@@ -125,3 +114,30 @@ export const actions = Property.Array({
   required: true,
 });
 
+export async function getChannels(accessToken: string) {
+  const client = new WebClient(accessToken);
+  const channels: { label: string; value: string }[] = [];
+  const CHANNELS_LIMIT = 2000;
+
+  let cursor;
+  do {
+    const response = await client.conversations.list({
+      types: 'public_channel,private_channel',
+      exclude_archived: true,
+      limit: 1000,
+      cursor,
+    });
+
+    if (response.channels) {
+      channels.push(
+        ...response.channels.map((channel) => {
+          return { label: channel.name || '', value: channel.id || '' };
+        })
+      );
+    }
+
+    cursor = response.response_metadata?.next_cursor;
+  } while (cursor && channels.length < CHANNELS_LIMIT);
+
+  return channels;
+}

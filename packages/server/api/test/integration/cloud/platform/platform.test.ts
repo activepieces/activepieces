@@ -3,7 +3,6 @@ import {
     FilteredPieceBehavior,
     LocalesEnum,
     PlatformRole,
-
     PrincipalType,
     UpdatePlatformRequestBody,
 } from '@activepieces/shared'
@@ -49,14 +48,16 @@ describe('Platform API', () => {
                 favIconUrl: 'updated fav icon url',
                 filteredPieceNames: ['updated filtered piece names'],
                 filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
-                smtpHost: 'updated smtp host',
+                smtp: {
+                    host: 'updated smtp host',
+                    port: 123,
+                    user: 'updated smtp user',
+                    password: 'updated smtp password',
+                    senderName: 'updated smtp sender name',
+                    senderEmail: 'updated smtp sender email',
+                },
                 enforceAllowedAuthDomains: true,
                 allowedAuthDomains: ['yahoo.com'],
-                smtpPort: 123,
-                smtpUser: 'updated smtp user',
-                smtpPassword: 'updated smtp password',
-                smtpSenderEmail: 'updated smtp sender email',
-                smtpUseSSL: true,
                 cloudAuthEnabled: false,
                 emailAuthEnabled: false,
                 defaultLocale: LocalesEnum.ENGLISH,
@@ -96,13 +97,7 @@ describe('Platform API', () => {
             ])
             expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
             expect(responseBody.emailAuthEnabled).toBe(false)
-            expect(responseBody.smtpHost).toBe('updated smtp host')
-            expect(responseBody.smtpPort).toBe(123)
-            expect(responseBody.smtpUser).toBe('updated smtp user')
-            expect(responseBody.smtpPassword).toBeUndefined()
             expect(responseBody.federatedAuthProviders).toStrictEqual({})
-            expect(responseBody.smtpSenderEmail).toBe('updated smtp sender email')
-            expect(responseBody.smtpUseSSL).toBe(true)
             expect(responseBody.analyticsEnabled).toBe(false)
             expect(responseBody.cloudAuthEnabled).toBe(false)
             expect(responseBody.embeddingEnabled).toBe(false)
@@ -170,7 +165,14 @@ describe('Platform API', () => {
                 },
 
             }
-            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id, smtpPassword: faker.internet.password(), federatedAuthProviders: providers, flowIssuesEnabled: false, alertsEnabled: false })
+            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id, smtp: {
+                host: faker.internet.password(),
+                port: 123,
+                user: faker.internet.password(),
+                password: faker.internet.password(),
+                senderEmail: faker.internet.password(),
+                senderName: faker.internet.password(),
+            }, federatedAuthProviders: providers, flowIssuesEnabled: false, alertsEnabled: false })
             await databaseConnection().getRepository('platform').save(mockPlatform)
 
             await databaseConnection().getRepository('user').update(mockOwnerUser.id, {
@@ -195,16 +197,17 @@ describe('Platform API', () => {
                 },
             })
 
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(39)
+
+            expect(Object.keys(responseBody).length).toBe(34)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)
-            expect(responseBody.smtpPassword).toBeUndefined()
+            expect(responseBody.smtp).toStrictEqual({})
             expect(responseBody.federatedAuthProviders.google).toStrictEqual({
                 clientId: providers.google.clientId,
             })

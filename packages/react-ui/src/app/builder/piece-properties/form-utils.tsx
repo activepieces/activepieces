@@ -128,7 +128,6 @@ export const formUtils = {
                 },
               ],
             ],
-            inputUiInfo: {},
           },
         };
       case ActionType.CODE: {
@@ -152,10 +151,10 @@ export const formUtils = {
         const requireAuth = isNil(actionName)
           ? false
           : piece?.actions?.[actionName]?.requireAuth ?? true;
-        const actionPropsWithoutAuth =
-          actionName !== undefined
-            ? piece?.actions?.[actionName]?.props ?? {}
-            : {};
+
+        const actionPropsWithoutAuth = isNil(actionName)
+          ? {}
+          : piece?.actions?.[actionName]?.props ?? {};
         const props = addAuthToPieceProps(
           actionPropsWithoutAuth,
           piece?.auth,
@@ -182,11 +181,11 @@ export const formUtils = {
         const triggerName = selectedStep?.settings?.triggerName;
         const requireAuth = isNil(triggerName)
           ? false
-          : piece?.triggers?.[triggerName]?.requireAuth ?? false;
-        const triggerPropsWithoutAuth =
-          triggerName !== undefined
-            ? piece?.triggers?.[triggerName]?.props ?? {}
-            : {};
+          : piece?.triggers?.[triggerName]?.requireAuth ?? true;
+
+        const triggerPropsWithoutAuth = isNil(triggerName)
+          ? {}
+          : piece?.triggers?.[triggerName]?.props ?? {};
         const props = addAuthToPieceProps(
           triggerPropsWithoutAuth,
           piece?.auth,
@@ -454,12 +453,10 @@ export function getDefaultValueForStep(
         break;
       }
       case PropertyType.MULTI_SELECT_DROPDOWN:
-        defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? [];
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-        defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? [];
+        defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       case PropertyType.OBJECT:
       case PropertyType.DYNAMIC:

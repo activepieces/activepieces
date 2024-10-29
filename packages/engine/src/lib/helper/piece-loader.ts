@@ -1,4 +1,4 @@
-import { Action, Piece } from '@activepieces/pieces-framework'
+import { Action, Piece, Trigger } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
 
 
@@ -31,6 +31,27 @@ const loadPieceOrThrow = async (
     }
 
     return piece
+}
+
+const getPieceAndTriggerOrThrow = async (params: {
+    pieceName: string
+    pieceVersion: string
+    triggerName: string
+    piecesSource: string
+},
+): Promise<{ piece: Piece, pieceTrigger: Trigger }> => {
+    const { pieceName, pieceVersion, triggerName, piecesSource } = params
+    const piece = await loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
+    const trigger = piece.getTrigger(triggerName)
+
+    if (trigger === undefined) {
+        throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
+    }
+
+    return {
+        piece,
+        pieceTrigger: trigger,
+    }
 }
 
 const getPieceAndActionOrThrow = async (params: {
@@ -115,6 +136,7 @@ const getPackageAlias = ({ pieceName, pieceVersion, piecesSource }: {
 
 export const pieceLoader = {
     loadPieceOrThrow,
+    getPieceAndTriggerOrThrow,
     getPieceAndActionOrThrow,
     getPropOrThrow,
 }

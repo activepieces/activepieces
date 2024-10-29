@@ -66,11 +66,11 @@ describe('flow execution', () => {
                 type: TriggerType.PIECE,
                 settings: {
                     pieceName: '@activepieces/piece-schedule',
-                    pieceVersion: '0.1.0',
+                    pieceVersion: '0.1.5',
                     input: {
                         run_on_weekends: false,
                     },
-                    triggerName: 'everyHourTrigger',
+                    triggerName: 'every_hour',
                     'pieceType': PieceType.OFFICIAL,
                     'packageType': PackageType.REGISTRY,
                     inputUiInfo: {},

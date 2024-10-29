@@ -1,12 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  CheckIcon,
-  EllipsisVertical,
-  RefreshCw,
-  RotateCcw,
-} from 'lucide-react';
+import { CheckIcon, Redo, RefreshCw, RotateCw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -155,16 +150,13 @@ const FlowRunsPage = () => {
         ),
         cell: ({ row }) => {
           return (
-            <div
-              className="flex items-end justify-end"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div onClick={(e) => e.stopPropagation()}>
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger
                   asChild
                   className="rounded-full p-2 hover:bg-muted cursor-pointer"
                 >
-                  <EllipsisVertical className="h-10 w-10" />
+                  <RefreshCw className="h-9 w-9" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <PermissionNeededTooltip
@@ -180,7 +172,8 @@ const FlowRunsPage = () => {
                       }
                     >
                       <div className="flex flex-row gap-2 items-center">
-                        <RefreshCw className="h-4 w-4" />
+                        <RotateCw className="h-4 w-4" />
+
                         <span>{t('Retry on latest version')}</span>
                       </div>
                     </DropdownMenuItem>
@@ -200,7 +193,7 @@ const FlowRunsPage = () => {
                         }
                       >
                         <div className="flex flex-row gap-2 items-center">
-                          <RotateCcw className="h-4 w-4" />
+                          <Redo className="h-4 w-4" />
                           <span>{t('Retry from failed step')}</span>
                         </div>
                       </DropdownMenuItem>

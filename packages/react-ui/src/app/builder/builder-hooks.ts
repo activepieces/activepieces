@@ -6,7 +6,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
-  Flow,
   FlowOperationRequest,
   FlowRun,
   FlowVersion,
@@ -53,6 +52,7 @@ export type BuilderState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
   readonly: boolean;
+  sampleData: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
@@ -80,7 +80,8 @@ export type BuilderState = {
   startSaving: () => void;
   setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
-  setFlow: (flow: Flow) => void;
+  setFlow: (flow: PopulatedFlow) => void;
+  setSampleData: (stepName: string, payload: unknown) => void;
   exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
@@ -91,7 +92,7 @@ export type BuilderState = {
 
 export type BuilderInitialState = Pick<
   BuilderState,
-  'flow' | 'flowVersion' | 'readonly' | 'run' | 'canExitRun'
+  'flow' | 'flowVersion' | 'readonly' | 'run' | 'canExitRun' | 'sampleData'
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
@@ -110,6 +111,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               {},
             )
           : {},
+      sampleData: initialState.sampleData,
       flow: initialState.flow,
       flowVersion: initialState.flowVersion,
       leftSidebar: initialState.run
@@ -176,6 +178,15 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         });
       },
       setFlow: (flow: PopulatedFlow) => set({ flow, selectedStep: null }),
+      setSampleData: (stepName: string, payload: unknown) =>
+        set((state) => {
+          return {
+            sampleData: {
+              ...state.sampleData,
+              [stepName]: payload,
+            },
+          };
+        }),
       exitRun: (userHasPermissionToEditFlow: boolean) =>
         set({
           run: null,

@@ -3,48 +3,42 @@ import {
     AppConnection,
     ErrorCode,
     isNil,
+    PrincipalType,
 } from '@activepieces/shared'
 import {
-    FastifyPluginCallbackTypebox,
+    FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
-import { allowWorkersOnly } from '../authentication/authorization'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
-export const appConnectionWorkerController: FastifyPluginCallbackTypebox = (
-    app,
-    _opts,
-    done,
-) => {
-    app.addHook('preHandler', allowWorkersOnly)
+export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.get(
-        '/:connectionName',
-        GetAppConnectionRequest,
-        async (request): Promise<AppConnection> => {
-            const appConnection = await appConnectionService.getOne({
-                projectId: request.principal.projectId,
-                name: request.params.connectionName,
+    app.get('/:connectionName', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
+        const appConnection = await appConnectionService.getOne({
+            projectId: request.principal.projectId,
+            name: request.params.connectionName,
+        })
+
+        if (isNil(appConnection)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: `connectionName=${request.params.connectionName}`,
+                    entityType: 'AppConnection',
+                },
             })
+        }
 
-            if (isNil(appConnection)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityId: `connectionName=${request.params.connectionName}`,
-                        entityType: 'AppConnection',
-                    },
-                })
-            }
-
-            return appConnection
-        },
+        return appConnection
+    },
     )
 
-    done()
 }
 
 const GetAppConnectionRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
     schema: {
         params: Type.Object({
             connectionName: Type.String(),

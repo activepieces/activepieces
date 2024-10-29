@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { authenticationSession } from '@/lib/authentication-session';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -59,12 +58,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
     pieceName: params.piece.name,
     cursor: undefined,
     limit: 100,
-    projectId: authenticationSession.getProjectId() ?? '',
   });
 
   return (
     <FormField
       control={form.control}
+      key={form.getValues().settings.input.auth}
       name={'settings.input.auth'}
       render={({ field }) => (
         <>
@@ -87,11 +86,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
             >
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
+                predefinedConnectionName={null}
                 key={reconnectConnection?.name || 'newConnection'}
                 piece={params.piece}
-                onConnectionCreated={(connectionName) => {
+                onConnectionCreated={(connection) => {
                   refetch();
-                  field.onChange(addBrackets(connectionName));
+                  field.onChange(addBrackets(connection.name));
                 }}
                 open={connectionDialogOpen}
                 setOpen={setConnectionDialogOpen}
@@ -162,7 +162,6 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 <SelectContent>
                   <SelectAction
                     onClick={() => {
-                      setReconnectConnection(null);
                       setSelectConnectionOpen(false);
                       setConnectionDialogOpen(true);
                     }}

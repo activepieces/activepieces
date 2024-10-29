@@ -146,6 +146,7 @@ export const threadEngineRunner: EngineRunner = {
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,
+            sampleData: operation.sampleData,
             publicUrl: await networkUtls.getPublicUrl(),
             internalApiUrl: networkUtls.getInternalApiUrl(),
             engineToken,
@@ -225,6 +226,7 @@ function getEnvironmentVariables(): Record<string, string | undefined> {
     return {
         ...propagatedEnvVars,
         NODE_OPTIONS: '--enable-source-maps',
+        AP_PAUSED_FLOW_TIMEOUT_DAYS: system.getOrThrow(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
         AP_EXECUTION_MODE: system.getOrThrow(SharedSystemProp.EXECUTION_MODE),
         AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
         AP_BASE_CODE_DIRECTORY: `${sandboxPath}/codes`,

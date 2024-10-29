@@ -36,6 +36,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import {
   BasicAuthProperty,
   CustomAuthProperty,
+  CustomAuthProps,
   OAuth2Property,
   OAuth2Props,
   PieceMetadataModel,
@@ -69,9 +70,12 @@ import { SecretTextConnectionSettings } from './secret-text-connection-settings'
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   open: boolean;
-  onConnectionCreated: (name: string) => void;
+  onConnectionCreated: (
+    res: Pick<AppConnectionWithoutSensitiveData, 'id' | 'name'>,
+  ) => void;
   setOpen: (open: boolean) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
+  predefinedConnectionName: string | null;
 };
 
 function buildConnectionSchema(
@@ -111,7 +115,7 @@ function buildConnectionSchema(
     case PropertyType.CUSTOM_AUTH:
       return Type.Object({
         request: Type.Composite([
-          Type.Omit(UpsertCustomAuthRequest, ['name']),
+          Type.Omit(UpsertCustomAuthRequest, ['name', 'value']),
           connectionSchema,
           Type.Object({
             value: Type.Object({
@@ -159,20 +163,22 @@ const CreateOrEditConnectionDialog = React.memo(
     setOpen,
     onConnectionCreated,
     reconnectConnection,
+    predefinedConnectionName,
   }: ConnectionDialogProps) => {
     const { auth } = piece;
 
     const formSchema = buildConnectionSchema(piece);
-
     const form = useForm<{
       request: UpsertAppConnectionRequestBody;
     }>({
       defaultValues: {
         request: createDefaultValues(
           piece,
-          reconnectConnection
-            ? reconnectConnection.name
-            : appConnectionUtils.findName(piece.name),
+          getConnectionName(
+            piece,
+            reconnectConnection,
+            predefinedConnectionName,
+          ),
         ),
       },
       mode: 'onChange',
@@ -184,7 +190,6 @@ const CreateOrEditConnectionDialog = React.memo(
       form.trigger();
     });
     const [errorMessage, setErrorMessage] = useState('');
-
     const { mutate, isPending } = useMutation({
       mutationFn: async () => {
         setErrorMessage('');
@@ -201,10 +206,12 @@ const CreateOrEditConnectionDialog = React.memo(
         }
         return appConnectionsApi.upsert(formValues);
       },
-      onSuccess: () => {
+      onSuccess: (connection) => {
         setOpen(false);
-        const name = form.getValues().request.name;
-        onConnectionCreated(name);
+        onConnectionCreated({
+          id: connection.id,
+          name: connection.name,
+        });
         setErrorMessage('');
       },
       onError: (err) => {
@@ -274,7 +281,10 @@ const CreateOrEditConnectionDialog = React.memo(
                       </FormLabel>
                       <FormControl>
                         <Input
-                          disabled={!isNil(reconnectConnection)}
+                          disabled={
+                            !isNil(reconnectConnection) ||
+                            !isNil(predefinedConnectionName)
+                          }
                           {...field}
                           required
                           id="name"
@@ -341,13 +351,30 @@ const CreateOrEditConnectionDialog = React.memo(
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
 export { CreateOrEditConnectionDialog };
 
+function getConnectionName(
+  piece: PieceMetadataModelSummary | PieceMetadataModel,
+  reconnectConnection: AppConnectionWithoutSensitiveData | null,
+  predefinedConnectionName: string | null,
+): string {
+  if (reconnectConnection) {
+    return reconnectConnection.name;
+  }
+  if (predefinedConnectionName) {
+    return predefinedConnectionName;
+  }
+  return appConnectionUtils.findName(piece.name);
+}
+
 function createDefaultValues(
   piece: PieceMetadataModelSummary | PieceMetadataModel,
   suggestedConnectionName: string,
 ): Partial<UpsertAppConnectionRequestBody> {
   const projectId = authenticationSession.getProjectId();
   assertNotNullOrUndefined(projectId, 'projectId');
-  switch (piece.auth?.type) {
+  if (!piece.auth) {
+    throw new Error(`Unsupported property type: ${piece.auth}`);
+  }
+  switch (piece.auth.type) {
     case PropertyType.SECRET_TEXT:
       return {
         name: suggestedConnectionName,
@@ -371,7 +398,7 @@ function createDefaultValues(
           password: '',
         },
       };
-    case PropertyType.CUSTOM_AUTH:
+    case PropertyType.CUSTOM_AUTH: {
       return {
         name: suggestedConnectionName,
         pieceName: piece.name,
@@ -379,9 +406,10 @@ function createDefaultValues(
         type: AppConnectionType.CUSTOM_AUTH,
         value: {
           type: AppConnectionType.CUSTOM_AUTH,
-          props: {},
+          props: extractDefaultPropsValues(piece.auth.props),
         },
       };
+    }
     case PropertyType.OAUTH2:
       return {
         name: suggestedConnectionName,
@@ -390,10 +418,10 @@ function createDefaultValues(
         type: AppConnectionType.CLOUD_OAUTH2,
         value: {
           type: AppConnectionType.CLOUD_OAUTH2,
-          scope: piece.auth?.scope.join(' '),
+          scope: piece.auth.scope.join(' '),
           authorization_method: piece.auth?.authorizationMethod,
           client_id: '',
-          props: {},
+          props: extractDefaultPropsValues(piece.auth.props),
           code: '',
         },
       };
@@ -401,3 +429,26 @@ function createDefaultValues(
       throw new Error(`Unsupported property type: ${piece.auth}`);
   }
 }
+
+const extractDefaultPropsValues = (
+  props: CustomAuthProps | OAuth2Props | undefined,
+) => {
+  if (!props) {
+    return {};
+  }
+  return Object.entries(props).reduce((acc, [propName, prop]) => {
+    if (prop.defaultValue) {
+      return {
+        ...acc,
+        [propName]: prop.defaultValue,
+      };
+    }
+    if (prop.type === PropertyType.CHECKBOX) {
+      return {
+        ...acc,
+        [propName]: false,
+      };
+    }
+    return acc;
+  }, {});
+};

@@ -1,14 +1,15 @@
-import { Static, Type } from '@sinclair/typebox';
-import { anthropic } from './anthropic';
-import { openai } from './openai';
-import { authHeader } from './utils';
 import { Property } from '@activepieces/pieces-framework';
 import {
   AiProviderWithoutSensitiveData,
   isNil,
   SeekPage,
 } from '@activepieces/shared';
+import { Static, Type } from '@sinclair/typebox';
 import { httpClient, HttpMethod } from '../../http';
+import { anthropic } from './anthropic';
+import { openai, openaiModels } from './openai';
+import { replicate, replicateModels } from './replicate';
+import { authHeader, hasMapper, model } from './utils';
 
 export const AI_PROVIDERS_MAKRDOWN = {
   openai: `Follow these instructions to get your OpenAI API Key:
@@ -23,6 +24,11 @@ It is strongly recommended that you add your credit card information to your Ope
 1. Visit the following website: https://console.anthropic.com/settings/keys.
 2. Once on the website, locate and click on the option to obtain your Claude API Key.
 `,
+  replicate: `Follow these instructions to get your Replicate API Key:
+
+1. Visit the following website: https://replicate.com/account/api-tokens.
+2. Once on the website, locate and click on the option to obtain your Replicate API Key.
+`,
 };
 
 export const AI_PROVIDERS = [
@@ -31,14 +37,7 @@ export const AI_PROVIDERS = [
     defaultBaseUrl: 'https://api.openai.com',
     label: 'OpenAI' as const,
     value: 'openai' as const,
-    models: [
-      { label: 'gpt-4o', value: 'gpt-4o', types: ['text'] },
-      { label: 'gpt-4o-mini', value: 'gpt-4o-mini', types: ['text'] },
-      { label: 'gpt-4-turbo', value: 'gpt-4-turbo', types: ['text'] },
-      { label: 'gpt-3.5-turbo', value: 'gpt-3.5-turbo', types: ['text'] },
-      { label: 'dall-e-3', value: 'dall-e-3', types: ['image'] },
-      { label: 'dall-e-2', value: 'dall-e-2', types: ['image'] },
-    ],
+    models: openaiModels,
     auth: authHeader({ bearer: true }),
     factory: openai,
     instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.openai,
@@ -49,37 +48,50 @@ export const AI_PROVIDERS = [
     label: 'Anthropic' as const,
     value: 'anthropic' as const,
     models: [
-      {
+      model({
         label: 'claude-3-5-sonnet',
         value: 'claude-3-5-sonnet-20240620',
-        types: ['text'],
-      },
-      {
+        supported: ['text', 'function'],
+      }),
+      model({
         label: 'claude-3-opus',
         value: 'claude-3-opus-20240229',
-        types: ['text'],
-      },
-      {
+        supported: ['text', 'function'],
+      }),
+      model({
         label: 'claude-3-sonnet',
         value: 'claude-3-sonnet-20240229',
-        types: ['text'],
-      },
-      {
+        supported: ['text', 'function'],
+      }),
+      model({
         label: 'claude-3-haiku',
         value: 'claude-3-haiku-20240307',
-        types: ['text'],
-      },
+        supported: ['text', 'function'],
+      }),
     ],
     auth: authHeader({ name: 'x-api-key', bearer: false }),
     factory: anthropic,
     instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.anthropic,
   },
+  {
+    logoUrl: 'https://cdn.activepieces.com/pieces/replicate.png',
+    defaultBaseUrl: 'https://api.replicate.com',
+    label: 'Replicate' as const,
+    value: 'replicate' as const,
+    models: replicateModels,
+    auth: authHeader({ bearer: true }),
+    factory: replicate,
+    instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.replicate,
+  },
 ];
 
-export const aiProps = (type: 'text' | 'image') => ({
+export const aiProps = (
+  supported: 'text' | 'image' | 'function' | 'moderation'
+) => ({
   provider: Property.Dropdown<AiProvider, true>({
     displayName: 'Provider',
     required: true,
+    defaultValue: 'openai',
     refreshers: [],
     options: async (_, ctx) => {
       const providers = await httpClient.sendRequest<
@@ -103,16 +115,19 @@ export const aiProps = (type: 'text' | 'image') => ({
         const providerMetadata = AI_PROVIDERS.find(
           (meta) =>
             meta.value === p.provider &&
-            meta.models.some((m) => m.types.includes(type))
+            meta.models.some((m) => m.supported.includes(supported))
         );
         if (isNil(providerMetadata)) {
           return [];
         }
-        return {
-          value: providerMetadata.value,
-          label: providerMetadata.label,
-          models: providerMetadata.models,
-        };
+        return [
+          {
+            value: providerMetadata.value,
+
+            label: providerMetadata.label,
+            models: providerMetadata.models,
+          },
+        ];
       });
 
       return {
@@ -122,25 +137,41 @@ export const aiProps = (type: 'text' | 'image') => ({
       };
     },
   }),
-  model: Property.Dropdown({
+  model: Property.Dropdown<string, true>({
     displayName: 'Model',
     required: true,
+    defaultValue: 'gpt-4o',
     refreshers: ['provider'],
     options: async ({ provider }) => {
       if (isNil(provider)) {
         return {
           disabled: true,
+
           options: [],
           placeholder: 'Select AI Provider',
         };
       }
       const models = AI_PROVIDERS.find(
         (p) => p.value === provider
-      )?.models.filter((m) => m.types.includes(type));
+      )?.models.filter((m) => m.supported.includes(supported));
       return {
         disabled: isNil(models),
         options: models ?? [],
       };
+    },
+  }),
+  advancedOptions: Property.DynamicProperties<false>({
+    displayName: 'Advanced Options',
+    required: false,
+    refreshers: ['provider', 'model'],
+    props: async ({ model, provider }) => {
+      const modelMetadata = AI_PROVIDERS.find(
+        (p) => p.value === (provider as unknown as string)
+      )?.models.find((m) => m.value === (model as unknown as string));
+      if (isNil(modelMetadata) || !hasMapper(modelMetadata)) {
+        return {};
+      }
+      return modelMetadata.mapper.advancedOptions ?? {};
     },
   }),
 });

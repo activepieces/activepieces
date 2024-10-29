@@ -1,0 +1,33 @@
+---
+title: 'Chat Completion'
+icon: 'text'
+description: 'Learn how to use chat completion AI in actions'
+---
+
+
+The following snippet shows how to use chat completion to get a response from an AI model.
+
+```typescript
+const ai = AI({ provider: context.propsValue.provider, server: context.server });
+
+const response = await ai.chat.text({
+  model: context.propsValue.model,
+  messages: [
+    {
+      role: AIChatRole.USER,
+      content: "Can you provide examples of TypeScript code formatting?",
+    },
+  ],
+  /**
+   * Controls the creativity of the AI response.
+   * A higher value will make the AI more creative and a lower value will make it more deterministic.
+   */
+  creativity: 0.7,
+  /**
+   * The maximum number of tokens to generate in the completion.
+   */
+  maxTokens: 100,
+});
+```
+
+

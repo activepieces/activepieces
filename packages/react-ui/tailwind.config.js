@@ -108,11 +108,22 @@ module.exports = {
             opacity: 1,
           },
         },
+        typing: {
+          "0%": {
+            width: "0%",
+            visibility: "hidden",
+          },
+          "100%": {
+            width: "100%",
+          }
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         fade: 'fade 0.2s ease-out',
+        typing: 'typing 0.7s steps(7) alternate',
+        'typing-sm': 'typing 0.5s steps(5) alternate',
       },
       boxShadow: {
         'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',

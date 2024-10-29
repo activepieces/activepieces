@@ -109,6 +109,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         payload,
                         flowId: listener.flowId,
                         simulate: false,
+                        useLatestFlowVersion: false,
                     },
                     priority: DEFAULT_PRIORITY,
                 })

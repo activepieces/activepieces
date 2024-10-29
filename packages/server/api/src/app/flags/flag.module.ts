@@ -29,4 +29,5 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
             })
         },
     )
+    
 }

@@ -461,4 +461,61 @@ describe('Flow API', () => {
             expect(responseBody?.params?.message).toBe(`flowId=${mockFlow.id}`)
         })
     })
+
+    describe('Export Flow Template endpoint', () => {
+        
+        it('Exports a flow template using an API key', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection().getRepository('user').save([mockUser])
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection().getRepository('platform').save(mockPlatform)
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            await databaseConnection().getRepository('project').save([mockProject])
+
+            const mockFlow = createMockFlow({
+                projectId: mockProject.id,
+                status: FlowStatus.ENABLED,
+            })
+            await databaseConnection().getRepository('flow').save([mockFlow])
+
+            const mockFlowVersion = createMockFlowVersion({
+                flowId: mockFlow.id,
+                updatedBy: mockUser.id,
+            })
+            await databaseConnection()
+                .getRepository('flow_version')
+                .save([mockFlowVersion])
+
+            const mockApiKey = 'test_api_key'
+            const mockToken = await generateMockToken({
+                type: PrincipalType.SERVICE,
+                projectId: mockProject.id,
+                id: mockApiKey,
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/v1/flows/${mockFlow.id}/template`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody).toHaveProperty('name')
+            expect(responseBody).toHaveProperty('description')
+            expect(responseBody).toHaveProperty('template')
+            expect(responseBody.template).toHaveProperty('trigger')
+        })
+    })
 })
