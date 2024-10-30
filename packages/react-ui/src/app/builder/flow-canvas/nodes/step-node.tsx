@@ -38,7 +38,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { StepStatusIcon } from '../../../../../features/flow-runs/components/step-status-icon';
+import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
 import { ApStepNode } from '../types';
 import { flowUtilConsts } from '../consts';
 

@@ -23,7 +23,7 @@ import {
 import { Label } from '../../../../components/ui/label';
 import { Split } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
-import { newFloWUtils } from '../../flow-canvas/new/new-utils';
+import { flowCanvasUtils } from '../../flow-canvas/flow-canvas-utils';
 import { FormField, FormItem } from '../../../../components/ui/form';
 
 export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
@@ -62,7 +62,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     );
     remove(index);
     setSelectedBranchIndex(null);
-    fitView(newFloWUtils.createFocusStepInGraphParams(step.name));
+    fitView(flowCanvasUtils.createFocusStepInGraphParams(step.name));
   };
 
   useEffect(() => {
@@ -163,13 +163,13 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               setSelectedBranchIndex(index);
               if (step.children[index]) {
                 fitView(
-                  newFloWUtils.createFocusStepInGraphParams(
+                  flowCanvasUtils.createFocusStepInGraphParams(
                     step.children[index].name,
                   ),
                 );
               } else {
                 fitView(
-                  newFloWUtils.createFocusStepInGraphParams(
+                  flowCanvasUtils.createFocusStepInGraphParams(
                     `${step.name}-big-add-button-${step.name}-branch-${index}-start-edge`,
                   ),
                 );

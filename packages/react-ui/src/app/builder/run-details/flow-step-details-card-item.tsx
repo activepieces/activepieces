@@ -63,11 +63,11 @@ const FlowStepDetailsCardItem = ({
   const stepOutput = useMemo(() => {
     return run && run.steps
       ? flowRunUtils.extractStepOutput(
-          stepName,
-          loopsIndexes,
-          run.steps,
-          flowVersion.trigger,
-        )
+        stepName,
+        loopsIndexes,
+        run.steps,
+        flowVersion.trigger,
+      )
       : null;
   }, [loopsIndexes, run, stepName, flowVersion.trigger]);
 
@@ -75,9 +75,9 @@ const FlowStepDetailsCardItem = ({
 
   const children =
     stepOutput &&
-    stepOutput.output &&
-    stepOutput.type === ActionType.LOOP_ON_ITEMS &&
-    stepOutput.output.iterations[loopsIndexes[stepName]]
+      stepOutput.output &&
+      stepOutput.type === ActionType.LOOP_ON_ITEMS &&
+      stepOutput.output.iterations[loopsIndexes[stepName]]
       ? Object.keys(stepOutput.output.iterations[loopsIndexes[stepName]])
       : [];
   const { stepMetadata } = piecesHooks.useStepMetadata({
@@ -131,9 +131,8 @@ const FlowStepDetailsCardItem = ({
               className="w-6 h-6 object-contain"
               src={stepMetadata?.logoUrl}
             />
-            <div className="break-all truncate min-w-0 grow-1 shrink-1">{`${
-              stepIndex + 1
-            }. ${step?.displayName}`}</div>
+            <div className="break-all truncate min-w-0 grow-1 shrink-1">{`${stepIndex + 1
+              }. ${step?.displayName}`}</div>
             <div className="w-2"></div>
             <div className="flex gap-1 justify-end  items-center flex-grow">
               {isLoopStep && isStepSelected && (
@@ -155,21 +154,21 @@ const FlowStepDetailsCardItem = ({
               )}
               {(!isLoopStep ||
                 (isLoopStep && !isChildSelected && !isStepSelected)) && (
-                <div className="flex gap-1 animate-fade">
-                  <span className="text-muted-foreground text-xs break-normal whitespace-nowrap">
-                    {formatUtils.formatDuration(
-                      stepOutput?.duration ?? 0,
-                      true,
+                  <div className="flex gap-1 animate-fade">
+                    <span className="text-muted-foreground text-xs break-normal whitespace-nowrap">
+                      {formatUtils.formatDuration(
+                        stepOutput?.duration ?? 0,
+                        true,
+                      )}
+                    </span>
+                    {stepOutput && stepOutput.status && (
+                      <StepStatusIcon
+                        status={stepOutput.status}
+                        size="4"
+                      ></StepStatusIcon>
                     )}
-                  </span>
-                  {stepOutput && stepOutput.status && (
-                    <StepStatusIcon
-                      status={stepOutput.status}
-                      size="4"
-                    ></StepStatusIcon>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
             </div>
           </div>
         </CardListItem>

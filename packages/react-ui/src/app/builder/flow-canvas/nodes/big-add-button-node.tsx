@@ -11,7 +11,7 @@ import {
   isNil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
-import { useBuilderStateContext } from '../../../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 import { ApBigAddButtonNode } from '../types';
 import { flowUtilConsts } from '../consts';
 
@@ -77,25 +77,25 @@ const ApBigAddButtonCanvasNode = React.memo(
                   <PieceSelector
                     operation={
                       data.stepLocationRelativeToParent ===
-                      StepLocationRelativeToParent.INSIDE_BRANCH
+                        StepLocationRelativeToParent.INSIDE_BRANCH
                         ? {
-                            type: FlowOperationType.ADD_ACTION,
-                            actionLocation: {
-                              parentStep: data.parentStepName,
-                              stepLocationRelativeToParent:
-                                data.stepLocationRelativeToParent,
-                              branchIndex: data.branchIndex,
-                              branchName: data.branchName,
-                            },
-                          }
+                          type: FlowOperationType.ADD_ACTION,
+                          actionLocation: {
+                            parentStep: data.parentStepName,
+                            stepLocationRelativeToParent:
+                              data.stepLocationRelativeToParent,
+                            branchIndex: data.branchIndex,
+                            branchName: data.branchName,
+                          },
+                        }
                         : {
-                            type: FlowOperationType.ADD_ACTION,
-                            actionLocation: {
-                              parentStep: data.parentStepName,
-                              stepLocationRelativeToParent:
-                                data.stepLocationRelativeToParent,
-                            },
-                          }
+                          type: FlowOperationType.ADD_ACTION,
+                          actionLocation: {
+                            parentStep: data.parentStepName,
+                            stepLocationRelativeToParent:
+                              data.stepLocationRelativeToParent,
+                          },
+                        }
                     }
                     open={actionMenuOpen}
                     onOpenChange={setActionMenuOpen}
@@ -118,10 +118,9 @@ const ApBigAddButtonCanvasNode = React.memo(
                   style={{
                     height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
                     width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-                    top: `-${
-                      flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 -
+                    top: `-${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 -
                       flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width / 2
-                    }px`,
+                      }px`,
                   }}
                   className=" absolute "
                   ref={setNodeRef}
@@ -151,14 +150,12 @@ const ApBigAddButtonCanvasNode = React.memo(
               >
                 <g>
                   <path
-                    d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -${
-                      flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 5
-                    } v ${
-                      flowUtilConsts.AP_NODE_SIZE.STEP.height +
+                    d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -${flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 5
+                      } v ${flowUtilConsts.AP_NODE_SIZE.STEP.height +
                       2 *
-                        (flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
-                          5)
-                    }`}
+                      (flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
+                        5)
+                      }`}
                     fill="transparent"
                     strokeWidth="1.5"
                   />

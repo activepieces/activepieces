@@ -3,7 +3,7 @@ import {
   Action,
   StepLocationRelativeToParent,
   Trigger,
-} from '../../../../../../shared/src';
+} from '../../../../../shared/src';
 
 export enum ApNodeType {
   STEP = 'STEP',

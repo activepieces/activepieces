@@ -1,11 +1,11 @@
 import { useReactFlow } from '@xyflow/react';
-import { ActionType, BranchExecutionType, flowHelper, FlowOperationType, isNil, RouterAction, StepLocationRelativeToParent } from '../../../../../../../shared/src';
-import { cn } from '../../../../../lib/utils';
-import { useBuilderStateContext } from '../../../builder-hooks';
+import { ActionType, BranchExecutionType, flowHelper, FlowOperationType, isNil, RouterAction, StepLocationRelativeToParent } from '../../../../../../shared/src';
+import { cn } from '../../../../lib/utils';
+import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../consts';
-import { newFloWUtils } from '../new-utils';
+import { flowCanvasUtils } from '../flow-canvas-utils';
 import { CopyPlus, EllipsisVertical, Trash2 } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from '../../../../../components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from '../../../../components/ui/dropdown-menu';
 import { DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
 import { t } from 'i18next';
 
@@ -86,7 +86,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
             ) {
               selectStepByName(props.sourceNodeName);
               setSelectedBranchIndex(props.branchIndex);
-              fitView(newFloWUtils.createFocusStepInGraphParams(props.targetNodeName))
+              fitView(flowCanvasUtils.createFocusStepInGraphParams(props.targetNodeName))
             }
           }}
         >

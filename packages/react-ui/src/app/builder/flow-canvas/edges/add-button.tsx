@@ -1,5 +1,4 @@
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
-import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -11,7 +10,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 import { ApButtonData } from '../types';
-import { useBuilderStateContext } from '../../../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../consts';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
@@ -74,24 +73,24 @@ const ApAddButton = React.memo((props: ApButtonData) => {
         <PieceSelector
           operation={
             props.stepLocationRelativeToParent ===
-            StepLocationRelativeToParent.INSIDE_BRANCH
+              StepLocationRelativeToParent.INSIDE_BRANCH
               ? {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                    branchIndex: props.branchIndex,
-                  },
-                }
+                type: FlowOperationType.ADD_ACTION,
+                actionLocation: {
+                  parentStep: props.parentStepName,
+                  stepLocationRelativeToParent:
+                    props.stepLocationRelativeToParent,
+                  branchIndex: props.branchIndex,
+                },
+              }
               : {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                  },
-                }
+                type: FlowOperationType.ADD_ACTION,
+                actionLocation: {
+                  parentStep: props.parentStepName,
+                  stepLocationRelativeToParent:
+                    props.stepLocationRelativeToParent,
+                },
+              }
           }
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}

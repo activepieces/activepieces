@@ -22,7 +22,7 @@ import {
 import { useBuilderStateContext } from '../builder-hooks';
 
 import StepDragOverlay from './step-drag-overlay';
-import { ApButtonData } from './new/types';
+import { ApButtonData } from './types';
 
 type FlowDragLayerProps = {
   children: React.ReactNode;
@@ -116,10 +116,10 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
                 droppedAtNodeData.stepLocationRelativeToParent,
               branchIndex:
                 droppedAtNodeData.stepLocationRelativeToParent ===
-                StepLocationRelativeToParent.INSIDE_BRANCH
+                  StepLocationRelativeToParent.INSIDE_BRANCH
                   ? droppedAtNodeData.branchIndex
                   : undefined,
-                        },
+            },
           },
           () => toast(UNSAVED_CHANGES_TOAST),
         );
