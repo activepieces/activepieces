@@ -48,10 +48,26 @@ export const AI_PROVIDERS = [
     label: 'Anthropic' as const,
     value: 'anthropic' as const,
     models: [
-      model({ label: 'claude-3-5-sonnet', value: 'claude-3-5-sonnet-20240620', supported: ['text', 'function'] }),
-      model({ label: 'claude-3-opus', value: 'claude-3-opus-20240229', supported: ['text', 'function'] }),
-      model({ label: 'claude-3-sonnet', value: 'claude-3-sonnet-20240229', supported: ['text', 'function'] }),
-      model({ label: 'claude-3-haiku', value: 'claude-3-haiku-20240307', supported: ['text', 'function'] }),
+      model({
+        label: 'claude-3-5-sonnet',
+        value: 'claude-3-5-sonnet-20240620',
+        supported: ['text', 'function'],
+      }),
+      model({
+        label: 'claude-3-opus',
+        value: 'claude-3-opus-20240229',
+        supported: ['text', 'function'],
+      }),
+      model({
+        label: 'claude-3-sonnet',
+        value: 'claude-3-sonnet-20240229',
+        supported: ['text', 'function'],
+      }),
+      model({
+        label: 'claude-3-haiku',
+        value: 'claude-3-haiku-20240307',
+        supported: ['text', 'function'],
+      }),
     ],
     auth: authHeader({ name: 'x-api-key', bearer: false }),
     factory: anthropic,
@@ -66,13 +82,22 @@ export const AI_PROVIDERS = [
     auth: authHeader({ bearer: true }),
     factory: replicate,
     instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.replicate,
-  }
+  },
 ];
 
-export const aiProps = (supported: 'text' | 'image' | 'function' | 'speech' | 'transcription') => ({
+export const aiProps = (
+  supported:
+    | 'text'
+    | 'image'
+    | 'function'
+    | 'speech'
+    | 'transcription'
+    | 'moderation'
+) => ({
   provider: Property.Dropdown<AiProvider, true>({
     displayName: 'Provider',
     required: true,
+    defaultValue: 'openai',
     refreshers: [],
     options: async (_, ctx) => {
       const providers = await httpClient.sendRequest<
@@ -101,11 +126,14 @@ export const aiProps = (supported: 'text' | 'image' | 'function' | 'speech' | 't
         if (isNil(providerMetadata)) {
           return [];
         }
-        return [{
-          value: providerMetadata.value,
-          label: providerMetadata.label,
-          models: providerMetadata.models,
-        }];
+        return [
+          {
+            value: providerMetadata.value,
+
+            label: providerMetadata.label,
+            models: providerMetadata.models,
+          },
+        ];
       });
 
       return {
@@ -118,11 +146,13 @@ export const aiProps = (supported: 'text' | 'image' | 'function' | 'speech' | 't
   model: Property.Dropdown<string, true>({
     displayName: 'Model',
     required: true,
+    defaultValue: 'gpt-4o',
     refreshers: ['provider'],
     options: async ({ provider }) => {
       if (isNil(provider)) {
         return {
           disabled: true,
+
           options: [],
           placeholder: 'Select AI Provider',
         };
@@ -142,8 +172,8 @@ export const aiProps = (supported: 'text' | 'image' | 'function' | 'speech' | 't
     refreshers: ['provider', 'model'],
     props: async ({ model, provider }) => {
       const modelMetadata = AI_PROVIDERS.find(
-        (p) => p.value === provider as unknown as string
-      )?.models.find((m) => m.value === model as unknown as string);
+        (p) => p.value === (provider as unknown as string)
+      )?.models.find((m) => m.value === (model as unknown as string));
       if (isNil(modelMetadata) || !hasMapper(modelMetadata)) {
         return {};
       }

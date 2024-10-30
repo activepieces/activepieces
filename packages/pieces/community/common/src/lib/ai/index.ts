@@ -5,6 +5,18 @@ export type AI = {
   provider: string;
   chat: AIChat;
   image?: AIImage;
+  moderation?: AIModeration;
+};
+
+export type AIModeration = {
+  create: (params: AIModerationCreateParams) => Promise<any | null>;
+};
+
+export type AIModerationCreateParams = {
+  model: string;
+  text?: string;
+  images?: ApFile[];
+  maxTokens?: number;
   voice?: AIVoice;
 };
 
@@ -140,6 +152,7 @@ export const AI = ({
   return {
     provider,
     image: impl.image,
+    moderation: impl.moderation,
     voice: impl.voice,
     chat: {
       text: async (params) => {

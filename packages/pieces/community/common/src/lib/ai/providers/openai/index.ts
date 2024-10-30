@@ -6,7 +6,8 @@ import { AuthenticationType } from '../../../authentication';
 import { isNil } from '@activepieces/shared';
 import OpenAI, { toFile } from 'openai';
 import { imageMapper, model, ModelType } from '../utils';
-import { Property, FilesService } from '@activepieces/pieces-framework';
+import { ApFile, Property, FilesService } from '@activepieces/pieces-framework';
+import { ModerationMultiModalInput } from 'openai/resources';
 
 export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const openaiApiVersion = 'v1';
@@ -170,6 +171,30 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
         };
       },
     },
+    moderation: {
+      create: async (params) => {
+        const inputs: ModerationMultiModalInput[] = [];
+
+        if (params.text) {
+          inputs.push({ type: 'text', text: params.text });
+        }
+        for (const image of params.images ?? []) {
+          inputs.push({
+            type: 'image_url',
+            image_url: {
+              url: `data:image/${image.extension};base64,${image.base64}`,
+            },
+          });
+        }
+
+        const response = await sdk.moderations.create({
+          input: inputs,
+          model: params.model,
+        });
+
+        return response.results[0];
+      },
+    },
     voice: {
       createSpeech: async (params) => {
         const response = await sdk.audio.speech.create({
@@ -317,6 +342,11 @@ export const openaiModels = [
   model({ label: 'dall-e-2', value: 'dall-e-2', supported: ['image'] }).mapper(
     openaiImageMapper
   ),
+  model({
+    label: 'omni-moderation-latest',
+    value: 'omni-moderation-latest',
+    supported: ['moderation'],
+  }),
   model({ label: 'tts-1', value: 'tts-1', supported: ['speech'] }),
   model({ label: 'tts-1-hd', value: 'tts-1-hd', supported: ['speech'] }),
   model({
