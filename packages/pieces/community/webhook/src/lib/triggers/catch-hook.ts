@@ -25,7 +25,7 @@ generates sample data and **does NOT** trigger the flow.
 If you expect a response from this webhook, add /sync to the end of the URL. 
 If it takes more than 30 seconds, it will return a 408 Request Timeout response.
 
-To return data, add an HTTP step to your flow with the Return Response action.
+To return data, add an Webhook step to your flow with the Return Response action.
 `;
 
 enum AuthType {
@@ -87,7 +87,8 @@ export const catchWebhook = createTrigger({
             fields = {
               headerName: Property.ShortText({
                 displayName: 'Header Name',
-                description: 'The name of the header to use for authentication.',
+                description:
+                  'The name of the header to use for authentication.',
                 required: true,
               }),
               headerValue: Property.ShortText({
@@ -114,34 +115,61 @@ export const catchWebhook = createTrigger({
   },
   async run(context) {
     const authenticationType = context.propsValue.authType;
-    assertNotNullOrUndefined(authenticationType, 'Authentication type is required');
-    const verified = verifyAuth(authenticationType, context.propsValue.authFields ?? {}, context.payload.headers);
+    assertNotNullOrUndefined(
+      authenticationType,
+      'Authentication type is required'
+    );
+    const verified = verifyAuth(
+      authenticationType,
+      context.propsValue.authFields ?? {},
+      context.payload.headers
+    );
     if (!verified) {
-      return []
+      return [];
     }
-    return [context.payload]
+    return [context.payload];
   },
 });
 
-function verifyAuth(authenticationType: AuthType, authFields: DynamicPropsValue, headers: Record<string, string>): boolean {
+function verifyAuth(
+  authenticationType: AuthType,
+  authFields: DynamicPropsValue,
+  headers: Record<string, string>
+): boolean {
   switch (authenticationType) {
     case AuthType.NONE:
       return true;
     case AuthType.BASIC:
-      return verifyBasicAuth(headers['authorization'], authFields['username'], authFields['password']);
+      return verifyBasicAuth(
+        headers['authorization'],
+        authFields['username'],
+        authFields['password']
+      );
     case AuthType.HEADER:
-      return verifyHeaderAuth(headers, authFields['headerName'], authFields['headerValue']);
+      return verifyHeaderAuth(
+        headers,
+        authFields['headerName'],
+        authFields['headerValue']
+      );
     default:
       throw new Error('Invalid authentication type');
   }
 }
 
-function verifyHeaderAuth(headers: Record<string, string>, headerName: string, headerSecret: string) {
+function verifyHeaderAuth(
+  headers: Record<string, string>,
+  headerName: string,
+  headerSecret: string
+) {
   const headerValue = headers[headerName.toLocaleLowerCase()];
   return headerValue === headerSecret;
 }
 
-function verifyBasicAuth(headerValue: string, username: string, password: string) {
+function verifyBasicAuth(
+  headerValue: string,
+  username: string,
+  password: string
+) {
   if (!headerValue.toLocaleLowerCase().startsWith('basic ')) {
     return false;
   }
