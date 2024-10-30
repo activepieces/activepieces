@@ -1,5 +1,4 @@
 import {
-  FlowId,
   FlowRetryStrategy,
   FlowRun,
   FlowRunStatus,
@@ -10,7 +9,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, PlayIcon, Redo, RotateCw, ChevronDown } from 'lucide-react';
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useNewWindow } from '../../../components/embed-provider';
@@ -224,6 +223,7 @@ const FlowRunsPage = () => {
         title: t('Runs replayed successfully'),
         variant: 'default',
       });
+      navigate(window.location.pathname);
     },
     onError: () => {
       toast(INTERNAL_ERROR_TOAST);
@@ -234,6 +234,9 @@ const FlowRunsPage = () => {
     () => [
       {
         render: (selectedRows, resetSelection) => {
+          const allFailed = selectedRows.every((row) =>
+            isFailedState(row.status),
+          );
           const isDisabled =
             selectedRows.length === 0 || !userHasPermissionToRetryRun;
           return (
@@ -275,7 +278,7 @@ const FlowRunsPage = () => {
                       hasPermission={userHasPermissionToRetryRun}
                     >
                       <DropdownMenuItem
-                        disabled={!userHasPermissionToRetryRun}
+                        disabled={!userHasPermissionToRetryRun || !allFailed}
                         onClick={() => {
                           replayRun.mutate({
                             runIds: selectedRows.map((row) => row.id),

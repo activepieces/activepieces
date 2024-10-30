@@ -116,6 +116,7 @@ export const flowRunService = {
             query: {
                 limit,
                 order: Order.DESC,
+                orderBy: 'startTime',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -154,7 +155,7 @@ export const flowRunService = {
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
         const oldFlowRun = await flowRunService.getOneOrThrow({
             id: flowRunId,
-            projectId
+            projectId,
         })
 
         const newFlowRun = {
@@ -188,7 +189,7 @@ export const flowRunService = {
     },
     async bulkRetry({ projectId, flowRunIds, strategy, filters }: BulkRetryParams): Promise<(FlowRun | null)[]> {
         const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, filters)
-        return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy })))
+        return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
     },
     async addToQueue({
         flowRunId,
