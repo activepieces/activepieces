@@ -1,13 +1,10 @@
 import { AI, AIChatRole, AIFactory } from '../..';
-import FormData from 'form-data';
-import mime from 'mime-types';
-import { httpClient, HttpMethod, HttpRequest } from '../../../http';
-import { AuthenticationType } from '../../../authentication';
 import { isNil } from '@activepieces/shared';
 import OpenAI, { toFile } from 'openai';
 import { imageMapper, model, ModelType } from '../utils';
-import { ApFile, Property, FilesService } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { ModerationMultiModalInput } from 'openai/resources';
+import { Readable } from 'stream';
 
 export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const openaiApiVersion = 'v1';
@@ -222,41 +219,15 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
         return { data: buffer };
       },
       createTranscription: async (params) => {
+        const audioFile = await toFile(
+          Readable.from(params.audio.data),
+          params.audio.filename
+        );
         const response = await sdk.audio.transcriptions.create({
           model: params.model,
           language: params.language,
-          file: await toFile(params.audio.data.buffer, params.audio.filename),
+          file: audioFile,
         });
-
-        // const form = new FormData();
-        // form.append('file', params.audio.data, {
-        //   filename: params.audio.filename,
-        //   contentType: mime.lookup(params.audio.extension || '') as string,
-        // });
-        // form.append('model', params.model);
-        // form.append('language', params.language);
-
-        // const request: HttpRequest = {
-        //   url: `${proxyUrl}/${openaiApiVersion}/audio/transcriptions`,
-        //   method: HttpMethod.POST,
-        //   body: form,
-        //   headers: {
-        //     // ...form.getHeaders(),
-        //     'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
-
-        //     'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.total_tokens',
-        //   },
-        //   authentication: {
-        //     type: AuthenticationType.BEARER_TOKEN,
-        //     token: engineToken,
-        //   },
-        // };
-
-        // console.log(JSON.stringify(request));
-
-        // const response = await httpClient.sendRequest<{ text: string }>(
-        //   request
-        // );
 
         return { text: response.text };
       },

@@ -9,7 +9,10 @@ export const voiceAi = createPiece({
   minimumSupportedRelease: '0.34.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/voice-ai.svg',
   authors: ['kishanprmr'],
-  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  categories: [
+    PieceCategory.ARTIFICIAL_INTELLIGENCE,
+    PieceCategory.UNIVERSAL_AI,
+  ],
   actions: [textToSpeech, speechToText],
   triggers: [],
 });

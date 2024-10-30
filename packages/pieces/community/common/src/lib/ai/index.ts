@@ -6,6 +6,7 @@ export type AI = {
   chat: AIChat;
   image?: AIImage;
   moderation?: AIModeration;
+  voice?: AIVoice;
 };
 
 export type AIModeration = {
