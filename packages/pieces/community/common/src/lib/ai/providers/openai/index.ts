@@ -1,7 +1,7 @@
 import { AI, AIChatRole, AIFactory } from '../..';
 import FormData from 'form-data';
 import mime from 'mime-types';
-import { httpClient, HttpMethod } from '../../../http';
+import { httpClient, HttpMethod, HttpRequest } from '../../../http';
 import { AuthenticationType } from '../../../authentication';
 import { isNil } from '@activepieces/shared';
 import OpenAI, { toFile } from 'openai';
@@ -172,42 +172,37 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
     },
     voice: {
       createSpeech: async (params) => {
-        const response = await sdk.audio.speech.create(
-          {
-            model: params.model,
-            input: params.input,
-            voice: params.voice as
-              | 'alloy'
-              | 'echo'
-              | 'fable'
-              | 'onyx'
-              | 'nova'
-              | 'shimmer',
-            speed: params.speed,
-            response_format: params.response_format as
-              | 'mp3'
-              | 'opus'
-              | 'aac'
-              | 'flac'
-              | 'wav'
-              | 'pcm',
-          },
-          { stream: true }
-        );
+        const response = await sdk.audio.speech.create({
+          model: params.model,
+          input: params.input,
+          voice: params.voice as
+            | 'alloy'
+            | 'echo'
+            | 'fable'
+            | 'onyx'
+            | 'nova'
+            | 'shimmer',
+          speed: params.speed,
+          response_format: params.response_format as
+            | 'mp3'
+            | 'opus'
+            | 'aac'
+            | 'flac'
+            | 'wav'
+            | 'pcm',
+        });
         const readableStream =
           response.body as unknown as NodeJS.ReadableStream;
         const buffer = await streamToBuffer(readableStream);
         return { data: buffer };
       },
       createTranscription: async (params) => {
-        console.log(params.audio.filename, params.audio.extension);
         const response = await sdk.audio.transcriptions.create({
           model: params.model,
           language: params.language,
-          file: await toFile(params.audio.data, params.audio.filename),
+          file: await toFile(params.audio.data.buffer, params.audio.filename),
         });
 
-        console.log(JSON.stringify(response));
         // const form = new FormData();
         // form.append('file', params.audio.data, {
         //   filename: params.audio.filename,
@@ -216,19 +211,27 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
         // form.append('model', params.model);
         // form.append('language', params.language);
 
-        // const response = await httpClient.sendRequest<{ text: string }>({
+        // const request: HttpRequest = {
         //   url: `${proxyUrl}/${openaiApiVersion}/audio/transcriptions`,
         //   method: HttpMethod.POST,
         //   body: form,
         //   headers: {
-        //     ...form.getHeaders(),
+        //     // ...form.getHeaders(),
+        //     'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
+
         //     'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.total_tokens',
         //   },
         //   authentication: {
         //     type: AuthenticationType.BEARER_TOKEN,
         //     token: engineToken,
         //   },
-        // });
+        // };
+
+        // console.log(JSON.stringify(request));
+
+        // const response = await httpClient.sendRequest<{ text: string }>(
+        //   request
+        // );
 
         return { text: response.text };
       },
