@@ -1,9 +1,9 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModel, BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
+import { UserMeta } from '../user'
 import { OAuth2GrantType } from './dto/upsert-app-connection-request'
 import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'
-import { UserMeta } from '../user'
 
 export type AppConnectionId = string
 
@@ -68,12 +68,12 @@ export type OAuth2ConnectionValueWithApp = {
 
 export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> =
     T extends AppConnectionType.SECRET_TEXT ? SecretTextConnectionValue :
-    T extends AppConnectionType.BASIC_AUTH ? BasicAuthConnectionValue :
-    T extends AppConnectionType.CLOUD_OAUTH2 ? CloudOAuth2ConnectionValue :
-    T extends AppConnectionType.PLATFORM_OAUTH2 ? PlatformOAuth2ConnectionValue :
-    T extends AppConnectionType.OAUTH2 ? OAuth2ConnectionValueWithApp :
-    T extends AppConnectionType.CUSTOM_AUTH ? CustomAuthConnectionValue :
-    never
+        T extends AppConnectionType.BASIC_AUTH ? BasicAuthConnectionValue :
+            T extends AppConnectionType.CLOUD_OAUTH2 ? CloudOAuth2ConnectionValue :
+                T extends AppConnectionType.PLATFORM_OAUTH2 ? PlatformOAuth2ConnectionValue :
+                    T extends AppConnectionType.OAUTH2 ? OAuth2ConnectionValueWithApp :
+                        T extends AppConnectionType.CUSTOM_AUTH ? CustomAuthConnectionValue :
+                            never
 
 export type AppConnection<Type extends AppConnectionType = AppConnectionType> = BaseModel<AppConnectionId> & {
     name: string
@@ -100,7 +100,7 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     projectId: ApId,
     status: Type.Enum(AppConnectionStatus),
     ownerId: Nullable(Type.String()),
-    owner: Type.Optional(Type.Union([UserMeta, Type.Null()]))
+    owner: Type.Optional(Type.Union([UserMeta, Type.Null()])),
 }, {
     description: 'App connection is a connection to an external app.',
 })
