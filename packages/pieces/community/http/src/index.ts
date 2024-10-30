@@ -9,7 +9,7 @@ export const http = createPiece({
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.20.3',
-  actions: [httpSendRequestAction, httpReturnResponse],
+  actions: [httpSendRequestAction],
   authors: [
     'bibhuty-did-this',
     'landonmoir',
