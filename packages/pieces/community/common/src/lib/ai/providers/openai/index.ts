@@ -2,7 +2,8 @@ import { AI, AIChatRole, AIFactory } from '../..';
 import { isNil } from '@activepieces/shared';
 import OpenAI from 'openai';
 import { imageMapper, model, ModelType } from '../utils';
-import { Property } from '@activepieces/pieces-framework';
+import { ApFile, Property } from '@activepieces/pieces-framework';
+import { ModerationMultiModalInput } from 'openai/resources';
 
 export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const openaiApiVersion = 'v1';
@@ -166,6 +167,30 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
         };
       },
     },
+    moderation: {
+      create: async (params) => {
+        const inputs: ModerationMultiModalInput[] = [];
+
+        if (params.text) {
+          inputs.push({ type: 'text', text: params.text });
+        }
+        for (const image of params.images ?? []) {
+          inputs.push({
+            type: 'image_url',
+            image_url: {
+              url: `data:image/${image.extension};base64,${image.base64}`,
+            },
+          });
+        }
+
+        const response = await sdk.moderations.create({
+          input: inputs,
+          model: params.model,
+        });
+
+        return response.results[0];
+      },
+    },
   };
 };
 
@@ -238,4 +263,9 @@ export const openaiModels = [
   model({ label: 'dall-e-2', value: 'dall-e-2', supported: ['image'] }).mapper(
     openaiImageMapper
   ),
+  model({
+    label: 'omni-moderation-latest',
+    value: 'omni-moderation-latest',
+    supported: ['moderation'],
+  }),
 ];

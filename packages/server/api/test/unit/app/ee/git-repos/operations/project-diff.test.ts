@@ -1,8 +1,8 @@
 
 import { faker } from '@faker-js/faker'
 import { nanoid } from 'nanoid'
-import { projectDiffService } from '../../../../../../src/app/ee/git-repos/project-diff/project-diff.service'
-import { ProjectMappingState } from '../../../../../../src/app/ee/git-repos/project-diff/project-mapping-state'
+import { projectDiffService } from '../../../../../../src/app/ee/git-sync/project-diff/project-diff.service'
+import { ProjectMappingState } from '../../../../../../src/app/ee/git-sync/project-diff/project-mapping-state'
 import { flowGenerator } from '../../../../../helpers/flow-generator'
 
 

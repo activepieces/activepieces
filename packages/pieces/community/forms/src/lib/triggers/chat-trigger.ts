@@ -3,15 +3,23 @@ import {
   TriggerStrategy,
   createTrigger
 } from '@activepieces/pieces-framework';
+import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 
 const markdown = `
 This trigger sets up a chat interface. Ensure that **Respond on UI (Markdown)** is the final step in your flow.
 
-**Your Chat URL:**
+**Published Chat URL:**
 \`\`\`text
 {{chatUrl}}
 \`\`\`
-
+Use this for production, views the published version of the chat flow.
+<br>
+<br>
+**Draft Chat URL:**
+\`\`\`text
+{{chatUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
+\`\`\`
+Use this to generate sample data, views the draft version of the chat flow (the one you are editing now).
 `;
 
 export const onChatSubmission = createTrigger({
@@ -48,10 +56,15 @@ export const onChatSubmission = createTrigger({
     if (!item.message) {
       throw new Error('Message is required');
     }
-    const response = {
+    const files = Object.entries(item).filter(([key]) => key.startsWith('file')).map(([key, value]) => {
+      const index = Number(key.split('[')[1].split(']')[0]);
+      return [index, value] as const;
+    }).sort(([indexA], [indexB]) => indexA - indexB).map(([_, value]) => value);
+
+    return [{
       chatId: item.chatId,
       message: item.message,
-    }
-    return [response];
+      files,
+    }];
   },
 });

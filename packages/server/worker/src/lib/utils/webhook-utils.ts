@@ -24,12 +24,12 @@ export const webhookUtils = {
         const webhookPrefix = await this.getWebhookPrefix()
         return `${webhookPrefix}/${flowId}${suffix}`
     },
-    async extractPayloadAndSave({ flowVersion, payload, projectId, engineToken, workerToken }: SaveSampleDataParams): Promise<unknown[]> {
+    async extractPayloadAndSave({ flowVersion, payload, projectId, engineToken, workerToken, simulate }: SaveSampleDataParams): Promise<unknown[]> {
         const payloads: unknown[] = await triggerConsumer.extractPayloads(engineToken, {
             projectId,
             flowVersion,
             payload,
-            simulate: false,
+            simulate,
         })
 
         rejectedPromiseHandler(workerApiService(workerToken).savePayloadsAsSampleData({
@@ -79,5 +79,6 @@ type SaveSampleDataParams = {
     workerToken: string
     flowVersion: FlowVersion
     payload: EventPayload
+    simulate: boolean
 }
 

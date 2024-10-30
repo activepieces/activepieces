@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.34.5",
+  "version": "0.34.8",
   "rcVersion": "0.35.0-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -183,7 +183,7 @@
     "jszip": "3.10.1",
     "jwks-rsa": "3.1.0",
     "jwt-decode": "4.0.0",
-    "langchain": "0.0.156",
+    "langchain": "0.2.19",
     "lottie-web": "5.12.2",
     "lucide-react": "0.407.0",
     "mailparser": "3.6.7",

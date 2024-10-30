@@ -1,15 +1,15 @@
 import { WebhookJobData } from '@activepieces/server-shared'
-import { EngineHttpResponse, FlowStatus, GetFlowVersionForWorkerRequestType, isNil, ProgressUpdateType } from '@activepieces/shared'
+import { EngineHttpResponse, FlowStatus, GetFlowVersionForWorkerRequestType, isNil, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { engineApiService, workerApiService } from '../api/server-api.service'
 import { webhookUtils } from '../utils/webhook-utils'
 
 export const webhookExecutor = {
     async consumeWebhook(data: WebhookJobData, engineToken: string, workerToken: string): Promise<void> {
-        const { flowId, payload, simulate } = data
+        const { flowId, payload, simulate, useLatestFlowVersion } = data
         const populatedFlow = await engineApiService(engineToken).getFlowWithExactPieces({
             flowId,
-            type: simulate ? GetFlowVersionForWorkerRequestType.LATEST : GetFlowVersionForWorkerRequestType.LOCKED,
+            type: useLatestFlowVersion ? GetFlowVersionForWorkerRequestType.LATEST : GetFlowVersionForWorkerRequestType.LOCKED,
         })
 
         if (isNil(populatedFlow)) {
@@ -34,7 +34,7 @@ export const webhookExecutor = {
             return
         }
 
-        if (populatedFlow.status !== FlowStatus.ENABLED && !simulate) {
+        if (!useLatestFlowVersion && populatedFlow.status !== FlowStatus.ENABLED && !simulate) {
             await stopAndReply(workerToken, data, {
                 status: StatusCodes.NOT_FOUND,
                 body: {},
@@ -48,14 +48,17 @@ export const webhookExecutor = {
             flowVersion: populatedFlow.version,
             payload,
             projectId: populatedFlow.projectId,
+            simulate,
         })
-
 
         if (simulate) {
             await workerApiService(workerToken).deleteWebhookSimulation({
                 flowId: populatedFlow.id,
                 projectId: populatedFlow.projectId,
             })
+        }
+
+        if (simulate) {
             await stopAndReply(workerToken, data, {
                 status: StatusCodes.OK,
                 body: {},
@@ -66,6 +69,7 @@ export const webhookExecutor = {
         const runs = await workerApiService(workerToken).startRuns({
             flowVersionId: populatedFlow.version.id,
             projectId: populatedFlow.projectId,
+            environment: useLatestFlowVersion ? RunEnvironment.TESTING : RunEnvironment.PRODUCTION,
             progressUpdateType: !isNil(data.synchronousHandlerId) ? ProgressUpdateType.WEBHOOK_RESPONSE : ProgressUpdateType.NONE,
             synchronousHandlerId: data.synchronousHandlerId ?? undefined,
             httpRequestId: data.requestId,

@@ -77,6 +77,7 @@ export const WebhookJobData = Type.Object({
     payload: Type.Any(),
     flowId: Type.String(),
     simulate: Type.Boolean(),
+    useLatestFlowVersion: Type.Optional(Type.Boolean()),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 

@@ -15,6 +15,7 @@ import {
     OAuth2GrantType,
     ProjectId,
     SeekPage,
+    spreadIfDefined,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -41,7 +42,7 @@ const repo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = {
     async upsert(params: UpsertParams): Promise<AppConnection> {
-        const { projectId, request } = params
+        const { projectId, request, ownerId } = params
 
         const validatedConnectionValue = await validateConnectionValue({
             connection: request,
@@ -60,6 +61,7 @@ export const appConnectionService = {
 
         const connection = {
             ...request,
+            ...spreadIfDefined('ownerId', ownerId),
             status: AppConnectionStatus.ACTIVE,
             value: encryptedConnectionValue,
             id: existingConnection?.id ?? apId(),
@@ -79,9 +81,12 @@ export const appConnectionService = {
         projectId,
         name,
     }: GetOneByName): Promise<AppConnection | null> {
-        const encryptedAppConnection = await repo().findOneBy({
-            projectId,
-            name,
+        const encryptedAppConnection = await repo().findOne({
+            where: {
+                projectId,
+                name,
+            },
+            relations: ['owner'],
         })
 
         if (isNil(encryptedAppConnection)) {
@@ -114,10 +119,11 @@ export const appConnectionService = {
                 },
             })
         }
-        return (await this.getOne({
+        const connection = await this.getOne({
             projectId: params.projectId,
             name: connectionById.name,
-        }))!
+        })
+        return connection!
     },
 
     async delete(params: DeleteParams): Promise<void> {
@@ -159,6 +165,12 @@ export const appConnectionService = {
         const queryBuilder = repo()
             .createQueryBuilder('app_connection')
             .where(querySelector)
+            .leftJoinAndMapOne(
+                'app_connection.owner',
+                'user',
+                'user',
+                'app_connection."ownerId" = "user"."id"',
+            )
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const promises: Promise<AppConnection>[] = []
 
@@ -438,6 +450,7 @@ async function refresh(connection: AppConnection): Promise<AppConnection> {
 
 type UpsertParams = {
     projectId: ProjectId
+    ownerId: string | null
     request: UpsertAppConnectionRequestBody
 }
 

@@ -232,7 +232,8 @@
           "pages": [
             "install/options/easypanel",
             "install/options/aws",
-            "install/options/gcp"
+            "install/options/gcp",
+            "install/options/elestio"
           ]
         }
       ]
@@ -312,6 +313,15 @@
         "developers/piece-reference/piece-versioning",
         "developers/piece-reference/examples",
         "developers/piece-reference/custom-api-calls"
+      ]
+    },
+    {
+      "group": "Unified AI",
+      "pages": [
+        "developers/unified-ai/overview",
+        "developers/unified-ai/chat",
+        "developers/unified-ai/function-calling",
+        "developers/unified-ai/image"
       ]
     },
     {

@@ -9,7 +9,7 @@ export const flows = createPiece({
   description: 'Trigger and call another sub flow.',
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.32.4',
-  categories: [PieceCategory.CORE],
+  categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],
   logoUrl: 'https://cdn.activepieces.com/pieces/flows.svg',
   authors: ['hazemadelkhalel'],
   actions: [callFlow, response],

@@ -67,7 +67,7 @@ export interface ActivepiecesVendorInit {
     hideFolders?: boolean;
     sdkVersion?: string;
     jwtToken?: string; // Added jwtToken here
-    initialRoute: string
+    initialRoute?: string       //previously initialRoute was optional
   };
 }
 // We used to send JWT in query params, now we send it in local storage

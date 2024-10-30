@@ -41,8 +41,7 @@ import { RouterSettings } from './router-settings';
 import { Pencil } from 'lucide-react';
 
 const StepSettingsContainer = () => {
-  const { selectedStep, pieceModel, formSchema, skipValueChangeDetection } =
-    useStepSettingsContext();
+  const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const [
     readonly,
     exitStepSettings,
@@ -179,18 +178,11 @@ const StepSettingsContainer = () => {
         (previousSavedStep.current.name === currentStep.name &&
           previousSavedStep.current.type === ActionType.ROUTER &&
           currentStep.type === ActionType.ROUTER &&
-          currentStep.settings.branches.length !== previousSavedStep.current.settings.branches.length)) {
+          currentStep.settings.branches.length !== previousSavedStep.current.settings.branches.length) || deepEqual(currentStep, previousSavedStep.current)) {
         previousSavedStep.current = currentStep;
         return;
       }
 
-
-      if (
-        deepEqual(currentStep, previousSavedStep.current) ||
-        skipValueChangeDetection
-      ) {
-        return;
-      }
       previousSavedStep.current = currentStep;
       if (currentStep.type === TriggerType.PIECE) {
         debouncedTrigger(currentStep as Trigger);

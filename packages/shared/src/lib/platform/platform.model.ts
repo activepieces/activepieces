@@ -61,6 +61,7 @@ export const Platform = Type.Object({
     federatedAuthProviders: FederatedAuthnProviderConfig,
     emailAuthEnabled: Type.Boolean(),
     licenseKey: Type.Optional(Type.String()),
+    pinnedPieces: Type.Array(Type.String()),
 })
 
 export type Platform = Static<typeof Platform>
@@ -68,7 +69,7 @@ export type Platform = Static<typeof Platform>
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: FederatedAuthnProviderConfigWithoutSensitiveData,
     defaultLocale: Nullable(Type.String()),
-    smtp: Type.Optional(Type.Object({}))
+    smtp: Type.Optional(Type.Object({})),
 }), Type.Omit(Platform, ['smtp', 'federatedAuthProviders', 'defaultLocale'])])
 
 export type PlatformWithoutSensitiveData = Static<typeof PlatformWithoutSensitiveData>

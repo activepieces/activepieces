@@ -31,7 +31,7 @@ export const UpsertOAuth2ConnectionFromToken = Type.Object({
     props: Type.Record(Type.String(), Type.Any()),
     token: Type.String(),
     code: Type.String(),
-    redirectUrl: Type.String()
+    redirectUrl: Type.String(),
 });
 
 export type UpsertOAuth2ConnectionFromToken = Static<typeof UpsertOAuth2ConnectionFromToken>

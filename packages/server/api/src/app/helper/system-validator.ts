@@ -1,4 +1,4 @@
-import { AppSystemProp, ContainerType, DatabaseType, PiecesSource, QueueMode, RedisType, SharedSystemProp, system, SystemProp, WorkerSystemProps } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, DatabaseType, logger, PiecesSource, QueueMode, RedisType, SharedSystemProp, system, SystemProp, WorkerSystemProps } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
@@ -170,7 +170,12 @@ const validateSystemPropTypes = () => {
 
 export const validateEnvPropsOnStartup = async (): Promise<void> => {
 
-    await validateSystemPropTypes()
+    const errors = validateSystemPropTypes()
+    if (Object.keys(errors).length > 0) {
+        logger.warn({
+            errors,
+        }, '[validateEnvPropsOnStartup]')
+    }
 
     const codeSandboxType = process.env.AP_CODE_SANDBOX_TYPE
     if (!isNil(codeSandboxType)) {

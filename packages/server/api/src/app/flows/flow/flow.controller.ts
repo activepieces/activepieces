@@ -19,17 +19,17 @@ import {
   SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared';
 import {
-  FastifyPluginAsyncTypebox,
-  Type,
-} from '@fastify/type-provider-typebox';
-import dayjs from 'dayjs';
-import { StatusCodes } from 'http-status-codes';
-import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization';
-import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware';
-import { gitRepoService } from '../../ee/git-repos/git-repo.service';
-import { eventsHooks } from '../../helper/application-events';
-import { projectService } from '../../project/project-service';
-import { flowService } from './flow.service';
+    FastifyPluginAsyncTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
+import dayjs from 'dayjs'
+import { StatusCodes } from 'http-status-codes'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware'
+import { gitRepoService } from '../../ee/git-sync/git-sync.service'
+import { eventsHooks } from '../../helper/application-events'
+import { projectService } from '../../project/project-service'
+import { flowService } from './flow.service'
 import { logger } from '../../../../../shared/src';
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -224,16 +224,23 @@ const CountFlowsRequestOptions = {
 };
 
 const GetFlowTemplateRequestOptions = {
-  schema: {
-    params: Type.Object({
-      id: ApId,
-    }),
-    querystring: GetFlowTemplateRequestQuery,
-    response: {
-      [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_FLOW,
     },
-  },
-};
+    schema: {
+        tags: ['flows'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Export flow as template',
+        params: Type.Object({
+            id: ApId,
+        }),
+        querystring: GetFlowTemplateRequestQuery,
+        response: {
+            [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
+        },
+    },
+  };
 
 const GetFlowRequestOptions = {
   config: {
