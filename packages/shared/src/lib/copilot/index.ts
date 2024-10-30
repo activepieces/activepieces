@@ -7,7 +7,7 @@ export enum AskCopilotTool {
 }
 
 export const AskCopilotRequest = Type.Object({
-    previousContext: Type.Array(Type.Object({
+    context: Type.Array(Type.Object({
         role: Type.Union([Type.Literal('user'), Type.Literal('assistant')]),
         content: Type.String(),
     })),

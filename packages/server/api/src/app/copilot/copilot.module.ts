@@ -1,7 +1,8 @@
-import { AskCopilotRequest, AskCopilotResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, AskCopilotRequest, AskCopilotResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../websockets/websockets.service'
 import { copilotService } from './copilot.service'
+import { httpGeneratorTool } from './tools/http-generate'
 
 export const copilotModule: FastifyPluginAsyncTypebox = async (app) => {
     websocketService.addListener(WebsocketServerEvent.ASK_COPILOT, (socket) => {
@@ -13,14 +14,16 @@ export const copilotModule: FastifyPluginAsyncTypebox = async (app) => {
 
     // TODO remove after testing
     app.post('/ask', AskCopilotRequestSchema, async (request) => {
-        const response: AskCopilotResponse | null = await copilotService.ask(request.body)
-        return response
+        return httpGeneratorTool.generateHttpRequest(request.body)
     })
 
 }
 
 
 const AskCopilotRequestSchema = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
     schema: {
         body: AskCopilotRequest
     },
