@@ -1,6 +1,5 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { httpReturnResponse } from './lib/actions/return-response';
 import { httpSendRequestAction } from './lib/actions/send-http-request-action';
 
 export const http = createPiece({
