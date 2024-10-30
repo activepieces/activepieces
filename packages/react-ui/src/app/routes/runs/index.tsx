@@ -31,6 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { MessageTooltip } from '@/components/ui/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -274,8 +275,11 @@ const FlowRunsPage = () => {
                   </PermissionNeededTooltip>
 
                   {selectedRows.some((row) => isFailedState(row.status)) && (
-                    <PermissionNeededTooltip
-                      hasPermission={userHasPermissionToRetryRun}
+                    <MessageTooltip
+                      message={t(
+                        'Only failed runs can be retried from failed step',
+                      )}
+                      isDisabled={!allFailed}
                     >
                       <DropdownMenuItem
                         disabled={!userHasPermissionToRetryRun || !allFailed}
@@ -293,7 +297,7 @@ const FlowRunsPage = () => {
                           <span>{t('from failed step')}</span>
                         </div>
                       </DropdownMenuItem>
-                    </PermissionNeededTooltip>
+                    </MessageTooltip>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
