@@ -18,7 +18,6 @@ export type AIModerationCreateParams = {
   text?: string;
   images?: ApFile[];
   maxTokens?: number;
-  voice?: AIVoice;
 };
 
 export type AIImage = {
