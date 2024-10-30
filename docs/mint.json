@@ -294,7 +294,6 @@
       "group": "Piece Reference",
       "pages": [
         "developers/piece-reference/authentication",
-        "developers/piece-reference/use-ai",
         {
           "group": "Triggers",
           "icon": "bolt",
