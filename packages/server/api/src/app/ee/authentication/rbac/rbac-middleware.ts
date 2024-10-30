@@ -48,7 +48,10 @@ export async function assertUserHasPermissionToFlow(
         case FlowOperationType.IMPORT_FLOW:
         case FlowOperationType.UPDATE_TRIGGER:
         case FlowOperationType.DUPLICATE_ACTION:
-        case FlowOperationType.USE_AS_DRAFT: {
+        case FlowOperationType.USE_AS_DRAFT:
+        case FlowOperationType.ADD_BRANCH:
+        case FlowOperationType.DELETE_BRANCH:
+        case FlowOperationType.DUPLICATE_BRANCH: {
             await assertRoleHasPermission(principal, Permission.WRITE_FLOW)
             break
         }
