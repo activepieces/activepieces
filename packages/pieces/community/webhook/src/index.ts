@@ -1,7 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { catchWebhook } from './lib/triggers/catch-hook';
 import { PieceCategory } from '@activepieces/shared';
-import { returnResponse } from './lib/triggers/return-response';
+import { returnResponse } from './lib/actions/return-response';
 
 export const webhook = createPiece({
   displayName: 'Webhook',
