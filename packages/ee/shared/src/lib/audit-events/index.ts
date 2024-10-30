@@ -283,6 +283,13 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         event.data.request.request.stepName
       }".`;
     }
+    case FlowOperationType.DUPLICATE_BRANCH: {
+      return `Duplicated branch number ${
+        event.data.request.request.branchIndex + 1
+      } in flow "${event.data.flowVersion.displayName}" for the step "${
+        event.data.request.request.stepName
+      }".`;
+    }
     case FlowOperationType.ADD_BRANCH:
       return `Added branch number ${
         event.data.request.request.branchIndex + 1

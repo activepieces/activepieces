@@ -24,9 +24,10 @@ import { Label } from '../../../../components/ui/label';
 import { Split } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
 import { newFloWUtils } from '../../flow-canvas/new/new-utils';
+import { FormField, FormItem } from '../../../../components/ui/form';
 
 export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
-  const [step, applyOperation, setSelectedBranchIndex, selectedBranchIndex, setBranchDeletedCallback] =
+  const [step, applyOperation, setSelectedBranchIndex, selectedBranchIndex, setBranchDeletedCallback, setBranchDuplicateCallback] =
     useBuilderStateContext((state) => [
       flowHelper.getStep(
         state.flowVersion,
@@ -36,7 +37,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       state.setSelectedBranchIndex,
       state.selectedBranchIndex,
       state.setBranchDeletedCallback,
-
+      state.setBranchDuplicateCallback
     ]);
   const { fitView } = useReactFlow();
 
@@ -65,14 +66,23 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   };
 
   useEffect(() => {
-    setBranchDeletedCallback((branchIndex: number, stepName: string) => {
+    setBranchDeletedCallback((branchIndex, stepName) => {
       if (step.name === stepName) {
         remove(branchIndex);
+      }
+    })
+    setBranchDuplicateCallback((branch, stepName) => {
+      if (step.name === stepName) {
+        insert(
+          -1,
+          branch
+        );
       }
     })
 
     return () => {
       setBranchDeletedCallback(null);
+      setBranchDuplicateCallback(null);
     }
 
   }, [])
@@ -80,26 +90,39 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     <>
       {isNil(selectedBranchIndex) && (
         <>
-          <Label>{t('Execute')}</Label>
-          <Select
-            onValueChange={(val) => {
-              setValue('settings.executionType', val as RouterExecutionType);
-            }}
-            value={`${getValues('settings.executionType')}`}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('Execute')} />
-            </SelectTrigger>
 
-            <SelectContent>
-              <SelectItem value={`${RouterExecutionType.EXECUTE_FIRST_MATCH}`}>
-                {t('Only the first (left) matching branch')}
-              </SelectItem>
-              <SelectItem value={`${RouterExecutionType.EXECUTE_ALL_MATCH}`}>
-                {t('All matching paths')}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+
+          <FormField
+            control={control}
+            name="settings.executionType"
+            render={({ field }) => (
+              <FormItem>
+                <Label>{t('Execute')}</Label>
+                <Select
+                  disabled={field.disabled}
+                  onValueChange={field.onChange}
+                  value={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('Execute')} />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value={`${RouterExecutionType.EXECUTE_FIRST_MATCH}`}>
+                      {t('Only the first (left) matching branch')}
+                    </SelectItem>
+                    <SelectItem value={`${RouterExecutionType.EXECUTE_ALL_MATCH}`}>
+                      {t('All matching paths')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+              </FormItem>
+            )}
+          ></FormField>
+
+
+
         </>
       )}
 
@@ -118,7 +141,24 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               setValue(`settings.branches[${index}].branchName`, name);
             }}
             deleteBranch={deleteBranch}
-            duplicateBranch={(index) => { }}
+            duplicateBranch={(index) => {
+              applyOperation({
+                type: FlowOperationType.DUPLICATE_BRANCH,
+                request: {
+                  stepName: step.name,
+                  branchIndex: index,
+                },
+              }, () => { });
+
+              insert(
+                -1,
+                {
+                  ...step.settings.branches[index],
+                  branchName: `${step.settings.branches[index].branchName} Copy`
+                }
+              );
+              setSelectedBranchIndex(step.settings.branches.length - 1);
+            }}
             setSelectedBranchIndex={(index) => {
               setSelectedBranchIndex(index);
               if (step.children[index]) {

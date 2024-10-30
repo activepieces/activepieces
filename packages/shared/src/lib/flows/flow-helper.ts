@@ -7,7 +7,6 @@ import {
   ActionType,
   BranchAction,
   BranchExecutionType,
-  BranchOperator,
   emptyCondition,
   LoopOnItemsAction,
   RouterAction,
@@ -472,7 +471,7 @@ function moveAction(
     stepLocationRelativeToParent: request.stepLocationRelativeToNewParent,
     branchIndex: request.branchIndex,
     branchName: request.branchName,
-  });
+  }, sourceStep.type === ActionType.ROUTER ? sourceStep.children: undefined);
 
   childOperation.forEach((operation) => {
     const operationWithBranchIndex = {
@@ -487,7 +486,8 @@ function moveAction(
 
 function addAction(
   flowVersion: FlowVersion,
-  request: AddActionRequest
+  request: AddActionRequest,
+  children?: (Action|null)[]
 ): FlowVersion {
   return transferFlow(flowVersion, (parentStep: Step) => {
     if (parentStep.name !== request.parentStep) {
@@ -503,6 +503,7 @@ function addAction(
       ) {
         parentStep.firstLoopAction = createAction(request.action, {
           nextAction: parentStep.firstLoopAction,
+          children
         });
       } else if (
         request.stepLocationRelativeToParent ===
@@ -510,6 +511,7 @@ function addAction(
       ) {
         parentStep.nextAction = createAction(request.action, {
           nextAction: parentStep.nextAction,
+          children
         });
       } else {
         throw new ActivepiecesError(
@@ -530,6 +532,7 @@ function addAction(
       ) {
         parentStep.onSuccessAction = createAction(request.action, {
           nextAction: parentStep.onSuccessAction,
+          children
         });
       } else if (
         request.stepLocationRelativeToParent ===
@@ -537,6 +540,7 @@ function addAction(
       ) {
         parentStep.onFailureAction = createAction(request.action, {
           nextAction: parentStep.onFailureAction,
+          children
         });
       } else if (
         request.stepLocationRelativeToParent ===
@@ -544,6 +548,7 @@ function addAction(
       ) {
         parentStep.nextAction = createAction(request.action, {
           nextAction: parentStep.nextAction,
+          children
         });
       } else {
         throw new ActivepiecesError(
@@ -567,6 +572,7 @@ function addAction(
           request.action,
           {
             nextAction: parentStep.children[request.branchIndex] ?? undefined,
+            children
           }
         );
       } else if (
@@ -575,6 +581,7 @@ function addAction(
       ) {
         parentStep.nextAction = createAction(request.action, {
           nextAction: parentStep.nextAction,
+          children
         });
       } else {
         throw new ActivepiecesError(
@@ -588,8 +595,7 @@ function addAction(
     } else {
       parentStep.nextAction = createAction(request.action, {
         nextAction: parentStep.nextAction,
-        children:
-          request.action.type === ActionType.ROUTER ? [null, null] : undefined,
+        children
       });
     }
     return parentStep;
@@ -630,12 +636,11 @@ function createAction(
       };
       break;
     case ActionType.ROUTER:
-      const routerChildren = children || [null, null];
       action = {
         ...baseProperties,
         type: ActionType.ROUTER,
         settings: request.settings,
-        children: routerChildren,
+        children:  children ?? [null, null],
       };
 
       break;
@@ -984,6 +989,85 @@ function duplicateStep(
     action: duplicatedStep as Action,
     parentStep: stepName,
     stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+  }, duplicatedStep.type === ActionType.ROUTER ? duplicatedStep.children.map(()=>null) : undefined);
+  
+  const operations = getImportOperations(duplicatedStep);
+  operations.forEach((operation) => {
+    finalFlow = flowHelper.apply(finalFlow, operation);
+  });
+  return finalFlow;
+}
+
+function duplicateRouterChild(
+  routerName: string,
+  childIndex: number,
+  flowVersionWithArtifacts: FlowVersion
+): FlowVersion {
+  const routerStep = flowHelper.getStep(flowVersionWithArtifacts, routerName) as RouterAction | undefined;
+
+  if (!routerStep) {
+    throw new Error(`step with name '${routerName}' not found`);
+  }
+
+
+  const existingNames = getAllSteps(flowVersionWithArtifacts.trigger).map(
+    (step) => step.name
+  );
+
+  const clonedChildStep = JSON.parse(JSON.stringify(routerStep.children[childIndex]));
+  const duplicatedBranch = JSON.parse(JSON.stringify(routerStep.settings.branches[childIndex])) as RouterAction['settings']['branches'][number];
+  duplicatedBranch.branchName =`${ duplicatedBranch.branchName } Copy`;
+  routerStep.settings.branches.splice(-1,0,duplicatedBranch);
+  routerStep.children.splice(-1,0,null);
+  if(isNil(clonedChildStep))
+  {
+    return flowVersionWithArtifacts;
+  }
+  
+  const oldStepsNameToReplace = getAllSteps(clonedChildStep).map(
+    (step) => step.name
+  );
+  const oldNameToNewName: Record<string, string> = {};
+
+  oldStepsNameToReplace.forEach((name) => {
+    const newName = findUnusedName(existingNames, 'step');
+    oldNameToNewName[name] = newName;
+    existingNames.push(newName);
+  });
+
+  const duplicatedStep = transferStep(clonedChildStep, (step: Step) => {
+    step.displayName = `${step.displayName} Copy`;
+    step.name = oldNameToNewName[step.name];
+    if (step.settings.inputUiInfo) {
+      step.settings.inputUiInfo.currentSelectedData = undefined;
+      step.settings.inputUiInfo.sampleDataFileId = undefined;
+      step.settings.inputUiInfo.lastTestDate = undefined;
+    }
+    oldStepsNameToReplace.forEach((oldName) => {
+      step.settings.input = applyFunctionToValuesSync(
+        step.settings.input,
+        (value: unknown) => {
+          if (isString(value)) {
+            return replaceOldStepNameWithNewOne({
+              input: value,
+              oldStepName: oldName,
+              newStepName: oldNameToNewName[oldName],
+            });
+          }
+          return value;
+        }
+      );
+    });
+    return step;
+  });
+
+
+
+  let finalFlow = addAction(flowVersionWithArtifacts, {
+    action: duplicatedStep as Action,
+    parentStep: routerName,
+    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
+    branchIndex: routerStep.children.length-2,
   });
   const operations = getImportOperations(duplicatedStep);
   operations.forEach((operation) => {
@@ -1284,6 +1368,10 @@ export const flowHelper = {
           }
           return parentStep;
         });
+        break;
+      }
+      case FlowOperationType.DUPLICATE_BRANCH : {
+        clonedVersion = duplicateRouterChild(operation.request.stepName,operation.request.branchIndex,clonedVersion);
         break;
       }
       default:

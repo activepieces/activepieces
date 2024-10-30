@@ -5,17 +5,7 @@ import { ApAddButton } from './add-button';
 import { StepLocationRelativeToParent } from '../../../../../../../shared/src';
 import { BranchLabel, BranchLabelProps } from './branch-label';
 
-const getLabelWidth = (text: string) => {
-  // Create a temporary element to calculate the pixel value
-  const tempElement = document.createElement('span');
-  tempElement.style.fontSize = flowUtilConsts.LABEL_HEIGHT + 'px'; // Set the font size
-  tempElement.innerHTML = text; // Set the text content
-  document.body.appendChild(tempElement); // Append to the body to apply styles
-  const width = tempElement.getBoundingClientRect().width; // Get computed font size in pixels
-  document.body.removeChild(tempElement); // Clean up
 
-  return width; // Return the pixel value
-};
 
 export const ApRouterStartCanvasEdge = ({
   sourceX,
@@ -26,6 +16,9 @@ export const ApRouterStartCanvasEdge = ({
   target,
   id,
 }: EdgeProps & Omit<ApRouterStartEdge, 'position'>) => {
+
+
+
   const verticalLineLength =
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
@@ -79,7 +72,6 @@ export const ApRouterStartCanvasEdge = ({
   
   `;
 
-  const labelWidth = getLabelWidth(data.label);
 
   const brancLabelProps: BranchLabelProps = data.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH ? {
     label: data.label,
@@ -130,22 +122,25 @@ export const ApRouterStartCanvasEdge = ({
       )}
 
       <foreignObject
-        width={Math.min(flowUtilConsts.AP_NODE_SIZE.STEP.width - 10, labelWidth) + 'px'}
+        width={flowUtilConsts.AP_NODE_SIZE.STEP.width - 10 + 'px'}
         height={
           flowUtilConsts.LABEL_HEIGHT +
           flowUtilConsts.LABEL_VERTICAL_PADDING +
           'px'
         }
-        x={targetX - Math.min(flowUtilConsts.AP_NODE_SIZE.STEP.width - 10, labelWidth) / 2}
+        x={targetX - (flowUtilConsts.AP_NODE_SIZE.STEP.width - 10) / 2}
         y={
           targetY -
           verticalLineLength / 2 -
           flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height -
           40
         }
-        className="flex items-center bg-background"
+        className="flex items-center "
       >
-        <BranchLabel key={brancLabelProps.label + brancLabelProps.targetNodeName} {...brancLabelProps}></BranchLabel>
+        <BranchLabel
+          key={brancLabelProps.label + brancLabelProps.targetNodeName}
+          {...brancLabelProps}
+        />
       </foreignObject>
     </>
   );

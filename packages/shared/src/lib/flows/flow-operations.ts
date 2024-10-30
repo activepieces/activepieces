@@ -26,6 +26,7 @@ export enum FlowOperationType {
   USE_AS_DRAFT = 'USE_AS_DRAFT',
   DELETE_BRANCH = 'DELETE_BRANCH',
   ADD_BRANCH = 'ADD_BRANCH',
+  DUPLICATE_BRANCH = 'DUPLICATE_BRANCH'
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -37,8 +38,13 @@ export const AddBranchRequest = Type.Object({
   stepName: Type.String(),
 });
 
-export type DeletePathRequest = Static<typeof DeleteBranchRequest>;
-export type AddPathRequest = Static<typeof AddBranchRequest>;
+export const DuplicateBranchRequest = Type.Object({
+  branchIndex: Type.Number(),
+  stepName: Type.String(),
+});
+export type DeleteBranchRequest = Static<typeof DeleteBranchRequest>;
+export type AddBranchRequest = Static<typeof AddBranchRequest>;
+export type DuplicateBranchRequest = Static<typeof DuplicateBranchRequest>
 
 export enum StepLocationRelativeToParent {
   INSIDE_TRUE_BRANCH = 'INSIDE_TRUE_BRANCH',
@@ -118,7 +124,7 @@ export const AddActionRequest = Type.Object({
   branchName: Type.Optional(Type.String()),
   action: UpdateActionRequest,
 });
-export type AddActionRequest = Static<typeof AddActionRequest>;
+export type AddActionRequest = Static<typeof AddActionRequest>  ;
 
 export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger]);
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>;
@@ -267,6 +273,15 @@ export const FlowOperationRequest = Type.Union([
     },
     {
       title: 'Add Branch',
+    }
+  ),
+  Type.Object(
+    {
+      type: Type.Literal(FlowOperationType.DUPLICATE_BRANCH),
+      request: DuplicateBranchRequest,
+    },
+    {
+      title: 'Duplicate Branch',
     }
   ),
 ]);

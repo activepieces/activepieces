@@ -231,7 +231,7 @@ const StepSettingsContainer = () => {
                 }}
                 readonly={readonly}
                 value={modifiedStep.displayName}
-                tooltipContent={t('Edit Step Name')}
+                tooltipContent={readonly ? '' : t('Edit Step Name')}
                 isEditing={isEditingStepOrBranchName}
                 setIsEditing={setIsEditingStepOrBranchName}
               ></EditableText>
@@ -265,13 +265,13 @@ const StepSettingsContainer = () => {
                     modifiedStep.settings.branches?.[selectedBranchIndex]
                       ?.branchName
                   }
-                  tooltipContent={t('Edit Branch Name')}
+                  tooltipContent={readonly ? '' : t('Edit Branch Name')}
                   isEditing={isEditingStepOrBranchName}
                   setIsEditing={setIsEditingStepOrBranchName}
                 ></EditableText>
               </>
             )}
-            {!isEditingStepOrBranchName && (
+            {!isEditingStepOrBranchName && !readonly && (
               <Pencil
                 className="h-4 w-4 shrink-0"
                 onClick={() => {

@@ -15,8 +15,7 @@ import {
 } from '../../../../components/ui/tooltip';
 import { t } from 'i18next';
 import EditableText from '../../../../components/ui/editable-text';
-import React, { useRef, useState } from 'react';
-import { set } from 'date-fns';
+import React, { useState } from 'react';
 import { cn } from '../../../../lib/utils';
 
 type BranchListProps = {

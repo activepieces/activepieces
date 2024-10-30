@@ -87,10 +87,9 @@ const ApBigButton = React.memo(({ data }: { data: ApNode['data'] }) => {
               style={{
                 height: `${AP_NODE_SIZE.stepNode.height}px`,
                 width: `${AP_NODE_SIZE.stepNode.width}px`,
-                top: `-${
-                  AP_NODE_SIZE.stepNode.height / 2 -
+                top: `-${AP_NODE_SIZE.stepNode.height / 2 -
                   AP_NODE_SIZE.bigButton.width / 2
-                }px`,
+                  }px`,
               }}
               className=" absolute "
               ref={setNodeRef}
