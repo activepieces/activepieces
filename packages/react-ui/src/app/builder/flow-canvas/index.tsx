@@ -8,16 +8,17 @@ import { flowHelper, isFlowStateTerminal } from '@activepieces/shared';
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { FlowDragLayer } from './flow-drag-layer';
-
-import { AboveFlowWidgets } from './widgets';
-import { flowCanvasUtils } from './flow-canvas-utils';
 import { flowUtilConsts } from './consts';
+import { flowCanvasUtils } from './flow-canvas-utils';
+import { FlowDragLayer } from './flow-drag-layer';
+import { AboveFlowWidgets } from './widgets';
 
 const FlowCanvas = React.memo(() => {
   const [allowCanvasPanning, graph, run, flowVersion] = useBuilderStateContext(
     (state) => {
-      const graph = flowCanvasUtils.convertFlowVersionToGraph(state.flowVersion);
+      const graph = flowCanvasUtils.convertFlowVersionToGraph(
+        state.flowVersion,
+      );
       return [state.allowCanvasPanning, graph, state.run, state.flowVersion];
     },
   );

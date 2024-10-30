@@ -48,8 +48,11 @@ export enum RightSideBarType {
 }
 
 type InsertMentionHandler = (propertyPath: string) => void;
-type BranchDeletedCallback = (branchIndex:number,stepName:string) => void 
-type BranchDuplicatedCallback = (branch:RouterAction['settings']['branches'][number],stepName:string) => void 
+type BranchDeletedCallback = (branchIndex: number, stepName: string) => void;
+type BranchDuplicatedCallback = (
+  branch: RouterAction['settings']['branches'][number],
+  stepName: string,
+) => void;
 export type BuilderState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
@@ -92,10 +95,12 @@ export type BuilderState = {
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
   setLoopIndex: (stepName: string, index: number) => void;
-  branchDeletedCallback: BranchDeletedCallback| null;
+  branchDeletedCallback: BranchDeletedCallback | null;
   branchDuplicateCallback: BranchDuplicatedCallback | null;
-  setBranchDeletedCallback: (callback: BranchDeletedCallback | null) => void
-  setBranchDuplicateCallback: (callback: BranchDuplicatedCallback| null) => void
+  setBranchDeletedCallback: (callback: BranchDeletedCallback | null) => void;
+  setBranchDuplicateCallback: (
+    callback: BranchDuplicatedCallback | null,
+  ) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -111,7 +116,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
       : null;
     return {
-    
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
@@ -313,15 +317,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         set((state) => ({
           refreshPieceFormSettings: !state.refreshPieceFormSettings,
         })),
-        setBranchDeletedCallback: (callback)=>set({
-          branchDeletedCallback: callback
+      setBranchDeletedCallback: (callback) =>
+        set({
+          branchDeletedCallback: callback,
         }),
-        branchDeletedCallback:null,
-        setBranchDuplicateCallback: (callback)=>set({
-          branchDuplicateCallback: callback
+      branchDeletedCallback: null,
+      setBranchDuplicateCallback: (callback) =>
+        set({
+          branchDuplicateCallback: callback,
         }),
-        branchDuplicateCallback:null,
-        selectedBranchIndex: null,
+      branchDuplicateCallback: null,
+      selectedBranchIndex: null,
     };
   });
 

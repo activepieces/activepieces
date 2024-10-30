@@ -1,8 +1,11 @@
 import { BaseEdge, EdgeProps } from '@xyflow/react';
-import { ApStraightLineEdge } from '../types';
+
+import { StepLocationRelativeToParent } from '@activepieces/shared';
+
 import { flowUtilConsts } from '../consts';
+import { ApStraightLineEdge } from '../types';
+
 import { ApAddButton } from './add-button';
-import { StepLocationRelativeToParent } from '../../../../../../shared/src';
 
 export const ApStraightLineCanvasEdge = ({
   sourceX,

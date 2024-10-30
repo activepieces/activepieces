@@ -1,11 +1,12 @@
 import { BaseEdge, EdgeProps } from '@xyflow/react';
-import { ApRouterStartEdge } from '../types';
+
+import { StepLocationRelativeToParent } from '@activepieces/shared';
+
 import { flowUtilConsts } from '../consts';
+import { ApRouterStartEdge } from '../types';
+
 import { ApAddButton } from './add-button';
-import { StepLocationRelativeToParent } from '../../../../../../shared/src';
 import { BranchLabel, BranchLabelProps } from './branch-label';
-
-
 
 export const ApRouterStartCanvasEdge = ({
   sourceX,
@@ -16,75 +17,86 @@ export const ApRouterStartCanvasEdge = ({
   target,
   id,
 }: EdgeProps & Omit<ApRouterStartEdge, 'position'>) => {
-
-
-
   const verticalLineLength =
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
     flowUtilConsts.LABEL_HEIGHT;
 
   const distanceBetweenSourceAndTarget = Math.abs(targetX - sourceX);
-  const path = `M ${targetX} ${targetY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
-    }
+  const path = `M ${targetX} ${
+    targetY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
+  }
       ${data.isBranchEmpty ? `` : flowUtilConsts.ARROW_DOWN}
       v -${verticalLineLength}    
 
-      ${distanceBetweenSourceAndTarget >= flowUtilConsts.ARC_LENGTH
-      ? sourceX > targetX
-        ? ' a12,12 0 0,1 12,-12'
-        : ' a-12,-12 0 0,0 -12,-12'
-      : `
-        v -${flowUtilConsts.ARC_LENGTH + flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE}`
-    } 
-
-      ${distanceBetweenSourceAndTarget >= flowUtilConsts.ARC_LENGTH
-      ? `
-       ${data.drawHorizontalLine
-        ? `h ${(Math.abs(targetX - sourceX) +
-          3 -
-          2 * flowUtilConsts.ARC_LENGTH) *
-        (sourceX > targetX ? 1 : -1)
-        }
-                    ${sourceX > targetX
-          ? flowUtilConsts.ARC_LEFT_UP
-          : flowUtilConsts.ARC_RIGHT_UP
+      ${
+        distanceBetweenSourceAndTarget >= flowUtilConsts.ARC_LENGTH
+          ? sourceX > targetX
+            ? ' a12,12 0 0,1 12,-12'
+            : ' a-12,-12 0 0,0 -12,-12'
+          : `
+        v -${
+          flowUtilConsts.ARC_LENGTH +
+          flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
         }`
-        : ``
-      }
+      } 
+
+      ${
+        distanceBetweenSourceAndTarget >= flowUtilConsts.ARC_LENGTH
+          ? `
+       ${
+         data.drawHorizontalLine
+           ? `h ${
+               (Math.abs(targetX - sourceX) +
+                 3 -
+                 2 * flowUtilConsts.ARC_LENGTH) *
+               (sourceX > targetX ? 1 : -1)
+             }
+                    ${
+                      sourceX > targetX
+                        ? flowUtilConsts.ARC_LEFT_UP
+                        : flowUtilConsts.ARC_RIGHT_UP
+                    }`
+           : ``
+       }
                   
 
-                    ${data.drawStartingVerticalLine
-        ? `v -${flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2 -
-        2 *
-        flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
-        }`
-        : ``
-      }
+                    ${
+                      data.drawStartingVerticalLine
+                        ? `v -${
+                            flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2 -
+                            2 *
+                              flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
+                          }`
+                        : ``
+                    }
 
 
                   `
-      : `
+          : `
                 `
-    } 
+      } 
 
      
   
   `;
 
-
-  const brancLabelProps: BranchLabelProps = data.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH ? {
-    label: data.label,
-    sourceNodeName: source,
-    targetNodeName: target,
-    stepLocationRelativeToParent: data.stepLocationRelativeToParent,
-    branchIndex: data.branchIndex,
-  } : {
-    label: data.label,
-    sourceNodeName: source,
-    targetNodeName: target,
-    stepLocationRelativeToParent: data.stepLocationRelativeToParent,
-  };
+  const brancLabelProps: BranchLabelProps =
+    data.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_BRANCH
+      ? {
+          label: data.label,
+          sourceNodeName: source,
+          targetNodeName: target,
+          stepLocationRelativeToParent: data.stepLocationRelativeToParent,
+          branchIndex: data.branchIndex,
+        }
+      : {
+          label: data.label,
+          sourceNodeName: source,
+          targetNodeName: target,
+          stepLocationRelativeToParent: data.stepLocationRelativeToParent,
+        };
 
   return (
     <>
@@ -102,22 +114,22 @@ export const ApRouterStartCanvasEdge = ({
         >
           {data.stepLocationRelativeToParent !==
             StepLocationRelativeToParent.INSIDE_BRANCH && (
-              <ApAddButton
-                edgeId={id}
-                stepLocationRelativeToParent={data.stepLocationRelativeToParent}
-                parentStepName={source}
-              ></ApAddButton>
-            )}
+            <ApAddButton
+              edgeId={id}
+              stepLocationRelativeToParent={data.stepLocationRelativeToParent}
+              parentStepName={source}
+            ></ApAddButton>
+          )}
 
           {data.stepLocationRelativeToParent ===
             StepLocationRelativeToParent.INSIDE_BRANCH && (
-              <ApAddButton
-                edgeId={id}
-                stepLocationRelativeToParent={data.stepLocationRelativeToParent}
-                parentStepName={source}
-                branchIndex={data.branchIndex}
-              ></ApAddButton>
-            )}
+            <ApAddButton
+              edgeId={id}
+              stepLocationRelativeToParent={data.stepLocationRelativeToParent}
+              parentStepName={source}
+              branchIndex={data.branchIndex}
+            ></ApAddButton>
+          )}
         </foreignObject>
       )}
 

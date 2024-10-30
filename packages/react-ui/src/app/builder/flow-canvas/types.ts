@@ -1,9 +1,10 @@
 import { Edge } from '@xyflow/react';
+
 import {
   Action,
   StepLocationRelativeToParent,
   Trigger,
-} from '../../../../../shared/src';
+} from '@activepieces/shared';
 
 export enum ApNodeType {
   STEP = 'STEP',
@@ -40,7 +41,7 @@ export type ApLoopReturnNode = {
     x: number;
     y: number;
   };
-  data: {};
+  data: Record<string, never>;
 };
 
 export type ApButtonData =

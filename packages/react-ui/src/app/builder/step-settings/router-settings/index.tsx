@@ -1,18 +1,19 @@
-import { memo, useEffect } from 'react';
+import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { useBuilderStateContext } from '../../builder-hooks';
+import { Split } from 'lucide-react';
+import { memo, useEffect } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
+
 import {
   flowHelper,
   FlowOperationType,
   isNil,
   RouterAction,
   RouterExecutionType,
-} from '../../../../../../shared/src';
-import { BranchSettings } from '../branch-settings';
+} from '@activepieces/shared';
 
-import { useFieldArray, useFormContext } from 'react-hook-form';
-import BranchesToolbar from './branches-toolbar';
-import { BranchesList } from './branches-list';
+import { FormField, FormItem } from '../../../../components/ui/form';
+import { Label } from '../../../../components/ui/label';
 import {
   Select,
   SelectValue,
@@ -20,28 +21,32 @@ import {
   SelectContent,
   SelectItem,
 } from '../../../../components/ui/select';
-import { Label } from '../../../../components/ui/label';
-import { Split } from 'lucide-react';
-import { useReactFlow } from '@xyflow/react';
+import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasUtils } from '../../flow-canvas/flow-canvas-utils';
-import { FormField, FormItem } from '../../../../components/ui/form';
+import { BranchSettings } from '../branch-settings';
+
+import { BranchesList } from './branches-list';
+import BranchesToolbar from './branches-toolbar';
 
 export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
-  const [step, applyOperation, setSelectedBranchIndex, selectedBranchIndex, setBranchDeletedCallback, setBranchDuplicateCallback] =
-    useBuilderStateContext((state) => [
-      flowHelper.getStep(
-        state.flowVersion,
-        state.selectedStep!,
-      )! as RouterAction,
-      state.applyOperation,
-      state.setSelectedBranchIndex,
-      state.selectedBranchIndex,
-      state.setBranchDeletedCallback,
-      state.setBranchDuplicateCallback
-    ]);
+  const [
+    step,
+    applyOperation,
+    setSelectedBranchIndex,
+    selectedBranchIndex,
+    setBranchDeletedCallback,
+    setBranchDuplicateCallback,
+  ] = useBuilderStateContext((state) => [
+    flowHelper.getStep(state.flowVersion, state.selectedStep!)! as RouterAction,
+    state.applyOperation,
+    state.setSelectedBranchIndex,
+    state.selectedBranchIndex,
+    state.setBranchDeletedCallback,
+    state.setBranchDuplicateCallback,
+  ]);
   const { fitView } = useReactFlow();
 
-  const { control, setValue, formState, getValues } =
+  const { control, setValue, formState } =
     useFormContext<Omit<RouterAction, 'children' | 'nextAction'>>();
 
   const { insert, remove } = useFieldArray({
@@ -58,7 +63,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
           branchIndex: index,
         },
       },
-      () => { },
+      () => {},
     );
     remove(index);
     setSelectedBranchIndex(null);
@@ -70,60 +75,52 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       if (step.name === stepName) {
         remove(branchIndex);
       }
-    })
+    });
     setBranchDuplicateCallback((branch, stepName) => {
       if (step.name === stepName) {
-        insert(
-          -1,
-          branch
-        );
+        insert(-1, branch);
       }
-    })
+    });
 
     return () => {
       setBranchDeletedCallback(null);
       setBranchDuplicateCallback(null);
-    }
-
-  }, [])
+    };
+  }, []);
   return (
     <>
       {isNil(selectedBranchIndex) && (
-        <>
+        <FormField
+          control={control}
+          name="settings.executionType"
+          render={({ field }) => (
+            <FormItem>
+              <Label>{t('Execute')}</Label>
+              <Select
+                disabled={field.disabled}
+                onValueChange={field.onChange}
+                value={field.value}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('Execute')} />
+                </SelectTrigger>
 
-
-          <FormField
-            control={control}
-            name="settings.executionType"
-            render={({ field }) => (
-              <FormItem>
-                <Label>{t('Execute')}</Label>
-                <Select
-                  disabled={field.disabled}
-                  onValueChange={field.onChange}
-                  value={field.value}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('Execute')} />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    <SelectItem value={`${RouterExecutionType.EXECUTE_FIRST_MATCH}`}>
-                      {t('Only the first (left) matching branch')}
-                    </SelectItem>
-                    <SelectItem value={`${RouterExecutionType.EXECUTE_ALL_MATCH}`}>
-                      {t('All matching paths')}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-              </FormItem>
-            )}
-          ></FormField>
-
-
-
-        </>
+                <SelectContent>
+                  <SelectItem
+                    value={`${RouterExecutionType.EXECUTE_FIRST_MATCH}`}
+                  >
+                    {t('Only the first (left) matching branch')}
+                  </SelectItem>
+                  <SelectItem
+                    value={`${RouterExecutionType.EXECUTE_ALL_MATCH}`}
+                  >
+                    {t('All matching paths')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        ></FormField>
       )}
 
       {isNil(selectedBranchIndex) && (
@@ -142,21 +139,21 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             }}
             deleteBranch={deleteBranch}
             duplicateBranch={(index) => {
-              applyOperation({
-                type: FlowOperationType.DUPLICATE_BRANCH,
-                request: {
-                  stepName: step.name,
-                  branchIndex: index,
-                },
-              }, () => { });
-
-              insert(
-                -1,
+              applyOperation(
                 {
-                  ...step.settings.branches[index],
-                  branchName: `${step.settings.branches[index].branchName} Copy`
-                }
+                  type: FlowOperationType.DUPLICATE_BRANCH,
+                  request: {
+                    stepName: step.name,
+                    branchIndex: index,
+                  },
+                },
+                () => {},
               );
+
+              insert(-1, {
+                ...step.settings.branches[index],
+                branchName: `${step.settings.branches[index].branchName} Copy`,
+              });
               setSelectedBranchIndex(step.settings.branches.length - 1);
             }}
             setSelectedBranchIndex={(index) => {
@@ -188,7 +185,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                         branchIndex: step.settings.branches.length - 1,
                       },
                     },
-                    () => { },
+                    () => {},
                   );
 
                   insert(
@@ -213,3 +210,5 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     </>
   );
 });
+
+RouterSettings.displayName = 'RouterSettings';

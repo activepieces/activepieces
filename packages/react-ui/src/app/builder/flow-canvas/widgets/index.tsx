@@ -21,8 +21,9 @@ const AboveFlowWidgets = React.memo(() => {
     <ViewportPortal>
       <div
         style={{
-          transform: `translate(0px,-${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 + 8
-            }px )`,
+          transform: `translate(0px,-${
+            flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 + 8
+          }px )`,
           position: 'absolute',
           pointerEvents: 'auto',
         }}

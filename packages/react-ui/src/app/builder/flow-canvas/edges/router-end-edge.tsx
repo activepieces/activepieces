@@ -1,8 +1,11 @@
 import { BaseEdge, EdgeProps } from '@xyflow/react';
-import { ApRouterEndEdge } from '../types';
+
+import { StepLocationRelativeToParent } from '@activepieces/shared';
+
 import { flowUtilConsts } from '../consts';
+import { ApRouterEndEdge } from '../types';
+
 import { ApAddButton } from './add-button';
-import { StepLocationRelativeToParent } from '../../../../../../shared/src';
 
 export const ApRouterEndCanvasEdge = ({
   sourceX,
@@ -23,24 +26,32 @@ export const ApRouterEndCanvasEdge = ({
   const distanceBetweenTargetAndSource = Math.abs(targetX - sourceX);
 
   const path = `
-    M ${sourceX - 0.5} ${sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2
-    }
+    M ${sourceX - 0.5} ${
+    sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2
+  }
     v ${data.verticalSpaceBetweenLastNodeInBranchAndEndLine}
    
-    ${distanceBetweenTargetAndSource >= flowUtilConsts.ARC_LENGTH
-      ? `${targetX > sourceX
-        ? flowUtilConsts.ARC_RIGHT_DOWN
-        : flowUtilConsts.ARC_LEFT_DOWN
-      }`
-      : `
-     v ${flowUtilConsts.ARC_LENGTH + flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 2}
+    ${
+      distanceBetweenTargetAndSource >= flowUtilConsts.ARC_LENGTH
+        ? `${
+            targetX > sourceX
+              ? flowUtilConsts.ARC_RIGHT_DOWN
+              : flowUtilConsts.ARC_LEFT_DOWN
+          }`
+        : `
+     v ${
+       flowUtilConsts.ARC_LENGTH +
+       flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
+       2
+     }
     `
     } 
 
 
 
-       ${data.drawHorizontalLine
-      ? `h ${horizontalLineLength}  
+       ${
+         data.drawHorizontalLine
+           ? `h ${horizontalLineLength}  
 
 
         
@@ -48,14 +59,16 @@ export const ApRouterEndCanvasEdge = ({
         
        
        `
-      : ``
-    }
+           : ``
+       }
       
 
-    ${data.drawEndingVerticalLine
-      ? `v${verticalLineLength} ${!data.isNextStepEmpty ? flowUtilConsts.ARROW_DOWN : ''
-      }`
-      : ''
+    ${
+      data.drawEndingVerticalLine
+        ? `v${verticalLineLength} ${
+            !data.isNextStepEmpty ? flowUtilConsts.ARROW_DOWN : ''
+          }`
+        : ''
     }
   `;
   return (

@@ -16,13 +16,13 @@ import {
   RouterAction,
 } from '@activepieces/shared';
 
-import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
 import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
+import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: t('(Text) Contains'),
   [BranchOperator.TEXT_DOES_NOT_CONTAIN]: t('(Text) Does not contain'),

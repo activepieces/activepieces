@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
+import { Pencil } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useDeepCompareEffect } from 'react-use';
@@ -36,9 +37,8 @@ import { BranchSettings } from './branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
-import { useStepSettingsContext } from './step-settings-context';
 import { RouterSettings } from './router-settings';
-import { Pencil } from 'lucide-react';
+import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
@@ -117,8 +117,8 @@ const StepSettingsContainer = () => {
   const actionOrTriggerDisplayName = selectedStep.settings.actionName
     ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
     : selectedStep.settings.triggerName
-      ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
-      : null;
+    ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
+    : null;
 
   // Watch changes in form execluding actionName or triggerName from watching //
   const inputChanges = useWatch({
@@ -174,11 +174,15 @@ const StepSettingsContainer = () => {
       );
       currentStep.valid = form.formState.isValid;
 
-      if (previousSavedStep.current === null ||
+      if (
+        previousSavedStep.current === null ||
         (previousSavedStep.current.name === currentStep.name &&
           previousSavedStep.current.type === ActionType.ROUTER &&
           currentStep.type === ActionType.ROUTER &&
-          currentStep.settings.branches.length !== previousSavedStep.current.settings.branches.length) || deepEqual(currentStep, previousSavedStep.current)) {
+          currentStep.settings.branches.length !==
+            previousSavedStep.current.settings.branches.length) ||
+        deepEqual(currentStep, previousSavedStep.current)
+      ) {
         previousSavedStep.current = currentStep;
         return;
       }
@@ -313,18 +317,18 @@ const StepSettingsContainer = () => {
                 {[ActionType.CODE, ActionType.PIECE].includes(
                   modifiedStep.type as ActionType,
                 ) && (
-                    <ActionErrorHandlingForm
-                      hideContinueOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.continueOnFailure?.hide
-                      }
-                      disabled={readonly}
-                      hideRetryOnFailure={
-                        modifiedStep.settings.errorHandlingOptions?.retryOnFailure
-                          ?.hide
-                      }
-                    ></ActionErrorHandlingForm>
-                  )}
+                  <ActionErrorHandlingForm
+                    hideContinueOnFailure={
+                      modifiedStep.settings.errorHandlingOptions
+                        ?.continueOnFailure?.hide
+                    }
+                    disabled={readonly}
+                    hideRetryOnFailure={
+                      modifiedStep.settings.errorHandlingOptions?.retryOnFailure
+                        ?.hide
+                    }
+                  ></ActionErrorHandlingForm>
+                )}
               </div>
             </ScrollArea>
           </ResizablePanel>

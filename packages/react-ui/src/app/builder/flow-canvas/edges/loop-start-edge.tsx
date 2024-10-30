@@ -1,8 +1,11 @@
 import { BaseEdge, EdgeProps } from '@xyflow/react';
-import { ApLoopStartEdge } from '../types';
+
+import { StepLocationRelativeToParent } from '@activepieces/shared';
+
 import { flowUtilConsts } from '../consts';
+import { ApLoopStartEdge } from '../types';
+
 import { ApAddButton } from './add-button';
-import { StepLocationRelativeToParent } from '../../../../../../shared/src';
 
 export const ApLoopStartLineCanvasEdge = ({
   sourceX,

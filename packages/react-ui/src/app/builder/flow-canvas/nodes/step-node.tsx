@@ -39,8 +39,8 @@ import {
 } from '@activepieces/shared';
 
 import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
-import { ApStepNode } from '../types';
 import { flowUtilConsts } from '../consts';
+import { ApStepNode } from '../types';
 
 function getStepStatus(
   stepName: string | undefined,
@@ -168,242 +168,240 @@ const ApStepCanvasNode = React.memo(
     };
 
     return (
-      <>
+      <div
+        id={data.step!.name}
+        style={{
+          height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
+          width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+          maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+        }}
+        className={cn(
+          'transition-all  border-box rounded-sm  border  border-solid  border-border relative hover:border-primary group',
+          {
+            'shadow-step-container': !isDragging,
+            'border-primary': isSelected,
+            'bg-background': !isDragging,
+            'border-none': isDragging,
+            'shadow-none': isDragging,
+          },
+        )}
+        onClick={(e) => handleStepClick(e)}
+        onMouseEnter={() => {
+          setAllowCanvasPanning(false);
+        }}
+        onMouseLeave={() => {
+          setAllowCanvasPanning(true);
+        }}
+        key={data.step?.name}
+        ref={openPieceSelector ? null : setNodeRef}
+        {...(!openPieceSelector ? attributes : {})}
+        {...(!openPieceSelector ? listeners : {})}
+      >
         <div
-          id={data.step!.name}
+          className="absolute left-full pl-3 text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
           style={{
-            height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
-            width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-            maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+            top: `${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 - 12}px`,
           }}
+        >
+          {data.step?.name}
+        </div>
+        <div
           className={cn(
-            'transition-all  border-box rounded-sm  border  border-solid  border-border relative hover:border-primary group',
+            'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
             {
-              'shadow-step-container': !isDragging,
-              'border-primary': isSelected,
-              'bg-background': !isDragging,
-              'border-none': isDragging,
-              'shadow-none': isDragging,
+              'border-t-[3px] border-primary border-solid':
+                isSelected && !isDragging,
             },
           )}
-          onClick={(e) => handleStepClick(e)}
-          onMouseEnter={() => {
-            setAllowCanvasPanning(false);
-          }}
-          onMouseLeave={() => {
-            setAllowCanvasPanning(true);
-          }}
-          key={data.step?.name}
-          ref={openPieceSelector ? null : setNodeRef}
-          {...(!openPieceSelector ? attributes : {})}
-          {...(!openPieceSelector ? listeners : {})}
-        >
-          <div
-            className="absolute left-full pl-3 text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
-            style={{
-              top: `${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 - 12}px`,
-            }}
-          >
-            {data.step?.name}
-          </div>
-          <div
-            className={cn(
-              'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
-              {
-                'border-t-[3px] border-primary border-solid':
-                  isSelected && !isDragging,
-              },
-            )}
-          ></div>
-          <div className="px-3 h-full w-full  overflow-hidden">
-            {!isDragging && (
-              <PieceSelector
-                initialSelectedPiece={
-                  data.step?.type === TriggerType.EMPTY
-                    ? undefined
-                    : stepMetadata?.displayName
+        ></div>
+        <div className="px-3 h-full w-full  overflow-hidden">
+          {!isDragging && (
+            <PieceSelector
+              initialSelectedPiece={
+                data.step?.type === TriggerType.EMPTY
+                  ? undefined
+                  : stepMetadata?.displayName
+              }
+              operation={{
+                type: isEmptyTriggerSelected
+                  ? FlowOperationType.UPDATE_TRIGGER
+                  : pieceSelectorOperation.current,
+                stepName: data.step!.name!,
+              }}
+              open={openPieceSelector || isEmptyTriggerSelected}
+              onOpenChange={(open) => {
+                setOpenPieceSelector(open);
+                if (open) {
+                  setOpenStepActionsMenu(false);
+                } else if (data.step?.type === TriggerType.EMPTY) {
+                  exitStepSettings();
                 }
-                operation={{
-                  type: isEmptyTriggerSelected
-                    ? FlowOperationType.UPDATE_TRIGGER
-                    : pieceSelectorOperation.current,
-                  stepName: data.step!.name!,
-                }}
-                open={openPieceSelector || isEmptyTriggerSelected}
-                onOpenChange={(open) => {
-                  setOpenPieceSelector(open);
-                  if (open) {
-                    setOpenStepActionsMenu(false);
-                  } else if (data.step?.type === TriggerType.EMPTY) {
-                    exitStepSettings();
+              }}
+              asChild={true}
+            >
+              <div
+                className="flex h-full w-full"
+                onClick={(e) => {
+                  if (!openPieceSelector) {
+                    handleStepClick(e);
                   }
                 }}
-                asChild={true}
               >
-                <div
-                  className="flex h-full w-full"
-                  onClick={(e) => {
-                    if (!openPieceSelector) {
-                      handleStepClick(e);
-                    }
-                  }}
-                >
-                  <div className="flex h-full items-center justify-between gap-3 w-full">
-                    <div className="flex items-center justify-center min-w-[46px] h-full">
-                      <PieceIcon
-                        logoUrl={stepMetadata?.logoUrl}
-                        displayName={stepMetadata?.displayName}
-                        showTooltip={false}
-                        size={'lg'}
-                      ></PieceIcon>
-                    </div>
-                    <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
-                      <div className=" flex items-center justify-between min-w-0 w-full">
-                        <div className="text-sm truncate grow shrink ">
-                          {stepIndex}. {data.step?.displayName}
-                        </div>
+                <div className="flex h-full items-center justify-between gap-3 w-full">
+                  <div className="flex items-center justify-center min-w-[46px] h-full">
+                    <PieceIcon
+                      logoUrl={stepMetadata?.logoUrl}
+                      displayName={stepMetadata?.displayName}
+                      showTooltip={false}
+                      size={'lg'}
+                    ></PieceIcon>
+                  </div>
+                  <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
+                    <div className=" flex items-center justify-between min-w-0 w-full">
+                      <div className="text-sm truncate grow shrink ">
+                        {stepIndex}. {data.step?.displayName}
+                      </div>
 
-                        {!readonly && (
-                          <div
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
+                      {!readonly && (
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
+                        >
+                          <DropdownMenu
+                            open={openStepActionsMenu}
+                            onOpenChange={(open) => {
+                              setOpenStepActionsMenu(open);
                             }}
+                            modal={true}
                           >
-                            <DropdownMenu
-                              open={openStepActionsMenu}
-                              onOpenChange={(open) => {
-                                setOpenStepActionsMenu(open);
-                              }}
-                              modal={true}
-                            >
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="p-1 size-7 "
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                  }}
-                                >
-                                  <EllipsisVertical className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                className="w-44 absolute"
-                                onCloseAutoFocus={(e) => e.preventDefault()}
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-1 size-7 "
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
                               >
+                                <EllipsisVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              className="w-44 absolute"
+                              onCloseAutoFocus={(e) => e.preventDefault()}
+                            >
+                              <DropdownMenuItem
+                                onSelect={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  pieceSelectorOperation.current = isAction
+                                    ? FlowOperationType.UPDATE_ACTION
+                                    : FlowOperationType.UPDATE_TRIGGER;
+                                  setOpenStepActionsMenu(false);
+                                  setOpenPieceSelector(true);
+                                  selectStepByName(data.step!.name!);
+                                }}
+                              >
+                                <StepActionWrapper>
+                                  <ArrowRightLeft className=" h-4 w-4 " />
+                                  <span>Replace</span>
+                                </StepActionWrapper>
+                              </DropdownMenuItem>
+
+                              {isAction && (
                                 <DropdownMenuItem
                                   onSelect={(e) => {
                                     e.preventDefault();
-                                    e.stopPropagation();
-                                    pieceSelectorOperation.current = isAction
-                                      ? FlowOperationType.UPDATE_ACTION
-                                      : FlowOperationType.UPDATE_TRIGGER;
+                                    duplicateStep();
                                     setOpenStepActionsMenu(false);
-                                    setOpenPieceSelector(true);
-                                    selectStepByName(data.step!.name!);
                                   }}
                                 >
                                   <StepActionWrapper>
-                                    <ArrowRightLeft className=" h-4 w-4 " />
-                                    <span>Replace</span>
+                                    <CopyPlus className="h-4 w-4" />
+                                    {t('Duplicate')}
                                   </StepActionWrapper>
                                 </DropdownMenuItem>
+                              )}
 
-                                {isAction && (
+                              {isAction && (
+                                <>
+                                  <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     onSelect={(e) => {
                                       e.preventDefault();
-                                      duplicateStep();
+                                      deleteStep();
                                       setOpenStepActionsMenu(false);
+                                      setAllowCanvasPanning(true);
                                     }}
                                   >
                                     <StepActionWrapper>
-                                      <CopyPlus className="h-4 w-4" />
-                                      {t('Duplicate')}
+                                      <Trash className="mr-2 h-4 w-4 text-destructive" />
+                                      <span className="text-destructive">
+                                        Delete
+                                      </span>
                                     </StepActionWrapper>
                                   </DropdownMenuItem>
-                                )}
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      )}
+                    </div>
 
-                                {isAction && (
-                                  <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      onSelect={(e) => {
-                                        e.preventDefault();
-                                        deleteStep();
-                                        setOpenStepActionsMenu(false);
-                                        setAllowCanvasPanning(true);
-                                      }}
-                                    >
-                                      <StepActionWrapper>
-                                        <Trash className="mr-2 h-4 w-4 text-destructive" />
-                                        <span className="text-destructive">
-                                          Delete
-                                        </span>
-                                      </StepActionWrapper>
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        )}
+                    <div className="flex justify-between w-full items-center">
+                      <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
+                        {stepMetadata?.displayName}
                       </div>
-
-                      <div className="flex justify-between w-full items-center">
-                        <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                          {stepMetadata?.displayName}
-                        </div>
-                        <div className="w-4 flex mt-0.5 items-center justify-center">
-                          {stepOutputStatus && (
-                            <StepStatusIcon
-                              status={stepOutputStatus}
-                              size="4"
-                            ></StepStatusIcon>
-                          )}
-                          {showRunningIcon && (
-                            <LoadingSpinner className="w-4 h-4 text-primary"></LoadingSpinner>
-                          )}
-                          {!data.step?.valid && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="mr-3">
-                                  <InvalidStepIcon
-                                    size={16}
-                                    viewBox="0 0 16 16"
-                                    className="stroke-0 animate-fade"
-                                  ></InvalidStepIcon>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="bottom">
-                                {t('Incomplete settings')}
-                              </TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
+                      <div className="w-4 flex mt-0.5 items-center justify-center">
+                        {stepOutputStatus && (
+                          <StepStatusIcon
+                            status={stepOutputStatus}
+                            size="4"
+                          ></StepStatusIcon>
+                        )}
+                        {showRunningIcon && (
+                          <LoadingSpinner className="w-4 h-4 text-primary"></LoadingSpinner>
+                        )}
+                        {!data.step?.valid && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="mr-3">
+                                <InvalidStepIcon
+                                  size={16}
+                                  viewBox="0 0 16 16"
+                                  className="stroke-0 animate-fade"
+                                ></InvalidStepIcon>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              {t('Incomplete settings')}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
-              </PieceSelector>
-            )}
+              </div>
+            </PieceSelector>
+          )}
 
-            <Handle
-              type="source"
-              style={flowUtilConsts.HANDLE_STYLING}
-              position={Position.Bottom}
-            />
-            <Handle
-              type="target"
-              style={flowUtilConsts.HANDLE_STYLING}
-              position={Position.Top}
-            />
-          </div>
+          <Handle
+            type="source"
+            style={flowUtilConsts.HANDLE_STYLING}
+            position={Position.Bottom}
+          />
+          <Handle
+            type="target"
+            style={flowUtilConsts.HANDLE_STYLING}
+            position={Position.Top}
+          />
         </div>
-      </>
+      </div>
     );
   },
 );

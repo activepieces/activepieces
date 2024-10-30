@@ -1,4 +1,4 @@
-import { Static, TSchema, Type } from '@sinclair/typebox';
+import { TSchema, Type } from '@sinclair/typebox';
 
 import {
   CONNECTION_REGEX,

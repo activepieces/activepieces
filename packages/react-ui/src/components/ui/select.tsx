@@ -6,12 +6,12 @@ import {
   ChevronUpIcon,
 } from '@radix-ui/react-icons';
 import * as SelectPrimitive from '@radix-ui/react-select';
+import { Check } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
 import { LoadingSpinner } from './spinner';
-import { Check } from 'lucide-react';
 
 const Select = SelectPrimitive.Root;
 

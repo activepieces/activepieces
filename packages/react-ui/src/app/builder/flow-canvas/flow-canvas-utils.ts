@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+
 import {
   Action,
   ActionType,
@@ -10,6 +11,7 @@ import {
   StepLocationRelativeToParent,
   Trigger,
 } from '@activepieces/shared';
+
 import { flowUtilConsts } from './consts';
 import {
   ApBigAddButtonNode,
@@ -212,9 +214,6 @@ const calculateGraphBoundingBox = (graph: ApGraph) => {
   };
 };
 
-
-
-
 const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
   const childGraph = step.firstLoopAction
     ? buildGraph(step.firstLoopAction)
@@ -225,7 +224,6 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
       });
 
   const childGraphBoundingBox = calculateGraphBoundingBox(childGraph);
-
 
   const childGraphAfterOffset = offsetGraph(childGraph, {
     x:

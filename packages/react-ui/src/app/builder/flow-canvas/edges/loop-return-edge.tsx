@@ -1,7 +1,10 @@
 import { BaseEdge, EdgeProps } from '@xyflow/react';
-import { ApLoopReturnEdge } from '../types';
+
+import { StepLocationRelativeToParent } from '@activepieces/shared';
+
 import { flowUtilConsts } from '../consts';
-import { StepLocationRelativeToParent } from '../../../../../../shared/src';
+import { ApLoopReturnEdge } from '../types';
+
 import { ApAddButton } from './add-button';
 
 export const ApLoopReturnLineCanvasEdge = ({
@@ -23,8 +26,9 @@ export const ApLoopReturnLineCanvasEdge = ({
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
     2 * flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
   const path = `
-  M ${sourceX - 0.5} ${sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2 - 1
-    }
+  M ${sourceX - 0.5} ${
+    sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2 - 1
+  }
   v 1
   ${flowUtilConsts.ARC_LEFT_DOWN} h -${horizontalLineLength}
   ${flowUtilConsts.ARC_RIGHT_UP} v -${verticalLineLength}
@@ -33,12 +37,14 @@ export const ApLoopReturnLineCanvasEdge = ({
   h ${horizontalLineLength / 2 - 2 * flowUtilConsts.ARC_LENGTH}
    ${ARROW_RIGHT}
  
-  M ${sourceX - flowUtilConsts.ARC_LENGTH - horizontalLineLength / 2} ${sourceY +
+  M ${sourceX - flowUtilConsts.ARC_LENGTH - horizontalLineLength / 2} ${
+    sourceY +
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
     flowUtilConsts.ARC_LENGTH / 2
-    }
-   v${endLineLength} ${data.drawArrowHeadAfterEnd ? flowUtilConsts.ARROW_DOWN : ''
-    } 
+  }
+   v${endLineLength} ${
+    data.drawArrowHeadAfterEnd ? flowUtilConsts.ARROW_DOWN : ''
+  } 
    `;
   const buttonPosition = {
     x:

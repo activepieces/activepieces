@@ -1,21 +1,23 @@
+import { t } from 'i18next';
+import { Trash, CopyPlus, Pencil } from 'lucide-react';
+import React, { useState } from 'react';
+
 import {
   RouterAction,
   BranchExecutionType,
   isNil,
   RouterActionSettings,
 } from '@activepieces/shared';
-import { Button } from '../../../../components/ui/button';
-import { Trash, CopyPlus, Pencil } from 'lucide-react';
+
 import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
+import { Button } from '../../../../components/ui/button';
+import EditableText from '../../../../components/ui/editable-text';
 import { Separator } from '../../../../components/ui/seperator';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
-import { t } from 'i18next';
-import EditableText from '../../../../components/ui/editable-text';
-import React, { useState } from 'react';
 import { cn } from '../../../../lib/utils';
 
 type BranchListProps = {
@@ -107,7 +109,9 @@ export const BranchListItem = ({
 }: BranchListItemProps) => {
   return (
     <div
-      className={'flex items-center gap-2 transition-all   has-[div.button-group:hover]:bg-background  text-sm hover:bg-gray-100 px-2 cursor-pointer'}
+      className={
+        'flex items-center gap-2 transition-all   has-[div.button-group:hover]:bg-background  text-sm hover:bg-gray-100 px-2 cursor-pointer'
+      }
       onClick={() => {
         onClick();
       }}

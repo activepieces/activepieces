@@ -1,6 +1,7 @@
-import React from 'react';
-import { Plus, Trash } from 'lucide-react';
 import { t } from 'i18next';
+import { Plus } from 'lucide-react';
+import React from 'react';
+
 import { Button } from '../../../../components/ui/button';
 
 interface BranchesToolbarProps {

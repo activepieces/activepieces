@@ -116,7 +116,7 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
                 droppedAtNodeData.stepLocationRelativeToParent,
               branchIndex:
                 droppedAtNodeData.stepLocationRelativeToParent ===
-                  StepLocationRelativeToParent.INSIDE_BRANCH
+                StepLocationRelativeToParent.INSIDE_BRANCH
                   ? droppedAtNodeData.branchIndex
                   : undefined,
             },
