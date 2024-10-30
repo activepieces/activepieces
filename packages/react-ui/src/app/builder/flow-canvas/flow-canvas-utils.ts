@@ -224,16 +224,39 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
       });
 
   const childGraphBoundingBox = calculateGraphBoundingBox(childGraph);
+  let deltaLeftX =
+    -(
+      childGraphBoundingBox.width +
+      flowUtilConsts.AP_NODE_SIZE.STEP.width +
+      flowUtilConsts.HORIZONTAL_SPACE_BETWEEN_NODES -
+      flowUtilConsts.AP_NODE_SIZE.STEP.width / 2 -
+      childGraphBoundingBox.right
+    ) /
+      2 -
+    flowUtilConsts.AP_NODE_SIZE.STEP.width / 2;
 
+  const loopReturnNode: ApLoopReturnNode = {
+    id: `${step.name}-loop-return-node`,
+    type: ApNodeType.LOOP_RETURN_NODE,
+    position: {
+      x: deltaLeftX + flowUtilConsts.AP_NODE_SIZE.STEP.width / 2,
+      y:
+        flowUtilConsts.AP_NODE_SIZE.STEP.height +
+        flowUtilConsts.VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD +
+        childGraphBoundingBox.height / 2,
+    },
+    data: {},
+  };
   const childGraphAfterOffset = offsetGraph(childGraph, {
     x:
-      childGraphBoundingBox.width / 2 +
-      flowUtilConsts.HORIZONTAL_SPACE_BETWEEN_NODES,
+      deltaLeftX +
+      flowUtilConsts.AP_NODE_SIZE.STEP.width +
+      flowUtilConsts.HORIZONTAL_SPACE_BETWEEN_NODES +
+      childGraphBoundingBox.left,
     y:
       flowUtilConsts.VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD +
       flowUtilConsts.AP_NODE_SIZE.STEP.height,
   });
-
   const edges: ApEdge[] = [
     {
       id: `${step.name}-loop-start-edge`,
@@ -259,22 +282,6 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
       },
     },
   ];
-
-  const loopReturnNode: ApLoopReturnNode = {
-    id: `${step.name}-loop-return-node`,
-    type: ApNodeType.LOOP_RETURN_NODE,
-    position: {
-      x:
-        flowUtilConsts.AP_NODE_SIZE.STEP.width / 2 -
-        childGraphBoundingBox.width / 2 -
-        flowUtilConsts.HORIZONTAL_SPACE_BETWEEN_NODES,
-      y:
-        flowUtilConsts.AP_NODE_SIZE.STEP.height +
-        flowUtilConsts.VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD +
-        childGraphBoundingBox.height / 2,
-    },
-    data: {},
-  };
 
   const subgraphEndSubNode: ApGraphEndNode = {
     id: `${step.name}-loop-subgraph-end`,

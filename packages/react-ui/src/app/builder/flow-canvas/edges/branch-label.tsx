@@ -24,20 +24,20 @@ import { flowCanvasUtils } from '../flow-canvas-utils';
 
 export type BranchLabelProps =
   | {
-      label: string;
-      targetNodeName: string;
-      sourceNodeName: string;
-    } & (
-      | {
-          stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
-          branchIndex: number;
-        }
-      | {
-          stepLocationRelativeToParent:
-            | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
-            | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
-        }
-    );
+    label: string;
+    targetNodeName: string;
+    sourceNodeName: string;
+  } & (
+    | {
+      stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
+      branchIndex: number;
+    }
+    | {
+      stepLocationRelativeToParent:
+      | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
+      | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
+    }
+  );
 
 export const BranchLabel = (props: BranchLabelProps) => {
   const [
@@ -63,10 +63,10 @@ export const BranchLabel = (props: BranchLabelProps) => {
   ]);
   const isBranchNonInteractive =
     props.stepLocationRelativeToParent !==
-      StepLocationRelativeToParent.INSIDE_BRANCH ||
+    StepLocationRelativeToParent.INSIDE_BRANCH ||
     (step?.type === ActionType.ROUTER &&
       step?.settings.branches[props.branchIndex]?.branchType ===
-        BranchExecutionType.FALLBACK);
+      BranchExecutionType.FALLBACK);
   const { fitView } = useReactFlow();
   if (isNil(step)) {
     console.log('step is null');
@@ -84,12 +84,12 @@ export const BranchLabel = (props: BranchLabelProps) => {
       >
         <div
           className={cn(
-            'flex items-center justify-center gap-0.5  items-center transition-all rounded-full  text-sm border  border-solid bg-primary-100/30  border-primary/50   px-2 text-primary/80 hover:text-primary hover:border-primary',
+            'flex items-center justify-center gap-0.5 select-none  items-center transition-all rounded-full  text-sm border  border-solid bg-primary-100/30  border-primary/50   px-2 text-primary/80 hover:text-primary hover:border-primary',
             {
               'border-primary text-primary':
                 selectedStep === props.sourceNodeName &&
                 props.stepLocationRelativeToParent ===
-                  StepLocationRelativeToParent.INSIDE_BRANCH &&
+                StepLocationRelativeToParent.INSIDE_BRANCH &&
                 props.branchIndex === selectedBranchIndex,
               'bg-accent text-foreground/70  border-accent hover:text-foreground/70 hover:bg-accent hover:border-accent cursor-default':
                 isBranchNonInteractive,
@@ -102,7 +102,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
           onClick={() => {
             if (
               props.stepLocationRelativeToParent ===
-                StepLocationRelativeToParent.INSIDE_BRANCH &&
+              StepLocationRelativeToParent.INSIDE_BRANCH &&
               !isBranchNonInteractive
             ) {
               selectStepByName(props.sourceNodeName);
@@ -147,7 +147,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
                           branchIndex: props.branchIndex,
                         },
                       },
-                      () => {},
+                      () => { },
                     );
                     branchDeletedCallback?.(
                       props.branchIndex,
@@ -176,14 +176,13 @@ export const BranchLabel = (props: BranchLabelProps) => {
                           branchIndex: props.branchIndex,
                         },
                       },
-                      () => {},
+                      () => { },
                     );
                     branchDuplicateCallback?.(
                       {
                         ...step.settings.branches[props.branchIndex],
-                        branchName: `${
-                          step.settings.branches[props.branchIndex].branchName
-                        } Copy`,
+                        branchName: `${step.settings.branches[props.branchIndex].branchName
+                          } Copy`,
                       },
                       props.sourceNodeName,
                     );

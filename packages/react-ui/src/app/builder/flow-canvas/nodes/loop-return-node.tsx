@@ -6,7 +6,12 @@ import { flowUtilConsts } from '../consts';
 const ApLoopReturnCanvasNode = (props: NodeProps) => {
   return (
     <>
-      <div className="w-[1px] h-[1px] "></div>
+      <div
+        className="h-[1px] bg-[transparent] pointer-events-none "
+        style={{
+          width: flowUtilConsts.AP_NODE_SIZE.LOOP_RETURN_NODE.width,
+        }}
+      ></div>
       <Handle
         type="source"
         position={Position.Top}
