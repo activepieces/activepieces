@@ -3,6 +3,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -187,11 +188,12 @@ function AppConnectionsTable() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { checkAccess } = useAuthorization();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['appConnections'],
+    queryKey: ['appConnections', searchParams.toString()],
     staleTime: 0,
+    gcTime: 0,
     queryFn: () => {
-      const searchParams = new URLSearchParams(window.location.search);
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)

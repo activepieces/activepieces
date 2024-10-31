@@ -127,10 +127,9 @@ const FlowsPage = () => {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['flow-table', window.location.search],
+    queryKey: ['flow-table', searchParams.toString()],
     staleTime: 0,
     queryFn: () => {
-      const searchParams = new URLSearchParams(window.location.search);
       const name = searchParams.get('name');
       const status = searchParams.get('status');
       const cursor = searchParams.get('cursor');
