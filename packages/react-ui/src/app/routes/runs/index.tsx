@@ -10,7 +10,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, PlayIcon, Redo, RotateCw, ChevronDown } from 'lucide-react';
 import { useMemo, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
@@ -43,14 +43,15 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 
 const FlowRunsPage = () => {
-  const params = useParams();
+  const [searchParams] = useSearchParams();
+
   const { data, isLoading } = useQuery({
-    queryKey: ['flow-run-table', window.location.search],
+    queryKey: ['flow-run-table', searchParams.toString()],
     staleTime: 0,
+    gcTime: 0,
     queryFn: () => {
-      const searchParams = new URLSearchParams(window.location.search);
-      const status = searchParams.getAll('status') || params.status;
-      const flowId = searchParams.getAll('flowId') || params.flowId;
+      const status = searchParams.getAll('status') as FlowRunStatus[];
+      const flowId = searchParams.getAll('flowId');
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
@@ -201,9 +202,8 @@ const FlowRunsPage = () => {
       strategy: FlowRetryStrategy;
     }) => {
       const searchParams = new URLSearchParams(window.location.search);
-      const status = (searchParams.getAll('status') ||
-        params.status) as FlowRunStatus[];
-      const flowId = searchParams.getAll('flowId') || params.flowId;
+      const status = searchParams.getAll('status') as FlowRunStatus[];
+      const flowId = searchParams.getAll('flowId');
       const createdAfter = searchParams.get('createdAfter') || undefined;
       const createdBefore = searchParams.get('createdBefore') || undefined;
 
