@@ -1008,7 +1008,7 @@ function duplicateStep(
   return finalFlow;
 }
 
-function duplicateRouterChild(
+function duplicateBranch(
   routerName: string,
   childIndex: number,
   flowVersionWithArtifacts: FlowVersion
@@ -1033,8 +1033,8 @@ function duplicateRouterChild(
     JSON.stringify(routerStep.settings.branches[childIndex])
   ) as RouterAction['settings']['branches'][number];
   duplicatedBranch.branchName = `${duplicatedBranch.branchName} Copy`;
-  routerStep.settings.branches.splice(-1, 0, duplicatedBranch);
-  routerStep.children.splice(-1, 0, null);
+  routerStep.settings.branches.splice(childIndex+1, 0, duplicatedBranch);
+  routerStep.children.splice(childIndex+1, 0, null);
   if (isNil(clonedChildStep)) {
     return flowVersionWithArtifacts;
   }
@@ -1080,7 +1080,7 @@ function duplicateRouterChild(
     action: duplicatedStep as Action,
     parentStep: routerName,
     stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
-    branchIndex: routerStep.children.length - 2,
+    branchIndex: childIndex+1,
   });
   const operations = getImportOperations(duplicatedStep);
   operations.forEach((operation) => {
@@ -1383,7 +1383,7 @@ export const flowHelper = {
         break;
       }
       case FlowOperationType.DUPLICATE_BRANCH: {
-        clonedVersion = duplicateRouterChild(
+        clonedVersion = duplicateBranch(
           operation.request.stepName,
           operation.request.branchIndex,
           clonedVersion

@@ -63,7 +63,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
           branchIndex: index,
         },
       },
-      () => {},
+      () => { },
     );
     remove(index);
     setSelectedBranchIndex(null);
@@ -76,9 +76,9 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
         remove(branchIndex);
       }
     });
-    setBranchDuplicateCallback((branch, stepName) => {
+    setBranchDuplicateCallback((branchIndex, branch, stepName) => {
       if (step.name === stepName) {
-        insert(-1, branch);
+        insert(branchIndex + 1, branch);
       }
     });
 
@@ -147,14 +147,14 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                     branchIndex: index,
                   },
                 },
-                () => {},
+                () => { },
               );
 
-              insert(-1, {
+              insert(index + 1, {
                 ...step.settings.branches[index],
                 branchName: `${step.settings.branches[index].branchName} Copy`,
               });
-              setSelectedBranchIndex(step.settings.branches.length - 1);
+              setSelectedBranchIndex(index + 1);
             }}
             setSelectedBranchIndex={(index) => {
               setSelectedBranchIndex(index);
@@ -185,7 +185,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                         branchIndex: step.settings.branches.length - 1,
                       },
                     },
-                    () => {},
+                    () => { },
                   );
 
                   insert(

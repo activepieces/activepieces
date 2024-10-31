@@ -50,6 +50,7 @@ export enum RightSideBarType {
 type InsertMentionHandler = (propertyPath: string) => void;
 type BranchDeletedCallback = (branchIndex: number, stepName: string) => void;
 type BranchDuplicatedCallback = (
+  branchIndex: number,
   branch: RouterAction['settings']['branches'][number],
   stepName: string,
 ) => void;
