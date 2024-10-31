@@ -1,9 +1,19 @@
+import { PopulatedIssue } from '@activepieces/ee-shared';
+import { FlowRunStatus, Permission } from '@activepieces/shared';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
+import { useMemo } from 'react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 
+import { useNewWindow } from '../../../components/embed-provider';
+import { TableTitle } from '../../../components/ui/table-title';
+import { issuesApi } from '../api/issues-api';
+import { issueHooks } from '../hooks/issue-hooks';
+
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DataTable,
   LIMIT_QUERY_PARAM,
@@ -17,17 +27,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { PopulatedIssue } from '@activepieces/ee-shared';
-import { FlowRunStatus, Permission } from '@activepieces/shared';
-
-import { useNewWindow } from '../../../components/embed-provider';
-import { TableTitle } from '../../../components/ui/table-title';
-import { issuesApi } from '../api/issues-api';
-import { issueHooks } from '../hooks/issue-hooks';
-import { useMemo } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useQuery } from '@tanstack/react-query';
-
 
 export default function IssuesTable() {
   const navigate = useNavigate();
@@ -42,7 +41,9 @@ export default function IssuesTable() {
     queryFn: () => {
       const searchParams = new URLSearchParams(window.location.search);
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM) ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!) : 10;
+      const limit = searchParams.get(LIMIT_QUERY_PARAM)
+        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
+        : 10;
       return issuesApi.list({
         projectId: authenticationSession.getProjectId()!,
         cursor: cursor ?? undefined,
@@ -71,73 +72,77 @@ export default function IssuesTable() {
     Permission.WRITE_ISSUES,
   );
 
-  const columns: ColumnDef<RowDataWithActions<PopulatedIssue>>[] = useMemo(() => [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
-          }
-          onCheckedChange={(value) =>
-            table.toggleAllPageRowsSelected(!!value)
-          }
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-        />
-      ),
-    },
-    {
-      accessorKey: 'flowName',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Flow Name')} />
-      ),
-      cell: ({ row }) => {
-        return <div className="text-left">{row.original.flowDisplayName}</div>;
+  const columns: ColumnDef<RowDataWithActions<PopulatedIssue>>[] = useMemo(
+    () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && 'indeterminate')
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+          />
+        ),
       },
-    },
-    {
-      accessorKey: 'count',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Count')} />
-      ),
-      cell: ({ row }) => {
-        return <div className="text-left">{row.original.count}</div>;
+      {
+        accessorKey: 'flowName',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Flow Name')} />
+        ),
+        cell: ({ row }) => {
+          return (
+            <div className="text-left">{row.original.flowDisplayName}</div>
+          );
+        },
       },
-    },
-    {
-      accessorKey: 'created',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('First Seen')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
-          </div>
-        );
+      {
+        accessorKey: 'count',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Count')} />
+        ),
+        cell: ({ row }) => {
+          return <div className="text-left">{row.original.count}</div>;
+        },
       },
-    },
-    {
-      accessorKey: 'lastOccurrence',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Last Seen')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.lastOccurrence))}
-          </div>
-        );
+      {
+        accessorKey: 'created',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('First Seen')} />
+        ),
+        cell: ({ row }) => {
+          return (
+            <div className="text-left">
+              {formatUtils.formatDate(new Date(row.original.created))}
+            </div>
+          );
+        },
       },
-    },
-  ], [userHasPermissionToMarkAsResolved, handleMarkAsResolved, t]);
-
+      {
+        accessorKey: 'lastOccurrence',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Last Seen')} />
+        ),
+        cell: ({ row }) => {
+          return (
+            <div className="text-left">
+              {formatUtils.formatDate(new Date(row.original.lastOccurrence))}
+            </div>
+          );
+        },
+      },
+    ],
+    [userHasPermissionToMarkAsResolved, handleMarkAsResolved, t],
+  );
 
   return (
     <div className="flex-col w-full">
@@ -169,15 +174,18 @@ export default function IssuesTable() {
                       className="gap-2"
                       size={'sm'}
                       onClick={(e) => {
-                        selectedRows.forEach(row => {
+                        selectedRows.forEach((row) => {
                           handleMarkAsResolved(row.flowDisplayName, row.id);
-                          row.delete()
+                          row.delete();
                         });
                         resetSelection();
                       }}
                     >
                       <Check className="size-4" />
-                      {t('Mark as Resolved')} {selectedRows.length === 0 ? '' : `(${selectedRows.length})`}
+                      {t('Mark as Resolved')}{' '}
+                      {selectedRows.length === 0
+                        ? ''
+                        : `(${selectedRows.length})`}
                     </Button>
                   </PermissionNeededTooltip>
                 </div>
