@@ -24,20 +24,20 @@ import { flowCanvasUtils } from '../flow-canvas-utils';
 
 export type BranchLabelProps =
   | {
-    label: string;
-    targetNodeName: string;
-    sourceNodeName: string;
-  } & (
-    | {
-      stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
-      branchIndex: number;
-    }
-    | {
-      stepLocationRelativeToParent:
-      | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
-      | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
-    }
-  );
+      label: string;
+      targetNodeName: string;
+      sourceNodeName: string;
+    } & (
+      | {
+          stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
+          branchIndex: number;
+        }
+      | {
+          stepLocationRelativeToParent:
+            | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
+            | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
+        }
+    );
 
 export const BranchLabel = (props: BranchLabelProps) => {
   const [
@@ -63,10 +63,10 @@ export const BranchLabel = (props: BranchLabelProps) => {
   ]);
   const isBranchNonInteractive =
     props.stepLocationRelativeToParent !==
-    StepLocationRelativeToParent.INSIDE_BRANCH ||
+      StepLocationRelativeToParent.INSIDE_BRANCH ||
     (step?.type === ActionType.ROUTER &&
       step?.settings.branches[props.branchIndex]?.branchType ===
-      BranchExecutionType.FALLBACK);
+        BranchExecutionType.FALLBACK);
   const { fitView } = useReactFlow();
   if (isNil(step)) {
     console.log('step is null');
@@ -89,7 +89,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
               'border-primary text-primary':
                 selectedStep === props.sourceNodeName &&
                 props.stepLocationRelativeToParent ===
-                StepLocationRelativeToParent.INSIDE_BRANCH &&
+                  StepLocationRelativeToParent.INSIDE_BRANCH &&
                 props.branchIndex === selectedBranchIndex,
               'bg-accent text-foreground/70  border-accent hover:text-foreground/70 hover:bg-accent hover:border-accent cursor-default':
                 isBranchNonInteractive,
@@ -102,7 +102,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
           onClick={() => {
             if (
               props.stepLocationRelativeToParent ===
-              StepLocationRelativeToParent.INSIDE_BRANCH &&
+                StepLocationRelativeToParent.INSIDE_BRANCH &&
               !isBranchNonInteractive
             ) {
               selectStepByName(props.sourceNodeName);
@@ -147,7 +147,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
                           branchIndex: props.branchIndex,
                         },
                       },
-                      () => { },
+                      () => {},
                     );
                     branchDeletedCallback?.(
                       props.branchIndex,
@@ -176,13 +176,14 @@ export const BranchLabel = (props: BranchLabelProps) => {
                           branchIndex: props.branchIndex,
                         },
                       },
-                      () => { },
+                      () => {},
                     );
                     branchDuplicateCallback?.(
                       {
                         ...step.settings.branches[props.branchIndex],
-                        branchName: `${step.settings.branches[props.branchIndex].branchName
-                          } Copy`,
+                        branchName: `${
+                          step.settings.branches[props.branchIndex].branchName
+                        } Copy`,
                       },
                       props.sourceNodeName,
                     );

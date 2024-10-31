@@ -1,9 +1,9 @@
 import { ReactFlow, Background, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { usePrevious } from 'react-use';
 
-import { flowHelper, isFlowStateTerminal } from '@activepieces/shared';
+import { isFlowStateTerminal } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
@@ -14,21 +14,11 @@ import { FlowDragLayer } from './flow-drag-layer';
 import { AboveFlowWidgets } from './widgets';
 
 const FlowCanvas = React.memo(() => {
-  const [allowCanvasPanning, graph, run, flowVersion] = useBuilderStateContext(
-    (state) => {
-      const graph = flowCanvasUtils.convertFlowVersionToGraph(
-        state.flowVersion,
-      );
-      return [state.allowCanvasPanning, graph, state.run, state.flowVersion];
-    },
-  );
-  const focusableNodes = useMemo(() => {
-    //TODO: fix reset zoom + fit to view behaviours
-    const nodes = flowHelper.getAllStepsAtFirstLevel(flowVersion.trigger);
-    return nodes.map((node) => ({
-      id: node.name,
-    }));
-  }, [flowVersion]);
+  const [allowCanvasPanning, graph, run] = useBuilderStateContext((state) => {
+    const graph = flowCanvasUtils.convertFlowVersionToGraph(state.flowVersion);
+    return [state.allowCanvasPanning, graph, state.run];
+  });
+
   const previousRun = usePrevious(run);
   const { fitView } = useReactFlow();
   if (
@@ -64,18 +54,11 @@ const FlowCanvas = React.memo(() => {
           panOnDrag={allowCanvasPanning}
           zoomOnDoubleClick={false}
           panOnScroll={true}
-          fitView={true}
+          fitView={false}
           nodesConnectable={false}
           elementsSelectable={true}
           nodesDraggable={false}
           nodesFocusable={false}
-          fitViewOptions={{
-            includeHiddenNodes: false,
-            minZoom: 0.5,
-            maxZoom: 1.2,
-            nodes: focusableNodes.slice(0, 1),
-            duration: 0,
-          }}
         >
           <AboveFlowWidgets></AboveFlowWidgets>
           <Background />

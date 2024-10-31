@@ -25,22 +25,6 @@ import {
   ApStraightLineEdge,
 } from './types';
 
-export const flowCanvasUtils = {
-  convertFlowVersionToGraph(version: FlowVersion): ApGraph {
-    const graph = buildGraph(version.trigger);
-    const graphEndWidget = graph.nodes.findLast(
-      (node) => node.type === ApNodeType.GRAPH_END_WIDGET,
-    ) as ApGraphEndNode;
-    if (graphEndWidget) {
-      graphEndWidget.data.showWidget = true;
-    } else {
-      console.warn('Flow end widget not found');
-    }
-    return graph;
-  },
-  createFocusStepInGraphParams,
-};
-
 const createBigAddButtonGraph: (
   parentStep: LoopOnItemsAction | BranchAction | RouterAction,
   nodeData: ApBigAddButtonNode['data'],
@@ -224,7 +208,7 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
       });
 
   const childGraphBoundingBox = calculateGraphBoundingBox(childGraph);
-  let deltaLeftX =
+  const deltaLeftX =
     -(
       childGraphBoundingBox.width +
       flowUtilConsts.AP_NODE_SIZE.STEP.width +
@@ -538,4 +522,21 @@ const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {
         flowUtilConsts.VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD,
     });
   });
+};
+
+export const flowCanvasUtils = {
+  convertFlowVersionToGraph(version: FlowVersion): ApGraph {
+    const graph = buildGraph(version.trigger);
+    const graphEndWidget = graph.nodes.findLast(
+      (node) => node.type === ApNodeType.GRAPH_END_WIDGET,
+    ) as ApGraphEndNode;
+    if (graphEndWidget) {
+      graphEndWidget.data.showWidget = true;
+    } else {
+      console.warn('Flow end widget not found');
+    }
+    return graph;
+  },
+  createFocusStepInGraphParams,
+  calculateGraphBoundingBox,
 };

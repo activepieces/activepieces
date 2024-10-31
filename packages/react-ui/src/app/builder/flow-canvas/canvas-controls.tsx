@@ -1,7 +1,7 @@
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { Fullscreen, Minus, Plus, RotateCw } from 'lucide-react';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -10,34 +10,60 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 
-const CanvasControls = () => {
-  const reactFlow = useReactFlow();
+import { flowUtilConsts } from './consts';
+import { flowCanvasUtils } from './flow-canvas-utils';
+import { ApNode } from './types';
 
+const duration = 200;
+const CanvasControls = ({
+  builderNavbarHeight,
+}: {
+  builderNavbarHeight: number;
+}) => {
+  const { zoomIn, zoomOut, zoomTo, setViewport, getNodes } = useReactFlow();
   const handleZoomIn = useCallback(() => {
-    reactFlow.zoomIn({
-      duration: 200,
+    zoomIn({
+      duration,
     });
-  }, [reactFlow]);
+  }, [zoomIn]);
 
   const handleZoomOut = useCallback(() => {
-    reactFlow.zoomOut({
-      duration: 200,
+    zoomOut({
+      duration,
     });
-  }, [reactFlow]);
+  }, [zoomOut]);
 
   const handleZoomReset = useCallback(() => {
-    reactFlow.zoomTo(1);
-  }, [reactFlow]);
+    zoomTo(1, { duration });
+  }, [zoomTo]);
 
   const handleFitToView = useCallback(() => {
-    reactFlow.fitView({
-      nodes: reactFlow.getNodes().slice(0, 5),
-      minZoom: 0.5,
-      maxZoom: 1.2,
-      duration: 300,
-    });
-  }, [reactFlow]);
-
+    const nodes = getNodes();
+    if (nodes.length === 0) return;
+    const graphHeight = flowCanvasUtils.calculateGraphBoundingBox({
+      nodes: nodes as ApNode[],
+      edges: [],
+    }).height;
+    const zoomRatio = Math.min(
+      Math.max((window.innerHeight - builderNavbarHeight) / graphHeight, 0.9),
+      1.25,
+    );
+    setViewport(
+      {
+        x:
+          window.innerWidth / 2 -
+          (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoomRatio) / 2,
+        y: nodes[0].position.y + 100 * zoomRatio,
+        zoom: zoomRatio,
+      },
+      {
+        duration,
+      },
+    );
+  }, [getNodes, setViewport]);
+  useEffect(() => {
+    handleFitToView();
+  }, []);
   return (
     <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row">
       <Tooltip>

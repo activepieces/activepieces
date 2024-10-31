@@ -206,7 +206,9 @@ const BuilderPage = () => {
 
           <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
             <div ref={middlePanelRef} className="relative h-full w-full">
-              <CanvasControls></CanvasControls>
+              <CanvasControls
+                builderNavbarHeight={builderNavbarHeight}
+              ></CanvasControls>
               <ShowPoweredBy
                 position="absolute"
                 show={platform?.showPoweredBy}
