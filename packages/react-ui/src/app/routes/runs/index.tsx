@@ -1,22 +1,27 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Redo, RefreshCw, RotateCw } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { CheckIcon, PlayIcon, Redo, RotateCw, ChevronDown } from 'lucide-react';
+import { useMemo, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
+  BulkAction,
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
   DataTable,
-  PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { MessageTooltip } from '@/components/ui/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -30,184 +35,127 @@ import {
   FlowRetryStrategy,
   FlowRun,
   FlowRunStatus,
-  Permission,
   isFailedState,
+  Permission,
 } from '@activepieces/shared';
 
 import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
 
-const fetchData = async (
-  params: {
-    flowId: string[];
-    status: FlowRunStatus[];
-    created: string;
-  },
-  pagination: PaginationParams,
-) => {
-  const status = params.status;
-  return flowRunsApi.list({
-    status,
-    projectId: authenticationSession.getProjectId()!,
-    flowId: params.flowId,
-    cursor: pagination.cursor,
-    limit: pagination.limit ?? 10,
-    createdAfter: pagination.createdAfter,
-    createdBefore: pagination.createdBefore,
-  });
-};
-
 const FlowRunsPage = () => {
+  const [searchParams] = useSearchParams();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['flow-run-table', searchParams.toString()],
+    staleTime: 0,
+    gcTime: 0,
+    queryFn: () => {
+      const status = searchParams.getAll('status') as FlowRunStatus[];
+      const flowId = searchParams.getAll('flowId');
+      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+      const limit = searchParams.get(LIMIT_QUERY_PARAM)
+        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
+        : 10;
+      const createdAfter = searchParams.get('createdAfter');
+      const createdBefore = searchParams.get('createdBefore');
+
+      return flowRunsApi.list({
+        status: status ? status.map((s) => s as FlowRunStatus) : undefined,
+        projectId: authenticationSession.getProjectId()!,
+        flowId,
+        cursor: cursor ?? undefined,
+        limit,
+        createdAfter: createdAfter ?? undefined,
+        createdBefore: createdBefore ?? undefined,
+      });
+    },
+  });
+
   const navigate = useNavigate();
-  const [refresh, setRefresh] = useState(0);
-  const { data, isFetching } = flowsHooks.useFlows({
+  const { data: flowsData, isFetching: isFetchingFlows } = flowsHooks.useFlows({
     limit: 1000,
     cursor: undefined,
   });
   const openNewWindow = useNewWindow();
-  const flows = data?.data;
+  const flows = flowsData?.data;
   const { checkAccess } = useAuthorization();
   const userHasPermissionToRetryRun = checkAccess(Permission.RETRY_RUN);
-  const { mutate } = useMutation<
-    FlowRun,
-    Error,
-    { row: RowDataWithActions<FlowRun>; strategy: FlowRetryStrategy }
-  >({
-    mutationFn: (data) =>
-      flowRunsApi.retry(data.row.id, { strategy: data.strategy }),
-    onSuccess: (updatedRun, { row }) => {
-      row.update(updatedRun);
+
+  const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && 'indeterminate')
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+        />
+      ),
     },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
+    {
+      accessorKey: 'flowId',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Flow')} />
+      ),
+      cell: ({ row }) => {
+        return <div className="text-left">{row.original.flowDisplayName}</div>;
+      },
     },
-  });
-
-  const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = useMemo(
-    () => [
-      {
-        accessorKey: 'flowId',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Flow')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">{row.original.flowDisplayName}</div>
-          );
-        },
+    {
+      accessorKey: 'status',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Status')} />
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const { variant, Icon } = flowRunUtils.getStatusIcon(status);
+        return (
+          <div className="text-left">
+            <StatusIconWithText
+              icon={Icon}
+              text={formatUtils.convertEnumToHumanReadable(status)}
+              variant={variant}
+            />
+          </div>
+        );
       },
-      {
-        accessorKey: 'status',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Status')} />
-        ),
-        cell: ({ row }) => {
-          const status = row.original.status;
-          const { variant, Icon } = flowRunUtils.getStatusIcon(status);
-          return (
-            <div className="text-left">
-              <StatusIconWithText
-                icon={Icon}
-                text={formatUtils.convertEnumToHumanReadable(status)}
-                variant={variant}
-              />
-            </div>
-          );
-        },
+    },
+    {
+      accessorKey: 'created',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Start Time')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {formatUtils.formatDate(new Date(row.original.startTime))}
+          </div>
+        );
       },
-      {
-        accessorKey: 'created',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Start Time')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">
-              {formatUtils.formatDate(new Date(row.original.startTime))}
-            </div>
-          );
-        },
+    },
+    {
+      accessorKey: 'duration',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Duration')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {row.original.finishTime &&
+              formatUtils.formatDuration(row.original.duration)}
+          </div>
+        );
       },
-      {
-        accessorKey: 'duration',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Duration')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">
-              {row.original.finishTime &&
-                formatUtils.formatDuration(row.original.duration)}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'actions',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Actions')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div onClick={(e) => e.stopPropagation()}>
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger
-                  asChild
-                  className="rounded-full p-2 hover:bg-muted cursor-pointer"
-                >
-                  <RefreshCw className="h-9 w-9" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToRetryRun}
-                  >
-                    <DropdownMenuItem
-                      disabled={!userHasPermissionToRetryRun}
-                      onClick={() =>
-                        mutate({
-                          row: row.original,
-                          strategy: FlowRetryStrategy.ON_LATEST_VERSION,
-                        })
-                      }
-                    >
-                      <div className="flex flex-row gap-2 items-center">
-                        <RotateCw className="h-4 w-4" />
-
-                        <span>{t('Retry on latest version')}</span>
-                      </div>
-                    </DropdownMenuItem>
-                  </PermissionNeededTooltip>
-
-                  {isFailedState(row.original.status) && (
-                    <PermissionNeededTooltip
-                      hasPermission={userHasPermissionToRetryRun}
-                    >
-                      <DropdownMenuItem
-                        disabled={!userHasPermissionToRetryRun}
-                        onClick={() =>
-                          mutate({
-                            row: row.original,
-                            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                          })
-                        }
-                      >
-                        <div className="flex flex-row gap-2 items-center">
-                          <Redo className="h-4 w-4" />
-                          <span>{t('Retry from failed step')}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    </PermissionNeededTooltip>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          );
-        },
-      },
-    ],
-    [],
-  );
+    },
+  ];
 
   const filters = useMemo(
     () => [
@@ -248,11 +196,127 @@ const FlowRunsPage = () => {
     [flows],
   );
 
-  useEffect(() => {
-    if (!isFetching) {
-      setRefresh((prev) => prev + 1);
-    }
-  }, [isFetching]);
+  const replayRun = useMutation({
+    mutationFn: (retryParams: {
+      runIds: string[];
+      strategy: FlowRetryStrategy;
+    }) => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const status = searchParams.getAll('status') as FlowRunStatus[];
+      const flowId = searchParams.getAll('flowId');
+      const createdAfter = searchParams.get('createdAfter') || undefined;
+      const createdBefore = searchParams.get('createdBefore') || undefined;
+
+      return flowRunsApi.bulkRetry({
+        projectId: authenticationSession.getProjectId()!,
+        flowRunIds: retryParams.runIds,
+        strategy: retryParams.strategy,
+        status,
+        flowId,
+        createdAfter,
+        createdBefore,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: t('Runs replayed successfully'),
+        variant: 'default',
+      });
+      navigate(window.location.pathname);
+    },
+    onError: () => {
+      toast(INTERNAL_ERROR_TOAST);
+    },
+  });
+
+  const bulkActions: BulkAction<FlowRun>[] = useMemo(
+    () => [
+      {
+        render: (selectedRows, resetSelection) => {
+          const allFailed = selectedRows.every((row) =>
+            isFailedState(row.status),
+          );
+          const isDisabled =
+            selectedRows.length === 0 || !userHasPermissionToRetryRun;
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild disabled={isDisabled}>
+                  <Button disabled={isDisabled} className="h-9 w-full">
+                    <PlayIcon className="mr-2 h-3 w-4" />
+                    {selectedRows.length > 0
+                      ? `${t('Retry')} (${selectedRows.length})`
+                      : t('Retry')}
+                    <ChevronDown className="h-3 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToRetryRun}
+                  >
+                    <DropdownMenuItem
+                      disabled={!userHasPermissionToRetryRun}
+                      onClick={() => {
+                        replayRun.mutate({
+                          runIds: selectedRows.map((row) => row.id),
+                          strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+                        });
+                        resetSelection();
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex flex-row gap-2 items-center">
+                        <RotateCw className="h-4 w-4" />
+                        <span>{t('on latest version')}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </PermissionNeededTooltip>
+
+                  {selectedRows.some((row) => isFailedState(row.status)) && (
+                    <MessageTooltip
+                      message={t(
+                        'Only failed runs can be retried from failed step',
+                      )}
+                      isDisabled={!allFailed}
+                    >
+                      <DropdownMenuItem
+                        disabled={!userHasPermissionToRetryRun || !allFailed}
+                        onClick={() => {
+                          replayRun.mutate({
+                            runIds: selectedRows.map((row) => row.id),
+                            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+                          });
+                          resetSelection();
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex flex-row gap-2 items-center">
+                          <Redo className="h-4 w-4" />
+                          <span>{t('from failed step')}</span>
+                        </div>
+                      </DropdownMenuItem>
+                    </MessageTooltip>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [replayRun, userHasPermissionToRetryRun, t],
+  );
+
+  const handleRowClick = useCallback(
+    (row: FlowRun, newWindow: boolean) => {
+      if (newWindow) {
+        openNewWindow(`/runs/${row.id}`);
+      } else {
+        navigate(`/runs/${row.id}`);
+      }
+    },
+    [navigate, openNewWindow],
+  );
 
   return (
     <div className="flex-col w-full">
@@ -262,16 +326,11 @@ const FlowRunsPage = () => {
       </div>
       <DataTable
         columns={columns}
-        fetchData={fetchData}
+        page={data}
+        isLoading={isLoading || isFetchingFlows}
         filters={filters}
-        refresh={refresh}
-        onRowClick={(row, newWindow) => {
-          if (newWindow) {
-            openNewWindow(`/runs/${row.id}`);
-          } else {
-            navigate(`/runs/${row.id}`);
-          }
-        }}
+        bulkActions={bulkActions}
+        onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
       />
     </div>
   );

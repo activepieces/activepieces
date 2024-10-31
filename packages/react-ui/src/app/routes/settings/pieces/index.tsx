@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
@@ -6,7 +7,7 @@ import { useState } from 'react';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
@@ -99,31 +100,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   },
 ];
 
-const fetchData = async ({ name }: { name: string }) => {
-  const pieces = await piecesApi.list({
-    searchQuery: name,
-    includeHidden: false,
-  });
-
-  return {
-    data: pieces,
-    next: null,
-    previous: null,
-  };
-};
-
-const filters = [
-  {
-    type: 'input',
-    title: t('Piece Name'),
-    accessorKey: 'name',
-    options: [],
-    icon: CheckIcon,
-  } as const,
-];
 const ProjectPiecesPage = () => {
-  const [refresh, setRefresh] = useState(0);
-
   const { data: installPiecesEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
   );
@@ -131,6 +108,24 @@ const ProjectPiecesPage = () => {
   const { data: managedPiecesEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
   );
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['pieces', searchQuery],
+    gcTime: 0,
+    staleTime: 0,
+    queryFn: async () => {
+      const pieces = await piecesApi.list({
+        includeHidden: false,
+        searchQuery: searchQuery,
+      });
+      return {
+        data: pieces,
+        next: null,
+        previous: null,
+      };
+    },
+  });
 
   return (
     <div className="flex w-full flex-col items-center justify-center gap-4">
@@ -140,7 +135,7 @@ const ProjectPiecesPage = () => {
           <div className="ml-auto">
             {installPiecesEnabled && (
               <InstallPieceDialog
-                onInstallPiece={() => setRefresh(refresh + 1)}
+                onInstallPiece={() => refetch()}
                 scope={PieceScope.PROJECT}
               />
             )}
@@ -148,14 +143,25 @@ const ProjectPiecesPage = () => {
         </div>
         <div className="flex justify-end">
           {managedPiecesEnabled && (
-            <ManagePiecesDialog onSuccess={() => setRefresh(refresh + 1)} />
+            <ManagePiecesDialog onSuccess={() => refetch()} />
           )}
         </div>
         <DataTable
           columns={columns}
-          filters={filters}
-          refresh={refresh}
-          fetchData={(filterParams) => fetchData(filterParams)}
+          filters={[
+            {
+              type: 'input',
+              title: t('Piece Name'),
+              accessorKey: 'name',
+              options: [],
+              icon: CheckIcon,
+              handleFilterChange: (filterValue: string) => {
+                setSearchQuery(filterValue);
+              },
+            } as const,
+          ]}
+          page={data}
+          isLoading={isLoading}
           hidePagination={true}
         />
       </div>

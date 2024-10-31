@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
@@ -10,7 +11,7 @@ import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/pieces/update-
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
@@ -24,7 +25,6 @@ import { PieceScope } from '@activepieces/shared';
 import { TableTitle } from '../../../../components/ui/table-title';
 
 const PlatformPiecesPage = () => {
-  const [refresh, setRefresh] = useState(0);
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.managePiecesEnabled;
 
@@ -133,17 +133,20 @@ const PlatformPiecesPage = () => {
       [],
     );
 
-  const fetchData = async () => {
-    const pieces = await piecesApi.list({
-      includeHidden: true,
-      includeTags: true,
-    });
-    return {
-      data: pieces,
-      next: null,
-      previous: null,
-    };
-  };
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['pieces'],
+    queryFn: async () => {
+      const pieces = await piecesApi.list({
+        includeHidden: true,
+        includeTags: true,
+      });
+      return {
+        data: pieces,
+        next: null,
+        previous: null,
+      };
+    },
+  });
 
   const [selectedPieces, setSelectedPieces] = useState<
     PieceMetadataModelSummary[]
@@ -168,12 +171,12 @@ const PlatformPiecesPage = () => {
                 <ApplyTags
                   selectedPieces={selectedPieces}
                   onApplyTags={() => {
-                    setRefresh(refresh + 1);
+                    refetch();
                   }}
                 ></ApplyTags>
                 <SyncPiecesButton />
                 <InstallPieceDialog
-                  onInstallPiece={() => setRefresh(refresh + 1)}
+                  onInstallPiece={() => refetch()}
                   scope={PieceScope.PLATFORM}
                 />
               </div>
@@ -181,8 +184,8 @@ const PlatformPiecesPage = () => {
           </div>
           <DataTable
             columns={columns}
-            refresh={refresh}
-            fetchData={fetchData}
+            page={data}
+            isLoading={isLoading}
             onSelectedRowsChange={setSelectedPieces}
           />
         </div>

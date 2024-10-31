@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  ColumnDef,
+  ColumnDef as TanstackColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -21,19 +21,20 @@ import {
 } from '@/components/ui/table';
 import { SeekPage } from '@activepieces/shared';
 
-import { Button } from './button';
-import { DataTableColumnHeader } from './data-table-column-header';
-import { DataTableFacetedFilter } from './data-table-options-filter';
-import { DataTableSkeleton } from './data-table-skeleton';
-import { DataTableToolbar } from './data-table-toolbar';
+import { Button } from '../button';
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from './select';
-import { INTERNAL_ERROR_TOAST, toast } from './use-toast';
+} from '../select';
+
+import { DataTableBulkActions } from './data-table-bulk-actions';
+import { DataTableColumnHeader } from './data-table-column-header';
+import { DataTableFacetedFilter } from './data-table-options-filter';
+import { DataTableSkeleton } from './data-table-skeleton';
+import { DataTableToolbar } from './data-table-toolbar';
 
 export type DataWithId = {
   id?: string;
@@ -43,11 +44,8 @@ export type RowDataWithActions<TData extends DataWithId> = TData & {
   update: (payload: Partial<TData>) => void;
 };
 
-type FilterRecord<Keys extends string, F extends DataTableFilter<Keys>> = {
-  [K in F as K['accessorKey']]: K['type'] extends 'select'
-    ? K['options'][number]['value'][]
-    : K['options'][number]['value'];
-};
+export const CURSOR_QUERY_PARAM = 'cursor';
+export const LIMIT_QUERY_PARAM = 'limit';
 
 export type DataTableFilter<Keys extends string> = {
   type: 'select' | 'input' | 'date';
@@ -65,11 +63,9 @@ type DataTableAction<TData extends DataWithId> = (
   row: RowDataWithActions<TData>,
 ) => JSX.Element;
 
-export type PaginationParams = {
-  cursor?: string;
-  limit?: number;
-  createdAfter?: string;
-  createdBefore?: string;
+// Extend the ColumnDef type to include the notClickable property
+type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
+  notClickable?: boolean;
 };
 
 interface DataTableProps<
@@ -79,21 +75,26 @@ interface DataTableProps<
   F extends DataTableFilter<Keys>,
 > {
   columns: ColumnDef<RowDataWithActions<TData>, TValue>[];
-  fetchData: (
-    filters: FilterRecord<Keys, F>,
-    pagination: PaginationParams,
-  ) => Promise<SeekPage<TData>>;
+  page: SeekPage<TData> | undefined;
   onRowClick?: (
     row: RowDataWithActions<TData>,
     newWindow: boolean,
     e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
   ) => void;
+  isLoading: boolean;
   filters?: F[];
-  refresh?: number;
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
   actions?: DataTableAction<TData>[];
   hidePagination?: boolean;
+  bulkActions?: BulkAction<TData>[];
 }
+
+export type BulkAction<TData extends DataWithId> = {
+  render: (
+    selectedRows: RowDataWithActions<TData>[],
+    resetSelection: () => void,
+  ) => React.ReactNode;
+};
 
 export function DataTable<
   TData extends DataWithId,
@@ -102,13 +103,14 @@ export function DataTable<
   F extends DataTableFilter<Keys>,
 >({
   columns: columnsInitial,
-  fetchData,
+  page,
   onRowClick,
   filters = [] as F[],
-  refresh,
   actions = [],
+  isLoading,
   onSelectedRowsChange,
   hidePagination,
+  bulkActions = [],
 }: DataTableProps<TData, TValue, Keys, F>) {
   const columns = columnsInitial.concat([
     {
@@ -139,70 +141,38 @@ export function DataTable<
     startingCursor,
   );
   const [nextPageCursor, setNextPageCursor] = useState<string | undefined>(
-    undefined,
+    page?.next ?? undefined,
   );
   const [previousPageCursor, setPreviousPageCursor] = useState<
     string | undefined
-  >(undefined);
-  const [tableData, setTableData] = useState<RowDataWithActions<TData>[]>([]);
-  const [deletedRows = [], setDeletedRows] = useState<TData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  >(page?.previous ?? undefined);
 
-  const fetchDataAndUpdateState = async (params: URLSearchParams) => {
-    setLoading(true);
-    setTableData([]);
-    try {
-      const limit = params.get('limit') ?? undefined;
-      const filterNames = filters.map((filter) => filter.accessorKey);
-      const paramsObject = filterNames
-        .map((key) => [key, params.getAll(key)] as const)
-        .reduce((acc, [key, values]) => {
-          const value = values.length === 1 ? values?.[0] || undefined : values;
-          if (!value) {
-            return acc;
-          }
-          const filter = filters.find((filter) => filter.accessorKey === key);
-          if (!filter || value.length > 0) {
-            return { ...acc, [key]: value };
-          }
-          if (filter.type === 'select') {
-            return { ...acc, [key]: [] };
-          }
-          return {
-            ...acc,
-            [key]: '',
-          };
-        }, {} as FilterRecord<Keys, F>);
-
-      const response = await fetchData(paramsObject, {
-        cursor: params.get('cursor') ?? undefined,
-        limit: limit ? parseInt(limit) : undefined,
-        createdAfter: params.get('createdAfter') ?? undefined,
-        createdBefore: params.get('createdBefore') ?? undefined,
-      });
-      const newData = response.data.map((row, index) => ({
-        ...row,
-        delete: () => {
-          setDeletedRows([...deletedRows, row]);
-        },
-        update: (payload: Partial<TData>) => {
-          setTableData((prevData) => {
-            const newData = [...prevData];
-            newData[index] = { ...newData[index], ...payload };
-            return newData;
-          });
-        },
-      }));
-      setTableData(newData);
-      setNextPageCursor(response.next ?? undefined);
-      setPreviousPageCursor(response.previous ?? undefined);
-    } catch (error) {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
-    } finally {
-      setLoading(false);
-    }
+  const enrichPageData = (data: TData[]) => {
+    return data.map((row, index) => ({
+      ...row,
+      delete: () => {
+        setDeletedRows((prevDeletedRows) => [...prevDeletedRows, row]);
+      },
+      update: (payload: Partial<TData>) => {
+        setTableData((prevData) => {
+          const newData = [...prevData];
+          newData[index] = { ...newData[index], ...payload };
+          return newData;
+        });
+      },
+    }));
   };
+
+  const [deletedRows, setDeletedRows] = useState<TData[]>([]);
+  const [tableData, setTableData] = useState<RowDataWithActions<TData>[]>(
+    enrichPageData(page?.data ?? []),
+  );
+
+  useDeepCompareEffect(() => {
+    setNextPageCursor(page?.next ?? undefined);
+    setPreviousPageCursor(page?.previous ?? undefined);
+    setTableData(enrichPageData(page?.data ?? []));
+  }, [page?.data]);
 
   const table = useReactTable({
     data: tableData,
@@ -246,10 +216,6 @@ export function DataTable<
   }, [currentCursor, table.getState().pagination.pageSize]);
 
   useEffect(() => {
-    fetchDataAndUpdateState(searchParams);
-  }, [searchParams, refresh]);
-
-  useEffect(() => {
     setTableData(
       tableData.filter(
         (row) => !deletedRows.some((deletedRow) => deletedRow.id === row.id),
@@ -257,21 +223,41 @@ export function DataTable<
     );
   }, [deletedRows]);
 
+  const resetSelection = () => {
+    table.toggleAllRowsSelected(false);
+  };
+
   return (
     <div>
       <DataTableToolbar>
-        {filters &&
-          filters.map((filter) => (
-            <DataTableFacetedFilter
-              key={filter.accessorKey}
-              type={filter.type}
-              column={table.getColumn(filter.accessorKey)}
-              title={filter.title}
-              options={filter.options}
+        <div className="w-full flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {filters &&
+              filters.map((filter) => (
+                <DataTableFacetedFilter
+                  key={filter.accessorKey}
+                  type={filter.type}
+                  column={table.getColumn(filter.accessorKey)}
+                  title={filter.title}
+                  options={filter.options}
+                />
+              ))}
+          </div>
+          {bulkActions.length > 0 && (
+            <DataTableBulkActions
+              selectedRows={table
+                .getSelectedRowModel()
+                .rows.map((row) => row.original)}
+              actions={bulkActions.map((action) => ({
+                render: (selectedRows: RowDataWithActions<TData>[]) =>
+                  action.render(selectedRows, resetSelection),
+              }))}
             />
-          ))}
+          )}
+        </div>
       </DataTableToolbar>
-      <div className="rounded-md border">
+
+      <div className="rounded-md border m-">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -292,7 +278,7 @@ export function DataTable<
             ))}
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {isLoading ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
@@ -304,8 +290,33 @@ export function DataTable<
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  onClick={(e) => onRowClick?.(row.original, e.ctrlKey, e)}
-                  onAuxClick={(e) => onRowClick?.(row.original, true, e)}
+                  onClick={(e) => {
+                    // Check if the clicked cell is not clickable
+                    const clickedCellIndex = (e.target as HTMLElement).closest(
+                      'td',
+                    )?.cellIndex;
+                    if (
+                      clickedCellIndex !== undefined &&
+                      (columnsInitial[clickedCellIndex]?.notClickable ||
+                        columnsInitial[clickedCellIndex]?.id === 'select')
+                    ) {
+                      return; // Don't trigger onRowClick for not clickable columns
+                    }
+                    onRowClick?.(row.original, e.ctrlKey, e);
+                  }}
+                  onAuxClick={(e) => {
+                    // Similar check for auxiliary click (e.g., middle mouse button)
+                    const clickedCellIndex = (e.target as HTMLElement).closest(
+                      'td',
+                    )?.cellIndex;
+                    if (
+                      clickedCellIndex !== undefined &&
+                      columnsInitial[clickedCellIndex]?.notClickable
+                    ) {
+                      return;
+                    }
+                    onRowClick?.(row.original, true, e);
+                  }}
                   key={row.id}
                   className={onRowClick ? 'cursor-pointer' : ''}
                   data-state={row.getIsSelected() && 'selected'}
