@@ -17,6 +17,7 @@ import { ApFlagId, isNil, PieceScope, PieceType } from '@activepieces/shared';
 import { TableTitle } from '../../../../components/ui/table-title';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
+import { useQuery } from '@tanstack/react-query';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -99,30 +100,7 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   },
 ];
 
-const fetchData = async ({ name }: { name: string }) => {
-  const pieces = await piecesApi.list({
-    searchQuery: name,
-    includeHidden: false,
-  });
-
-  return {
-    data: pieces,
-    next: null,
-    previous: null,
-  };
-};
-
-const filters = [
-  {
-    type: 'input',
-    title: t('Piece Name'),
-    accessorKey: 'name',
-    options: [],
-    icon: CheckIcon,
-  } as const,
-];
 const ProjectPiecesPage = () => {
-  const [refresh, setRefresh] = useState(0);
 
   const { data: installPiecesEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
@@ -132,6 +110,21 @@ const ProjectPiecesPage = () => {
     ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
   );
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['pieces', searchQuery],
+    gcTime: 0,
+    staleTime: 0,
+    queryFn: async () => {
+      const pieces = await piecesApi.list({ includeHidden: false, searchQuery: searchQuery });
+      return {
+        data: pieces,
+        next: null,
+        previous: null,
+      };
+    },
+  });
+
   return (
     <div className="flex w-full flex-col items-center justify-center gap-4">
       <div className="mx-auto w-full flex-col">
@@ -140,7 +133,7 @@ const ProjectPiecesPage = () => {
           <div className="ml-auto">
             {installPiecesEnabled && (
               <InstallPieceDialog
-                onInstallPiece={() => setRefresh(refresh + 1)}
+                onInstallPiece={() => refetch()}
                 scope={PieceScope.PROJECT}
               />
             )}
@@ -148,14 +141,25 @@ const ProjectPiecesPage = () => {
         </div>
         <div className="flex justify-end">
           {managedPiecesEnabled && (
-            <ManagePiecesDialog onSuccess={() => setRefresh(refresh + 1)} />
+            <ManagePiecesDialog onSuccess={() => refetch()} />
           )}
         </div>
         <DataTable
           columns={columns}
-          filters={filters}
-          refresh={refresh}
-          fetchData={(filterParams) => fetchData(filterParams)}
+          filters={[
+            {
+              type: 'input',
+              title: t('Piece Name'),
+              accessorKey: 'name',
+              options: [],
+              icon: CheckIcon,
+              handleFilterChange: (filterValue: string) => {
+                setSearchQuery(filterValue);
+              },
+            } as const,
+          ]}
+          page={data}
+          isLoading={isLoading}
           hidePagination={true}
         />
       </div>

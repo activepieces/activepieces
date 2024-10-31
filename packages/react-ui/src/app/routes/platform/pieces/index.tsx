@@ -22,9 +22,9 @@ import {
 import { PieceScope } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/ui/table-title';
+import { useQuery } from '@tanstack/react-query';
 
 const PlatformPiecesPage = () => {
-  const [refresh, setRefresh] = useState(0);
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.managePiecesEnabled;
 
@@ -133,21 +133,22 @@ const PlatformPiecesPage = () => {
       [],
     );
 
-  const fetchData = async () => {
-    const pieces = await piecesApi.list({
-      includeHidden: true,
-      includeTags: true,
-    });
-    return {
-      data: pieces,
-      next: null,
-      previous: null,
-    };
-  };
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['pieces'],
+    queryFn: async () => {
+      const pieces = await piecesApi.list({
+        includeHidden: true,
+        includeTags: true,
+      });
+      return {
+        data: pieces,
+        next: null,
+        previous: null,
+      };
+    },
+  });
 
-  const [selectedPieces, setSelectedPieces] = useState<
-    PieceMetadataModelSummary[]
-  >([]);
+  const [selectedPieces, setSelectedPieces] = useState<PieceMetadataModelSummary[]>([]);
 
   return (
     <LockedFeatureGuard
@@ -168,12 +169,12 @@ const PlatformPiecesPage = () => {
                 <ApplyTags
                   selectedPieces={selectedPieces}
                   onApplyTags={() => {
-                    setRefresh(refresh + 1);
+                    refetch();
                   }}
                 ></ApplyTags>
                 <SyncPiecesButton />
                 <InstallPieceDialog
-                  onInstallPiece={() => setRefresh(refresh + 1)}
+                  onInstallPiece={() => refetch()}
                   scope={PieceScope.PLATFORM}
                 />
               </div>
@@ -181,8 +182,8 @@ const PlatformPiecesPage = () => {
           </div>
           <DataTable
             columns={columns}
-            refresh={refresh}
-            fetchData={fetchData}
+            page={data}
+            isLoading={isLoading}
             onSelectedRowsChange={setSelectedPieces}
           />
         </div>

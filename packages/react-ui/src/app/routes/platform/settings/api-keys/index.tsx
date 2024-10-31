@@ -1,15 +1,12 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Plus, Trash } from 'lucide-react';
-import { useState } from 'react';
-
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewApiKeyDialog } from '@/app/routes/platform/settings/api-keys/new-api-key-dialog';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
-  PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -17,17 +14,18 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { apiKeyApi } from '@/features/platform-admin-panel/lib/api-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
-
-const fetchData = async (
-  _params: Record<string, string>,
-  _pagination: PaginationParams,
-) => {
-  return apiKeyApi.list();
-};
+import { ApiKeyResponseWithoutValue } from '../../../../../../../ee/shared/src';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 
 const ApiKeysPage = () => {
-  const [refresh, setRefresh] = useState(0);
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['api-keys'],
+    gcTime: 0,
+    staleTime: 0,
+    queryFn: () => apiKeyApi.list(),
+  });
 
   const columns: ColumnDef<RowDataWithActions<ApiKeyResponseWithoutValue>>[] = [
     {
@@ -78,7 +76,7 @@ const ApiKeysPage = () => {
         <div className="mb-4 flex">
           <div className="flex items-center justify-between flex-row w-full">
             <span className="text-2xl font-bold w-full">{t('API Keys')}</span>
-            <NewApiKeyDialog onCreate={() => setRefresh(refresh + 1)}>
+            <NewApiKeyDialog onCreate={() => queryClient.invalidateQueries({ queryKey: ['api-keys'] })}>
               <Button
                 size="sm"
                 className="flex items-center justify-center gap-2"
@@ -90,9 +88,9 @@ const ApiKeysPage = () => {
           </div>
         </div>
         <DataTable
+          page={data}
+          isLoading={isLoading}
           columns={columns}
-          refresh={refresh}
-          fetchData={fetchData}
           actions={[
             (row) => {
               return (
@@ -102,12 +100,10 @@ const ApiKeysPage = () => {
                     message={t('Are you sure you want to delete this API key?')}
                     entityName={t('API Key')}
                     mutationFn={async () => {
-                      console.log('HELLO');
                       await apiKeyApi.delete(row.id);
-                      setRefresh(refresh + 1);
+                      refetch();
                     }}
-                    onError={(error) => {
-                      console.error(error);
+                    onError={() => {
                       toast(INTERNAL_ERROR_TOAST);
                     }}
                   >

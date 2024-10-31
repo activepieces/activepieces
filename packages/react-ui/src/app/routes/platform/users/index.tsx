@@ -1,7 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash } from 'lucide-react';
-import { useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -17,19 +16,20 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
 import { UserStatus } from '@activepieces/shared';
-
 import { TableTitle } from '../../../../components/ui/table-title';
-
 import { UpdateUserRoleDialog } from './update-role-dialog';
 
 export default function UsersPage() {
-  const [refreshCount, setRefreshCount] = useState(0);
-
+  
   const { toast } = useToast();
 
-  const refreshData = () => {
-    setRefreshCount((prev) => prev + 1);
-  };
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => {
+      return platformUserApi.list();
+    },
+  });
+
 
   const { mutate: deleteUser, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-user'],
@@ -37,7 +37,7 @@ export default function UsersPage() {
       await platformUserApi.delete(userId);
     },
     onSuccess: () => {
-      refreshData();
+      refetch();
       toast({
         title: t('Success'),
         description: t('User deleted successfully'),
@@ -61,7 +61,7 @@ export default function UsersPage() {
         };
       },
       onSuccess: (data) => {
-        refreshData();
+        refetch();
         toast({
           title: t('Success'),
           description:
@@ -160,8 +160,9 @@ export default function UsersPage() {
               },
             },
           ]}
-          fetchData={() => platformUserApi.list()}
-          refresh={refreshCount}
+          page={data}
+          hidePagination={true}
+          isLoading={isLoading}
           actions={[
             (row) => {
               return (
@@ -171,7 +172,7 @@ export default function UsersPage() {
                       <UpdateUserRoleDialog
                         userId={row.id}
                         role={row.platformRole}
-                        onUpdate={() => refreshData()}
+                        onUpdate={() => refetch()}
                       >
                         <Button variant="ghost" className="size-8 p-0">
                           <Pencil className="size-4" />

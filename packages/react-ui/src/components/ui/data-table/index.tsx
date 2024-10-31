@@ -11,7 +11,6 @@ import { t } from 'i18next';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
-
 import { Button } from '../button';
 import {
   Select,
@@ -20,7 +19,6 @@ import {
   SelectContent,
   SelectItem,
 } from '../select';
-
 import { DataTableBulkActions } from './data-table-bulk-actions';
 import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFacetedFilter } from './data-table-options-filter';
@@ -295,13 +293,6 @@ export function DataTable<
                     const clickedCellIndex = (e.target as HTMLElement).closest(
                       'td',
                     )?.cellIndex;
-                    console.log('row', row);
-                    console.log('clickedCellIndex', clickedCellIndex);
-                    console.log('columnsInitial', columnsInitial);
-                    console.log(
-                      'not clickable',
-                      columnsInitial[clickedCellIndex]?.notClickable,
-                    );
                     if (
                       clickedCellIndex !== undefined &&
                       (columnsInitial[clickedCellIndex]?.notClickable ||

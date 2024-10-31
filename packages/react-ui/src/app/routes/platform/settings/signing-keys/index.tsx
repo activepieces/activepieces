@@ -1,17 +1,14 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Plus, Trash } from 'lucide-react';
-import { useState } from 'react';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
-
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewSigningKeyDialog } from '@/app/routes/platform/settings/signing-keys/new-signing-key-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
   DataTable,
-  PaginationParams,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -20,16 +17,14 @@ import { signingKeyApi } from '@/features/platform-admin-panel/lib/signing-key-a
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { SigningKey } from '@activepieces/ee-shared';
-
-const fetchData = async (
-  _params: Record<string, string>,
-  _pagination: PaginationParams,
-) => {
-  return signingKeyApi.list();
-};
+import { useQuery } from '@tanstack/react-query';
 
 const SigningKeysPage = () => {
-  const [refresh, setRefresh] = useState(0);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['signing-keys'],
+    queryFn: () => signingKeyApi.list(),
+  });
 
   const columns: ColumnDef<RowDataWithActions<SigningKey>>[] = [
     {
@@ -97,7 +92,7 @@ const SigningKeysPage = () => {
                 <div></div>
               </div>
             </div>
-            <NewSigningKeyDialog onCreate={() => setRefresh(refresh + 1)}>
+            <NewSigningKeyDialog onCreate={() => refetch()}>
               <Button
                 size="sm"
                 className="flex items-center justify-center gap-2"
@@ -110,8 +105,8 @@ const SigningKeysPage = () => {
         </div>
         <DataTable
           columns={columns}
-          refresh={refresh}
-          fetchData={fetchData}
+          page={data}
+          isLoading={isLoading}
           actions={[
             (row) => (
               <div className="flex items-end justify-end">
@@ -123,7 +118,6 @@ const SigningKeysPage = () => {
                   entityName={t('Signing Key')}
                   mutationFn={async () => {
                     await signingKeyApi.delete(row.id);
-                    setRefresh(refresh + 1);
                   }}
                   onError={(error) => {
                     console.error(error);
