@@ -88,12 +88,15 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         return flowRun
     })
 
-    app.post('/bulk-retry', BulkRetryFlowRequest, async (req) => {
+    app.post('/retry', BulkRetryFlowRequest, async (req) => {
         return flowRunService.bulkRetry({
             projectId: req.principal.projectId,
             flowRunIds: req.body.flowRunIds,
             strategy: req.body.strategy,
-            filters: req.body.filters,
+            status: req.body.status,
+            flowId: req.body.flowId,
+            createdAfter: req.body.createdAfter,
+            createdBefore: req.body.createdBefore,
         })
     })
 

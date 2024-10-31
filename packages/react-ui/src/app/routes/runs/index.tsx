@@ -211,12 +211,10 @@ const FlowRunsPage = () => {
         projectId: authenticationSession.getProjectId()!,
         flowRunIds: retryParams.runIds,
         strategy: retryParams.strategy,
-        filters: {
-          status,
-          flowId,
-          createdAfter,
-          createdBefore,
-        },
+        status,
+        flowId,
+        createdAfter,
+        createdBefore,
       });
     },
     onSuccess: () => {

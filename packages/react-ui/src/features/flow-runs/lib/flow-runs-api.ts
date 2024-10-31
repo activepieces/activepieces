@@ -24,7 +24,7 @@ export const flowRunsApi = {
     return api.get<FlowRun>(`/v1/flow-runs/${id}`);
   },
   bulkRetry(request: BulkRetryFlowRequestBody): Promise<FlowRun[]> {
-    return api.post<FlowRun[]>('/v1/flow-runs/bulk-retry', request);
+    return api.post<FlowRun[]>('/v1/flow-runs/retry', request);
   },
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);

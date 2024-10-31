@@ -187,8 +187,8 @@ export const flowRunService = {
             }
         }
     },
-    async bulkRetry({ projectId, flowRunIds, strategy, filters }: BulkRetryParams): Promise<(FlowRun | null)[]> {
-        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, filters)
+    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore }: BulkRetryParams): Promise<(FlowRun | null)[]> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore)
         return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
     },
     async addToQueue({
@@ -393,7 +393,10 @@ export const flowRunService = {
 async function filterFlowRunsAndApplyFilters(
     projectId: ProjectId,
     flowRunIds?: FlowRunId[],
-    filters?: BulkRetryParams['filters'],
+    status?: FlowRunStatus[],
+    flowId?: FlowId[],
+    createdAfter?: string,
+    createdBefore?: string,
 ): Promise<FlowRunId[]> {
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId,
@@ -405,24 +408,24 @@ async function filterFlowRunsAndApplyFilters(
             id: In(flowRunIds),
         })
     }
-    if (filters?.flowId && filters.flowId.length > 0) {
+    if (flowId && flowId.length > 0) {
         query = query.andWhere({
-            flowId: In(filters.flowId),
+            flowId: In(flowId),
         })
     }
-    if (filters?.status && filters.status.length > 0) {
+    if (status && status.length > 0) {
         query = query.andWhere({
-            status: In(filters.status),
+            status: In(status),
         })
     }
-    if (filters?.createdAfter) {
+    if (createdAfter) {
         query = query.andWhere('flow_run.created >= :createdAfter', {
-            createdAfter: filters.createdAfter,
+            createdAfter,
         })
     }
-    if (filters?.createdBefore) {
+    if (createdBefore) {
         query = query.andWhere('flow_run.created <= :createdBefore', {
-            createdBefore: filters.createdBefore,
+            createdBefore,
         })
     }
 
@@ -530,10 +533,8 @@ type BulkRetryParams = {
     projectId: ProjectId
     flowRunIds?: FlowRunId[]
     strategy: FlowRetryStrategy
-    filters?: {
-        status?: FlowRunStatus[]
-        flowId?: FlowId[]
-        createdAfter?: string
-        createdBefore?: string
-    }
+    status?: FlowRunStatus[]
+    flowId?: FlowId[]
+    createdAfter?: string
+    createdBefore?: string
 }
