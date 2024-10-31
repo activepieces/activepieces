@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
@@ -22,7 +23,6 @@ import {
 import { PieceScope } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/ui/table-title';
-import { useQuery } from '@tanstack/react-query';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -148,7 +148,9 @@ const PlatformPiecesPage = () => {
     },
   });
 
-  const [selectedPieces, setSelectedPieces] = useState<PieceMetadataModelSummary[]>([]);
+  const [selectedPieces, setSelectedPieces] = useState<
+    PieceMetadataModelSummary[]
+  >([]);
 
   return (
     <LockedFeatureGuard

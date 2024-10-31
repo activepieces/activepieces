@@ -1,16 +1,10 @@
-import {
-  AppConnectionStatus,
-  AppConnectionWithoutSensitiveData,
-  Permission,
-} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { TableTitle } from '../../components/ui/table-title';
-import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
-import { NewConnectionDialog } from './new-connection-dialog';
+
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -31,7 +25,16 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import {
+  AppConnectionStatus,
+  AppConnectionWithoutSensitiveData,
+  Permission,
+} from '@activepieces/shared';
+
+import { TableTitle } from '../../components/ui/table-title';
+import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
+
+import { NewConnectionDialog } from './new-connection-dialog';
 
 type PieceIconWithPieceNameProps = {
   pieceName: string;
@@ -53,8 +56,10 @@ const PieceIconWithPieceName = ({ pieceName }: PieceIconWithPieceNameProps) => {
   );
 };
 
-
-const columns: ColumnDef<RowDataWithActions<AppConnectionWithoutSensitiveData>, unknown>[] = [
+const columns: ColumnDef<
+  RowDataWithActions<AppConnectionWithoutSensitiveData>,
+  unknown
+>[] = [
   {
     id: 'select',
     header: ({ table }) => (
@@ -102,8 +107,7 @@ const columns: ColumnDef<RowDataWithActions<AppConnectionWithoutSensitiveData>, 
     ),
     cell: ({ row }) => {
       const status = row.original.status;
-      const { variant, icon: Icon } =
-        appConnectionUtils.getStatusIcon(status);
+      const { variant, icon: Icon } = appConnectionUtils.getStatusIcon(status);
       return (
         <div className="text-left">
           <StatusIconWithText
@@ -210,7 +214,7 @@ function AppConnectionsTable() {
       await Promise.all(ids.map((id) => appConnectionsApi.delete(id)));
     },
     onSuccess: () => {
-      refetch(); 
+      refetch();
     },
     onError: () => {
       toast({
@@ -263,31 +267,27 @@ function AppConnectionsTable() {
           return (
             <PermissionNeededTooltip
               hasPermission={userHasPermissionToWriteAppConnection}
-          >
-            <NewConnectionDialog
-              onConnectionCreated={() => {
-                setRefresh(refresh + 1);
-                refetch();
-              }}
             >
-              <Button
-                variant="default"
-                size="sm"
-                disabled={!userHasPermissionToWriteAppConnection}
+              <NewConnectionDialog
+                onConnectionCreated={() => {
+                  setRefresh(refresh + 1);
+                  refetch();
+                }}
               >
-                {t('New Connection')}
-              </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  disabled={!userHasPermissionToWriteAppConnection}
+                >
+                  {t('New Connection')}
+                </Button>
               </NewConnectionDialog>
             </PermissionNeededTooltip>
           );
         },
       },
     ],
-    [
-      bulkDeleteMutation,
-      userHasPermissionToWriteAppConnection,
-      isDialogOpen,
-    ],
+    [bulkDeleteMutation, userHasPermissionToWriteAppConnection, isDialogOpen],
   );
   return (
     <div className="flex-col w-full">

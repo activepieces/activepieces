@@ -16,11 +16,12 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
 import { UserStatus } from '@activepieces/shared';
+
 import { TableTitle } from '../../../../components/ui/table-title';
+
 import { UpdateUserRoleDialog } from './update-role-dialog';
 
 export default function UsersPage() {
-  
   const { toast } = useToast();
 
   const { data, isLoading, refetch } = useQuery({
@@ -29,7 +30,6 @@ export default function UsersPage() {
       return platformUserApi.list();
     },
   });
-
 
   const { mutate: deleteUser, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-user'],

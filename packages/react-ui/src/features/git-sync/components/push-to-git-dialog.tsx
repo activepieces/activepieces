@@ -1,17 +1,8 @@
-import {
-  GitBranchType,
-  GitPushOperationType,
-  PushGitRepoRequest,
-} from '@activepieces/ee-shared';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-
-import { gitSyncApi } from '../lib/git-sync-api';
-import { gitSyncHooks } from '../lib/git-sync-hooks';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +25,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import {
+  GitBranchType,
+  GitPushOperationType,
+  PushGitRepoRequest,
+} from '@activepieces/ee-shared';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
+
+import { gitSyncApi } from '../lib/git-sync-api';
+import { gitSyncHooks } from '../lib/git-sync-hooks';
 
 type PushToGitDialogProps = {
   flowIds: string[];

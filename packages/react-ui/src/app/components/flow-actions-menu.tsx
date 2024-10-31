@@ -1,10 +1,3 @@
-import { GitBranchType } from '@activepieces/ee-shared';
-import {
-  Flow,
-  FlowOperationType,
-  FlowVersion,
-  Permission,
-} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -18,12 +11,6 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import React from 'react';
-
-import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
-import { RenameFlowDialog } from '../../features/flows/components/rename-flow-dialog';
-import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
-import { flowsApi } from '../../features/flows/lib/flows-api';
-import { flowsUtils } from '../../features/flows/lib/flows-utils';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding, useNewWindow } from '@/components/embed-provider';
@@ -45,6 +32,19 @@ import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { GitBranchType } from '@activepieces/ee-shared';
+import {
+  Flow,
+  FlowOperationType,
+  FlowVersion,
+  Permission,
+} from '@activepieces/shared';
+
+import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
+import { RenameFlowDialog } from '../../features/flows/components/rename-flow-dialog';
+import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
+import { flowsApi } from '../../features/flows/lib/flows-api';
+import { flowsUtils } from '../../features/flows/lib/flows-utils';
 
 interface FlowActionMenuProps {
   flow: Flow;

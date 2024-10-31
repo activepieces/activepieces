@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
@@ -17,7 +18,6 @@ import { ApFlagId, isNil, PieceScope, PieceType } from '@activepieces/shared';
 import { TableTitle } from '../../../../components/ui/table-title';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
-import { useQuery } from '@tanstack/react-query';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -101,7 +101,6 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
 ];
 
 const ProjectPiecesPage = () => {
-
   const { data: installPiecesEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
   );
@@ -116,7 +115,10 @@ const ProjectPiecesPage = () => {
     gcTime: 0,
     staleTime: 0,
     queryFn: async () => {
-      const pieces = await piecesApi.list({ includeHidden: false, searchQuery: searchQuery });
+      const pieces = await piecesApi.list({
+        includeHidden: false,
+        searchQuery: searchQuery,
+      });
       return {
         data: pieces,
         next: null,

@@ -1,10 +1,14 @@
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Folder, Key, Link2, Logs, Users, Workflow } from 'lucide-react';
-import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { CURSOR_QUERY_PARAM, DataTable, LIMIT_QUERY_PARAM } from '@/components/ui/data-table';
+import {
+  CURSOR_QUERY_PARAM,
+  DataTable,
+  LIMIT_QUERY_PARAM,
+} from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Tooltip,
@@ -22,7 +26,6 @@ import {
 import { isNil } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/ui/table-title';
-import { useQuery } from '@tanstack/react-query';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -35,7 +38,7 @@ export default function AuditLogsPage() {
     queryFn: async () => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM);
-    
+
       return auditEventsApi.list({
         cursor: cursor ?? undefined,
         limit: limit ? parseInt(limit) : undefined,

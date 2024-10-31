@@ -1,16 +1,9 @@
-import { PopulatedIssue } from '@activepieces/ee-shared';
-import { FlowRunStatus, Permission } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { useMemo } from 'react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
-
-import { useNewWindow } from '../../../components/embed-provider';
-import { TableTitle } from '../../../components/ui/table-title';
-import { issuesApi } from '../api/issues-api';
-import { issueHooks } from '../hooks/issue-hooks';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,6 +20,13 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
+import { PopulatedIssue } from '@activepieces/ee-shared';
+import { FlowRunStatus, Permission } from '@activepieces/shared';
+
+import { useNewWindow } from '../../../components/embed-provider';
+import { TableTitle } from '../../../components/ui/table-title';
+import { issuesApi } from '../api/issues-api';
+import { issueHooks } from '../hooks/issue-hooks';
 
 export default function IssuesTable() {
   const navigate = useNavigate();

@@ -3,10 +3,16 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Pencil, Plus, Trash } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { CURSOR_QUERY_PARAM, DataTable, LIMIT_QUERY_PARAM, RowDataWithActions } from '@/components/ui/data-table';
+import {
+  CURSOR_QUERY_PARAM,
+  DataTable,
+  LIMIT_QUERY_PARAM,
+  RowDataWithActions,
+} from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Tooltip,
@@ -19,7 +25,9 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import { ProjectWithLimits } from '@activepieces/shared';
+
 import { TableTitle } from '../../../../components/ui/table-title';
+
 import { NewProjectDialog } from './new-project-dialog';
 
 const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
@@ -134,16 +142,12 @@ export default function ProjectsPage() {
     },
   });
 
-  const errorToastMessage = (
-    error: unknown,
-  ): string | undefined => {
+  const errorToastMessage = (error: unknown): string | undefined => {
     if (validationUtils.isValidationError(error)) {
       console.error(t('Validation error'), error);
       switch (error.response?.data?.params?.message) {
         case 'PROJECT_HAS_ENABLED_FLOWS':
-          return t(
-            'Project has enabled flows. Please disable them first.',
-          );
+          return t('Project has enabled flows. Please disable them first.');
         case 'ACTIVE_PROJECT':
           return t(
             'This project is active. Please switch to another project first.',
@@ -167,7 +171,10 @@ export default function ProjectsPage() {
         <div className="flex items-center justify-between flex-row">
           <TableTitle>{t('Projects')}</TableTitle>
           <NewProjectDialog onCreate={() => refetch()}>
-            <Button size="sm" className="flex items-center justify-center gap-2">
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-2"
+            >
               <Plus className="size-4" />
               {t('New Project')}
             </Button>

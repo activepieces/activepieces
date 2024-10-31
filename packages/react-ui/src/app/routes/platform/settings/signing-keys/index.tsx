@@ -1,26 +1,23 @@
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Plus, Trash } from 'lucide-react';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
+
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewSigningKeyDialog } from '@/app/routes/platform/settings/signing-keys/new-signing-key-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import {
-  DataTable,
-  RowDataWithActions,
-} from '@/components/ui/data-table';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { signingKeyApi } from '@/features/platform-admin-panel/lib/signing-key-api'; // Update to the correct API endpoint
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { SigningKey } from '@activepieces/ee-shared';
-import { useQuery } from '@tanstack/react-query';
 
 const SigningKeysPage = () => {
-
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['signing-keys'],
     queryFn: () => signingKeyApi.list(),

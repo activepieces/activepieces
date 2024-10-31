@@ -1,12 +1,12 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Pencil, Plus, Trash } from 'lucide-react';
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { CURSOR_QUERY_PARAM, DataTable, LIMIT_QUERY_PARAM } from '@/components/ui/data-table';
+import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Tooltip,
@@ -22,7 +22,6 @@ import { formatUtils } from '@/lib/utils';
 import { TableTitle } from '../../../../components/ui/table-title';
 
 import { UpsertTemplateDialog } from './upsert-template-dialog';
-import { useSearchParams } from 'react-router-dom';
 
 export default function TemplatesPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -116,7 +115,6 @@ export default function TemplatesPage() {
               },
             },
           ]}
-
           page={data}
           hidePagination={true}
           isLoading={isLoading}

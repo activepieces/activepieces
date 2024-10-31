@@ -1,21 +1,19 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Plus, Trash } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { NewApiKeyDialog } from '@/app/routes/platform/settings/api-keys/new-api-key-dialog';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import {
-  DataTable,
-  RowDataWithActions,
-} from '@/components/ui/data-table';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { apiKeyApi } from '@/features/platform-admin-panel/lib/api-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ApiKeyResponseWithoutValue } from '../../../../../../../ee/shared/src';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
 
 const ApiKeysPage = () => {
   const queryClient = useQueryClient();
@@ -76,7 +74,11 @@ const ApiKeysPage = () => {
         <div className="mb-4 flex">
           <div className="flex items-center justify-between flex-row w-full">
             <span className="text-2xl font-bold w-full">{t('API Keys')}</span>
-            <NewApiKeyDialog onCreate={() => queryClient.invalidateQueries({ queryKey: ['api-keys'] })}>
+            <NewApiKeyDialog
+              onCreate={() =>
+                queryClient.invalidateQueries({ queryKey: ['api-keys'] })
+              }
+            >
               <Button
                 size="sm"
                 className="flex items-center justify-center gap-2"
