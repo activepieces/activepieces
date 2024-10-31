@@ -1,9 +1,17 @@
+import {
+  Flow,
+  FlowOperationType,
+  FlowVersion,
+  PopulatedFlow,
+} from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+
+import { flowsApi } from '../lib/flows-api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,14 +33,6 @@ import {
 } from '@/components/ui/select';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import {
-  Flow,
-  FlowOperationType,
-  FlowVersion,
-  PopulatedFlow,
-} from '@activepieces/shared';
-
-import { flowsApi } from '../lib/flows-api';
 
 const MoveFlowFormSchema = Type.Object({
   folder: Type.String({
@@ -44,16 +44,11 @@ type MoveFlowFormSchema = Static<typeof MoveFlowFormSchema>;
 
 type MoveFlowDialogProps = {
   children: React.ReactNode;
-  flow: Flow;
-  flowVersion: FlowVersion;
+  flows: Flow[];
   onMoveTo: (folderId: string) => void;
 };
-const MoveFlowDialog = ({
-  children,
-  flow,
-  flowVersion,
-  onMoveTo,
-}: MoveFlowDialogProps) => {
+
+const MoveFlowDialog = ({ children, flows, onMoveTo }: MoveFlowDialogProps) => {
   const form = useForm<MoveFlowFormSchema>({
     resolver: typeboxResolver(MoveFlowFormSchema),
   });
@@ -61,23 +56,26 @@ const MoveFlowDialog = ({
   const { folders, isLoading } = foldersHooks.useFolders();
   const [isDialogOpened, setIsDialogOpened] = useState(false);
   const { mutate, isPending } = useMutation<
-    PopulatedFlow,
+    PopulatedFlow[],
     Error,
     MoveFlowFormSchema
   >({
     mutationFn: async (data) => {
-      return await flowsApi.update(flow.id, {
-        type: FlowOperationType.CHANGE_FOLDER,
-        request: {
-          folderId: data.folder,
-        },
-      });
+      const updatePromises = flows.map((flow) =>
+        flowsApi.update(flow.id, {
+          type: FlowOperationType.CHANGE_FOLDER,
+          request: {
+            folderId: data.folder,
+          },
+        }),
+      );
+      return await Promise.all(updatePromises);
     },
     onSuccess: () => {
       onMoveTo(form.getValues().folder);
       setIsDialogOpened(false);
       toast({
-        title: t('Moved flow successfully'),
+        title: t('Moved flows successfully'),
       });
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
@@ -88,9 +86,7 @@ const MoveFlowDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {t('Move')} {flowVersion.displayName}
-          </DialogTitle>
+          <DialogTitle>{t('Move Selected Flows')}</DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
@@ -141,4 +137,5 @@ const MoveFlowDialog = ({
     </Dialog>
   );
 };
+
 export { MoveFlowDialog };

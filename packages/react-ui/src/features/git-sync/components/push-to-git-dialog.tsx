@@ -1,8 +1,17 @@
+import {
+  GitBranchType,
+  GitPushOperationType,
+  PushGitRepoRequest,
+} from '@activepieces/ee-shared';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+
+import { gitSyncApi } from '../lib/git-sync-api';
+import { gitSyncHooks } from '../lib/git-sync-hooks';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,22 +34,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  GitBranchType,
-  GitPushOperationType,
-  PushGitRepoRequest,
-} from '@activepieces/ee-shared';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
-
-import { gitSyncApi } from '../lib/git-sync-api';
-import { gitSyncHooks } from '../lib/git-sync-hooks';
 
 type PushToGitDialogProps = {
-  flowId: string;
+  flowIds: string[];
   children?: React.ReactNode;
 };
 
-const PushToGitDialog = ({ children, flowId }: PushToGitDialogProps) => {
+const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
   const [open, setOpen] = React.useState(false);
 
   const { platform } = platformHooks.useCurrentPlatform();
@@ -48,19 +48,24 @@ const PushToGitDialog = ({ children, flowId }: PushToGitDialogProps) => {
     authenticationSession.getProjectId(),
     platform.gitSyncEnabled,
   );
+
   const form = useForm<PushGitRepoRequest>({
     defaultValues: {
       type: GitPushOperationType.PUSH_FLOW,
       commitMessage: '',
-      flowId,
+      flowId: '',
     },
     resolver: typeboxResolver(PushGitRepoRequest),
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (request: PushGitRepoRequest) => {
+    mutationFn: async (request: PushGitRepoRequest) => {
       assertNotNullOrUndefined(gitSync, 'gitSync');
-      return gitSyncApi.push(gitSync.id, request);
+      await Promise.all(
+        flowIds.map((flowId) =>
+          gitSyncApi.push(gitSync.id, { ...request, flowId }),
+        ),
+      );
     },
     onSuccess: () => {
       toast({
