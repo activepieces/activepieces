@@ -643,6 +643,9 @@
       "@activepieces/piece-webhook": [
         "packages/pieces/community/webhook/src/index.ts"
       ],
+      "@activepieces/piece-webling": [
+        "packages/pieces/community/webling/src/index.ts"
+      ],
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"
       ],
