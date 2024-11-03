@@ -1,4 +1,9 @@
 import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
+import {
   createPiece,
   PieceAuth,
   Property,
@@ -17,7 +22,26 @@ export const weblingAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-  // TODO: Validation
+  validate: async ({ auth }) => {
+    try {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `https://${auth.baseUrl}/api/1/member`,
+        headers: {
+          apikey: auth.apikey,
+        },
+      };
+      await httpClient.sendRequest(request);
+      return {
+        valid: true,
+      };
+    } catch (e: any) {
+      return {
+        valid: false,
+        error: e?.message,
+      };
+    }
+  },
 });
 
 export const webling = createPiece({
