@@ -7,12 +7,12 @@ import {
 export const weblingAuth = PieceAuth.CustomAuth({
   required: true,
   props: {
-    base_url: Property.ShortText({
+    baseUrl: Property.ShortText({
       displayName: 'Base URL',
       required: true,
       defaultValue: 'example.webling.ch',
     }),
-    api_key: PieceAuth.SecretText({
+    apikey: PieceAuth.SecretText({
       displayName: 'API Key',
       required: true,
     }),
