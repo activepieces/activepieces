@@ -1,3 +1,5 @@
+import { GitBranchType } from '@activepieces/ee-shared';
+import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -13,8 +15,11 @@ import {
   UploadCloud,
   Workflow,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import FlowActionMenu from '../../../app/components/flow-actions-menu';
+import { TableTitle } from '../../../components/ui/table-title';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding, useNewWindow } from '@/components/embed-provider';
@@ -54,11 +59,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { GitBranchType } from '@activepieces/ee-shared';
-import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
-
-import FlowActionMenu from '../../../app/components/flow-actions-menu';
-import { TableTitle } from '../../../components/ui/table-title';
 
 const filters = [
   {
@@ -176,6 +176,10 @@ const FlowsPage = () => {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
+  const [selectedRowIds, setSelectedRowIds] = useState<Array<PopulatedFlow>>(
+    [],
+  );
+
   const columns: (ColumnDef<RowDataWithActions<PopulatedFlow>> & {
     accessorKey: string;
   })[] = [
@@ -187,15 +191,65 @@ const FlowsPage = () => {
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && 'indeterminate')
           }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          onCheckedChange={(value) => {
+            const isChecked = !!value;
+            table.toggleAllPageRowsSelected(isChecked);
+
+            if (isChecked) {
+              const allRowIds = table
+                .getRowModel()
+                .rows.map((row) => row.original);
+
+              const newSelectedRowIds = [...allRowIds, ...selectedRowIds];
+
+              const uniqueRowIds = Array.from(
+                new Map(
+                  newSelectedRowIds.map((item) => [item.id, item]),
+                ).values(),
+              );
+
+              setSelectedRowIds(uniqueRowIds);
+            } else {
+              const filteredRowIds = selectedRowIds.filter((row) => {
+                return !table
+                  .getRowModel()
+                  .rows.some((r) => r.original.version.id === row.version.id);
+              });
+              setSelectedRowIds(filteredRowIds);
+            }
+          }}
         />
       ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-        />
-      ),
+      cell: ({ row }) => {
+        const isChecked = selectedRowIds.some(
+          (selectedRow) =>
+            selectedRow.id === row.original.id &&
+            selectedRow.status === row.original.status,
+        );
+        return (
+          <Checkbox
+            checked={isChecked}
+            onCheckedChange={(value) => {
+              const isChecked = !!value;
+              let newSelectedRowIds = [...selectedRowIds];
+              if (isChecked) {
+                const exists = newSelectedRowIds.some(
+                  (selectedRow) => selectedRow.id === row.original.id,
+                );
+                if (!exists) {
+                  newSelectedRowIds.push(row.original);
+                }
+              } else {
+                newSelectedRowIds = newSelectedRowIds.filter(
+                  (selectedRow) => selectedRow.id !== row.original.id,
+                );
+              }
+              setSelectedRowIds(newSelectedRowIds);
+              row.toggleSelected(!!value);
+            }}
+          />
+        );
+      },
       accessorKey: 'select',
     },
     {
@@ -303,8 +357,10 @@ const FlowsPage = () => {
   const bulkActions: BulkAction<PopulatedFlow>[] = useMemo(
     () => [
       {
-        render: (selectedRows, resetSelection) => {
-          const isDisabled = selectedRows.length === 0;
+        render: (_, resetSelection) => {
+          const isDisabled = selectedRowIds.length === 0;
+          console.log('selectedRowIds', selectedRowIds);
+          console.log('isDisabled', isDisabled);
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <DropdownMenu modal={true}>
@@ -314,8 +370,8 @@ const FlowsPage = () => {
                     className="h-9 w-full"
                     variant={'outline'}
                   >
-                    {selectedRows.length > 0
-                      ? `${t('Actions')} (${selectedRows.length})`
+                    {selectedRowIds.length > 0
+                      ? `${t('Actions')} (${selectedRowIds.length})`
                       : t('Actions')}
                     <ChevronDown className="h-3 w-4 ml-2" />
                   </Button>
@@ -325,7 +381,7 @@ const FlowsPage = () => {
                     hasPermission={userHasPermissionToPushToGit}
                   >
                     <PushToGitDialog
-                      flowIds={selectedRows.map((flow) => flow.id)}
+                      flowIds={selectedRowIds.map((flow) => flow.version.id)}
                     >
                       <DropdownMenuItem
                         disabled={!userHasPermissionToPushToGit}
@@ -343,10 +399,11 @@ const FlowsPage = () => {
                       hasPermission={userHasPermissionToUpdateFlow}
                     >
                       <MoveFlowDialog
-                        flows={selectedRows}
+                        flows={selectedRowIds}
                         onMoveTo={() => {
                           setRefresh(refresh + 1);
                           resetSelection();
+                          setSelectedRowIds([]);
                         }}
                       >
                         <DropdownMenuItem
@@ -361,7 +418,13 @@ const FlowsPage = () => {
                       </MoveFlowDialog>
                     </PermissionNeededTooltip>
                   )}
-                  <DropdownMenuItem onClick={() => exportFlows(selectedRows)}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      exportFlows(selectedRowIds);
+                      resetSelection();
+                      setSelectedRowIds([]);
+                    }}
+                  >
                     <div className="flex cursor-pointer flex-row gap-2 items-center">
                       {isExportPending ? (
                         <LoadingSpinner />
@@ -396,8 +459,13 @@ const FlowsPage = () => {
                       }
                       mutationFn={async () => {
                         await Promise.all(
-                          selectedRows.map((flow) => flowsApi.delete(flow.id)),
+                          selectedRowIds.map((flow) =>
+                            flowsApi.delete(flow.version.id),
+                          ),
                         );
+                        setRefresh(refresh + 1);
+                        resetSelection();
+                        setSelectedRowIds([]);
                       }}
                       entityName={t('flow')}
                     >
@@ -421,7 +489,7 @@ const FlowsPage = () => {
         },
       },
     ],
-    [doesUserHavePermissionToWriteFlow, t],
+    [doesUserHavePermissionToWriteFlow, t, selectedRowIds],
   );
 
   return (
