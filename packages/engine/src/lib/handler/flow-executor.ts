@@ -43,7 +43,7 @@ export const flowExecutor = {
         })
     },
     async execute({ action, constants, executionState }: {
-        action: Action | null | undefined,
+        action: Action | null | undefined
         executionState: FlowExecutorContext
         constants: EngineConstants
     }): Promise<FlowExecutorContext> {

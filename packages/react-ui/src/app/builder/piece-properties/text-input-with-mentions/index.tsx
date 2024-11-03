@@ -10,7 +10,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import './tip-tap.css';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
-import { flowHelper, isNil } from '@activepieces/shared';
+import { flowStructureUtil, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 
@@ -70,7 +70,7 @@ export const TextInputWithMentions = ({
   placeholder,
 }: TextInputWithMentionsProps) => {
   const steps = useBuilderStateContext((state) =>
-    flowHelper.getAllSteps(state.flowVersion.trigger),
+    flowStructureUtil.getAllSteps(state.flowVersion.trigger),
   );
   const stepsMetadata = piecesHooks
     .useStepsMetadata(steps)

@@ -1,6 +1,6 @@
 import path from 'path'
 import { logger, networkUtls, SharedSystemProp, system, webhookSecretsUtils, WorkerSystemProps } from '@activepieces/server-shared'
-import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
+import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { executionFiles } from '../execution-files'
@@ -39,7 +39,7 @@ export const threadEngineRunner: EngineRunner = {
         }, '[threadEngineRunner#executeTrigger]')
 
         const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, operation.flowVersion)
-        const lockedVersion = await pieceEngineUtil.lockPieceInFlowVersion({
+        const lockedVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
             engineToken,
             stepName: operation.flowVersion.trigger.name,
             flowVersion: operation.flowVersion,
@@ -106,8 +106,7 @@ export const threadEngineRunner: EngineRunner = {
             flowVersionId: operation.flowVersion.id,
         }, '[threadEngineRunner#executeAction]')
 
-        const step = flowHelper.getStep(operation.flowVersion, operation.stepName) as (Action | undefined)
-        assertNotNullOrUndefined(step, 'Step not found')
+        const step = flowStructureUtil.getActionOrThrow(operation.stepName, operation.flowVersion.trigger)
         switch (step.type) {
             case ActionType.PIECE: {
                 const lockedPiece = await pieceEngineUtil.getExactPieceForStep(engineToken, step)
@@ -137,7 +136,7 @@ export const threadEngineRunner: EngineRunner = {
                 break
         }
 
-        const lockedFlowVersion = await pieceEngineUtil.lockPieceInFlowVersion({
+        const lockedFlowVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
             engineToken,
             flowVersion: operation.flowVersion,
             stepName: operation.stepName,

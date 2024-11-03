@@ -1,4 +1,4 @@
-import { Action, ActionType, assertEqual, CodeAction, EXACT_VERSION_REGEX, flowHelper, FlowVersion, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, PieceType, Trigger, TriggerType } from '@activepieces/shared'
+import { Action, ActionType, assertEqual, CodeAction, EXACT_VERSION_REGEX, flowStructureUtil, FlowVersion, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, PieceType, Step, Trigger, TriggerType } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
 import { CodeArtifact } from './engine-runner'
 
@@ -9,7 +9,7 @@ type ExtractFlowPiecesParams = {
 
 export const pieceEngineUtil = {
     getCodeSteps(flowVersion: FlowVersion): CodeArtifact[] {
-        const steps = flowHelper.getAllSteps(flowVersion.trigger)
+        const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         return steps.filter((step) => step.type === ActionType.CODE).map((step) => {
             const codeAction = step as CodeAction
             return {
@@ -24,7 +24,7 @@ export const pieceEngineUtil = {
         flowVersion,
         engineToken,
     }: ExtractFlowPiecesParams): Promise<PiecePackage[]> {
-        const steps = flowHelper.getAllSteps(flowVersion.trigger)
+        const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         const pieces = steps.filter((step) => step.type === TriggerType.PIECE || step.type === ActionType.PIECE).map((step) => {
             const { packageType, pieceType, pieceName, pieceVersion } = step.settings as PieceTriggerSettings | PieceActionSettings
             return pieceEngineUtil.getExactPieceVersion(engineToken, {
@@ -86,42 +86,32 @@ export const pieceEngineUtil = {
             packageType,
         })
     },
-    async lockPieceInFlowVersion({
-        engineToken,
-        flowVersion,
-        stepName,
-    }: {
-        engineToken: string
-        flowVersion: FlowVersion
-        stepName: string
-    }): Promise<FlowVersion> {
-        return flowHelper.transferFlowAsync(flowVersion, async (step) => {
-            if (step.name !== stepName) {
-                return step
-            }
-            if (step.type === TriggerType.PIECE) {
-                const piece = await pieceEngineUtil.getExactPieceForStep(engineToken, step)
-                return {
-                    ...step,
-                    settings: {
-                        ...step.settings,
-                        pieceVersion: piece.pieceVersion,
-                    },
-                }
-            }
-            if (step.type === ActionType.PIECE) {
-                const piece = await pieceEngineUtil.getExactPieceForStep(engineToken, step)
-                return {
-                    ...step,
-                    settings: {
-                        ...step.settings,
-                        pieceVersion: piece.pieceVersion,
-                    },
-                }
+    async lockSingleStepPieceVersion(params: LockFlowVersionParams): Promise<FlowVersion> {
+        const { engineToken, flowVersion } = params
+        const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        const pieceSteps = allSteps.filter(step => step.name === params.stepName)
+        const pieces = await Promise.all(pieceSteps.map(step => this.getExactPieceForStep(engineToken, step)))
+        const pieceVersions = pieces.reduce((acc, piece, index) => ({
+            ...acc,
+            [pieceSteps[index].name]: piece.pieceVersion,
+        }), {} as Record<string, string>)
+        return flowStructureUtil.transferFlow(flowVersion, (step) => {
+            if (isPieceStep(step)) {
+                step.settings.pieceVersion = pieceVersions[step.name]
             }
             return step
         })
     },
+}
+
+const isPieceStep = (step: Step): step is Action | Trigger => {
+    return step.type === TriggerType.PIECE || step.type === ActionType.PIECE
+}
+
+type LockFlowVersionParams = {
+    engineToken: string
+    flowVersion: FlowVersion
+    stepName: string
 }
 
 export type BasicPieceInformation = {

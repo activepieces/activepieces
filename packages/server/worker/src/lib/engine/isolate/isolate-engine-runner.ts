@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import { hashUtils, logger, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
-import { Action, ActionType, apId, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { Action, ActionType, apId, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { pieceEngineUtil } from '../flow-engine-util'
@@ -43,7 +43,7 @@ export const isolateEngineRunner: EngineRunner = {
             '[EngineHelper#executeTrigger]',
         )
         const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, operation.flowVersion)
-        const lockedVersion = await pieceEngineUtil.lockPieceInFlowVersion({
+        const lockedVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
             engineToken,
             stepName: operation.flowVersion.trigger.name,
             flowVersion: operation.flowVersion,
@@ -111,12 +111,8 @@ export const isolateEngineRunner: EngineRunner = {
         return execute(EngineOperationType.EXECUTE_VALIDATE_AUTH, sandbox, input)
     },
     async executeAction(engineToken, operation) {
-        const step = flowHelper.getStep(operation.flowVersion, operation.stepName) as
-            | Action
-            | undefined
-        assertNotNullOrUndefined(step, 'Step not found')
-
-        const lockedFlowVersion = await pieceEngineUtil.lockPieceInFlowVersion({
+        const step = flowStructureUtil.getActionOrThrow(operation.stepName, operation.flowVersion.trigger)
+        const lockedFlowVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
             engineToken,
             flowVersion: operation.flowVersion,
             stepName: operation.stepName,

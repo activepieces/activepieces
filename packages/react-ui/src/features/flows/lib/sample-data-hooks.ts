@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { flowHelper, FlowVersion } from '@activepieces/shared';
+import { flowStructureUtil, FlowVersion } from '@activepieces/shared';
 
 import { sampleDataApi } from './sample-data-api';
 
@@ -12,7 +12,7 @@ export const sampleDataHooks = {
       staleTime: 0,
       refetchOnWindowFocus: false,
       queryFn: async () => {
-        const steps = flowHelper.getAllSteps(flowVersion!.trigger);
+        const steps = flowStructureUtil.getAllSteps(flowVersion!.trigger);
         const singleStepSampleData = await Promise.all(
           steps.map(async (step) => {
             return {

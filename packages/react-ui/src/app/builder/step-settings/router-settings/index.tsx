@@ -5,8 +5,8 @@ import { memo, useEffect } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import {
-  flowHelper,
   FlowOperationType,
+  flowStructureUtil,
   isNil,
   RouterAction,
   RouterExecutionType,
@@ -37,7 +37,10 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     setBranchDeletedCallback,
     setBranchDuplicateCallback,
   ] = useBuilderStateContext((state) => [
-    flowHelper.getStep(state.flowVersion, state.selectedStep!)! as RouterAction,
+    flowStructureUtil.getActionOrThrow(
+      state.selectedStep!,
+      state.flowVersion.trigger,
+    ) as RouterAction,
     state.applyOperation,
     state.setSelectedBranchIndex,
     state.selectedBranchIndex,
@@ -63,7 +66,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
           branchIndex: index,
         },
       },
-      () => { },
+      () => {},
     );
     remove(index);
     setSelectedBranchIndex(null);
@@ -147,7 +150,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                     branchIndex: index,
                   },
                 },
-                () => { },
+                () => {},
               );
 
               insert(index + 1, {
@@ -185,12 +188,14 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                         branchIndex: step.settings.branches.length - 1,
                       },
                     },
-                    () => { },
+                    () => {},
                   );
 
                   insert(
                     step.settings.branches.length - 1,
-                    flowHelper.createEmptyPath(step.settings.branches.length),
+                    flowStructureUtil.createEmptyPath(
+                      step.settings.branches.length,
+                    ),
                   );
                   setSelectedBranchIndex(step.settings.branches.length - 1);
                 }}

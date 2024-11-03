@@ -27,7 +27,7 @@ import {
   PieceTrigger,
   TriggerType,
   WebsocketClientEvent,
-  flowHelper,
+  flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
 
@@ -91,7 +91,10 @@ const BuilderPage = () => {
           containerKey: undefined,
         };
       }
-      const step = flowHelper.getStep(flowVersion, state.selectedStep);
+      const step = flowStructureUtil.getStep(
+        state.selectedStep,
+        flowVersion.trigger,
+      );
       const triggerOrActionName =
         step?.type === TriggerType.PIECE
           ? (step as PieceTrigger).settings.triggerName

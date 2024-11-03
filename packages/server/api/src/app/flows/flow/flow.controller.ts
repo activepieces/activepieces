@@ -54,7 +54,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
-        logger.debug(request.body)
         const userId = await extractUserIdFromPrincipal(request.principal)
         await assertUserHasPermissionToFlow(request.principal, request.body.type)
 

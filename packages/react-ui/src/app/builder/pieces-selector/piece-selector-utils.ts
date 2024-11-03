@@ -21,13 +21,13 @@ import {
   TriggerType,
   deepMergeAndCast,
   FlowVersion,
-  flowHelper,
   PieceCategory,
   BranchExecutionType,
   RouterExecutionType,
   spreadIfDefined,
   isNil,
   Platform,
+  flowStructureUtil,
 } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
@@ -58,10 +58,7 @@ const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
   if (piece.type === TriggerType.PIECE) {
     return 'trigger';
   }
-  return flowHelper.findUnusedName(
-    flowHelper.getAllSteps(flowVersion.trigger).map((f) => f.name),
-    'step',
-  );
+  return flowStructureUtil.findUnusedName(flowVersion.trigger);
 };
 
 const isAiPiece = (piece: StepMetadata) =>

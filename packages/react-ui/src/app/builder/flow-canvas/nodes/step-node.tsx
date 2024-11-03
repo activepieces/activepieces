@@ -34,7 +34,7 @@ import {
   FlowRunStatus,
   FlowVersion,
   TriggerType,
-  flowHelper,
+  flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
 
@@ -133,15 +133,15 @@ const ApStepCanvasNode = React.memo(
       step: data.step!,
     });
     const stepIndex = useMemo(() => {
-      const steps = flowHelper.getAllSteps(flowVersion.trigger);
+      const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
       return steps.findIndex((step) => step.name === data.step!.name) + 1;
     }, [data, flowVersion]);
 
     const [openStepActionsMenu, setOpenStepActionsMenu] = useState(false);
     const [openPieceSelector, setOpenPieceSelector] = useState(false);
 
-    const isTrigger = flowHelper.isTrigger(data.step!.type);
-    const isAction = flowHelper.isAction(data.step!.type);
+    const isTrigger = flowStructureUtil.isTrigger(data.step!.type);
+    const isAction = flowStructureUtil.isAction(data.step!.type);
     const isEmptyTriggerSelected =
       selectedStep === 'trigger' && data.step?.type === TriggerType.EMPTY;
 

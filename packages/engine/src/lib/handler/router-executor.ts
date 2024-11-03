@@ -1,4 +1,5 @@
-import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, BranchCondition, BranchExecutionType, BranchOperator, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { BaseExecutor } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
@@ -9,10 +10,6 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         action,
         executionState,
         constants,
-    }: {
-        action: RouterAction
-        executionState: FlowExecutorContext
-        constants: EngineConstants
     }) {
         const { censoredInput, resolvedInput } = await constants.variableService.resolve<RouterActionSettings>({
             unresolvedInput: action.settings,
@@ -73,7 +70,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
 }
 
 
-function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
+export function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     let orOperator = false
     for (const conditionGroup of conditionGroups) {
         let andGroup = true
@@ -135,6 +132,20 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
                     andGroup = andGroup && firstValueDoesNotEndWith
                     break
                 }
+                case BranchOperator.LIST_CONTAINS: {
+                    const list = parseAndCoerceListAsArray(castedCondition.firstValue)
+                    andGroup = andGroup && list.some((item) =>
+                        toLowercaseIfCaseInsensitive(item, castedCondition.caseSensitive) === toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
+                    )
+                    break
+                }
+                case BranchOperator.LIST_DOES_NOT_CONTAIN: {
+                    const list = parseAndCoerceListAsArray(castedCondition.firstValue)
+                    andGroup = andGroup && !list.some((item) =>
+                        toLowercaseIfCaseInsensitive(item, castedCondition.caseSensitive) === toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive),
+                    )
+                    break
+                }
                 case BranchOperator.NUMBER_IS_GREATER_THAN: {
                     const firstValue = parseStringToNumber(castedCondition.firstValue)
                     const secondValue = parseStringToNumber(castedCondition.secondValue)
@@ -159,6 +170,25 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
                 case BranchOperator.BOOLEAN_IS_FALSE:
                     andGroup = andGroup && !castedCondition.firstValue
                     break
+                case BranchOperator.DATE_IS_AFTER:
+                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isAfter(dayjs(castedCondition.secondValue))
+                    break
+                case BranchOperator.DATE_IS_EQUAL:
+                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isSame(dayjs(castedCondition.secondValue))
+                    break
+                case BranchOperator.DATE_IS_BEFORE:
+                    andGroup = andGroup && isValidDate(castedCondition.firstValue) && isValidDate(castedCondition.secondValue) && dayjs(castedCondition.firstValue).isBefore(dayjs(castedCondition.secondValue))
+                    break
+                case BranchOperator.LIST_IS_EMPTY: {
+                    const list = parseListAsArray(castedCondition.firstValue)
+                    andGroup = andGroup && Array.isArray(list) && list?.length === 0
+                    break
+                }
+                case BranchOperator.LIST_IS_NOT_EMPTY: {
+                    const list = parseListAsArray(castedCondition.firstValue)
+                    andGroup = andGroup && Array.isArray(list) && list?.length !== 0
+                    break
+                }
                 case BranchOperator.EXISTS:
                     andGroup = andGroup && castedCondition.firstValue !== undefined && castedCondition.firstValue !== null && castedCondition.firstValue !== ''
                     break
@@ -176,12 +206,44 @@ function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean | un
     if (typeof text === 'string') {
         return caseSensitive ? text : text.toLowerCase()
     }
-    else {
-        return caseSensitive ? JSON.stringify(text) : JSON.stringify(text).toLowerCase()
-    }
+    const textAsString = JSON.stringify(text)
+    return caseSensitive ? textAsString : textAsString.toLowerCase()
 }
 
 function parseStringToNumber(str: string): number | string {
     const num = Number(str)
     return isNaN(num) ? str : num
+}
+
+function parseListAsArray(input: unknown): unknown[] | undefined {
+    if (typeof input === 'string') {
+        try {
+            const parsed = JSON.parse(input)
+            return Array.isArray(parsed) ? parsed : undefined
+        }
+        catch (e) {
+            return undefined
+        }
+    }
+    return Array.isArray(input) ? input : undefined
+}
+
+function parseAndCoerceListAsArray(input: unknown): unknown[] {
+    if (typeof input === 'string') {
+        try {
+            const parsed = JSON.parse(input)
+            return Array.isArray(parsed) ? parsed : [parsed]
+        }
+        catch (e) {
+            return [input]
+        }
+    }
+    return Array.isArray(input) ? input : [input]
+}
+
+function isValidDate(date: unknown): boolean {
+    if (typeof date === 'string' || typeof date === 'number' || date instanceof Date) {
+        return dayjs(date).isValid()
+    }
+    return false
 }

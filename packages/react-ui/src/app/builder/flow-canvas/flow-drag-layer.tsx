@@ -16,7 +16,7 @@ import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import {
   FlowOperationType,
   StepLocationRelativeToParent,
-  flowHelper,
+  flowStructureUtil,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -69,7 +69,7 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
   ]);
 
   const draggedStep = activeDraggingStep
-    ? flowHelper.getStep(flowVersion, activeDraggingStep)
+    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
     : undefined;
 
   const handleDragStart = (e: DragStartEvent) => {
@@ -94,10 +94,10 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
         droppedAtNodeData.parentStepName &&
         draggedStep
       ) {
-        const isPartOfInnerFlow = flowHelper.isPartOfInnerFlow({
-          parentStep: draggedStep,
-          childName: droppedAtNodeData.parentStepName,
-        });
+        const isPartOfInnerFlow = flowStructureUtil.isChildOf(
+          draggedStep,
+          droppedAtNodeData.parentStepName,
+        );
         if (isPartOfInnerFlow) {
           toast({
             title: t('Invalid Move'),

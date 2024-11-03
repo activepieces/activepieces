@@ -2,8 +2,8 @@ import {
     Action,
     ActionType,
     BranchOperator,
-    flowHelper,
     FlowOperationRequest,
+    flowOperations,
     FlowOperationType,
     FlowVersion,
     FlowVersionState,
@@ -13,6 +13,7 @@ import {
     Trigger,
     TriggerType,
 } from '../../src'
+import { _getImportOperations } from '../../src/lib/flows/operations/import-flow'
 
 const flowVersionWithBranching: FlowVersion = {
     'id': 'pj0KQ7Aypoa9OQGHzmKDl',
@@ -65,7 +66,7 @@ const flowVersionWithBranching: FlowVersion = {
                     'packageType': PackageType.REGISTRY,
                     'pieceType': PieceType.OFFICIAL,
                     'pieceName': 'store',
-                    'pieceVersion': '0.2.6',
+                    'pieceVersion': '~0.2.6',
                     'actionName': 'get',
                     'inputUiInfo': {
                         'customizedInputs': {
@@ -175,7 +176,7 @@ describe('Flow Helper', () => {
                 flowId: flowVersionWithBranching.flowId,
             },
         }
-        const result = flowHelper.apply(flowVersionWithBranching, operation)
+        const result = flowOperations.apply(flowVersionWithBranching, operation)
         expect(result.state).toEqual(FlowVersionState.LOCKED)
     })
 
@@ -186,7 +187,7 @@ describe('Flow Helper', () => {
                 name: flowVersionWithBranching.trigger.nextAction.name,
             },
         }
-        const result = flowHelper.apply(flowVersionWithBranching, operation)
+        const result = flowOperations.apply(flowVersionWithBranching, operation)
         const expectedFlowVersion: FlowVersion = {
             'id': 'pj0KQ7Aypoa9OQGHzmKDl',
             'updatedBy': '',
@@ -205,7 +206,7 @@ describe('Flow Helper', () => {
                     'packageType': PackageType.REGISTRY,
                     'pieceType': PieceType.OFFICIAL,
                     'pieceName': 'schedule',
-                    'pieceVersion': '0.0.2',
+                    'pieceVersion': '~0.0.2',
                     'inputUiInfo': {},
                     'triggerName': 'cron_expression',
                 },
@@ -221,7 +222,7 @@ describe('Flow Helper', () => {
                         'packageType': PackageType.REGISTRY,
                         'pieceType': PieceType.OFFICIAL,
                         'pieceName': 'store',
-                        'pieceVersion': '0.2.6',
+                        'pieceVersion': '~0.2.6',
                         'actionName': 'get',
                         'inputUiInfo': {
                             'customizedInputs': {
@@ -261,7 +262,7 @@ describe('Flow Helper', () => {
                 },
             },
         }
-        const updateFlowVersion = flowHelper.apply(flowVersionWithBranching, updateRequest)
+        const updateFlowVersion = flowOperations.apply(flowVersionWithBranching, updateRequest)
         const expectedFlowTrigger: Trigger = {
             'name': 'trigger',
             'type': TriggerType.PIECE,
@@ -273,7 +274,7 @@ describe('Flow Helper', () => {
                 'packageType': PackageType.REGISTRY,
                 'pieceType': PieceType.OFFICIAL,
                 'pieceName': 'schedule',
-                'pieceVersion': '0.0.2',
+                'pieceVersion': '~0.0.2',
                 'inputUiInfo': {},
                 'triggerName': 'cron_expression',
             },
@@ -292,7 +293,7 @@ describe('Flow Helper', () => {
                         'packageType': PackageType.REGISTRY,
                         'pieceType': PieceType.OFFICIAL,
                         'pieceName': 'store',
-                        'pieceVersion': '0.2.6',
+                        'pieceVersion': '~0.2.6',
                         'actionName': 'get',
                         'inputUiInfo': {
                             'customizedInputs': {},
@@ -325,7 +326,7 @@ describe('Flow Helper', () => {
                         'packageType': PackageType.REGISTRY,
                         'pieceType': PieceType.OFFICIAL,
                         'pieceName': 'discord',
-                        'pieceVersion': '0.2.1',
+                        'pieceVersion': '~0.2.1',
                         'actionName': 'send_message_webhook',
                         'inputUiInfo': {
                             'customizedInputs': {},
@@ -404,10 +405,10 @@ describe('Flow Helper', () => {
             },
         }
         let resultFlow = emptyScheduleFlowVersion
-        resultFlow = flowHelper.apply(resultFlow, addBranchRequest)
-        resultFlow = flowHelper.apply(resultFlow, addCodeActionOnTrue)
-        resultFlow = flowHelper.apply(resultFlow, addCodeActionOnFalse)
-        resultFlow = flowHelper.apply(resultFlow, addCodeActionOnAfter)
+        resultFlow = flowOperations.apply(resultFlow, addBranchRequest)
+        resultFlow = flowOperations.apply(resultFlow, addCodeActionOnTrue)
+        resultFlow = flowOperations.apply(resultFlow, addCodeActionOnFalse)
+        resultFlow = flowOperations.apply(resultFlow, addCodeActionOnAfter)
         const expectedTrigger: Trigger = {
             'name': 'trigger',
             'type': TriggerType.PIECE,
@@ -419,7 +420,7 @@ describe('Flow Helper', () => {
                 'packageType': PackageType.REGISTRY,
                 'pieceType': PieceType.OFFICIAL,
                 'pieceName': 'schedule',
-                'pieceVersion': '0.0.2',
+                'pieceVersion': '~0.0.2',
                 'inputUiInfo': {},
                 'triggerName': 'cron_expression',
             },
@@ -520,9 +521,9 @@ describe('Flow Helper', () => {
             },
         }
         let resultFlow = emptyScheduleFlowVersion
-        resultFlow = flowHelper.apply(resultFlow, addBranchRequest)
-        resultFlow = flowHelper.apply(resultFlow, addCodeActionInside)
-        resultFlow = flowHelper.apply(resultFlow, addCodeActionOnAfter)
+        resultFlow = flowOperations.apply(resultFlow, addBranchRequest)
+        resultFlow = flowOperations.apply(resultFlow, addCodeActionInside)
+        resultFlow = flowOperations.apply(resultFlow, addCodeActionOnAfter)
 
         const expectedTrigger: Trigger = {
             'name': 'trigger',
@@ -535,7 +536,7 @@ describe('Flow Helper', () => {
                 'packageType': PackageType.REGISTRY,
                 'pieceType': PieceType.OFFICIAL,
                 'pieceName': 'schedule',
-                'pieceVersion': '0.0.2',
+                'pieceVersion': '~0.0.2',
                 'inputUiInfo': {},
                 'triggerName': 'cron_expression',
             },
@@ -786,7 +787,7 @@ test('Duplicate Flow With Branch', () => {
             },
         },
     ]
-    const importOperations = flowHelper.getImportOperations(flowVersion.trigger)
+    const importOperations = _getImportOperations(flowVersion.trigger)
     expect(importOperations).toEqual(expectedImportOperations)
 })
 test('Duplicate Flow With Loops using Import', () => {
@@ -921,6 +922,6 @@ test('Duplicate Flow With Loops using Import', () => {
         },
     ]
 
-    const importOperations = flowHelper.getImportOperations(flowVersion.trigger)
+    const importOperations = _getImportOperations(flowVersion.trigger)
     expect(importOperations).toEqual(expectedResult)
 })

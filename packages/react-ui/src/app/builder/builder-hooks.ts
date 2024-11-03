@@ -14,7 +14,7 @@ import {
   PopulatedFlow,
   RouterAction,
   TriggerType,
-  flowHelper,
+  flowOperations,
   isNil,
 } from '@activepieces/shared';
 
@@ -270,7 +270,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             console.warn('Cannot apply operation while readonly');
             return state;
           }
-          const newFlowVersion = flowHelper.apply(state.flowVersion, operation);
+          const newFlowVersion = flowOperations.apply(
+            state.flowVersion,
+            operation,
+          );
           const updateRequest = async () => {
             set({ saving: true });
             try {
