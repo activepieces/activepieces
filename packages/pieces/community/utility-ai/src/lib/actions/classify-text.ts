@@ -17,11 +17,6 @@ export const classifyText = createAction({
       description: 'Categories to classify text into.',
       required: true,
     }),
-    maxTokens: Property.Number({
-      displayName: 'Max Tokens',
-      required: false,
-      defaultValue: 2000,
-    }),
   },
   async run(context) {
     const categories = (context.propsValue.categories as string[]) ?? [];
@@ -33,7 +28,7 @@ export const classifyText = createAction({
 
     const response = await ai.chat.text({
       model: context.propsValue.model,
-      maxTokens: context.propsValue.maxTokens,
+      maxTokens: 2000,
       messages: [
         {
           role: AIChatRole.USER,

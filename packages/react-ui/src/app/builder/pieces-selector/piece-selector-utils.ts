@@ -108,7 +108,10 @@ const isPopularPieces = (
     '@activepieces/piece-forms',
     '@activepieces/piece-slack',
   ];
-  return popularPieces.includes((stepMetadata as PieceStepMetadata).pieceName);
+  const pinnedPieces = platform.pinnedPieces ?? [];
+  return [...popularPieces, ...pinnedPieces].includes(
+    (stepMetadata as PieceStepMetadata).pieceName,
+  );
 };
 
 const isFlowController = (stepMetadata: StepMetadata) => {

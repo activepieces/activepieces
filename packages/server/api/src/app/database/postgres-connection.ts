@@ -155,6 +155,7 @@ import { AddAiProviderTable1726445983043 } from './migration/postgres/1726445983
 import { AddAiTokensForProjectPlan1726446092010 } from './migration/postgres/1726446092010-AddAiTokensForProjectPlan'
 import { RemovePremiumPieces1727865841722 } from './migration/postgres/1727865841722-RemovePremiumPieces'
 import { AddConnectionOwner1730123432651 } from './migration/postgres/1730123432651-AddConnectionOwner'
+import { AppConnectionsSetNull1730627612799 } from './migration/postgres/1730627612799-AppConnectionsSetNull'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -259,6 +260,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         MigrateSMTPInPlatform1729602169179,
         AddPinnedPieces1729776414647,
         AddConnectionOwner1730123432651,
+        AppConnectionsSetNull1730627612799,
     ]
 
     const edition = system.getEdition()

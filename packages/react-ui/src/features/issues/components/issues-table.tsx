@@ -3,7 +3,11 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
 import { useMemo } from 'react';
-import { createSearchParams, useNavigate } from 'react-router-dom';
+import {
+  createSearchParams,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -35,11 +39,13 @@ export default function IssuesTable() {
     platform.flowIssuesEnabled,
   );
 
+  const [searchParams] = useSearchParams();
+
   const { data, isLoading } = useQuery({
-    queryKey: ['issues', { platform }],
+    queryKey: ['issues', searchParams.toString()],
     staleTime: 0,
+    gcTime: 0,
     queryFn: () => {
-      const searchParams = new URLSearchParams(window.location.search);
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)

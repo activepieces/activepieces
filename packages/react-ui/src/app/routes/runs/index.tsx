@@ -264,7 +264,6 @@ const FlowRunsPage = () => {
       runIds: string[];
       strategy: FlowRetryStrategy;
     }) => {
-      const searchParams = new URLSearchParams(window.location.search);
       const status = searchParams.getAll('status') as FlowRunStatus[];
       const flowId = searchParams.getAll('flowId');
       const createdAfter = searchParams.get('createdAfter') || undefined;

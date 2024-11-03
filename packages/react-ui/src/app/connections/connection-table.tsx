@@ -7,13 +7,13 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { TableTitle } from '../../components/ui/table-title';
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
 import { NewConnectionDialog } from './new-connection-dialog';
+import { useMemo, useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -246,6 +246,7 @@ function AppConnectionsTable() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['appConnections', location.search],
     staleTime: 0,
+    gcTime: 0,
     queryFn: () => {
       const searchParams = new URLSearchParams(location.search);
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
