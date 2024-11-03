@@ -1,10 +1,11 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import simpleGit, { SimpleGit } from 'simple-git'
 import { userService } from '../../user/user-service'
+import { SharedSystemProp, system } from '@activepieces/server-shared'
 
 export const gitHelper = {
     commitAndPush,
@@ -88,6 +89,10 @@ async function initGitRepo(
 }
 
 async function validateConnection(request: ConfigureRepoRequest): Promise<void> {
+    const environment = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return
+    }
     const { remoteUrl, sshPrivateKey, branch } = request
 
     const tmpFolder = path.join('/', 'tmp', 'repo', nanoid(), 'validate')
