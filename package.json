@@ -183,7 +183,7 @@
     "jszip": "3.10.1",
     "jwks-rsa": "3.1.0",
     "jwt-decode": "4.0.0",
-    "langchain": "0.2.19",
+    "langchain": "0.3.3",
     "lottie-web": "5.12.2",
     "lucide-react": "0.407.0",
     "mailparser": "3.6.7",
