@@ -1,14 +1,7 @@
-import {
-  PieceMetadataModelSummary,
-  PropertyType,
-} from '@activepieces/pieces-framework';
-import { PieceScope } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
-
-import { TableTitle } from '../../../../components/ui/table-title';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ApplyTags } from '@/app/routes/platform/pieces/apply-tags';
@@ -23,6 +16,13 @@ import { InstallPieceDialog } from '@/features/pieces/components/install-piece-d
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { platformHooks } from '@/hooks/platform-hooks';
+import {
+  PieceMetadataModelSummary,
+  PropertyType,
+} from '@activepieces/pieces-framework';
+import { PieceScope } from '@activepieces/shared';
+
+import { TableTitle } from '../../../../components/ui/table-title';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();

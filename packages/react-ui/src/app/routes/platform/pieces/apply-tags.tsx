@@ -1,4 +1,3 @@
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState, useEffect, useRef } from 'react';
@@ -21,6 +20,7 @@ import {
 import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { piecesTagsApi } from '@/features/platform-admin-panel/lib/pieces-tags';
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 type ApplyTagsProps = {
   selectedPieces: PieceMetadataModelSummary[];
