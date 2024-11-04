@@ -112,8 +112,7 @@ const PieceSelector = ({
       sortedPiecesMetadata.find((p) => p.displayName === initialSelectedPiece),
     );
 
-    const hideGroups = debouncedQuery.length > 0;
-    if (hideGroups) {
+    if (debouncedQuery.length > 0 && sortedPiecesMetadata.length > 0) {
       return [{ title: 'Search Results', pieces: sortedPiecesMetadata }];
     }
 
@@ -156,7 +155,6 @@ const PieceSelector = ({
     isTrigger,
     initialSelectedPiece,
   ]);
-
   const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
   const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
 
@@ -290,6 +288,7 @@ const PieceSelector = ({
             pieceGroups={pieceGroups}
             isLoadingPieces={isLoadingPieces}
           />
+
           {debouncedQuery.length === 0 && piecesIsLoaded && !noResultsFound && (
             <>
               <Separator orientation="vertical" className="h-full" />
