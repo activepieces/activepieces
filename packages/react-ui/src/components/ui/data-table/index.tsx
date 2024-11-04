@@ -10,6 +10,7 @@ import { t } from 'i18next';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
+import { v4 as uuid } from 'uuid';
 
 import {
   Table,
@@ -179,6 +180,7 @@ export function DataTable<
     columns,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
+    getRowId: () => uuid(),
     initialState: {
       pagination: {
         pageSize: parseInt(startingLimit),
