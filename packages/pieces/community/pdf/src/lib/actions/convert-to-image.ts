@@ -41,8 +41,8 @@ async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
 
         return imageBuffers;
     } finally {
-        await fs.unlink(inputFilePath).catch(() => {});
-        await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});
+        await fs.unlink(inputFilePath).catch(() => void 0);
+        await fs.rm(outputDir, { recursive: true, force: true }).catch(() => void 0);
     }
 }
 

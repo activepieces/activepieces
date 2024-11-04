@@ -22,7 +22,10 @@ import {
 
 import { PieceStepMetadata, StepMetadata } from './types';
 
-export const CORE_STEP_METADATA : Record<Exclude<ActionType,ActionType.PIECE> | TriggerType.EMPTY ,  StepMetadata> = {
+export const CORE_STEP_METADATA: Record<
+  Exclude<ActionType, ActionType.PIECE> | TriggerType.EMPTY,
+  StepMetadata
+> = {
   [ActionType.CODE]: {
     displayName: t('Code'),
     logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
@@ -85,7 +88,7 @@ export const piecesApi = {
       pieceVersion: piece.version,
       categories: piece.categories ?? [],
       packageType: piece.packageType,
-      auth:piece.auth
+      auth: piece.auth,
     };
   },
   mapToSuggestions(
@@ -128,7 +131,9 @@ export const piecesApi = {
     formData.set('pieceVersion', params.pieceVersion);
     formData.set('scope', params.scope);
     if (params.packageType === PackageType.ARCHIVE) {
-      const buffer = await (params.pieceArchive as unknown as File).arrayBuffer();
+      const buffer = await (
+        params.pieceArchive as unknown as File
+      ).arrayBuffer();
       formData.append('pieceArchive', new Blob([buffer]));
     }
 

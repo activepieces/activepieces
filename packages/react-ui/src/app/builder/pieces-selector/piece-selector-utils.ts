@@ -116,9 +116,11 @@ const isFlowController = (stepMetadata: StepMetadata) => {
       PieceCategory.FLOW_CONTROL,
     );
   }
-  return [ActionType.LOOP_ON_ITEMS, ActionType.ROUTER,ActionType.BRANCH].includes(
-    stepMetadata.type as ActionType,
-  );
+  return [
+    ActionType.LOOP_ON_ITEMS,
+    ActionType.ROUTER,
+    ActionType.BRANCH,
+  ].includes(stepMetadata.type as ActionType);
 };
 
 const isUniversalAiPiece = (stepMetadata: StepMetadata) => {

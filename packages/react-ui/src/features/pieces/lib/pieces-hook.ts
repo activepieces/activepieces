@@ -243,7 +243,7 @@ export function getCoreActions(
           type: ActionType.LOOP_ON_ITEMS as const,
         },
       ];
-   
+
     case ActionType.ROUTER:
       return [
         {
@@ -254,15 +254,15 @@ export function getCoreActions(
           ),
         },
       ];
-      case ActionType.BRANCH:
-        return [
-          {
-            name: 'branch',
-            displayName: t('Branch'),
-            description: t(
-              'Split your flow into branches depending on condition(s)',
-            ),
-          },
-        ];
+    case ActionType.BRANCH:
+      return [
+        {
+          name: 'branch',
+          displayName: t('Branch'),
+          description: t(
+            'Split your flow into branches depending on condition(s)',
+          ),
+        },
+      ];
   }
 }

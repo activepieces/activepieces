@@ -106,7 +106,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                 handleSelect={handleSelect}
                 ref={
                   pieceMetadata.displayName ===
-                    selectedPieceMetadata?.displayName
+                  selectedPieceMetadata?.displayName
                     ? selectedItemRef
                     : null
                 }

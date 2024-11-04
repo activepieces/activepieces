@@ -78,7 +78,11 @@ export type PieceSelectorItem =
   | {
       displayName: string;
       name: string;
-      type: ActionType.LOOP_ON_ITEMS | ActionType.BRANCH | ActionType.ROUTER | ActionType.CODE;
+      type:
+        | ActionType.LOOP_ON_ITEMS
+        | ActionType.BRANCH
+        | ActionType.ROUTER
+        | ActionType.CODE;
       description: string;
     };
 
