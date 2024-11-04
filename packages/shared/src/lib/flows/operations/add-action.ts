@@ -35,7 +35,7 @@ function createAction(request: UpdateActionRequest, {
                 ...baseProperties,
                 type: ActionType.ROUTER,
                 settings: request.settings,
-                children: [null, null],
+                children: request.settings.branches.map(() => null),
             }
 
             break

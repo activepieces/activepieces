@@ -8,10 +8,10 @@ import { FlowOperationRequest, FlowOperationType, StepLocationRelativeToParent }
 
 function findUnusedName(existingNames: string[], prefix: string): string {
     let index = 1
-    let name = `${prefix}-${index}`
+    let name = `${prefix}_${index}`
     while (existingNames.includes(name)) {
         index++
-        name = `${prefix}-${index}`
+        name = `${prefix}_${index}`
     }
     return name
 }

@@ -22,22 +22,26 @@ import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../consts';
 import { flowCanvasUtils } from '../flow-canvas-utils';
 
-export type BranchLabelProps =
-  | {
-      label: string;
-      targetNodeName: string;
-      sourceNodeName: string;
-    } & (
-      | {
-          stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
-          branchIndex: number;
-        }
-      | {
-          stepLocationRelativeToParent:
-            | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
-            | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
-        }
-    );
+type BaseBranchLabel = {
+  label: string;
+  targetNodeName: string;
+  sourceNodeName: string;
+};
+
+// Type for numbered branches (e.g. in a router)
+type NumberedBranch = BaseBranchLabel & {
+  stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
+  branchIndex: number;
+};
+
+// Type for true/false branches (e.g. in conditions)
+type ConditionalBranch = BaseBranchLabel & {
+  stepLocationRelativeToParent:
+    | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
+    | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
+};
+
+export type BranchLabelProps = NumberedBranch | ConditionalBranch;
 
 export const BranchLabel = (props: BranchLabelProps) => {
   const [
@@ -47,8 +51,6 @@ export const BranchLabel = (props: BranchLabelProps) => {
     setSelectedBranchIndex,
     step,
     applyOperation,
-    branchDeletedCallback,
-    branchDuplicateCallback,
     readonly,
   ] = useBuilderStateContext((state) => [
     state.selectedStep,
@@ -57,19 +59,27 @@ export const BranchLabel = (props: BranchLabelProps) => {
     state.setSelectedBranchIndex,
     flowStructureUtil.getStep(props.sourceNodeName, state.flowVersion.trigger),
     state.applyOperation,
-    state.branchDeletedCallback,
-    state.branchDuplicateCallback,
     state.readonly,
   ]);
-  const isBranchNonInteractive =
+
+  const isFallbackBranch =
+    props.stepLocationRelativeToParent ===
+      StepLocationRelativeToParent.INSIDE_BRANCH &&
+    step?.type === ActionType.ROUTER &&
+    step?.settings.branches[props.branchIndex]?.branchType ===
+      BranchExecutionType.FALLBACK;
+  const isNotInsideRoute =
     props.stepLocationRelativeToParent !==
-      StepLocationRelativeToParent.INSIDE_BRANCH ||
-    (step?.type === ActionType.ROUTER &&
-      step?.settings.branches[props.branchIndex]?.branchType ===
-        BranchExecutionType.FALLBACK);
+    StepLocationRelativeToParent.INSIDE_BRANCH;
+  const isBranchNonInteractive = isNotInsideRoute || isFallbackBranch;
+  const isBranchSelected =
+    selectedStep === props.sourceNodeName &&
+    props.stepLocationRelativeToParent ===
+      StepLocationRelativeToParent.INSIDE_BRANCH &&
+    props.branchIndex === selectedBranchIndex;
   const { fitView } = useReactFlow();
+
   if (isNil(step)) {
-    console.log('step is null');
     return <></>;
   }
 
@@ -86,11 +96,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
           className={cn(
             'flex items-center justify-center gap-0.5 select-none  items-center transition-all rounded-full  text-sm border  border-solid bg-primary-100/30  border-primary/50   px-2 text-primary/80 hover:text-primary hover:border-primary',
             {
-              'border-primary text-primary':
-                selectedStep === props.sourceNodeName &&
-                props.stepLocationRelativeToParent ===
-                  StepLocationRelativeToParent.INSIDE_BRANCH &&
-                props.branchIndex === selectedBranchIndex,
+              'border-primary text-primary': isBranchSelected,
               'bg-accent text-foreground/70  border-accent hover:text-foreground/70 hover:bg-accent hover:border-accent cursor-default':
                 isBranchNonInteractive,
             },
@@ -149,10 +155,6 @@ export const BranchLabel = (props: BranchLabelProps) => {
                       },
                       () => {},
                     );
-                    branchDeletedCallback?.(
-                      props.branchIndex,
-                      props.sourceNodeName,
-                    );
                     selectStepByName(props.sourceNodeName);
                   }}
                 >
@@ -177,16 +179,6 @@ export const BranchLabel = (props: BranchLabelProps) => {
                         },
                       },
                       () => {},
-                    );
-                    branchDuplicateCallback?.(
-                      props.branchIndex,
-                      {
-                        ...step.settings.branches[props.branchIndex],
-                        branchName: `${
-                          step.settings.branches[props.branchIndex].branchName
-                        } Copy`,
-                      },
-                      props.sourceNodeName,
                     );
                     setSelectedBranchIndex(props.branchIndex + 1);
                   }}

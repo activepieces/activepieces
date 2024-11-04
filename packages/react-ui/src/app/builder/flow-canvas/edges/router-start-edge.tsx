@@ -23,63 +23,59 @@ export const ApRouterStartCanvasEdge = ({
     flowUtilConsts.LABEL_HEIGHT;
 
   const distanceBetweenSourceAndTarget = Math.abs(targetX - sourceX);
-  const path = `M ${targetX} ${
-    targetY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
-  }
-      ${data.isBranchEmpty ? `` : flowUtilConsts.ARROW_DOWN}
-      v -${verticalLineLength}    
+  const generatePath = () => {
+    // Start point and initial vertical line
+    let path = `M ${targetX} ${
+      targetY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
+    }`;
 
-      ${
-        distanceBetweenSourceAndTarget >= flowUtilConsts.ARC_LENGTH
-          ? sourceX > targetX
-            ? ' a12,12 0 0,1 12,-12'
-            : ' a-12,-12 0 0,0 -12,-12'
-          : `
-        v -${
-          flowUtilConsts.ARC_LENGTH +
-          flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
-        }`
-      } 
+    // Add arrow if branch is not empty
+    if (!data.isBranchEmpty) {
+      path += flowUtilConsts.ARROW_DOWN;
+    }
 
-      ${
-        distanceBetweenSourceAndTarget >= flowUtilConsts.ARC_LENGTH
-          ? `
-       ${
-         data.drawHorizontalLine
-           ? `h ${
-               (Math.abs(targetX - sourceX) +
-                 3 -
-                 2 * flowUtilConsts.ARC_LENGTH) *
-               (sourceX > targetX ? 1 : -1)
-             }
-                    ${
-                      sourceX > targetX
-                        ? flowUtilConsts.ARC_LEFT_UP
-                        : flowUtilConsts.ARC_RIGHT_UP
-                    }`
-           : ``
-       }
-                  
+    // Vertical line up
+    path += `v -${verticalLineLength}`;
 
-                    ${
-                      data.drawStartingVerticalLine
-                        ? `v -${
-                            flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2 -
-                            2 *
-                              flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
-                          }`
-                        : ``
-                    }
+    // Arc or vertical line based on distance
+    if (distanceBetweenSourceAndTarget >= flowUtilConsts.ARC_LENGTH) {
+      // Add appropriate arc based on source position
+      path +=
+        sourceX > targetX ? ' a12,12 0 0,1 12,-12' : ' a-12,-12 0 0,0 -12,-12';
 
+      if (data.drawHorizontalLine) {
+        // Calculate horizontal line length
+        const horizontalLength =
+          (Math.abs(targetX - sourceX) + 3 - 2 * flowUtilConsts.ARC_LENGTH) *
+          (sourceX > targetX ? 1 : -1);
 
-                  `
-          : `
-                `
-      } 
+        // Add horizontal line and arc
+        path += `h ${horizontalLength}`;
+        path +=
+          sourceX > targetX
+            ? flowUtilConsts.ARC_LEFT_UP
+            : flowUtilConsts.ARC_RIGHT_UP;
+      }
 
-     
-  
-  `;
+      if (data.drawStartingVerticalLine) {
+        // Add final vertical line
+        const finalVerticalLength =
+          flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2 -
+          2 * flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
+        path += `v -${finalVerticalLength}`;
+      }
+    } else {
+      // If distance is small, just draw vertical line
+      path += `v -${
+        flowUtilConsts.ARC_LENGTH +
+        flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
+      }`;
+    }
+
+    return path;
+  };
+
+  const path = generatePath();
 
   const brancLabelProps: BranchLabelProps =
     data.stepLocationRelativeToParent ===

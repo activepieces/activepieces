@@ -5,6 +5,7 @@ import { memo, useEffect } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import {
+  FlowOperationRequest,
   FlowOperationType,
   flowStructureUtil,
   isNil,
@@ -34,8 +35,8 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     applyOperation,
     setSelectedBranchIndex,
     selectedBranchIndex,
-    setBranchDeletedCallback,
-    setBranchDuplicateCallback,
+    addOperationListener,
+    removeOperationListener,
   ] = useBuilderStateContext((state) => [
     flowStructureUtil.getActionOrThrow(
       state.selectedStep!,
@@ -44,8 +45,8 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     state.applyOperation,
     state.setSelectedBranchIndex,
     state.selectedBranchIndex,
-    state.setBranchDeletedCallback,
-    state.setBranchDuplicateCallback,
+    state.addOperationListener,
+    state.removeOperationListener,
   ]);
   const { fitView } = useReactFlow();
 
@@ -74,20 +75,33 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   };
 
   useEffect(() => {
-    setBranchDeletedCallback((branchIndex, stepName) => {
-      if (step.name === stepName) {
-        remove(branchIndex);
+    const deleteBranchListener = (operation: FlowOperationRequest) => {
+      if (operation.type === FlowOperationType.DELETE_BRANCH) {
+        if (operation.request.stepName === step.name) {
+          remove(operation.request.branchIndex);
+        }
       }
-    });
-    setBranchDuplicateCallback((branchIndex, branch, stepName) => {
-      if (step.name === stepName) {
-        insert(branchIndex + 1, branch);
+    };
+
+    const duplicateBranchListener = (operation: FlowOperationRequest) => {
+      if (operation.type === FlowOperationType.DUPLICATE_BRANCH) {
+        if (operation.request.stepName === step.name) {
+          insert(operation.request.branchIndex + 1, {
+            ...step.settings.branches[operation.request.branchIndex],
+            branchName: `${
+              step.settings.branches[operation.request.branchIndex].branchName
+            } Copy`,
+          });
+        }
       }
-    });
+    };
+
+    addOperationListener(deleteBranchListener);
+    addOperationListener(duplicateBranchListener);
 
     return () => {
-      setBranchDeletedCallback(null);
-      setBranchDuplicateCallback(null);
+      removeOperationListener(deleteBranchListener);
+      removeOperationListener(duplicateBranchListener);
     };
   }, []);
   return (
@@ -138,7 +152,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             readonly={readonly}
             step={step}
             branchNameChanged={(index, name) => {
-              setValue(`settings.branches[${index}].branchName`, name);
+              setValue(`settings.branches.${index}.branchName` as const, name);
             }}
             deleteBranch={deleteBranch}
             duplicateBranch={(index) => {

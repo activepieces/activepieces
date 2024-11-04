@@ -86,7 +86,6 @@ const ApBigAddButtonCanvasNode = React.memo(
                               stepLocationRelativeToParent:
                                 data.stepLocationRelativeToParent,
                               branchIndex: data.branchIndex,
-                              branchName: data.branchName,
                             },
                           }
                         : {

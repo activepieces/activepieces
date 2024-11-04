@@ -25,58 +25,55 @@ export const ApRouterEndCanvasEdge = ({
 
   const distanceBetweenTargetAndSource = Math.abs(targetX - sourceX);
 
-  const path = `
-    M ${sourceX - 0.5} ${
-    sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2
-  }
-    v ${data.verticalSpaceBetweenLastNodeInBranchAndEndLine}
-   
-    ${
-      distanceBetweenTargetAndSource >= flowUtilConsts.ARC_LENGTH
-        ? `${
-            targetX > sourceX
-              ? flowUtilConsts.ARC_RIGHT_DOWN
-              : flowUtilConsts.ARC_LEFT_DOWN
-          }`
-        : `
-     v ${
-       flowUtilConsts.ARC_LENGTH +
-       flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
-       2
-     }
-    `
-    } 
+  const generatePath = () => {
+    // Start point
+    let path = `M ${sourceX - 0.5} ${
+      sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2
+    }`;
 
+    // Vertical line from start
+    path += `v ${data.verticalSpaceBetweenLastNodeInBranchAndEndLine}`;
 
-
-       ${
-         data.drawHorizontalLine
-           ? `h ${horizontalLineLength}  
-
-
-        
-     ${targetX > sourceX ? flowUtilConsts.ARC_RIGHT : flowUtilConsts.ARC_LEFT}
-        
-       
-       `
-           : ``
-       }
-      
-
-    ${
-      data.drawEndingVerticalLine
-        ? `v${verticalLineLength} ${
-            !data.isNextStepEmpty ? flowUtilConsts.ARROW_DOWN : ''
-          }`
-        : ''
+    // Arc or vertical line based on distance
+    if (distanceBetweenTargetAndSource >= flowUtilConsts.ARC_LENGTH) {
+      path +=
+        targetX > sourceX
+          ? flowUtilConsts.ARC_RIGHT_DOWN
+          : flowUtilConsts.ARC_LEFT_DOWN;
+    } else {
+      path += `v ${
+        flowUtilConsts.ARC_LENGTH +
+        flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
+        2
+      }`;
     }
-  `;
+
+    // Optional horizontal line
+    if (data.drawHorizontalLine) {
+      path += `h ${horizontalLineLength} ${
+        targetX > sourceX ? flowUtilConsts.ARC_RIGHT : flowUtilConsts.ARC_LEFT
+      }`;
+    }
+
+    // Optional ending vertical line with arrow
+    if (data.drawEndingVerticalLine) {
+      path += `v${verticalLineLength}`;
+      if (!data.isNextStepEmpty) {
+        path += flowUtilConsts.ARROW_DOWN;
+      }
+    }
+
+    return path;
+  };
+
+  const path = generatePath();
+
   return (
     <>
       <BaseEdge
         path={path}
         style={{ strokeWidth: `${flowUtilConsts.LINE_WIDTH}px` }}
-      ></BaseEdge>
+      />
 
       {data.drawEndingVerticalLine && (
         <foreignObject
@@ -98,7 +95,7 @@ export const ApRouterEndCanvasEdge = ({
             edgeId={id}
             stepLocationRelativeToParent={StepLocationRelativeToParent.AFTER}
             parentStepName={data.routerOrBranchStepName}
-          ></ApAddButton>
+          />
         </foreignObject>
       )}
     </>
