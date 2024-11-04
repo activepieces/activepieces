@@ -92,8 +92,8 @@ function _getImportOperations(step: Action | Trigger | undefined): FlowOperation
             }
             case ActionType.ROUTER: {
                 if (step.children) {
-                    step.children.forEach((child: Action | null, index: number) => {
-                        if (!isNil(child) && !isNil(step?.name)) {
+                    for (const [index, child] of step.children.entries()) {
+                        if (!isNil(child)) {
                             steps.push({
                                 type: FlowOperationType.ADD_ACTION,
                                 request: {
@@ -105,7 +105,7 @@ function _getImportOperations(step: Action | Trigger | undefined): FlowOperation
                             })
                             steps.push(..._getImportOperations(child))
                         }
-                    })
+                    }
                 }
                 break
             }
@@ -153,8 +153,8 @@ function removeAnySubsequentAction(action: Action): Action {
 
 function _importFlow(flowVersion: FlowVersion, request: ImportFlowRequest): FlowOperationRequest[] {
     const existingActions = getAllActionsThatDoesNotHaveParent(flowVersion.trigger)
-    
-    const deleteOperations = existingActions.map(action => 
+
+    const deleteOperations = existingActions.map(action =>
         createDeleteActionOperation(action.name),
     )
 

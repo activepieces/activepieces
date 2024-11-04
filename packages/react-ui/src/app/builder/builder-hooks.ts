@@ -12,7 +12,6 @@ import {
   FlowVersionState,
   Permission,
   PopulatedFlow,
-  RouterAction,
   TriggerType,
   flowOperations,
   isNil,
@@ -48,12 +47,6 @@ export enum RightSideBarType {
 }
 
 type InsertMentionHandler = (propertyPath: string) => void;
-type BranchDeletedCallback = (branchIndex: number, stepName: string) => void;
-type BranchDuplicatedCallback = (
-  branchIndex: number,
-  branch: RouterAction['settings']['branches'][number],
-  stepName: string,
-) => void;
 export type BuilderState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
@@ -96,11 +89,12 @@ export type BuilderState = {
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
   setLoopIndex: (stepName: string, index: number) => void;
-  branchDeletedCallback: BranchDeletedCallback | null;
-  branchDuplicateCallback: BranchDuplicatedCallback | null;
-  setBranchDeletedCallback: (callback: BranchDeletedCallback | null) => void;
-  setBranchDuplicateCallback: (
-    callback: BranchDuplicatedCallback | null,
+  operationListeners: Array<(operation: FlowOperationRequest) => void>;
+  addOperationListener: (
+    listener: (operation: FlowOperationRequest) => void,
+  ) => void;
+  removeOperationListener: (
+    listener: (operation: FlowOperationRequest) => void,
   ) => void;
 };
 
@@ -274,6 +268,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             state.flowVersion,
             operation,
           );
+
+          state.operationListeners.forEach((listener) => {
+            listener(operation);
+          });
+
           const updateRequest = async () => {
             set({ saving: true });
             try {
@@ -321,17 +320,22 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         set((state) => ({
           refreshPieceFormSettings: !state.refreshPieceFormSettings,
         })),
-      setBranchDeletedCallback: (callback) =>
-        set({
-          branchDeletedCallback: callback,
-        }),
-      branchDeletedCallback: null,
-      setBranchDuplicateCallback: (callback) =>
-        set({
-          branchDuplicateCallback: callback,
-        }),
-      branchDuplicateCallback: null,
       selectedBranchIndex: null,
+      operationListeners: [],
+      addOperationListener: (
+        listener: (operation: FlowOperationRequest) => void,
+      ) =>
+        set((state) => ({
+          operationListeners: [...state.operationListeners, listener],
+        })),
+      removeOperationListener: (
+        listener: (operation: FlowOperationRequest) => void,
+      ) =>
+        set((state) => ({
+          operationListeners: state.operationListeners.filter(
+            (l) => l !== listener,
+          ),
+        })),
     };
   });
 

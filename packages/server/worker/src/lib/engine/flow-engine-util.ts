@@ -89,14 +89,14 @@ export const pieceEngineUtil = {
     async lockSingleStepPieceVersion(params: LockFlowVersionParams): Promise<FlowVersion> {
         const { engineToken, flowVersion } = params
         const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
-        const pieceSteps = allSteps.filter(step => step.name === params.stepName)
+        const pieceSteps = allSteps.filter(step => step.name === params.stepName && isPieceStep(step))
         const pieces = await Promise.all(pieceSteps.map(step => this.getExactPieceForStep(engineToken, step)))
         const pieceVersions = pieces.reduce((acc, piece, index) => ({
             ...acc,
             [pieceSteps[index].name]: piece.pieceVersion,
         }), {} as Record<string, string>)
         return flowStructureUtil.transferFlow(flowVersion, (step) => {
-            if (isPieceStep(step)) {
+            if (pieceVersions[step.name]) {
                 step.settings.pieceVersion = pieceVersions[step.name]
             }
             return step

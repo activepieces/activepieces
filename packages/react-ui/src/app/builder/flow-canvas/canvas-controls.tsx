@@ -61,9 +61,11 @@ const CanvasControls = ({
       },
     );
   }, [getNodes, setViewport]);
+
   useEffect(() => {
     handleFitToView();
   }, []);
+
   return (
     <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row">
       <Tooltip>
