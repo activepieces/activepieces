@@ -89,6 +89,7 @@ const FlowsPage = () => {
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const openNewWindow = useNewWindow();
   const [searchParams] = useSearchParams();
 
@@ -351,7 +352,6 @@ const FlowsPage = () => {
       },
     },
   ];
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const bulkActions: BulkAction<PopulatedFlow>[] = useMemo(
     () => [
