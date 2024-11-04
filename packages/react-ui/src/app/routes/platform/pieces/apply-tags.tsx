@@ -1,5 +1,7 @@
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { t } from 'i18next';
+import { useState, useEffect, useRef } from 'react';
 
 import { CreateTagDialog } from '@/app/routes/platform/pieces/create-tag-dialog';
 import { Button } from '@/components/ui/button';
@@ -19,7 +21,6 @@ import {
 import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { piecesTagsApi } from '@/features/platform-admin-panel/lib/pieces-tags';
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 
 type ApplyTagsProps = {
   selectedPieces: PieceMetadataModelSummary[];
@@ -36,7 +37,7 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
   });
   const [open, setOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
-
+  const tagsThatHaveBeenClickedRef = useRef<Set<string>>(new Set());
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   useEffect(() => {
     setSelectedTags(
@@ -53,12 +54,20 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
   const { mutate: applyTags } = useMutation({
     mutationFn: async (tags: string[]) => {
       setSelectedTags(new Set(tags));
+      toast({
+        title: t('Applying Tags...'),
+        variant: 'default',
+      });
       await piecesTagsApi.tagPieces({
         piecesName: selectedPieces.map((piece) => piece.name),
         tags,
       });
     },
     onSuccess: () => {
+      toast({
+        title: t('Tags applied.'),
+        variant: 'default',
+      });
       onApplyTags();
     },
     onError: () => {
@@ -69,7 +78,6 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
   const [tagOptions, setTagOptions] = useState<
     { label: string; value: string }[]
   >([]);
-
   useEffect(() => {
     setTagOptions(
       tags.map((tag) => ({
@@ -80,7 +88,13 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
   }, [tags]);
 
   return (
-    <Popover open={open} onOpenChange={(open) => setOpen(open)}>
+    <Popover
+      open={open}
+      onOpenChange={(open) => {
+        setOpen(open);
+        tagsThatHaveBeenClickedRef.current = new Set();
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -105,11 +119,13 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
                     ) &&
                     !selectedPieces.every((piece) =>
                       piece.tags?.includes(option.value),
-                    );
+                    ) &&
+                    !tagsThatHaveBeenClickedRef.current.has(option.value);
                   return (
                     <CommandItem
                       key={option.value}
                       onSelect={() => {
+                        tagsThatHaveBeenClickedRef.current.add(option.value);
                         const newSelectedTags = new Set(selectedTags);
                         if (isSelected && !isIndeterminate) {
                           newSelectedTags.delete(option.value);
@@ -128,33 +144,31 @@ const ApplyTags = ({ selectedPieces, onApplyTags }: ApplyTagsProps) => {
                     </CommandItem>
                   );
                 })}
-                <CreateTagDialog
-                  onTagCreated={(tag) => {
-                    if (
-                      tagOptions.some((option) => option.value === tag.name)
-                    ) {
-                      return;
-                    }
-                    setTagOptions([
-                      ...tagOptions,
-                      { label: tag.name, value: tag.name },
-                    ]);
-                  }}
-                  isOpen={createDialogOpen}
-                  setIsOpen={setCreateDialogOpen}
-                >
-                  <CommandItem
-                    className="justify-center text-center"
-                    onSelect={(e) => {
-                      setCreateDialogOpen(true);
-                    }}
-                  >
-                    + Create Tag
-                  </CommandItem>
-                </CreateTagDialog>
               </CommandGroup>
             )}
 
+            <CreateTagDialog
+              onTagCreated={(tag) => {
+                if (tagOptions.some((option) => option.value === tag.name)) {
+                  return;
+                }
+                setTagOptions([
+                  ...tagOptions,
+                  { label: tag.name, value: tag.name },
+                ]);
+              }}
+              isOpen={createDialogOpen}
+              setIsOpen={setCreateDialogOpen}
+            >
+              <CommandItem
+                className="justify-center text-center"
+                onSelect={(e) => {
+                  setCreateDialogOpen(true);
+                }}
+              >
+                + Create Tag
+              </CommandItem>
+            </CreateTagDialog>
             <Separator />
             <CommandGroup>
               <CommandItem

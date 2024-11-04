@@ -1,3 +1,4 @@
+import { Tag } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -15,7 +16,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { piecesTagsApi } from '@/features/platform-admin-panel/lib/pieces-tags';
-import { Tag } from '@activepieces/shared';
 
 type CreateTagDialogProps = {
   onTagCreated: (tag: Tag) => void;
@@ -62,10 +62,8 @@ export function CreateTagDialog({
           <DialogTitle>Create New Tag</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="tagName" className="text-right">
-              {t('Tag Name')}
-            </Label>
+          <div className="flex flex-col gap-4">
+            <Label htmlFor="tagName">{t('Tag')}</Label>
             <Input
               id="tagName"
               value={tagName}
