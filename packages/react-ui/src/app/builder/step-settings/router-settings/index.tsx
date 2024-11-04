@@ -66,7 +66,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
           branchIndex: index,
         },
       },
-      () => {},
+      () => { },
     );
     remove(index);
     setSelectedBranchIndex(null);
@@ -150,7 +150,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                     branchIndex: index,
                   },
                 },
-                () => {},
+                () => { },
               );
 
               insert(index + 1, {
@@ -188,12 +188,12 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                         branchIndex: step.settings.branches.length - 1,
                       },
                     },
-                    () => {},
+                    () => { },
                   );
 
                   insert(
                     step.settings.branches.length - 1,
-                    flowStructureUtil.createEmptyPath(
+                    flowStructureUtil.createEmptyBranch(
                       step.settings.branches.length,
                     ),
                   );
