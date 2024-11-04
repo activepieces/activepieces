@@ -31,14 +31,13 @@ async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
         }
 
         const files = await fs.readdir(outputDir);
-        const imageBuffers = await Promise.all(
-            files.map(async (file) => {
-                const filePath = join(outputDir, file);
-                const imageBuffer = await fs.readFile(filePath);
-                await fs.unlink(filePath);
-                return imageBuffer;
-            })
-        );
+        const imageBuffers = [];
+        for (const file of files) {
+            const filePath = join(outputDir, file);
+            const imageBuffer = await fs.readFile(filePath);
+            await fs.unlink(filePath);
+            imageBuffers.push(imageBuffer);
+        }
 
         return imageBuffers;
     } finally {

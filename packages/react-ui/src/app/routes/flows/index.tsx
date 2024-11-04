@@ -13,7 +13,7 @@ import {
   UploadCloud,
   Workflow,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -32,6 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { MessageTooltip } from '@/components/ui/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -88,6 +89,7 @@ const FlowsPage = () => {
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const openNewWindow = useNewWindow();
   const [searchParams] = useSearchParams();
 
@@ -126,7 +128,7 @@ const FlowsPage = () => {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-table', searchParams.toString()],
     staleTime: 0,
     queryFn: () => {
@@ -175,6 +177,8 @@ const FlowsPage = () => {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
+  const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
+
   const columns: (ColumnDef<RowDataWithActions<PopulatedFlow>> & {
     accessorKey: string;
   })[] = [
@@ -184,17 +188,67 @@ const FlowsPage = () => {
         <Checkbox
           checked={
             table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
+            table.getIsSomePageRowsSelected()
           }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          onCheckedChange={(value) => {
+            const isChecked = !!value;
+            table.toggleAllPageRowsSelected(isChecked);
+
+            if (isChecked) {
+              const allRowIds = table
+                .getRowModel()
+                .rows.map((row) => row.original);
+
+              const newSelectedRowIds = [...allRowIds, ...selectedRows];
+
+              const uniqueRowIds = Array.from(
+                new Map(
+                  newSelectedRowIds.map((item) => [item.id, item]),
+                ).values(),
+              );
+
+              setSelectedRows(uniqueRowIds);
+            } else {
+              const filteredRowIds = selectedRows.filter((row) => {
+                return !table
+                  .getRowModel()
+                  .rows.some((r) => r.original.version.id === row.version.id);
+              });
+              setSelectedRows(filteredRowIds);
+            }
+          }}
         />
       ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-        />
-      ),
+      cell: ({ row }) => {
+        const isChecked = selectedRows.some(
+          (selectedRow) =>
+            selectedRow.id === row.original.id &&
+            selectedRow.status === row.original.status,
+        );
+        return (
+          <Checkbox
+            checked={isChecked}
+            onCheckedChange={(value) => {
+              const isChecked = !!value;
+              let newSelectedRows = [...selectedRows];
+              if (isChecked) {
+                const exists = newSelectedRows.some(
+                  (selectedRow) => selectedRow.id === row.original.id,
+                );
+                if (!exists) {
+                  newSelectedRows.push(row.original);
+                }
+              } else {
+                newSelectedRows = newSelectedRows.filter(
+                  (selectedRow) => selectedRow.id !== row.original.id,
+                );
+              }
+              setSelectedRows(newSelectedRows);
+              row.toggleSelected(!!value);
+            }}
+          />
+        );
+      },
       accessorKey: 'select',
     },
     {
@@ -302,33 +356,49 @@ const FlowsPage = () => {
   const bulkActions: BulkAction<PopulatedFlow>[] = useMemo(
     () => [
       {
-        render: (selectedRows, resetSelection) => {
+        render: (_, resetSelection) => {
           const isDisabled = selectedRows.length === 0;
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <DropdownMenu modal={true}>
+              <DropdownMenu
+                modal={true}
+                open={isDropdownOpen}
+                onOpenChange={setIsDropdownOpen}
+              >
                 <DropdownMenuTrigger asChild disabled={isDisabled}>
-                  <Button
-                    disabled={isDisabled}
-                    className="h-9 w-full"
-                    variant={'outline'}
+                  <MessageTooltip
+                    message={t('Select at least one flow to perform actions')}
+                    isDisabled={isDisabled}
                   >
-                    {selectedRows.length > 0
-                      ? `${t('Actions')} (${selectedRows.length})`
-                      : t('Actions')}
-                    <ChevronDown className="h-3 w-4 ml-2" />
-                  </Button>
+                    <Button
+                      disabled={isDisabled}
+                      className="h-9 w-full"
+                      variant={'outline'}
+                      onClick={() => {
+                        console.log('isDropdownOpen', isDropdownOpen);
+                        setIsDropdownOpen(!isDropdownOpen);
+                      }}
+                    >
+                      {selectedRows.length > 0
+                        ? `${t('Actions')} (${selectedRows.length})`
+                        : t('Actions')}
+                      <ChevronDown className="h-3 w-4 ml-2" />
+                    </Button>
+                  </MessageTooltip>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <PermissionNeededTooltip
                     hasPermission={userHasPermissionToPushToGit}
                   >
                     <PushToGitDialog
-                      flowIds={selectedRows.map((flow) => flow.id)}
+                      flowIds={selectedRows.map((flow) => flow.version.id)}
                     >
                       <DropdownMenuItem
                         disabled={!userHasPermissionToPushToGit}
-                        onSelect={(e) => e.preventDefault()}
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setIsDropdownOpen(false);
+                        }}
                       >
                         <div className="flex cursor-pointer  flex-row gap-2 items-center">
                           <UploadCloud className="h-4 w-4" />
@@ -346,6 +416,9 @@ const FlowsPage = () => {
                         onMoveTo={() => {
                           setRefresh(refresh + 1);
                           resetSelection();
+                          setSelectedRows([]);
+                          refetch();
+                          setIsDropdownOpen(false);
                         }}
                       >
                         <DropdownMenuItem
@@ -360,7 +433,14 @@ const FlowsPage = () => {
                       </MoveFlowDialog>
                     </PermissionNeededTooltip>
                   )}
-                  <DropdownMenuItem onClick={() => exportFlows(selectedRows)}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      exportFlows(selectedRows);
+                      resetSelection();
+                      setSelectedRows([]);
+                      setIsDropdownOpen(false);
+                    }}
+                  >
                     <div className="flex cursor-pointer flex-row gap-2 items-center">
                       {isExportPending ? (
                         <LoadingSpinner />
@@ -397,6 +477,11 @@ const FlowsPage = () => {
                         await Promise.all(
                           selectedRows.map((flow) => flowsApi.delete(flow.id)),
                         );
+                        setRefresh(refresh + 1);
+                        resetSelection();
+                        setSelectedRows([]);
+                        refetch();
+                        setIsDropdownOpen(false);
                       }}
                       entityName={t('flow')}
                     >
@@ -420,7 +505,13 @@ const FlowsPage = () => {
         },
       },
     ],
-    [doesUserHavePermissionToWriteFlow, t],
+    [
+      doesUserHavePermissionToWriteFlow,
+      t,
+      selectedRows,
+      refresh,
+      isDropdownOpen,
+    ],
   );
 
   return (
@@ -487,7 +578,7 @@ const FlowsPage = () => {
         </div>
       </div>
       <div className="flex flex-row gap-4">
-        {!embedState.hideFolders && <FolderFilterList />}
+        {!embedState.hideFolders && <FolderFilterList refresh={refresh} />}
         <div className="w-full">
           <DataTable
             columns={columns.filter(
