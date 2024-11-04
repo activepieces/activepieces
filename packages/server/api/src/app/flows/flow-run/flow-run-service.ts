@@ -116,7 +116,7 @@ export const flowRunService = {
             query: {
                 limit,
                 order: Order.DESC,
-                orderBy: 'startTime',
+                orderBy: 'created',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -163,6 +163,7 @@ export const flowRunService = {
             id: apId(),
             status: FlowRunStatus.RUNNING,
             startTime: new Date().toISOString(),
+            created: new Date().toISOString(),
         }
 
         await flowRunRepo().save(newFlowRun)
