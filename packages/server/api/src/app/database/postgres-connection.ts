@@ -156,6 +156,7 @@ import { AddAiTokensForProjectPlan1726446092010 } from './migration/postgres/172
 import { RemovePremiumPieces1727865841722 } from './migration/postgres/1727865841722-RemovePremiumPieces'
 import { AddConnectionOwner1730123432651 } from './migration/postgres/1730123432651-AddConnectionOwner'
 import { AppConnectionsSetNull1730627612799 } from './migration/postgres/1730627612799-AppConnectionsSetNull'
+import { AddFlowSchemaVersion1730760434336 } from './migration/postgres/1730760434336-AddFlowSchemaVersion'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -261,6 +262,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPinnedPieces1729776414647,
         AddConnectionOwner1730123432651,
         AppConnectionsSetNull1730627612799,
+        AddFlowSchemaVersion1730760434336,
     ]
 
     const edition = system.getEdition()

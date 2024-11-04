@@ -12,6 +12,7 @@ import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
+import { applyMigrations } from './migrations'
 import { _moveAction } from './move-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
@@ -355,9 +356,10 @@ export const flowOperations = {
                 break
             }
             case FlowOperationType.IMPORT_FLOW: {
-                const operations = _importFlow(clonedVersion, operation.request)
+                let migratedVersion = applyMigrations(clonedVersion)
+                const operations = _importFlow(migratedVersion, operation.request)
                 operations.forEach((operation) => {
-                    clonedVersion = flowOperations.apply(clonedVersion, operation)
+                    migratedVersion = flowOperations.apply(migratedVersion, operation)
                 })
                 break
             }
