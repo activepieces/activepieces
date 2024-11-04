@@ -1,3 +1,5 @@
+import { GitBranchType } from '@activepieces/ee-shared';
+import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -16,6 +18,9 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import FlowActionMenu from '../../../app/components/flow-actions-menu';
+import { TableTitle } from '../../../components/ui/table-title';
+
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -32,6 +37,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { MessageTooltip } from '@/components/ui/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -54,11 +60,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { GitBranchType } from '@activepieces/ee-shared';
-import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
-
-import FlowActionMenu from '../../../app/components/flow-actions-menu';
-import { TableTitle } from '../../../components/ui/table-title';
 
 const filters = [
   {
@@ -126,7 +127,7 @@ const FlowsPage = () => {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-table', searchParams.toString()],
     staleTime: 0,
     queryFn: () => {
@@ -175,9 +176,7 @@ const FlowsPage = () => {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const [selectedRowIds, setSelectedRowIds] = useState<Array<PopulatedFlow>>(
-    [],
-  );
+  const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
 
   const columns: (ColumnDef<RowDataWithActions<PopulatedFlow>> & {
     accessorKey: string;
@@ -188,7 +187,7 @@ const FlowsPage = () => {
         <Checkbox
           checked={
             table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
+            table.getIsSomePageRowsSelected()
           }
           onCheckedChange={(value) => {
             const isChecked = !!value;
@@ -199,7 +198,7 @@ const FlowsPage = () => {
                 .getRowModel()
                 .rows.map((row) => row.original);
 
-              const newSelectedRowIds = [...allRowIds, ...selectedRowIds];
+              const newSelectedRowIds = [...allRowIds, ...selectedRows];
 
               const uniqueRowIds = Array.from(
                 new Map(
@@ -207,20 +206,20 @@ const FlowsPage = () => {
                 ).values(),
               );
 
-              setSelectedRowIds(uniqueRowIds);
+              setSelectedRows(uniqueRowIds);
             } else {
-              const filteredRowIds = selectedRowIds.filter((row) => {
+              const filteredRowIds = selectedRows.filter((row) => {
                 return !table
                   .getRowModel()
                   .rows.some((r) => r.original.version.id === row.version.id);
               });
-              setSelectedRowIds(filteredRowIds);
+              setSelectedRows(filteredRowIds);
             }
           }}
         />
       ),
       cell: ({ row }) => {
-        const isChecked = selectedRowIds.some(
+        const isChecked = selectedRows.some(
           (selectedRow) =>
             selectedRow.id === row.original.id &&
             selectedRow.status === row.original.status,
@@ -230,20 +229,20 @@ const FlowsPage = () => {
             checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;
-              let newSelectedRowIds = [...selectedRowIds];
+              let newSelectedRows = [...selectedRows];
               if (isChecked) {
-                const exists = newSelectedRowIds.some(
+                const exists = newSelectedRows.some(
                   (selectedRow) => selectedRow.id === row.original.id,
                 );
                 if (!exists) {
-                  newSelectedRowIds.push(row.original);
+                  newSelectedRows.push(row.original);
                 }
               } else {
-                newSelectedRowIds = newSelectedRowIds.filter(
+                newSelectedRows = newSelectedRows.filter(
                   (selectedRow) => selectedRow.id !== row.original.id,
                 );
               }
-              setSelectedRowIds(newSelectedRowIds);
+              setSelectedRows(newSelectedRows);
               row.toggleSelected(!!value);
             }}
           />
@@ -352,39 +351,54 @@ const FlowsPage = () => {
       },
     },
   ];
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const bulkActions: BulkAction<PopulatedFlow>[] = useMemo(
     () => [
       {
         render: (_, resetSelection) => {
-          const isDisabled = selectedRowIds.length === 0;
-          console.log('selectedRowIds', selectedRowIds);
-          console.log('isDisabled', isDisabled);
+          const isDisabled = selectedRows.length === 0;
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <DropdownMenu modal={true}>
+              <DropdownMenu
+                modal={true}
+                open={isDropdownOpen}
+                onOpenChange={setIsDropdownOpen}
+              >
                 <DropdownMenuTrigger asChild disabled={isDisabled}>
-                  <Button
-                    disabled={isDisabled}
-                    className="h-9 w-full"
-                    variant={'outline'}
+                  <MessageTooltip
+                    message={t('Select at least one flow to perform actions')}
+                    isDisabled={isDisabled}
                   >
-                    {selectedRowIds.length > 0
-                      ? `${t('Actions')} (${selectedRowIds.length})`
-                      : t('Actions')}
-                    <ChevronDown className="h-3 w-4 ml-2" />
-                  </Button>
+                    <Button
+                      disabled={isDisabled}
+                      className="h-9 w-full"
+                      variant={'outline'}
+                      onClick={() => {
+                        console.log('isDropdownOpen', isDropdownOpen);
+                        setIsDropdownOpen(!isDropdownOpen);
+                      }}
+                    >
+                      {selectedRows.length > 0
+                        ? `${t('Actions')} (${selectedRows.length})`
+                        : t('Actions')}
+                      <ChevronDown className="h-3 w-4 ml-2" />
+                    </Button>
+                  </MessageTooltip>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <PermissionNeededTooltip
                     hasPermission={userHasPermissionToPushToGit}
                   >
                     <PushToGitDialog
-                      flowIds={selectedRowIds.map((flow) => flow.version.id)}
+                      flowIds={selectedRows.map((flow) => flow.version.id)}
                     >
                       <DropdownMenuItem
                         disabled={!userHasPermissionToPushToGit}
-                        onSelect={(e) => e.preventDefault()}
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setIsDropdownOpen(false);
+                        }}
                       >
                         <div className="flex cursor-pointer  flex-row gap-2 items-center">
                           <UploadCloud className="h-4 w-4" />
@@ -398,11 +412,13 @@ const FlowsPage = () => {
                       hasPermission={userHasPermissionToUpdateFlow}
                     >
                       <MoveFlowDialog
-                        flows={selectedRowIds}
+                        flows={selectedRows}
                         onMoveTo={() => {
                           setRefresh(refresh + 1);
                           resetSelection();
-                          setSelectedRowIds([]);
+                          setSelectedRows([]);
+                          refetch();
+                          setIsDropdownOpen(false);
                         }}
                       >
                         <DropdownMenuItem
@@ -419,9 +435,10 @@ const FlowsPage = () => {
                   )}
                   <DropdownMenuItem
                     onClick={() => {
-                      exportFlows(selectedRowIds);
+                      exportFlows(selectedRows);
                       resetSelection();
-                      setSelectedRowIds([]);
+                      setSelectedRows([]);
+                      setIsDropdownOpen(false);
                     }}
                   >
                     <div className="flex cursor-pointer flex-row gap-2 items-center">
@@ -458,13 +475,13 @@ const FlowsPage = () => {
                       }
                       mutationFn={async () => {
                         await Promise.all(
-                          selectedRowIds.map((flow) =>
-                            flowsApi.delete(flow.version.id),
-                          ),
+                          selectedRows.map((flow) => flowsApi.delete(flow.id)),
                         );
                         setRefresh(refresh + 1);
                         resetSelection();
-                        setSelectedRowIds([]);
+                        setSelectedRows([]);
+                        refetch();
+                        setIsDropdownOpen(false);
                       }}
                       entityName={t('flow')}
                     >
@@ -488,7 +505,13 @@ const FlowsPage = () => {
         },
       },
     ],
-    [doesUserHavePermissionToWriteFlow, t, selectedRowIds],
+    [
+      doesUserHavePermissionToWriteFlow,
+      t,
+      selectedRows,
+      refresh,
+      isDropdownOpen,
+    ],
   );
 
   return (
@@ -555,7 +578,7 @@ const FlowsPage = () => {
         </div>
       </div>
       <div className="flex flex-row gap-4">
-        {!embedState.hideFolders && <FolderFilterList />}
+        {!embedState.hideFolders && <FolderFilterList refresh={refresh} />}
         <div className="w-full">
           <DataTable
             columns={columns.filter(

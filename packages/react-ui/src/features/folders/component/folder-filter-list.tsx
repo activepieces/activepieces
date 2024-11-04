@@ -1,3 +1,4 @@
+import { FolderDto, Permission } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -11,9 +12,15 @@ import {
   PlusIcon,
   Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useLocation, useSearchParams } from 'react-router-dom';
+
+import { foldersApi } from '../lib/folders-api';
+import { foldersHooks } from '../lib/folders-hooks';
+import { foldersUtils } from '../lib/folders-utils';
+
+import { RenameFolderDialog } from './rename-folder-dialog';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -44,13 +51,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { FolderDto, Permission } from '@activepieces/shared';
-
-import { foldersApi } from '../lib/folders-api';
-import { foldersHooks } from '../lib/folders-hooks';
-import { foldersUtils } from '../lib/folders-utils';
-
-import { RenameFolderDialog } from './rename-folder-dialog';
 
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
@@ -182,7 +182,7 @@ const FolderItem = ({
   );
 };
 
-const FolderFilterList = () => {
+const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const location = useLocation();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FLOW);
@@ -208,9 +208,13 @@ const FolderFilterList = () => {
     setSearchParams(newQueryParameters);
   };
 
-  const { folders, isLoading, refetch } = foldersHooks.useFolders();
+  const {
+    folders,
+    isLoading,
+    refetch: refetchFolders,
+  } = foldersHooks.useFolders();
 
-  const { data: allFlowsCount } = useQuery({
+  const { data: allFlowsCount, refetch: refetchAllFlowsCount } = useQuery({
     queryKey: ['flowsCount', authenticationSession.getProjectId()],
     queryFn: flowsApi.count,
   });
@@ -230,7 +234,7 @@ const FolderFilterList = () => {
       form.reset();
       setIsDialogOpen(false);
       updateSearchParams(folder.id);
-      refetch();
+      refetchFolders();
       toast({
         title: t('Added folder successfully'),
       });
@@ -252,6 +256,11 @@ const FolderFilterList = () => {
       }
     },
   });
+
+  useEffect(() => {
+    refetchFolders();
+    refetchAllFlowsCount();
+  }, [refresh]);
 
   return (
     <div className="p-2">
@@ -357,7 +366,7 @@ const FolderFilterList = () => {
                     }
                     key={folder.id}
                     folder={folder}
-                    refetch={refetch}
+                    refetch={refetchFolders}
                     selectedFolderId={selectedFolderId}
                     updateSearchParams={updateSearchParams}
                   />

@@ -1,9 +1,19 @@
+import {
+  AppConnectionStatus,
+  AppConnectionWithoutSensitiveData,
+  Permission,
+} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+
+import { TableTitle } from '../../components/ui/table-title';
+import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
+
+import { NewConnectionDialog } from './new-connection-dialog';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -26,16 +36,6 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import {
-  AppConnectionStatus,
-  AppConnectionWithoutSensitiveData,
-  Permission,
-} from '@activepieces/shared';
-
-import { TableTitle } from '../../components/ui/table-title';
-import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
-
-import { NewConnectionDialog } from './new-connection-dialog';
 
 type PieceIconWithPieceNameProps = {
   pieceName: string;
@@ -75,7 +75,7 @@ const filters = [
 function AppConnectionsTable() {
   const [refresh, setRefresh] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedRowIds, setSelectedRowIds] = useState<
+  const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
   const { checkAccess } = useAuthorization();
@@ -91,39 +91,39 @@ function AppConnectionsTable() {
         <Checkbox
           checked={
             table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
+            table.getIsSomePageRowsSelected()
           }
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
 
             if (isChecked) {
-              const allRowIds = table
+              const allRows = table
                 .getRowModel()
                 .rows.map((row) => row.original);
 
-              const newSelectedRowIds = [...allRowIds, ...selectedRowIds];
+              const newSelectedRows = [...allRows, ...selectedRows];
 
-              const uniqueRowIds = Array.from(
+              const uniqueRows = Array.from(
                 new Map(
-                  newSelectedRowIds.map((item) => [item.id, item]),
+                  newSelectedRows.map((item) => [item.id, item]),
                 ).values(),
               );
 
-              setSelectedRowIds(uniqueRowIds);
+              setSelectedRows(uniqueRows);
             } else {
-              const filteredRowIds = selectedRowIds.filter((row) => {
+              const filteredRows = selectedRows.filter((row) => {
                 return !table
                   .getRowModel()
                   .rows.some((r) => r.original.id === row.id);
               });
-              setSelectedRowIds(filteredRowIds);
+              setSelectedRows(filteredRows);
             }
           }}
         />
       ),
       cell: ({ row }) => {
-        const isChecked = selectedRowIds.some(
+        const isChecked = selectedRows.some(
           (selectedRow) => selectedRow.id === row.original.id,
         );
         return (
@@ -131,20 +131,20 @@ function AppConnectionsTable() {
             checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;
-              let newSelectedRowIds = [...selectedRowIds];
+              let newSelectedRows = [...selectedRows];
               if (isChecked) {
-                const exists = newSelectedRowIds.some(
+                const exists = newSelectedRows.some(
                   (selectedRow) => selectedRow.id === row.original.id,
                 );
                 if (!exists) {
-                  newSelectedRowIds.push(row.original);
+                  newSelectedRows.push(row.original);
                 }
               } else {
-                newSelectedRowIds = newSelectedRowIds.filter(
+                newSelectedRows = newSelectedRows.filter(
                   (selectedRow) => selectedRow.id !== row.original.id,
                 );
               }
-              setSelectedRowIds(newSelectedRowIds);
+              setSelectedRows(newSelectedRows);
               row.toggleSelected(!!value);
             }}
           />
@@ -296,13 +296,19 @@ function AppConnectionsTable() {
                     'Are you sure you want to delete the selected connections? This action cannot be undone.',
                   )}
                   entityName="connections"
-                  mutationFn={() =>
-                    bulkDeleteMutation.mutateAsync(
-                      selectedRowIds.map((row) => row.id),
-                    )
-                  }
+                  mutationFn={async () => {
+                    try {
+                      await bulkDeleteMutation.mutateAsync(
+                        selectedRows.map((row) => row.id),
+                      );
+                      resetSelection();
+                      setSelectedRows([]);
+                    } catch (error) {
+                      console.error('Error deleting connections:', error);
+                    }
+                  }}
                 >
-                  {selectedRowIds.length > 0 && (
+                  {selectedRows.length > 0 && (
                     <Button
                       className="w-full mr-2"
                       onClick={() => setIsDialogOpen(true)}
@@ -310,7 +316,7 @@ function AppConnectionsTable() {
                       variant="destructive"
                     >
                       <Trash className="mr-2 w-4" />
-                      {`${t('Delete')} (${selectedRowIds.length})`}
+                      {`${t('Delete')} (${selectedRows.length})`}
                     </Button>
                   )}
                 </ConfirmationDeleteDialog>
@@ -348,7 +354,7 @@ function AppConnectionsTable() {
       bulkDeleteMutation,
       userHasPermissionToWriteAppConnection,
       isDialogOpen,
-      selectedRowIds,
+      selectedRows,
     ],
   );
   return (
