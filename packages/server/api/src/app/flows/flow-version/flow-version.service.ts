@@ -16,6 +16,7 @@ import {
     FlowVersionState,
     ImportFlowRequest,
     isNil,
+    LATEST_SCHEMA_VERSION,
     LoopOnItemsActionSettings,
     PieceActionSettings,
     PieceTriggerSettings,
@@ -260,6 +261,7 @@ export const flowVersionService = {
                 valid: false,
                 displayName: 'Select Trigger',
             },
+            schemaVersion: LATEST_SCHEMA_VERSION,
             valid: false,
             state: FlowVersionState.DRAFT,
         }
