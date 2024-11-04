@@ -62,10 +62,8 @@ export function CreateTagDialog({
           <DialogTitle>Create New Tag</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="tagName" className="text-right">
-              {t('Tag Name')}
-            </Label>
+          <div className="flex flex-col gap-4">
+            <Label htmlFor="tagName">{t('Tag')}</Label>
             <Input
               id="tagName"
               value={tagName}
