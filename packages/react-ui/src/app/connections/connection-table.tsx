@@ -1,19 +1,9 @@
-import {
-  AppConnectionStatus,
-  AppConnectionWithoutSensitiveData,
-  Permission,
-} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-
-import { TableTitle } from '../../components/ui/table-title';
-import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
-
-import { NewConnectionDialog } from './new-connection-dialog';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -36,6 +26,16 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
+import {
+  AppConnectionStatus,
+  AppConnectionWithoutSensitiveData,
+  Permission,
+} from '@activepieces/shared';
+
+import { TableTitle } from '../../components/ui/table-title';
+import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
+
+import { NewConnectionDialog } from './new-connection-dialog';
 
 type PieceIconWithPieceNameProps = {
   pieceName: string;
