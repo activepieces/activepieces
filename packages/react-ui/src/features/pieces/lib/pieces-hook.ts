@@ -248,7 +248,7 @@ export function getCoreActions(
       return [
         {
           name: 'router',
-          displayName: t('Branches'),
+          displayName: t('Router'),
           description: t(
             'Split your flow into branches depending on condition(s)',
           ),

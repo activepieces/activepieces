@@ -16,7 +16,9 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
         if (parentStep.type !== request.type) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_OPERATION_INVALID,
-                params: {},
+                params: {
+                    message: `Step type mismatch: ${parentStep.type} !== ${request.type}`,
+                },
             })
         }
         const baseProps: Omit<Action, 'type' | 'settings'> = {

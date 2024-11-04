@@ -46,6 +46,7 @@ function _getImportOperations(step: Action | Trigger | undefined): FlowOperation
                 type: FlowOperationType.ADD_ACTION,
                 request: {
                     parentStep: step?.name ?? '',
+                    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
                     action: removeAnySubsequentAction(step.nextAction),
                 },
             })

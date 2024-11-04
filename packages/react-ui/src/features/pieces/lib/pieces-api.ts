@@ -45,7 +45,7 @@ export const CORE_STEP_METADATA: Record<
     type: ActionType.BRANCH as const,
   },
   [ActionType.ROUTER]: {
-    displayName: 'Branches',
+    displayName: 'Router',
     logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
     description: t('Split your flow into branches depending on condition(s)'),
     type: ActionType.ROUTER,

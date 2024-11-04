@@ -83,10 +83,10 @@ function handleLoopOnItems(parentStep: LoopOnItemsAction, request: AddActionRequ
         throw new ActivepiecesError(
             {
                 code: ErrorCode.FLOW_OPERATION_INVALID,
-                params: {},
-            },
-            `Loop step parent ${request.stepLocationRelativeToParent} not found`,
-        )
+                params: {
+                    message: `Loop step parent ${request.stepLocationRelativeToParent} not found`,
+                },
+            })
     }
     return parentStep
 }
@@ -111,10 +111,10 @@ function handleBranch(parentStep: BranchAction, request: AddActionRequest): Step
         throw new ActivepiecesError(
             {
                 code: ErrorCode.FLOW_OPERATION_INVALID,
-                params: {},
-            },
-            `Branch step parent ${request.stepLocationRelativeToParent} not found`,
-        )
+                params: {
+                    message: `Branch step parent ${request.stepLocationRelativeToParent} not found`,
+                },
+            })
     }
     return parentStep
 }
@@ -133,9 +133,10 @@ function handleRouter(parentStep: RouterAction, request: AddActionRequest): Step
     else {
         throw new ActivepiecesError({
             code: ErrorCode.FLOW_OPERATION_INVALID,
-            params: {},
-        }, `Router step parent ${request.stepLocationRelativeToParent} not found`,
-        )
+            params: {
+                message: `Router step parent ${request.stepLocationRelativeToParent} not found`,
+            },
+        })
     }
     return parentStep
 }
