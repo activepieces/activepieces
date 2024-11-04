@@ -3,7 +3,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -57,117 +57,6 @@ const PieceIconWithPieceName = ({ pieceName }: PieceIconWithPieceNameProps) => {
   );
 };
 
-const columns: ColumnDef<
-  RowDataWithActions<AppConnectionWithoutSensitiveData>,
-  unknown
->[] = [
-  {
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-      />
-    ),
-  },
-  {
-    accessorKey: 'pieceName',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('App')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          <PieceIconWithPieceName pieceName={row.original.pieceName} />
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'name',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Name')} />
-    ),
-    cell: ({ row }) => {
-      return <div className="text-left">{row.original.name}</div>;
-    },
-  },
-  {
-    accessorKey: 'status',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Status')} />
-    ),
-    cell: ({ row }) => {
-      const status = row.original.status;
-      const { variant, icon: Icon } = appConnectionUtils.getStatusIcon(status);
-      return (
-        <div className="text-left">
-          <StatusIconWithText
-            icon={Icon}
-            text={formatUtils.convertEnumToHumanReadable(status)}
-            variant={variant}
-          />
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'created',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Created')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'updated',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Updated')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.updated))}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'owner',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Owner')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {row.original.owner && (
-            <UserFullName
-              firstName={row.original.owner.firstName}
-              lastName={row.original.owner.lastName}
-              email={row.original.owner.email}
-            />
-          )}
-          {!row.original.owner && <div className="text-left">-</div>}
-        </div>
-      );
-    },
-  },
-];
-
 const filters = [
   {
     type: 'select',
@@ -186,14 +75,180 @@ const filters = [
 function AppConnectionsTable() {
   const [refresh, setRefresh] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<
+    Array<AppConnectionWithoutSensitiveData>
+  >([]);
   const { checkAccess } = useAuthorization();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
+
+  const columns: ColumnDef<
+    RowDataWithActions<AppConnectionWithoutSensitiveData>,
+    unknown
+  >[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            table.getIsSomePageRowsSelected()
+          }
+          onCheckedChange={(value) => {
+            const isChecked = !!value;
+            table.toggleAllPageRowsSelected(isChecked);
+
+            if (isChecked) {
+              const allRows = table
+                .getRowModel()
+                .rows.map((row) => row.original);
+
+              const newSelectedRows = [...allRows, ...selectedRows];
+
+              const uniqueRows = Array.from(
+                new Map(
+                  newSelectedRows.map((item) => [item.id, item]),
+                ).values(),
+              );
+
+              setSelectedRows(uniqueRows);
+            } else {
+              const filteredRows = selectedRows.filter((row) => {
+                return !table
+                  .getRowModel()
+                  .rows.some((r) => r.original.id === row.id);
+              });
+              setSelectedRows(filteredRows);
+            }
+          }}
+        />
+      ),
+      cell: ({ row }) => {
+        const isChecked = selectedRows.some(
+          (selectedRow) => selectedRow.id === row.original.id,
+        );
+        return (
+          <Checkbox
+            checked={isChecked}
+            onCheckedChange={(value) => {
+              const isChecked = !!value;
+              let newSelectedRows = [...selectedRows];
+              if (isChecked) {
+                const exists = newSelectedRows.some(
+                  (selectedRow) => selectedRow.id === row.original.id,
+                );
+                if (!exists) {
+                  newSelectedRows.push(row.original);
+                }
+              } else {
+                newSelectedRows = newSelectedRows.filter(
+                  (selectedRow) => selectedRow.id !== row.original.id,
+                );
+              }
+              setSelectedRows(newSelectedRows);
+              row.toggleSelected(!!value);
+            }}
+          />
+        );
+      },
+      accessorKey: 'select',
+    },
+    {
+      accessorKey: 'pieceName',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('App')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            <PieceIconWithPieceName pieceName={row.original.pieceName} />
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Name')} />
+      ),
+      cell: ({ row }) => {
+        return <div className="text-left">{row.original.name}</div>;
+      },
+    },
+    {
+      accessorKey: 'status',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Status')} />
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const { variant, icon: Icon } =
+          appConnectionUtils.getStatusIcon(status);
+        return (
+          <div className="text-left">
+            <StatusIconWithText
+              icon={Icon}
+              text={formatUtils.convertEnumToHumanReadable(status)}
+              variant={variant}
+            />
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'created',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Created')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {formatUtils.formatDate(new Date(row.original.created))}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'updated',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Updated')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {formatUtils.formatDate(new Date(row.original.updated))}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'owner',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Owner')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {row.original.owner && (
+              <UserFullName
+                firstName={row.original.owner.firstName}
+                lastName={row.original.owner.lastName}
+                email={row.original.owner.email}
+              />
+            )}
+            {!row.original.owner && <div className="text-left">-</div>}
+          </div>
+        );
+      },
+    },
+  ];
+  const location = useLocation();
+
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['appConnections', searchParams.toString()],
+    queryKey: ['appConnections', location.search],
     staleTime: 0,
     gcTime: 0,
     queryFn: () => {
+      const searchParams = new URLSearchParams(location.search);
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
@@ -229,7 +284,7 @@ function AppConnectionsTable() {
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
     () => [
       {
-        render: (selectedRows, resetSelection) => {
+        render: (_, resetSelection) => {
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <PermissionNeededTooltip
@@ -241,11 +296,17 @@ function AppConnectionsTable() {
                     'Are you sure you want to delete the selected connections? This action cannot be undone.',
                   )}
                   entityName="connections"
-                  mutationFn={() =>
-                    bulkDeleteMutation.mutateAsync(
-                      selectedRows.map((row) => row.id),
-                    )
-                  }
+                  mutationFn={async () => {
+                    try {
+                      await bulkDeleteMutation.mutateAsync(
+                        selectedRows.map((row) => row.id),
+                      );
+                      resetSelection();
+                      setSelectedRows([]);
+                    } catch (error) {
+                      console.error('Error deleting connections:', error);
+                    }
+                  }}
                 >
                   {selectedRows.length > 0 && (
                     <Button
@@ -289,7 +350,12 @@ function AppConnectionsTable() {
         },
       },
     ],
-    [bulkDeleteMutation, userHasPermissionToWriteAppConnection, isDialogOpen],
+    [
+      bulkDeleteMutation,
+      userHasPermissionToWriteAppConnection,
+      isDialogOpen,
+      selectedRows,
+    ],
   );
   return (
     <div className="flex-col w-full">

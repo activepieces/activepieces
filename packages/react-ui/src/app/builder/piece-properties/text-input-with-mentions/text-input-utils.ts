@@ -161,7 +161,8 @@ function convertTiptapJsonToText(nodes: JSONContent[]): string {
       case TipTapNodeTypes.hardBreak:
         return '\n';
       case TipTapNodeTypes.text: {
-        return node.text ?? '';
+        //replace &nbsp; with a normal space
+        return node.text ? node.text.replaceAll('\u00A0', ' ') : '';
       }
       case TipTapNodeTypes.mention: {
         return node.attrs?.label
