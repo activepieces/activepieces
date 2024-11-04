@@ -48,7 +48,7 @@ function ProjectSwitcher() {
     },
     [projects],
   );
-  const sortedProjects = projects?.sort((a, b) => {
+  const sortedProjects = (projects ?? []).sort((a, b) => {
     return a.displayName.localeCompare(b.displayName);
   });
 

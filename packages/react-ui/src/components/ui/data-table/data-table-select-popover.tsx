@@ -3,8 +3,8 @@ import { CheckIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
-import { Badge } from './badge';
-import { Button } from './button';
+import { Badge } from '../badge';
+import { Button } from '../button';
 import {
   Command,
   CommandEmpty,
@@ -13,10 +13,10 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from './command';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { ScrollArea } from './scroll-area';
-import { Separator } from './seperator';
+} from '../command';
+import { Popover, PopoverContent, PopoverTrigger } from '../popover';
+import { ScrollArea } from '../scroll-area';
+import { Separator } from '../seperator';
 
 type DataTableSelectPopoverProps = {
   title?: string;

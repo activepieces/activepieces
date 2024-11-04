@@ -2,6 +2,7 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApId,
+    BulkRetryFlowRequestBody,
     ErrorCode,
     ExecutionType,
     FlowRun,
@@ -12,7 +13,6 @@ import {
     ProgressUpdateType,
     RetryFlowRequestBody,
     SeekPage,
-
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 import {
@@ -74,6 +74,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         const flowRun = await flowRunService.retry({
             flowRunId: req.params.id,
             strategy: req.body.strategy,
+            projectId: req.body.projectId,
         })
 
         if (isNil(flowRun)) {
@@ -85,6 +86,18 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
         return flowRun
+    })
+
+    app.post('/retry', BulkRetryFlowRequest, async (req) => {
+        return flowRunService.bulkRetry({
+            projectId: req.principal.projectId,
+            flowRunIds: req.body.flowRunIds,
+            strategy: req.body.strategy,
+            status: req.body.status,
+            flowId: req.body.flowId,
+            createdAfter: req.body.createdAfter,
+            createdBefore: req.body.createdBefore,
+        })
     })
 
 }
@@ -145,5 +158,14 @@ const RetryFlowRequest = {
             id: ApId,
         }),
         body: RetryFlowRequestBody,
+    },
+}
+
+const BulkRetryFlowRequest = {
+    config: {
+        permission: Permission.RETRY_RUN,
+    },
+    schema: {
+        body: BulkRetryFlowRequestBody,
     },
 }

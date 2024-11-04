@@ -203,7 +203,7 @@ describe('Platform API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
 
-            expect(Object.keys(responseBody).length).toBe(34)
+            expect(Object.keys(responseBody).length).toBe(35)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwnerUser.id)
             expect(responseBody.name).toBe(mockPlatform.name)

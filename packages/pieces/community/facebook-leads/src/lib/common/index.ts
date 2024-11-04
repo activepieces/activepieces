@@ -33,6 +33,15 @@ export const facebookLeadsCommon = {
             },
           };
         });
+        if(pages.length === 0)
+        {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'No pages found',
+          };
+        }
+
 
         return {
           options: pages,

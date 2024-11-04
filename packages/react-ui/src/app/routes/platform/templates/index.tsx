@@ -1,13 +1,13 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Pencil, Plus, Trash } from 'lucide-react';
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipContent,
@@ -26,19 +26,21 @@ import { UpsertTemplateDialog } from './upsert-template-dialog';
 export default function TemplatesPage() {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const [refreshCount, setRefreshCount] = useState(0);
-
   const { toast } = useToast();
 
-  const refreshData = () => {
-    setRefreshCount((prev) => prev + 1);
-  };
+  const [searchParams] = useSearchParams();
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['templates', searchParams.toString()],
+    staleTime: 0,
+    queryFn: () => {
+      return templatesApi.list({});
+    },
+  });
 
   const { mutate: deleteTemplate, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-template'],
     mutationFn: (templateId: string) => templatesApi.delete(templateId),
     onSuccess: () => {
-      refreshData();
       toast({
         title: t('Success'),
         description: t('Template deleted successfully'),
@@ -64,7 +66,7 @@ export default function TemplatesPage() {
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
           <TableTitle>{t('Templates')}</TableTitle>
-          <UpsertTemplateDialog onDone={() => refreshData()}>
+          <UpsertTemplateDialog onDone={() => refetch()}>
             <Button
               size="sm"
               className="flex items-center justify-center gap-2"
@@ -113,11 +115,9 @@ export default function TemplatesPage() {
               },
             },
           ]}
-          fetchData={async () => {
-            const response = await templatesApi.list({});
-            return { data: response.data, next: null, previous: null };
-          }}
-          refresh={refreshCount}
+          page={data}
+          hidePagination={true}
+          isLoading={isLoading}
           actions={[
             (row) => {
               return (
@@ -125,7 +125,7 @@ export default function TemplatesPage() {
                   <Tooltip>
                     <TooltipTrigger>
                       <UpsertTemplateDialog
-                        onDone={() => refreshData()}
+                        onDone={() => refetch()}
                         template={row}
                       >
                         <Button variant="ghost" className="size-8 p-0">

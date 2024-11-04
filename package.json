@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.34.8",
-  "rcVersion": "0.35.0-rc.0",
+  "version": "0.34.9",
+  "rcVersion": "0.35.0-rc.1",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -183,7 +183,7 @@
     "jszip": "3.10.1",
     "jwks-rsa": "3.1.0",
     "jwt-decode": "4.0.0",
-    "langchain": "0.2.19",
+    "langchain": "0.3.3",
     "lottie-web": "5.12.2",
     "lucide-react": "0.407.0",
     "mailparser": "3.6.7",
