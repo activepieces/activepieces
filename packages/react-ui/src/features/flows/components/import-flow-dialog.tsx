@@ -84,6 +84,7 @@ const ImportFlowDialog = (
         request: {
           displayName: template.name,
           trigger: template.template.trigger,
+          schemaVersion: template.template.schemaVersion,
         },
       });
     },

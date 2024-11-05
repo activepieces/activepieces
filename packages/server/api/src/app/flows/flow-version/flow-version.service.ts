@@ -91,6 +91,7 @@ export const flowVersionService = {
                     request: {
                         trigger: previousVersion.trigger,
                         displayName: previousVersion.displayName,
+                        schemaVersion: previousVersion.schemaVersion,
                     },
                 }]
                 break
@@ -286,10 +287,10 @@ async function removeSecretsFromFlow(
         if (removeConnectionNames) {
             clonedStep.settings.input = replaceConnections(clonedStep.settings.input)
         }
-        if (removeSampleData && !isNil(step?.settings?.inputUiInfo)) {
-            step.settings.inputUiInfo.sampleDataFileId = undefined
-            step.settings.inputUiInfo.currentSelectedData = undefined
-            step.settings.inputUiInfo.lastTestDate = undefined
+        if (removeSampleData && !isNil(clonedStep?.settings?.inputUiInfo)) {
+            clonedStep.settings.inputUiInfo.sampleDataFileId = undefined
+            clonedStep.settings.inputUiInfo.currentSelectedData = undefined
+            clonedStep.settings.inputUiInfo.lastTestDate = undefined
         }
         return clonedStep
     })

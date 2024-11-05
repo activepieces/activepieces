@@ -84,6 +84,7 @@ async function updateFlowInProject(originalFlow: PopulatedFlow, newFlow: Populat
             request: {
                 displayName: newFlow.version.displayName,
                 trigger: newFlowVersion.trigger,
+                schemaVersion: newFlow.version.schemaVersion,
             },
         },
     })
