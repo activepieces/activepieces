@@ -74,6 +74,7 @@ export type LockFlowRequest = Static<typeof LockFlowRequest>
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
     trigger: Trigger,
+    schemaVersion: Nullable(Type.String()),
 })
 
 export type ImportFlowRequest = Static<typeof ImportFlowRequest>
@@ -357,8 +358,13 @@ export const flowOperations = {
                 break
             }
             case FlowOperationType.IMPORT_FLOW: {
-                clonedVersion = applyMigrations(clonedVersion)
-                const operations = _importFlow(clonedVersion, operation.request)
+                const migratedFlow = applyMigrations({
+                    ...clonedVersion,
+                    trigger: operation.request.trigger,
+                    displayName: operation.request.displayName,
+                    schemaVersion: operation.request.schemaVersion,
+                })
+                const operations = _importFlow(clonedVersion, migratedFlow)
                 operations.forEach((operation) => {
                     clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })

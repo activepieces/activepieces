@@ -101,6 +101,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         request: {
           displayName: flowVersion.displayName,
           trigger: flowVersion.trigger,
+          schemaVersion: flowVersion.schemaVersion,
         },
       });
       return updatedFlow;
