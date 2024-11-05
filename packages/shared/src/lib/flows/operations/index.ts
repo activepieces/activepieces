@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../common'
-import { BranchActionSchema, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
+import { BranchActionSchema, BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { EmptyTrigger, PieceTrigger, Trigger } from '../triggers/trigger'
@@ -43,6 +43,7 @@ export const DeleteBranchRequest = Type.Object({
 export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),
     stepName: Type.String(),
+    conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
 })
 
 export const DuplicateBranchRequest = Type.Object({

@@ -207,8 +207,9 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
 
                   insert(
                     step.settings.branches.length - 1,
-                    flowStructureUtil.createEmptyBranch(
+                    flowStructureUtil.createBranch(
                       step.settings.branches.length,
+                      undefined,
                     ),
                   );
                   setSelectedBranchIndex(step.settings.branches.length - 1);

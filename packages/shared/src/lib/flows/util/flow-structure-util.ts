@@ -1,6 +1,6 @@
 import { isNil } from '../../common'
 import { ActivepiecesError, ErrorCode } from '../../common/activepieces-error'
-import { Action, ActionType, BranchAction, BranchExecutionType, emptyCondition, LoopOnItemsAction, RouterAction } from '../actions/action'
+import { Action, ActionType, BranchAction, BranchCondition, BranchExecutionType, emptyCondition, LoopOnItemsAction, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { Trigger, TriggerType } from '../triggers/trigger'
 
@@ -138,9 +138,9 @@ function getAllSteps(step: Step): Step[] {
 }
 
 
-const createEmptyBranch = (pathNumber: number) => {
+const createBranch = (pathNumber: number, conditions: BranchCondition[][] | undefined) => {
     return {
-        conditions: [[emptyCondition]],
+        conditions: conditions ?? [[emptyCondition]],
         branchType: BranchExecutionType.CONDITION,
         branchName: `Branch ${pathNumber}`,
     }
@@ -211,7 +211,7 @@ export const flowStructureUtil = {
     getActionOrThrow,
     getTriggerOrThrow,
     getStep,
-    createEmptyBranch,
+    createBranch,
     findPathToStep,
     isChildOf,
     findUnusedName,
