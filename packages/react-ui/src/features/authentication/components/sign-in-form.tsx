@@ -1,7 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
-import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
@@ -64,7 +63,9 @@ const SignInForm: React.FC = () => {
     },
     onError: (error) => {
       if (api.isError(error)) {
-        const errorCode: ErrorCode | undefined = (error.response?.data as { code: ErrorCode })?.code;
+        const errorCode: ErrorCode | undefined = (
+          error.response?.data as { code: ErrorCode }
+        )?.code;
         if (isNil(errorCode)) {
           form.setError('root.serverError', {
             message: t('Something went wrong, please try again later'),
@@ -72,20 +73,18 @@ const SignInForm: React.FC = () => {
           return;
         }
         switch (errorCode) {
-          case ErrorCode.INVALID_CREDENTIALS:
-            {
-              form.setError('root.serverError', {
-                message: t('Invalid email or password'),
-              });
-              break;
-            }
-          case ErrorCode.USER_IS_INACTIVE:
-            {
-              form.setError('root.serverError', {
-                message: t('User has been deactivated'),
-              });
-              break;
-            }
+          case ErrorCode.INVALID_CREDENTIALS: {
+            form.setError('root.serverError', {
+              message: t('Invalid email or password'),
+            });
+            break;
+          }
+          case ErrorCode.USER_IS_INACTIVE: {
+            form.setError('root.serverError', {
+              message: t('User has been deactivated'),
+            });
+            break;
+          }
           case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
             form.setError('root.serverError', {
               message: t(`Email hasn't been verified, check your inbox`),
@@ -104,14 +103,12 @@ const SignInForm: React.FC = () => {
             });
             break;
           }
-          default:
-            {
-              form.setError('root.serverError', {
-                message: t('Something went wrong, please try again later'),
-              });
-            }
+          default: {
+            form.setError('root.serverError', {
+              message: t('Something went wrong, please try again later'),
+            });
+          }
         }
-
       }
     },
   });

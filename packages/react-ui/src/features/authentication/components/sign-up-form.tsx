@@ -1,5 +1,4 @@
 import { useMutation } from '@tanstack/react-query';
-import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -113,7 +112,9 @@ const SignUpForm = ({
     },
     onError: (error) => {
       if (api.isError(error)) {
-        const errorCode: ErrorCode | undefined = (error.response?.data as { code: ErrorCode })?.code;
+        const errorCode: ErrorCode | undefined = (
+          error.response?.data as { code: ErrorCode }
+        )?.code;
         if (isNil(errorCode)) {
           form.setError('root.serverError', {
             message: t('Something went wrong, please try again later'),
@@ -154,7 +155,6 @@ const SignUpForm = ({
             break;
           }
         }
-
       }
     },
   });
