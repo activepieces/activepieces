@@ -61,15 +61,18 @@ export class GenericStepOutput<T extends ActionType | TriggerType, OUTPUT> {
         input,
         type,
         status,
+        output,
     }: {
         input: unknown
         type: T
         status: StepOutputStatus
+        output?: OUTPUT
     }): GenericStepOutput<T, OUTPUT> {
         return new GenericStepOutput<T, OUTPUT>({
             input,
             type,
             status,
+            output,
         })
     }
 }
