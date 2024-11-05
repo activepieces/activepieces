@@ -23,6 +23,7 @@ const polling: Polling<
     const searchQuery = `${jql ? jql + ' AND ' : ''}created > '${dayjs(
       lastFetchEpochMS
     ).format('YYYY-MM-DD HH:mm')}'`;
+    console.log(searchQuery)
     const issues = await searchIssuesByJql({
       auth,
       jql: searchQuery,

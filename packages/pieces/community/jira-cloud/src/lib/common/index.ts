@@ -1,5 +1,6 @@
 import {
 	AuthenticationType,
+	HttpError,
 	HttpMessageBody,
 	HttpMethod,
 	HttpRequest,
@@ -9,15 +10,37 @@ import {
 import { JiraAuth } from '../../auth';
 
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraAuth }) {
-	return httpClient.sendRequest({
-		...request,
-		url: `${request.auth.instanceUrl}/rest/api/3/${request.url}`,
-		authentication: {
-			type: AuthenticationType.BASIC,
-			username: request.auth.email,
-			password: request.auth.apiToken,
-		},
-	});
+
+	try{
+		const result= await httpClient.sendRequest({
+			...request,
+			url: `${request.auth.instanceUrl}/rest/api/3/${request.url}`,
+			authentication: {
+				type: AuthenticationType.BASIC,
+				username: request.auth.email,
+				password: request.auth.apiToken,
+			},
+		});
+		return result;
+	}
+	catch(e)
+	{
+	
+
+		if(e instanceof HttpError)
+		{
+			
+			if(typeof e.response.body === 'object' && e.response.body && (e.response.body as Record<string, string[]>)['errorMessages'] )
+			{
+				const messages = (e.response.body as Record<string, string[]>)['errorMessages'].join('\n');
+				console.error(messages)
+				throw new Error(JSON.stringify({messages}));
+			}
+			
+		}
+		throw e;
+	}
+	
 }
 
 export async function getUsers(auth: JiraAuth) {

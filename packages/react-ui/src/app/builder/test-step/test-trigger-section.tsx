@@ -174,9 +174,10 @@ const TestTriggerSection = React.memo(
       onError: (error) => {
         console.error(error);
         setErrorMessage(
-          testStepUtils.formatErrorMessage(
-            t('Failed to run test step, please ensure settings are correct.'),
-          ),
+          error.message === "{}" || !error.message ?
+            testStepUtils.formatErrorMessage(
+              t('Failed to run test step, please ensure settings are correct.'),
+            ) : error.message,
         );
       },
     });
