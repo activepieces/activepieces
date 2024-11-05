@@ -39,8 +39,16 @@ async function handleRouterExecution({ action, executionState, constants, censor
     routerExecutionType: RouterExecutionType
 }): Promise<FlowExecutorContext> {
 
-    const evaluatedConditions = resolvedInput.branches.map((branch) => {
+    const evaluatedConditionsWithoutFallback = resolvedInput.branches.map((branch) => {
         return branch.branchType === BranchExecutionType.FALLBACK ? true : evaluateConditions(branch.conditions)
+    })
+
+    const evaluatedConditions = resolvedInput.branches.map((branch, index) => {
+        if (branch.branchType === BranchExecutionType.CONDITION) {
+            return evaluatedConditionsWithoutFallback[index]
+        }
+        const fallback = evaluatedConditionsWithoutFallback.filter((_, i) => i !== index).every((condition) => !condition)
+        return fallback
     })
 
     const routerOutput = RouterStepOutput.init({
