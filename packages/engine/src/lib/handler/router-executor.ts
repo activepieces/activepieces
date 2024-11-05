@@ -12,7 +12,10 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         constants,
     }) {
         const { censoredInput, resolvedInput } = await constants.variableService.resolve<RouterActionSettings>({
-            unresolvedInput: action.settings,
+            unresolvedInput: {
+                ...action.settings,
+                inputUiInfo: undefined,
+            },
             executionState,
         })
 
