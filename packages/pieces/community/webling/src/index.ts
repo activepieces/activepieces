@@ -8,6 +8,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { calendarEventChanged } from './lib/triggers/calendar-event';
 
 export const weblingAuth = PieceAuth.CustomAuth({
   required: true,
@@ -51,5 +52,5 @@ export const webling = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/webling.png',
   authors: [],
   actions: [],
-  triggers: [],
+  triggers: [calendarEventChanged],
 });
