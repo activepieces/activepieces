@@ -37,6 +37,7 @@ export const migrateBranchToRouter: Migration = {
                             currentSelectedData: undefined,
                         },
                     },
+                    nextAction: step.nextAction,
                     children: [step.onSuccessAction ?? null, step.onFailureAction ?? null],
                 }
                 return routerAction
