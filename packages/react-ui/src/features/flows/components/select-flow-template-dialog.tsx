@@ -32,6 +32,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { MarkdownVariant } from '@activepieces/shared';
 import {
   FlowOperationType,
   FlowTemplate,
@@ -235,7 +236,7 @@ const SelectFlowTemplateDialog = ({
                     </div>
                     <ApMarkdown
                       markdown={selectedTemplate?.description}
-                      variant="Borderless"
+                      variant={MarkdownVariant.BORDERLESS}
                     />
 
                     {selectedTemplate.blogUrl && (

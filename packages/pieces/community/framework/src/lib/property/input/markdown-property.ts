@@ -2,8 +2,7 @@ import { Type } from '@sinclair/typebox';
 import { BasePropertySchema, TPropertyValue } from './common';
 import { PropertyType } from './property-type';
 import { ValidationInputType } from '../../validators/types';
-
-export type MarkdownType = 'Borderless' | 'Info' | 'Warning' | 'Tip';
+import { MarkdownVariant } from '@activepieces/shared';
 
 export const MarkDownProperty = Type.Composite([
   BasePropertySchema,
@@ -17,5 +16,5 @@ export type MarkDownProperty = BasePropertySchema &
     ValidationInputType.ANY,
     false
   > & {
-    variant?: MarkdownType;
+    variant?: MarkdownVariant;
   };

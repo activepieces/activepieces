@@ -14,7 +14,8 @@ import {
 import { DynamicProperties } from './dynamic-prop';
 import { FileProperty } from './file-property';
 import { JsonProperty } from './json-property';
-import { MarkDownProperty, MarkdownType } from './markdown-property';
+import { MarkDownProperty } from './markdown-property';
+import { MarkdownVariant } from '@activepieces/shared';
 import { NumberProperty } from './number-property';
 import { ObjectProperty } from './object-property';
 import { PropertyType } from './property-type';
@@ -97,7 +98,7 @@ export const Property = {
   },
   MarkDown(request: {
     value: string;
-    variant?: MarkdownType;
+    variant?: MarkdownVariant;
   }): MarkDownProperty {
     return {
       displayName: 'Markdown',
@@ -105,7 +106,7 @@ export const Property = {
       description: request.value,
       type: PropertyType.MARKDOWN,
       valueSchema: undefined as never,
-      variant: request.variant ?? 'Info',
+      variant: request.variant ?? MarkdownVariant.INFO,
     };
   },
   Number<R extends boolean>(
