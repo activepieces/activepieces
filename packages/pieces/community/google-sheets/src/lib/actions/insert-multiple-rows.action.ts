@@ -5,7 +5,14 @@ import {
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
+import {
+    Dimension,
+    getHeaders,
+    googleSheetsCommon,
+    objectToArray,
+    objectWithHeadersAsKeysToArray,
+    ValueInputOption,
+} from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
@@ -73,6 +80,7 @@ export const insertMultipleRowsAction = createAction({
 				return fields;
 			},
 		}),
+        headersAsKeys: googleSheetsCommon.headersAsKeysForInsert,
 	},
 
 	async run(context) {
@@ -84,8 +92,18 @@ export const insertMultipleRowsAction = createAction({
 
 		const formattedValues = [];
 
+		const headers = context.propsValue.headersAsKeys ? await getHeaders({
+			accessToken: context.auth['access_token'],
+			sheetName: sheetName,
+			spreadSheetId: spreadSheetId,
+		}) : [];
+
 		for (const rowInput of rowValuesInput) {
-			formattedValues.push(objectToArray(rowInput));
+			formattedValues.push(
+				context.propsValue.headersAsKeys
+				? await objectWithHeadersAsKeysToArray(headers, rowInput)
+				: objectToArray(rowInput)
+			);
 		}
 
 		const authClient = new OAuth2Client();

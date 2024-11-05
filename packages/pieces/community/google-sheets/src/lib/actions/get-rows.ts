@@ -22,6 +22,7 @@ async function getRows(
   memKey: string,
   groupSize: number,
   startRow: number,
+  headersAsKeys: boolean,
   testing: boolean
 ) {
   const sheetName = await googleSheetsCommon.findSheetName(
@@ -58,6 +59,7 @@ async function getRows(
     spreadSheetId: spreadsheetId,
     rowIndex_s: startingRow,
     rowIndex_e: endRow - 1,
+    headersAsKeys: headersAsKeys,
   });
 
   if (row.length == 0) {
@@ -111,6 +113,7 @@ export const getRowsAction = createAction({
       defaultValue: 1,
       validators: [Validators.minValue(1)],
     }),
+    headersAsKeys: googleSheetsCommon.headersAsKeys,
   },
   async run({ store, auth, propsValue }) {
     try {
@@ -122,6 +125,7 @@ export const getRowsAction = createAction({
         propsValue['memKey'],
         propsValue['groupSize'],
         propsValue['startRow'],
+        propsValue['headersAsKeys'],
         false
       );
     } catch (error) {
@@ -142,6 +146,7 @@ export const getRowsAction = createAction({
         propsValue['memKey'],
         propsValue['groupSize'],
         propsValue['startRow'],
+        propsValue['headersAsKeys'],
         true
       );
     } catch (error) {

@@ -16,6 +16,7 @@ export const findRowByNumAction = createAction({
       description: 'The row number to get from the sheet',
       required: true,
     }),
+    headersAsKeys: googleSheetsCommon.headersAsKeys,
   },
   async run({ propsValue, auth }) {
     const sheetName = await googleSheetsCommon.findSheetName(
@@ -30,6 +31,7 @@ export const findRowByNumAction = createAction({
       spreadSheetId: propsValue['spreadsheet_id'],
       rowIndex_s: propsValue['rowNumber'],
       rowIndex_e: propsValue['rowNumber'],
+      headersAsKeys: propsValue['headersAsKeys'],
     });
     return row[0];
   },

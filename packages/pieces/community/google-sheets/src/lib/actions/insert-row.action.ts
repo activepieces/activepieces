@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   Dimension,
+  getHeaders,
   googleSheetsCommon,
   objectToArray,
+  objectWithHeadersAsKeysToArray,
   stringifyArray,
   ValueInputOption,
 } from '../common/common';
@@ -31,23 +33,38 @@ export const insertRowAction = createAction({
       defaultValue: false,
     }),
     values: googleSheetsCommon.values,
+    headersAsKeys: googleSheetsCommon.headersAsKeysForInsert,
   },
   async run({ propsValue, auth }) {
-    const values = propsValue['values'];
     const sheetName = await googleSheetsCommon.findSheetName(
       auth['access_token'],
       propsValue['spreadsheet_id'],
       propsValue['sheet_id']
     );
+
+    const values = propsValue['values'];
     let formattedValues;
-    if (propsValue.first_row_headers) {
-      formattedValues = objectToArray(values);
+    if (propsValue.first_row_headers || propsValue.headersAsKeys) {
+      if (propsValue.headersAsKeys) {
+        const headers = await getHeaders({
+          accessToken: auth['access_token'],
+          sheetName: sheetName,
+          spreadSheetId: propsValue['spreadsheet_id'],
+        });
+        formattedValues = await objectWithHeadersAsKeysToArray(headers, values['values']);
+      } else {
+        formattedValues = objectToArray(values);
+      }
+
+      // To prevent undefined values from being completely removed,
+      // we have to replace it with empty strings.
       for (let i = 0; i < formattedValues.length; i++) {
         if (isNil(formattedValues[i])) formattedValues[i] = '';
       }
     } else {
       formattedValues = values['values'];
     }
+
     const res = await googleSheetsCommon.appendGoogleSheetValues({
       accessToken: auth['access_token'],
       majorDimension: Dimension.COLUMNS,
