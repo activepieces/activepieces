@@ -33,9 +33,6 @@ const FlowBuilderPage = () => {
     return <Navigate to="/404" />;
   }
 
-  if (isSampleDataError) {
-    return <p>Error loading sample data, contact support</p>;
-  }
 
   if (isLoading || isSampleDataLoading) {
     return (
