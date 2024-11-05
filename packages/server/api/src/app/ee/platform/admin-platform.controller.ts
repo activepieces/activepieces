@@ -66,6 +66,11 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                 if (originalSize !== updatedStepsSize) {
                     throw new Error(`steps size mismatch for flow: ${flowVersion.displayName}`)
                 }
+                const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+                const hasBranchSteps = allSteps.some(s => s.type === 'BRANCH')
+                if (hasBranchSteps) {
+                    throw new Error(`flow ${flowVersion.displayName} still contains branch steps after migration`)
+                }
                 await flowVersionRepo().save({
                     ...flowVersion,
                     schemaVersion: '1',
