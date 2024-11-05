@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
 
-import { MarkdownType } from '@activepieces/pieces-framework';
+import { MarkdownVariant } from '@activepieces/shared';
 
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
@@ -21,28 +21,28 @@ function applyVariables(markdown: string, variables: Record<string, string>) {
 type MarkdownProps = {
   markdown: string | undefined;
   variables?: Record<string, string>;
-  variant?: MarkdownType;
+  variant?: MarkdownVariant;
 };
 
 const Container = ({
   variant,
   children,
 }: {
-  variant?: MarkdownType;
+  variant?: MarkdownVariant;
   children: React.ReactNode;
 }) => {
   let containerClass = '';
   switch (variant) {
-    case 'Info':
+    case MarkdownVariant.INFO:
       containerClass = 'rounded';
       break;
-    case 'Warning':
+    case MarkdownVariant.WARNING:
       containerClass = 'bg-warning-400 border-warning-500 text-warning-600';
       break;
-    case 'Tip':
+    case MarkdownVariant.TIP:
       containerClass = 'bg-success-400 border-success-500 text-success-600';
       break;
-    case 'Borderless':
+    case MarkdownVariant.BORDERLESS:
       containerClass = 'border-none';
       break;
     default:
@@ -52,9 +52,11 @@ const Container = ({
   return (
     <Alert className={`rounded ${containerClass}`}>
       <div className="h-4 w-4 flex flex-start items-start justify-start">
-        {(variant === 'Info' || variant === undefined) && <Info />}
-        {variant === 'Warning' && <AlertTriangle />}
-        {variant === 'Tip' && <Lightbulb />}
+        {(variant === MarkdownVariant.INFO || variant === undefined) && (
+          <Info />
+        )}
+        {variant === MarkdownVariant.WARNING && <AlertTriangle />}
+        {variant === MarkdownVariant.TIP && <Lightbulb />}
       </div>
       <AlertDescription>{children}</AlertDescription>
     </Alert>
