@@ -27,7 +27,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                 schemaVersion: IsNull(),
                 ...(req.body.flowIds ? { flowId: In(req.body.flowIds) } : {}),
             },
-            take: 1000,
+            take: req.body.limit,
         })
 
         for (const flowVersion of flowVersions) {
@@ -132,6 +132,7 @@ const MigrateBranchToRouterRequest = {
     schema: {
         body: Type.Object({
             flowIds: Type.Optional(Type.Array(Type.String())),
+            limit: Type.Optional(Type.Number({ default: 1000 })),
         }),
     },
     config: {
