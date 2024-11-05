@@ -361,6 +361,7 @@ export const flowOperations = {
                 operations.forEach((operation) => {
                     migratedVersion = flowOperations.apply(migratedVersion, operation)
                 })
+                clonedVersion = migratedVersion;
                 break
             }
             default:
