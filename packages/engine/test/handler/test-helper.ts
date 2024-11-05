@@ -52,17 +52,25 @@ export function buildSimpleLoopAction({
     }
 }
 
-export function buildRouterWithOneCondition({ children, conditions, executionType }: { children: Action[], conditions: BranchCondition[], executionType: RouterExecutionType }): Action {
+export function buildRouterWithOneCondition({ children, conditions, executionType }: { children: Action[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType }): Action {
     return {
         name: 'router',
         displayName: 'Your Router Name',
         type: ActionType.ROUTER,
         settings: {
-            branches: conditions.map((condition) => ({
-                conditions: [[condition]],
-                branchType: BranchExecutionType.CONDITION,
-                branchName: 'Test Branch',
-            })),
+            branches: conditions.map((condition) => {
+                if (condition === null) {
+                    return {
+                        branchType: BranchExecutionType.FALLBACK,
+                        branchName: 'Fallback Branch',
+                    }
+                }
+                return {
+                    conditions: [[condition]],
+                    branchType: BranchExecutionType.CONDITION,
+                    branchName: 'Test Branch',
+                }
+            }),
             executionType,
             inputUiInfo: {},
         },

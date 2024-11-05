@@ -131,7 +131,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                   <SelectItem
                     value={`${RouterExecutionType.EXECUTE_ALL_MATCH}`}
                   >
-                    {t('All matching paths')}
+                    {t('All matching paths from left to right')}
                   </SelectItem>
                 </SelectContent>
               </Select>
