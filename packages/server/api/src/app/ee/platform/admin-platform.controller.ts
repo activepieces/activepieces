@@ -92,21 +92,22 @@ const traverseAndUpdateSubFlow = (
         case 'ROUTER':
             for (const branch of root.children) {
                 if (branch) {
-                    updated = traverseAndUpdateSubFlow(updater, branch) || updated
+                    const branchUpdated = traverseAndUpdateSubFlow(updater, branch)
+                    updated = updated || branchUpdated
                 }
             }
             break
         case 'BRANCH':
-            updated =
-                traverseAndUpdateSubFlow(updater, root.onSuccessAction) || updated
-            updated =
-                traverseAndUpdateSubFlow(updater, root.onFailureAction) || updated
+            const successUpdated = traverseAndUpdateSubFlow(updater, root.onSuccessAction)
+            updated = updated || successUpdated
+            const failureUpdated = traverseAndUpdateSubFlow(updater, root.onFailureAction)
+            updated = updated || failureUpdated
             updater(root)
             updated = true
             break
         case 'LOOP_ON_ITEMS':
-            updated =
-                traverseAndUpdateSubFlow(updater, root.firstLoopAction) || updated
+            const loopUpdated = traverseAndUpdateSubFlow(updater, root.firstLoopAction)
+            updated = updated || loopUpdated
             break
         case 'PIECE':
         case 'PIECE_TRIGGER':
@@ -115,7 +116,8 @@ const traverseAndUpdateSubFlow = (
             break
     }
 
-    updated = traverseAndUpdateSubFlow(updater, root.nextAction) || updated
+    const nextUpdated = traverseAndUpdateSubFlow(updater, root.nextAction)
+    updated = updated || nextUpdated
     return updated
 }
 
