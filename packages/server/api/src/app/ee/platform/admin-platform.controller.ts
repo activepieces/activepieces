@@ -36,7 +36,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                                 {
                                     conditions: step.settings.conditions,
                                     branchType: BranchExecutionType.CONDITION,
-                                    branchName: step.name,
+                                    branchName: 'On Success',
                                 },
                                 {
                                     branchType: BranchExecutionType.FALLBACK,
