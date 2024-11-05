@@ -3,21 +3,18 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const alertVariants = cva(
-  'relative w-full rounded-lg border p-4 flex gap-2',
-  {
-    variants: {
-      variant: {
-        default: 'bg-background text-foreground',
-        destructive:
-          'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
+const alertVariants = cva('relative w-full rounded-lg border p-4 flex gap-2', {
+  variants: {
+    variant: {
+      default: 'bg-background text-foreground',
+      destructive:
+        'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive',
     },
   },
-);
+  defaultVariants: {
+    variant: 'default',
+  },
+});
 
 const Alert = React.forwardRef<
   HTMLDivElement,

@@ -1,11 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, Info, AlertTriangle, Lightbulb } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
+
 import { MarkdownType } from '@activepieces/pieces-framework';
-import { Info, AlertTriangle, Lightbulb } from 'lucide-react';
 
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
@@ -37,10 +37,10 @@ const Container = ({
       containerClass = 'rounded';
       break;
     case 'Warning':
-      containerClass = 'bg-[#FDF8F2] border-[#FDEBC6] text-[#835300]'; 
+      containerClass = 'bg-[#FDF8F2] border-[#FDEBC6] text-[#835300]';
       break;
     case 'Tip':
-      containerClass = 'bg-[#F5FEFA] border-[#C7F1E2] text-[#064E3B]'; 
+      containerClass = 'bg-[#F5FEFA] border-[#C7F1E2] text-[#064E3B]';
       break;
     case 'Borderless':
       containerClass = 'border-none';
