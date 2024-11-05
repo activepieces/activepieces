@@ -8,8 +8,10 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { calendarEventChanged } from './lib/triggers/calendar-event';
+import { onEventChanged } from './lib/triggers/calendar-event';
+import { onChangedData } from './lib/triggers/on-changed-data';
 import { PieceCategory } from '@activepieces/shared';
+import { eventsById } from './lib/actions/get-events-by-id';
 
 export const weblingAuth = PieceAuth.CustomAuth({
   required: true,
@@ -53,6 +55,6 @@ export const webling = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/webling.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ['felifluid'],
-  actions: [],
-  triggers: [calendarEventChanged],
+  actions: [eventsById],
+  triggers: [onEventChanged, onChangedData],
 });

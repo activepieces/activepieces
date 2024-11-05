@@ -29,9 +29,9 @@ const polling: Polling<
   },
 };
 
-export const calendarEventChanged = createTrigger({
+export const onEventChanged = createTrigger({
   auth: weblingAuth,
-  name: 'new_or_updated_event',
+  name: 'onEventChanged',
   displayName: 'New or Updated Event',
   description: 'Triggers when an event is added or updated.',
   props: {

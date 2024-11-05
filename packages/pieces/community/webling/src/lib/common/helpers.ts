@@ -26,6 +26,14 @@ export async function getChanges(
   authProp: PiecePropValueSchema<typeof weblingAuth>,
   lastFetchEpochMS: number
 ): Promise<WeblingChanges> {
+  // Webling API breaks if unix timestamp is too far in the past
+  if (lastFetchEpochMS === 0) {
+    const today = new Date();
+    const minUpdated = new Date();
+    minUpdated.setDate(today.getDate() - 7);
+    lastFetchEpochMS = minUpdated.getTime();
+  }
+
   const response = await callApi<WeblingChanges>(
     authProp,
     `/changes/${lastFetchEpochMS / 1000}` // webling uses seconds instead of milliseconds
@@ -43,7 +51,7 @@ export async function getCalendars(
   return response.body;
 }
 
-export async function getEvents(
+export async function getAllEvents(
   authProp: PiecePropValueSchema<typeof weblingAuth>,
   calendarId: string
 ): Promise<WeblingCalendarEvent[]> {
@@ -53,6 +61,21 @@ export async function getEvents(
   );
   return response.body;
 }
+
+export async function getEventsById(
+  authProp: PiecePropValueSchema<typeof weblingAuth>,
+  eventIds: string,
+): Promise<WeblingCalendarEvent[]> {
+
+  const request = `calendarevent/${eventIds}`
+
+  const response = await callApi<WeblingCalendarEvent[]>(
+    authProp,
+    request
+  );
+
+  return response.body;
+};
 
 export async function getUpdatedOrNewEvents(
   authProp: PiecePropValueSchema<typeof weblingAuth>,

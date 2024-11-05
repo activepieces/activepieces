@@ -60,7 +60,7 @@ export interface WeblingCalendarEvent {
     showParticipationsInPortal: boolean;
     showAllAnswersInPortal: boolean;
   };
-  parents: object[];
+  parents: string[];
   children: object;
   links: object;
 }
