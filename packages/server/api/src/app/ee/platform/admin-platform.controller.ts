@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 import { adminPlatformService } from './admin-platform.service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
+import { In, IsNull } from 'typeorm'
 
 export const adminPlatformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })
@@ -20,58 +21,60 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/migrate', MigrateBranchToRouterRequest, async (req, res) => {
-        
-        for (const flowId of req.body.flowIds) {
-            const flowVersions = await flowVersionRepo().findBy({
-                flowId: flowId,
-            })
 
-            for (const flowVersion of flowVersions) {
-                const originalSize = flowStructureUtil.getAllSteps(flowVersion.trigger).length
-                const updated = await traverseAndUpdateSubFlow((step: any) => {
-                    if (step.type === 'BRANCH') {
-                        step.type = 'ROUTER'
-                        step.settings = {
-                            branches: [
-                                {
-                                    conditions: step.settings.conditions,
-                                    branchType: BranchExecutionType.CONDITION,
-                                    branchName: 'On Success',
-                                },
-                                {
-                                    branchType: BranchExecutionType.FALLBACK,
-                                    branchName: 'Otherwise',
-                                }
-                            ],
-                            executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-                            inputUiInfo: {
-                                sampleDataFileId: undefined,
-                                lastTestDate: undefined,
-                                customizedInputs: undefined,
-                                currentSelectedData: undefined,
+        const flowVersions = await flowVersionRepo().find({
+            where: {
+                schemaVersion: IsNull(),
+                ...(req.body.flowIds ? { flowId: In(req.body.flowIds) } : {}),
+            },
+            take: 1000,
+        })
+
+        for (const flowVersion of flowVersions) {
+            const originalSize = flowStructureUtil.getAllSteps(flowVersion.trigger).length
+            const updated = await traverseAndUpdateSubFlow((step: any) => {
+                if (step.type === 'BRANCH') {
+                    step.type = 'ROUTER'
+                    step.settings = {
+                        branches: [
+                            {
+                                conditions: step.settings.conditions,
+                                branchType: BranchExecutionType.CONDITION,
+                                branchName: 'On Success',
                             },
-                        }
-                        step.children = [step.onSuccessAction, step.onFailureAction]
-                        step.onSuccessAction = undefined
-                        step.onFailureAction = undefined
+                            {
+                                branchType: BranchExecutionType.FALLBACK,
+                                branchName: 'Otherwise',
+                            }
+                        ],
+                        executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+                        inputUiInfo: {
+                            sampleDataFileId: undefined,
+                            lastTestDate: undefined,
+                            customizedInputs: undefined,
+                            currentSelectedData: undefined,
+                        },
                     }
-                }, flowVersion.trigger)
-
-                if (updated) {
-                    const updatedStepsSize = flowStructureUtil.getAllSteps(flowVersion.trigger).length
-                    if (originalSize !== updatedStepsSize) {
-                        throw new Error(`steps size mismatch for flow: ${flowVersion.displayName}`)
-                    }
-                    await flowVersionRepo().save({
-                        ...flowVersion,
-                        schemaVersion: '1',
-                    })
+                    step.children = [step.onSuccessAction, step.onFailureAction]
+                    step.onSuccessAction = undefined
+                    step.onFailureAction = undefined
                 }
+            }, flowVersion.trigger)
 
+            if (updated) {
+                const updatedStepsSize = flowStructureUtil.getAllSteps(flowVersion.trigger).length
+                if (originalSize !== updatedStepsSize) {
+                    throw new Error(`steps size mismatch for flow: ${flowVersion.displayName}`)
+                }
+                await flowVersionRepo().save({
+                    ...flowVersion,
+                    schemaVersion: '1',
+                })
             }
+
         }
 
-        return res.status(StatusCodes.OK).send()
+        return res.status(StatusCodes.OK).send(flowVersions.length)
     })
 }
 
@@ -128,7 +131,7 @@ const AdminAddPlatformRequest = {
 const MigrateBranchToRouterRequest = {
     schema: {
         body: Type.Object({
-            flowIds: Type.Array(Type.String()),
+            flowIds: Type.Optional(Type.Array(Type.String())),
         }),
     },
     config: {
