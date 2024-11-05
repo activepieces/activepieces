@@ -356,10 +356,10 @@ export const flowOperations = {
                 break
             }
             case FlowOperationType.IMPORT_FLOW: {
-                let migratedVersion = applyMigrations(clonedVersion)
-                const operations = _importFlow(migratedVersion, operation.request)
+                clonedVersion = applyMigrations(clonedVersion)
+                const operations = _importFlow(clonedVersion, operation.request)
                 operations.forEach((operation) => {
-                    migratedVersion = flowOperations.apply(migratedVersion, operation)
+                    clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })
                 break
             }
