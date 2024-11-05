@@ -98,7 +98,7 @@ const AuthFormTemplate = React.memo(
         <CardContent>
           {!showCheckYourEmailNote && <ThirdPartyLogin isSignUp={isSignUp} />}
           <AuthSeparator
-            isEmailAuthEnabled={isEmailAuthEnabled ?? true}
+            isEmailAuthEnabled={(isEmailAuthEnabled ?? true) && !showCheckYourEmailNote}
           ></AuthSeparator>
           {isEmailAuthEnabled ? (
             isSignUp ? (

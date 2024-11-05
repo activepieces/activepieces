@@ -1,5 +1,5 @@
 ---
-title: "Setup Webhook Secrets"
+title: "Setup App Webhooks"
 description: ""
 icon: 'webhook'
 ---
@@ -24,3 +24,10 @@ Certain apps like Slack and Square only support one webhook per OAuth2 app. This
 1. Go to the "Event Subscription" settings in the Slack OAuth2 developer platform.
 2. The URL format should be: `https://YOUR_AP_INSTANCE/api/v1/app-events/slack`.
 3. When connecting to Slack, use your OAuth2 credentials or update the OAuth2 app details from the admin console (in platform plans).
+4. Add the following events to the app:
+    - `message.channels`
+    - `reaction_added`
+    - `message.im`
+    - `message.groups`
+    - `message.mpim`
+    - `app_mention`
