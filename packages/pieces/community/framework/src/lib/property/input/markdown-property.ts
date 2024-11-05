@@ -17,5 +17,5 @@ export type MarkDownProperty = BasePropertySchema &
     ValidationInputType.ANY,
     false
   > & {
-    markdownType?: MarkdownType;
+    variant?: MarkdownType;
   };

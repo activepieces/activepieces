@@ -21,26 +21,26 @@ function applyVariables(markdown: string, variables: Record<string, string>) {
 type MarkdownProps = {
   markdown: string | undefined;
   variables?: Record<string, string>;
-  markdownType?: MarkdownType;
+  variant?: MarkdownType;
 };
 
 const Container = ({
-  markdownType,
+  variant,
   children,
 }: {
-  markdownType?: MarkdownType;
+  variant?: MarkdownType;
   children: React.ReactNode;
 }) => {
   let containerClass = '';
-  switch (markdownType) {
+  switch (variant) {
     case 'Info':
       containerClass = 'rounded';
       break;
     case 'Warning':
-      containerClass = 'bg-[#FDF8F2] border-[#FDEBC6] text-[#835300]';
+      containerClass = 'bg-warning-400 border-warning-500 text-warning-600';
       break;
     case 'Tip':
-      containerClass = 'bg-[#F5FEFA] border-[#C7F1E2] text-[#064E3B]';
+      containerClass = 'bg-success-400 border-success-500 text-success-600';
       break;
     case 'Borderless':
       containerClass = 'border-none';
@@ -52,9 +52,9 @@ const Container = ({
   return (
     <Alert className={`rounded ${containerClass}`}>
       <div className="h-4 w-4 flex flex-start items-start justify-start">
-        {(markdownType === 'Info' || markdownType === undefined) && <Info />}
-        {markdownType === 'Warning' && <AlertTriangle />}
-        {markdownType === 'Tip' && <Lightbulb />}
+        {(variant === 'Info' || variant === undefined) && <Info />}
+        {variant === 'Warning' && <AlertTriangle />}
+        {variant === 'Tip' && <Lightbulb />}
       </div>
       <AlertDescription>{children}</AlertDescription>
     </Alert>
@@ -62,7 +62,7 @@ const Container = ({
 };
 
 const ApMarkdown = React.memo(
-  ({ markdown, variables, markdownType }: MarkdownProps) => {
+  ({ markdown, variables, variant }: MarkdownProps) => {
     const [copiedText, setCopiedText] = useState<string | null>(null);
     const { toast } = useToast();
 
@@ -89,7 +89,7 @@ const ApMarkdown = React.memo(
       .map((line) => line.trim())
       .join('\n');
     return (
-      <Container markdownType={markdownType}>
+      <Container variant={variant}>
         <ReactMarkdown
           remarkPlugins={[gfm]}
           components={{

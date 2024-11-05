@@ -97,7 +97,7 @@ export const Property = {
   },
   MarkDown(request: {
     value: string;
-    markdownType?: MarkdownType;
+    variant?: MarkdownType;
   }): MarkDownProperty {
     return {
       displayName: 'Markdown',
@@ -105,7 +105,7 @@ export const Property = {
       description: request.value,
       type: PropertyType.MARKDOWN,
       valueSchema: undefined as never,
-      markdownType: request.markdownType ?? 'Info',
+      variant: request.variant ?? 'Info',
     };
   },
   Number<R extends boolean>(
