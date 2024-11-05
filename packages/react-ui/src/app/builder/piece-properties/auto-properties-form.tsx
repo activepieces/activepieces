@@ -158,6 +158,7 @@ const selectFormComponentForProperty = ({
         <ApMarkdown
           markdown={property.description}
           variables={markdownVariables}
+          markdownType={property.markdownType}
         />
       );
     case PropertyType.STATIC_DROPDOWN:

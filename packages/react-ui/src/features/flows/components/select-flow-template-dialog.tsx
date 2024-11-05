@@ -235,7 +235,7 @@ const SelectFlowTemplateDialog = ({
                     </div>
                     <ApMarkdown
                       markdown={selectedTemplate?.description}
-                      withBorder={false}
+                      markdownType="Borderless"
                     />
 
                     {selectedTemplate.blogUrl && (

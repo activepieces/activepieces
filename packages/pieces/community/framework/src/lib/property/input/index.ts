@@ -1,18 +1,24 @@
-import { Type } from "@sinclair/typebox";
-import { Validators } from "../../validators/validators";
-import { ArrayProperty } from "./array-property";
-import { CheckboxProperty } from "./checkbox-property";
-import { DateTimeProperty } from "./date-time-property";
-import { DropdownProperty, MultiSelectDropdownProperty } from "./dropdown/dropdown-prop";
-import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
-import { DynamicProperties } from "./dynamic-prop";
-import { FileProperty } from "./file-property";
-import { JsonProperty } from "./json-property";
-import { MarkDownProperty } from "./markdown-property";
-import { NumberProperty } from "./number-property";
-import { ObjectProperty } from "./object-property";
-import { PropertyType } from "./property-type";
-import { LongTextProperty, ShortTextProperty } from "./text-property";
+import { Type } from '@sinclair/typebox';
+import { Validators } from '../../validators/validators';
+import { ArrayProperty } from './array-property';
+import { CheckboxProperty } from './checkbox-property';
+import { DateTimeProperty } from './date-time-property';
+import {
+  DropdownProperty,
+  MultiSelectDropdownProperty,
+} from './dropdown/dropdown-prop';
+import {
+  StaticDropdownProperty,
+  StaticMultiSelectDropdownProperty,
+} from './dropdown/static-dropdown';
+import { DynamicProperties } from './dynamic-prop';
+import { FileProperty } from './file-property';
+import { JsonProperty } from './json-property';
+import { MarkDownProperty, MarkdownType } from './markdown-property';
+import { NumberProperty } from './number-property';
+import { ObjectProperty } from './object-property';
+import { PropertyType } from './property-type';
+import { LongTextProperty, ShortTextProperty } from './text-property';
 
 export const InputProperty = Type.Union([
   ShortTextProperty,
@@ -30,10 +36,10 @@ export const InputProperty = Type.Union([
   JsonProperty,
   DateTimeProperty,
   FileProperty,
-])
+]);
 
 export type InputProperty =
-  ShortTextProperty<boolean>
+  | ShortTextProperty<boolean>
   | LongTextProperty<boolean>
   | MarkDownProperty
   | CheckboxProperty<boolean>
@@ -53,7 +59,6 @@ type Properties<T> = Omit<
   T,
   'valueSchema' | 'type' | 'defaultValidators' | 'defaultProcessors'
 >;
-
 
 export const Property = {
   ShortText<R extends boolean>(
@@ -90,13 +95,17 @@ export const Property = {
       ? LongTextProperty<true>
       : LongTextProperty<false>;
   },
-  MarkDown(request: { value: string }): MarkDownProperty {
+  MarkDown(request: {
+    value: string;
+    markdownType?: MarkdownType;
+  }): MarkDownProperty {
     return {
       displayName: 'Markdown',
       required: false,
       description: request.value,
       type: PropertyType.MARKDOWN,
       valueSchema: undefined as never,
+      markdownType: request.markdownType ?? 'Info',
     };
   },
   Number<R extends boolean>(

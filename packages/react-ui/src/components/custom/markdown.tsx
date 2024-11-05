@@ -4,6 +4,8 @@ import { Check, Copy } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
+import { MarkdownType } from '@activepieces/pieces-framework';
+import { Info, AlertTriangle, Lightbulb } from 'lucide-react';
 
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
@@ -19,26 +21,48 @@ function applyVariables(markdown: string, variables: Record<string, string>) {
 type MarkdownProps = {
   markdown: string | undefined;
   variables?: Record<string, string>;
-  withBorder?: boolean;
+  markdownType?: MarkdownType;
 };
 
 const Container = ({
-  withBorder,
+  markdownType,
   children,
 }: {
-  withBorder: boolean;
+  markdownType?: MarkdownType;
   children: React.ReactNode;
-}) =>
-  withBorder ? (
-    <Alert className="rounded">
+}) => {
+  let containerClass = '';
+  switch (markdownType) {
+    case 'Info':
+      containerClass = 'rounded';
+      break;
+    case 'Warning':
+      containerClass = 'bg-[#FDF8F2] border-[#FDEBC6] text-[#835300]'; 
+      break;
+    case 'Tip':
+      containerClass = 'bg-[#F5FEFA] border-[#C7F1E2] text-[#064E3B]'; 
+      break;
+    case 'Borderless':
+      containerClass = 'border-none';
+      break;
+    default:
+      break;
+  }
+
+  return (
+    <Alert className={`rounded ${containerClass}`}>
+      <div className="h-4 w-4 flex flex-start items-start justify-start">
+        {(markdownType === 'Info' || markdownType === undefined) && <Info />}
+        {markdownType === 'Warning' && <AlertTriangle />}
+        {markdownType === 'Tip' && <Lightbulb />}
+      </div>
       <AlertDescription>{children}</AlertDescription>
     </Alert>
-  ) : (
-    children
   );
+};
 
 const ApMarkdown = React.memo(
-  ({ markdown, variables, withBorder = true }: MarkdownProps) => {
+  ({ markdown, variables, markdownType }: MarkdownProps) => {
     const [copiedText, setCopiedText] = useState<string | null>(null);
     const { toast } = useToast();
 
@@ -65,7 +89,7 @@ const ApMarkdown = React.memo(
       .map((line) => line.trim())
       .join('\n');
     return (
-      <Container withBorder={withBorder}>
+      <Container markdownType={markdownType}>
         <ReactMarkdown
           remarkPlugins={[gfm]}
           components={{
@@ -77,10 +101,10 @@ const ApMarkdown = React.memo(
               const codeContent = String(props.children).trim();
               const isCopying = codeContent === copiedText;
               return (
-                <div className="relative  w-full items-center flex bg-background border border-solid text-sm rounded block w-full gap-1 p-1.5">
+                <div className="relative w-full items-center flex bg-background border border-solid text-sm rounded block w-full gap-1 p-1.5">
                   <input
                     type="text"
-                    className=" grow bg-background "
+                    className="grow bg-background"
                     value={codeContent}
                     disabled
                   />
