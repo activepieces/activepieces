@@ -62,13 +62,13 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
                 if (condition === null) {
                     return {
                         branchType: BranchExecutionType.FALLBACK,
-                        branchName: 'Fallback Branch'
+                        branchName: 'Fallback Branch',
                     }
                 }
                 return {
                     conditions: [[condition]],
                     branchType: BranchExecutionType.CONDITION,
-                    branchName: 'Test Branch'
+                    branchName: 'Test Branch',
                 }
             }),
             executionType,
