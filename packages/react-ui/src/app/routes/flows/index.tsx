@@ -340,10 +340,22 @@ const FlowsPage = () => {
               flow={flow}
               readonly={false}
               flowVersion={flow.version}
-              onRename={() => setRefresh(refresh + 1)}
-              onMoveTo={() => setRefresh(refresh + 1)}
-              onDuplicate={() => setRefresh(refresh + 1)}
-              onDelete={() => setRefresh(refresh + 1)}
+              onRename={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
+              onMoveTo={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
+              onDuplicate={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
+              onDelete={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
             >
               <EllipsisVertical className="h-10 w-10" />
             </FlowActionMenu>
