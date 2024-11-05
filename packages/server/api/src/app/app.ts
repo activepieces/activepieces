@@ -221,7 +221,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(workerModule)
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
-
+    await app.register(adminPlatformPieceModule)
+    
     app.get(
         '/redirect',
         async (
@@ -274,7 +275,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
-            await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
             setPlatformOAuthService({

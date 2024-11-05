@@ -7,6 +7,7 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
     private static readonly IGNORED_ROUTES = [
         '/v1/admin/pieces',
         '/v1/admin/platforms',
+        '/v1/admin/platforms/migrate',
         '/v1/app-credentials',
         '/v1/users/projects/:projectId/token',
         '/v1/webhooks',
