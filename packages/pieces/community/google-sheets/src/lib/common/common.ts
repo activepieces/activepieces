@@ -98,15 +98,9 @@ export const googleSheetsCommon = {
     },
   }),
   headersAsKeys: Property.Checkbox({
-    displayName: 'Use headers as keys?',
-    description: 'Use headers as keys in the result (instead of A, B, C...)',
+    displayName: 'Use headers as Value Names',
+    description: 'Use headers as value names in the result (instead of A, B, C)',
     required: true,
-    defaultValue: false,
-  }),
-  headersAsKeysForInsert: Property.Checkbox({
-    displayName: 'Use headers as keys?',
-    description: 'The provided dynamic values are using headers as object keys (instead of A, B, C...)',
-    required: false,
     defaultValue: false,
   }),
   values: Property.DynamicProperties({
@@ -332,7 +326,7 @@ export async function getGoogleSheetRows(params: {
   for (let i = 0; i < response.body.values.length; i++) {
     const values: any = {};
     for (let j = 0; j < response.body.values[i].length; j++) {
-      const key = params.headersAsKeys ? headers[j] : columnToLabel(j);
+      const key = params.headersAsKeys ? headers[j] || columnToLabel(j)  : columnToLabel(j);
       if (Object.prototype.hasOwnProperty.call(values, key)) {
         throw new Error(`Duplicate column name "${key}"`);
       }

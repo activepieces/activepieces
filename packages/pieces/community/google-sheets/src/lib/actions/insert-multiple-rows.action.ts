@@ -9,8 +9,7 @@ import {
     Dimension,
     getHeaders,
     googleSheetsCommon,
-    objectToArray,
-    objectWithHeadersAsKeysToArray,
+    labelToColumn,
     ValueInputOption,
 } from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
@@ -80,31 +79,32 @@ export const insertMultipleRowsAction = createAction({
 				return fields;
 			},
 		}),
-        headersAsKeys: googleSheetsCommon.headersAsKeysForInsert,
 	},
 
 	async run(context) {
 		const spreadSheetId = context.propsValue.spreadsheet_id;
 		const sheetId = context.propsValue.sheet_id;
-		const rowValuesInput = context.propsValue.values['values'] as any[];
-
+		const rowValuesInput: Record<string,string>[] = context.propsValue.values['values'];
 		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
-
-		const formattedValues = [];
-
-		const headers = context.propsValue.headersAsKeys ? await getHeaders({
+		const headers =  await getHeaders({
 			accessToken: context.auth['access_token'],
 			sheetName: sheetName,
 			spreadSheetId: spreadSheetId,
-		}) : [];
+		});
 
-		for (const rowInput of rowValuesInput) {
-			formattedValues.push(
-				context.propsValue.headersAsKeys
-				? await objectWithHeadersAsKeysToArray(headers, rowInput)
-				: objectToArray(rowInput)
-			);
-		}
+		const formattedValues=rowValuesInput.map(row=>{
+		  return  Object.keys(row).reduce((acc,column)=>{
+				const columnIndexInHeaders = headers.findIndex(header=> header === column);
+					if(columnIndexInHeaders > -1)
+					{
+						acc[columnIndexInHeaders]=row[column];
+					}
+					else {
+						acc[labelToColumn(column)]=row[column];
+					}
+				return acc;
+			},[] as string[])
+		})
 
 		const authClient = new OAuth2Client();
 		authClient.setCredentials(context.auth);
