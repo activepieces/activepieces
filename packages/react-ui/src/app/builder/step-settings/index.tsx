@@ -117,8 +117,8 @@ const StepSettingsContainer = () => {
   const actionOrTriggerDisplayName = selectedStep.settings.actionName
     ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
     : selectedStep.settings.triggerName
-      ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
-      : null;
+    ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
+    : null;
 
   // Watch changes in form execluding actionName or triggerName from watching //
   const inputChanges = useWatch({
@@ -173,14 +173,14 @@ const StepSettingsContainer = () => {
         JSON.stringify(form.getValues()),
       );
       currentStep.valid = form.formState.isValid;
-      console.log(previousSavedStep.current?.settings?.branches)
+      console.log(previousSavedStep.current?.settings?.branches);
       console.log(currentStep.settings?.branches);
-      console.log('-----------------------------------')
+      console.log('-----------------------------------');
       const routerBranchesNumberChanged =
         currentStep.type === ActionType.ROUTER &&
         previousSavedStep.current?.type === ActionType.ROUTER &&
         previousSavedStep.current.settings.branches.length !==
-        currentStep.settings.branches.length;
+          currentStep.settings.branches.length;
       if (
         previousSavedStep.current === null ||
         deepEqual(currentStep, previousSavedStep.current) ||
@@ -320,18 +320,18 @@ const StepSettingsContainer = () => {
                 {[ActionType.CODE, ActionType.PIECE].includes(
                   modifiedStep.type as ActionType,
                 ) && (
-                    <ActionErrorHandlingForm
-                      hideContinueOnFailure={
-                        modifiedStep.settings.errorHandlingOptions
-                          ?.continueOnFailure?.hide
-                      }
-                      disabled={readonly}
-                      hideRetryOnFailure={
-                        modifiedStep.settings.errorHandlingOptions?.retryOnFailure
-                          ?.hide
-                      }
-                    ></ActionErrorHandlingForm>
-                  )}
+                  <ActionErrorHandlingForm
+                    hideContinueOnFailure={
+                      modifiedStep.settings.errorHandlingOptions
+                        ?.continueOnFailure?.hide
+                    }
+                    disabled={readonly}
+                    hideRetryOnFailure={
+                      modifiedStep.settings.errorHandlingOptions?.retryOnFailure
+                        ?.hide
+                    }
+                  ></ActionErrorHandlingForm>
+                )}
               </div>
             </ScrollArea>
           </ResizablePanel>
