@@ -89,12 +89,20 @@ export type BuilderState = {
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
   setLoopIndex: (stepName: string, index: number) => void;
-  operationListeners: Array<(operation: FlowOperationRequest) => void>;
+  operationListeners: Array<
+    (flowVersion: FlowVersion, operation: FlowOperationRequest) => void
+  >;
   addOperationListener: (
-    listener: (operation: FlowOperationRequest) => void,
+    listener: (
+      flowVersion: FlowVersion,
+      operation: FlowOperationRequest,
+    ) => void,
   ) => void;
   removeOperationListener: (
-    listener: (operation: FlowOperationRequest) => void,
+    listener: (
+      flowVersion: FlowVersion,
+      operation: FlowOperationRequest,
+    ) => void,
   ) => void;
 };
 
@@ -270,7 +278,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           );
 
           state.operationListeners.forEach((listener) => {
-            listener(operation);
+            listener(state.flowVersion, operation);
           });
 
           const updateRequest = async () => {
@@ -323,13 +331,19 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       selectedBranchIndex: null,
       operationListeners: [],
       addOperationListener: (
-        listener: (operation: FlowOperationRequest) => void,
+        listener: (
+          flowVersion: FlowVersion,
+          operation: FlowOperationRequest,
+        ) => void,
       ) =>
         set((state) => ({
           operationListeners: [...state.operationListeners, listener],
         })),
       removeOperationListener: (
-        listener: (operation: FlowOperationRequest) => void,
+        listener: (
+          flowVersion: FlowVersion,
+          operation: FlowOperationRequest,
+        ) => void,
       ) =>
         set((state) => ({
           operationListeners: state.operationListeners.filter(

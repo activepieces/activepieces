@@ -118,6 +118,7 @@ function _duplicateBranch(
     const operations: FlowOperationRequest[] = [{
         type: FlowOperationType.ADD_BRANCH,
         request: {
+            branchName: `${clonedRouter.settings.branches[childIndex].branchName} Copy`,
             branchIndex: childIndex + 1,
             stepName: routerName,
             conditions: clonedRouter.settings.branches[childIndex].branchType === BranchExecutionType.CONDITION ? clonedRouter.settings.branches[childIndex].conditions : undefined,
