@@ -1,6 +1,5 @@
-import { SeekPage, UpdateUserRequestBody, User } from '@activepieces/shared';
-
 import { api } from '@/lib/api';
+import { SeekPage, UpdateUserRequestBody, User } from '@activepieces/shared';
 
 export const platformUserApi = {
   list() {

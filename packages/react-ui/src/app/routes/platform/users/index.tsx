@@ -1,11 +1,6 @@
-import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash } from 'lucide-react';
-
-import { TableTitle } from '../../../../components/ui/table-title';
-
-import { UpdateUserDialog } from './update-user-dialog';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -20,6 +15,11 @@ import {
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
+import { PlatformRole, UserStatus } from '@activepieces/shared';
+
+import { TableTitle } from '../../../../components/ui/table-title';
+
+import { UpdateUserDialog } from './update-user-dialog';
 
 export default function UsersPage() {
   const { toast } = useToast();

@@ -1,11 +1,8 @@
-import { PlatformRole, UpdateUserRequestBody } from '@activepieces/shared';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-
-import { Input } from '../../../../components/ui/input';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +25,9 @@ import {
 } from '@/components/ui/select';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-user-api';
+import { PlatformRole, UpdateUserRequestBody } from '@activepieces/shared';
+
+import { Input } from '../../../../components/ui/input';
 
 export const UpdateUserDialog = ({
   children,
