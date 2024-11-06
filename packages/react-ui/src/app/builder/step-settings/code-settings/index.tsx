@@ -48,12 +48,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
             <div className="pb-4">
               <ApMarkdown markdown={markdown} variant={MarkdownVariant.INFO} />
             </div>
-            <div className="pb-4">
-              <ApMarkdown
-                markdown={warningMarkdown}
-                variant={MarkdownVariant.WARNING}
-              />
-            </div>
+
 
             <div className="flex items-center justify-between">
               <FormLabel>{t('Inputs')}</FormLabel>
@@ -77,6 +72,12 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
           </FormItem>
         )}
       />
+      <div className="pb-4">
+        <ApMarkdown
+          markdown={warningMarkdown}
+          variant={MarkdownVariant.WARNING}
+        />
+      </div>
       <FormField
         control={form.control}
         name="settings.sourceCode"
