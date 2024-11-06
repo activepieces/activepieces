@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BranchCondition, BranchOperator } from '@activepieces/shared'
-import { evaluateConditions } from '../../src/lib/handler/branch-executor'
+import { evaluateConditions } from '../../src/lib/handler/router-executor'
 
 describe('Branch evaluateConditions', () => {
     describe('DATE_IS_AFTER', () => {

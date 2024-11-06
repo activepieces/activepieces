@@ -131,7 +131,7 @@ export const piecesHooks = {
             const filtersPrimitive: StepMetadataWithSuggestions[] = [
               CORE_STEP_METADATA[ActionType.CODE],
               CORE_STEP_METADATA[ActionType.LOOP_ON_ITEMS],
-              CORE_STEP_METADATA[ActionType.BRANCH],
+              CORE_STEP_METADATA[ActionType.ROUTER],
             ].filter((step) => passSearch(searchQuery, step));
             return [...filtersPrimitive, ...piecesMetadata];
           }
@@ -179,6 +179,7 @@ export const piecesHooks = {
             case ActionType.CODE:
             case ActionType.LOOP_ON_ITEMS:
             case ActionType.BRANCH:
+            case ActionType.ROUTER:
               return getCoreActions(stepMetadata.type);
             default:
               return [];
@@ -217,7 +218,11 @@ function passSearch(
 }
 
 export function getCoreActions(
-  type: ActionType.BRANCH | ActionType.LOOP_ON_ITEMS | ActionType.CODE,
+  type:
+    | ActionType.BRANCH
+    | ActionType.LOOP_ON_ITEMS
+    | ActionType.CODE
+    | ActionType.ROUTER,
 ) {
   switch (type) {
     case ActionType.CODE:
@@ -238,6 +243,17 @@ export function getCoreActions(
           type: ActionType.LOOP_ON_ITEMS as const,
         },
       ];
+
+    case ActionType.ROUTER:
+      return [
+        {
+          name: 'router',
+          displayName: t('Router'),
+          description: t(
+            'Split your flow into branches depending on condition(s)',
+          ),
+        },
+      ];
     case ActionType.BRANCH:
       return [
         {
@@ -246,7 +262,6 @@ export function getCoreActions(
           description: t(
             'Split your flow into branches depending on condition(s)',
           ),
-          type: ActionType.BRANCH as const,
         },
       ];
   }

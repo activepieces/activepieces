@@ -11,7 +11,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { CodeAction } from '@activepieces/shared';
+import { CodeAction, MarkdownVariant } from '@activepieces/shared';
 
 import { LeftSideBarType, useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
@@ -22,8 +22,10 @@ const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below. 
 
 You can access these inputs in your code using \`inputs.key\`, where \`key\` is the name you assigned below.  
+`;
 
-**⚠️ Warning: "const code" is the entry to the code. If it is removed or renamed, your step will fail.** 
+const warningMarkdown = `
+**const code** is the entry to the code. If it is removed or renamed, your step will fail.
 `;
 
 type CodeSettingsProps = {
@@ -44,7 +46,13 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         render={({ field }) => (
           <FormItem>
             <div className="pb-4">
-              <ApMarkdown markdown={markdown} />
+              <ApMarkdown markdown={markdown} variant={MarkdownVariant.INFO} />
+            </div>
+            <div className="pb-4">
+              <ApMarkdown
+                markdown={warningMarkdown}
+                variant={MarkdownVariant.WARNING}
+              />
             </div>
 
             <div className="flex items-center justify-between">

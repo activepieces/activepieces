@@ -22,6 +22,10 @@ export function setAtPath<T, K extends keyof any>(obj: T, path: K | K[], value: 
 }
 
 
+export function insertAt<T>(array: T[], index: number, item: T): T[] {
+    return [...array.slice(0, index), item, ...array.slice(index)]
+}
+
 export function debounce<T>(func: (...args: T[]) => void, wait: number): (...args: T[]) => void {
     let timeout: NodeJS.Timeout
 

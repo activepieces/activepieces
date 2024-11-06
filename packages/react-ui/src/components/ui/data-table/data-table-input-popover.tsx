@@ -2,11 +2,11 @@ import { PlusCircledIcon } from '@radix-ui/react-icons';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
-import { Badge } from './badge';
-import { Button } from './button';
-import { Input } from './input';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { Separator } from './seperator';
+import { Badge } from '../badge';
+import { Button } from '../button';
+import { Input } from '../input';
+import { Popover, PopoverContent, PopoverTrigger } from '../popover';
+import { Separator } from '../seperator';
 
 type DataTableInputPopoverProps = {
   title?: string;

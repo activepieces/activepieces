@@ -55,6 +55,7 @@ export type FeatureKey =
   | 'PIECES'
   | 'TEMPLATES'
   | 'TEAM'
+  | 'USERS'
   | 'API'
   | 'SSO'
   | 'AUDIT_LOGS'

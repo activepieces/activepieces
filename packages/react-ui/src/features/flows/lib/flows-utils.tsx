@@ -1,8 +1,14 @@
 import cronstrue from 'cronstrue/i18n';
 import { t } from 'i18next';
+import JSZip from 'jszip';
 import { TimerReset, TriangleAlert, Zap } from 'lucide-react';
 
-import { Flow, FlowVersion, TriggerType } from '@activepieces/shared';
+import {
+  Flow,
+  FlowVersion,
+  PopulatedFlow,
+  TriggerType,
+} from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 
@@ -29,8 +35,21 @@ const downloadFlow = async (flowId: string) => {
   downloadFile(JSON.stringify(template, null, 2), template.name, 'json');
 };
 
+const downloadFlowsIntoZip = async (flows: PopulatedFlow[]) => {
+  const zip = new JSZip();
+  for (const flow of flows) {
+    const template = await flowsApi.getTemplate(flow.id, {});
+    zip.file(
+      `${flow.version.displayName}_${flow.id}.json`,
+      JSON.stringify(template, null, 2),
+    );
+  }
+  return zip;
+};
+
 export const flowsUtils = {
   downloadFlow,
+  downloadFlowsIntoZip,
   flowStatusToolTipRenderer: (flow: Flow, version: FlowVersion) => {
     const trigger = version.trigger;
     switch (trigger.type) {

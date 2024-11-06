@@ -33,6 +33,7 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
+  MarkdownVariant,
   FlowOperationType,
   FlowTemplate,
   PopulatedFlow,
@@ -66,6 +67,7 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
         request: {
           displayName: template.name,
           trigger: template.template.trigger,
+          schemaVersion: template.template.schemaVersion,
         },
       });
     },
@@ -235,7 +237,7 @@ const SelectFlowTemplateDialog = ({
                     </div>
                     <ApMarkdown
                       markdown={selectedTemplate?.description}
-                      withBorder={false}
+                      variant={MarkdownVariant.BORDERLESS}
                     />
 
                     {selectedTemplate.blogUrl && (

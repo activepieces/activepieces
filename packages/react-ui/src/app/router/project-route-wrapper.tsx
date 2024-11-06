@@ -53,6 +53,10 @@ const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     return <Navigate to="/sign-in" replace />;
   }
 
+  if (!isProjectValid && !isNil(projectId) && projectId !== currentProjectId) {
+    return <Navigate to="/flows" replace />;
+  }
+
   if (isError || !isProjectValid) {
     return <Navigate to="/404" replace />;
   }
@@ -84,9 +88,8 @@ const RedirectToCurrentProjectRoute: React.FC<
   );
 
   const searchParamsString = searchParams.toString();
-  const pathWithParamsAndSearchParams = `${pathWithParams}${
-    searchParamsString ? `?${searchParamsString}` : ''
-  }`;
+  const pathWithParamsAndSearchParams = `${pathWithParams}${searchParamsString ? `?${searchParamsString}` : ''
+    }`;
 
   return (
     <Navigate
@@ -105,16 +108,16 @@ export const ProjectRouterWrapper = ({
   element,
   path,
 }: ProjectRouterWrapperProps) => [
-  {
-    path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
-    element: <TokenCheckerWrapper>{element}</TokenCheckerWrapper>,
-  },
-  {
-    path,
-    element: (
-      <RedirectToCurrentProjectRoute path={path}>
-        {element}
-      </RedirectToCurrentProjectRoute>
-    ),
-  },
-];
+    {
+      path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
+      element: <TokenCheckerWrapper>{element}</TokenCheckerWrapper>,
+    },
+    {
+      path,
+      element: (
+        <RedirectToCurrentProjectRoute path={path}>
+          {element}
+        </RedirectToCurrentProjectRoute>
+      ),
+    },
+  ];

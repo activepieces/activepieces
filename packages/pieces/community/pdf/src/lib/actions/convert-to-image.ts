@@ -16,7 +16,6 @@ async function isPdftoppmInstalled(): Promise<boolean> {
     const { stdout, stderr } = await execPromise(`command -v ${pdftoppmPath}`);
     return !stderr && stdout.trim() === pdftoppmPath;
 }
-
 async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
     const tempDir = tmpdir();
     const uniqueId = nanoid();
@@ -32,19 +31,18 @@ async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
         }
 
         const files = await fs.readdir(outputDir);
-        const imageBuffers = await Promise.all(
-            files.map(async (file) => {
-                const filePath = join(outputDir, file);
-                const imageBuffer = await fs.readFile(filePath);
-                await fs.unlink(filePath);
-                return imageBuffer;
-            })
-        );
+        const imageBuffers = [];
+        for (const file of files) {
+            const filePath = join(outputDir, file);
+            const imageBuffer = await fs.readFile(filePath);
+            await fs.unlink(filePath);
+            imageBuffers.push(imageBuffer);
+        }
 
         return imageBuffers;
     } finally {
-        await fs.unlink(inputFilePath);
-        await fs.rmdir(outputDir);
+        await fs.unlink(inputFilePath).catch(() => void 0);
+        await fs.rm(outputDir, { recursive: true, force: true }).catch(() => void 0);
     }
 }
 

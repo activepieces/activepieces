@@ -3,9 +3,10 @@ import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 import { useSearchParams } from 'react-router-dom';
 
+import { DatePickerWithRange } from '../date-picker-range';
+
 import { DataTableInputPopover } from './data-table-input-popover';
 import { DataTableSelectPopover } from './data-table-select-popover';
-import { DatePickerWithRange } from './date-picker-range';
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   type: 'select' | 'input' | 'date';

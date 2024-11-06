@@ -2,10 +2,10 @@ import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
-    flowHelper,
     FlowId,
     FlowOperationRequest,
     FlowOperationType,
+    flowStructureUtil,
     FlowVersion,
     isNil,
     ProjectId,
@@ -67,7 +67,7 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
     if (operation.type !== FlowOperationType.UPDATE_TRIGGER && operation.type !== FlowOperationType.DELETE_ACTION) {
         return
     }
-    const stepToDelete = flowHelper.getStep(flowVersion, operation.request.name)
+    const stepToDelete = flowStructureUtil.getStepOrThrow(operation.request.name, flowVersion.trigger)
     const triggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && (flowVersion.trigger.type !== operation.request.type 
         || flowVersion.trigger.settings.triggerName !== operation.request.settings.triggerName
         || flowVersion.trigger.settings.pieceName !== operation.request.settings.pieceName)

@@ -116,6 +116,7 @@ export const flowRunService = {
             query: {
                 limit,
                 order: Order.DESC,
+                orderBy: 'created',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -151,26 +152,45 @@ export const flowRunService = {
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-    async retry({ flowRunId, strategy }: RetryParams): Promise<FlowRun | null> {
+    async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
+        const oldFlowRun = await flowRunService.getOneOrThrow({
+            id: flowRunId,
+            projectId,
+        })
+
+        const newFlowRun = {
+            ...oldFlowRun,
+            id: apId(),
+            status: FlowRunStatus.RUNNING,
+            startTime: new Date().toISOString(),
+            created: new Date().toISOString(),
+        }
+
+        await flowRunRepo().save(newFlowRun)
+
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
                 return flowRunService.addToQueue({
-                    flowRunId,
+                    flowRunId: newFlowRun.id,
                     executionType: ExecutionType.RESUME,
                     progressUpdateType: ProgressUpdateType.NONE,
                     checkRequestId: false,
                 })
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(flowRunId)
+                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(newFlowRun.id)
                 return flowRunService.addToQueue({
                     payload,
-                    flowRunId,
+                    flowRunId: newFlowRun.id,
                     executionType: ExecutionType.BEGIN,
                     progressUpdateType: ProgressUpdateType.NONE,
                     checkRequestId: false,
                 })
             }
         }
+    },
+    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore }: BulkRetryParams): Promise<(FlowRun | null)[]> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore)
+        return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
     },
     async addToQueue({
         flowRunId,
@@ -371,6 +391,49 @@ export const flowRunService = {
     },
 }
 
+async function filterFlowRunsAndApplyFilters(
+    projectId: ProjectId,
+    flowRunIds?: FlowRunId[],
+    status?: FlowRunStatus[],
+    flowId?: FlowId[],
+    createdAfter?: string,
+    createdBefore?: string,
+): Promise<FlowRunId[]> {
+    let query = flowRunRepo().createQueryBuilder('flow_run').where({
+        projectId,
+        environment: RunEnvironment.PRODUCTION,
+    })
+    
+    if (!isNil(flowRunIds) && flowRunIds.length > 0) {
+        query = query.andWhere({
+            id: In(flowRunIds),
+        })
+    }
+    if (flowId && flowId.length > 0) {
+        query = query.andWhere({
+            flowId: In(flowId),
+        })
+    }
+    if (status && status.length > 0) {
+        query = query.andWhere({
+            status: In(status),
+        })
+    }
+    if (createdAfter) {
+        query = query.andWhere('flow_run.created >= :createdAfter', {
+            createdAfter,
+        })
+    }
+    if (createdBefore) {
+        query = query.andWhere('flow_run.created <= :createdBefore', {
+            createdBefore,
+        })
+    }
+
+    const flowRuns = await query.getMany()
+    return flowRuns.map(flowRun => flowRun.id)
+}
+
 async function updateLogs({ flowRunId, projectId, executionState }: UpdateLogs): Promise<undefined | string> {
     if (isNil(executionState)) {
         return undefined
@@ -464,4 +527,15 @@ type PauseParams = {
 type RetryParams = {
     flowRunId: FlowRunId
     strategy: FlowRetryStrategy
+    projectId: ProjectId
+}
+
+type BulkRetryParams = {
+    projectId: ProjectId
+    flowRunIds?: FlowRunId[]
+    strategy: FlowRetryStrategy
+    status?: FlowRunStatus[]
+    flowId?: FlowId[]
+    createdAfter?: string
+    createdBefore?: string
 }

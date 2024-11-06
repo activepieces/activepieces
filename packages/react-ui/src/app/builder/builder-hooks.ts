@@ -13,7 +13,7 @@ import {
   Permission,
   PopulatedFlow,
   TriggerType,
-  flowHelper,
+  flowOperations,
   isNil,
 } from '@activepieces/shared';
 
@@ -47,7 +47,6 @@ export enum RightSideBarType {
 }
 
 type InsertMentionHandler = (propertyPath: string) => void;
-
 export type BuilderState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
@@ -63,7 +62,9 @@ export type BuilderState = {
   allowCanvasPanning: boolean;
   saving: boolean;
   refreshPieceFormSettings: boolean;
+  selectedBranchIndex: number | null;
   refreshSettings: () => void;
+  setSelectedBranchIndex: (index: number | null) => void;
   exitRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
@@ -88,6 +89,13 @@ export type BuilderState = {
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
   setLoopIndex: (stepName: string, index: number) => void;
+  operationListeners: Array<(operation: FlowOperationRequest) => void>;
+  addOperationListener: (
+    listener: (operation: FlowOperationRequest) => void,
+  ) => void;
+  removeOperationListener: (
+    listener: (operation: FlowOperationRequest) => void,
+  ) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -132,7 +140,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       refreshPieceFormSettings: false,
 
       removeStepSelection: () =>
-        set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
+        set({
+          selectedStep: null,
+          rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
+        }),
       setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
         set({
           allowCanvasPanning,
@@ -140,6 +152,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       setActiveDraggingStep: (stepName: string | null) =>
         set({
           activeDraggingStep: stepName,
+        }),
+      setSelectedBranchIndex: (branchIndex: number | null) =>
+        set({
+          selectedBranchIndex: branchIndex,
         }),
       setReadOnly: (readonly: boolean) => set({ readonly }),
       renameFlowClientSide: (newName: string) => {
@@ -164,6 +180,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             leftSidebar: !isNil(state.run)
               ? LeftSideBarType.RUN_DETAILS
               : LeftSideBarType.NONE,
+            selectedBranchIndex: null,
           };
         });
       },
@@ -194,15 +211,18 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           loopsIndexes: {},
           leftSidebar: LeftSideBarType.NONE,
           rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
         }),
       exitStepSettings: () =>
         set({
           rightSidebar: RightSideBarType.NONE,
           selectedStep: null,
+          selectedBranchIndex: null,
         }),
       exitPieceSelector: () =>
         set({
           rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
         }),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
@@ -244,7 +264,15 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             console.warn('Cannot apply operation while readonly');
             return state;
           }
-          const newFlowVersion = flowHelper.apply(state.flowVersion, operation);
+          const newFlowVersion = flowOperations.apply(
+            state.flowVersion,
+            operation,
+          );
+
+          state.operationListeners.forEach((listener) => {
+            listener(operation);
+          });
+
           const updateRequest = async () => {
             set({ saving: true });
             try {
@@ -281,6 +309,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             flowVersion.state === FlowVersionState.LOCKED,
           leftSidebar: LeftSideBarType.NONE,
           rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
         }));
       },
       insertMention: null,
@@ -290,6 +319,22 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       refreshSettings: () =>
         set((state) => ({
           refreshPieceFormSettings: !state.refreshPieceFormSettings,
+        })),
+      selectedBranchIndex: null,
+      operationListeners: [],
+      addOperationListener: (
+        listener: (operation: FlowOperationRequest) => void,
+      ) =>
+        set((state) => ({
+          operationListeners: [...state.operationListeners, listener],
+        })),
+      removeOperationListener: (
+        listener: (operation: FlowOperationRequest) => void,
+      ) =>
+        set((state) => ({
+          operationListeners: state.operationListeners.filter(
+            (l) => l !== listener,
+          ),
         })),
     };
   });
