@@ -2,7 +2,7 @@ import { spawn } from 'child_process'
 import { Server } from 'http'
 import { resolve } from 'path'
 import { ApLock, AppSystemProp, filePiecesUtils, logger, memoryLock, SharedSystemProp, system } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, debounce, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyInstance } from 'fastify'
@@ -22,7 +22,7 @@ async function handleFileChange(piecePackageName: string, io: Server): Promise<v
         lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
 
         logger.info(chalk.blue.bold('🤌 Building pieces... 🤌'))
-        if (!/^[a-z0-9-]+$/.test(piecePackageName)) {
+        if (!/^[A-Za-z0-9-]+$/.test(piecePackageName)) {
             throw new Error(`Piece package name contains invalid character: ${piecePackageName}`)
         }
         const cmd = `npx nx run-many -t build --projects=${piecePackageName}`
@@ -72,7 +72,10 @@ export async function piecesBuilder(app: FastifyInstance, io: Server): Promise<v
         logger.info(chalk.blue(`Starting watch for package: ${packageName}`))
 
         const pieceDirectory = await filePiecesUtils.findPieceDirectoryByFolderName(packageName)
-        assertNotNullOrUndefined(pieceDirectory, 'pieceDirectory')
+        if (isNil(pieceDirectory)) {
+            logger.info(chalk.yellow(`Piece directory not found for package: ${packageName}`))
+            continue
+        }
         logger.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
 
         const piecePackageName = `pieces-${packageName}`
