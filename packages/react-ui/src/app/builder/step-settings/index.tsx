@@ -173,6 +173,9 @@ const StepSettingsContainer = () => {
         JSON.stringify(form.getValues()),
       );
       currentStep.valid = form.formState.isValid;
+      console.log(previousSavedStep.current?.settings?.branches);
+      console.log(currentStep.settings?.branches);
+      console.log('-----------------------------------');
       const routerBranchesNumberChanged =
         currentStep.type === ActionType.ROUTER &&
         previousSavedStep.current?.type === ActionType.ROUTER &&

@@ -71,7 +71,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       },
       () => {},
     );
-    remove(index);
+
     setSelectedBranchIndex(null);
     fitView(flowCanvasUtils.createFocusStepInGraphParams(step.name));
   };
@@ -122,7 +122,6 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       removeOperationListener(duplicateBranchListener);
     };
   }, []);
-  console.log(formState.errors.settings?.branches);
   return (
     <>
       {isNil(selectedBranchIndex) && (
@@ -185,11 +184,6 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                 },
                 () => {},
               );
-
-              insert(index + 1, {
-                ...step.settings.branches[index],
-                branchName: `${step.settings.branches[index].branchName} Copy`,
-              });
               setSelectedBranchIndex(index + 1);
             }}
             setSelectedBranchIndex={(index) => {
