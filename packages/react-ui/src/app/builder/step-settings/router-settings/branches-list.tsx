@@ -131,8 +131,7 @@ export const BranchListItem = ({
       ></EditableText>
 
       {!isNil(errors[branchIndex]) && (
-        <div className='min-w-[16px]'>
-
+        <div className="min-w-[16px]">
           <Tooltip>
             <TooltipTrigger asChild>
               <InvalidStepIcon
