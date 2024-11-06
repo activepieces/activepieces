@@ -6,12 +6,14 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
+  Action,
   FlowOperationRequest,
   FlowRun,
   FlowVersion,
   FlowVersionState,
   Permission,
   PopulatedFlow,
+  Trigger,
   TriggerType,
   flowOperations,
   isNil,
@@ -89,12 +91,12 @@ export type BuilderState = {
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
   setLoopIndex: (stepName: string, index: number) => void;
-  operationListeners: Array<(operation: FlowOperationRequest) => void>;
+  operationListeners: Array<(flowVersion: FlowVersion, operation: FlowOperationRequest) => void>;
   addOperationListener: (
-    listener: (operation: FlowOperationRequest) => void,
+    listener: (flowVersion: FlowVersion, operation: FlowOperationRequest) => void,
   ) => void;
   removeOperationListener: (
-    listener: (operation: FlowOperationRequest) => void,
+    listener: (flowVersion: FlowVersion,operation: FlowOperationRequest) => void,
   ) => void;
 };
 
@@ -270,7 +272,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           );
 
           state.operationListeners.forEach((listener) => {
-            listener(operation);
+            listener(state.flowVersion,operation);
           });
 
           const updateRequest = async () => {
@@ -323,13 +325,13 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       selectedBranchIndex: null,
       operationListeners: [],
       addOperationListener: (
-        listener: (operation: FlowOperationRequest) => void,
+        listener: ( flowVersion: FlowVersion, operation: FlowOperationRequest) => void,
       ) =>
         set((state) => ({
           operationListeners: [...state.operationListeners, listener],
         })),
       removeOperationListener: (
-        listener: (operation: FlowOperationRequest) => void,
+        listener: (flowVersion: FlowVersion,operation: FlowOperationRequest) => void,
       ) =>
         set((state) => ({
           operationListeners: state.operationListeners.filter(

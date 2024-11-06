@@ -5,9 +5,11 @@ import { memo, useEffect } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import {
+  ActionType,
   FlowOperationRequest,
   FlowOperationType,
   flowStructureUtil,
+  FlowVersion,
   isNil,
   RouterAction,
   RouterExecutionType,
@@ -67,7 +69,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
           branchIndex: index,
         },
       },
-      () => {},
+      () => { },
     );
     remove(index);
     setSelectedBranchIndex(null);
@@ -75,7 +77,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   };
 
   useEffect(() => {
-    const deleteBranchListener = (operation: FlowOperationRequest) => {
+    const deleteBranchListener = (_: FlowVersion, operation: FlowOperationRequest) => {
       if (operation.type === FlowOperationType.DELETE_BRANCH) {
         if (operation.request.stepName === step.name) {
           remove(operation.request.branchIndex);
@@ -83,14 +85,20 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       }
     };
 
-    const duplicateBranchListener = (operation: FlowOperationRequest) => {
+    const duplicateBranchListener = (flowVersion: FlowVersion, operation: FlowOperationRequest) => {
       if (operation.type === FlowOperationType.DUPLICATE_BRANCH) {
+        const step = flowStructureUtil.getActionOrThrow(operation.request.stepName, flowVersion.trigger);
+        if (step.type !== ActionType.ROUTER) {
+          console.error(`Trying to duplicate a branch on a none router step! ${operation.request.stepName}`);
+          return;
+        }
+        const branch = step.settings.branches[operation.request.branchIndex];
+
         if (operation.request.stepName === step.name) {
           insert(operation.request.branchIndex + 1, {
-            ...step.settings.branches[operation.request.branchIndex],
-            branchName: `${
-              step.settings.branches[operation.request.branchIndex].branchName
-            } Copy`,
+            ...branch,
+            branchName: `${branch.branchName
+              } Copy`,
           });
         }
       }
@@ -104,6 +112,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       removeOperationListener(duplicateBranchListener);
     };
   }, []);
+  console.log(formState.errors.settings?.branches);
   return (
     <>
       {isNil(selectedBranchIndex) && (
@@ -164,7 +173,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                     branchIndex: index,
                   },
                 },
-                () => {},
+                () => { },
               );
 
               insert(index + 1, {
@@ -200,15 +209,17 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                       request: {
                         stepName: step.name,
                         branchIndex: step.settings.branches.length - 1,
+                        branchName: `Branch ${step.settings.branches.length}`
                       },
                     },
-                    () => {},
+                    () => { },
                   );
+
 
                   insert(
                     step.settings.branches.length - 1,
                     flowStructureUtil.createBranch(
-                      step.settings.branches.length,
+                      `Branch ${step.settings.branches.length}`,
                       undefined,
                     ),
                   );
