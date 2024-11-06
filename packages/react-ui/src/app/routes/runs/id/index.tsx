@@ -49,9 +49,7 @@ const FlowRunPage = () => {
     );
   }
 
-  if (isSampleDataError) {
-    return <p>Error loading sample data, contact support</p>;
-  }
+
 
   return (
     data && (

@@ -72,7 +72,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   return (
     <CardList
       className={cn('w-[250px] min-w-[250px] transition-all ', {
-        'w-full': debouncedQuery.length > 0,
+        'w-full': debouncedQuery.length > 0 || noResultsFound,
       })}
       listClassName="gap-0"
     >

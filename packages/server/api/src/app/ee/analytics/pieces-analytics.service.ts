@@ -1,5 +1,5 @@
 import { logger } from '@activepieces/server-shared'
-import { ActionType, flowHelper, FlowStatus, isNil, PieceAction, PieceTrigger, TriggerType } from '@activepieces/shared'
+import { ActionType, FlowStatus, flowStructureUtil, isNil, PieceAction, PieceTrigger, TriggerType } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { FlowEntity } from '../../flows/flow/flow.entity'
 import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
@@ -46,7 +46,7 @@ async function piecesAnalyticsHandler(): Promise<void> {
         if (isNil(flowVersion)) {
             continue
         }
-        const pieces = flowHelper.getAllSteps(flowVersion.trigger).filter(
+        const pieces = flowStructureUtil.getAllSteps(flowVersion.trigger).filter(
             (step) =>
                 step.type === ActionType.PIECE || step.type === TriggerType.PIECE,
         ).map((step) => {

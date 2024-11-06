@@ -27,7 +27,7 @@ import {
   PieceTrigger,
   TriggerType,
   WebsocketClientEvent,
-  flowHelper,
+  flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
 
@@ -91,7 +91,10 @@ const BuilderPage = () => {
           containerKey: undefined,
         };
       }
-      const step = flowHelper.getStep(flowVersion, state.selectedStep);
+      const step = flowStructureUtil.getStep(
+        state.selectedStep,
+        flowVersion.trigger,
+      );
       const triggerOrActionName =
         step?.type === TriggerType.PIECE
           ? (step as PieceTrigger).settings.triggerName
@@ -206,7 +209,9 @@ const BuilderPage = () => {
 
           <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
             <div ref={middlePanelRef} className="relative h-full w-full">
-              <CanvasControls></CanvasControls>
+              <CanvasControls
+                builderNavbarHeight={builderNavbarHeight}
+              ></CanvasControls>
               <ShowPoweredBy
                 position="absolute"
                 show={platform?.showPoweredBy}

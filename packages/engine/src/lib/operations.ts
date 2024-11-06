@@ -1,5 +1,4 @@
 import {
-    Action,
     ActionType,
     EngineOperation,
     EngineOperationType,
@@ -13,10 +12,9 @@ import {
     ExecuteTriggerOperation,
     ExecuteValidateAuthOperation,
     ExecutionType,
-    flowHelper,
     FlowRunResponse,
+    flowStructureUtil,
     GenericStepOutput,
-    isNil,
     StepOutput,
     StepOutputStatus,
     TriggerHookType,
@@ -55,10 +53,7 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
 
 
 async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionResponse> {
-    const step = flowHelper.getStep(input.flowVersion, input.stepName) as Action | undefined
-    if (isNil(step) || !Object.values(ActionType).includes(step.type)) {
-        throw new Error('Step not found or not supported')
-    }
+    const step = flowStructureUtil.getActionOrThrow(input.stepName, input.flowVersion.trigger)
     const output = await flowExecutor.getExecutorForAction(step.type).handle({
         action: step,
         executionState: await testExecutionContext.stateFromFlowVersion({

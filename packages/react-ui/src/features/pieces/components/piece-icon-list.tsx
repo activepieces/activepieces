@@ -1,7 +1,7 @@
 import { cva } from 'class-variance-authority';
 import { t } from 'i18next';
 
-import { flowHelper, Trigger } from '@activepieces/shared';
+import { Trigger, flowStructureUtil } from '@activepieces/shared';
 
 import {
   Tooltip,
@@ -38,7 +38,7 @@ export function PieceIconList({
   maxNumberOfIconsToShow: number;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 }) {
-  const steps = flowHelper.getAllSteps(trigger);
+  const steps = flowStructureUtil.getAllSteps(trigger);
   const stepsMetadata: StepMetadata[] = piecesHooks
     .useStepsMetadata(steps)
     .map((data) => data.data)

@@ -34,6 +34,7 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
                 email: user.email,
                 platformId: user.platformId,
             }, '[postSignUp] provisionUserInvitation')
+            await authenticationHelper.autoVerifyUserIfEligible(user)
             await userInvitationsService.provisionUserInvitation({
                 email: user.email,
                 platformId: user.platformId!,

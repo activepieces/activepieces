@@ -14,9 +14,6 @@ import {
 } from '@activepieces/shared';
 
 export const flowsApi = {
-  applyOperation(flowId: string, operation: FlowOperationRequest) {
-    return api.post<PopulatedFlow>(`/v1/flows/${flowId}`, operation);
-  },
   list(request: ListFlowsRequest): Promise<SeekPage<PopulatedFlow>> {
     return api.get<SeekPage<PopulatedFlow>>('/v1/flows', request);
   },

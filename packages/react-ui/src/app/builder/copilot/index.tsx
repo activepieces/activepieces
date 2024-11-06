@@ -13,8 +13,8 @@ import {
   Action,
   ActionType,
   deepMergeAndCast,
-  flowHelper,
   FlowOperationType,
+  flowStructureUtil,
   GenerateCodeRequest,
   GenerateCodeResponse,
   WebsocketClientEvent,
@@ -174,10 +174,10 @@ export const CopilotSidebar = () => {
     if (!selectedStep) {
       return;
     }
-    const step = flowHelper.getStep(flowVersion, selectedStep);
-    if (!step) {
-      return;
-    }
+    const step = flowStructureUtil.getStepOrThrow(
+      selectedStep,
+      flowVersion.trigger,
+    );
     const isCodeType = message.messageType !== 'code';
     if (isCodeType) {
       return;
