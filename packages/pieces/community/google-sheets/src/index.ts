@@ -8,6 +8,7 @@ import { findRowsAction } from './lib/actions/find-rows';
 import { getRowsAction } from './lib/actions/get-rows';
 import { insertRowAction } from './lib/actions/insert-row.action';
 import { updateRowAction } from './lib/actions/update-row';
+import { replaceRowsAction } from './lib/actions/replace-rows';
 import { googleSheetsCommon } from './lib/common/common';
 import { newRowAddedTrigger } from './lib/triggers/new-row-added-webhook';
 import { newOrUpdatedRowTrigger } from './lib/triggers/new-or-updated-row.trigger';
@@ -53,6 +54,7 @@ export const googleSheets = createPiece({
 		clearSheetAction,
 		findRowByNumAction,
 		getRowsAction,
+		replaceRowsAction,
 		createCustomApiCallAction({
 			auth: googleSheetsAuth,
 			baseUrl: () => {

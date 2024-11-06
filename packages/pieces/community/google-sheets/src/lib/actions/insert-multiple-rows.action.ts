@@ -1,10 +1,5 @@
 import { googleSheetsAuth } from '../../';
-import {
-	createAction,
-	DynamicPropsValue,
-	OAuth2PropertyValue,
-	Property,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import {
     Dimension,
     getHeaders,
@@ -13,7 +8,6 @@ import {
     objectWithHeadersAsKeysToArray,
     ValueInputOption,
 } from '../common/common';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
@@ -27,59 +21,8 @@ export const insertMultipleRowsAction = createAction({
 		spreadsheet_id: googleSheetsCommon.spreadsheet_id,
 		include_team_drives: googleSheetsCommon.include_team_drives,
 		sheet_id: googleSheetsCommon.sheet_id,
-		as_string: Property.Checkbox({
-			displayName: 'As String',
-			description:
-				'Inserted values that are dates and formulas will be entered as strings and have no effect',
-			required: false,
-		}),
-		values: Property.DynamicProperties({
-			displayName: 'Values',
-			description: 'The values to insert.',
-			required: true,
-			refreshers: ['sheet_id', 'spreadsheet_id'],
-			props: async ({ auth, sheet_id, spreadsheet_id }) => {
-				if (
-					!auth ||
-					(spreadsheet_id ?? '').toString().length === 0 ||
-					(sheet_id ?? '').toString().length === 0
-				) {
-					return {};
-				}
-
-				const fields: DynamicPropsValue = {};
-
-				const sheetId = Number(sheet_id)
-
-				const authentication = auth as OAuth2PropertyValue;
-				const values = await googleSheetsCommon.getValues(
-					spreadsheet_id as unknown as string,
-					getAccessTokenOrThrow(authentication),
-					sheetId,
-				);
-
-				const firstRow = values?.[0]?.values ?? [];
-				const columns: {
-					[key: string]: any;
-				} = {};
-				for (const key in firstRow) {
-					columns[key] = Property.ShortText({
-						displayName: firstRow[key].toString(),
-						description: firstRow[key].toString(),
-						required: false,
-						defaultValue: '',
-					});
-				}
-
-				fields['values'] = Property.Array({
-					displayName: 'Values',
-					required: false,
-					properties: columns,
-				});
-
-				return fields;
-			},
-		}),
+		as_string: googleSheetsCommon.as_string,
+		values: googleSheetsCommon.valuesForMultipleRows,
         headersAsKeys: googleSheetsCommon.headersAsKeysForInsert,
 	},
 

@@ -1,4 +1,4 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property, OAuth2PropertyValue, DynamicPropsValue } from '@activepieces/pieces-framework';
 import {
   Authentication,
   httpClient,
@@ -97,6 +97,17 @@ export const googleSheetsCommon = {
       };
     },
   }),
+  as_string: Property.Checkbox({
+    displayName: 'As String',
+    description: 'Inserted values that are dates and formulas will be entered as strings and have no effect',
+    required: false,
+  }),
+  first_row_headers: Property.Checkbox({
+    displayName: 'Does the first row contain headers?',
+    description: 'If the first row is headers',
+    required: true,
+    defaultValue: false,
+  }),
   headersAsKeys: Property.Checkbox({
     displayName: 'Use headers as keys?',
     description: 'Use headers as keys in the result (instead of A, B, C...)',
@@ -109,7 +120,7 @@ export const googleSheetsCommon = {
     required: false,
     defaultValue: false,
   }),
-  values: Property.DynamicProperties({
+  valuesForOneRow: Property.DynamicProperties({
     displayName: 'Values',
     description: 'The values to insert',
     required: true,
@@ -151,6 +162,53 @@ export const googleSheetsCommon = {
         });
       }
       return properties;
+    },
+  }),
+  valuesForMultipleRows: Property.DynamicProperties({
+    displayName: 'Values',
+    description: 'The values to insert.',
+    required: true,
+    refreshers: ['sheet_id', 'spreadsheet_id'],
+    props: async ({ auth, sheet_id, spreadsheet_id }) => {
+      if (
+        !auth ||
+        (spreadsheet_id ?? '').toString().length === 0 ||
+        (sheet_id ?? '').toString().length === 0
+      ) {
+        return {};
+      }
+
+      const fields: DynamicPropsValue = {};
+
+      const sheetId = Number(sheet_id)
+
+      const authentication = auth as OAuth2PropertyValue;
+      const values = await googleSheetsCommon.getValues(
+        spreadsheet_id as unknown as string,
+        getAccessTokenOrThrow(authentication),
+        sheetId,
+      );
+
+      const firstRow = values?.[0]?.values ?? [];
+      const columns: {
+        [key: string]: any;
+      } = {};
+      for (const key in firstRow) {
+        columns[key] = Property.ShortText({
+          displayName: firstRow[key].toString(),
+          description: firstRow[key].toString(),
+          required: false,
+          defaultValue: '',
+        });
+      }
+
+      fields['values'] = Property.Array({
+        displayName: 'Values',
+        required: false,
+        properties: columns,
+      });
+
+      return fields;
     },
   }),
   columnName: Property.Dropdown<string>({

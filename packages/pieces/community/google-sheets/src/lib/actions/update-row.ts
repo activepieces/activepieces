@@ -21,13 +21,8 @@ export const updateRowAction = createAction({
       description: 'The row number to update',
       required: true,
     }),
-    first_row_headers: Property.Checkbox({
-      displayName: 'Does the first row contain headers?',
-      description: 'If the first row is headers',
-      required: true,
-      defaultValue: false,
-    }),
-    values: googleSheetsCommon.values,
+    first_row_headers: googleSheetsCommon.first_row_headers,
+    values: googleSheetsCommon.valuesForOneRow,
   },
   async run(context) {
     const spreadSheetId = context.propsValue.spreadsheet_id;

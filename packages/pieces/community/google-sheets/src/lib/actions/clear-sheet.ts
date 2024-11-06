@@ -11,12 +11,7 @@ export const clearSheetAction = createAction({
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     include_team_drives: googleSheetsCommon.include_team_drives,
     sheet_id: googleSheetsCommon.sheet_id,
-    is_first_row_headers: Property.Checkbox({
-      displayName: 'Is First row Headers?',
-      description: 'If the first row is headers',
-      required: true,
-      defaultValue: true,
-    }),
+    is_first_row_headers: googleSheetsCommon.first_row_headers,
   },
   async run({ propsValue, auth }) {
     await googleSheetsCommon.findSheetName(

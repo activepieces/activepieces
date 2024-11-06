@@ -20,19 +20,9 @@ export const insertRowAction = createAction({
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
     include_team_drives: googleSheetsCommon.include_team_drives,
     sheet_id: googleSheetsCommon.sheet_id,
-    as_string: Property.Checkbox({
-      displayName: 'As String',
-      description:
-        'Inserted values that are dates and formulas will be entered strings and have no effect',
-      required: false,
-    }),
-    first_row_headers: Property.Checkbox({
-      displayName: 'Does the first row contain headers?',
-      description: 'If the first row is headers',
-      required: true,
-      defaultValue: false,
-    }),
-    values: googleSheetsCommon.values,
+    as_string: googleSheetsCommon.as_string,
+    first_row_headers: googleSheetsCommon.first_row_headers,
+    values: googleSheetsCommon.valuesForOneRow,
     headersAsKeys: googleSheetsCommon.headersAsKeysForInsert,
   },
   async run({ propsValue, auth }) {
