@@ -6,6 +6,15 @@ export type AI = {
   chat: AIChat;
   image?: AIImage;
   moderation?: AIModeration;
+  function?: AIFunction;
+};
+
+export type AIFunction = {
+  call?: (
+    params: AIChatCompletionsCreateParams & {
+      functions: AIFunctionDefinition[];
+    } & { image: ApFile }
+  ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
 };
 
 export type AIModeration = {
@@ -23,11 +32,6 @@ export type AIImage = {
   generate: (
     params: AIImageGenerateParams
   ) => Promise<AIImageCompletion | null>;
-  function?: (
-    params: AIChatCompletionsCreateParams & {
-      functions: AIFunctionDefinition[];
-    } & { image: ApFile }
-  ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
 };
 
 export type AIImageGenerateParams = {
@@ -43,11 +47,6 @@ export type AIImageCompletion = {
 
 export type AIChat = {
   text: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
-  function?: (
-    params: AIChatCompletionsCreateParams & {
-      functions: AIFunctionDefinition[];
-    }
-  ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
 };
 
 export type AIChatCompletionsCreateParams = {
@@ -85,15 +84,15 @@ export type AIFunctionCall = {
 export type AIFunctionDefinition = {
   name: string;
   description: string;
-  arguments: AIFunctionArgumentDefinition[];
+  arguments: AIFunctionArgumentDefinition;
 };
 
 export type AIFunctionArgumentDefinition = {
-  name: string;
-  type: 'string' | 'number' | 'boolean';
-  description?: string;
-  isRequired: boolean;
-};
+  type: 'object';
+  properties?: unknown | null;
+  required?: string[];
+  [k: string]: unknown;
+}
 
 export enum AIChatRole {
   SYSTEM = 'system',
@@ -121,12 +120,12 @@ export const AI = ({
     throw new Error(`AI provider ${provider} is not registered`);
   }
 
-  const functionCalling = impl.chat.function;
 
   return {
     provider,
     image: impl.image,
     moderation: impl.moderation,
+    function: impl.function,
     chat: {
       text: async (params) => {
         try {
@@ -138,20 +137,7 @@ export const AI = ({
           }
           throw e;
         }
-      },
-      function: functionCalling
-        ? async (params) => {
-            try {
-              const response = await functionCalling(params);
-              return response;
-            } catch (e: any) {
-              if (e?.error?.error) {
-                throw e.error.error;
-              }
-              throw e;
-            }
-          }
-        : undefined,
+      }
     },
   };
 };
