@@ -2,6 +2,7 @@ import { ReactFlow, Background, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useEffect, useRef } from 'react';
 import { usePrevious } from 'react-use';
+
 import { isFlowStateTerminal } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
