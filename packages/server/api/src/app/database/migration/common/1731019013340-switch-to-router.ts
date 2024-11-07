@@ -4,13 +4,13 @@
 import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class SwitchToRouter1730999337 implements MigrationInterface {
+export class SwitchToRouter1731019013340 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const flowVersionIds = await queryRunner.query(
             'SELECT id FROM flow_version WHERE "schemaVersion" IS NULL',
         )
         logger.info(
-            'SwitchToRouter1730999337: found ' +
+            'SwitchToRouter1731019013340: found ' +
             flowVersionIds.length +
             ' versions',
         )
@@ -21,65 +21,118 @@ export class SwitchToRouter1730999337 implements MigrationInterface {
                 [id],
             )
             if (flowVersion.length > 0) {
-                const updated = traverseAndUpdateSubFlow(
+                const trigger = typeof flowVersion[0].trigger === 'string' ? JSON.parse(flowVersion[0].trigger) : flowVersion[0].trigger
+                const originalStepCount = countSteps(trigger)
+                const updatedTrigger = traverseAndUpdateSubFlow(
                     convertBranchToRouter,
-                    flowVersion[0].trigger,
+                    JSON.parse(JSON.stringify(trigger)), // Deep clone to avoid modifying original
                 )
-                if (updated) {
-                    await queryRunner.query(
-                        'UPDATE flow_version SET trigger = $1 WHERE id = $2',
-                        [flowVersion[0].trigger, flowVersion[0].id],
-                    )
+
+                const updatedStepCount = countSteps(updatedTrigger)
+                if (originalStepCount !== updatedStepCount) {
+                    throw new Error(`Step count mismatch for flow ${id}: original=${originalStepCount}, updated=${updatedStepCount}`)
                 }
-            }
-            updatedFlows++
-            if (updatedFlows % 100 === 0) {
-                logger.info(
-                    'SwitchToRouter1730999337: ' +
-                    updatedFlows +
-                    ' flows updated',
+
+                if (hasBranchType(updatedTrigger)) {
+                    throw new Error(`Flow ${id} still contains BRANCH type after migration`)
+                }
+                await queryRunner.query(
+                    'UPDATE flow_version SET trigger = $1, "schemaVersion" = $2 WHERE id = $3',
+                    [JSON.stringify(updatedTrigger), '1', flowVersion[0].id],
                 )
+                updatedFlows++
             }
         }
 
-        logger.info('SwitchToRouter1730999337: up')
+        logger.info({
+            name: 'SwitchToRouter1731019013340: up',
+            updatedFlows,
+        })
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        throw new Error('SwitchToRouter1730999337: down - no rollback supported')
+        throw new Error('SwitchToRouter1731019013340: down - no rollback supported')
     }
+}
+
+const countSteps = (step: Step | undefined): number => {
+    if (!step) return 0
+
+    let count = 1
+
+    switch (step.type) {
+        case 'ROUTER':
+            count += step.children.reduce((acc, child) => acc + countSteps(child), 0)
+            break
+        case 'BRANCH':
+            count += countSteps(step.onSuccessAction) + countSteps(step.onFailureAction)
+            break
+        case 'LOOP_ON_ITEMS':
+            count += countSteps(step.firstLoopAction)
+            break
+        default:
+            break
+    }
+
+    count += countSteps(step.nextAction)
+    return count
+}
+
+const hasBranchType = (step: Step | undefined): boolean => {
+    if (!step) return false
+    if (step.type === 'BRANCH') return true
+
+    let hasBranch = false
+    switch (step.type) {
+        case 'ROUTER':
+            hasBranch = step.children.some(child => hasBranchType(child))
+            break
+        case 'LOOP_ON_ITEMS':
+            hasBranch = hasBranchType(step.firstLoopAction)
+            break
+        default:
+            break
+    }
+    if (hasBranchType(step.nextAction)) {
+        return true
+    }
+    return hasBranch
 }
 
 const traverseAndUpdateSubFlow = (
     updater: (s: Step) => void,
-    root?: Step,
-): boolean => {
+    root: Step | undefined,
+): Step | undefined => {
     if (!root) {
-        return false
+        return undefined
     }
 
-    let updated = false
+    const clonedRoot = JSON.parse(JSON.stringify(root))
 
-    switch (root.type) {
+    switch (clonedRoot.type) {
         case 'ROUTER':
-            for (const branch of root.children) {
+            const updatedChildren: (Step | null)[] = []
+            for (const branch of clonedRoot.children) {
                 if (branch) {
                     const branchUpdated = traverseAndUpdateSubFlow(updater, branch)
-                    updated = updated || branchUpdated
+                    updatedChildren.push(branchUpdated ?? null)
+                }
+                else {
+                    updatedChildren.push(null)
                 }
             }
+            clonedRoot.children = updatedChildren
             break
         case 'BRANCH':
-            const successUpdated = traverseAndUpdateSubFlow(updater, root.onSuccessAction)
-            updated = updated || successUpdated
-            const failureUpdated = traverseAndUpdateSubFlow(updater, root.onFailureAction)
-            updated = updated || failureUpdated
-            updater(root)
-            updated = true
+            clonedRoot.onSuccessAction = clonedRoot.onSuccessAction ?
+                traverseAndUpdateSubFlow(updater, clonedRoot.onSuccessAction) : undefined
+            clonedRoot.onFailureAction = clonedRoot.onFailureAction ?
+                traverseAndUpdateSubFlow(updater, clonedRoot.onFailureAction) : undefined
+            updater(clonedRoot)
             break
         case 'LOOP_ON_ITEMS':
-            const loopUpdated = traverseAndUpdateSubFlow(updater, root.firstLoopAction)
-            updated = updated || loopUpdated
+            clonedRoot.firstLoopAction = clonedRoot.firstLoopAction ?
+                traverseAndUpdateSubFlow(updater, clonedRoot.firstLoopAction) : undefined
             break
         case 'PIECE':
         case 'PIECE_TRIGGER':
@@ -88,9 +141,10 @@ const traverseAndUpdateSubFlow = (
             break
     }
 
-    const nextUpdated = traverseAndUpdateSubFlow(updater, root.nextAction)
-    updated = updated || nextUpdated
-    return updated
+    clonedRoot.nextAction = clonedRoot.nextAction ?
+        traverseAndUpdateSubFlow(updater, clonedRoot.nextAction) : undefined
+
+    return clonedRoot
 }
 
 const convertBranchToRouter = (step: any): void => {

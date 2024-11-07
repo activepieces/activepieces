@@ -12,7 +12,6 @@ import {
 import {
   Action,
   ActionType,
-  BranchOperator,
   CodeActionSchema,
   isEmpty,
   LoopOnItemsActionSchema,
@@ -22,7 +21,6 @@ import {
   PieceTriggerSettings,
   Trigger,
   TriggerType,
-  ValidBranchCondition,
   isNil,
   spreadIfDefined,
   RouterActionSchema,
