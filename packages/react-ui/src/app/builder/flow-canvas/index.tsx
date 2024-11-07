@@ -1,6 +1,6 @@
 import { ReactFlow, Background, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
 import { isFlowStateTerminal } from '@activepieces/shared';
@@ -13,14 +13,14 @@ import { flowCanvasUtils } from './flow-canvas-utils';
 import { FlowDragLayer } from './flow-drag-layer';
 import { AboveFlowWidgets } from './widgets';
 
-const FlowCanvas = React.memo(() => {
+export const FlowCanvas = React.memo(() => {
   const [allowCanvasPanning, graph, run] = useBuilderStateContext((state) => {
     const graph = flowCanvasUtils.convertFlowVersionToGraph(state.flowVersion);
     return [state.allowCanvasPanning, graph, state.run];
   });
 
   const previousRun = usePrevious(run);
-  const { fitView } = useReactFlow();
+  const { fitView, getViewport, setViewport } = useReactFlow();
   if (
     (run && previousRun?.id !== run.id && isFlowStateTerminal(run.status)) ||
     (run &&
@@ -37,9 +37,42 @@ const FlowCanvas = React.memo(() => {
       });
     }
   }
+  const containerRef = useRef<HTMLDivElement>(null);
+  const containerSizeRef = useRef({
+    width: 0,
+    height: 0,
+  });
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      entries.forEach((entry) => {
+        if (containerRef.current) {
+          const { width, height } = entries[0].contentRect;
+          const { x, y, zoom } = getViewport();
+
+          // Adjust x/y values based on the new size and keep the same zoom level
+          const newX = x + (width - containerSizeRef.current.width) / 2;
+
+          // Update the viewport to keep content centered without affecting zoom
+          setViewport({ x: newX, y, zoom });
+          containerSizeRef.current = {
+            width,
+            height,
+          };
+        }
+      });
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [setViewport, getViewport]);
 
   return (
-    <div className="size-full relative overflow-hidden">
+    <div ref={containerRef} className="size-full relative overflow-hidden">
       <FlowDragLayer>
         <ReactFlow
           nodeTypes={flowUtilConsts.nodeTypes}
@@ -69,4 +102,3 @@ const FlowCanvas = React.memo(() => {
 });
 
 FlowCanvas.displayName = 'FlowCanvas';
-export { FlowCanvas };

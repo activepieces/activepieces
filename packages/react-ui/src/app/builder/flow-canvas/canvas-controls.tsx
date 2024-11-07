@@ -17,8 +17,10 @@ import { ApNode } from './types';
 const duration = 200;
 const CanvasControls = ({
   builderNavbarHeight,
+  canvasWidth,
 }: {
   builderNavbarHeight: number;
+  canvasWidth: number;
 }) => {
   const { zoomIn, zoomOut, zoomTo, setViewport, getNodes } = useReactFlow();
   const handleZoomIn = useCallback(() => {
@@ -51,7 +53,7 @@ const CanvasControls = ({
     setViewport(
       {
         x:
-          window.innerWidth / 2 -
+          canvasWidth / 2 -
           (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoomRatio) / 2,
         y: nodes[0].position.y + 100 * zoomRatio,
         zoom: zoomRatio,
@@ -60,7 +62,7 @@ const CanvasControls = ({
         duration,
       },
     );
-  }, [getNodes, setViewport]);
+  }, [getNodes, setViewport, canvasWidth]);
 
   useEffect(() => {
     handleFitToView();
