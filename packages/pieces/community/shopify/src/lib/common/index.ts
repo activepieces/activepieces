@@ -121,14 +121,39 @@ export async function getProducts(
     queryParams.updated_at_min = updatedAtMin;
   }
 
-  const response = await sendShopifyRequest({
-    auth: auth,
-    url: `/products.json`,
-    method: HttpMethod.GET,
-    queryParams,
-  });
+  let products:ShopifyProduct[] = [];
+  let hasNextPage = true;
 
-  return (response.body as { products: ShopifyProduct[] }).products;
+  while (hasNextPage) {
+
+    const response = await sendShopifyRequest({
+      auth: auth,
+      url: `/products.json`,
+      method: HttpMethod.GET,
+      queryParams,
+    });
+
+    products = products.concat((response.body as { products: ShopifyProduct[] }).products);
+
+    const linkHeader = response.headers?.['link'];
+    if (linkHeader && typeof linkHeader === 'string' && linkHeader.includes('rel="next"')) {
+      // Extract the URL for the next page from the Link header
+      const nextLink = linkHeader
+        .split(',')
+        .find((s) => s.includes('rel="next"'))
+        ?.match(/<(.*?)>/)?.[1];
+      
+      if (nextLink) {
+        queryParams.page_info = new URL(nextLink).searchParams.get('page_info') || '';
+      } else {
+        hasNextPage = false;
+      }
+    } else {
+      hasNextPage = false;
+    }
+  }
+
+  return products;
 }
 
 export async function createProduct(
