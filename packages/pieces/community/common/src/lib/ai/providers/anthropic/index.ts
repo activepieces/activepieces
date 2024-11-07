@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { TextBlock, ToolUseBlock } from '@anthropic-ai/sdk/resources';
+import { TextBlock, Tool, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import { AI, AIChatRole, AIFactory } from '../..';
 import mime from 'mime-types';
 
@@ -13,6 +13,81 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
   });
   return {
     provider: 'ANTHROPIC' as const,
+    function: {
+      call: async (params) => {
+        type AllowedImageTypes =
+          | 'image/jpeg'
+          | 'image/png'
+          | 'image/gif'
+          | 'image/webp';
+        const messages: Anthropic.Messages.MessageParam[] = params.messages.map((message) => ({
+          role: 'user',
+          content: [
+            { type: 'text', text: message.content },
+          ],
+        }));
+        if (params.image) {
+          messages.push({
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type:
+                    ((params.image.extension &&
+                      mime.lookup(
+                        params.image.extension
+                      )) as AllowedImageTypes) || 'image/jpeg',
+                  data: params.image.base64,
+                },
+              },
+            ],
+          });
+        }
+        const completion = await sdk.messages.create({
+          model: params.model,
+          messages: messages,
+          max_tokens: params.maxTokens ?? 2000,
+          tools: params.functions.map((functionDefinition) => ({
+            name: functionDefinition.name,
+            description: functionDefinition.description,
+            input_schema: functionDefinition.arguments as unknown as Tool.InputSchema,
+          })),
+        });
+
+        const toolCallsResponse = completion.content.filter(
+          (choice): choice is ToolUseBlock => choice.type === 'tool_use'
+        );
+
+        const toolCall = toolCallsResponse[0];
+        return {
+          choices: completion.content
+            .filter((choice): choice is TextBlock => choice.type === 'text')
+            .map((choice: TextBlock) => ({
+              content: choice.text,
+              role: AIChatRole.ASSISTANT,
+            })),
+          call: toolCall
+            ? {
+              id: toolCall.id,
+              function: {
+                name: toolCall.name,
+                arguments: toolCall.input,
+              },
+            }
+            : null,
+          model: completion.model,
+          created: new Date().getTime(),
+          usage: {
+            completionTokens: completion.usage.output_tokens,
+            promptTokens: completion.usage.input_tokens,
+            totalTokens:
+              completion.usage.output_tokens + completion.usage.input_tokens,
+          },
+        };
+      },
+    },
     chat: {
       text: async (params) => {
         const concatenatedSystemMessage = params.messages
@@ -48,147 +123,9 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
               completion.usage.output_tokens + completion.usage.input_tokens,
           },
         };
-      },
-      function: async (params) => {
-        const completion = await sdk.messages.create({
-          model: params.model,
-          messages: params.messages.map((message) => ({
-            role: message.role === 'user' ? 'user' : 'assistant',
-            content: message.content,
-          })),
-          max_tokens: params.maxTokens ?? 2000,
-          tools: params.functions.map((functionDefinition) => ({
-            name: functionDefinition.name,
-            description: functionDefinition.description,
-            input_schema: {
-              type: 'object',
-              properties: functionDefinition.arguments.reduce(
-                (acc, { name, type, description }) => {
-                  acc[name] = { type, description };
-                  return acc;
-                },
-                {} as Record<string, unknown>
-              ),
-              required: functionDefinition.arguments
-                .filter((prop) => prop.isRequired)
-                .map((prop) => prop.name),
-            },
-          })),
-        });
-
-        const toolCallsResponse = completion.content.filter(
-          (choice): choice is ToolUseBlock => choice.type === 'tool_use'
-        );
-
-        const toolCall = toolCallsResponse?.[0];
-        return {
-          choices: completion.content
-            .filter((choice): choice is TextBlock => choice.type === 'text')
-            .map((choice: TextBlock) => ({
-              content: choice.text,
-              role: AIChatRole.ASSISTANT,
-            })),
-          call: toolCall
-            ? {
-                id: toolCall.id,
-                function: {
-                  name: toolCall.name,
-                  arguments: toolCall.input,
-                },
-              }
-            : null,
-          model: completion.model,
-          created: new Date().getTime(),
-          usage: {
-            completionTokens: completion.usage.output_tokens,
-            promptTokens: completion.usage.input_tokens,
-            totalTokens:
-              completion.usage.output_tokens + completion.usage.input_tokens,
-          },
-        };
-      },
+      }
     },
     image: {
-      function: async (params) => {
-        type AllowedImageTypes =
-          | 'image/jpeg'
-          | 'image/png'
-          | 'image/gif'
-          | 'image/webp';
-        const completion = await sdk.messages.create({
-          model: params.model,
-          messages: params.messages.map((message) => ({
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type:
-                    ((params.image.extension &&
-                      mime.lookup(
-                        params.image.extension
-                      )) as AllowedImageTypes) || 'image/jpeg',
-                  data: params.image.base64,
-                },
-              },
-              {
-                type: 'text',
-                text: message.content,
-              },
-            ],
-          })),
-          max_tokens: params.maxTokens ?? 2000,
-          tools: params.functions.map((functionDefinition) => ({
-            name: functionDefinition.name,
-            description: functionDefinition.description,
-            input_schema: {
-              type: 'object',
-              properties: functionDefinition.arguments.reduce(
-                (acc, { name, type, description }) => {
-                  acc[name] = { type, description };
-                  return acc;
-                },
-                {} as Record<string, unknown>
-              ),
-              required: functionDefinition.arguments
-                .filter((prop) => prop.isRequired)
-                .map((prop) => prop.name),
-            },
-          })),
-        });
-
-        const toolCallsResponse = completion.content.filter(
-          (choice): choice is ToolUseBlock => choice.type === 'tool_use'
-        );
-
-        const toolCall = toolCallsResponse[0];
-        return {
-          choices: completion.content
-            .filter((choice): choice is TextBlock => choice.type === 'text')
-            .map((choice: TextBlock) => ({
-              content: choice.text,
-              role: AIChatRole.ASSISTANT,
-            })),
-          call: toolCall
-            ? {
-                id: toolCall.id,
-                function: {
-                  name: toolCall.name,
-                  arguments: toolCall.input,
-                },
-              }
-            : null,
-          model: completion.model,
-          created: new Date().getTime(),
-          usage: {
-            completionTokens: completion.usage.output_tokens,
-            promptTokens: completion.usage.input_tokens,
-            totalTokens:
-              completion.usage.output_tokens + completion.usage.input_tokens,
-          },
-        };
-      },
       generate: async (parmas) => null,
     },
   };
