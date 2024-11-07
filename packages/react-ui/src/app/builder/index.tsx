@@ -155,6 +155,8 @@ const BuilderPage = () => {
     };
   }, [socket, refetchPiece, run]);
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
+  const [hasInitiallyCalledFitToView, setHasInitiallyCalledFitToView] =
+    useState(false);
   return (
     <div className="flex h-screen w-screen flex-col relative">
       {run && (
@@ -209,14 +211,21 @@ const BuilderPage = () => {
 
           <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
             <div ref={middlePanelRef} className="relative h-full w-full">
-              <div className="absolute left-0 top-0 h-full w-full z-10 ">
-                <FlowCanvas />
-              </div>
+              <div className="absolute left-0 top-0 h-full w-full z-10 "></div>
+              <FlowCanvas
+                hasInitiallyCalledFitToView={hasInitiallyCalledFitToView}
+              ></FlowCanvas>
+              {middlePanelRef.current &&
+                middlePanelRef.current.clientWidth > 0 && (
+                  <CanvasControls
+                    builderNavbarHeight={builderNavbarHeight}
+                    canvasWidth={middlePanelRef.current?.clientWidth ?? 0}
+                    setHasInitiallyCalledFitToView={
+                      setHasInitiallyCalledFitToView
+                    }
+                  ></CanvasControls>
+                )}
 
-              <CanvasControls
-                builderNavbarHeight={builderNavbarHeight}
-                canvasWidth={middlePanelRef.current?.clientWidth ?? 0}
-              ></CanvasControls>
               <ShowPoweredBy
                 position="absolute"
                 show={platform?.showPoweredBy}

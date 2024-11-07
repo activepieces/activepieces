@@ -18,9 +18,11 @@ const duration = 200;
 const CanvasControls = ({
   builderNavbarHeight,
   canvasWidth,
+  setHasInitiallyCalledFitToView,
 }: {
   builderNavbarHeight: number;
   canvasWidth: number;
+  setHasInitiallyCalledFitToView: (value: boolean) => void;
 }) => {
   const { zoomIn, zoomOut, zoomTo, setViewport, getNodes } = useReactFlow();
   const handleZoomIn = useCallback(() => {
@@ -66,6 +68,7 @@ const CanvasControls = ({
 
   useEffect(() => {
     handleFitToView();
+    setHasInitiallyCalledFitToView(true);
   }, []);
 
   return (

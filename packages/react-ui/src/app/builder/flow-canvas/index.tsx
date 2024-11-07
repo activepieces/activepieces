@@ -13,92 +13,101 @@ import { flowCanvasUtils } from './flow-canvas-utils';
 import { FlowDragLayer } from './flow-drag-layer';
 import { AboveFlowWidgets } from './widgets';
 
-export const FlowCanvas = React.memo(() => {
-  const [allowCanvasPanning, graph, run] = useBuilderStateContext((state) => {
-    const graph = flowCanvasUtils.convertFlowVersionToGraph(state.flowVersion);
-    return [state.allowCanvasPanning, graph, state.run];
-  });
-
-  const previousRun = usePrevious(run);
-  const { fitView, getViewport, setViewport } = useReactFlow();
-  if (
-    (run && previousRun?.id !== run.id && isFlowStateTerminal(run.status)) ||
-    (run &&
-      previousRun &&
-      !isFlowStateTerminal(previousRun.status) &&
-      isFlowStateTerminal(run.status))
-  ) {
-    const failedStep = run.steps
-      ? flowRunUtils.findFailedStepInOutput(run.steps)
-      : null;
-    if (failedStep) {
-      setTimeout(() => {
-        fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStep));
-      });
-    }
-  }
-  const containerRef = useRef<HTMLDivElement>(null);
-  const containerSizeRef = useRef({
-    width: 0,
-    height: 0,
-  });
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      entries.forEach((entry) => {
-        if (containerRef.current) {
-          const { width, height } = entries[0].contentRect;
-          const { x, y, zoom } = getViewport();
-
-          // Adjust x/y values based on the new size and keep the same zoom level
-          const newX = x + (width - containerSizeRef.current.width) / 2;
-
-          // Update the viewport to keep content centered without affecting zoom
-          setViewport({ x: newX, y, zoom });
-          containerSizeRef.current = {
-            width,
-            height,
-          };
-        }
-      });
+export const FlowCanvas = React.memo(
+  ({
+    hasInitiallyCalledFitToView,
+  }: {
+    hasInitiallyCalledFitToView: boolean;
+  }) => {
+    const [allowCanvasPanning, graph, run] = useBuilderStateContext((state) => {
+      const graph = flowCanvasUtils.convertFlowVersionToGraph(
+        state.flowVersion,
+      );
+      return [state.allowCanvasPanning, graph, state.run];
     });
 
-    resizeObserver.observe(containerRef.current);
+    const previousRun = usePrevious(run);
+    const { fitView, getViewport, setViewport } = useReactFlow();
+    if (
+      (run && previousRun?.id !== run.id && isFlowStateTerminal(run.status)) ||
+      (run &&
+        previousRun &&
+        !isFlowStateTerminal(previousRun.status) &&
+        isFlowStateTerminal(run.status))
+    ) {
+      const failedStep = run.steps
+        ? flowRunUtils.findFailedStepInOutput(run.steps)
+        : null;
+      if (failedStep) {
+        setTimeout(() => {
+          fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStep));
+        });
+      }
+    }
+    const containerRef = useRef<HTMLDivElement>(null);
+    const containerSizeRef = useRef({
+      width: 0,
+      height: 0,
+    });
+    useEffect(() => {
+      if (!containerRef.current) return;
+      const resizeObserver = new ResizeObserver((entries) => {
+        entries.forEach((entry) => {
+          if (containerRef.current && hasInitiallyCalledFitToView) {
+            const { width, height } = entries[0].contentRect;
+            const { x, y, zoom } = getViewport();
+            // Adjust x/y values based on the new size and keep the same zoom level
+            const newX = x + (width - containerSizeRef.current.width) / 2;
 
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [setViewport, getViewport]);
+            // Update the viewport to keep content centered without affecting zoom
+            setViewport({ x: newX, y, zoom });
+            containerSizeRef.current = {
+              width,
+              height,
+            };
+          }
+        });
+      });
 
-  return (
-    <div ref={containerRef} className="size-full relative overflow-hidden">
-      <FlowDragLayer>
-        <ReactFlow
-          nodeTypes={flowUtilConsts.nodeTypes}
-          nodes={graph.nodes}
-          edgeTypes={flowUtilConsts.edgeTypes}
-          edges={graph.edges}
-          draggable={false}
-          edgesFocusable={false}
-          elevateEdgesOnSelect={false}
-          maxZoom={1.5}
-          minZoom={0.5}
-          panOnDrag={allowCanvasPanning}
-          zoomOnDoubleClick={false}
-          panOnScroll={true}
-          fitView={false}
-          nodesConnectable={false}
-          elementsSelectable={true}
-          nodesDraggable={false}
-          nodesFocusable={false}
-        >
-          <AboveFlowWidgets></AboveFlowWidgets>
-          <Background />
-        </ReactFlow>
-      </FlowDragLayer>
-    </div>
-  );
-});
+      resizeObserver.observe(containerRef.current);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, [setViewport, getViewport]);
+
+    return (
+      <div
+        ref={containerRef}
+        className="size-full relative overflow-hidden z-50"
+      >
+        <FlowDragLayer>
+          <ReactFlow
+            nodeTypes={flowUtilConsts.nodeTypes}
+            nodes={graph.nodes}
+            edgeTypes={flowUtilConsts.edgeTypes}
+            edges={graph.edges}
+            draggable={false}
+            edgesFocusable={false}
+            elevateEdgesOnSelect={false}
+            maxZoom={1.5}
+            minZoom={0.5}
+            panOnDrag={allowCanvasPanning}
+            zoomOnDoubleClick={false}
+            panOnScroll={true}
+            fitView={false}
+            nodesConnectable={false}
+            elementsSelectable={true}
+            nodesDraggable={false}
+            nodesFocusable={false}
+          >
+            <AboveFlowWidgets></AboveFlowWidgets>
+            <Background />
+          </ReactFlow>
+        </FlowDragLayer>
+      </div>
+    );
+  },
+);
 
 FlowCanvas.displayName = 'FlowCanvas';
