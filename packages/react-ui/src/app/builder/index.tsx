@@ -1,6 +1,25 @@
+import {
+  ActionType,
+  FlowRunStatus,
+  PieceTrigger,
+  TriggerType,
+  WebsocketClientEvent,
+  flowStructureUtil,
+  isNil,
+} from '@activepieces/shared';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
+
+import { cn, useElementSize } from '../../lib/utils';
+
+import { BuilderHeader } from './builder-header';
+import { CopilotSidebar } from './copilot';
+import { FlowCanvas } from './flow-canvas';
+import { FlowVersionsList } from './flow-versions';
+import { FlowRunDetails } from './run-details';
+import { RunsList } from './run-list';
+import { StepSettingsContainer } from './step-settings';
 
 import {
   LeftSideBarType,
@@ -21,25 +40,6 @@ import {
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  ActionType,
-  FlowRunStatus,
-  PieceTrigger,
-  TriggerType,
-  WebsocketClientEvent,
-  flowStructureUtil,
-  isNil,
-} from '@activepieces/shared';
-
-import { cn, useElementSize } from '../../lib/utils';
-
-import { BuilderHeader } from './builder-header';
-import { CopilotSidebar } from './copilot';
-import { FlowCanvas } from './flow-canvas';
-import { FlowVersionsList } from './flow-versions';
-import { FlowRunDetails } from './run-details';
-import { RunsList } from './run-list';
-import { StepSettingsContainer } from './step-settings';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -154,9 +154,11 @@ const BuilderPage = () => {
       );
     };
   }, [socket, refetchPiece, run]);
+
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
-  const [hasInitiallyCalledFitToView, setHasInitiallyCalledFitToView] =
+  const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
+
   return (
     <div className="flex h-screen w-screen flex-col relative">
       {run && (
@@ -213,16 +215,14 @@ const BuilderPage = () => {
             <div ref={middlePanelRef} className="relative h-full w-full">
               <div className="absolute left-0 top-0 h-full w-full z-10 "></div>
               <FlowCanvas
-                hasInitiallyCalledFitToView={hasInitiallyCalledFitToView}
+                setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
               ></FlowCanvas>
               {middlePanelRef.current &&
                 middlePanelRef.current.clientWidth > 0 && (
                   <CanvasControls
                     builderNavbarHeight={builderNavbarHeight}
                     canvasWidth={middlePanelRef.current?.clientWidth ?? 0}
-                    setHasInitiallyCalledFitToView={
-                      setHasInitiallyCalledFitToView
-                    }
+                    hasCanvasBeenInitialised={hasCanvasBeenInitialised}
                   ></CanvasControls>
                 )}
 

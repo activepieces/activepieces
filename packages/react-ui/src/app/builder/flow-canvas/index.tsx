@@ -2,7 +2,6 @@ import { ReactFlow, Background, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useEffect, useRef } from 'react';
 import { usePrevious } from 'react-use';
-
 import { isFlowStateTerminal } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
@@ -15,9 +14,9 @@ import { AboveFlowWidgets } from './widgets';
 
 export const FlowCanvas = React.memo(
   ({
-    hasInitiallyCalledFitToView,
+    setHasCanvasBeenInitialised,
   }: {
-    hasInitiallyCalledFitToView: boolean;
+    setHasCanvasBeenInitialised: (value: boolean) => void;
   }) => {
     const [allowCanvasPanning, graph, run] = useBuilderStateContext((state) => {
       const graph = flowCanvasUtils.convertFlowVersionToGraph(
@@ -51,22 +50,24 @@ export const FlowCanvas = React.memo(
     });
     useEffect(() => {
       if (!containerRef.current) return;
-      const resizeObserver = new ResizeObserver((entries) => {
-        entries.forEach((entry) => {
-          if (containerRef.current && hasInitiallyCalledFitToView) {
-            const { width, height } = entries[0].contentRect;
-            const { x, y, zoom } = getViewport();
-            // Adjust x/y values based on the new size and keep the same zoom level
-            const newX = x + (width - containerSizeRef.current.width) / 2;
 
-            // Update the viewport to keep content centered without affecting zoom
-            setViewport({ x: newX, y, zoom });
-            containerSizeRef.current = {
-              width,
-              height,
-            };
-          }
-        });
+      const resizeObserver = new ResizeObserver((entries) => {
+        const { width, height } = entries[0].contentRect;
+
+        setHasCanvasBeenInitialised(true);
+        const { x, y, zoom } = getViewport();
+
+        if (containerRef.current && width !== containerSizeRef.current.width) {
+          const newX = x + (width - containerSizeRef.current.width) / 2;
+          // Update the viewport to keep content centered without affecting zoom
+          setViewport({ x: newX, y, zoom });
+        }
+        // Adjust x/y values based on the new size and keep the same zoom level
+
+        containerSizeRef.current = {
+          width,
+          height,
+        };
       });
 
       resizeObserver.observe(containerRef.current);
