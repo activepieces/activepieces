@@ -12,7 +12,6 @@ import {
 import {
   Action,
   ActionType,
-  BranchActionSchema,
   BranchOperator,
   CodeActionSchema,
   isEmpty,
@@ -117,23 +116,6 @@ export const formUtils = {
             items: selectedStep.settings.items ?? '',
           },
         };
-      case ActionType.BRANCH:
-        return {
-          ...selectedStep,
-          settings: {
-            ...selectedStep.settings,
-            conditions: selectedStep.settings.conditions ?? [
-              [
-                {
-                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                  firstValue: '',
-                  secondValue: '',
-                  caseSensitive: false,
-                },
-              ],
-            ],
-          },
-        };
       case ActionType.ROUTER:
         return {
           ...selectedStep,
@@ -234,15 +216,6 @@ export const formUtils = {
               items: Type.String({
                 minLength: 1,
               }),
-            }),
-          }),
-        ]);
-      case ActionType.BRANCH:
-        return Type.Composite([
-          BranchActionSchema,
-          Type.Object({
-            settings: Type.Object({
-              conditions: Type.Array(Type.Array(ValidBranchCondition)),
             }),
           }),
         ]);

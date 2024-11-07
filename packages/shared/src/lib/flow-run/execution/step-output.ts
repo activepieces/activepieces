@@ -79,32 +79,17 @@ export class GenericStepOutput<T extends ActionType | TriggerType, OUTPUT> {
 
 export type StepOutput =
   | GenericStepOutput<ActionType.LOOP_ON_ITEMS, LoopStepResult>
-  | GenericStepOutput<ActionType.BRANCH, BranchStepResult>
+  | GenericStepOutput<ActionType.ROUTER, unknown>
   | GenericStepOutput<
-  | Exclude<ActionType, ActionType.LOOP_ON_ITEMS | ActionType.BRANCH>
+  | Exclude<ActionType, ActionType.LOOP_ON_ITEMS | ActionType.ROUTER>
   | TriggerType,
   unknown
   >
 
-type BranchStepResult = {
-    condition: boolean
-}
+
 
 type RouterStepResult = {
     conditions: boolean[]
-}
-
-export class BranchStepOutput extends GenericStepOutput<
-ActionType.BRANCH,
-BranchStepResult
-> {
-    static init({ input }: { input: unknown }): BranchStepOutput {
-        return new BranchStepOutput({
-            type: ActionType.BRANCH,
-            input,
-            status: StepOutputStatus.SUCCEEDED,
-        })
-    }
 }
 
 export class RouterStepOutput extends GenericStepOutput<

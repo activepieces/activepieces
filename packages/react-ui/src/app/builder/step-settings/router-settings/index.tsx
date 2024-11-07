@@ -238,7 +238,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
         <BranchSettings
           readonly={readonly}
           key={`settings.branches[${selectedBranchIndex}].conditions`}
-          fieldName={`settings.branches[${selectedBranchIndex}].conditions`}
+          branchIndex={selectedBranchIndex}
         ></BranchSettings>
       )}
     </>

@@ -130,7 +130,6 @@ export const threadEngineRunner: EngineRunner = {
                 })
                 break
             }
-            case ActionType.BRANCH:
             case ActionType.ROUTER:
             case ActionType.LOOP_ON_ITEMS:
                 break
