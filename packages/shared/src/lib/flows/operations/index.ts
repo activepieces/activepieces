@@ -44,6 +44,7 @@ export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),
     stepName: Type.String(),
     conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
+    branchName: Type.String(),
 })
 
 export const DuplicateBranchRequest = Type.Object({

@@ -138,11 +138,11 @@ function getAllSteps(step: Step): Step[] {
 }
 
 
-const createBranch = (pathNumber: number, conditions: BranchCondition[][] | undefined) => {
+const createBranch = (branchName: string, conditions: BranchCondition[][] | undefined) => {
     return {
         conditions: conditions ?? [[emptyCondition]],
         branchType: BranchExecutionType.CONDITION,
-        branchName: `Branch ${pathNumber}`,
+        branchName,
     }
 }
 

@@ -9,7 +9,13 @@ import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockFlow, createMockFlowVersion, createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
+import {
+    createMockFlow,
+    createMockFlowVersion,
+    createMockPlatform,
+    createMockProject,
+    createMockUser,
+} from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -77,7 +83,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBeNull()
             expect(responseBody?.schedule).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(9)
+            expect(Object.keys(responseBody?.version)).toHaveLength(10)
             expect(responseBody?.version?.id).toHaveLength(21)
             expect(responseBody?.version?.created).toBeDefined()
             expect(responseBody?.version?.updated).toBeDefined()
@@ -165,7 +171,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.schedule).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(9)
+            expect(Object.keys(responseBody?.version)).toHaveLength(10)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
 
@@ -237,7 +243,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.schedule).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(9)
+            expect(Object.keys(responseBody?.version)).toHaveLength(10)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
     })
@@ -304,7 +310,7 @@ describe('Flow API', () => {
             expect(responseBody?.publishedVersionId).toBe(mockFlowVersion.id)
             expect(responseBody?.schedule).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(9)
+            expect(Object.keys(responseBody?.version)).toHaveLength(10)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
             expect(responseBody?.version?.state).toBe('LOCKED')
         })
@@ -382,7 +388,10 @@ describe('Flow API', () => {
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection().getRepository('platform').save(mockPlatform)
 
-            const mockProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser.id })
+            const mockProject = createMockProject({
+                platformId: mockPlatform.id,
+                ownerId: mockUser.id,
+            })
             await databaseConnection().getRepository('project').save([mockProject])
 
             const mockFlow = createMockFlow({ projectId: mockProject.id })
@@ -428,7 +437,10 @@ describe('Flow API', () => {
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection().getRepository('platform').save(mockPlatform)
 
-            const mockProject = createMockProject({ platformId: mockPlatform.id, ownerId: mockUser.id })
+            const mockProject = createMockProject({
+                platformId: mockPlatform.id,
+                ownerId: mockUser.id,
+            })
             await databaseConnection().getRepository('project').save([mockProject])
 
             const mockFlow = createMockFlow({ projectId: mockProject.id })
@@ -463,7 +475,6 @@ describe('Flow API', () => {
     })
 
     describe('Export Flow Template endpoint', () => {
-        
         it('Exports a flow template using an API key', async () => {
             // arrange
             const mockUser = createMockUser()

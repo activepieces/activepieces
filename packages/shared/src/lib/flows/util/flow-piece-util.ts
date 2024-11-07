@@ -33,7 +33,7 @@ function upgradeStep(step: Step, stepName: string): Step {
 function getUsedPieces(trigger: Trigger): string[] {
     return flowStructureUtil.getAllSteps(trigger)
         .filter((step) => step.type === ActionType.PIECE || step.type === TriggerType.PIECE)
-        .map((step) => step.settings.pieceVersion)
+        .map((step) => step.settings.pieceName)
 }
 
 

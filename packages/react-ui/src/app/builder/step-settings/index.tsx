@@ -174,9 +174,15 @@ const StepSettingsContainer = () => {
       );
       currentStep.valid = form.formState.isValid;
 
+      const routerBranchesNumberChanged =
+        currentStep.type === ActionType.ROUTER &&
+        previousSavedStep.current?.type === ActionType.ROUTER &&
+        previousSavedStep.current.settings.branches.length !==
+          currentStep.settings.branches.length;
       if (
         previousSavedStep.current === null ||
-        deepEqual(currentStep, previousSavedStep.current)
+        deepEqual(currentStep, previousSavedStep.current) ||
+        routerBranchesNumberChanged
       ) {
         previousSavedStep.current = currentStep;
         return;
