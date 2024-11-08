@@ -3,7 +3,10 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import {
+  MarkdownVariant,
+  USE_DRAFT_QUERY_PARAM_NAME,
+} from '@activepieces/shared';
 
 const markdown = `**Published Form URL:**
 \`\`\`text
@@ -20,7 +23,7 @@ Use this to generate sample data, views the draft version of the form (the one y
 `;
 
 const responseMarkdown = `
-If **Wait for Response** is enabled, ensure the last step in the flow is **Respond on UI (File/Markdown)**.
+If **Wait for Response** is enabled, ensure the last step in the flow is **Respond on UI**.
 `;
 
 export const onFormSubmission = createTrigger({
@@ -38,6 +41,7 @@ export const onFormSubmission = createTrigger({
     }),
     response: Property.MarkDown({
       value: responseMarkdown,
+      variant: MarkdownVariant.WARNING,
     }),
     inputs: Property.Array({
       displayName: 'Inputs',

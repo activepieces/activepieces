@@ -5,7 +5,7 @@ import mime from 'mime-types';
 
 export const returnResponse = createAction({
   name: 'return_response',
-  displayName: 'Respond on UI (File/Markdown)',
+  displayName: 'Respond on UI',
   description: 'Return a file or markdown as a response.',
   props: {
     type: Property.StaticDropdown({

@@ -3,11 +3,15 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import {
+  MarkdownVariant,
+  USE_DRAFT_QUERY_PARAM_NAME,
+} from '@activepieces/shared';
+
+const responseMarkdown = `
+This trigger sets up a chat interface. Ensure that **Respond on UI** action is set with **Markdown** as the response type in the final step of your flow.`;
 
 const markdown = `
-This trigger sets up a chat interface. Ensure that **Respond on UI (File/Markdown)** is set with **Markdown** as the response type in the final step of your flow.
-
 **Published Chat URL:**
 \`\`\`text
 {{chatUrl}}
@@ -27,6 +31,10 @@ export const onChatSubmission = createTrigger({
   displayName: 'Chat UI',
   description: 'Trigger the flow by sending a message',
   props: {
+    responseMarkdown: Property.MarkDown({
+      value: responseMarkdown,
+      variant: MarkdownVariant.WARNING,
+    }),
     about: Property.MarkDown({
       value: markdown,
     }),
