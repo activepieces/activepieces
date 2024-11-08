@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/collapsible';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn, formatUtils } from '@/lib/utils';
-import { ActionType, flowHelper } from '@activepieces/shared';
+import { ActionType, flowStructureUtil } from '@activepieces/shared';
 
 import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
@@ -38,8 +38,11 @@ const FlowStepDetailsCardItem = ({
     run,
     flowVersion,
   ] = useBuilderStateContext((state) => {
-    const step = flowHelper.getStep(state.flowVersion, stepName);
-    const stepIndex = flowHelper
+    const step = flowStructureUtil.getStepOrThrow(
+      stepName,
+      state.flowVersion.trigger,
+    );
+    const stepIndex = flowStructureUtil
       .getAllSteps(state.flowVersion.trigger)
       .findIndex((s) => s.name === stepName);
 
@@ -56,7 +59,7 @@ const FlowStepDetailsCardItem = ({
   const { fitView } = useReactFlow();
   const isChildSelected = useMemo(() => {
     return step?.type === ActionType.LOOP_ON_ITEMS && selectedStep
-      ? flowHelper.isChildOf(step, selectedStep)
+      ? flowStructureUtil.isChildOf(step, selectedStep)
       : false;
   }, [step, selectedStep]);
 

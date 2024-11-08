@@ -474,6 +474,9 @@
       "@activepieces/piece-razorpay": [
         "packages/pieces/community/razorpay/src/index.ts"
       ],
+      "@activepieces/piece-reachinbox": [
+        "packages/pieces/community/reachinbox/src/index.ts"
+      ],
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
@@ -619,6 +622,9 @@
       "@activepieces/piece-upgradechat": [
         "packages/pieces/community/upgradechat/src/index.ts"
       ],
+      "@activepieces/piece-utility-ai": [
+        "packages/pieces/community/utility-ai/src/index.ts"
+      ],
       "@activepieces/piece-vbout": [
         "packages/pieces/community/vbout/src/index.ts"
       ],
@@ -704,9 +710,6 @@
       ],
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
-      ],
-      "@activepieces/piece-reachinbox": [
-        "packages/pieces/community/reachinbox/src/index.ts"
       ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],

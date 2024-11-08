@@ -2,7 +2,8 @@ import { AI, AIChatRole, AIFactory } from '../..';
 import { isNil } from '@activepieces/shared';
 import OpenAI from 'openai';
 import { imageMapper, model, ModelType } from '../utils';
-import { Property } from '@activepieces/pieces-framework';
+import { ApFile, Property } from '@activepieces/pieces-framework';
+import { ChatCompletionMessageParam, FunctionParameters, ModerationMultiModalInput } from 'openai/resources';
 
 export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const openaiApiVersion = 'v1';
@@ -12,47 +13,32 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
   });
   return {
     provider: 'OPENAI',
-    image: {
-      generate: async (params) => {
-        const mapper = findImageMapper(params.model);
-        const input = await mapper.encodeInput(params);
-        const response = await sdk.images.generate(input as any);
-        return mapper.decodeOutput(response);
-      },
-      function: async (params) => {
-        const completion = await sdk.chat.completions.create({
-          model: params.model,
-          messages: params.messages.map((message) => ({
+    function: {
+      call: async (params) => {
+        const messages: ChatCompletionMessageParam[] = params.messages.map((message) => ({
+          role: 'user',
+          content: [
+            { type: 'text', text: message.content },
+          ],
+        }));
+        if (params.image) {
+          messages.push({
             role: 'user',
             content: [
-              { type: 'text', text: message.content },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/${params.image.extension};base64,${params.image.base64}`,
-                },
-              },
+              { type: 'image_url', image_url: { url: `data:image/${params.image.extension};base64,${params.image.base64}` } },
             ],
-          })),
+          });
+        }
+        const completion = await sdk.chat.completions.create({
+          model: params.model,
+          messages: messages,
           max_tokens: params.maxTokens,
           tools: params.functions.map((functionDefinition) => ({
             type: 'function',
             function: {
               name: functionDefinition.name,
               description: functionDefinition.description,
-              parameters: {
-                type: 'object',
-                properties: functionDefinition.arguments.reduce(
-                  (acc, { name, type, description }) => {
-                    acc[name] = { type, description };
-                    return acc;
-                  },
-                  {} as Record<string, unknown>
-                ),
-                required: functionDefinition.arguments
-                  .filter((prop) => prop.isRequired)
-                  .map((prop) => prop.name),
-              },
+              parameters: functionDefinition.arguments as unknown as FunctionParameters,
             },
           })),
         });
@@ -66,12 +52,12 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
           })),
           call: toolCall
             ? {
-                id: toolCall.id,
-                function: {
-                  name: toolCall.function.name,
-                  arguments: JSON.parse(toolCall.function.arguments as string),
-                },
-              }
+              id: toolCall.id,
+              function: {
+                name: toolCall.function.name,
+                arguments: JSON.parse(toolCall.function.arguments as string),
+              },
+            }
             : null,
           created: completion.created,
           model: completion.model,
@@ -81,6 +67,14 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
             totalTokens: completion.usage.total_tokens,
           },
         };
+      },
+    },
+    image: {
+      generate: async (params) => {
+        const mapper = findImageMapper(params.model);
+        const input = await mapper.encodeInput(params);
+        const response = await sdk.images.generate(input as any);
+        return mapper.decodeOutput(response);
       },
     },
     chat: {
@@ -109,61 +103,30 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
             totalTokens: completion.usage.total_tokens,
           },
         };
-      },
-      function: async (params) => {
-        const completion = await sdk.chat.completions.create({
-          model: params.model,
-          messages: params.messages.map((message) => ({
-            role: message.role === 'user' ? 'user' : 'assistant',
-            content: message.content,
-          })),
-          max_tokens: params.maxTokens,
-          tools: params.functions.map((functionDefinition) => ({
-            type: 'function',
-            function: {
-              name: functionDefinition.name,
-              description: functionDefinition.description,
-              parameters: {
-                type: 'object',
-                properties: functionDefinition.arguments.reduce(
-                  (acc, { name, type, description }) => {
-                    acc[name] = { type, description };
-                    return acc;
-                  },
-                  {} as Record<string, unknown>
-                ),
-                required: functionDefinition.arguments
-                  .filter((prop) => prop.isRequired)
-                  .map((prop) => prop.name),
-              },
+      }
+    },
+    moderation: {
+      create: async (params) => {
+        const inputs: ModerationMultiModalInput[] = [];
+
+        if (params.text) {
+          inputs.push({ type: 'text', text: params.text });
+        }
+        for (const image of params.images ?? []) {
+          inputs.push({
+            type: 'image_url',
+            image_url: {
+              url: `data:image/${image.extension};base64,${image.base64}`,
             },
-          })),
+          });
+        }
+
+        const response = await sdk.moderations.create({
+          input: inputs,
+          model: params.model,
         });
 
-        const toolCall = completion.choices[0].message.tool_calls?.[0];
-
-        return {
-          choices: completion.choices.map((choice) => ({
-            role: AIChatRole.ASSISTANT,
-            content: choice.message.content ?? '',
-          })),
-          call: toolCall
-            ? {
-                id: toolCall.id,
-                function: {
-                  name: toolCall.function.name,
-                  arguments: JSON.parse(toolCall.function.arguments as string),
-                },
-              }
-            : null,
-          created: completion.created,
-          model: completion.model,
-          usage: completion.usage && {
-            completionTokens: completion.usage.completion_tokens,
-            promptTokens: completion.usage.prompt_tokens,
-            totalTokens: completion.usage.total_tokens,
-          },
-        };
+        return response.results[0];
       },
     },
   };
@@ -238,4 +201,9 @@ export const openaiModels = [
   model({ label: 'dall-e-2', value: 'dall-e-2', supported: ['image'] }).mapper(
     openaiImageMapper
   ),
+  model({
+    label: 'omni-moderation-latest',
+    value: 'omni-moderation-latest',
+    supported: ['moderation'],
+  }),
 ];

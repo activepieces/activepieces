@@ -26,6 +26,10 @@ import {
   ValidBranchCondition,
   isNil,
   spreadIfDefined,
+  RouterActionSchema,
+  RouterBranchesSchema,
+  SampleDataSetting,
+  RouterExecutionType,
 } from '@activepieces/shared';
 
 function addAuthToPieceProps(
@@ -129,6 +133,10 @@ export const formUtils = {
               ],
             ],
           },
+        };
+      case ActionType.ROUTER:
+        return {
+          ...selectedStep,
         };
       case ActionType.CODE: {
         const defaultCode = `export const code = async (inputs) => {
@@ -235,6 +243,17 @@ export const formUtils = {
           Type.Object({
             settings: Type.Object({
               conditions: Type.Array(Type.Array(ValidBranchCondition)),
+            }),
+          }),
+        ]);
+      case ActionType.ROUTER:
+        return Type.Intersect([
+          Type.Omit(RouterActionSchema, ['settings']),
+          Type.Object({
+            settings: Type.Object({
+              branches: RouterBranchesSchema(true),
+              executionType: Type.Enum(RouterExecutionType),
+              inputUiInfo: SampleDataSetting,
             }),
           }),
         ]);

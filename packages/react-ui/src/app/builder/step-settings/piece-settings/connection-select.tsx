@@ -163,6 +163,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                   <SelectAction
                     onClick={() => {
                       setSelectConnectionOpen(false);
+                      setReconnectConnection(null);
                       setConnectionDialogOpen(true);
                     }}
                   >

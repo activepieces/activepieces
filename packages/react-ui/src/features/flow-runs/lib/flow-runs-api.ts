@@ -13,6 +13,7 @@ import {
   CreateStepRunRequestBody,
   StepRunResponse,
   isFlowStateTerminal,
+  BulkRetryFlowRequestBody,
 } from '@activepieces/shared';
 
 export const flowRunsApi = {
@@ -21,6 +22,9 @@ export const flowRunsApi = {
   },
   getPopulated(id: string): Promise<FlowRun> {
     return api.get<FlowRun>(`/v1/flow-runs/${id}`);
+  },
+  bulkRetry(request: BulkRetryFlowRequestBody): Promise<FlowRun[]> {
+    return api.post<FlowRun[]>('/v1/flow-runs/retry', request);
   },
   retry(flowRunId: string, request: RetryFlowRequestBody): Promise<FlowRun> {
     return api.post<FlowRun>(`/v1/flow-runs/${flowRunId}/retry`, request);

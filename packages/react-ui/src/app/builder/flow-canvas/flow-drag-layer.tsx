@@ -13,12 +13,16 @@ import {
 import { t } from 'i18next';
 
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
-import { FlowOperationType, flowHelper } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  StepLocationRelativeToParent,
+  flowStructureUtil,
+} from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { ApEdge } from './flow-canvas-utils';
 import StepDragOverlay from './step-drag-overlay';
+import { ApButtonData } from './types';
 
 type FlowDragLayerProps = {
   children: React.ReactNode;
@@ -65,7 +69,7 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
   ]);
 
   const draggedStep = activeDraggingStep
-    ? flowHelper.getStep(flowVersion, activeDraggingStep)
+    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
     : undefined;
 
   const handleDragStart = (e: DragStartEvent) => {
@@ -83,12 +87,17 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
       e.over.data.current &&
       e.over.data.current.accepts === e.active.data?.current?.type
     ) {
-      const edgeData: ApEdge['data'] = e.over.data.current as ApEdge['data'];
-      if (edgeData && edgeData.parentStep && draggedStep) {
-        const isPartOfInnerFlow = flowHelper.isPartOfInnerFlow({
-          parentStep: draggedStep,
-          childName: edgeData.parentStep,
-        });
+      const droppedAtNodeData: ApButtonData = e.over.data
+        .current as ApButtonData;
+      if (
+        droppedAtNodeData &&
+        droppedAtNodeData.parentStepName &&
+        draggedStep
+      ) {
+        const isPartOfInnerFlow = flowStructureUtil.isChildOf(
+          draggedStep,
+          droppedAtNodeData.parentStepName,
+        );
         if (isPartOfInnerFlow) {
           toast({
             title: t('Invalid Move'),
@@ -102,9 +111,14 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
             type: FlowOperationType.MOVE_ACTION,
             request: {
               name: draggedStep.name,
-              newParentStep: edgeData.parentStep,
+              newParentStep: droppedAtNodeData.parentStepName,
               stepLocationRelativeToNewParent:
-                edgeData.stepLocationRelativeToParent,
+                droppedAtNodeData.stepLocationRelativeToParent,
+              branchIndex:
+                droppedAtNodeData.stepLocationRelativeToParent ===
+                StepLocationRelativeToParent.INSIDE_BRANCH
+                  ? droppedAtNodeData.branchIndex
+                  : undefined,
             },
           },
           () => toast(UNSAVED_CHANGES_TOAST),

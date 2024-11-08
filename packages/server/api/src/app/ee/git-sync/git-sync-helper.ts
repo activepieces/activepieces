@@ -2,7 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { ProjectSyncError } from '@activepieces/ee-shared'
 import { fileExists } from '@activepieces/server-shared'
-import { Flow, flowHelper, FlowOperationType, PopulatedFlow } from '@activepieces/shared'
+import { Flow, FlowOperationType, flowStructureUtil, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
@@ -72,7 +72,7 @@ async function updateFlowInProject(originalFlow: PopulatedFlow, newFlow: Populat
 ): Promise<PopulatedFlow> {
     const project = await projectService.getOneOrThrow(projectId)
 
-    const newFlowVersion = await flowHelper.updateFlowSecrets(originalFlow, newFlow) 
+    const newFlowVersion = updateFlowSecrets(originalFlow, newFlow) 
 
     return flowService.update({
         id: originalFlow.id,
@@ -84,11 +84,22 @@ async function updateFlowInProject(originalFlow: PopulatedFlow, newFlow: Populat
             request: {
                 displayName: newFlow.version.displayName,
                 trigger: newFlowVersion.trigger,
+                schemaVersion: newFlow.version.schemaVersion,
             },
         },
     })
 }
 
+function updateFlowSecrets(originalFlow: PopulatedFlow, newFlow: PopulatedFlow): FlowVersion {
+    return flowStructureUtil.transferFlow(newFlow.version, (step) => {
+        const oldStep = flowStructureUtil.getStep(step.name, originalFlow.version.trigger)
+        if (oldStep?.settings?.input?.auth) {
+            step.settings.input.auth = oldStep.settings.input.auth
+        }
+        return step
+    })
+}
+  
 async function republishFlow(flowId: string, projectId: string): Promise<ProjectSyncError | null> {
     const project = await projectService.getOneOrThrow(projectId)
     const flow = await flowService.getOnePopulated({ id: flowId, projectId })

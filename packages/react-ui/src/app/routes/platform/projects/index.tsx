@@ -1,15 +1,19 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Pencil, Plus, Trash } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import {
+  CURSOR_QUERY_PARAM,
+  DataTable,
+  LIMIT_QUERY_PARAM,
+  RowDataWithActions,
+} from '@/components/ui/data-table';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipContent,
@@ -100,42 +104,59 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
 ];
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [refreshCount, setRefreshCount] = useState(0);
-
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { setCurrentProject } = projectHooks.useCurrentProject();
+  const navigate = useNavigate();
+  const isEnabled = platform.manageProjectsEnabled;
+  const { data: currentProject } = projectHooks.useCurrentProject();
 
-  const errorToastMessage = (
-    projectName: string,
-    error: unknown,
-  ): string | undefined => {
+  const [searchParams] = useSearchParams();
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['projects', searchParams.toString()],
+    staleTime: 0,
+    queryFn: () => {
+      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+      const limit = searchParams.get(LIMIT_QUERY_PARAM);
+      return projectApi.list({
+        cursor: cursor ?? undefined,
+        limit: limit ? parseInt(limit) : undefined,
+      });
+    },
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      await projectApi.delete(projectId);
+    },
+    onSuccess: () => {
+      refetch();
+    },
+    onError: (error, _) => {
+      toast({
+        title: t('Error'),
+        description: errorToastMessage(error),
+        duration: 3000,
+      });
+    },
+  });
+
+  const errorToastMessage = (error: unknown): string | undefined => {
     if (validationUtils.isValidationError(error)) {
       console.error(t('Validation error'), error);
       switch (error.response?.data?.params?.message) {
         case 'PROJECT_HAS_ENABLED_FLOWS':
-          return t(
-            'project ({{projectName}}) has enabled flows. Please disable them first.',
-            { projectName },
-          );
+          return t('Project has enabled flows. Please disable them first.');
         case 'ACTIVE_PROJECT':
           return t(
-            'project ({{projectName}}) is active. Please switch to another project first.',
-            { projectName },
+            'This project is active. Please switch to another project first.',
           );
       }
       return undefined;
     }
   };
 
-  const { data: currentProject } = projectHooks.useCurrentProject();
-
-  const refreshData = () => {
-    setRefreshCount((prev) => prev + 1);
-  };
-
-  const queryClient = useQueryClient();
-  const { setCurrentProject } = projectHooks.useCurrentProject();
-  const navigate = useNavigate();
-  const isEnabled = platform.manageProjectsEnabled;
   return (
     <LockedFeatureGuard
       featureKey="PROJECTS"
@@ -149,7 +170,7 @@ export default function ProjectsPage() {
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
           <TableTitle>{t('Projects')}</TableTitle>
-          <NewProjectDialog onCreate={() => refreshData()}>
+          <NewProjectDialog onCreate={() => refetch()}>
             <Button
               size="sm"
               className="flex items-center justify-center gap-2"
@@ -165,14 +186,8 @@ export default function ProjectsPage() {
             navigate('/');
           }}
           columns={columns}
-          fetchData={(_, pagination) => {
-            console.log(pagination);
-            return projectApi.list({
-              cursor: pagination.cursor,
-              limit: pagination.limit ?? 10,
-            });
-          }}
-          refresh={refreshCount}
+          page={data}
+          isLoading={isLoading}
           actions={[
             (row) => {
               return (
@@ -221,13 +236,12 @@ export default function ProjectsPage() {
                     message={t('Are you sure you want to delete this project?')}
                     entityName={t('Project')}
                     mutationFn={async () => {
-                      await projectApi.delete(row.id);
-                      refreshData();
+                      await deleteProjectMutation.mutateAsync(row.id);
                     }}
                     onError={(error) => {
                       toast({
                         title: t('Error'),
-                        description: errorToastMessage(row.displayName, error),
+                        description: errorToastMessage(error),
                         duration: 3000,
                       });
                     }}

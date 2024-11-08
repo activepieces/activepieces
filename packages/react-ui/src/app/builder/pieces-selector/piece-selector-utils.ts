@@ -21,11 +21,13 @@ import {
   TriggerType,
   deepMergeAndCast,
   FlowVersion,
-  flowHelper,
   PieceCategory,
+  BranchExecutionType,
+  RouterExecutionType,
   spreadIfDefined,
   isNil,
   Platform,
+  flowStructureUtil,
 } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
@@ -56,13 +58,7 @@ const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
   if (piece.type === TriggerType.PIECE) {
     return 'trigger';
   }
-  const baseName = 'step_';
-  let number = 1;
-  const steps = flowHelper.getAllSteps(flowVersion.trigger);
-  while (steps.some((step) => step.name === `${baseName}${number}`)) {
-    number++;
-  }
-  return `${baseName}${number}`;
+  return flowStructureUtil.findUnusedName(flowVersion.trigger);
 };
 
 const isAiPiece = (piece: StepMetadata) =>
@@ -108,7 +104,10 @@ const isPopularPieces = (
     '@activepieces/piece-forms',
     '@activepieces/piece-slack',
   ];
-  return popularPieces.includes((stepMetadata as PieceStepMetadata).pieceName);
+  const pinnedPieces = platform.pinnedPieces ?? [];
+  return [...popularPieces, ...pinnedPieces].includes(
+    (stepMetadata as PieceStepMetadata).pieceName,
+  );
 };
 
 const isFlowController = (stepMetadata: StepMetadata) => {
@@ -117,9 +116,11 @@ const isFlowController = (stepMetadata: StepMetadata) => {
       PieceCategory.FLOW_CONTROL,
     );
   }
-  return [ActionType.LOOP_ON_ITEMS, ActionType.BRANCH].includes(
-    stepMetadata.type as ActionType,
-  );
+  return [
+    ActionType.LOOP_ON_ITEMS,
+    ActionType.ROUTER,
+    ActionType.BRANCH,
+  ].includes(stepMetadata.type as ActionType);
 };
 
 const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
@@ -241,6 +242,40 @@ const getDefaultStep = ({
               ],
             ],
           },
+        },
+        common,
+      );
+    case ActionType.ROUTER:
+      return deepMergeAndCast<Action>(
+        {
+          type: ActionType.ROUTER,
+          settings: {
+            executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+            branches: [
+              {
+                conditions: [
+                  [
+                    {
+                      operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                      firstValue: '',
+                      secondValue: '',
+                      caseSensitive: false,
+                    },
+                  ],
+                ],
+                branchType: BranchExecutionType.CONDITION,
+                branchName: 'Branch 1',
+              },
+              {
+                branchType: BranchExecutionType.FALLBACK,
+                branchName: 'Otherwise',
+              },
+            ],
+            inputUiInfo: {
+              customizedInputs: {},
+            },
+          },
+          children: [null, null],
         },
         common,
       );

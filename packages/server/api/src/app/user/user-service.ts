@@ -39,7 +39,7 @@ export const userService = {
 
         return userRepo().save(user)
     },
-    async update({ id, status, platformId, platformRole }: UpdateParams): Promise<User> {
+    async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<User> {
 
         const updateResult = await userRepo().update({
             id,
@@ -47,6 +47,7 @@ export const userService = {
         }, {
             ...spreadIfDefined('status', status),
             ...spreadIfDefined('platformRole', platformRole),
+            ...spreadIfDefined('externalId', externalId),
         })
 
         if (updateResult.affected !== 1) {
@@ -194,6 +195,7 @@ type UpdateParams = {
     status?: UserStatus
     platformId: PlatformId
     platformRole?: PlatformRole
+    externalId?: string
 }
 
 type CreateParams = SignUpRequest & {

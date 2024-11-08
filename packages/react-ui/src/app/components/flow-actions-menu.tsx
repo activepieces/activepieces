@@ -101,6 +101,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         request: {
           displayName: flowVersion.displayName,
           trigger: flowVersion.trigger,
+          schemaVersion: flowVersion.schemaVersion,
         },
       });
       return updatedFlow;
@@ -151,7 +152,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </PermissionNeededTooltip>
         )}
         <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
-          <PushToGitDialog flowId={flow.id}>
+          <PushToGitDialog flowIds={[flow.id]}>
             <DropdownMenuItem
               disabled={!userHasPermissionToPushToGit}
               onSelect={(e) => e.preventDefault()}
@@ -168,11 +169,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >
-            <MoveFlowDialog
-              flow={flow}
-              flowVersion={flowVersion}
-              onMoveTo={onMoveTo}
-            >
+            <MoveFlowDialog flows={[flow]} onMoveTo={onMoveTo}>
               <DropdownMenuItem
                 disabled={!userHasPermissionToUpdateFlow}
                 onSelect={(e) => e.preventDefault()}

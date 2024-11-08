@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsReportResponse, flowHelper, FlowStatus, PieceCategory, PlatformId, PopulatedFlow, ProjectId } from '@activepieces/shared'
+import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsReportResponse, flowPieceUtil, FlowStatus, PieceCategory, PlatformId, PopulatedFlow, ProjectId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { In, MoreThan } from 'typeorm'
 import { auditLogRepo } from '../../ee/audit-logs/audit-event-service'
@@ -65,7 +65,7 @@ async function analyzeProjects(flows: PopulatedFlow[]) {
 
 async function numberOfFlowsWithAI(flows: PopulatedFlow[]) {
     const aiPiecePromises = flows.flatMap(flow => {
-        const usedPieces = flowHelper.getUsedPieces(flow.version.trigger)
+        const usedPieces = flowPieceUtil.getUsedPieces(flow.version.trigger)
         return usedPieces.map(piece => pieceMetadataService.getOrThrow({
             name: piece,
             version: undefined,
@@ -80,7 +80,7 @@ async function numberOfFlowsWithAI(flows: PopulatedFlow[]) {
 async function analyzePieces(flows: PopulatedFlow[]) {
     const pieces: Record<string, AnalyticsPieceReportItem> = {}
     for (const flow of flows) {
-        const usedPieces = flowHelper.getUsedPieces(flow.version.trigger)
+        const usedPieces = flowPieceUtil.getUsedPieces(flow.version.trigger)
         for (const piece of usedPieces) {
             if (!pieces[piece]) {
                 const pieceMetadata = await pieceMetadataService.getOrThrow({
