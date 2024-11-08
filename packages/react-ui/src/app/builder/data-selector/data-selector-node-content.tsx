@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-import { flowHelper } from '@activepieces/shared';
+import { flowStructureUtil } from '@activepieces/shared';
 
 import { useApRipple } from '../../../components/theme-provider';
 import { Button } from '../../../components/ui/button';
@@ -46,7 +46,7 @@ const DataSelectorNodeContent = ({
 
   const [ripple, rippleEvent] = useApRipple();
   const step = !node.data.isSlice
-    ? flowHelper.getStep(flowVersion, node.data.propertyPath)
+    ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
     : undefined;
   const stepMetadata = step
     ? piecesHooks.useStepMetadata({ step }).stepMetadata

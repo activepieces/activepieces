@@ -244,7 +244,9 @@ Record<string, never>
 
 export type FlowOperationErrorParams = BaseErrorParams<
 ErrorCode.FLOW_OPERATION_INVALID,
-Record<string, never>
+{
+    message: string
+}
 >
 
 export type FlowFormNotFoundError = BaseErrorParams<

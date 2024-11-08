@@ -70,7 +70,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             type: 'many-to-one',
             target: 'user',
             cascade: true,
-            onDelete: 'CASCADE',
+            onDelete: 'SET NULL',
             joinColumn: {
                 name: 'ownerId',
                 foreignKeyConstraintName: 'fk_app_connection_owner_id',

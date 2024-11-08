@@ -1,13 +1,12 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash } from 'lucide-react';
-import { useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Tooltip,
   TooltipContent,
@@ -16,20 +15,21 @@ import {
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
-import { UserStatus } from '@activepieces/shared';
+import { PlatformRole, UserStatus } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/ui/table-title';
 
-import { UpdateUserRoleDialog } from './update-role-dialog';
+import { UpdateUserDialog } from './update-user-dialog';
 
 export default function UsersPage() {
-  const [refreshCount, setRefreshCount] = useState(0);
-
   const { toast } = useToast();
 
-  const refreshData = () => {
-    setRefreshCount((prev) => prev + 1);
-  };
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => {
+      return platformUserApi.list();
+    },
+  });
 
   const { mutate: deleteUser, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-user'],
@@ -37,7 +37,7 @@ export default function UsersPage() {
       await platformUserApi.delete(userId);
     },
     onSuccess: () => {
-      refreshData();
+      refetch();
       toast({
         title: t('Success'),
         description: t('User deleted successfully'),
@@ -61,7 +61,7 @@ export default function UsersPage() {
         };
       },
       onSuccess: (data) => {
-        refreshData();
+        refetch();
         toast({
           title: t('Success'),
           description:
@@ -133,7 +133,11 @@ export default function UsersPage() {
               ),
               cell: ({ row }) => {
                 return (
-                  <div className="text-left">{row.original.platformRole}</div>
+                  <div className="text-left">
+                    {row.original.platformRole === PlatformRole.ADMIN
+                      ? t('Admin')
+                      : t('Member')}
+                  </div>
                 );
               },
             },
@@ -156,27 +160,35 @@ export default function UsersPage() {
                 <DataTableColumnHeader column={column} title={t('Status')} />
               ),
               cell: ({ row }) => {
-                return <div className="text-left">{row.original.status}</div>;
+                return (
+                  <div className="text-left">
+                    {row.original.status === UserStatus.ACTIVE
+                      ? t('Active')
+                      : t('Inactive')}
+                  </div>
+                );
               },
             },
           ]}
-          fetchData={() => platformUserApi.list()}
-          refresh={refreshCount}
+          page={data}
+          hidePagination={true}
+          isLoading={isLoading}
           actions={[
             (row) => {
               return (
                 <div className="flex items-end justify-end">
                   <Tooltip>
                     <TooltipTrigger>
-                      <UpdateUserRoleDialog
+                      <UpdateUserDialog
                         userId={row.id}
                         role={row.platformRole}
-                        onUpdate={() => refreshData()}
+                        externalId={row.externalId}
+                        onUpdate={() => refetch()}
                       >
                         <Button variant="ghost" className="size-8 p-0">
                           <Pencil className="size-4" />
                         </Button>
-                      </UpdateUserRoleDialog>
+                      </UpdateUserDialog>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {t('Edit user')}
@@ -191,7 +203,7 @@ export default function UsersPage() {
                   <Tooltip>
                     <TooltipTrigger>
                       <Button
-                        disabled={isDeleting}
+                        disabled={isUpdatingStatus}
                         variant="ghost"
                         className="size-8 p-0"
                         loading={isUpdatingStatus}

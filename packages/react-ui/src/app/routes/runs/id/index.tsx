@@ -35,11 +35,8 @@ const FlowRunPage = () => {
     enabled: runId !== undefined,
   });
 
-  const {
-    data: sampleData,
-    isLoading: isSampleDataLoading,
-    isError: isSampleDataError,
-  } = sampleDataHooks.useSampleDataForFlow(data?.flow?.version);
+  const { data: sampleData, isLoading: isSampleDataLoading } =
+    sampleDataHooks.useSampleDataForFlow(data?.flow?.version);
 
   if (isLoading || isSampleDataLoading) {
     return (
@@ -47,10 +44,6 @@ const FlowRunPage = () => {
         <LoadingSpinner size={50}></LoadingSpinner>
       </div>
     );
-  }
-
-  if (isSampleDataError) {
-    return <p>Error loading sample data, contact support</p>;
   }
 
   return (

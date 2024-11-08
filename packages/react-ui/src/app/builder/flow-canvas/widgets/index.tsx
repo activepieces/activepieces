@@ -1,13 +1,13 @@
 import { ViewportPortal } from '@xyflow/react';
 import React from 'react';
 
-import { AP_NODE_SIZE } from '@/app/builder/flow-canvas/flow-canvas-utils';
 import FlowEndWidget from '@/app/builder/flow-canvas/widgets/flow-end-widget';
 import IncompleteSettingsButton from '@/app/builder/flow-canvas/widgets/incomplete-settings-widget';
 import { TestFlowWidget } from '@/app/builder/flow-canvas/widgets/test-flow-widget';
 import ViewOnlyWidget from '@/app/builder/flow-canvas/widgets/view-only-widget';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { flowUtilConsts } from '../consts';
 
 const AboveFlowWidgets = React.memo(() => {
   const [flowVersion, setRun, selectStepByName, readonly] =
@@ -22,7 +22,7 @@ const AboveFlowWidgets = React.memo(() => {
       <div
         style={{
           transform: `translate(0px,-${
-            AP_NODE_SIZE.stepNode.height / 2 + 8
+            flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 + 8
           }px )`,
           position: 'absolute',
           pointerEvents: 'auto',
@@ -48,28 +48,24 @@ const AboveFlowWidgets = React.memo(() => {
   );
 });
 AboveFlowWidgets.displayName = 'AboveFlowWidgets';
-const BelowFlowWidget = React.memo(
-  ({ graphHeight }: { graphHeight: number }) => {
-    return (
-      <ViewportPortal>
+const BelowFlowWidget = React.memo(() => {
+  return (
+    <ViewportPortal>
+      <div
+        style={{
+          pointerEvents: 'auto',
+        }}
+      >
         <div
-          style={{
-            transform: `translate(0px, ${graphHeight + 18}px)`,
-            position: 'absolute',
-            pointerEvents: 'auto',
-          }}
+          className="flex items-center justify-center gap-2"
+          style={{ width: flowUtilConsts.AP_NODE_SIZE.STEP.width + 'px' }}
         >
-          <div
-            className="flex items-center justify-center gap-2"
-            style={{ width: AP_NODE_SIZE.stepNode.width + 'px' }}
-          >
-            <FlowEndWidget></FlowEndWidget>
-          </div>
+          <FlowEndWidget></FlowEndWidget>
         </div>
-      </ViewportPortal>
-    );
-  },
-);
+      </div>
+    </ViewportPortal>
+  );
+});
 
 BelowFlowWidget.displayName = 'BelowFlowWidget';
 export { AboveFlowWidgets, BelowFlowWidget };

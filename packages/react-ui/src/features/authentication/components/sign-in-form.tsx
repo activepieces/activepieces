@@ -1,7 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
-import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
@@ -19,6 +18,8 @@ import {
   ApEdition,
   ApFlagId,
   AuthenticationResponse,
+  ErrorCode,
+  isNil,
   SignInRequest,
 } from '@activepieces/shared';
 
@@ -62,11 +63,43 @@ const SignInForm: React.FC = () => {
     },
     onError: (error) => {
       if (api.isError(error)) {
-        switch (error.response?.status) {
-          case HttpStatusCode.Unauthorized:
-          case HttpStatusCode.BadRequest: {
+        const errorCode: ErrorCode | undefined = (
+          error.response?.data as { code: ErrorCode }
+        )?.code;
+        if (isNil(errorCode)) {
+          form.setError('root.serverError', {
+            message: t('Something went wrong, please try again later'),
+          });
+          return;
+        }
+        switch (errorCode) {
+          case ErrorCode.INVALID_CREDENTIALS: {
             form.setError('root.serverError', {
               message: t('Invalid email or password'),
+            });
+            break;
+          }
+          case ErrorCode.USER_IS_INACTIVE: {
+            form.setError('root.serverError', {
+              message: t('User has been deactivated'),
+            });
+            break;
+          }
+          case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
+            form.setError('root.serverError', {
+              message: t(`Email hasn't been verified, check your inbox`),
+            });
+            break;
+          }
+          case ErrorCode.DOMAIN_NOT_ALLOWED: {
+            form.setError('root.serverError', {
+              message: t(`Email domain is disallowed`),
+            });
+            break;
+          }
+          case ErrorCode.EMAIL_AUTH_DISABLED: {
+            form.setError('root.serverError', {
+              message: t(`Email authentication has been disabled`),
             });
             break;
           }
@@ -74,10 +107,8 @@ const SignInForm: React.FC = () => {
             form.setError('root.serverError', {
               message: t('Something went wrong, please try again later'),
             });
-            break;
           }
         }
-        return;
       }
     },
   });

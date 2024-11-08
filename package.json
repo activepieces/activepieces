@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.34.9",
+  "version": "0.34.11",
   "rcVersion": "0.35.0-rc.1",
   "scripts": {
     "prepare": "husky install",
@@ -80,7 +80,7 @@
     "@segment/analytics-node": "2.1.0",
     "@sendgrid/mail": "8.0.0",
     "@sentry/node": "7.64.0",
-    "@sinclair/typebox": "0.32.35",
+    "@sinclair/typebox": "0.33.18",
     "@slack/web-api": "7.0.4",
     "@socket.io/redis-adapter": "8.2.1",
     "@supabase/supabase-js": "2.45.4",
@@ -183,7 +183,7 @@
     "jszip": "3.10.1",
     "jwks-rsa": "3.1.0",
     "jwt-decode": "4.0.0",
-    "langchain": "0.2.19",
+    "langchain": "0.3.3",
     "lottie-web": "5.12.2",
     "lucide-react": "0.407.0",
     "mailparser": "3.6.7",

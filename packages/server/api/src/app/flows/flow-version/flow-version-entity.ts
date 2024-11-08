@@ -19,6 +19,10 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         displayName: {
             type: String,
         },
+        schemaVersion: {
+            type: String,
+            nullable: true,
+        },
         trigger: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,

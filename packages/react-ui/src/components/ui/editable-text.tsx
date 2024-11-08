@@ -1,7 +1,5 @@
-import { Pencil } from 'lucide-react';
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 
-import { useElementSize } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
@@ -11,8 +9,10 @@ type EditableTextProps = {
   className?: string;
   readonly: boolean;
   onValueChange: (value: string) => void;
-  containerRef: React.RefObject<HTMLDivElement>;
   tooltipContent?: string;
+  disallowEditingOnClick?: boolean;
+  isEditing: boolean;
+  setIsEditing: (isEditing: boolean) => void;
 };
 
 const EditableText = ({
@@ -20,27 +20,27 @@ const EditableText = ({
   className = '',
   readonly = false,
   onValueChange,
-  containerRef,
   tooltipContent,
+  disallowEditingOnClick,
+  isEditing,
+  setIsEditing,
 }: EditableTextProps) => {
   const [value, setValue] = useState(initialValue);
-  const [editing, setEditing] = useState(false);
-
-  const [valueOnEditingStarted, setValueOnEditingStarted] = useState('');
+  const isEditingPreviousRef = useRef(isEditing);
+  const valueOnEditingStartedRef = useRef(initialValue);
 
   const editableTextRef = useRef<HTMLDivElement>(null);
-  const { width: containerWidth } = useElementSize(containerRef);
 
   const emitChangedValue = useCallback(() => {
     const nodeValue = (editableTextRef.current?.textContent ?? '').trim();
     const shouldUpdateValue =
-      nodeValue.length > 0 && nodeValue !== valueOnEditingStarted;
+      nodeValue.length > 0 && nodeValue !== valueOnEditingStartedRef.current;
 
-    setValue(shouldUpdateValue ? nodeValue : valueOnEditingStarted);
+    setValue(shouldUpdateValue ? nodeValue : valueOnEditingStartedRef.current);
     if (shouldUpdateValue) {
       onValueChange(nodeValue);
     }
-  }, [onValueChange, valueOnEditingStarted]);
+  }, [onValueChange, valueOnEditingStartedRef.current]);
 
   const setSelectionToValue = () => {
     setTimeout(() => {
@@ -57,85 +57,70 @@ const EditableText = ({
       }
     }, 1);
   };
+  if (isEditing && !isEditingPreviousRef.current) {
+    valueOnEditingStartedRef.current = value ? value.trim() : '';
+    setSelectionToValue();
+  }
+  isEditingPreviousRef.current = isEditing;
 
-  return (
-    <div
-      onClick={() => {
-        if (readonly) return;
-        if (!editing) {
-          setEditing(true);
-          setValueOnEditingStarted(value ? value.trim() : '');
-          setSelectionToValue();
+  return !isEditing ? (
+    <Tooltip>
+      <TooltipTrigger
+        disabled={
+          readonly ||
+          isEditing ||
+          disallowEditingOnClick ||
+          isNil(tooltipContent)
         }
-      }}
-      className="flex gap-2 items-center"
-    >
-      {!editing ? (
-        <Tooltip>
-          <TooltipTrigger
-            disabled={readonly || editing || isNil(tooltipContent)}
-            asChild
-          >
-            <div
-              onClick={() => {
-                if (readonly) return;
-                if (!editing) {
-                  setEditing(true);
-                  setValueOnEditingStarted(value ? value.trim() : '');
-                  setSelectionToValue();
-                }
-              }}
-              className="flex gap-2 items-center"
-            >
-              <div
-                ref={editableTextRef}
-                key={'viewed'}
-                className={`${className} truncate `}
-                style={{
-                  maxWidth: `${containerWidth - 100}px`,
-                }}
-                title={
-                  editableTextRef.current &&
-                  editableTextRef.current.scrollWidth >
-                    editableTextRef.current.clientWidth &&
-                  value
-                    ? value
-                    : ''
-                }
-              >
-                {value}
-              </div>
-              {!editing && !readonly && <Pencil className="h-4 w-4 shrink-0" />}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent className="font-normal z-50" side="bottom">
-            {tooltipContent}
-          </TooltipContent>
-        </Tooltip>
-      ) : (
+        asChild
+      >
         <div
-          key={'editable'}
-          ref={editableTextRef}
-          contentEditable
-          suppressContentEditableWarning={true}
-          className={`${className}  focus:outline-none break-all`}
-          onBlur={() => {
-            emitChangedValue();
-            setEditing(false);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              setValue(valueOnEditingStarted);
-              setEditing(false);
-            } else if (event.key === 'Enter') {
-              emitChangedValue();
-              setEditing(false);
+          onClick={() => {
+            if (!isEditing && !readonly && !disallowEditingOnClick) {
+              setIsEditing(true);
             }
           }}
+          ref={editableTextRef}
+          key={'viewed'}
+          className={`${className} truncate `}
+          title={
+            editableTextRef.current &&
+            editableTextRef.current.scrollWidth >
+              editableTextRef.current.clientWidth &&
+            value
+              ? value
+              : ''
+          }
         >
           {value}
         </div>
-      )}
+      </TooltipTrigger>
+      <TooltipContent className="font-normal z-50" side="bottom">
+        {tooltipContent}
+      </TooltipContent>
+    </Tooltip>
+  ) : (
+    <div
+      key={'editable'}
+      ref={editableTextRef}
+      contentEditable
+      suppressContentEditableWarning={true}
+      className={`${className}  focus:outline-none break-all`}
+      onBlur={() => {
+        emitChangedValue();
+        setIsEditing(false);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          setValue(valueOnEditingStartedRef.current);
+          setIsEditing(false);
+        } else if (event.key === 'Enter') {
+          emitChangedValue();
+          setIsEditing(false);
+        }
+      }}
+    >
+      {value}
     </div>
   );
 };

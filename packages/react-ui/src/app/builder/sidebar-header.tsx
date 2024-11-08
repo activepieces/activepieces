@@ -9,12 +9,16 @@ type SidebarHeaderProps = {
 };
 const SidebarHeader = ({ children, onClose }: SidebarHeaderProps) => {
   return (
-    <div className="flex p-4 w-full justify-between items-center">
-      <div className="font-semibold flex-grow text-lg">{children}</div>
+    <div className="flex p-4 w-full gap-2 text-lg font-semibold  items-center">
+      {children}
+      <div className="grow"></div>
       <Button
         variant="ghost"
         size={'sm'}
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         aria-label={t('Close')}
       >
         <X size={16} />

@@ -1,3 +1,4 @@
+
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
@@ -68,7 +69,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 flowVersion: flow.version,
             },
         })
-
         const updatedFlow = await flowService.update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
@@ -144,14 +144,15 @@ async function assertThatFlowIsNotBeingUsed(
     const currentTime = dayjs()
     if (
         !isNil(flow.version.updatedBy) &&
-        flow.version.updatedBy !== userId &&
-        currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
+    flow.version.updatedBy !== userId &&
+    currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
     ) {
         throw new ActivepiecesError({
             code: ErrorCode.FLOW_IN_USE,
             params: {
                 flowVersionId: flow.version.id,
-                message: 'Flow is being used by another user in the last minute. Please try again later.',
+                message:
+          'Flow is being used by another user in the last minute. Please try again later.',
             },
         })
     }
