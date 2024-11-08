@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
 import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
+
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: t('(Text) Contains'),
   [BranchOperator.TEXT_DOES_NOT_CONTAIN]: t('(Text) Does not contain'),
@@ -85,7 +86,7 @@ const BranchSingleCondition = ({
     condition.operator && singleValueConditions.includes(condition?.operator);
   const isInvalid = isSingleValueCondition
     ? condition.firstValue.length === 0
-    : condition.firstValue.length === 0 || condition.secondValue.length === 0;
+    : condition.firstValue.length === 0 || condition.secondValue?.length === 0;
   return (
     <>
       <div className="flex items-center gap-2">
@@ -136,7 +137,18 @@ const BranchSingleCondition = ({
                   value={field.value}
                   options={operationOptions}
                   placeholder={''}
-                  onChange={(e) => field.onChange(e)}
+                  onChange={(e) => {
+                    if (
+                      isSingleValueCondition &&
+                      !singleValueConditions.includes(e)
+                    ) {
+                      form.setValue(
+                        `${fieldName}.${groupIndex}.${conditionIndex}.secondValue`,
+                        '',
+                      );
+                    }
+                    field.onChange(e);
+                  }}
                 />
                 <FormMessage />
               </FormItem>
@@ -151,7 +163,7 @@ const BranchSingleCondition = ({
                   <TextInputWithMentions
                     placeholder={t('Second value')}
                     disabled={readonly}
-                    initialValue={field.value}
+                    initialValue={field.value || ''}
                     onChange={field.onChange}
                   ></TextInputWithMentions>
                   <FormMessage />
