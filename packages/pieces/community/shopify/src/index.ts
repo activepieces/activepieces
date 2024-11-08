@@ -20,6 +20,7 @@ import { createProductAction } from './lib/actions/create-product';
 import { createTransactionAction } from './lib/actions/create-transaction';
 import { getAssetAction } from './lib/actions/get-asset';
 import { getCustomerAction } from './lib/actions/get-customer';
+import { getCustomersAction } from './lib/actions/get-customers';
 import { getCustomerOrdersAction } from './lib/actions/get-customer-orders';
 import { getFulfillmentAction } from './lib/actions/get-fulfillment';
 import { getFulfillmentsAction } from './lib/actions/get-fulfillments';
@@ -111,6 +112,7 @@ export const shopify = createPiece({
     createTransactionAction,
     getAssetAction,
     getCustomerAction,
+    getCustomersAction,
     getCustomerOrdersAction,
     getFulfillmentAction,
     getFulfillmentsAction,
