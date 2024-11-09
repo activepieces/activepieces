@@ -29,7 +29,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         })
 
         for (const flowVersion of flowVersions) {
-            const originalSize = flowStructureUtil.getAllSteps(flowVersion.trigger).length
+            const originalSize = getAllSteps(flowVersion.trigger).length
             flowVersion.trigger = traverseAndUpdateSubFlow((step: any) => {
                 if (step.type === 'BRANCH') {
                     step.type = 'ROUTER'
@@ -59,7 +59,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                 }
             }, flowVersion.trigger)!
 
-            const updatedStepsSize = flowStructureUtil.getAllSteps(flowVersion.trigger).length
+            const updatedStepsSize = getAllSteps(flowVersion.trigger).length
             if (originalSize !== updatedStepsSize) {
                 throw new Error(`steps size mismatch for flow: ${flowVersion.displayName} original: ${originalSize} updated: ${updatedStepsSize}`)
             }
@@ -77,6 +77,71 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         return res.status(StatusCodes.OK).send(flowVersions.length)
     })
 }
+
+function transferStep(
+    step: any,
+    transferFunction: (step: any) => any,
+): Step {
+    const updatedStep = transferFunction(step)
+    switch (updatedStep.type) {
+        case 'LOOP_ON_ITEMS': {
+            const { firstLoopAction } = updatedStep
+            if (firstLoopAction) {
+                updatedStep.firstLoopAction = transferStep(
+                    firstLoopAction,
+                    transferFunction,
+                )
+            }
+            break
+        }
+        case 'ROUTER': {
+            const { children } = updatedStep
+            if (children) {
+                updatedStep.children = children.map((child: any) =>
+                    child ? (transferStep(child, transferFunction)) : null,
+                )
+            }
+            break
+        }
+        case 'BRANCH': {
+            if (updatedStep.onSuccessAction) {
+                updatedStep.onSuccessAction = transferStep(
+                    updatedStep.onSuccessAction,
+                    transferFunction,
+                )
+            }
+            if (updatedStep.onFailureAction) {
+                updatedStep.onFailureAction = transferStep(
+                    updatedStep.onFailureAction,
+                    transferFunction,
+                )
+            }
+            break
+        }
+        default:
+            break
+    }
+
+    if (updatedStep.nextAction) {
+        updatedStep.nextAction = transferStep(
+            updatedStep.nextAction,
+            transferFunction,
+        )
+    }
+
+    return updatedStep
+}
+
+
+function getAllSteps(step: Step): Step[] {
+    const steps: Step[] = []
+    transferStep(step, (currentStep) => {
+        steps.push(currentStep)
+        return currentStep
+    })
+    return steps
+}
+
 
 const traverseAndUpdateSubFlow = (
     updater: (s: Step) => void,
