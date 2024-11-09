@@ -3,16 +3,16 @@ import { t } from 'i18next';
 import { Fullscreen, Minus, Plus, RotateCw } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
-import { flowUtilConsts } from './consts';
-import { flowCanvasUtils } from './flow-canvas-utils';
-import { ApNode } from './types';
-
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
+
+import { flowUtilConsts } from './consts';
+import { flowCanvasUtils } from './flow-canvas-utils';
+import { ApNode } from './types';
 
 const duration = 200;
 const CanvasControls = ({

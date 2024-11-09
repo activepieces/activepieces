@@ -33,7 +33,6 @@ import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
-import { BranchSettings } from './branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
@@ -294,9 +293,6 @@ const StepSettingsContainer = () => {
                 )}
                 {modifiedStep.type === ActionType.CODE && (
                   <CodeSettings readonly={readonly}></CodeSettings>
-                )}
-                {modifiedStep.type === ActionType.BRANCH && (
-                  <BranchSettings readonly={readonly}></BranchSettings>
                 )}
                 {modifiedStep.type === ActionType.PIECE && modifiedStep && (
                   <PieceSettings
