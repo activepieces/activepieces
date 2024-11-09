@@ -1,4 +1,4 @@
-import { AdminAddPlatformRequestBody, PrincipalType, Step, RouterExecutionType, BranchExecutionType, RouterActionSettings, ALL_PRINCIPAL_TYPES, RouterAction, ActionType, flowStructureUtil } from '@activepieces/shared'
+import { AdminAddPlatformRequestBody, PrincipalType, Step, RouterExecutionType, BranchExecutionType, flowStructureUtil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { adminPlatformService } from './admin-platform.service'
@@ -30,7 +30,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
         for (const flowVersion of flowVersions) {
             const originalSize = flowStructureUtil.getAllSteps(flowVersion.trigger).length
-            const updated = await traverseAndUpdateSubFlow((step: any) => {
+            flowVersion.trigger = traverseAndUpdateSubFlow((step: any) => {
                 if (step.type === 'BRANCH') {
                     step.type = 'ROUTER'
                     step.settings = {
@@ -57,11 +57,11 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                     step.onSuccessAction = undefined
                     step.onFailureAction = undefined
                 }
-            }, flowVersion.trigger)
+            }, flowVersion.trigger)!
 
             const updatedStepsSize = flowStructureUtil.getAllSteps(flowVersion.trigger).length
             if (originalSize !== updatedStepsSize) {
-                throw new Error(`steps size mismatch for flow: ${flowVersion.displayName}`)
+                throw new Error(`steps size mismatch for flow: ${flowVersion.displayName} original: ${originalSize} updated: ${updatedStepsSize}`)
             }
             const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
             const hasBranchSteps = allSteps.some(s => (s as any).type === 'BRANCH')
@@ -72,8 +72,6 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                 ...flowVersion,
                 schemaVersion: '1',
             })
-
-
         }
 
         return res.status(StatusCodes.OK).send(flowVersions.length)
@@ -81,35 +79,39 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 }
 
 const traverseAndUpdateSubFlow = (
-    updater: (s: any) => void,
-    root?: any,
-): boolean => {
+    updater: (s: Step) => void,
+    root: Step | undefined,
+): any => {
     if (!root) {
-        return false
+        return undefined
     }
 
-    let updated = false
+    const clonedRoot = JSON.parse(JSON.stringify(root))
 
-    switch (root.type) {
+    switch (clonedRoot.type) {
         case 'ROUTER':
-            for (const branch of root.children) {
+            const updatedChildren: (Step | null)[] = []
+            for (const branch of clonedRoot.children) {
                 if (branch) {
                     const branchUpdated = traverseAndUpdateSubFlow(updater, branch)
-                    updated = updated || branchUpdated
+                    updatedChildren.push(branchUpdated ?? null)
+                }
+                else {
+                    updatedChildren.push(null)
                 }
             }
+            clonedRoot.children = updatedChildren
             break
         case 'BRANCH':
-            const successUpdated = traverseAndUpdateSubFlow(updater, root.onSuccessAction)
-            updated = updated || successUpdated
-            const failureUpdated = traverseAndUpdateSubFlow(updater, root.onFailureAction)
-            updated = updated || failureUpdated
-            updater(root)
-            updated = true
+            clonedRoot.onSuccessAction = clonedRoot.onSuccessAction ?
+                traverseAndUpdateSubFlow(updater, clonedRoot.onSuccessAction) : undefined
+            clonedRoot.onFailureAction = clonedRoot.onFailureAction ?
+                traverseAndUpdateSubFlow(updater, clonedRoot.onFailureAction) : undefined
+            updater(clonedRoot)
             break
         case 'LOOP_ON_ITEMS':
-            const loopUpdated = traverseAndUpdateSubFlow(updater, root.firstLoopAction)
-            updated = updated || loopUpdated
+            clonedRoot.firstLoopAction = clonedRoot.firstLoopAction ?
+                traverseAndUpdateSubFlow(updater, clonedRoot.firstLoopAction) : undefined
             break
         case 'PIECE':
         case 'PIECE_TRIGGER':
@@ -118,9 +120,10 @@ const traverseAndUpdateSubFlow = (
             break
     }
 
-    const nextUpdated = traverseAndUpdateSubFlow(updater, root.nextAction)
-    updated = updated || nextUpdated
-    return updated
+    clonedRoot.nextAction = clonedRoot.nextAction ?
+        traverseAndUpdateSubFlow(updater, clonedRoot.nextAction) : undefined
+
+    return clonedRoot
 }
 
 const AdminAddPlatformRequest = {
