@@ -66,7 +66,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                 throw new Error(`steps size mismatch for flow: ${flowVersion.displayName}`)
             }
             const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
-            const hasBranchSteps = allSteps.some(s => s.type === 'BRANCH')
+            const hasBranchSteps = allSteps.some(s => (s as any).type === 'BRANCH')
             if (hasBranchSteps) {
                 throw new Error(`flow ${flowVersion.displayName} still contains branch steps after migration`)
             }
@@ -84,7 +84,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
 const traverseAndUpdateSubFlow = (
     updater: (s: any) => void,
-    root?: Step,
+    root?: any,
 ): boolean => {
     if (!root) {
         return false
