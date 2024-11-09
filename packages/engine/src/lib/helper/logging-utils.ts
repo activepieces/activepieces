@@ -1,10 +1,11 @@
-import { isObject, StepOutput } from '@activepieces/shared'
+import { isObject, MAX_LOG_SIZE, StepOutput } from '@activepieces/shared'
 import { Queue } from '@datastructures-js/queue'
 import sizeof from 'object-sizeof'
 import PriorityQueue from 'priority-queue-typescript'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
-const MAX_SIZE_FOR_ALL_ENTRIES = 1024 * 1024
+const ERROR_OFFSET = 256 * 1024
+const MAX_SIZE_FOR_ALL_ENTRIES = MAX_LOG_SIZE - ERROR_OFFSET
 const SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER = sizeof(TRUNCATION_TEXT_PLACEHOLDER)
 const nonTruncatableKeys: Key[] = ['status', 'duration', 'type']
 
