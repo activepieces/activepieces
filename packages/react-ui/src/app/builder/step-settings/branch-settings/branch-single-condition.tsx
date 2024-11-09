@@ -12,7 +12,6 @@ import {
   BranchOperator,
   textConditions,
   singleValueConditions,
-  BranchAction,
   RouterAction,
 } from '@activepieces/shared';
 
@@ -63,7 +62,7 @@ type BranchSingleConditionProps = {
   conditionIndex: number;
   readonly: boolean;
   deleteClick: () => void;
-  fieldName: `settings.conditions` | `settings.branches[${number}].conditions`;
+  branchIndex: number;
 };
 
 const BranchSingleCondition = ({
@@ -72,12 +71,12 @@ const BranchSingleCondition = ({
   conditionIndex,
   showDelete,
   readonly,
-  fieldName,
+  branchIndex,
 }: BranchSingleConditionProps) => {
-  const form = useFormContext<BranchAction | RouterAction>();
+  const form = useFormContext<RouterAction>();
 
   const condition = form.getValues(
-    `${fieldName}.${groupIndex}.${conditionIndex}`,
+    `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`,
   );
 
   const isTextCondition =
@@ -86,7 +85,8 @@ const BranchSingleCondition = ({
     condition.operator && singleValueConditions.includes(condition?.operator);
   const isInvalid = isSingleValueCondition
     ? condition.firstValue.length === 0
-    : condition.firstValue.length === 0 || condition.secondValue?.length === 0;
+    : condition.firstValue.length === 0 ||
+      ('secondValue' in condition && condition.secondValue?.length === 0);
   return (
     <>
       <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ const BranchSingleCondition = ({
           })}
         >
           <FormField
-            name={`${fieldName}.${groupIndex}.${conditionIndex}.firstValue`}
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.firstValue`}
             control={form.control}
             render={({ field }) => {
               return (
@@ -128,7 +128,7 @@ const BranchSingleCondition = ({
             }}
           />
           <FormField
-            name={`${fieldName}.${groupIndex}.${conditionIndex}.operator`}
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.operator`}
             control={form.control}
             render={({ field }) => (
               <FormItem>
@@ -140,10 +140,11 @@ const BranchSingleCondition = ({
                   onChange={(e) => {
                     if (
                       isSingleValueCondition &&
-                      !singleValueConditions.includes(e)
+                      e !== null &&
+                      !singleValueConditions.includes(e as BranchOperator)
                     ) {
                       form.setValue(
-                        `${fieldName}.${groupIndex}.${conditionIndex}.secondValue`,
+                        `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
                         '',
                       );
                     }
@@ -156,7 +157,7 @@ const BranchSingleCondition = ({
           />
           {!isSingleValueCondition && (
             <FormField
-              name={`${fieldName}.${groupIndex}.${conditionIndex}.secondValue`}
+              name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`}
               control={form.control}
               render={({ field }) => (
                 <FormItem>
@@ -177,7 +178,7 @@ const BranchSingleCondition = ({
       <div className="flex justify-start items-center gap-2 mt-2">
         {isTextCondition && (
           <FormField
-            name={`${fieldName}.${groupIndex}.${conditionIndex}.caseSensitive`}
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.caseSensitive`}
             control={form.control}
             render={({ field }) => (
               <FormItem>

@@ -7,19 +7,21 @@ import { emptyCondition } from '@activepieces/shared';
 
 type BranchSettingsProps = {
   readonly: boolean;
-  fieldName?: 'settings.conditions' | `settings.branches[${number}].conditions`;
+  branchIndex: number;
 };
 
 const BranchSettings = React.memo(
-  ({ readonly, fieldName = 'settings.conditions' }: BranchSettingsProps) => {
+  ({ readonly, branchIndex }: BranchSettingsProps) => {
     const form = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
       control: form.control,
-      name: fieldName,
+      name: `settings.branches.${branchIndex}.conditions`,
     });
 
     const handleDelete = (groupIndex: number, conditionIndex: number) => {
-      const conditions = form.getValues(fieldName);
+      const conditions = form.getValues(
+        `settings.branches.${branchIndex}.conditions`,
+      );
       const newConditionsGroup = [...conditions[groupIndex]];
       const isSingleGroup = conditions.length === 1;
       const isSingleConditionInGroup = newConditionsGroup.length === 1;
@@ -35,7 +37,9 @@ const BranchSettings = React.memo(
     };
 
     const handleAnd = (groupIndex: number) => {
-      const conditions = form.getValues(fieldName);
+      const conditions = form.getValues(
+        `settings.branches.${branchIndex}.conditions`,
+      );
       conditions[groupIndex] = [...conditions[groupIndex], emptyCondition];
       update(groupIndex, conditions[groupIndex]);
     };
@@ -46,16 +50,12 @@ const BranchSettings = React.memo(
 
     return (
       <div className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
-        <div className="text-md ">
-          {fieldName === 'settings.conditions'
-            ? t('Continue If')
-            : t('Execute If')}
-        </div>
+        <div className="text-md ">{t('Execute If')}</div>
         {fields.map((fieldGroup, groupIndex) => (
           <BranchConditionGroup
             key={fieldGroup.id}
             readonly={readonly}
-            fieldName={fieldName}
+            branchIndex={branchIndex}
             numberOfGroups={fields.length}
             groupIndex={groupIndex}
             onAnd={() => handleAnd(groupIndex)}
