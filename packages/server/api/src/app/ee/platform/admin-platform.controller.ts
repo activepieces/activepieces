@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes'
 import { adminPlatformService } from './admin-platform.service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
-import { In, IsNull } from 'typeorm'
+import { In } from 'typeorm'
 
 export const adminPlatformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })
@@ -24,10 +24,8 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
         const flowVersions = await flowVersionRepo().find({
             where: {
-                schemaVersion: IsNull(),
-                ...(req.body.flowIds ? { flowId: In(req.body.flowIds) } : {}),
+                flowId: In(req.body.flowIds),
             },
-            take: req.body.limit,
         })
 
         for (const flowVersion of flowVersions) {
@@ -137,8 +135,7 @@ const AdminAddPlatformRequest = {
 const MigrateBranchToRouterRequest = {
     schema: {
         body: Type.Object({
-            flowIds: Type.Optional(Type.Array(Type.String())),
-            limit: Type.Optional(Type.Number({ default: 1000 })),
+            flowIds: Type.Array(Type.String()),
         }),
     },
     config: {
