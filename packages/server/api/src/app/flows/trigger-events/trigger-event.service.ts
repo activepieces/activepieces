@@ -10,10 +10,8 @@ import {
     PieceTrigger,
     PopulatedFlow,
     ProjectId,
-    sanitizeObjectForPostgresql,
     SeekPage,
     Trigger,
-    TriggerEvent,
     TriggerEventWithPayload,
     TriggerHookType,
     TriggerType,
@@ -21,12 +19,12 @@ import {
 import { engineRunner, webhookUtils } from 'server-worker'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { repoFactory } from '../../core/db/repo-factory'
+import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
-import { fileService } from '../../file/file.service'
 
 export const triggerEventRepo = repoFactory(TriggerEventEntity)
 
@@ -141,12 +139,16 @@ export const triggerEventService = {
             sourceName,
         })
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        const dataWithPayload = await Promise.all(data.map(async (triggerEvent) => ({
-            ...triggerEvent,
-            payload: await fileService.getDataOrThrow({
+        const dataWithPayload = await Promise.all(data.map(async (triggerEvent) => {
+            const fileData = await fileService.getDataOrThrow({
                 fileId: triggerEvent.fileId,
-            }),
-        })))
+            })
+            const decodedPayload = JSON.parse(fileData.data.toString())
+            return {
+                ...triggerEvent,
+                payload: decodedPayload,
+            }
+        }))
         return paginationHelper.createPage<TriggerEventWithPayload>(dataWithPayload, newCursor)
     },
 }

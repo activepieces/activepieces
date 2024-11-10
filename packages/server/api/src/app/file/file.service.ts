@@ -11,11 +11,11 @@ import {
     isNil,
     ProjectId,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { Equal, In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
-import dayjs from 'dayjs'
-import { In, LessThanOrEqual } from 'typeorm'
 
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
@@ -98,13 +98,13 @@ export const fileService = {
             const logsFileIds = await fileRepo().find({
                 select: ['id', 'created'],
                 where: {
-                    type,
+                    type: Equal(type),
                     created: LessThanOrEqual(retentionDateBoundary),
                 },
                 take: maximumFilesToDeletePerIteration,
             })
             const result = await fileRepo().delete({
-                type,
+                type: Equal(type),
                 created: LessThanOrEqual(retentionDateBoundary),
                 id: In(logsFileIds.map(log => log.id)),
             })
@@ -114,7 +114,10 @@ export const fileService = {
                 counts: affected,
             }, '[FileService#deleteStaleBulk] iteration completed')
         }
-    }
+        logger.info({
+            totalAffected,
+        }, '[FileService#deleteStaleBulk] completed')
+    },
 }
 
 type GetDataResponse = {
