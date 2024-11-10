@@ -414,9 +414,9 @@ export const flowService = {
                 projectId,
             })
 
-            await flowSideEffects.preDelete({
+            rejectedPromiseHandler(flowSideEffects.preDelete({
                 flowToDelete,
-            })
+            }))
 
             await flowRepo().delete({ id })
         }
