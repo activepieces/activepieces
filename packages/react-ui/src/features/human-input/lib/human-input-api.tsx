@@ -1,9 +1,9 @@
 import { api } from '@/lib/api';
 import {
   ChatUIResponse,
-  FileResponseInterface,
   FormResponse,
   USE_DRAFT_QUERY_PARAM_NAME,
+  HumanInputFormResult,
 } from '@activepieces/shared';
 
 export const humanInputApi = {
@@ -19,7 +19,7 @@ export const humanInputApi = {
   },
   submitForm: (formResult: FormResponse, useDraft: boolean, data: unknown) => {
     const suffix = getSuffix(useDraft, formResult.props.waitForResponse);
-    return api.post<FormResult | null>(
+    return api.post<HumanInputFormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
       data,
     );
@@ -38,7 +38,7 @@ export const humanInputApi = {
       formData.append(`file[${index}]`, file);
     });
     const suffix = getSuffix(useDraft, true);
-    return api.post<FormResult | null>(
+    return api.post<HumanInputFormResult | null>(
       `/v1/webhooks/${flowId}${suffix}`,
       formData,
       undefined,
@@ -63,19 +63,3 @@ type SendMessageParams = {
   files: File[];
   useDraft: boolean;
 };
-
-export type FormResult =
-  | {
-      type: FormResultTypes.FILE;
-      value: FileResponseInterface;
-    }
-  | {
-      type: FormResultTypes.MARKDOWN;
-      value: string;
-      files?: FileResponseInterface[];
-    };
-
-export enum FormResultTypes {
-  MARKDOWN = 'markdown',
-  FILE = 'file',
-}

@@ -40,17 +40,11 @@
     --success-100: 148 48% 90%;
     --success: 148 48% 46%;
     --success-300: 148 48% 40%;
-    --success-400: 153, 82%, 98%;
-    --success-500: 159, 60%, 86%;
-    --success-600: 164, 84%, 17%;
 
 
     --warning-100: 51.72, 93.55%, 93.92%;
     --warning: 47 96% 53%;
     --warning-300: 28 80% 31%;
-    --warning-400: 33, 73%, 97%;
-    --warning-500: 40, 93%, 89%;
-    --warning-600: 38, 100%, 26%;
 
     --add-button-shadow: 0px 0px 0px 6px hsl(var(--primary-100));
 
@@ -96,16 +90,11 @@
     --success-100: 166 97% 20%;
     --success: 166 97% 14%;
     --success-300: 166 97% 60%;
-    --success-400: 164, 44%, 9%;
-    --success-500: 161, 71%, 18%;
-    --success-600: 152, 63%, 77%;
+
 
     --warning-100: 51.72, 93.55%, 17.92%;
     --warning: 47 96% 53%;
     --warning-300: 52 96% 70%;
-    --warning-400: 40, 43%, 10%;
-    --warning-500: 38, 76%, 22%;
-    --warning-600: 48, 96%, 76%;
 
     --add-button-shadow: 0px 0px 0px 6px hsl(var(--primary-100) / 0.5);
 
