@@ -32,7 +32,7 @@ export const HumanInputFormResult = Type.Union([
         type: Type.Literal(HumanInputFormResultTypes.MARKDOWN),
         value: Type.String(),
         files: Type.Optional(Type.Array(FileResponseInterface)),
-    })
+    }),
 ])
 
 export type HumanInputFormResult = Static<typeof HumanInputFormResult>

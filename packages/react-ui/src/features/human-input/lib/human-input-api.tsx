@@ -1,7 +1,6 @@
 import { api } from '@/lib/api';
 import {
   ChatUIResponse,
-  FileResponseInterface,
   FormResponse,
   USE_DRAFT_QUERY_PARAM_NAME,
   HumanInputFormResult,
@@ -64,5 +63,3 @@ type SendMessageParams = {
   files: File[];
   useDraft: boolean;
 };
-
-

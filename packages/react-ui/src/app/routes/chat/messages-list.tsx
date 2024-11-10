@@ -48,7 +48,7 @@ const formatError = (
       return projectId ? (
         <span>
           No response from the chatbot. Ensure that{' '}
-          <strong>Respond on UI (Markdown)</strong> is the final step in{' '}
+          <strong>Respond on UI</strong> is in{' '}
           <a
             href={`/projects/${projectId}/flows/${flowId}`}
             className="text-primary underline"

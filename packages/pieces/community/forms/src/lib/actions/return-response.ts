@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { FileResponseInterface, MarkdownResponseInterface } from '@activepieces/shared';
+import { FileResponseInterface, HumanInputFormResult, HumanInputFormResultTypes } from '@activepieces/shared';
 import { StatusCodes } from 'http-status-codes';
 import mime from 'mime-types';
 
@@ -39,8 +39,8 @@ export const returnResponse = createAction({
         mimeType: mimeType || '',
       });
     }
-    const markdownResponseBody: MarkdownResponseInterface = {
-      type: 'markdown',
+    const markdownResponseBody: HumanInputFormResult = {
+      type: HumanInputFormResultTypes.MARKDOWN,
       value: propsValue.markdown ?? '',
       files: responseFiles,
     }
