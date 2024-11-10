@@ -66,19 +66,10 @@ export const webhookSideEffects = {
             flowVersionId,
         })
 
-        const response = await triggerHooks.disable({
+        await triggerHooks.disable({
             projectId,
             flowVersion,
             simulate: true,
         })
-
-        if (isNil(response) || response.status !== EngineResponseStatus.OK) {
-            throw new ActivepiecesError({
-                code: ErrorCode.TRIGGER_DISABLE,
-                params: {
-                    flowVersionId: flowVersion.id,
-                },
-            })
-        }
     },
 }
