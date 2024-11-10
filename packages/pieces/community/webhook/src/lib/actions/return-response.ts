@@ -17,15 +17,6 @@ export const returnResponse = createAction({
   displayName: 'Return Response',
   description: 'return a response',
   props: {
-    status: Property.Number({
-      displayName: 'Status',
-      required: false,
-      defaultValue: 200,
-    }),
-    headers: Property.Object({
-      displayName: 'Headers',
-      required: false,
-    }),
     responseType: Property.StaticDropdown({
       displayName: 'Response Type',
       required: false,
@@ -59,6 +50,18 @@ export const returnResponse = createAction({
 
         const fields: DynamicPropsValue = {};
 
+        if (bodyTypeInput !== ResponseType.REDIRECT) {
+          fields['status'] = Property.Number({
+            displayName: 'Status',
+            required: false,
+            defaultValue: 200,
+          });
+          fields['headers'] = Property.Object({
+            displayName: 'Headers',
+            required: false,
+          });
+        }
+
         switch (bodyTypeInput) {
           case ResponseType.JSON:
             fields['data'] = Property.Json({
@@ -85,9 +88,11 @@ export const returnResponse = createAction({
   },
 
   async run(context) {
-    const { status, body, responseType, headers } = context.propsValue;
+    const { body, responseType } = context.propsValue;
     const bodyInput = body['data'];
-
+    const headers = body['headers'];
+    const status = body['status'];
+    
     const response: StopResponse = {
       status: status ?? StatusCodes.OK,
       headers: (headers as Record<string, string>) ?? {},
@@ -101,8 +106,8 @@ export const returnResponse = createAction({
         response.body = bodyInput;
         break;
       case ResponseType.REDIRECT:
-        (response.status = StatusCodes.MOVED_PERMANENTLY),
-          (response.headers = { ...response.headers, Location: bodyInput });
+        response.status = StatusCodes.MOVED_PERMANENTLY;
+        response.headers = { ...response.headers, Location: bodyInput };
         break;
     }
 
