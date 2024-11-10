@@ -3,7 +3,7 @@ import { AxiosError } from 'axios';
 import { ArrowUpIcon, Paperclip } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useEffect, useRef, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
 import { LoadingScreen } from '@/app/components/loading-screen';
@@ -23,7 +23,9 @@ import {
   USE_DRAFT_QUERY_PARAM_NAME,
 } from '@activepieces/shared';
 
-import { ImageDialog } from './image-dialog';
+import NotFoundPage from '../404-page';
+
+import { ImageDialog } from './chat-message/image-dialog';
 import { Messages, MessagesList } from './messages-list';
 
 export function ChatPage() {
@@ -68,34 +70,41 @@ export function ChatPage() {
 
   const botName =
     chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`;
-
   const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
       if (!flowId || !chatId) return null;
+
+      // Get input and files based on whether we're retrying
       const savedInput = isRetrying ? previousInputRef.current : input;
       const savedFiles = isRetrying ? previousFilesRef.current : files;
+
+      // Save current values for potential retry
       previousInputRef.current = savedInput;
       previousFilesRef.current = savedFiles;
+
+      // Clear input fields
       setInput('');
       setFiles([]);
+
+      // Only add messages to UI if not retrying
       if (!isRetrying) {
-        const fileMessages: Messages = savedFiles.map((file) => {
-          const isImage = file.type.startsWith('image/');
-          return {
-            role: 'user' as const,
-            content: URL.createObjectURL(file),
-            type: isImage ? ('image' as const) : ('file' as const),
-            mimeType: file.type,
-            fileName: file.name,
-          };
-        });
+        // Convert files to message format
         setMessages([
           ...messages,
-          ...fileMessages,
-          { role: 'user', content: savedInput },
+          {
+            role: 'user',
+            textContent: savedInput,
+            files: savedFiles.map((file) => ({
+              url: URL.createObjectURL(file),
+              mimeType: file.type,
+            })),
+          },
         ]);
       }
+
       scrollToBottom();
+
+      // Send message to API
       return humanInputApi.sendMessage({
         flowId,
         chatId: chatId.current,
@@ -104,52 +113,59 @@ export function ChatPage() {
         useDraft,
       });
     },
+
     onSuccess: (result) => {
       if (!result) {
         setSendingError({
           code: ErrorCode.NO_CHAT_RESPONSE,
           params: {},
         });
-      } else if ('type' in result) {
+        return;
+      }
+
+      if ('type' in result) {
+        setSendingError(null);
+
         switch (result.type) {
-          case FormResultTypes.FILE:
+          case FormResultTypes.FILE: {
             if ('url' in result.value) {
-              const isImage = result.value.mimeType?.startsWith('image/');
-              setSendingError(null);
               setMessages([
                 ...messages,
                 {
                   role: 'bot',
-                  content: result.value.url,
-                  type: isImage ? 'image' : 'file',
-                  mimeType: result.value.mimeType,
+                  files: [
+                    {
+                      url: result.value.url,
+                      mimeType: result.value.mimeType,
+                    },
+                  ],
                 },
               ]);
             }
             break;
-          case FormResultTypes.MARKDOWN:
-            setSendingError(null);
+          }
+
+          case FormResultTypes.MARKDOWN: {
+            const validFiles = (result.files ?? []).filter(
+              (file) => 'url' in file && 'mimeType' in file,
+            );
+
             setMessages([
               ...messages,
-              { role: 'bot', content: result.value, type: 'text' as const },
-              ...(result.files ?? []).map((file) => {
-                const isImage =
-                  'mimeType' in file
-                    ? file.mimeType?.startsWith('image/')
-                    : false;
-                return {
-                  role: 'bot' as const,
-                  content: 'url' in file ? file.url : file.base64Url,
-                  type: isImage ? ('image' as const) : ('file' as const),
-                  mimeType: 'mimeType' in file ? file.mimeType : undefined,
-                  fileName: 'fileName' in file ? file.fileName : undefined,
-                };
-              }),
+              {
+                role: 'bot',
+                textContent: result.value,
+                files: validFiles.length > 0 ? validFiles : undefined,
+              },
             ]);
+            break;
+          }
         }
       }
+
       scrollToBottom();
     },
+
     onError: (error: AxiosError) => {
       setSendingError(error.response?.data as ApErrorParams);
       scrollToBottom();
@@ -189,7 +205,14 @@ export function ChatPage() {
     setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
 
-  if (!flowId || isLoadingError) return <Navigate to="/404" />;
+  if (!flowId || isLoadingError) {
+    return (
+      <NotFoundPage
+        title="Hmm... this chat isn't here"
+        description="The chat you're looking for isn't here or maybe hasn't been published by the owner yet"
+      />
+    );
+  }
 
   if (isLoading) return <LoadingScreen />;
 

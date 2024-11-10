@@ -9,7 +9,7 @@ import {
 } from '@activepieces/shared';
 
 const responseMarkdown = `
-This trigger sets up a chat interface. Ensure that **Respond on UI** action is set with **Markdown** as the response type in the final step of your flow.`;
+This trigger sets up a chat interface. Ensure that **Respond on UI** is used in your flow`;
 
 const markdown = `
 **Published Chat URL:**
@@ -31,12 +31,13 @@ export const onChatSubmission = createTrigger({
   displayName: 'Chat UI',
   description: 'Trigger the flow by sending a message',
   props: {
+    about: Property.MarkDown({
+      value: markdown,
+      variant: MarkdownVariant.BORDERLESS,
+    }),
     responseMarkdown: Property.MarkDown({
       value: responseMarkdown,
       variant: MarkdownVariant.WARNING,
-    }),
-    about: Property.MarkDown({
-      value: markdown,
     }),
     botName: Property.ShortText({
       displayName: 'Bot Name',

@@ -9,8 +9,17 @@ const FileResponseInterfaceV1 = Type.Object({
 const FileResponseInterfaceV2 = Type.Object({
     mimeType: Type.String(),
     url: Type.String(),
+    fileName: Type.Optional(Type.String()),
 })
 
 export const FileResponseInterface = Type.Union([FileResponseInterfaceV1, FileResponseInterfaceV2])
 
 export type FileResponseInterface = Static<typeof FileResponseInterface>
+
+export const MarkdownResponseInterface = Type.Object({
+    type: Type.Literal('markdown'),
+    value: Type.String(),
+    files: Type.Optional(Type.Array(FileResponseInterface)),
+})
+
+export type MarkdownResponseInterface = Static<typeof MarkdownResponseInterface>

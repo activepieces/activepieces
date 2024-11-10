@@ -104,9 +104,8 @@ function buildSchema(inputs: FormInputWithName[]) {
     ),
   };
 }
-const handleDownloadFile = (formResult: FormResult) => {
+const handleDownloadFile = (fileBase: FileResponseInterface) => {
   const link = document.createElement('a');
-  const fileBase = formResult.value as FileResponseInterface;
   if ('url' in fileBase) {
     link.href = fileBase.url;
   } else {
@@ -160,11 +159,17 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
       ),
     onSuccess: (formResult) => {
       switch (formResult?.type) {
-        case FormResultTypes.MARKDOWN:
+        case FormResultTypes.MARKDOWN: {
           setMarkdownResponse(formResult.value as string);
+          if (formResult.files) {
+            formResult.files.forEach((file) => {
+              handleDownloadFile(file as FileResponseInterface);
+            });
+          }
           break;
+        }
         case FormResultTypes.FILE:
-          handleDownloadFile(formResult);
+          handleDownloadFile(formResult.value as FileResponseInterface);
           break;
         default:
           toast({
