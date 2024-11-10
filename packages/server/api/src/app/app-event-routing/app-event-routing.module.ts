@@ -3,19 +3,12 @@ import { intercom } from '@activepieces/piece-intercom'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
-    JobType,
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    logger,
-    rejectedPromiseHandler,
-} from '@activepieces/server-shared'
-import {
-    ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
+    ActivepiecesError, ALL_PRINCIPAL_TYPES,
     apId,
     assertNotNullOrUndefined,
     ErrorCode,
-    GetFlowVersionForWorkerRequestType,
     isNil,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -83,29 +76,18 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             }
             const appName = pieceNames[pieceUrl]
             assertNotNullOrUndefined(piece.events, 'Event is possible in this piece')
-            const { reply, event, identifierValue } = piece.events.parseAndReply({
-                payload,
-            })
+            const { reply, event, identifierValue } = piece.events.parseAndReply({ payload })
             if (!isNil(reply)) {
-                logger.info(
-                    {
-                        reply,
-                        piece: pieceUrl,
-                    },
-                    '[AppEventRoutingController#event] reply',
-                )
-                return requestReply
-                    .status(StatusCodes.OK)
-                    .headers(reply?.headers ?? {})
-                    .send(reply?.body ?? {})
+                logger.info({
+                    reply,
+                    piece: pieceUrl,
+                }, '[AppEventRoutingController#event] reply')
+                return requestReply.status(StatusCodes.OK).headers(reply?.headers ?? {}).send(reply?.body ?? {})
             }
-            logger.info(
-                {
-                    event,
-                    identifierValue,
-                },
-                '[AppEventRoutingController#event] event',
-            )
+            logger.info({
+                event,
+                identifierValue,
+            }, '[AppEventRoutingController#event] event')
             if (isNil(event) || isNil(identifierValue)) {
                 return requestReply.status(StatusCodes.BAD_REQUEST).send({})
             }
@@ -126,14 +108,13 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         synchronousHandlerId: null,
                         payload,
                         flowId: listener.flowId,
-                        saveSampleData: false,
-                        flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                        simulate: false,
+                        useLatestFlowVersion: false,
                     },
                     priority: DEFAULT_PRIORITY,
                 })
             })
             rejectedPromiseHandler(Promise.all(eventsQueue))
             return requestReply.status(StatusCodes.OK).send({})
-        },
-    )
+        })
 }

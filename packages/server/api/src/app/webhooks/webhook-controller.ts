@@ -1,8 +1,4 @@
-import {
-    JobType,
-    LATEST_JOB_DATA_SCHEMA_VERSION,
-    logger,
-} from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -13,7 +9,6 @@ import {
     Flow,
     FlowId,
     FlowStatus,
-    GetFlowVersionForWorkerRequestType,
     isMultipartFile,
     isNil,
     WebhookUrlParams,
@@ -28,56 +23,44 @@ import { flowService } from '../flows/flow/flow.service'
 import { webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
 import { flowQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
-import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
-    app.all(
-        '/:flowId/sync',
-        WEBHOOK_PARAMS,
-        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            const response = await handleWebhook({
-                request,
-                flowId: request.params.flowId,
-                async: false,
-                flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
-                saveSampleData: await webhookSimulationService.exists(
-                    request.params.flowId,
-                ),
-            })
-            await reply
-                .status(response.status)
-                .headers(response.headers)
-                .send(response.body)
-        },
-    )
 
-    app.all(
-        '/:flowId',
-        WEBHOOK_PARAMS,
-        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
-            const response = await handleWebhook({
-                request,
-                flowId: request.params.flowId,
-                async: true,
-                saveSampleData: await webhookSimulationService.exists(
-                    request.params.flowId,
-                ),
-                flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
-            })
-            await reply
-                .status(response.status)
-                .headers(response.headers)
-                .send(response.body)
-        },
-    )
+    app.all('/:flowId/sync', WEBHOOK_PARAMS, async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+        const response = await handleWebhook({
+            request,
+            flowId: request.params.flowId,
+            async: false,
+            simulate: false,
+            useLatestFlowVersion: false,
+        })
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
+
+    app.all('/:flowId', WEBHOOK_PARAMS, async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+        const response = await handleWebhook({
+            request,
+            flowId: request.params.flowId,
+            async: true,
+            simulate: false,
+            useLatestFlowVersion: false,
+        })
+        await reply
+            .status(response.status)
+            .headers(response.headers)
+            .send(response.body)
+    })
 
     app.all('/:flowId/draft/sync', WEBHOOK_PARAMS, async (request, reply) => {
         const response = await handleWebhook({
             request,
             flowId: request.params.flowId,
             async: false,
-            saveSampleData: true,
-            flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST,
+            simulate: false,
+            useLatestFlowVersion: true,
         })
         await reply
             .status(response.status)
@@ -90,8 +73,8 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             request,
             flowId: request.params.flowId,
             async: true,
-            saveSampleData: true,
-            flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST,
+            simulate: false,
+            useLatestFlowVersion: true,
         })
         await reply
             .status(response.status)
@@ -104,14 +87,15 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             request,
             flowId: request.params.flowId,
             async: true,
-            saveSampleData: true,
-            flowVersionToRun: undefined,
+            simulate: true,
+            useLatestFlowVersion: true,
         })
         await reply
             .status(response.status)
             .headers(response.headers)
             .send(response.body)
-    })
+    },
+    )
 
     // @deprecated this format was changed in early 2023 to include flowId in the path
     app.all('/', WEBHOOK_QUERY_PARAMS, async (request, reply) => {
@@ -119,8 +103,8 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             request,
             flowId: request.query.flowId,
             async: true,
-            saveSampleData: true,
-            flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+            simulate: false,
+            useLatestFlowVersion: false,
         })
         await reply
             .status(response.status)
@@ -129,25 +113,11 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
-async function handleWebhook({
-    request,
-    flowId,
-    async,
-    saveSampleData,
-    flowVersionToRun,
-}: {
-    request: FastifyRequest
-    flowId: string
-    async: boolean
-    saveSampleData: boolean
-    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
-}): Promise<EngineHttpResponse> {
+async function handleWebhook({ request, flowId, async, simulate, useLatestFlowVersion }: { request: FastifyRequest, flowId: string, async: boolean, simulate: boolean, useLatestFlowVersion: boolean }): Promise<EngineHttpResponse> {
     const flow = await getFlowOrThrow(flowId)
     const payload = await convertRequest(request, flow.projectId, flow.id)
     const requestId = apId()
-    const synchronousHandlerId = async
-        ? null
-        : webhookResponseWatcher.getServerId()
+    const synchronousHandlerId = async ? null : webhookResponseWatcher.getServerId()
     if (isNil(flow)) {
         return {
             status: StatusCodes.GONE,
@@ -155,11 +125,7 @@ async function handleWebhook({
             headers: {},
         }
     }
-    if (
-        flow.status !== FlowStatus.ENABLED &&
-    !saveSampleData &&
-    flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED
-    ) {
+    if (flow.status !== FlowStatus.ENABLED && !simulate && !useLatestFlowVersion) {
         return {
             status: StatusCodes.NOT_FOUND,
             body: {},
@@ -176,8 +142,8 @@ async function handleWebhook({
             synchronousHandlerId,
             payload,
             flowId: flow.id,
-            saveSampleData,
-            flowVersionToRun,
+            simulate,
+            useLatestFlowVersion,
         },
         priority: await getJobPriority(flow.projectId, synchronousHandlerId),
     })
@@ -191,11 +157,7 @@ async function handleWebhook({
     return webhookResponseWatcher.oneTimeListener(requestId, true)
 }
 
-async function convertRequest(
-    request: FastifyRequest,
-    projectId: string,
-    flowId: string,
-): Promise<EventPayload> {
+async function convertRequest(request: FastifyRequest, projectId: string, flowId: string): Promise<EventPayload> {
     const payload: EventPayload = {
         method: request.method,
         headers: request.headers as Record<string, string>,
@@ -205,11 +167,7 @@ async function convertRequest(
     return payload
 }
 
-const convertBody = async (
-    request: FastifyRequest,
-    projectId: string,
-    flowId: string,
-): Promise<unknown> => {
+const convertBody = async (request: FastifyRequest, projectId: string, flowId: string): Promise<unknown> => {
     if (request.isMultipart()) {
         const jsonResult: Record<string, unknown> = {}
         const requestBodyEntries = Object.entries(
@@ -218,16 +176,12 @@ const convertBody = async (
 
         for (const [key, value] of requestBodyEntries) {
             if (isMultipartFile(value)) {
-                const file = await stepFileService.saveAndEnrich(
-                    {
-                        file: value.data as Buffer,
-                        fileName: value.filename,
-                        stepName: 'trigger',
-                        flowId,
-                    },
-                    request.hostname,
-                    projectId,
-                )
+                const file = await stepFileService.saveAndEnrich({
+                    file: value.data as Buffer,
+                    fileName: value.filename,
+                    stepName: 'trigger',
+                    flowId,
+                }, request.hostname, projectId)
                 jsonResult[key] = file.url
             }
             else {

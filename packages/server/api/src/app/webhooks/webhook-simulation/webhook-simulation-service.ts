@@ -6,9 +6,7 @@ import {
     FlowId,
     FlowVersionId,
     isNil,
-    ProjectId,
-    WebhookSimulation,
-} from '@activepieces/shared'
+    ProjectId, WebhookSimulation } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock } from '../../helper/lock'
 import { WebhookSimulationEntity } from './webhook-simulation-entity'
@@ -36,7 +34,9 @@ const createLock = async ({ flowId }: AcquireLockParams): Promise<ApLock> => {
     return distributedLock.acquireLock({ key, timeout: 5000 })
 }
 
-const webhookSimulationRepo = repoFactory(WebhookSimulationEntity)
+const webhookSimulationRepo = repoFactory(
+    WebhookSimulationEntity,
+)
 
 export const webhookSimulationService = {
     async create(params: CreateParams): Promise<WebhookSimulation> {
@@ -79,12 +79,6 @@ export const webhookSimulationService = {
             await lock.release()
         }
     },
-    async exists(flowId: FlowId): Promise<boolean> {
-        const webhookSimulation = await webhookSimulationRepo().findOneBy({
-            flowId,
-        })
-        return !isNil(webhookSimulation)
-    },
     async get(params: GetParams): Promise<WebhookSimulation | null> {
         logger.debug(params, '[WebhookSimulationService#getByFlowId] params')
 
@@ -98,7 +92,7 @@ export const webhookSimulationService = {
     async getOrThrow(params: GetParams): Promise<WebhookSimulation> {
         const webhookSimulation = await this.get(params)
         const { flowId, projectId } = params
-
+        
         if (isNil(webhookSimulation)) {
             logger.debug('[WebhookSimulationService#getByFlowId] not found')
             throw new ActivepiecesError({
@@ -110,7 +104,7 @@ export const webhookSimulationService = {
         }
         return webhookSimulation
     },
-    
+
     async delete(params: DeleteParams): Promise<void> {
         logger.debug(params, '[WebhookSimulationService#deleteByFlowId] params')
 
