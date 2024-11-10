@@ -51,10 +51,10 @@ export const BranchLabel = (props: BaseBranchLabel) => {
 
   const isFallbackBranch =
     props.stepLocationRelativeToParent ===
-    StepLocationRelativeToParent.INSIDE_BRANCH &&
+      StepLocationRelativeToParent.INSIDE_BRANCH &&
     step?.type === ActionType.ROUTER &&
     step?.settings.branches[props.branchIndex]?.branchType ===
-    BranchExecutionType.FALLBACK;
+      BranchExecutionType.FALLBACK;
   const isNotInsideRoute =
     props.stepLocationRelativeToParent !==
     StepLocationRelativeToParent.INSIDE_BRANCH;
@@ -62,14 +62,11 @@ export const BranchLabel = (props: BaseBranchLabel) => {
   const isBranchSelected =
     selectedStep === props.sourceNodeName &&
     props.stepLocationRelativeToParent ===
-    StepLocationRelativeToParent.INSIDE_BRANCH &&
+      StepLocationRelativeToParent.INSIDE_BRANCH &&
     props.branchIndex === selectedBranchIndex;
   const { fitView } = useReactFlow();
 
-  if (
-    isNil(step) ||
-    (step.type !== ActionType.ROUTER)
-  ) {
+  if (isNil(step) || step.type !== ActionType.ROUTER) {
     return <></>;
   }
 
@@ -98,7 +95,7 @@ export const BranchLabel = (props: BaseBranchLabel) => {
           onClick={() => {
             if (
               props.stepLocationRelativeToParent ===
-              StepLocationRelativeToParent.INSIDE_BRANCH &&
+                StepLocationRelativeToParent.INSIDE_BRANCH &&
               !isBranchNonInteractive
             ) {
               selectStepByName(props.sourceNodeName);
@@ -145,7 +142,7 @@ export const BranchLabel = (props: BaseBranchLabel) => {
                             branchIndex: props.branchIndex,
                           },
                         },
-                        () => { },
+                        () => {},
                       );
                       selectStepByName(props.sourceNodeName);
                     }}
@@ -170,7 +167,7 @@ export const BranchLabel = (props: BaseBranchLabel) => {
                             branchIndex: props.branchIndex,
                           },
                         },
-                        () => { },
+                        () => {},
                       );
                       setSelectedBranchIndex(props.branchIndex + 1);
                     }}
