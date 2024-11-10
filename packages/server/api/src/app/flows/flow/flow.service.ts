@@ -155,7 +155,7 @@ export const flowService = {
         projectId,
         versionId,
         removeConnectionsName = false,
-        removeSampleData = false,   
+        removeSampleData = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
         const flow = await flowRepo(entityManager).findOneBy({
@@ -414,9 +414,9 @@ export const flowService = {
                 projectId,
             })
 
-            await flowSideEffects.preDelete({
+            rejectedPromiseHandler(flowSideEffects.preDelete({
                 flowToDelete,
-            })
+            }))
 
             await flowRepo().delete({ id })
         }
