@@ -26,24 +26,11 @@ type BaseBranchLabel = {
   label: string;
   targetNodeName: string;
   sourceNodeName: string;
-};
-
-// Type for numbered branches (e.g. in a router)
-type NumberedBranch = BaseBranchLabel & {
   stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
   branchIndex: number;
 };
 
-// Type for true/false branches (e.g. in conditions)
-type ConditionalBranch = BaseBranchLabel & {
-  stepLocationRelativeToParent:
-    | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
-    | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
-};
-
-export type BranchLabelProps = NumberedBranch | ConditionalBranch;
-
-export const BranchLabel = (props: BranchLabelProps) => {
+export const BranchLabel = (props: BaseBranchLabel) => {
   const [
     selectedStep,
     selectedBranchIndex,
@@ -64,10 +51,10 @@ export const BranchLabel = (props: BranchLabelProps) => {
 
   const isFallbackBranch =
     props.stepLocationRelativeToParent ===
-      StepLocationRelativeToParent.INSIDE_BRANCH &&
+    StepLocationRelativeToParent.INSIDE_BRANCH &&
     step?.type === ActionType.ROUTER &&
     step?.settings.branches[props.branchIndex]?.branchType ===
-      BranchExecutionType.FALLBACK;
+    BranchExecutionType.FALLBACK;
   const isNotInsideRoute =
     props.stepLocationRelativeToParent !==
     StepLocationRelativeToParent.INSIDE_BRANCH;
@@ -75,13 +62,13 @@ export const BranchLabel = (props: BranchLabelProps) => {
   const isBranchSelected =
     selectedStep === props.sourceNodeName &&
     props.stepLocationRelativeToParent ===
-      StepLocationRelativeToParent.INSIDE_BRANCH &&
+    StepLocationRelativeToParent.INSIDE_BRANCH &&
     props.branchIndex === selectedBranchIndex;
   const { fitView } = useReactFlow();
 
   if (
     isNil(step) ||
-    (step.type !== ActionType.BRANCH && step.type !== ActionType.ROUTER)
+    (step.type !== ActionType.ROUTER)
   ) {
     return <></>;
   }
@@ -111,7 +98,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
           onClick={() => {
             if (
               props.stepLocationRelativeToParent ===
-                StepLocationRelativeToParent.INSIDE_BRANCH &&
+              StepLocationRelativeToParent.INSIDE_BRANCH &&
               !isBranchNonInteractive
             ) {
               selectStepByName(props.sourceNodeName);
@@ -158,7 +145,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
                             branchIndex: props.branchIndex,
                           },
                         },
-                        () => {},
+                        () => { },
                       );
                       selectStepByName(props.sourceNodeName);
                     }}
@@ -183,7 +170,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
                             branchIndex: props.branchIndex,
                           },
                         },
-                        () => {},
+                        () => { },
                       );
                       setSelectedBranchIndex(props.branchIndex + 1);
                     }}

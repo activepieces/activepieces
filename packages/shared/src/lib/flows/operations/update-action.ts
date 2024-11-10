@@ -49,17 +49,7 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
                 }
                 break
             }
-            case ActionType.BRANCH: {
-                updatedAction = {
-                    ...baseProps,
-                    settings: request.settings,
-                    type: ActionType.BRANCH,
-                    nextAction: stepToUpdate.nextAction,
-                    onSuccessAction: 'onSuccessAction' in stepToUpdate ? stepToUpdate.onSuccessAction : undefined,
-                    onFailureAction: 'onFailureAction' in stepToUpdate ? stepToUpdate.onFailureAction : undefined,
-                }
-                break
-            }
+          
             case ActionType.ROUTER: {
                 updatedAction = {
                     ...baseProps,
