@@ -34,11 +34,10 @@ const Container = ({
 }) => {
   return (
     <Alert
-      className={cn('rounded-md border-none', {
-        'p-0': variant === MarkdownVariant.BORDERLESS,
+      className={cn('rounded-md border', {
         'bg-warning-100 text-warning-300': variant === MarkdownVariant.WARNING,
         'bg-success-100 text-success-300': variant === MarkdownVariant.TIP,
-        'bg-background': variant === MarkdownVariant.BORDERLESS,
+        'p-0 bg-background border-none': variant === MarkdownVariant.BORDERLESS,
       })}
     >
       {variant !== MarkdownVariant.BORDERLESS && (
