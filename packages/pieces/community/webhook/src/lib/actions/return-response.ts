@@ -106,6 +106,8 @@ export const returnResponse = createAction({
         response.body = bodyInput;
         break;
       case ResponseType.REDIRECT:
+        response.status = StatusCodes.MOVED_PERMANENTLY;
+        response.headers = { ...response.headers, Location: bodyInput };
         break;
     }
 
