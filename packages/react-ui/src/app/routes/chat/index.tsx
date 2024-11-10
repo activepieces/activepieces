@@ -11,7 +11,6 @@ import { FileInputPreview } from '@/app/routes/chat/file-input-preview';
 import { Button } from '@/components/ui/button';
 import { ChatInput } from '@/components/ui/chat/chat-input';
 import {
-  FormResultTypes,
   humanInputApi,
 } from '@/features/human-input/lib/human-input-api';
 import { cn } from '@/lib/utils';
@@ -21,6 +20,7 @@ import {
   ErrorCode,
   isNil,
   USE_DRAFT_QUERY_PARAM_NAME,
+  HumanInputFormResultTypes,
 } from '@activepieces/shared';
 
 import NotFoundPage from '../404-page';
@@ -127,7 +127,7 @@ export function ChatPage() {
         setSendingError(null);
 
         switch (result.type) {
-          case FormResultTypes.FILE: {
+          case HumanInputFormResultTypes.FILE: {
             if ('url' in result.value) {
               setMessages([
                 ...messages,
@@ -145,7 +145,7 @@ export function ChatPage() {
             break;
           }
 
-          case FormResultTypes.MARKDOWN: {
+          case HumanInputFormResultTypes.MARKDOWN: {
             const validFiles = (result.files ?? []).filter(
               (file) => 'url' in file && 'mimeType' in file,
             );

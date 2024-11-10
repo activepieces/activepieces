@@ -29,12 +29,12 @@ import {
   FormInput,
   FormInputType,
   FormResponse,
+  HumanInputFormResultTypes,
+  HumanInputFormResult,
 } from '@activepieces/shared';
 
 import { Checkbox } from '../../../components/ui/checkbox';
 import {
-  FormResult,
-  FormResultTypes,
   humanInputApi,
 } from '../lib/human-input-api';
 
@@ -150,7 +150,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
     resolver: typeboxResolver(schema.properties),
   });
 
-  const { mutate, isPending } = useMutation<FormResult | null, Error>({
+  const { mutate, isPending } = useMutation<HumanInputFormResult | null, Error>({
     mutationFn: async () =>
       humanInputApi.submitForm(
         form,
@@ -159,7 +159,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
       ),
     onSuccess: (formResult) => {
       switch (formResult?.type) {
-        case FormResultTypes.MARKDOWN: {
+        case HumanInputFormResultTypes.MARKDOWN: {
           setMarkdownResponse(formResult.value as string);
           if (formResult.files) {
             formResult.files.forEach((file) => {
@@ -168,7 +168,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
           }
           break;
         }
-        case FormResultTypes.FILE:
+        case HumanInputFormResultTypes.FILE:
           handleDownloadFile(formResult.value as FileResponseInterface);
           break;
         default:

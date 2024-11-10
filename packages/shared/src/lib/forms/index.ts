@@ -16,10 +16,23 @@ export const FileResponseInterface = Type.Union([FileResponseInterfaceV1, FileRe
 
 export type FileResponseInterface = Static<typeof FileResponseInterface>
 
-export const MarkdownResponseInterface = Type.Object({
-    type: Type.Literal('markdown'),
-    value: Type.String(),
-    files: Type.Optional(Type.Array(FileResponseInterface)),
-})
 
-export type MarkdownResponseInterface = Static<typeof MarkdownResponseInterface>
+
+export enum HumanInputFormResultTypes {
+    FILE = 'file',
+    MARKDOWN = 'markdown',
+}
+
+export const HumanInputFormResult = Type.Union([
+    Type.Object({
+        type: Type.Literal(HumanInputFormResultTypes.FILE),
+        value: FileResponseInterface,
+    }),
+    Type.Object({
+        type: Type.Literal(HumanInputFormResultTypes.MARKDOWN),
+        value: Type.String(),
+        files: Type.Optional(Type.Array(FileResponseInterface)),
+    })
+])
+
+export type HumanInputFormResult = Static<typeof HumanInputFormResult>
