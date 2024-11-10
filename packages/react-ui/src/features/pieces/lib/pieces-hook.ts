@@ -178,7 +178,6 @@ export const piecesHooks = {
             }
             case ActionType.CODE:
             case ActionType.LOOP_ON_ITEMS:
-            case ActionType.BRANCH:
             case ActionType.ROUTER:
               return getCoreActions(stepMetadata.type);
             default:
@@ -218,11 +217,7 @@ function passSearch(
 }
 
 export function getCoreActions(
-  type:
-    | ActionType.BRANCH
-    | ActionType.LOOP_ON_ITEMS
-    | ActionType.CODE
-    | ActionType.ROUTER,
+  type: ActionType.LOOP_ON_ITEMS | ActionType.CODE | ActionType.ROUTER,
 ) {
   switch (type) {
     case ActionType.CODE:
@@ -249,16 +244,6 @@ export function getCoreActions(
         {
           name: 'router',
           displayName: t('Router'),
-          description: t(
-            'Split your flow into branches depending on condition(s)',
-          ),
-        },
-      ];
-    case ActionType.BRANCH:
-      return [
-        {
-          name: 'branch',
-          displayName: t('Branch'),
           description: t(
             'Split your flow into branches depending on condition(s)',
           ),

@@ -4,7 +4,6 @@ import {
 } from '@activepieces/pieces-framework'
 import {
     ActionType,
-    BranchActionSettingsWithValidation,
     FlowOperationRequest,
     FlowOperationType,
     isNil,
@@ -19,7 +18,6 @@ import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
-const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettings)
 const routerSettingsValidator = TypeCompiler.Compile(RouterActionSettingsWithValidation)
 
@@ -36,11 +34,6 @@ export const flowVersionValidationUtil = {
                 switch (clonedRequest.request.action.type) {
                     case ActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.action.valid = loopSettingsValidator.Check(
-                            clonedRequest.request.action.settings,
-                        )
-                        break
-                    case ActionType.BRANCH:
-                        clonedRequest.request.action.valid = branchSettingsValidator.Check(
                             clonedRequest.request.action.settings,
                         )
                         break
@@ -65,11 +58,6 @@ export const flowVersionValidationUtil = {
                 switch (clonedRequest.request.type) {
                     case ActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.valid = loopSettingsValidator.Check(
-                            clonedRequest.request.settings,
-                        )
-                        break
-                    case ActionType.BRANCH:
-                        clonedRequest.request.valid = branchSettingsValidator.Check(
                             clonedRequest.request.settings,
                         )
                         break

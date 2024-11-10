@@ -1,4 +1,4 @@
-import { Action, ActionErrorHandlingOptions, ActionType, BranchAction, BranchCondition, BranchExecutionType, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType, RouterExecutionType } from '@activepieces/shared'
+import { Action, ActionErrorHandlingOptions, ActionType, BranchCondition, BranchExecutionType, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType, RouterExecutionType } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 import { VariableService } from '../../src/lib/variables/variable-service'
 
@@ -78,24 +78,6 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
         valid: true,
     }
 }
-
-export function buildActionWithOneCondition({ condition, onSuccessAction, onFailureAction }: { condition: BranchCondition, onSuccessAction?: Action, onFailureAction?: Action }): BranchAction {
-    return {
-        name: 'branch',
-        displayName: 'Your Branch Name',
-        type: ActionType.BRANCH,
-        settings: {
-            inputUiInfo: {},
-            conditions: [
-                [condition],
-            ],
-        },
-        onFailureAction,
-        onSuccessAction,
-        valid: true,
-    }
-}
-
 
 export function buildCodeAction({ name, input, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1', input: Record<string, unknown>, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: Action }): CodeAction {
     return {

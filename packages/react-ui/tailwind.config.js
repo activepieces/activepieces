@@ -33,9 +33,6 @@ module.exports = {
           DEFAULT: 'hsl(var(--warning))',
           100: 'hsl(var(--warning-100))',
           300: 'hsl(var(--warning-300))',
-          400: 'hsl(var(--warning-400))',
-          500: 'hsl(var(--warning-500))',
-          600: 'hsl(var(--warning-600))',
         },
         border: {
           DEFAULT: 'hsl(var(--border))',
@@ -54,9 +51,6 @@ module.exports = {
           DEFAULT: 'hsl(var(--success))',
           100: 'hsl(var(--success-100))',
           300: 'hsl(var(--success-300))',
-          400: 'hsl(var(--success-400))',
-          500: 'hsl(var(--success-500))',
-          600: 'hsl(var(--success-600))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
