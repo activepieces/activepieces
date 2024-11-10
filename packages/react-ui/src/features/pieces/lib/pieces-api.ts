@@ -38,12 +38,6 @@ export const CORE_STEP_METADATA: Record<
     description: 'Iterate over a list of items',
     type: ActionType.LOOP_ON_ITEMS as const,
   },
-  [ActionType.BRANCH]: {
-    displayName: t('Branch'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
-    description: t('Split your flow into branches depending on condition(s)'),
-    type: ActionType.BRANCH as const,
-  },
   [ActionType.ROUTER]: {
     displayName: 'Router',
     logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
@@ -101,7 +95,6 @@ export const piecesApi = {
   },
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
     switch (step.type) {
-      case ActionType.BRANCH:
       case ActionType.ROUTER:
       case ActionType.LOOP_ON_ITEMS:
       case ActionType.CODE:

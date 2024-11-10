@@ -1,27 +1,45 @@
 import { t } from 'i18next';
+import { LucideIcon, SearchX } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 
-const NotFoundPage: React.FC = () => {
+interface NotFoundPageProps {
+  title?: string;
+  description?: string;
+  showHomeButton?: boolean;
+  buttonText?: string;
+  icon?: LucideIcon;
+}
+
+const NotFoundPage: React.FC<NotFoundPageProps> = ({
+  title = 'Oops! Page Not Found',
+  description = "The page you're looking for isn't here. Want to try going back home?",
+  showHomeButton = true,
+  buttonText = 'Go Home',
+  icon: Icon = SearchX,
+}) => {
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-8 lg:px-6 lg:py-16">
+    <div className="mx-auto max-w-screen-xl px-4 py-8 lg:px-6 lg:py-16 bg-background">
       <div className="mx-auto max-w-screen-sm text-center">
-        <h1 className="mb-4 text-7xl font-extrabold tracking-tight text-primary lg:text-9xl">
-          404
-        </h1>
-        <p className="mb-4 text-3xl font-bold tracking-tight text-muted-foreground md:text-4xl">
-          {t("Something's missing.")}
+        <div className="mx-auto mb-8 flex justify-center">
+          <Icon className="h-24 w-24" />
+        </div>
+        <p className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+          {t(title)}
         </p>
-        <p className="mb-4 text-lg font-light text-muted-foreground">
-          {t(
-            "Sorry, we can't find that page. You'll find lots to explore on the home page.",
-          )}
+
+        <p className="mb-4 text-lg font-light text-foreground">
+          {t(description)}
         </p>
-        <Link to="/flows">
-          <Button size="lg">{t('Back to Homepage')}</Button>
-        </Link>
+        {showHomeButton && (
+          <Link to="/flows">
+            <Button size="lg" variant={'default'}>
+              {t(buttonText)}
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );

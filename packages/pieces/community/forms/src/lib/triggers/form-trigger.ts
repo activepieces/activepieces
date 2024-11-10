@@ -3,7 +3,10 @@ import {
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import {
+  MarkdownVariant,
+  USE_DRAFT_QUERY_PARAM_NAME,
+} from '@activepieces/shared';
 
 const markdown = `**Published Form URL:**
 \`\`\`text
@@ -18,9 +21,8 @@ Use this for production, views the published version of the form.
 \`\`\`
 Use this to generate sample data, views the draft version of the form (the one you are editing now).
 `;
-
 const responseMarkdown = `
-If **Wait for Response** is enabled, ensure the last step in the flow is either **Respond on UI (Markdown)** or **Respond on UI (File)**.
+If **Wait for Response** is enabled, use **Respond on UI** in your flow to provide a response back to the form.
 `;
 
 export const onFormSubmission = createTrigger({
@@ -30,14 +32,16 @@ export const onFormSubmission = createTrigger({
   props: {
     about: Property.MarkDown({
       value: markdown,
+      variant: MarkdownVariant.BORDERLESS,
+    }),
+    response: Property.MarkDown({
+      value: responseMarkdown,
+      variant: MarkdownVariant.WARNING,
     }),
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
       defaultValue: false,
       required: true,
-    }),
-    response: Property.MarkDown({
-      value: responseMarkdown,
     }),
     inputs: Property.Array({
       displayName: 'Inputs',

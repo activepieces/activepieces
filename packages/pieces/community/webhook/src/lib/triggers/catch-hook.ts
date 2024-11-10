@@ -4,25 +4,26 @@ import {
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { assertNotNullOrUndefined, MarkdownVariant } from '@activepieces/shared';
 
-const message = `**Live URL:**
+const liveMarkdown = `**Live URL:**
 \`\`\`text
 {{webhookUrl}}
 \`\`\`
-triggers the flow and **does NOT** generate sample data.
-<br>
-<br>
+generate sample data & triggers published flow.
+
+`;
+
+const testMarkdown = `
 **Test URL:**
-\`\`\`text
-{{webhookUrl}}/test
-\`\`\`
-generates sample data and **does NOT** trigger the flow.
-<br>
-<br>
-**Synchronous Requests:**
- 
-If you expect a response from this webhook, add /sync to the end of the URL. 
+
+if you want to generate sample data without triggering the flow, append \`/test\` to your webhook URL.
+
+`;
+
+const syncMarkdown = `**Synchronous Requests:**
+
+If you expect a response from this webhook, add \`/sync\` to the end of the URL. 
 If it takes more than 30 seconds, it will return a 408 Request Timeout response.
 
 To return data, add an HTTP step to your flow with the Return Response action.
@@ -39,8 +40,17 @@ export const catchWebhook = createTrigger({
   description:
     'Receive incoming HTTP/webhooks using any HTTP method such as GET, POST, PUT, DELETE, etc.',
   props: {
-    markdown: Property.MarkDown({
-      value: message,
+    liveMarkdown: Property.MarkDown({
+      value: liveMarkdown,
+      variant: MarkdownVariant.BORDERLESS,
+    }),
+    syncMarkdown: Property.MarkDown({
+      value: syncMarkdown,
+      variant: MarkdownVariant.INFO,
+    }),
+    testMarkdown: Property.MarkDown({
+      value: testMarkdown,
+      variant: MarkdownVariant.INFO,
     }),
     authType: Property.StaticDropdown<AuthType>({
       displayName: 'Authentication',
