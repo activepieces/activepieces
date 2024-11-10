@@ -69,7 +69,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
           branchIndex: index,
         },
       },
-      () => {},
+      () => { },
     );
 
     setSelectedBranchIndex(null);
@@ -182,7 +182,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                     branchIndex: index,
                   },
                 },
-                () => {},
+                () => { },
               );
               setSelectedBranchIndex(index + 1);
             }}
@@ -216,7 +216,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                         branchName: `Branch ${step.settings.branches.length}`,
                       },
                     },
-                    () => {},
+                    () => { },
                   );
 
                   insert(

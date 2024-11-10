@@ -37,8 +37,8 @@ type NumberedBranch = BaseBranchLabel & {
 // Type for true/false branches (e.g. in conditions)
 type ConditionalBranch = BaseBranchLabel & {
   stepLocationRelativeToParent:
-    | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
-    | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
+  | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
+  | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
 };
 
 export type BranchLabelProps = NumberedBranch | ConditionalBranch;
@@ -62,12 +62,14 @@ export const BranchLabel = (props: BranchLabelProps) => {
     state.readonly,
   ]);
 
+
+
   const isFallbackBranch =
     props.stepLocationRelativeToParent ===
-      StepLocationRelativeToParent.INSIDE_BRANCH &&
+    StepLocationRelativeToParent.INSIDE_BRANCH &&
     step?.type === ActionType.ROUTER &&
     step?.settings.branches[props.branchIndex]?.branchType ===
-      BranchExecutionType.FALLBACK;
+    BranchExecutionType.FALLBACK;
   const isNotInsideRoute =
     props.stepLocationRelativeToParent !==
     StepLocationRelativeToParent.INSIDE_BRANCH;
@@ -75,11 +77,11 @@ export const BranchLabel = (props: BranchLabelProps) => {
   const isBranchSelected =
     selectedStep === props.sourceNodeName &&
     props.stepLocationRelativeToParent ===
-      StepLocationRelativeToParent.INSIDE_BRANCH &&
+    StepLocationRelativeToParent.INSIDE_BRANCH &&
     props.branchIndex === selectedBranchIndex;
   const { fitView } = useReactFlow();
 
-  if (isNil(step)) {
+  if (isNil(step) || (step.type !== ActionType.BRANCH && step.type !== ActionType.ROUTER)) {
     return <></>;
   }
 
@@ -108,7 +110,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
           onClick={() => {
             if (
               props.stepLocationRelativeToParent ===
-                StepLocationRelativeToParent.INSIDE_BRANCH &&
+              StepLocationRelativeToParent.INSIDE_BRANCH &&
               !isBranchNonInteractive
             ) {
               selectStepByName(props.sourceNodeName);
@@ -123,7 +125,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
         >
           <div className="truncate">{props.label}</div>
 
-          {!isBranchNonInteractive && !readonly && (
+          {!isBranchNonInteractive && !readonly && step.type === ActionType.ROUTER && (
             <DropdownMenu modal={true}>
               <DropdownMenuTrigger asChild>
                 <div
@@ -139,8 +141,9 @@ export const BranchLabel = (props: BranchLabelProps) => {
                   e.stopPropagation();
                 }}
               >
+
                 <DropdownMenuItem
-                  disabled={step?.settings.branches.length <= 2}
+                  disabled={step.settings.branches.length <= 2}
                   onSelect={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -153,7 +156,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
                           branchIndex: props.branchIndex,
                         },
                       },
-                      () => {},
+                      () => { },
                     );
                     selectStepByName(props.sourceNodeName);
                   }}
@@ -178,7 +181,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
                           branchIndex: props.branchIndex,
                         },
                       },
-                      () => {},
+                      () => { },
                     );
                     setSelectedBranchIndex(props.branchIndex + 1);
                   }}

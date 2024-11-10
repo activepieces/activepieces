@@ -158,7 +158,6 @@ const BuilderPage = () => {
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
-
   return (
     <div className="flex h-screen w-screen flex-col relative">
       {run && (
@@ -263,7 +262,7 @@ const BuilderPage = () => {
                     <StepSettingsProvider
                       pieceModel={pieceModel}
                       selectedStep={memorizedSelectedStep}
-                      key={containerKey + (pieceModel?.name ?? '')}
+                      key={containerKey + (pieceModel?.name ?? '') + memorizedSelectedStep.type}
                     >
                       <StepSettingsContainer />
                     </StepSettingsProvider>
