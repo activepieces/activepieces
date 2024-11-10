@@ -1,19 +1,5 @@
-import {
-  Action,
-  ActionType,
-  FlowOperationType,
-  flowStructureUtil,
-  isNil,
-  Trigger,
-  TriggerType,
-} from '@activepieces/shared';
 import React, { useState, useMemo, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
-
-import { SearchInput } from '../../../components/ui/search-input';
-
-import { PiecesCardList } from './pieces-card-list';
-import { StepsCardList } from './steps-card-list';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
@@ -36,6 +22,20 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { platformHooks } from '@/hooks/platform-hooks';
+import {
+  Action,
+  ActionType,
+  FlowOperationType,
+  flowStructureUtil,
+  isNil,
+  Trigger,
+  TriggerType,
+} from '@activepieces/shared';
+
+import { SearchInput } from '../../../components/ui/search-input';
+
+import { PiecesCardList } from './pieces-card-list';
+import { StepsCardList } from './steps-card-list';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -177,7 +177,6 @@ const PieceSelector = ({
     stepMetadata,
     actionOrTrigger,
   ) => {
-
     resetField();
     onOpenChange(false);
     const newStepName = pieceSelectorUtils.getStepName(
@@ -219,17 +218,32 @@ const PieceSelector = ({
         break;
       }
       case FlowOperationType.UPDATE_ACTION: {
-        const currentAction = flowStructureUtil.getStep(operation.stepName, flowVersion.trigger);
+        const currentAction = flowStructureUtil.getStep(
+          operation.stepName,
+          flowVersion.trigger,
+        );
         if (isNil(currentAction)) {
-          console.error("Trying to update an action that's not in the displayed flow version");
+          console.error(
+            "Trying to update an action that's not in the displayed flow version",
+          );
           return;
         }
-        if (currentAction.type === TriggerType.EMPTY || currentAction.type === TriggerType.PIECE) {
-          console.error("Trying to update an action that's actually the trigger in the displayed flow version");
+        if (
+          currentAction.type === TriggerType.EMPTY ||
+          currentAction.type === TriggerType.PIECE
+        ) {
+          console.error(
+            "Trying to update an action that's actually the trigger in the displayed flow version",
+          );
           return;
         }
-        if ((currentAction.type !== ActionType.PIECE && stepData.type !== ActionType.PIECE && stepData.type === currentAction.type) ||
-          (currentAction.type === ActionType.PIECE && stepData.type === ActionType.PIECE && stepData.settings.actionName === currentAction.settings.actionName)
+        if (
+          (currentAction.type !== ActionType.PIECE &&
+            stepData.type !== ActionType.PIECE &&
+            stepData.type === currentAction.type) ||
+          (currentAction.type === ActionType.PIECE &&
+            stepData.type === ActionType.PIECE &&
+            stepData.settings.actionName === currentAction.settings.actionName)
         ) {
           return;
         }

@@ -37,8 +37,8 @@ type NumberedBranch = BaseBranchLabel & {
 // Type for true/false branches (e.g. in conditions)
 type ConditionalBranch = BaseBranchLabel & {
   stepLocationRelativeToParent:
-  | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
-  | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
+    | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
+    | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
 };
 
 export type BranchLabelProps = NumberedBranch | ConditionalBranch;
@@ -62,14 +62,12 @@ export const BranchLabel = (props: BranchLabelProps) => {
     state.readonly,
   ]);
 
-
-
   const isFallbackBranch =
     props.stepLocationRelativeToParent ===
-    StepLocationRelativeToParent.INSIDE_BRANCH &&
+      StepLocationRelativeToParent.INSIDE_BRANCH &&
     step?.type === ActionType.ROUTER &&
     step?.settings.branches[props.branchIndex]?.branchType ===
-    BranchExecutionType.FALLBACK;
+      BranchExecutionType.FALLBACK;
   const isNotInsideRoute =
     props.stepLocationRelativeToParent !==
     StepLocationRelativeToParent.INSIDE_BRANCH;
@@ -77,11 +75,14 @@ export const BranchLabel = (props: BranchLabelProps) => {
   const isBranchSelected =
     selectedStep === props.sourceNodeName &&
     props.stepLocationRelativeToParent ===
-    StepLocationRelativeToParent.INSIDE_BRANCH &&
+      StepLocationRelativeToParent.INSIDE_BRANCH &&
     props.branchIndex === selectedBranchIndex;
   const { fitView } = useReactFlow();
 
-  if (isNil(step) || (step.type !== ActionType.BRANCH && step.type !== ActionType.ROUTER)) {
+  if (
+    isNil(step) ||
+    (step.type !== ActionType.BRANCH && step.type !== ActionType.ROUTER)
+  ) {
     return <></>;
   }
 
@@ -110,7 +111,7 @@ export const BranchLabel = (props: BranchLabelProps) => {
           onClick={() => {
             if (
               props.stepLocationRelativeToParent ===
-              StepLocationRelativeToParent.INSIDE_BRANCH &&
+                StepLocationRelativeToParent.INSIDE_BRANCH &&
               !isBranchNonInteractive
             ) {
               selectStepByName(props.sourceNodeName);
@@ -125,75 +126,76 @@ export const BranchLabel = (props: BranchLabelProps) => {
         >
           <div className="truncate">{props.label}</div>
 
-          {!isBranchNonInteractive && !readonly && step.type === ActionType.ROUTER && (
-            <DropdownMenu modal={true}>
-              <DropdownMenuTrigger asChild>
-                <div
-                  className="h-5 shrink-0 border border-transparent hover:border-solid hover:border-primary-300/50 transition-all rounded-full w-5 flex items-center justify-center"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <EllipsisVertical className="h-4 w-4" />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-              >
-
-                <DropdownMenuItem
-                  disabled={step.settings.branches.length <= 2}
-                  onSelect={(e) => {
+          {!isBranchNonInteractive &&
+            !readonly &&
+            step.type === ActionType.ROUTER && (
+              <DropdownMenu modal={true}>
+                <DropdownMenuTrigger asChild>
+                  <div
+                    className="h-5 shrink-0 border border-transparent hover:border-solid hover:border-primary-300/50 transition-all rounded-full w-5 flex items-center justify-center"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <EllipsisVertical className="h-4 w-4" />
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setSelectedBranchIndex(null);
-                    applyOperation(
-                      {
-                        type: FlowOperationType.DELETE_BRANCH,
-                        request: {
-                          stepName: props.sourceNodeName,
-                          branchIndex: props.branchIndex,
-                        },
-                      },
-                      () => { },
-                    );
-                    selectStepByName(props.sourceNodeName);
                   }}
                 >
-                  <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                    <span className="text-destructive">
-                      {t('Delete Branch')}
-                    </span>
-                  </div>
-                </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={step.settings.branches.length <= 2}
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedBranchIndex(null);
+                      applyOperation(
+                        {
+                          type: FlowOperationType.DELETE_BRANCH,
+                          request: {
+                            stepName: props.sourceNodeName,
+                            branchIndex: props.branchIndex,
+                          },
+                        },
+                        () => {},
+                      );
+                      selectStepByName(props.sourceNodeName);
+                    }}
+                  >
+                    <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <span className="text-destructive">
+                        {t('Delete Branch')}
+                      </span>
+                    </div>
+                  </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    applyOperation(
-                      {
-                        type: FlowOperationType.DUPLICATE_BRANCH,
-                        request: {
-                          stepName: props.sourceNodeName,
-                          branchIndex: props.branchIndex,
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      applyOperation(
+                        {
+                          type: FlowOperationType.DUPLICATE_BRANCH,
+                          request: {
+                            stepName: props.sourceNodeName,
+                            branchIndex: props.branchIndex,
+                          },
                         },
-                      },
-                      () => { },
-                    );
-                    setSelectedBranchIndex(props.branchIndex + 1);
-                  }}
-                >
-                  <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                    <CopyPlus className="h-4 w-4" />
-                    <span>{t('Duplicate Branch')}</span>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+                        () => {},
+                      );
+                      setSelectedBranchIndex(props.branchIndex + 1);
+                    }}
+                  >
+                    <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                      <CopyPlus className="h-4 w-4" />
+                      <span>{t('Duplicate Branch')}</span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
         </div>
       </div>
     </div>
