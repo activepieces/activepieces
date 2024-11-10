@@ -31,7 +31,6 @@ export type PieceStepMetadata = BaseStepMetadata & {
 
 type PrimitiveStepMetadata = BaseStepMetadata & {
   type:
-    | ActionType.BRANCH
     | ActionType.CODE
     | ActionType.LOOP_ON_ITEMS
     | ActionType.ROUTER
@@ -78,11 +77,7 @@ export type PieceSelectorItem =
   | {
       displayName: string;
       name: string;
-      type:
-        | ActionType.LOOP_ON_ITEMS
-        | ActionType.BRANCH
-        | ActionType.ROUTER
-        | ActionType.CODE;
+      type: ActionType.LOOP_ON_ITEMS | ActionType.ROUTER | ActionType.CODE;
       description: string;
     };
 
