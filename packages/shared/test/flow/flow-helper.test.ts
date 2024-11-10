@@ -1,7 +1,6 @@
 import {
     Action,
     ActionType,
-    BranchOperator,
     FlowOperationRequest,
     flowOperations,
     FlowOperationType,
