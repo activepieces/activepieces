@@ -22,8 +22,8 @@ import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/post
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { commonProperties } from './database-connection'
-import { MigrateSMTPInPlatform1729602169179 } from './migration/1729602169179-MigrateSMTPInPlatform'
-import { AddPinnedPieces1729776414647 } from './migration/1729776414647-AddPinnedPieces'
+import { MigrateSMTPInPlatform1729602169179 } from './migration/postgres/1729602169179-MigrateSMTPInPlatform'
+import { AddPinnedPieces1729776414647 } from './migration/postgres/1729776414647-AddPinnedPieces'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -158,6 +158,7 @@ import { RemovePremiumPieces1727865841722 } from './migration/postgres/172786584
 import { AddConnectionOwner1730123432651 } from './migration/postgres/1730123432651-AddConnectionOwner'
 import { AppConnectionsSetNull1730627612799 } from './migration/postgres/1730627612799-AppConnectionsSetNull'
 import { AddFlowSchemaVersion1730760434336 } from './migration/postgres/1730760434336-AddFlowSchemaVersion'
+import { StoreTriggerEventsInFile1731247581852 } from './migration/postgres/1731247581852-StoreTriggerEventsInFile'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -265,6 +266,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AppConnectionsSetNull1730627612799,
         AddFlowSchemaVersion1730760434336,
         SwitchToRouter1731019013340,
+        StoreTriggerEventsInFile1731247581852,
     ]
 
     const edition = system.getEdition()

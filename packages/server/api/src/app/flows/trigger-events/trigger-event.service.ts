@@ -3,6 +3,8 @@ import {
     apId,
     Cursor,
     ErrorCode,
+    FileCompression,
+    FileType,
     FlowId,
     getPieceMajorAndMinorVersion,
     PieceTrigger,
@@ -12,12 +14,11 @@ import {
     SeekPage,
     Trigger,
     TriggerEvent,
+    TriggerEventWithPayload,
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { engineRunner, webhookUtils } from 'server-worker'
-import { LessThan } from 'typeorm'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -25,6 +26,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
+import { fileService } from '../../file/file.service'
 
 export const triggerEventRepo = repoFactory(TriggerEventEntity)
 
@@ -33,36 +35,40 @@ export const triggerEventService = {
         projectId,
         flowId,
         payload,
-    }: {
-        projectId: ProjectId
-        flowId: FlowId
-        payload: unknown
-    }): Promise<TriggerEvent> {
+    }: SaveEventParams): Promise<TriggerEventWithPayload> {
         const flow = await flowService.getOnePopulatedOrThrow({
             id: flowId,
             projectId,
         })
 
+        const file = await fileService.save({
+            projectId,
+            fileName: `${apId()}.json`,
+            data: Buffer.from(JSON.stringify(payload)),
+            type: FileType.TRIGGER_EVENT_FILE,
+            compression: FileCompression.NONE,
+        })
         const sourceName = getSourceName(flow.version.trigger)
         
-        return triggerEventRepo().save({
+        const trigger = await triggerEventRepo().save({
             id: apId(),
+            fileId: file.id,
             projectId,
             flowId: flow.id,
             sourceName,
-            payload: sanitizeObjectForPostgresql(payload),
         })
+        return {
+            ...trigger,
+            payload,
+        }
     },
 
     async test({
         projectId,
         flow,
-    }: {
-        projectId: ProjectId
-        flow: PopulatedFlow
-    }): Promise<SeekPage<unknown>> {
+    }: TestParams): Promise<SeekPage<TriggerEventWithPayload>> {
         const trigger = flow.version.trigger
-        const emptyPage = paginationHelper.createPage<TriggerEvent>([], null)
+        const emptyPage = paginationHelper.createPage<TriggerEventWithPayload>([], null)
         switch (trigger.type) {
             case TriggerType.PIECE: {
                 const engineToken = await accessTokenManager.generateEngineToken({
@@ -116,7 +122,7 @@ export const triggerEventService = {
         flow,
         cursor,
         limit,
-    }: ListParams): Promise<SeekPage<TriggerEvent>> {
+    }: ListParams): Promise<SeekPage<TriggerEventWithPayload>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const sourceName = getSourceName(flow.version.trigger)
         const flowId = flow.id
@@ -135,13 +141,13 @@ export const triggerEventService = {
             sourceName,
         })
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        return paginationHelper.createPage<TriggerEvent>(data, newCursor)
-    },
-    async deleteEventsOlderThanFourteenDay(): Promise<void> {
-        const fourteenDayAgo = dayjs().subtract(14, 'day').toDate()
-        await triggerEventRepo().delete({
-            created: LessThan(fourteenDayAgo.toISOString()),
-        })
+        const dataWithPayload = await Promise.all(data.map(async (triggerEvent) => ({
+            ...triggerEvent,
+            payload: await fileService.getDataOrThrow({
+                fileId: triggerEvent.fileId,
+            }),
+        })))
+        return paginationHelper.createPage<TriggerEventWithPayload>(dataWithPayload, newCursor)
     },
 }
 
@@ -160,6 +166,17 @@ function getSourceName(trigger: Trigger): string {
         case TriggerType.EMPTY:
             return trigger.type
     }
+}
+
+type TestParams = {
+    projectId: ProjectId
+    flow: PopulatedFlow
+}
+
+type SaveEventParams = {
+    projectId: ProjectId
+    flowId: FlowId
+    payload: unknown
 }
 
 type ListParams = {
