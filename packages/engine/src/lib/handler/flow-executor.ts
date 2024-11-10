@@ -3,7 +3,6 @@ import { Action, ActionType, ExecuteFlowOperation, ExecutionType, isNil } from '
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
-import { branchExecutor } from './branch-executor'
 import { codeExecutor } from './code-executor'
 import { EngineConstants } from './context/engine-constants'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
@@ -13,7 +12,6 @@ import { routerExecuter } from './router-executor'
 
 const executeFunction: Record<ActionType, BaseExecutor<Action>> = {
     [ActionType.CODE]: codeExecutor,
-    [ActionType.BRANCH]: branchExecutor,
     [ActionType.LOOP_ON_ITEMS]: loopExecutor,
     [ActionType.PIECE]: pieceExecutor,
     [ActionType.ROUTER]: routerExecuter,

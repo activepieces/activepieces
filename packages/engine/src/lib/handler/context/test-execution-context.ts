@@ -1,6 +1,5 @@
 import {
     ActionType,
-    BranchStepOutput,
     flowStructureUtil,
     FlowVersion,
     GenericStepOutput,
@@ -33,14 +32,6 @@ export const testExecutionContext = {
 
             const stepType = step.type
             switch (stepType) {
-                case ActionType.BRANCH:
-                    flowExecutionContext = flowExecutionContext.upsertStep(
-                        step.name,
-                        BranchStepOutput.init({
-                            input: step.settings,
-                        }),
-                    )
-                    break
                 case ActionType.ROUTER:
                     flowExecutionContext = flowExecutionContext.upsertStep(
                         step.name,
@@ -48,6 +39,7 @@ export const testExecutionContext = {
                             input: step.settings,
                             type: stepType,
                             status: StepOutputStatus.SUCCEEDED,
+                            ...spreadIfDefined('output', sampleData?.[step.name]),
                         }),
                     )
                     break

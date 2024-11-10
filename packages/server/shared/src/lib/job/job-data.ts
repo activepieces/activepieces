@@ -1,5 +1,6 @@
 import {
     ExecutionType,
+    GetFlowVersionForWorkerRequestType,
     ProgressUpdateType,
     RunEnvironment,
     TriggerType,
@@ -7,7 +8,6 @@ import {
 import { Static, Type } from '@sinclair/typebox'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
-
 
 export enum RepeatableJobType {
     RENEW_WEBHOOK = 'RENEW_WEBHOOK',
@@ -48,11 +48,14 @@ export const DelayedJobData = Type.Object({
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
     jobType: Type.Literal(RepeatableJobType.DELAYED_FLOW),
-
 })
 export type DelayedJobData = Static<typeof DelayedJobData>
 
-export const ScheduledJobData = Type.Union([RepeatingJobData, DelayedJobData, RenewWebhookJobData])
+export const ScheduledJobData = Type.Union([
+    RepeatingJobData,
+    DelayedJobData,
+    RenewWebhookJobData,
+])
 export type ScheduledJobData = Static<typeof ScheduledJobData>
 
 export const OneTimeJobData = Type.Object({
@@ -76,10 +79,17 @@ export const WebhookJobData = Type.Object({
     synchronousHandlerId: Type.Union([Type.String(), Type.Null()]),
     payload: Type.Any(),
     flowId: Type.String(),
-    simulate: Type.Boolean(),
-    useLatestFlowVersion: Type.Optional(Type.Boolean()),
+    saveSampleData: Type.Boolean(),
+    flowVersionToRun: Type.Optional(Type.Union([
+        Type.Literal(GetFlowVersionForWorkerRequestType.LOCKED),
+        Type.Literal(GetFlowVersionForWorkerRequestType.LATEST),
+    ])),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 
-export const JobData = Type.Union([ScheduledJobData, OneTimeJobData, WebhookJobData])
+export const JobData = Type.Union([
+    ScheduledJobData,
+    OneTimeJobData,
+    WebhookJobData,
+])
 export type JobData = Static<typeof JobData>

@@ -20,7 +20,6 @@ const stepMetadataSuggestions = (stepMetadata: StepMetadataWithSuggestions) => {
     case ActionType.PIECE:
       return stepMetadata.suggestedActions;
     case ActionType.CODE:
-    case ActionType.BRANCH:
     case ActionType.ROUTER:
     case ActionType.LOOP_ON_ITEMS: {
       return getCoreActions(stepMetadata.type);

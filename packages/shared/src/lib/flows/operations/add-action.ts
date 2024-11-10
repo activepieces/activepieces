@@ -1,7 +1,7 @@
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { isNil } from '../../common'
 import { ActivepiecesError, ErrorCode } from '../../common/activepieces-error'
-import { Action, ActionType, BranchAction, LoopOnItemsAction, RouterAction, SingleActionSchema } from '../actions/action'
+import { Action, ActionType, LoopOnItemsAction, RouterAction, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil, Step } from '../util/flow-structure-util'
 import { AddActionRequest, StepLocationRelativeToParent, UpdateActionRequest } from './index'
@@ -23,13 +23,6 @@ function createAction(request: UpdateActionRequest, {
     }
     let action: Action
     switch (request.type) {
-        case ActionType.BRANCH:
-            action = {
-                ...baseProperties,
-                type: ActionType.BRANCH,
-                settings: request.settings,
-            }
-            break
         case ActionType.ROUTER:
             action = {
                 ...baseProperties,
@@ -91,34 +84,6 @@ function handleLoopOnItems(parentStep: LoopOnItemsAction, request: AddActionRequ
     return parentStep
 }
 
-function handleBranch(parentStep: BranchAction, request: AddActionRequest): Step {
-    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) {
-        parentStep.onSuccessAction = createAction(request.action, {
-            nextAction: parentStep.onSuccessAction,
-        })
-    }
-    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_FALSE_BRANCH) {
-        parentStep.onFailureAction = createAction(request.action, {
-            nextAction: parentStep.onFailureAction,
-        })
-    }
-    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
-        parentStep.nextAction = createAction(request.action, {
-            nextAction: parentStep.nextAction,
-        })
-    }
-    else {
-        throw new ActivepiecesError(
-            {
-                code: ErrorCode.FLOW_OPERATION_INVALID,
-                params: {
-                    message: `Branch step parent ${request.stepLocationRelativeToParent} not found`,
-                },
-            })
-    }
-    return parentStep
-}
-
 function handleRouter(parentStep: RouterAction, request: AddActionRequest): Step {
     if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH && !isNil(request.branchIndex)) {
         parentStep.children[request.branchIndex] = createAction(request.action, {
@@ -149,8 +114,6 @@ function _addAction(flowVersion: FlowVersion, request: AddActionRequest): FlowVe
         switch (parentStep.type) {
             case ActionType.LOOP_ON_ITEMS:
                 return handleLoopOnItems(parentStep, request)
-            case ActionType.BRANCH:
-                return handleBranch(parentStep, request)
             case ActionType.ROUTER:
                 return handleRouter(parentStep, request)
             default: {
