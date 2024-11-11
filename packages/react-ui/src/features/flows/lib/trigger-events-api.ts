@@ -8,10 +8,18 @@ import {
 
 export const triggerEventsApi = {
   pollTrigger(request: TestPollingTriggerRequest) {
-    return api.get<SeekPage<TriggerEventWithPayload>>('/v1/trigger-events/poll', request);
+    return api.get<SeekPage<TriggerEventWithPayload>>(
+      '/v1/trigger-events/poll',
+      request,
+    );
   },
-  list(request: ListTriggerEventsRequest): Promise<SeekPage<TriggerEventWithPayload>> {
-    return api.get<SeekPage<TriggerEventWithPayload>>('/v1/trigger-events', request);
+  list(
+    request: ListTriggerEventsRequest,
+  ): Promise<SeekPage<TriggerEventWithPayload>> {
+    return api.get<SeekPage<TriggerEventWithPayload>>(
+      '/v1/trigger-events',
+      request,
+    );
   },
   startWebhookSimulation(flowId: string) {
     return api.post<void>('/v1/webhook-simulation', {
