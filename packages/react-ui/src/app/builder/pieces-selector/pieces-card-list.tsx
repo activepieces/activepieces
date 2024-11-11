@@ -106,7 +106,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                 handleSelect={handleSelect}
                 ref={
                   pieceMetadata.displayName ===
-                  selectedPieceMetadata?.displayName
+                    selectedPieceMetadata?.displayName
                     ? selectedItemRef
                     : null
                 }
@@ -186,7 +186,7 @@ const PieceCardListItem = React.forwardRef<
           interactive={debouncedQuery.length === 0}
           onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
         >
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center h-full">
             <PieceIcon
               logoUrl={pieceMetadata.logoUrl}
               displayName={pieceMetadata.displayName}
@@ -199,16 +199,15 @@ const PieceCardListItem = React.forwardRef<
           </div>
         </CardListItem>
 
-        {debouncedQuery.length > 0 ||
-          ((window.innerWidth || document.documentElement.clientWidth) < 768 &&
-            pieceMetadata.type !== TriggerType.EMPTY && (
-              <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
-                <PieceSearchSuggestions
-                  pieceMetadata={pieceMetadata}
-                  handleSelectOperationSuggestion={handleSelect}
-                />
-              </div>
-            ))}
+        {(debouncedQuery.length > 0 || (window.innerWidth || document.documentElement.clientWidth) < 768) &&
+          pieceMetadata.type !== TriggerType.EMPTY && (
+            <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
+              <PieceSearchSuggestions
+                pieceMetadata={pieceMetadata}
+                handleSelectOperationSuggestion={handleSelect}
+              />
+            </div>
+          )}
       </div>
     );
   },
