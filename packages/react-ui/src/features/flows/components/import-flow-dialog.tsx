@@ -102,7 +102,6 @@ const ImportFlowDialog = (
             : 'inside dashboard',
         },
       });
-      setTemplates((prevTemplates) => [...prevTemplates, flow]);
 
       if (failedFiles.length) {
         toast({
