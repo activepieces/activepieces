@@ -1,10 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode, isAxiosError } from 'axios';
 import { t } from 'i18next';
+import JSZip from 'jszip';
 import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import JSZip from 'jszip';
 
 import { useTelemetry } from '@/components/telemetry-provider';
 import { Button } from '@/components/ui/button';
@@ -49,12 +48,18 @@ const readTemplateJson = (
     try {
       const template = JSON.parse(reader.result as string);
       if (!template.template || !template.name || !template.template.trigger) {
-        setFailedFiles((prevFailedFiles) => [...prevFailedFiles, templateFile.name]);
+        setFailedFiles((prevFailedFiles) => [
+          ...prevFailedFiles,
+          templateFile.name,
+        ]);
       } else {
         addTemplate(template as FlowTemplate);
       }
     } catch (error) {
-      setFailedFiles((prevFailedFiles) => [...prevFailedFiles, templateFile.name]);
+      setFailedFiles((prevFailedFiles) => [
+        ...prevFailedFiles,
+        templateFile.name,
+      ]);
     }
   };
   reader.readAsText(templateFile);
@@ -63,7 +68,6 @@ const readTemplateJson = (
 const ImportFlowDialog = (
   props: ImportFlowDialogProps & { children: React.ReactNode },
 ) => {
-  const navigate = useNavigate();
   const { capture } = useTelemetry();
   const [templates, setTemplates] = useState<FlowTemplate[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -106,12 +110,16 @@ const ImportFlowDialog = (
       if (failedFiles.length) {
         toast({
           title: t('Import Warning'),
-          description: t('The following files failed to import: ') + failedFiles.join(', '),
+          description:
+            t('The following files failed to import: ') +
+            failedFiles.join(', '),
         });
       } else {
         toast({
           title: t('Import Success'),
-          description: t(`Flow${templates.length === 1 ? '' : 's'} imported successfully.`),
+          description: t(
+            `Flow${templates.length === 1 ? '' : 's'} imported successfully.`,
+          ),
           variant: 'default',
         });
       }
@@ -137,7 +145,9 @@ const ImportFlowDialog = (
       if (failedFiles.length) {
         toast({
           title: t('Import Warning'),
-          description: t('The following files failed to import: ') + failedFiles.join(', '),
+          description:
+            t('The following files failed to import: ') +
+            failedFiles.join(', '),
         });
       } else {
         setErrorMessage(t('Please select a file first'));
@@ -148,7 +158,9 @@ const ImportFlowDialog = (
     }
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = event.target.files;
     if (!files?.[0]) return;
 
@@ -162,7 +174,7 @@ const ImportFlowDialog = (
       const zip = new JSZip();
       const zipContent = await zip.loadAsync(file);
       const jsonFiles = Object.keys(zipContent.files).filter((fileName) =>
-        fileName.endsWith('.json')
+        fileName.endsWith('.json'),
       );
 
       for (const fileName of jsonFiles) {
@@ -172,7 +184,7 @@ const ImportFlowDialog = (
           (template) => {
             if (template) newTemplates.push(template);
           },
-          setFailedFiles
+          setFailedFiles,
         );
       }
     } else if (file.type === 'application/json') {
@@ -181,7 +193,7 @@ const ImportFlowDialog = (
         (template) => {
           if (template) newTemplates.push(template);
         },
-        setFailedFiles
+        setFailedFiles,
       );
     } else {
       setErrorMessage(t('Unsupported file type'));

@@ -10,13 +10,15 @@ export const triggerEventsApi = {
   pollTrigger(request: TestPollingTriggerRequest) {
     return api.get<SeekPage<TriggerEventWithPayload>>(
       '/v1/trigger-events/poll',
-      request
+      request,
     );
   },
-  list(request: ListTriggerEventsRequest): Promise<SeekPage<TriggerEventWithPayload>> {
+  list(
+    request: ListTriggerEventsRequest,
+  ): Promise<SeekPage<TriggerEventWithPayload>> {
     return api.get<SeekPage<TriggerEventWithPayload>>(
       '/v1/trigger-events',
-      request
+      request,
     );
   },
   startWebhookSimulation(flowId: string) {
@@ -32,7 +34,7 @@ export const triggerEventsApi = {
   saveTriggerMockdata(flowId: string, mockData: unknown) {
     return api.post<TriggerEventWithPayload>(
       `/v1/trigger-events?flowId=${flowId}`,
-      mockData
+      mockData,
     );
   },
 };

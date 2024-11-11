@@ -540,10 +540,13 @@ const FlowsPage = () => {
           <PermissionNeededTooltip
             hasPermission={doesUserHavePermissionToWriteFlow}
           >
-            <ImportFlowDialog insideBuilder={false} onRefresh={() => {
-              setRefresh(refresh + 1);
-              refetch();
-            }}>
+            <ImportFlowDialog
+              insideBuilder={false}
+              onRefresh={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
+            >
               <Button
                 disabled={!doesUserHavePermissionToWriteFlow}
                 variant="outline"
