@@ -35,8 +35,10 @@ const Container = ({
   return (
     <Alert
       className={cn('rounded-md border', {
-        'bg-warning-100 text-warning-300': variant === MarkdownVariant.WARNING,
-        'bg-success-100 text-success-300': variant === MarkdownVariant.TIP,
+        'bg-warning-100 text-warning-300 border-none':
+          variant === MarkdownVariant.WARNING,
+        'bg-success-100 text-success-300 border-none':
+          variant === MarkdownVariant.TIP,
         'p-0 bg-background border-none': variant === MarkdownVariant.BORDERLESS,
       })}
     >

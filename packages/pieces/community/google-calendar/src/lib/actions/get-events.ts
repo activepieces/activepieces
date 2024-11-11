@@ -54,6 +54,12 @@ export const getEvents = createAction({
       displayName: 'Date to',
       required: false,
     }),
+    singleEvents: Property.Checkbox({
+			displayName: 'Expand Recurring Event?',
+      description: "Whether to expand recurring events into instances and only return single one-off events and instances of recurring events, but not the underlying recurring events themselves.",
+			required: true,
+			defaultValue: false,
+		}),
   },
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/list
@@ -63,10 +69,15 @@ export const getEvents = createAction({
       end_date,
       search,
       event_types,
+      singleEvents,
     } = configValue.propsValue;
     const { access_token: token } = configValue.auth;
     const queryParams: Record<string, string> = { showDeleted: 'false' };
     let url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`;
+
+    if(singleEvents !== null) {
+      queryParams['singleEvents'] = singleEvents ? 'true' : 'false';
+    }
 
     if (search) {
       queryParams['q'] = `"${search}"`;
