@@ -106,7 +106,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                 handleSelect={handleSelect}
                 ref={
                   pieceMetadata.displayName ===
-                    selectedPieceMetadata?.displayName
+                  selectedPieceMetadata?.displayName
                     ? selectedItemRef
                     : null
                 }
@@ -176,32 +176,31 @@ const PieceCardListItem = React.forwardRef<
     };
 
     return (
-      <>
-        <div
-          onMouseLeave={handleMouseLeave} ref={ref}>
-          <CardListItem
-            className="flex-col p-3 gap-1 items-start"
-            selected={
-              pieceMetadata.displayName === selectedPieceMetadata?.displayName &&
-              debouncedQuery.length === 0
-            }
-            interactive={debouncedQuery.length === 0}
-            onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
-          >
-            <div className="flex gap-2 items-center">
-              <PieceIcon
-                logoUrl={pieceMetadata.logoUrl}
-                displayName={pieceMetadata.displayName}
-                showTooltip={false}
-                size={'sm'}
-              />
-              <div className="flex-grow h-full flex items-center justify-left text-sm">
-                {pieceMetadata.displayName}
-              </div>
+      <div onMouseLeave={handleMouseLeave} ref={ref}>
+        <CardListItem
+          className="flex-col p-3 gap-1 items-start"
+          selected={
+            pieceMetadata.displayName === selectedPieceMetadata?.displayName &&
+            debouncedQuery.length === 0
+          }
+          interactive={debouncedQuery.length === 0}
+          onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
+        >
+          <div className="flex gap-2 items-center">
+            <PieceIcon
+              logoUrl={pieceMetadata.logoUrl}
+              displayName={pieceMetadata.displayName}
+              showTooltip={false}
+              size={'sm'}
+            />
+            <div className="flex-grow h-full flex items-center justify-left text-sm">
+              {pieceMetadata.displayName}
             </div>
-          </CardListItem>
+          </div>
+        </CardListItem>
 
-          {debouncedQuery.length > 0 || ((window.innerWidth || document.documentElement.clientWidth) < 768) &&
+        {debouncedQuery.length > 0 ||
+          ((window.innerWidth || document.documentElement.clientWidth) < 768 &&
             pieceMetadata.type !== TriggerType.EMPTY && (
               <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
                 <PieceSearchSuggestions
@@ -209,13 +208,8 @@ const PieceCardListItem = React.forwardRef<
                   handleSelectOperationSuggestion={handleSelect}
                 />
               </div>
-            )}
-        </div>
-
-
-
-      </>
-
+            ))}
+      </div>
     );
   },
 );

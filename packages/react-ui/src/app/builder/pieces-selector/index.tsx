@@ -169,23 +169,37 @@ const PieceSelector = ({
   const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
   const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
 
-
   const listHeightRef = useRef<number>(maxListHeight);
   const popoverTriggerRef = useRef<HTMLButtonElement | null>(null);
   if (!previousOpenValueRef.current && open && popoverTriggerRef.current) {
-    const popoverTriggerRect = popoverTriggerRef.current.getBoundingClientRect();
+    const popoverTriggerRect =
+      popoverTriggerRef.current.getBoundingClientRect();
     const popOverFullHeight = maxListHeight + aboveListSectionHeight;
-    const isRenderingPopoverBelowTrigger = (popoverTriggerRect.top < (window.innerHeight || document.documentElement.clientHeight) - popoverTriggerRect.bottom);
+    const isRenderingPopoverBelowTrigger =
+      popoverTriggerRect.top <
+      (window.innerHeight || document.documentElement.clientHeight) -
+        popoverTriggerRect.bottom;
     if (isRenderingPopoverBelowTrigger) {
-      const isPopoverOverflowing = popoverTriggerRect.bottom + popOverFullHeight > (window.innerHeight || document.documentElement.clientHeight);
+      const isPopoverOverflowing =
+        popoverTriggerRect.bottom + popOverFullHeight >
+        (window.innerHeight || document.documentElement.clientHeight);
       if (isPopoverOverflowing) {
-        listHeightRef.current = Math.max(100, maxListHeight + (window.innerHeight || document.documentElement.clientHeight) - popOverFullHeight - popoverTriggerRect.bottom)
+        listHeightRef.current = Math.max(
+          100,
+          maxListHeight +
+            (window.innerHeight || document.documentElement.clientHeight) -
+            popOverFullHeight -
+            popoverTriggerRect.bottom,
+        );
       }
-    }
-    else {
-      const isPopoverOverflowing = popoverTriggerRect.top - popOverFullHeight < 0;
+    } else {
+      const isPopoverOverflowing =
+        popoverTriggerRect.top - popOverFullHeight < 0;
       if (isPopoverOverflowing) {
-        listHeightRef.current = Math.max(100, maxListHeight - Math.abs(popoverTriggerRect.top - popOverFullHeight))
+        listHeightRef.current = Math.max(
+          100,
+          maxListHeight - Math.abs(popoverTriggerRect.top - popOverFullHeight),
+        );
       }
     }
   }
@@ -196,8 +210,6 @@ const PieceSelector = ({
     setSelectedMetadata(initiallySelectedMetaDataRef.current);
     setSelectedTag(PieceTagEnum.ALL);
   };
-
-
 
   const handleSelect: HandleSelectCallback = (
     stepMetadata,
@@ -304,25 +316,23 @@ const PieceSelector = ({
         }
         onOpenChange(open);
       }}
-
     >
       <PopoverTrigger ref={popoverTriggerRef} asChild={asChild}>
         {children}
       </PopoverTrigger>
       <PopoverContent
-
         className="w-[340px] md:w-[600px] p-0 shadow-lg"
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
         }}
-
       >
         <>
-          <div style={{
-            height: `${aboveListSectionHeight}px`
-          }}>
-
+          <div
+            style={{
+              height: `${aboveListSectionHeight}px`,
+            }}
+          >
             <div className="p-2">
               <SearchInput
                 placeholder="Search"
@@ -351,13 +361,12 @@ const PieceSelector = ({
             <Separator orientation="horizontal" />
           </div>
 
-
-
-          <div className=" hidden md:flex   flex-row overflow-y-auto max-h-[300px] h-[300px] " style={{
-            height: listHeightRef.current + 'px'
-          }} >
-
-
+          <div
+            className=" hidden md:flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
+            style={{
+              height: listHeightRef.current + 'px',
+            }}
+          >
             <PiecesCardList
               debouncedQuery={debouncedQuery}
               selectedTag={selectedTag}
@@ -371,20 +380,24 @@ const PieceSelector = ({
               isLoadingPieces={isLoadingPieces}
             />
 
-            {debouncedQuery.length === 0 && piecesIsLoaded && !noResultsFound && (
-              <>
-                <Separator orientation="vertical" className="h-full" />
-                <StepsCardList
-                  selectedPieceMetadata={selectedPieceMetadata}
-                  handleSelect={handleSelect}
-                />
-              </>
-            )}
+            {debouncedQuery.length === 0 &&
+              piecesIsLoaded &&
+              !noResultsFound && (
+                <>
+                  <Separator orientation="vertical" className="h-full" />
+                  <StepsCardList
+                    selectedPieceMetadata={selectedPieceMetadata}
+                    handleSelect={handleSelect}
+                  />
+                </>
+              )}
           </div>
-          <div className='block md:hidden max-h-[300px] h-[300px]' style={{
-            height: listHeightRef.current + 'px'
-          }} >
-
+          <div
+            className="block md:hidden max-h-[300px] h-[300px]"
+            style={{
+              height: listHeightRef.current + 'px',
+            }}
+          >
             <PiecesCardList
               debouncedQuery={debouncedQuery}
               selectedTag={selectedTag}
@@ -398,7 +411,6 @@ const PieceSelector = ({
               isLoadingPieces={isLoadingPieces}
             />
           </div>
-
         </>
       </PopoverContent>
     </Popover>
