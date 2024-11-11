@@ -52,31 +52,6 @@ function _getImportOperations(step: Action | Trigger | undefined): FlowOperation
             })
         }
         switch (step.type) {
-            case ActionType.BRANCH: {
-                if (step.onFailureAction) {
-                    steps.push({
-                        type: FlowOperationType.ADD_ACTION,
-                        request: {
-                            parentStep: step?.name ?? '',
-                            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
-                            action: removeAnySubsequentAction(step.onFailureAction),
-                        },
-                    })
-                    steps.push(..._getImportOperations(step.onFailureAction))
-                }
-                if (step.onSuccessAction) {
-                    steps.push({
-                        type: FlowOperationType.ADD_ACTION,
-                        request: {
-                            parentStep: step.name,
-                            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
-                            action: removeAnySubsequentAction(step.onSuccessAction),
-                        },
-                    })
-                    steps.push(..._getImportOperations(step.onSuccessAction))
-                }
-                break
-            }
             case ActionType.LOOP_ON_ITEMS: {
                 if (step.firstLoopAction) {
                     steps.push({
@@ -126,11 +101,6 @@ function _getImportOperations(step: Action | Trigger | undefined): FlowOperation
 function removeAnySubsequentAction(action: Action): Action {
     const clonedAction: Action = JSON.parse(JSON.stringify(action))
     switch (clonedAction.type) {
-        case ActionType.BRANCH: {
-            delete clonedAction.onSuccessAction
-            delete clonedAction.onFailureAction
-            break
-        }
         case ActionType.ROUTER: {
             clonedAction.children = clonedAction.children.map((child: Action | null) => {
                 if (isNil(child)) {

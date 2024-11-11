@@ -10,6 +10,7 @@ export enum FileType {
     PACKAGE_ARCHIVE = 'PACKAGE_ARCHIVE',
     FLOW_STEP_FILE = 'FLOW_STEP_FILE',
     SAMPLE_DATA = 'SAMPLE_DATA',
+    TRIGGER_EVENT_FILE = 'TRIGGER_EVENT_FILE',
 }
 export enum FileCompression {
     NONE = 'NONE',

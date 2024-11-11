@@ -29,14 +29,12 @@ import {
   FormInput,
   FormInputType,
   FormResponse,
+  HumanInputFormResultTypes,
+  HumanInputFormResult,
 } from '@activepieces/shared';
 
 import { Checkbox } from '../../../components/ui/checkbox';
-import {
-  FormResult,
-  FormResultTypes,
-  humanInputApi,
-} from '../lib/human-input-api';
+import { humanInputApi } from '../lib/human-input-api';
 
 type ApFormProps = {
   form: FormResponse;
@@ -104,9 +102,8 @@ function buildSchema(inputs: FormInputWithName[]) {
     ),
   };
 }
-const handleDownloadFile = (formResult: FormResult) => {
+const handleDownloadFile = (fileBase: FileResponseInterface) => {
   const link = document.createElement('a');
-  const fileBase = formResult.value as FileResponseInterface;
   if ('url' in fileBase) {
     link.href = fileBase.url;
   } else {
@@ -151,52 +148,60 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
     resolver: typeboxResolver(schema.properties),
   });
 
-  const { mutate, isPending } = useMutation<FormResult | null, Error>({
-    mutationFn: async () =>
-      humanInputApi.submitForm(
-        form,
-        useDraft,
-        putBackQuotesForInputNames(reactForm.getValues(), inputs.current),
-      ),
-    onSuccess: (formResult) => {
-      switch (formResult?.type) {
-        case FormResultTypes.MARKDOWN:
-          setMarkdownResponse(formResult.value as string);
-          break;
-        case FormResultTypes.FILE:
-          handleDownloadFile(formResult);
-          break;
-        default:
-          toast({
-            title: t('Success'),
-            description: t('Your submission was successfully received.'),
-            duration: 3000,
-          });
-          break;
-      }
-    },
-    onError: (error) => {
-      if (api.isError(error)) {
-        const status = error.response?.status;
-        if (status === 404) {
-          toast({
-            title: t('Flow not found'),
-            description: t(
-              'The flow you are trying to submit to does not exist.',
-            ),
-            duration: 3000,
-          });
-        } else {
-          toast({
-            title: t('Error'),
-            description: t('The flow failed to execute.'),
-            duration: 3000,
-          });
+  const { mutate, isPending } = useMutation<HumanInputFormResult | null, Error>(
+    {
+      mutationFn: async () =>
+        humanInputApi.submitForm(
+          form,
+          useDraft,
+          putBackQuotesForInputNames(reactForm.getValues(), inputs.current),
+        ),
+      onSuccess: (formResult) => {
+        switch (formResult?.type) {
+          case HumanInputFormResultTypes.MARKDOWN: {
+            setMarkdownResponse(formResult.value as string);
+            if (formResult.files) {
+              formResult.files.forEach((file) => {
+                handleDownloadFile(file as FileResponseInterface);
+              });
+            }
+            break;
+          }
+          case HumanInputFormResultTypes.FILE:
+            handleDownloadFile(formResult.value as FileResponseInterface);
+            break;
+          default:
+            toast({
+              title: t('Success'),
+              description: t('Your submission was successfully received.'),
+              duration: 3000,
+            });
+            break;
         }
-      }
-      console.error(error);
+      },
+      onError: (error) => {
+        if (api.isError(error)) {
+          const status = error.response?.status;
+          if (status === 404) {
+            toast({
+              title: t('Flow not found'),
+              description: t(
+                'The flow you are trying to submit to does not exist.',
+              ),
+              duration: 3000,
+            });
+          } else {
+            toast({
+              title: t('Error'),
+              description: t('The flow failed to execute.'),
+              duration: 3000,
+            });
+          }
+        }
+        console.error(error);
+      },
     },
-  });
+  );
   return (
     <div className="w-full h-full flex">
       <div className="container py-20">

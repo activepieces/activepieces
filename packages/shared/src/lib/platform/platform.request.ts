@@ -1,11 +1,13 @@
 import { Static, Type } from '@sinclair/typebox'
-import { LocalesEnum } from '../common'
+import { LocalesEnum, SAFE_STRING_PATTERN } from '../common'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig } from '../federated-authn'
 import { FilteredPieceBehavior, SMTPInformation } from './platform.model'
 
 export const UpdatePlatformRequestBody = Type.Object({
-    name: Type.Optional(Type.String()),
+    name: Type.Optional(Type.String({
+        pattern: SAFE_STRING_PATTERN,
+    })),
     primaryColor: Type.Optional(Type.String()),
     logoIconUrl: Type.Optional(Type.String()),
     fullLogoUrl: Type.Optional(Type.String()),
