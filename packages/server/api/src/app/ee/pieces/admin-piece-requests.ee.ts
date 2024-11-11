@@ -22,7 +22,7 @@ const Action = Type.Object({
 })
 
 const Trigger = Type.Composite([
-    Type.Omit(Action, ['requireAuth']),
+    Action,
     Type.Object({
         renewConfiguration: Type.Optional(WebhookRenewConfiguration),
         handshakeConfiguration: WebhookHandshakeConfiguration,
