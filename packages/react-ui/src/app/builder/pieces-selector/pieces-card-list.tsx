@@ -71,8 +71,8 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
 
   return (
     <CardList
-      className={cn('w-[250px] min-w-[250px] transition-all ', {
-        'w-full': debouncedQuery.length > 0 || noResultsFound,
+      className={cn(' w-full md:w-[250px] md:min-w-[250px] transition-all ', {
+        'w-full md:w-full': debouncedQuery.length > 0 || noResultsFound,
       })}
       listClassName="gap-0"
     >
@@ -106,7 +106,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                 handleSelect={handleSelect}
                 ref={
                   pieceMetadata.displayName ===
-                  selectedPieceMetadata?.displayName
+                    selectedPieceMetadata?.displayName
                     ? selectedItemRef
                     : null
                 }
@@ -116,7 +116,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         ))}
 
       {noResultsFound && (
-        <div className="flex flex-col gap-2 items-center justify-center h-[300px] ">
+        <div className="flex flex-col gap-2 items-center justify-center h-full ">
           <SearchX className="w-10 h-10" />
           <div className="text-sm ">{t('No pieces found')}</div>
           <div className="text-sm ">{t('Try adjusting your search')}</div>
@@ -176,39 +176,46 @@ const PieceCardListItem = React.forwardRef<
     };
 
     return (
-      <div onMouseLeave={handleMouseLeave} ref={ref}>
-        <CardListItem
-          className="flex-col p-3 gap-1 items-start"
-          selected={
-            pieceMetadata.displayName === selectedPieceMetadata?.displayName &&
-            debouncedQuery.length === 0
-          }
-          interactive={debouncedQuery.length === 0}
-          onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
-        >
-          <div className="flex gap-2 items-center">
-            <PieceIcon
-              logoUrl={pieceMetadata.logoUrl}
-              displayName={pieceMetadata.displayName}
-              showTooltip={false}
-              size={'sm'}
-            />
-            <div className="flex-grow h-full flex items-center justify-left text-sm">
-              {pieceMetadata.displayName}
-            </div>
-          </div>
-        </CardListItem>
-
-        {debouncedQuery.length > 0 &&
-          pieceMetadata.type !== TriggerType.EMPTY && (
-            <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
-              <PieceSearchSuggestions
-                pieceMetadata={pieceMetadata}
-                handleSelectOperationSuggestion={handleSelect}
+      <>
+        <div
+          onMouseLeave={handleMouseLeave} ref={ref}>
+          <CardListItem
+            className="flex-col p-3 gap-1 items-start"
+            selected={
+              pieceMetadata.displayName === selectedPieceMetadata?.displayName &&
+              debouncedQuery.length === 0
+            }
+            interactive={debouncedQuery.length === 0}
+            onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}
+          >
+            <div className="flex gap-2 items-center">
+              <PieceIcon
+                logoUrl={pieceMetadata.logoUrl}
+                displayName={pieceMetadata.displayName}
+                showTooltip={false}
+                size={'sm'}
               />
+              <div className="flex-grow h-full flex items-center justify-left text-sm">
+                {pieceMetadata.displayName}
+              </div>
             </div>
-          )}
-      </div>
+          </CardListItem>
+
+          {debouncedQuery.length > 0 || ((window.innerWidth || document.documentElement.clientWidth) < 768) &&
+            pieceMetadata.type !== TriggerType.EMPTY && (
+              <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
+                <PieceSearchSuggestions
+                  pieceMetadata={pieceMetadata}
+                  handleSelectOperationSuggestion={handleSelect}
+                />
+              </div>
+            )}
+        </div>
+
+
+
+      </>
+
     );
   },
 );
