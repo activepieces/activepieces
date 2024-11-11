@@ -106,7 +106,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                 handleSelect={handleSelect}
                 ref={
                   pieceMetadata.displayName ===
-                    selectedPieceMetadata?.displayName
+                  selectedPieceMetadata?.displayName
                     ? selectedItemRef
                     : null
                 }
@@ -199,7 +199,8 @@ const PieceCardListItem = React.forwardRef<
           </div>
         </CardListItem>
 
-        {(debouncedQuery.length > 0 || (window.innerWidth || document.documentElement.clientWidth) < 768) &&
+        {(debouncedQuery.length > 0 ||
+          (window.innerWidth || document.documentElement.clientWidth) < 768) &&
           pieceMetadata.type !== TriggerType.EMPTY && (
             <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
               <PieceSearchSuggestions
