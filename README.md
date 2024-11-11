@@ -340,6 +340,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pavloDeshko"><img src="https://avatars.githubusercontent.com/u/27104046?v=4?s=100" width="100px;" alt="pavloDeshko"/><br /><sub><b>pavloDeshko</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3ApavloDeshko" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/liuhuapiaoyuan"><img src="https://avatars.githubusercontent.com/u/8020726?v=4?s=100" width="100px;" alt="abc"/><br /><sub><b>abc</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=liuhuapiaoyuan" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/manojkum-d"><img src="https://avatars.githubusercontent.com/u/141437046?v=4?s=100" width="100px;" alt="manoj kumar d"/><br /><sub><b>manoj kumar d</b></sub></a><br /><a href="#plugin-manojkum-d" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/felifluid"><img src="https://avatars.githubusercontent.com/u/59516203?v=4?s=100" width="100px;" alt="Feli"/><br /><sub><b>Feli</b></sub></a><br /><a href="#plugin-felifluid" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
