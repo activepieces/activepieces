@@ -87,11 +87,11 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
                 predefinedConnectionName={null}
-                key={reconnectConnection?.name || 'newConnection'}
+                key={reconnectConnection?.externalId || 'newConnection'}
                 piece={params.piece}
                 onConnectionCreated={(connection) => {
                   refetch();
-                  field.onChange(addBrackets(connection.name));
+                  field.onChange(addBrackets(connection.externalId));
                 }}
                 open={connectionDialogOpen}
                 setOpen={setConnectionDialogOpen}
@@ -114,7 +114,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                         setReconnectConnection(
                           connectionsPage?.data?.find(
                             (connection) =>
-                              connection.name ===
+                              connection.externalId ===
                               removeBrackets(
                                 form.getValues().settings.input.auth ?? '',
                               ),
@@ -137,11 +137,15 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                       !isNil(
                         connectionsPage?.data?.find(
                           (connection) =>
-                            connection.name === removeBrackets(field.value),
+                            connection.externalId ===
+                            removeBrackets(field.value),
                         ),
                       ) ? (
                         <div className="truncate flex-grow flex-shrink">
-                          {removeBrackets(field.value)}
+                          {connectionsPage?.data?.find(
+                            (connection) =>
+                              connection.externalId === removeBrackets(field.value)
+                          )?.displayName}
                         </div>
                       ) : null}
                     </SelectValue>
@@ -177,10 +181,10 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     connectionsPage.data.map((connection) => {
                       return (
                         <SelectItem
-                          value={addBrackets(connection.name)}
-                          key={connection.name}
+                          value={addBrackets(connection.externalId)}
+                          key={connection.externalId}
                         >
-                          {connection.name}
+                          {connection.displayName}
                         </SelectItem>
                       );
                     })}

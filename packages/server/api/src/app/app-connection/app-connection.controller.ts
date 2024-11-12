@@ -8,6 +8,7 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    UpdateConnectionValueRequestBody,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
 import {
@@ -19,13 +20,10 @@ import { eventsHooks } from '../helper/application-events'
 import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
-export const appConnectionController: FastifyPluginCallbackTypebox = (
-    app,
-    _opts,
-    done,
-) => {
+export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService.upsert({
+            platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
             request: request.body,
             ownerId: await securityHelper.getUserIdFromRequest(request),
@@ -41,15 +39,24 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (
             .send(removeSensitiveData(appConnection))
     })
 
+    app.post('/:id', UpdateConnectionValueRequest, async (request, reply) => {
+        const appConnection = await appConnectionService.update({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+            request: request.body,
+        })
+        return removeSensitiveData(appConnection)
+    })
+
     app.get(
         '/',
         ListAppConnectionsRequest,
         async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-            const { name, pieceName, status, cursor, limit } = request.query
+            const { displayName, pieceName, status, cursor, limit } = request.query
 
             const appConnections = await appConnectionService.list({
                 pieceName,
-                name,
+                displayName,
                 status,
                 projectId: request.principal.projectId,
                 cursorRequest: cursor ?? null,
@@ -110,6 +117,22 @@ const UpsertAppConnectionRequest = {
         Response: {
             [StatusCodes.CREATED]: AppConnectionWithoutSensitiveData,
         },
+    },
+}
+
+const UpdateConnectionValueRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_APP_CONNECTION,
+    },
+    schema: {
+        tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Update an app connection value',
+        body: UpdateConnectionValueRequestBody,
+        params: Type.Object({
+            id: ApId,
+        }),
     },
 }
 

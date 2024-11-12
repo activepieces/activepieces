@@ -3,7 +3,8 @@ import { AppConnectionType } from '../app-connection'
 import { OAuth2AuthorizationMethod } from '../oauth2-authorization-method'
 
 const commonAuthProps = {
-    name: Type.String({}),
+    externalId: Type.String({}),
+    displayName: Type.String({}),
     pieceName: Type.String({}),
     projectId: Type.String({}),
 }
@@ -136,3 +137,12 @@ export type UpsertSecretTextRequest = Static<typeof UpsertSecretTextRequest>
 export type UpsertBasicAuthRequest = Static<typeof UpsertBasicAuthRequest>
 export type UpsertCustomAuthRequest = Static<typeof UpsertCustomAuthRequest>
 export type UpsertAppConnectionRequestBody = Static<typeof UpsertAppConnectionRequestBody>
+
+
+export const UpdateConnectionValueRequestBody = Type.Object({
+    displayName: Type.String({
+        minLength: 1,
+    }),
+})
+
+export type UpdateConnectionValueRequestBody = Static<typeof UpdateConnectionValueRequestBody>

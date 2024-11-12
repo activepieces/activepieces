@@ -5,6 +5,7 @@ import {
     apId,
     AppConnection,
     AppConnectionId,
+    AppConnectionScope,
     AppConnectionStatus,
     AppConnectionType,
     AppConnectionValue,
@@ -16,6 +17,7 @@ import {
     ProjectId,
     SeekPage,
     spreadIfDefined,
+    UpdateConnectionValueRequestBody,
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -37,12 +39,13 @@ import {
 } from '../app-connection.entity'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
+import { APArrayContains } from '../../database/database-connection'
 
 const repo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = {
     async upsert(params: UpsertParams): Promise<AppConnection> {
-        const { projectId, request, ownerId } = params
+        const { projectId, request, ownerId, platformId } = params
 
         const validatedConnectionValue = await validateConnectionValue({
             connection: request,
@@ -55,36 +58,52 @@ export const appConnectionService = {
         })
 
         const existingConnection = await repo().findOneBy({
-            name: request.name,
-            projectId,
+            externalId: request.externalId,
+            projectIds: APArrayContains('projectIds', [projectId]),
         })
 
         const connection = {
             ...request,
+            displayName: request.displayName ?? request.externalId,
             ...spreadIfDefined('ownerId', ownerId),
             status: AppConnectionStatus.ACTIVE,
             value: encryptedConnectionValue,
             id: existingConnection?.id ?? apId(),
-            projectId,
+            scope: AppConnectionScope.PROJECT,
+            projectIds: [projectId],
+            platformId,
         }
 
-        await repo().upsert(connection, ['name', 'projectId'])
+        await repo().upsert(connection, ['id'])
 
         const updatedConnection = await repo().findOneByOrFail({
-            name: request.name,
-            projectId,
+            externalId: request.externalId,
+            projectIds: APArrayContains('projectIds', [projectId]),
         })
         return decryptConnection(updatedConnection)
+    },
+    async update(params: UpdateParams): Promise<AppConnection> {
+        const { projectId, id, request } = params
+        await repo().update({
+            id,
+            projectIds: APArrayContains('projectIds', [projectId]),
+        }, {
+            displayName: request.displayName,
+        })
+        return this.getOneOrThrow({
+            projectId,
+            id,
+        })
     },
 
     async getOne({
         projectId,
-        name,
+        externalId,
     }: GetOneByName): Promise<AppConnection | null> {
         const encryptedAppConnection = await repo().findOne({
             where: {
-                projectId,
-                name,
+                projectIds: APArrayContains('projectIds', [projectId]),
+                externalId,
             },
             relations: ['owner'],
         })
@@ -98,7 +117,7 @@ export const appConnectionService = {
             return oauth2Util.removeRefreshTokenAndClientSecret(appConnection)
         }
 
-        const refreshedConnection = await lockAndRefreshConnection({ projectId, name })
+        const refreshedConnection = await lockAndRefreshConnection({ projectId, externalId })
         if (isNil(refreshedConnection)) {
             return null
         }
@@ -108,7 +127,7 @@ export const appConnectionService = {
     async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {
         const connectionById = await repo().findOneBy({
             id: params.id,
-            projectId: params.projectId,
+            projectIds: APArrayContains('projectIds', [params.projectId]),
         })
         if (isNil(connectionById)) {
             throw new ActivepiecesError({
@@ -121,7 +140,7 @@ export const appConnectionService = {
         }
         const connection = await this.getOne({
             projectId: params.projectId,
-            name: connectionById.name,
+            externalId: connectionById.externalId,
         })
         return connection!
     },
@@ -134,7 +153,7 @@ export const appConnectionService = {
         projectId,
         pieceName,
         cursorRequest,
-        name,
+        displayName,
         status,
         limit,
     }: ListParams): Promise<SeekPage<AppConnection>> {
@@ -151,13 +170,13 @@ export const appConnectionService = {
         })
 
         const querySelector: Record<string, string | FindOperator<string>> = {
-            projectId,
+            projectIds: APArrayContains('projectIds', [projectId]),
         }
         if (!isNil(pieceName)) {
             querySelector.pieceName = Equal(pieceName)
         }
-        if (!isNil(name)) {
-            querySelector.name = ILike(`%${name}%`)
+        if (!isNil(displayName)) {
+            querySelector.displayName = ILike(`%${displayName}%`)
         }
         if (!isNil(status)) {
             querySelector.status = In(status)
@@ -190,10 +209,6 @@ export const appConnectionService = {
             refreshConnections,
             cursor,
         )
-    },
-
-    async countByProject({ projectId }: CountByProjectParams): Promise<number> {
-        return repo().countBy({ projectId })
     },
 }
 
@@ -357,13 +372,13 @@ const engineValidateAuth = async (
  */
 async function lockAndRefreshConnection({
     projectId,
-    name,
+    externalId,
 }: {
     projectId: ProjectId
-    name: string
+    externalId: string
 }) {
     const refreshLock = await distributedLock.acquireLock({
-        key: `${projectId}_${name}`,
+        key: `${projectId}_${externalId}`,
         timeout: 20000,
     })
 
@@ -371,8 +386,8 @@ async function lockAndRefreshConnection({
 
     try {
         const encryptedAppConnection = await repo().findOneBy({
-            projectId,
-            name,
+            projectIds: APArrayContains('projectIds', [projectId]),
+            externalId,
         })
         if (isNil(encryptedAppConnection)) {
             return encryptedAppConnection
@@ -381,7 +396,7 @@ async function lockAndRefreshConnection({
         if (!needRefresh(appConnection)) {
             return appConnection
         }
-        const refreshedAppConnection = await refresh(appConnection)
+        const refreshedAppConnection = await refresh(appConnection, projectId)
 
         await repo().update(refreshedAppConnection.id, {
             status: AppConnectionStatus.ACTIVE,
@@ -419,26 +434,26 @@ function needRefresh(connection: AppConnection): boolean {
     }
 }
 
-async function refresh(connection: AppConnection): Promise<AppConnection> {
+async function refresh(connection: AppConnection, projectId: ProjectId): Promise<AppConnection> {
     switch (connection.value.type) {
         case AppConnectionType.PLATFORM_OAUTH2:
             connection.value = await oauth2Handler[connection.value.type].refresh({
                 pieceName: connection.pieceName,
-                projectId: connection.projectId,
+                projectId,
                 connectionValue: connection.value,
             })
             break
         case AppConnectionType.CLOUD_OAUTH2:
             connection.value = await oauth2Handler[connection.value.type].refresh({
                 pieceName: connection.pieceName,
-                projectId: connection.projectId,
+                projectId,
                 connectionValue: connection.value,
             })
             break
         case AppConnectionType.OAUTH2:
             connection.value = await oauth2Handler[connection.value.type].refresh({
                 pieceName: connection.pieceName,
-                projectId: connection.projectId,
+                projectId,
                 connectionValue: connection.value,
             })
             break
@@ -451,12 +466,13 @@ async function refresh(connection: AppConnection): Promise<AppConnection> {
 type UpsertParams = {
     projectId: ProjectId
     ownerId: string | null
+    platformId: string
     request: UpsertAppConnectionRequestBody
 }
 
 type GetOneByName = {
     projectId: ProjectId
-    name: string
+    externalId: string
 }
 
 type GetOneParams = {
@@ -473,13 +489,15 @@ type ListParams = {
     projectId: ProjectId
     pieceName: string | undefined
     cursorRequest: Cursor | null
-    name: string | undefined
+    displayName: string | undefined
     status: AppConnectionStatus[] | undefined
     limit: number
 }
 
-type CountByProjectParams = {
+type UpdateParams = {
     projectId: ProjectId
+    id: AppConnectionId
+    request: UpdateConnectionValueRequestBody
 }
 
 type EngineValidateAuthParams = {

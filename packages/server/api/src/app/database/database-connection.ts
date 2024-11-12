@@ -4,7 +4,11 @@ import {
     ArrayContains,
     DataSource,
     EntitySchema,
+    FindOperator,
+    FindOptionsWhere,
+    Like,
     ObjectLiteral,
+    Raw,
     SelectQueryBuilder,
 } from 'typeorm'
 import { AiProviderEntity } from '../ai/ai-provider-entity'
@@ -135,28 +139,23 @@ export const databaseConnection = () => {
     return _databaseConnection
 }
 
-export function APArrayContains<T extends ObjectLiteral>(
+export function APArrayContains<T>(
     columnName: string,
-    values: string[],
-    query: SelectQueryBuilder<T>,
-): SelectQueryBuilder<T> {
+    values: string[]
+): FindOperator<T> {
     const databaseType = system.get(AppSystemProp.DB_TYPE)
     switch (databaseType) {
         case DatabaseType.POSTGRES:
-            return query.andWhere({
-                [columnName]: ArrayContains(values),
-            })
+            return ArrayContains(values)
         case DatabaseType.SQLITE3: {
             const likeConditions = values
-                .map((tag, index) => `flow_run.tags LIKE :tag${index}`)
+                .map((_, index) => `${columnName} LIKE :value${index}`)
                 .join(' AND ')
-            const likeParams = values.reduce((params, tag, index) => {
-                return {
-                    ...params,
-                    [`tag${index}`]: `%${tag}%`,
-                }
-            }, {})
-            return query.andWhere(likeConditions, likeParams)
+            const likeParams = values.reduce((params, value, index) => {
+                params[`value${index}`] = `%${value}%`
+                return params
+            }, {} as Record<string, string>)
+            return Raw(_ => `(${likeConditions})`, likeParams)
         }
         default:
             throw new Error(`Unsupported database type: ${databaseType}`)
