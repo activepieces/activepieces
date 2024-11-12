@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import gfm from 'remark-gfm';
 
+import { cn } from '@/lib/utils';
 import { MarkdownVariant } from '@activepieces/shared';
 
 import { Alert, AlertDescription } from '../ui/alert';
@@ -31,33 +32,29 @@ const Container = ({
   variant?: MarkdownVariant;
   children: React.ReactNode;
 }) => {
-  let containerClass = '';
-  switch (variant) {
-    case MarkdownVariant.INFO:
-      containerClass = 'rounded';
-      break;
-    case MarkdownVariant.WARNING:
-      containerClass = 'bg-warning-400 border-warning-500 text-warning-600';
-      break;
-    case MarkdownVariant.TIP:
-      containerClass = 'bg-success-400 border-success-500 text-success-600';
-      break;
-    case MarkdownVariant.BORDERLESS:
-      containerClass = 'border-none';
-      break;
-    default:
-      break;
-  }
-
   return (
-    <Alert className={`rounded ${containerClass}`}>
-      <div className="h-4 w-4 flex flex-start items-start justify-start">
-        {(variant === MarkdownVariant.INFO || variant === undefined) && (
-          <Info />
-        )}
-        {variant === MarkdownVariant.WARNING && <AlertTriangle />}
-        {variant === MarkdownVariant.TIP && <Lightbulb />}
-      </div>
+    <Alert
+      className={cn('rounded-md border', {
+        'bg-warning-100 text-warning-300 border-none':
+          variant === MarkdownVariant.WARNING,
+        'bg-success-100 text-success-300 border-none':
+          variant === MarkdownVariant.TIP,
+        'p-0 bg-background border-none': variant === MarkdownVariant.BORDERLESS,
+      })}
+    >
+      {variant !== MarkdownVariant.BORDERLESS && (
+        <>
+          {(variant === MarkdownVariant.INFO || variant === undefined) && (
+            <Info className="w-4 h-4 mt-1" />
+          )}
+          {variant === MarkdownVariant.WARNING && (
+            <AlertTriangle className="w-4 h-4 mt-1" />
+          )}
+          {variant === MarkdownVariant.TIP && (
+            <Lightbulb className="w-4 h-4 mt-1" />
+          )}
+        </>
+      )}
       <AlertDescription>{children}</AlertDescription>
     </Alert>
   );

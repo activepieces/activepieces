@@ -23,16 +23,12 @@ const FlowBuilderPage = () => {
     refetchOnWindowFocus: false,
   });
 
-  const {
-    data: sampleData,
-    isLoading: isSampleDataLoading,
-    isError: isSampleDataError,
-  } = sampleDataHooks.useSampleDataForFlow(flow?.version);
+  const { data: sampleData, isLoading: isSampleDataLoading } =
+    sampleDataHooks.useSampleDataForFlow(flow?.version);
 
   if (isError) {
     return <Navigate to="/404" />;
   }
-
 
   if (isLoading || isSampleDataLoading) {
     return (

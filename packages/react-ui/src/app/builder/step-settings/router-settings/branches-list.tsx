@@ -131,18 +131,20 @@ export const BranchListItem = ({
       ></EditableText>
 
       {!isNil(errors[branchIndex]) && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <InvalidStepIcon
-              size={16}
-              viewBox="0 0 16 16"
-              className="stroke-0 animate-fade shrink-0"
-            ></InvalidStepIcon>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {t('Incomplete branch settings')}
-          </TooltipContent>
-        </Tooltip>
+        <div className="min-w-[16px]">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <InvalidStepIcon
+                size={16}
+                viewBox="0 0 16 16"
+                className="stroke-0 animate-fade shrink-0"
+              ></InvalidStepIcon>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t('Incomplete branch settings')}
+            </TooltipContent>
+          </Tooltip>
+        </div>
       )}
       <div className="grow"></div>
       <div

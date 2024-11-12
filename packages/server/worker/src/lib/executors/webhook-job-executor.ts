@@ -1,28 +1,47 @@
 import { WebhookJobData } from '@activepieces/server-shared'
-import { EngineHttpResponse, FlowStatus, GetFlowVersionForWorkerRequestType, isNil, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
+import {
+    EngineHttpResponse,
+    FlowStatus,
+    GetFlowVersionForWorkerRequestType,
+    isNil,
+    PopulatedFlow,
+    ProgressUpdateType,
+    RunEnvironment,
+} from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { engineApiService, workerApiService } from '../api/server-api.service'
 import { webhookUtils } from '../utils/webhook-utils'
 
 export const webhookExecutor = {
-    async consumeWebhook(data: WebhookJobData, engineToken: string, workerToken: string): Promise<void> {
-        const { flowId, payload, simulate, useLatestFlowVersion } = data
-        const populatedFlow = await engineApiService(engineToken).getFlowWithExactPieces({
-            flowId,
-            type: useLatestFlowVersion ? GetFlowVersionForWorkerRequestType.LATEST : GetFlowVersionForWorkerRequestType.LOCKED,
-        })
+    async consumeWebhook(
+        data: WebhookJobData,
+        engineToken: string,
+        workerToken: string,
+    ): Promise<void> {
+        const { payload, saveSampleData, flowVersionToRun } = data
 
-        if (isNil(populatedFlow)) {
+        if (saveSampleData) {
+            await handleSampleData(data, engineToken, workerToken)
+        }
+
+        const onlySaveSampleData = isNil(flowVersionToRun)
+        if (onlySaveSampleData) {
             await stopAndReply(workerToken, data, {
-                status: StatusCodes.GONE,
+                status: StatusCodes.OK,
                 body: {},
                 headers: {},
             })
             return
         }
+
+        const populatedFlowToRun = await getFlowToRun(workerToken, engineToken, flowVersionToRun, data)
+        if (isNil(populatedFlowToRun)) {
+            return
+        }
+
         const handshakeResponse = await webhookUtils.handshake({
             engineToken,
-            populatedFlow,
+            populatedFlow: populatedFlowToRun,
             payload,
         })
         if (!isNil(handshakeResponse)) {
@@ -34,7 +53,9 @@ export const webhookExecutor = {
             return
         }
 
-        if (!useLatestFlowVersion && populatedFlow.status !== FlowStatus.ENABLED && !simulate) {
+        const disabledFlow = flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED && populatedFlowToRun.status !== FlowStatus.ENABLED
+
+        if (disabledFlow) {
             await stopAndReply(workerToken, data, {
                 status: StatusCodes.NOT_FOUND,
                 body: {},
@@ -42,35 +63,25 @@ export const webhookExecutor = {
             })
             return
         }
-        const filteredPayloads = await webhookUtils.extractPayloadAndSave({
+
+
+        const filteredPayloads = await webhookUtils.extractPayload({
             engineToken,
-            workerToken,
-            flowVersion: populatedFlow.version,
+            flowVersion: populatedFlowToRun.version,
             payload,
-            projectId: populatedFlow.projectId,
-            simulate,
+            projectId: populatedFlowToRun.projectId,
+            simulate: saveSampleData,
         })
 
-        if (simulate) {
-            await workerApiService(workerToken).deleteWebhookSimulation({
-                flowId: populatedFlow.id,
-                projectId: populatedFlow.projectId,
-            })
-        }
-
-        if (simulate) {
-            await stopAndReply(workerToken, data, {
-                status: StatusCodes.OK,
-                body: {},
-                headers: {},
-            })
-            return
-        }
         const runs = await workerApiService(workerToken).startRuns({
-            flowVersionId: populatedFlow.version.id,
-            projectId: populatedFlow.projectId,
-            environment: useLatestFlowVersion ? RunEnvironment.TESTING : RunEnvironment.PRODUCTION,
-            progressUpdateType: !isNil(data.synchronousHandlerId) ? ProgressUpdateType.WEBHOOK_RESPONSE : ProgressUpdateType.NONE,
+            flowVersionId: populatedFlowToRun.version.id,
+            projectId: populatedFlowToRun.projectId,
+            environment: flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED
+                ? RunEnvironment.PRODUCTION
+                : RunEnvironment.TESTING,
+            progressUpdateType: !isNil(data.synchronousHandlerId)
+                ? ProgressUpdateType.WEBHOOK_RESPONSE
+                : ProgressUpdateType.NONE,
             synchronousHandlerId: data.synchronousHandlerId ?? undefined,
             httpRequestId: data.requestId,
             payloads: filteredPayloads,
@@ -84,11 +95,83 @@ export const webhookExecutor = {
             return
         }
     },
+}
+async function getFlowToRun(workerToken: string, engineToken: string, flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, data: WebhookJobData): Promise<PopulatedFlow | null> {
+    const flowToRun = await engineApiService(engineToken).getFlowWithExactPieces({
+        flowId: data.flowId,
+        type: flowVersionToRun,
+    })
+
+    if (!isNil(flowToRun)) {
+        return flowToRun
+    }
+
+    if (flowVersionToRun === GetFlowVersionForWorkerRequestType.LATEST) {
+        await stopAndReply(workerToken, data, {
+            body: {},
+            headers: {},
+            status: StatusCodes.GONE,
+        })
+        return null
+    }
+
+    const latestFlowVersion = await engineApiService(engineToken).getFlowWithExactPieces({
+        flowId: data.flowId,
+        type: GetFlowVersionForWorkerRequestType.LATEST,
+    })
+
+    await stopAndReply(workerToken, data, {
+        body: {},
+        headers: {},
+        status: isNil(latestFlowVersion) ? StatusCodes.GONE : StatusCodes.NOT_FOUND,
+    })
+    return null
+}
+
+async function handleSampleData(
+    data: WebhookJobData,
+    engineToken: string,
+    workerToken: string,
+): Promise<void> {
+    const { flowId, payload } = data
+    const latestFlowVersion = await engineApiService(
+        engineToken,
+    ).getFlowWithExactPieces({
+        flowId,
+        type: GetFlowVersionForWorkerRequestType.LATEST,
+    })
+
+    if (isNil(latestFlowVersion)) {
+        await stopAndReply(workerToken, data, {
+            status: StatusCodes.GONE,
+            body: {},
+            headers: {},
+        })
+        return
+    }
+
+    const payloads = await webhookUtils.extractPayload({
+        engineToken,
+        flowVersion: latestFlowVersion.version,
+        payload,
+        projectId: latestFlowVersion.projectId,
+        simulate: true,
+    })
+
+    await webhookUtils.savePayloadsAsSampleData({
+        flowVersion: latestFlowVersion.version,
+        projectId: latestFlowVersion.projectId,
+        workerToken,
+        payloads,
+    })
 
 }
 
-
-async function stopAndReply(workerToken: string, data: WebhookJobData, response: EngineHttpResponse): Promise<void> {
+async function stopAndReply(
+    workerToken: string,
+    data: WebhookJobData,
+    response: EngineHttpResponse,
+): Promise<void> {
     if (isNil(data.synchronousHandlerId)) {
         return
     }
@@ -98,4 +181,3 @@ async function stopAndReply(workerToken: string, data: WebhookJobData, response:
         response,
     })
 }
-

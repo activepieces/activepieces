@@ -33,7 +33,6 @@ import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
-import { BranchSettings } from './branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
@@ -174,9 +173,15 @@ const StepSettingsContainer = () => {
       );
       currentStep.valid = form.formState.isValid;
 
+      const routerBranchesNumberChanged =
+        currentStep.type === ActionType.ROUTER &&
+        previousSavedStep.current?.type === ActionType.ROUTER &&
+        previousSavedStep.current.settings.branches.length !==
+          currentStep.settings.branches.length;
       if (
         previousSavedStep.current === null ||
-        deepEqual(currentStep, previousSavedStep.current)
+        deepEqual(currentStep, previousSavedStep.current) ||
+        routerBranchesNumberChanged
       ) {
         previousSavedStep.current = currentStep;
         return;
@@ -288,9 +293,6 @@ const StepSettingsContainer = () => {
                 )}
                 {modifiedStep.type === ActionType.CODE && (
                   <CodeSettings readonly={readonly}></CodeSettings>
-                )}
-                {modifiedStep.type === ActionType.BRANCH && (
-                  <BranchSettings readonly={readonly}></BranchSettings>
                 )}
                 {modifiedStep.type === ActionType.PIECE && modifiedStep && (
                   <PieceSettings

@@ -1,5 +1,14 @@
 import { t } from 'i18next';
-import { Key, Lock, Palette, ShieldPlus, CreditCard } from 'lucide-react';
+import {
+  Key,
+  Lock,
+  Palette,
+  ShieldPlus,
+  CreditCard,
+  ScrollText,
+  UserCog,
+  Sparkles,
+} from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -25,9 +34,19 @@ export default function PlatformSettingsLayout({
       icon: <Palette size={iconSize} />,
     },
     {
+      title: t('Universal AI'),
+      href: '/platform/settings/ai',
+      icon: <Sparkles size={iconSize} />,
+    },
+    {
       title: t('API Keys'),
       href: '/platform/settings/api-keys',
       icon: <Key size={iconSize} />,
+    },
+    {
+      title: t('Single Sign On'),
+      href: '/platform/settings/sso',
+      icon: <ShieldPlus size={iconSize} />,
     },
     {
       title: t('Signing Keys'),
@@ -35,9 +54,14 @@ export default function PlatformSettingsLayout({
       icon: <Lock size={iconSize} />,
     },
     {
-      title: 'Single Sign On',
-      href: '/platform/settings/sso',
-      icon: <ShieldPlus size={iconSize} />,
+      title: t('Users'),
+      href: '/platform/settings/users',
+      icon: <UserCog size={iconSize} />,
+    },
+    {
+      title: t('Audit Logs'),
+      href: '/platform/settings/audit-logs',
+      icon: <ScrollText size={iconSize} />,
     },
   ];
 

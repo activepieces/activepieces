@@ -1,7 +1,6 @@
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { isNil } from '../../common'
-import { ActivepiecesError, ErrorCode } from '../../common/activepieces-error'
-import { Action, SingleActionSchema } from '../actions/action'
+import { Action, ActionType, SingleActionSchema } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { UpdateActionRequest } from './index'
@@ -9,29 +8,59 @@ import { UpdateActionRequest } from './index'
 const actionSchemaValidator = TypeCompiler.Compile(SingleActionSchema)
 
 function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): FlowVersion {
-    return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
-        if (parentStep.name !== request.name) {
-            return parentStep
+    return flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
+        if (stepToUpdate.name !== request.name) {
+            return stepToUpdate
         }
-        if (parentStep.type !== request.type) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_OPERATION_INVALID,
-                params: {
-                    message: `Step type mismatch: ${parentStep.type} !== ${request.type}`,
-                },
-            })
-        }
+     
         const baseProps: Omit<Action, 'type' | 'settings'> = {
             displayName: request.displayName,
             name: request.name,
             valid: false,
         }
-        const updatedAction = {
-            ...parentStep,
-            ...baseProps,
-            type: request.type,
-            settings: request.settings,
-        } as Action
+
+        let updatedAction: Action
+        switch (request.type) {
+            case ActionType.CODE: {
+                updatedAction = {
+                    ...baseProps,
+                    settings: request.settings,
+                    type: ActionType.CODE,
+                    nextAction: stepToUpdate.nextAction,
+                }
+                break
+            }
+            case ActionType.PIECE: {
+                updatedAction = {
+                    ...baseProps,
+                    settings: request.settings,
+                    type: ActionType.PIECE,
+                    nextAction: stepToUpdate.nextAction,
+                }
+                break
+            }
+            case ActionType.LOOP_ON_ITEMS: {
+                updatedAction = {
+                    ...baseProps,
+                    settings: request.settings,
+                    type: ActionType.LOOP_ON_ITEMS,
+                    firstLoopAction: 'firstLoopAction' in stepToUpdate ? stepToUpdate.firstLoopAction : undefined,
+                    nextAction: stepToUpdate.nextAction,
+                }
+                break
+            }
+          
+            case ActionType.ROUTER: {
+                updatedAction = {
+                    ...baseProps,
+                    settings: request.settings,
+                    type: ActionType.ROUTER,
+                    nextAction: stepToUpdate.nextAction,
+                    children: 'children' in stepToUpdate ? stepToUpdate.children : [null, null],
+                }
+                break
+            }
+        }
         const valid = (isNil(request.valid) ? true : request.valid) && actionSchemaValidator.Check(updatedAction)
         return {
             ...updatedAction,

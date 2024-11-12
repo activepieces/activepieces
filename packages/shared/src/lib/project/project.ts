@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { SAFE_STRING_PATTERN } from '../common'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { ProjectMemberRole } from './project-member'
@@ -79,7 +80,9 @@ export const ProjectWithLimits = Type.Composite([
 
 export const UpdateProjectRequestInCommunity = Type.Object({
     notifyStatus: Type.Optional(Type.Enum(NotificationStatus)),
-    displayName: Type.Optional(Type.String()),
+    displayName: Type.Optional(Type.String({
+        pattern: SAFE_STRING_PATTERN,
+    })),
 })
 
 export type UpdateProjectRequestInCommunity = Static<typeof UpdateProjectRequestInCommunity>

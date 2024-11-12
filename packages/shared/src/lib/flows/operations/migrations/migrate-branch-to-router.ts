@@ -1,6 +1,6 @@
 
 import { isNil } from '../../../common'
-import { ActionType, BranchExecutionType, RouterAction, RouterExecutionType } from '../../actions/action'
+import { Action, ActionType, BranchExecutionType, RouterAction, RouterExecutionType } from '../../actions/action'
 import { FlowVersion } from '../../flow-version'
 import { flowStructureUtil } from '../../util/flow-structure-util'
 import { Migration } from '.'
@@ -11,7 +11,8 @@ export const migrateBranchToRouter: Migration = {
             return flowVersion
         }
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-            if (step.type === ActionType.BRANCH) {
+            const unschemedStep = step as unknown as { type: string, settings: { conditions: unknown[] }, onSuccessAction: Action | null, onFailureAction: Action | null }
+            if (unschemedStep.type === 'BRANCH') {
                 const routerAction: RouterAction = {
                     displayName: step.displayName,
                     name: step.name,
@@ -38,7 +39,7 @@ export const migrateBranchToRouter: Migration = {
                         },
                     },
                     nextAction: step.nextAction,
-                    children: [step.onSuccessAction ?? null, step.onFailureAction ?? null],
+                    children: [unschemedStep.onSuccessAction ?? null, unschemedStep.onFailureAction ?? null],
                 }
                 return routerAction
             }

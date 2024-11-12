@@ -31,6 +31,7 @@ import {
 } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
+import { useRef } from 'react';
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
@@ -116,11 +117,9 @@ const isFlowController = (stepMetadata: StepMetadata) => {
       PieceCategory.FLOW_CONTROL,
     );
   }
-  return [
-    ActionType.LOOP_ON_ITEMS,
-    ActionType.ROUTER,
-    ActionType.BRANCH,
-  ].includes(stepMetadata.type as ActionType);
+  return [ActionType.LOOP_ON_ITEMS, ActionType.ROUTER].includes(
+    stepMetadata.type as ActionType,
+  );
 };
 
 const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
@@ -226,25 +225,6 @@ const getDefaultStep = ({
         },
         common,
       );
-    case ActionType.BRANCH:
-      return deepMergeAndCast<Action>(
-        {
-          type: ActionType.BRANCH,
-          settings: {
-            conditions: [
-              [
-                {
-                  firstValue: '',
-                  operator: BranchOperator.TEXT_CONTAINS,
-                  secondValue: '',
-                  caseSensitive: false,
-                },
-              ],
-            ],
-          },
-        },
-        common,
-      );
     case ActionType.ROUTER:
       return deepMergeAndCast<Action>(
         {
@@ -332,6 +312,56 @@ const checkPieceInputValidity = (
     return acc;
   }, true);
 };
+
+const maxListHeight = 300;
+const minListHeight = 100;
+const aboveListSectionHeight = 86;
+
+const useAdjustPieceListHeightToAvailableSpace = (isPieceSelectorOpen: boolean) => {
+  const listHeightRef = useRef<number>(maxListHeight);
+  const popoverTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const previousOpenValueRef = useRef<boolean>(isPieceSelectorOpen);
+  if (!previousOpenValueRef.current && isPieceSelectorOpen && popoverTriggerRef.current) {
+    const popoverTriggerRect =
+      popoverTriggerRef.current.getBoundingClientRect();
+    const popOverFullHeight = maxListHeight + aboveListSectionHeight;
+    const isRenderingPopoverBelowTrigger =
+      popoverTriggerRect.top <
+      (window.innerHeight || document.documentElement.clientHeight) -
+      popoverTriggerRect.bottom;
+    if (isRenderingPopoverBelowTrigger) {
+      const isPopoverOverflowing =
+        popoverTriggerRect.bottom + popOverFullHeight >
+        (window.innerHeight || document.documentElement.clientHeight);
+      if (isPopoverOverflowing) {
+        listHeightRef.current = Math.max(
+          minListHeight,
+          maxListHeight +
+          (window.innerHeight || document.documentElement.clientHeight) -
+          popOverFullHeight -
+          popoverTriggerRect.bottom,
+        );
+      }
+    } else {
+      const isPopoverOverflowing =
+        popoverTriggerRect.top - popOverFullHeight < 0;
+      if (isPopoverOverflowing) {
+        listHeightRef.current = Math.max(
+          minListHeight,
+          maxListHeight - Math.abs(popoverTriggerRect.top - popOverFullHeight),
+        );
+      }
+    }
+  }
+  previousOpenValueRef.current = isPieceSelectorOpen;
+  return {
+    listHeightRef,
+    popoverTriggerRef,
+    maxListHeight,
+    aboveListSectionHeight
+  }
+}
+
 export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
@@ -343,4 +373,5 @@ export const pieceSelectorUtils = {
   isUtilityCorePiece,
   isFlowController,
   isUniversalAiPiece,
+  useAdjustPieceListHeightToAvailableSpace
 };

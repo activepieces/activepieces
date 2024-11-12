@@ -12,7 +12,6 @@ import {
   BranchOperator,
   textConditions,
   singleValueConditions,
-  BranchAction,
   RouterAction,
 } from '@activepieces/shared';
 
@@ -23,6 +22,7 @@ import {
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
 import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
+
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: t('(Text) Contains'),
   [BranchOperator.TEXT_DOES_NOT_CONTAIN]: t('(Text) Does not contain'),
@@ -62,7 +62,7 @@ type BranchSingleConditionProps = {
   conditionIndex: number;
   readonly: boolean;
   deleteClick: () => void;
-  fieldName: `settings.conditions` | `settings.branches[${number}].conditions`;
+  branchIndex: number;
 };
 
 const BranchSingleCondition = ({
@@ -71,12 +71,12 @@ const BranchSingleCondition = ({
   conditionIndex,
   showDelete,
   readonly,
-  fieldName,
+  branchIndex,
 }: BranchSingleConditionProps) => {
-  const form = useFormContext<BranchAction | RouterAction>();
+  const form = useFormContext<RouterAction>();
 
   const condition = form.getValues(
-    `${fieldName}.${groupIndex}.${conditionIndex}`,
+    `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`,
   );
 
   const isTextCondition =
@@ -85,7 +85,8 @@ const BranchSingleCondition = ({
     condition.operator && singleValueConditions.includes(condition?.operator);
   const isInvalid = isSingleValueCondition
     ? condition.firstValue.length === 0
-    : condition.firstValue.length === 0 || condition.secondValue.length === 0;
+    : condition.firstValue.length === 0 ||
+      ('secondValue' in condition && condition.secondValue?.length === 0);
   return (
     <>
       <div className="flex items-center gap-2">
@@ -95,7 +96,7 @@ const BranchSingleCondition = ({
               <InvalidStepIcon
                 size={16}
                 viewBox="0 0 16 16"
-                className="stroke-0 animate-fade"
+                className="stroke-0 animate-fade shrink-0"
               ></InvalidStepIcon>
             </TooltipTrigger>
             <TooltipContent side="bottom">
@@ -110,7 +111,7 @@ const BranchSingleCondition = ({
           })}
         >
           <FormField
-            name={`${fieldName}.${groupIndex}.${conditionIndex}.firstValue`}
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.firstValue`}
             control={form.control}
             render={({ field }) => {
               return (
@@ -127,7 +128,7 @@ const BranchSingleCondition = ({
             }}
           />
           <FormField
-            name={`${fieldName}.${groupIndex}.${conditionIndex}.operator`}
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.operator`}
             control={form.control}
             render={({ field }) => (
               <FormItem>
@@ -136,7 +137,19 @@ const BranchSingleCondition = ({
                   value={field.value}
                   options={operationOptions}
                   placeholder={''}
-                  onChange={(e) => field.onChange(e)}
+                  onChange={(e) => {
+                    if (
+                      isSingleValueCondition &&
+                      e !== null &&
+                      !singleValueConditions.includes(e as BranchOperator)
+                    ) {
+                      form.setValue(
+                        `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
+                        '',
+                      );
+                    }
+                    field.onChange(e);
+                  }}
                 />
                 <FormMessage />
               </FormItem>
@@ -144,14 +157,14 @@ const BranchSingleCondition = ({
           />
           {!isSingleValueCondition && (
             <FormField
-              name={`${fieldName}.${groupIndex}.${conditionIndex}.secondValue`}
+              name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`}
               control={form.control}
               render={({ field }) => (
                 <FormItem>
                   <TextInputWithMentions
                     placeholder={t('Second value')}
                     disabled={readonly}
-                    initialValue={field.value}
+                    initialValue={field.value || ''}
                     onChange={field.onChange}
                   ></TextInputWithMentions>
                   <FormMessage />
@@ -165,7 +178,7 @@ const BranchSingleCondition = ({
       <div className="flex justify-start items-center gap-2 mt-2">
         {isTextCondition && (
           <FormField
-            name={`${fieldName}.${groupIndex}.${conditionIndex}.caseSensitive`}
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.caseSensitive`}
             control={form.control}
             render={({ field }) => (
               <FormItem>

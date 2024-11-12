@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../common'
-import { BranchActionSchema, BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
+import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { EmptyTrigger, PieceTrigger, Trigger } from '../triggers/trigger'
@@ -44,6 +44,7 @@ export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),
     stepName: Type.String(),
     conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
+    branchName: Type.String(),
 })
 
 export const DuplicateBranchRequest = Type.Object({
@@ -55,8 +56,6 @@ export type AddBranchRequest = Static<typeof AddBranchRequest>
 export type DuplicateBranchRequest = Static<typeof DuplicateBranchRequest>
 
 export enum StepLocationRelativeToParent {
-    INSIDE_TRUE_BRANCH = 'INSIDE_TRUE_BRANCH',
-    INSIDE_FALSE_BRANCH = 'INSIDE_FALSE_BRANCH',
     AFTER = 'AFTER',
     INSIDE_LOOP = 'INSIDE_LOOP',
     INSIDE_BRANCH = 'INSIDE_BRANCH',
@@ -101,7 +100,6 @@ export const UpdateActionRequest = Type.Union([
     CodeActionSchema,
     LoopOnItemsActionSchema,
     PieceActionSchema,
-    BranchActionSchema,
     RouterActionSchema,
 ])
 

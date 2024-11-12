@@ -1,6 +1,6 @@
 import { isNil } from '../../common'
 import { ActivepiecesError, ErrorCode } from '../../common/activepieces-error'
-import { Action, ActionType, BranchAction, BranchCondition, BranchExecutionType, emptyCondition, LoopOnItemsAction, RouterAction } from '../actions/action'
+import { Action, ActionType, BranchCondition, BranchExecutionType, emptyCondition, LoopOnItemsAction, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { Trigger, TriggerType } from '../triggers/trigger'
 
@@ -66,22 +66,6 @@ function transferStep<T extends Step>(
 ): Step {
     const updatedStep = transferFunction(step as T)
     switch (updatedStep.type) {
-        case ActionType.BRANCH: {
-            const { onSuccessAction, onFailureAction } = updatedStep
-            if (onSuccessAction) {
-                updatedStep.onSuccessAction = transferStep(
-                    onSuccessAction,
-                    transferFunction,
-                ) as Action
-            }
-            if (onFailureAction) {
-                updatedStep.onFailureAction = transferStep(
-                    onFailureAction,
-                    transferFunction,
-                ) as Action
-            }
-            break
-        }
         case ActionType.LOOP_ON_ITEMS: {
             const { firstLoopAction } = updatedStep
             if (firstLoopAction) {
@@ -138,11 +122,11 @@ function getAllSteps(step: Step): Step[] {
 }
 
 
-const createBranch = (pathNumber: number, conditions: BranchCondition[][] | undefined) => {
+const createBranch = (branchName: string, conditions: BranchCondition[][] | undefined) => {
     return {
         conditions: conditions ?? [[emptyCondition]],
         branchType: BranchExecutionType.CONDITION,
-        branchName: `Branch ${pathNumber}`,
+        branchName,
     }
 }
 
@@ -160,7 +144,7 @@ function findPathToStep(trigger: Trigger, targetStepName: string): StepWithIndex
 }
 
 
-function getAllChildSteps(action: LoopOnItemsAction | BranchAction | RouterAction): Step[] {
+function getAllChildSteps(action: LoopOnItemsAction  | RouterAction): Step[] {
     return getAllSteps({
         ...action,
         nextAction: undefined,
@@ -169,17 +153,8 @@ function getAllChildSteps(action: LoopOnItemsAction | BranchAction | RouterActio
 
 function isChildOf(parent: Step, childStepName: string): boolean {
     switch (parent.type) {
+        case ActionType.ROUTER: 
         case ActionType.LOOP_ON_ITEMS: {
-            const children = getAllChildSteps(parent)
-            return children.findIndex((c) => c.name === childStepName) > -1
-        }
-        case ActionType.ROUTER: {
-            const children = parent.children.filter(
-                (child): child is Action => child !== null,
-            )
-            return children.findIndex((c) => c.name === childStepName) > -1
-        }
-        case ActionType.BRANCH: {
             const children = getAllChildSteps(parent)
             return children.findIndex((c) => c.name === childStepName) > -1
         }

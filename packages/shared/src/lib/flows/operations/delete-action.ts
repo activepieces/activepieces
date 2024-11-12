@@ -13,23 +13,6 @@ function _deleteAction(
             parentStep.nextAction = stepToUpdate.nextAction
         }
         switch (parentStep.type) {
-            case ActionType.BRANCH: {
-                if (
-                    parentStep.onFailureAction &&
-            parentStep.onFailureAction.name === request.name
-                ) {
-                    const stepToUpdate: Action = parentStep.onFailureAction
-                    parentStep.onFailureAction = stepToUpdate.nextAction
-                }
-                if (
-                    parentStep.onSuccessAction &&
-            parentStep.onSuccessAction.name === request.name
-                ) {
-                    const stepToUpdate: Action = parentStep.onSuccessAction
-                    parentStep.onSuccessAction = stepToUpdate.nextAction
-                }
-                break
-            }
             case ActionType.LOOP_ON_ITEMS: {
                 if (
                     parentStep.firstLoopAction &&
