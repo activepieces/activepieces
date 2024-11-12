@@ -25,6 +25,7 @@ import { engineRunner } from 'server-worker'
 import { Equal, FindOperator, ILike, In } from 'typeorm'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { repoFactory } from '../../core/db/repo-factory'
+import { APArrayContains } from '../../database/database-connection'
 import { encryptUtils } from '../../helper/encryption'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -39,7 +40,6 @@ import {
 } from '../app-connection.entity'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
-import { APArrayContains } from '../../database/database-connection'
 
 const repo = repoFactory(AppConnectionEntity)
 

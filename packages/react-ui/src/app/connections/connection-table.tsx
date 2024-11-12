@@ -18,6 +18,12 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
 import { UserFullName } from '@/components/ui/user-fullname';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
@@ -36,12 +42,6 @@ import { TableTitle } from '../../components/ui/table-title';
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
 import { NewConnectionDialog } from './new-connection-dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { RenameConnectionDialog } from './rename-connection-dialog';
 
 type PieceIconWithPieceNameProps = {
@@ -92,199 +92,197 @@ function AppConnectionsTable() {
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown
   >[] = [
-      {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              table.getIsSomePageRowsSelected()
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            table.getIsSomePageRowsSelected()
+          }
+          onCheckedChange={(value) => {
+            const isChecked = !!value;
+            table.toggleAllPageRowsSelected(isChecked);
+
+            if (isChecked) {
+              const allRows = table
+                .getRowModel()
+                .rows.map((row) => row.original);
+
+              const newSelectedRows = [...allRows, ...selectedRows];
+
+              const uniqueRows = Array.from(
+                new Map(
+                  newSelectedRows.map((item) => [item.id, item]),
+                ).values(),
+              );
+
+              setSelectedRows(uniqueRows);
+            } else {
+              const filteredRows = selectedRows.filter((row) => {
+                return !table
+                  .getRowModel()
+                  .rows.some((r) => r.original.id === row.id);
+              });
+              setSelectedRows(filteredRows);
             }
+          }}
+        />
+      ),
+      cell: ({ row }) => {
+        const isChecked = selectedRows.some(
+          (selectedRow) => selectedRow.id === row.original.id,
+        );
+        return (
+          <Checkbox
+            checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;
-              table.toggleAllPageRowsSelected(isChecked);
-
+              let newSelectedRows = [...selectedRows];
               if (isChecked) {
-                const allRows = table
-                  .getRowModel()
-                  .rows.map((row) => row.original);
-
-                const newSelectedRows = [...allRows, ...selectedRows];
-
-                const uniqueRows = Array.from(
-                  new Map(
-                    newSelectedRows.map((item) => [item.id, item]),
-                  ).values(),
+                const exists = newSelectedRows.some(
+                  (selectedRow) => selectedRow.id === row.original.id,
                 );
-
-                setSelectedRows(uniqueRows);
+                if (!exists) {
+                  newSelectedRows.push(row.original);
+                }
               } else {
-                const filteredRows = selectedRows.filter((row) => {
-                  return !table
-                    .getRowModel()
-                    .rows.some((r) => r.original.id === row.id);
-                });
-                setSelectedRows(filteredRows);
+                newSelectedRows = newSelectedRows.filter(
+                  (selectedRow) => selectedRow.id !== row.original.id,
+                );
               }
+              setSelectedRows(newSelectedRows);
+              row.toggleSelected(!!value);
             }}
           />
-        ),
-        cell: ({ row }) => {
-          const isChecked = selectedRows.some(
-            (selectedRow) => selectedRow.id === row.original.id,
-          );
-          return (
-            <Checkbox
-              checked={isChecked}
-              onCheckedChange={(value) => {
-                const isChecked = !!value;
-                let newSelectedRows = [...selectedRows];
-                if (isChecked) {
-                  const exists = newSelectedRows.some(
-                    (selectedRow) => selectedRow.id === row.original.id,
-                  );
-                  if (!exists) {
-                    newSelectedRows.push(row.original);
-                  }
-                } else {
-                  newSelectedRows = newSelectedRows.filter(
-                    (selectedRow) => selectedRow.id !== row.original.id,
-                  );
-                }
-                setSelectedRows(newSelectedRows);
-                row.toggleSelected(!!value);
-              }}
+        );
+      },
+      accessorKey: 'select',
+    },
+    {
+      accessorKey: 'pieceName',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('App')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            <PieceIconWithPieceName pieceName={row.original.pieceName} />
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'displayName',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Display Name')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-left">{row.original.displayName}</div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {t('External ID')}: {row.original.externalId || '-'}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      },
+    },
+    {
+      accessorKey: 'status',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Status')} />
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const { variant, icon: Icon } =
+          appConnectionUtils.getStatusIcon(status);
+        return (
+          <div className="text-left">
+            <StatusIconWithText
+              icon={Icon}
+              text={formatUtils.convertEnumToHumanReadable(status)}
+              variant={variant}
             />
-          );
-        },
-        accessorKey: 'select',
+          </div>
+        );
       },
-      {
-        accessorKey: 'pieceName',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('App')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">
-              <PieceIconWithPieceName pieceName={row.original.pieceName} />
-            </div>
-          );
-        },
+    },
+    {
+      accessorKey: 'updated',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Connected At')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {formatUtils.formatDate(new Date(row.original.updated))}
+          </div>
+        );
       },
-      {
-        accessorKey: 'displayName',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Display Name')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <TooltipProvider>
+    },
+    {
+      accessorKey: 'owner',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Owner')} />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div className="text-left">
+            {row.original.owner && (
+              <UserFullName
+                firstName={row.original.owner.firstName}
+                lastName={row.original.owner.lastName}
+                email={row.original.owner.email}
+              />
+            )}
+            {!row.original.owner && <div className="text-left">-</div>}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-2 justify-end">
+            <PermissionNeededTooltip
+              hasPermission={userHasPermissionToWriteAppConnection}
+            >
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="text-left">
-                    {row.original.displayName}
-                  </div>
+                  <RenameConnectionDialog
+                    connectionId={row.original.id}
+                    currentName={row.original.displayName}
+                    onRename={() => {
+                      refetch();
+                    }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={!userHasPermissionToWriteAppConnection}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </RenameConnectionDialog>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>
-                    {t('External ID')}: {row.original.externalId || '-'}
-                  </p>
+                  <p>{t('Rename Connection')}</p>
                 </TooltipContent>
               </Tooltip>
-            </TooltipProvider>
-          );
-        },
+            </PermissionNeededTooltip>
+          </div>
+        );
       },
-      {
-        accessorKey: 'status',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Status')} />
-        ),
-        cell: ({ row }) => {
-          const status = row.original.status;
-          const { variant, icon: Icon } =
-            appConnectionUtils.getStatusIcon(status);
-          return (
-            <div className="text-left">
-              <StatusIconWithText
-                icon={Icon}
-                text={formatUtils.convertEnumToHumanReadable(status)}
-                variant={variant}
-              />
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'updated',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Connected At')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">
-              {formatUtils.formatDate(new Date(row.original.updated))}
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'owner',
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Owner')} />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="text-left">
-              {row.original.owner && (
-                <UserFullName
-                  firstName={row.original.owner.firstName}
-                  lastName={row.original.owner.lastName}
-                  email={row.original.owner.email}
-                />
-              )}
-              {!row.original.owner && <div className="text-left">-</div>}
-            </div>
-          );
-        },
-      },
-      {
-        id: 'actions',
-        cell: ({ row }) => {
-          return (
-            <div className="flex items-center gap-2 justify-end">
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToWriteAppConnection}
-              >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <RenameConnectionDialog
-                      connectionId={row.original.id}
-                      currentName={row.original.displayName}
-                      onRename={() => {
-                        refetch();
-                      }}
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={!userHasPermissionToWriteAppConnection}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </RenameConnectionDialog>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{t('Rename Connection')}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </PermissionNeededTooltip>
-            </div>
-          );
-        },
-      },
-    ];
+    },
+  ];
   const location = useLocation();
 
   const { data, isLoading, refetch } = useQuery({
@@ -404,9 +402,7 @@ function AppConnectionsTable() {
   return (
     <div className="flex-col w-full">
       <TableTitle
-        description={t(
-          'Manage project connections to external systems.',
-        )}
+        description={t('Manage project connections to external systems.')}
       >
         {t('Connections')}
       </TableTitle>

@@ -5,6 +5,8 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +16,6 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button'; // Importing Button from shadcn
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 
@@ -99,7 +100,6 @@ const RenameConnectionDialog: React.FC<RenameConnectionDialogProps> = ({
               </FormMessage>
             )}
             <Button loading={isPending}>{t('Rename')}</Button>
-
           </form>
         </Form>
       </DialogContent>
@@ -107,4 +107,4 @@ const RenameConnectionDialog: React.FC<RenameConnectionDialogProps> = ({
   );
 };
 
-export { RenameConnectionDialog }; 
+export { RenameConnectionDialog };

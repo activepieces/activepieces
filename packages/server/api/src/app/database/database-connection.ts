@@ -5,11 +5,7 @@ import {
     DataSource,
     EntitySchema,
     FindOperator,
-    FindOptionsWhere,
-    Like,
-    ObjectLiteral,
     Raw,
-    SelectQueryBuilder,
 } from 'typeorm'
 import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
@@ -141,7 +137,7 @@ export const databaseConnection = () => {
 
 export function APArrayContains<T>(
     columnName: string,
-    values: string[]
+    values: string[],
 ): FindOperator<T> {
     const databaseType = system.get(AppSystemProp.DB_TYPE)
     switch (databaseType) {

@@ -39,7 +39,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             .send(removeSensitiveData(appConnection))
     })
 
-    app.post('/:id', UpdateConnectionValueRequest, async (request, reply) => {
+    app.post('/:id', UpdateConnectionValueRequest, async (request) => {
         const appConnection = await appConnectionService.update({
             id: request.params.id,
             projectId: request.principal.projectId,

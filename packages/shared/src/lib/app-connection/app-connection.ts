@@ -111,7 +111,7 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     scope: Type.Enum(AppConnectionScope),
     status: Type.Enum(AppConnectionStatus),
     ownerId: Nullable(Type.String()),
-    owner: Type.Optional(Type.Union([UserMeta, Type.Null()])),
+    owner: Nullable(UserMeta),
 }, {
     description: 'App connection is a connection to an external app.',
 })

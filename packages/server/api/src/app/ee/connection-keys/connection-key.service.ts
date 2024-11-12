@@ -21,9 +21,9 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { projectService } from '../../project/project-service'
 import { appCredentialService } from '../app-credentials/app-credentials.service'
 import { ConnectionKeyEntity } from './connection-key.entity'
-import { projectService } from '../../project/project-service'
 
 const connectionKeyRepo = repoFactory(ConnectionKeyEntity)
 

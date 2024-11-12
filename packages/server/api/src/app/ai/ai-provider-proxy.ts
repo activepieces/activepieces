@@ -167,7 +167,6 @@ const ProxyRequest = {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
     schema: {
-        tags: ['ai-providers'],
         description: 'Proxy a request to a third party service',
         params: Type.Object({
             provider: Type.String(),

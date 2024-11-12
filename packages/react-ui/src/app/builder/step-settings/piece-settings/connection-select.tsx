@@ -142,10 +142,13 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                         ),
                       ) ? (
                         <div className="truncate flex-grow flex-shrink">
-                          {connectionsPage?.data?.find(
-                            (connection) =>
-                              connection.externalId === removeBrackets(field.value)
-                          )?.displayName}
+                          {
+                            connectionsPage?.data?.find(
+                              (connection) =>
+                                connection.externalId ===
+                                removeBrackets(field.value),
+                            )?.displayName
+                          }
                         </div>
                       ) : null}
                     </SelectValue>

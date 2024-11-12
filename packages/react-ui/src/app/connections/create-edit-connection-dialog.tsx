@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
+
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -47,9 +48,13 @@ import {
   isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
-import { newConnectionUtils, ConnectionNameAlreadyExists } from './new-connection-utils';
+
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
+import {
+  newConnectionUtils,
+  ConnectionNameAlreadyExists,
+} from './new-connection-utils';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 

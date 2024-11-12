@@ -1,3 +1,16 @@
+import { Type } from '@sinclair/typebox';
+import { t } from 'i18next';
+
+import { formUtils } from '@/app/builder/piece-properties/form-utils';
+import { authenticationSession } from '@/lib/authentication-session';
+import {
+  CustomAuthProperty,
+  CustomAuthProps,
+  OAuth2Props,
+  PieceMetadataModel,
+  PieceMetadataModelSummary,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
@@ -12,18 +25,6 @@ import {
   isNil,
   apId,
 } from '@activepieces/shared';
-import {
-    CustomAuthProperty,
-  CustomAuthProps,
-  OAuth2Props,
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-  PropertyType,
-} from '@activepieces/pieces-framework';
-import { authenticationSession } from '@/lib/authentication-session';
-import { Type } from '@sinclair/typebox';
-import { formUtils } from '@/app/builder/piece-properties/form-utils';
-import { t } from 'i18next';
 
 export class ConnectionNameAlreadyExists extends Error {
   constructor() {
@@ -33,9 +34,7 @@ export class ConnectionNameAlreadyExists extends Error {
 }
 
 export const newConnectionUtils = {
-  buildConnectionSchema(
-    piece: PieceMetadataModelSummary | PieceMetadataModel,
-  ) {
+  buildConnectionSchema(piece: PieceMetadataModelSummary | PieceMetadataModel) {
     const auth = piece.auth;
     if (isNil(auth)) {
       return Type.Object({
@@ -48,7 +47,9 @@ export const newConnectionUtils = {
       externalId: Type.String({
         pattern: '^[A-Za-z0-9_\\-@\\+\\.]*$',
         minLength: 1,
-        errorMessage: t('Name can only contain letters, numbers and underscores'),
+        errorMessage: t(
+          'Name can only contain letters, numbers and underscores',
+        ),
       }),
     });
 
@@ -70,7 +71,11 @@ export const newConnectionUtils = {
       case PropertyType.CUSTOM_AUTH:
         return Type.Object({
           request: Type.Composite([
-            Type.Omit(UpsertCustomAuthRequest, ['externalId', 'value', 'displayName']),
+            Type.Omit(UpsertCustomAuthRequest, [
+              'externalId',
+              'value',
+              'displayName',
+            ]),
             connectionSchema,
             Type.Object({
               value: Type.Object({
@@ -98,7 +103,10 @@ export const newConnectionUtils = {
       default:
         return Type.Object({
           request: Type.Composite([
-            Type.Omit(UpsertAppConnectionRequestBody, ['externalId', 'displayName']),
+            Type.Omit(UpsertAppConnectionRequestBody, [
+              'externalId',
+              'displayName',
+            ]),
             connectionSchema,
           ]),
         });
@@ -176,7 +184,9 @@ export const newConnectionUtils = {
           type: AppConnectionType.CUSTOM_AUTH,
           value: {
             type: AppConnectionType.CUSTOM_AUTH,
-            props: newConnectionUtils.extractDefaultPropsValues(piece.auth.props),
+            props: newConnectionUtils.extractDefaultPropsValues(
+              piece.auth.props,
+            ),
           },
         };
       }
@@ -192,7 +202,9 @@ export const newConnectionUtils = {
             scope: piece.auth.scope.join(' '),
             authorization_method: piece.auth?.authorizationMethod,
             client_id: '',
-            props: newConnectionUtils.extractDefaultPropsValues(piece.auth.props),
+            props: newConnectionUtils.extractDefaultPropsValues(
+              piece.auth.props,
+            ),
             code: '',
           },
         };
@@ -221,4 +233,4 @@ export const newConnectionUtils = {
       return acc;
     }, {});
   },
-}; 
+};

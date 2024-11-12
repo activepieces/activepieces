@@ -8,7 +8,6 @@ import {
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
-    Type,
 } from '@fastify/type-provider-typebox'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 

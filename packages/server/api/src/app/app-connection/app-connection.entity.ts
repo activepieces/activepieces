@@ -51,7 +51,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             nullable: false,
         },
         scope: {
-            type: String
+            type: String,
         },
         value: {
             type: JSONB_COLUMN_TYPE,
