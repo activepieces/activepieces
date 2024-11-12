@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+
 import {
   PieceSelectorItem,
   PieceStepMetadata,
@@ -31,7 +33,6 @@ import {
 } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
-import { useRef } from 'react';
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
@@ -317,18 +318,24 @@ const maxListHeight = 300;
 const minListHeight = 100;
 const aboveListSectionHeight = 86;
 
-const useAdjustPieceListHeightToAvailableSpace = (isPieceSelectorOpen: boolean) => {
+const useAdjustPieceListHeightToAvailableSpace = (
+  isPieceSelectorOpen: boolean,
+) => {
   const listHeightRef = useRef<number>(maxListHeight);
   const popoverTriggerRef = useRef<HTMLButtonElement | null>(null);
   const previousOpenValueRef = useRef<boolean>(isPieceSelectorOpen);
-  if (!previousOpenValueRef.current && isPieceSelectorOpen && popoverTriggerRef.current) {
+  if (
+    !previousOpenValueRef.current &&
+    isPieceSelectorOpen &&
+    popoverTriggerRef.current
+  ) {
     const popoverTriggerRect =
       popoverTriggerRef.current.getBoundingClientRect();
     const popOverFullHeight = maxListHeight + aboveListSectionHeight;
     const isRenderingPopoverBelowTrigger =
       popoverTriggerRect.top <
       (window.innerHeight || document.documentElement.clientHeight) -
-      popoverTriggerRect.bottom;
+        popoverTriggerRect.bottom;
     if (isRenderingPopoverBelowTrigger) {
       const isPopoverOverflowing =
         popoverTriggerRect.bottom + popOverFullHeight >
@@ -337,9 +344,9 @@ const useAdjustPieceListHeightToAvailableSpace = (isPieceSelectorOpen: boolean) 
         listHeightRef.current = Math.max(
           minListHeight,
           maxListHeight +
-          (window.innerHeight || document.documentElement.clientHeight) -
-          popOverFullHeight -
-          popoverTriggerRect.bottom,
+            (window.innerHeight || document.documentElement.clientHeight) -
+            popOverFullHeight -
+            popoverTriggerRect.bottom,
         );
       }
     } else {
@@ -358,9 +365,9 @@ const useAdjustPieceListHeightToAvailableSpace = (isPieceSelectorOpen: boolean) 
     listHeightRef,
     popoverTriggerRef,
     maxListHeight,
-    aboveListSectionHeight
-  }
-}
+    aboveListSectionHeight,
+  };
+};
 
 export const pieceSelectorUtils = {
   getDefaultStep,
@@ -373,5 +380,5 @@ export const pieceSelectorUtils = {
   isUtilityCorePiece,
   isFlowController,
   isUniversalAiPiece,
-  useAdjustPieceListHeightToAvailableSpace
+  useAdjustPieceListHeightToAvailableSpace,
 };
