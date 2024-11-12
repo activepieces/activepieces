@@ -1,5 +1,5 @@
 import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { CreateRbacRequestBody, PrincipalType, UpdateRbacRequestBody } from '@activepieces/shared'
+import { apId, CreateRbacRequestBody, PrincipalType, UpdateRbacRequestBody } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -345,6 +345,76 @@ describe('Custom Domain API', () => {
                 method: 'POST',
                 url: `/v1/rbac/${rbacRule.id}`,
                 body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+    })
+
+    describe('Delete Rbac Rule', () => {
+        it('should delete a rbac rule', async () => {
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUserOne.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const rbacRule = createMockRbac({ platformId: mockPlatformOne.id })
+            await databaseConnection().getRepository('rbac').save(rbacRule)
+
+
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/rbac/${rbacRule.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('should fail to delete a rbac rule if user is not platform owner', async () => {
+            const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const nonOwnerUserId = createMockUser()
+            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: nonOwnerUserId.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const rbacRule = createMockRbac({ platformId: mockPlatformOne.id })
+            await databaseConnection().getRepository('rbac').save(rbacRule)
+
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/rbac/${rbacRule.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should fail to delete a rbac rule if rbac rule does not exist', async () => {
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUserOne.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/rbac/${apId()}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
