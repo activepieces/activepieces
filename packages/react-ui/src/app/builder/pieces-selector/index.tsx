@@ -51,7 +51,51 @@ type PieceGroup = {
 };
 
 const maxListHeight = 300;
+const minListHeight = 100;
 const aboveListSectionHeight = 86;
+
+const useAdjustPieceListHeightToAvailableSpace = (isPieceSelectorOpen: boolean) => {
+  const listHeightRef = useRef<number>(maxListHeight);
+  const popoverTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const previousOpenValueRef = useRef<boolean>(isPieceSelectorOpen);
+  if (!previousOpenValueRef.current && isPieceSelectorOpen && popoverTriggerRef.current) {
+    const popoverTriggerRect =
+      popoverTriggerRef.current.getBoundingClientRect();
+    const popOverFullHeight = maxListHeight + aboveListSectionHeight;
+    const isRenderingPopoverBelowTrigger =
+      popoverTriggerRect.top <
+      (window.innerHeight || document.documentElement.clientHeight) -
+      popoverTriggerRect.bottom;
+    if (isRenderingPopoverBelowTrigger) {
+      const isPopoverOverflowing =
+        popoverTriggerRect.bottom + popOverFullHeight >
+        (window.innerHeight || document.documentElement.clientHeight);
+      if (isPopoverOverflowing) {
+        listHeightRef.current = Math.max(
+          minListHeight,
+          maxListHeight +
+          (window.innerHeight || document.documentElement.clientHeight) -
+          popOverFullHeight -
+          popoverTriggerRect.bottom,
+        );
+      }
+    } else {
+      const isPopoverOverflowing =
+        popoverTriggerRect.top - popOverFullHeight < 0;
+      if (isPopoverOverflowing) {
+        listHeightRef.current = Math.max(
+          minListHeight,
+          maxListHeight - Math.abs(popoverTriggerRect.top - popOverFullHeight),
+        );
+      }
+    }
+  }
+  previousOpenValueRef.current = isPieceSelectorOpen;
+  return {
+    listHeightRef,
+    popoverTriggerRef,
+  }
+}
 const PieceSelector = ({
   children,
   open,
@@ -62,7 +106,6 @@ const PieceSelector = ({
 }: PieceSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const previousOpenValueRef = useRef<boolean>(open);
   const [selectedPieceMetadata, setSelectedMetadata] = useState<
     StepMetadata | undefined
   >(undefined);
@@ -169,41 +212,7 @@ const PieceSelector = ({
   const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
   const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
 
-  const listHeightRef = useRef<number>(maxListHeight);
-  const popoverTriggerRef = useRef<HTMLButtonElement | null>(null);
-  if (!previousOpenValueRef.current && open && popoverTriggerRef.current) {
-    const popoverTriggerRect =
-      popoverTriggerRef.current.getBoundingClientRect();
-    const popOverFullHeight = maxListHeight + aboveListSectionHeight;
-    const isRenderingPopoverBelowTrigger =
-      popoverTriggerRect.top <
-      (window.innerHeight || document.documentElement.clientHeight) -
-        popoverTriggerRect.bottom;
-    if (isRenderingPopoverBelowTrigger) {
-      const isPopoverOverflowing =
-        popoverTriggerRect.bottom + popOverFullHeight >
-        (window.innerHeight || document.documentElement.clientHeight);
-      if (isPopoverOverflowing) {
-        listHeightRef.current = Math.max(
-          100,
-          maxListHeight +
-            (window.innerHeight || document.documentElement.clientHeight) -
-            popOverFullHeight -
-            popoverTriggerRect.bottom,
-        );
-      }
-    } else {
-      const isPopoverOverflowing =
-        popoverTriggerRect.top - popOverFullHeight < 0;
-      if (isPopoverOverflowing) {
-        listHeightRef.current = Math.max(
-          100,
-          maxListHeight - Math.abs(popoverTriggerRect.top - popOverFullHeight),
-        );
-      }
-    }
-  }
-  previousOpenValueRef.current = open;
+  const { listHeightRef, popoverTriggerRef } = useAdjustPieceListHeightToAvailableSpace(open);
 
   const resetField = () => {
     setSearchQuery('');
