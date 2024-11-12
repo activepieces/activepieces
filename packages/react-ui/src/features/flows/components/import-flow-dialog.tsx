@@ -30,36 +30,33 @@ import { flowsApi } from '../lib/flows-api';
 export type ImportFlowDialogProps =
   | {
       insideBuilder: false;
-      onRefresh: () => void;
+      onRefresh?: () => void;
     }
   | {
       insideBuilder: true;
       flowId: string;
-      onRefresh: () => void;
+      onRefresh?: () => void;
     };
 
 const readTemplateJson = (
   templateFile: File,
   addTemplate: (template: FlowTemplate) => void,
-  setFailedFiles: (failedFiles: string[]) => void,
+  onFailed: (failedFiles: string) => void,
 ) => {
   const reader = new FileReader();
   reader.onload = () => {
+    const fileName = templateFile.name || 'unknown';
+
     try {
-      const template = JSON.parse(reader.result as string);
-      if (!template.template || !template.name || !template.template.trigger) {
-        setFailedFiles((prevFailedFiles) => [
-          ...prevFailedFiles,
-          templateFile.name,
-        ]);
+      const template = JSON.parse(reader.result as string) as FlowTemplate;
+      const { template: tmpl, name } = template;
+      if (!tmpl || !name || !tmpl.trigger) {
+        onFailed(fileName);
       } else {
-        addTemplate(template as FlowTemplate);
+        addTemplate(template);
       }
-    } catch (error) {
-      setFailedFiles((prevFailedFiles) => [
-        ...prevFailedFiles,
-        templateFile.name,
-      ]);
+    } catch {
+      onFailed(fileName);
     }
   };
   reader.readAsText(templateFile);
@@ -125,7 +122,7 @@ const ImportFlowDialog = (
       }
 
       setIsDialogOpen(false);
-      props.onRefresh();
+      props.onRefresh?.();
     },
     onError: (err) => {
       if (
@@ -184,7 +181,12 @@ const ImportFlowDialog = (
           (template) => {
             if (template) newTemplates.push(template);
           },
-          setFailedFiles,
+          (failedFile) => {
+            setFailedFiles((prevFailedFiles) => [
+              ...prevFailedFiles,
+              failedFile,
+            ]);
+          },
         );
       }
     } else if (file.type === 'application/json') {
@@ -193,7 +195,9 @@ const ImportFlowDialog = (
         (template) => {
           if (template) newTemplates.push(template);
         },
-        setFailedFiles,
+        (failedFile) => {
+          setFailedFiles((prevFailedFiles) => [...prevFailedFiles, failedFile]);
+        },
       );
     } else {
       setErrorMessage(t('Unsupported file type'));

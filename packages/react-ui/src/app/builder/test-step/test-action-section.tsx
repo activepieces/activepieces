@@ -29,7 +29,7 @@ const TestActionSection = React.memo(
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
-    const form = useFormContext<Action>();
+    const form = useFormContext<Pick<Action, 'settings' | 'name'>>();
     const formValues = form.getValues();
 
     const { sampleData, setSampleData } = useBuilderStateContext((state) => {
@@ -79,16 +79,18 @@ const TestActionSection = React.memo(
       onSuccess: ({ success, output, sampleDataFileId }) => {
         if (success) {
           setErrorMessage(undefined);
-
+          const newInputUiInfo = {
+            ...formValues.settings.inputUiInfo,
+            sampleDataFileId,
+            currentSelectedData: undefined,
+            lastTestDate: dayjs().toISOString(),
+          };
           form.setValue(
             'settings.inputUiInfo',
+            newInputUiInfo as typeof formValues.settings.inputUiInfo,
             {
-              ...formValues.settings.inputUiInfo,
-              sampleDataFileId,
-              currentSelectedData: undefined,
-              lastTestDate: dayjs().toISOString(),
+              shouldValidate: true,
             },
-            { shouldValidate: true },
           );
         } else {
           setErrorMessage(
