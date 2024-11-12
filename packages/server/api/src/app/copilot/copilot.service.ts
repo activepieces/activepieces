@@ -1,5 +1,5 @@
-import { AppSystemProp, CopilotInstanceTypes, logger, system } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, GenerateCodeResponse } from '@activepieces/shared'
+import { AppSystemProp, CopilotInstanceTypes, exceptionHandler, logger, system } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, GenerateCodeResponse, isNil } from '@activepieces/shared'
 import OpenAI from 'openai'
 import {
     ChatCompletionMessageParam,
@@ -11,7 +11,7 @@ type GenerateCodeParams = {
     previousContext: ChatCompletionMessageParam[]
 }
 
-const CODE_TOOLS: ChatCompletionTool[] = [ 
+const CODE_TOOLS: ChatCompletionTool[] = [
     {
         type: 'function',
         function: {
@@ -177,43 +177,49 @@ type OpenAIResponse = {
 export const copilotService = {
     async generateCode({ prompt, previousContext }: GenerateCodeParams): Promise<GenerateCodeResponse> {
         logger.debug({ prompt }, '[CopilotService#generateCode] Prompting...')
-        const result = await getOpenAI().chat.completions.create({
-            model: 'gpt-4o',
-            messages: [
-                ...CODE_PROMPT,
-                ...previousContext,
-                {
-                    role: 'user',
-                    content: prompt,
+        try {
+            const result = await getOpenAI().chat.completions.create({
+                model: 'gpt-4o',
+                messages: [
+                    ...CODE_PROMPT,
+                    ...previousContext,
+                    {
+                        role: 'user',
+                        content: prompt,
+                    },
+                ],
+                tools: CODE_TOOLS,
+                tool_choice: {
+                    type: 'function',
+                    function: {
+                        name: 'generate_code',
+                    },
                 },
-            ],
-            tools: CODE_TOOLS,
-            tool_choice: {
-                type: 'function',
-                function: {
-                    name: 'generate_code',
-                },
-            },
-            temperature: 1,
-        })
-        assertNotNullOrUndefined(
-            result.choices[0].message.tool_calls,
-            'OpenAICodeResponse',
-        )
-        const response = JSON.parse(result.choices[0].message.tool_calls[0].function.arguments) as OpenAIResponse
-        return {
-            code: response.code,
-            inputs: response.inputs.reduce((acc, curr) => {
-                acc[curr.key] = curr.value
-                return acc
-            }, {} as Record<string, string>),
-            packageJson: {
-                // TODO resolve exact version
-                dependencies: response.packages.reduce((acc, curr) => {
-                    acc[curr] = '*'
+                temperature: 1,
+            })
+            assertNotNullOrUndefined(
+                result.choices[0].message.tool_calls,
+                'OpenAICodeResponse',
+            )
+            const response = JSON.parse(result.choices[0].message.tool_calls[0].function.arguments) as OpenAIResponse
+            return {
+                code: response.code,
+                inputs: !isNil(response.inputs) ? response.inputs.reduce((acc, curr) => {
+                    acc[curr.key] = curr.value
                     return acc
-                }, {} as Record<string, string>),
-            },
+                }, {} as Record<string, string>) : {},
+                packageJson: {
+                    // TODO resolve exact version
+                    dependencies: response.packages.reduce((acc, curr) => {
+                        acc[curr] = '*'
+                        return acc
+                    }, {} as Record<string, string>),
+                },
+            }
+        }
+        catch (error) {
+            // TODO add error handling
+            exceptionHandler.handle(error)
         }
     },
 }
