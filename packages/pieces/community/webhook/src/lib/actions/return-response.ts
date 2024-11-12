@@ -39,7 +39,7 @@ export const returnResponse = createAction({
         ],
       },
     }),
-    body: Property.DynamicProperties({
+    fields: Property.DynamicProperties({
       displayName: 'Response',
       refreshers: ['responseType'],
       required: true,
@@ -64,19 +64,19 @@ export const returnResponse = createAction({
 
         switch (bodyTypeInput) {
           case ResponseType.JSON:
-            fields['data'] = Property.Json({
+            fields['body'] = Property.Json({
               displayName: 'JSON Body',
               required: true,
             });
             break;
           case ResponseType.RAW:
-            fields['data'] = Property.LongText({
+            fields['body'] = Property.LongText({
               displayName: 'Raw Body',
               required: true,
             });
             break;
           case ResponseType.REDIRECT:
-            fields['data'] = Property.LongText({
+            fields['body'] = Property.LongText({
               displayName: 'Redirect URL',
               required: true,
             });
@@ -88,10 +88,10 @@ export const returnResponse = createAction({
   },
 
   async run(context) {
-    const { body, responseType } = context.propsValue;
-    const bodyInput = body['data'];
-    const headers = body['headers'];
-    const status = body['status'];
+    const { fields, responseType } = context.propsValue;
+    const bodyInput = fields ['body'];
+    const headers = fields['headers'];
+    const status = fields['status'];
     
     const response: StopResponse = {
       status: status ?? StatusCodes.OK,
