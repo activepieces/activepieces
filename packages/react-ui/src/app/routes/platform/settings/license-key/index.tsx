@@ -139,7 +139,7 @@ const LicenseKeyPage = () => {
     dayjs(keyData.expiresAt).isBefore(dayjs().add(7, 'day'));
 
   return (
-    <div className="flex-col w-full max-w-2xl mx-auto">
+    <div className="flex-col w-full max-w-2xl">
       <div className="mb-6 flex items-center">
         <div>
           <h1 className="text-2xl font-bold">{t('License Key')}</h1>

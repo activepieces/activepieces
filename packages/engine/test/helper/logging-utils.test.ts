@@ -12,7 +12,7 @@ describe('Logging Utils', () => {
                 type: ActionType.CODE,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {
-                    a: 'a'.repeat(2197100),
+                    a: 'a'.repeat(1024 * 1024 * 4),
                 },
             }),
         }
