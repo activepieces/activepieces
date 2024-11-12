@@ -204,7 +204,7 @@ export const RbacEvent = Type.Object({
   ...BaseAuditEventProps,
   action: Type.Literal(ApplicationEventName.RBAC_CREATED),
   data: Type.Object({
-    rbac: Type.Pick(Rbac, ['id', 'created', 'updated', 'name', 'permissions']),
+    rbac: Type.Pick(Rbac, ['id', 'created', 'updated', 'name', 'permissions', 'platformId']),
   }),
 });
 
