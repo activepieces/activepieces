@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { SAFE_STRING_PATTERN } from '../common'
-import { ApId } from '@activepieces/shared'
+import { ApId } from '../common/id-generator'
 
 export const CreateRbacRequestBody = Type.Object({
     name: Type.String({
