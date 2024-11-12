@@ -50,7 +50,6 @@ type PieceGroup = {
   pieces: StepMetadataWithSuggestions[];
 };
 
-
 const PieceSelector = ({
   children,
   open,
@@ -167,7 +166,12 @@ const PieceSelector = ({
   const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
   const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
 
-  const { listHeightRef, popoverTriggerRef, aboveListSectionHeight, maxListHeight } = pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
+  const {
+    listHeightRef,
+    popoverTriggerRef,
+    aboveListSectionHeight,
+    maxListHeight,
+  } = pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
 
   const resetField = () => {
     setSearchQuery('');
@@ -325,8 +329,8 @@ const PieceSelector = ({
             <Separator orientation="horizontal" />
           </div>
 
-          {
-            (window.innerWidth || document.documentElement.clientWidth) >= 768 &&
+          {(window.innerWidth || document.documentElement.clientWidth) >=
+            768 && (
             <div
               className=" flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
               style={{
@@ -358,10 +362,10 @@ const PieceSelector = ({
                   </>
                 )}
             </div>
-          }
+          )}
 
-          {
-            (window.innerWidth || document.documentElement.clientWidth) < 768 &&
+          {(window.innerWidth || document.documentElement.clientWidth) <
+            768 && (
             <div
               className=" max-h-[300px] h-[300px]"
               style={{
@@ -381,8 +385,7 @@ const PieceSelector = ({
                 isLoadingPieces={isLoadingPieces}
               />
             </div>
-          }
-
+          )}
         </>
       </PopoverContent>
     </Popover>

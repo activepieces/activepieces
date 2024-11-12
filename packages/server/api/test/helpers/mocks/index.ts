@@ -40,6 +40,7 @@ import {
     Project,
     ProjectMemberRole,
     ProjectPlan,
+    Rbac,
     RunEnvironment,
     TemplateType,
     TriggerType,
@@ -531,6 +532,17 @@ export const createMockFile = (file?: Partial<File>): File => {
         compression: file?.compression ?? faker.helpers.enumValue(FileCompression),
         data: file?.data ?? Buffer.from(faker.lorem.paragraphs()),
         type: file?.type ?? faker.helpers.enumValue(FileType),
+    }
+}
+
+export const createMockRbac = (rbac?: Partial<Rbac>): Rbac => {
+    return {
+        id: rbac?.id ?? apId(),
+        name: rbac?.name ?? faker.lorem.word(),
+        created: rbac?.created ?? faker.date.recent().toISOString(),
+        updated: rbac?.updated ?? faker.date.recent().toISOString(),
+        permissions: rbac?.permissions ?? [],
+        platformId: rbac?.platformId ?? apId(),
     }
 }
 

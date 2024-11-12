@@ -69,6 +69,8 @@ export * from './lib/flows/util/flow-structure-util'
 export * from './lib/flows/operations'
 export * from './lib/flows/util/flow-piece-util'
 export * from './lib/property/markdown'
+export * from './lib/rbac/rbac'
+export * from './lib/rbac/rbac.request'
 
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 import { TypeSystemPolicy } from '@sinclair/typebox/system'

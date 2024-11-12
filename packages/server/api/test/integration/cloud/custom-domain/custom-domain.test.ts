@@ -1,5 +1,5 @@
 import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { PrincipalType } from '@activepieces/shared'
+import { CreateRbacRequestBody, PrincipalType, UpdateRbacRequestBody } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -8,9 +8,9 @@ import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockCustomDomain,
+    createMockRbac,
     createMockUser,
-    mockBasicSetup,
-} from '../../../helpers/mocks'
+    mockBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -206,6 +206,151 @@ describe('Custom Domain API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    })
+
+    describe('Create Rbac Rule', () => {
+        it('should create a new rbac rule', async () => {
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUserOne.id,
+                platform: { id: mockPlatformOne.id },
+            })
+            
+            const rbacRule = createMockRbac({ platformId: mockPlatformOne.id })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/rbac',
+                body: rbacRule,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+            
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        })
+        it('should fail to create a new rbac rule if user is not platform owner', async () => {
+            const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const nonOwnerUserId = createMockUser()
+            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: nonOwnerUserId.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const rbacRule = createMockRbac({ platformId: mockPlatformOne.id })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/rbac',
+                body: rbacRule,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should fail to create a new rbac rule if rbac rule is invalid', async () => {
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUserOne.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const request: CreateRbacRequestBody = {
+                name: faker.lorem.word(),
+                permissions: ['read', 'write'],
+                platformId: 'FAKE ID',
+            }
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/rbac',
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+    })
+
+    describe('Get Rbac Rule', () => {
+        it('should get all rbac rules', async () => {
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUserOne.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/rbac',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+        it('should fail to get all rbac rules if user is not platform owner', async () => {
+            const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const nonOwnerUserId = createMockUser()
+            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: nonOwnerUserId.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/rbac',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+    })
+
+    describe('Update Rbac Rule', () => {
+        it('should update a rbac rule', async () => {
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUserOne.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const rbacRule = createMockRbac({ platformId: mockPlatformOne.id })
+
+            await databaseConnection().getRepository('rbac').save(rbacRule)
+
+            const request: UpdateRbacRequestBody = {
+                name: faker.lorem.word(),
+                permissions: ['read', 'write'],
+            }
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/rbac/${rbacRule.id}`,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 })
