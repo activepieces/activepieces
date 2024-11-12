@@ -50,8 +50,7 @@ type PieceGroup = {
   pieces: StepMetadataWithSuggestions[];
 };
 
-const maxListHeight = 300;
-const aboveListSectionHeight = 86;
+
 const PieceSelector = ({
   children,
   open,
@@ -62,7 +61,6 @@ const PieceSelector = ({
 }: PieceSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const previousOpenValueRef = useRef<boolean>(open);
   const [selectedPieceMetadata, setSelectedMetadata] = useState<
     StepMetadata | undefined
   >(undefined);
@@ -169,41 +167,7 @@ const PieceSelector = ({
   const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
   const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
 
-  const listHeightRef = useRef<number>(maxListHeight);
-  const popoverTriggerRef = useRef<HTMLButtonElement | null>(null);
-  if (!previousOpenValueRef.current && open && popoverTriggerRef.current) {
-    const popoverTriggerRect =
-      popoverTriggerRef.current.getBoundingClientRect();
-    const popOverFullHeight = maxListHeight + aboveListSectionHeight;
-    const isRenderingPopoverBelowTrigger =
-      popoverTriggerRect.top <
-      (window.innerHeight || document.documentElement.clientHeight) -
-        popoverTriggerRect.bottom;
-    if (isRenderingPopoverBelowTrigger) {
-      const isPopoverOverflowing =
-        popoverTriggerRect.bottom + popOverFullHeight >
-        (window.innerHeight || document.documentElement.clientHeight);
-      if (isPopoverOverflowing) {
-        listHeightRef.current = Math.max(
-          100,
-          maxListHeight +
-            (window.innerHeight || document.documentElement.clientHeight) -
-            popOverFullHeight -
-            popoverTriggerRect.bottom,
-        );
-      }
-    } else {
-      const isPopoverOverflowing =
-        popoverTriggerRect.top - popOverFullHeight < 0;
-      if (isPopoverOverflowing) {
-        listHeightRef.current = Math.max(
-          100,
-          maxListHeight - Math.abs(popoverTriggerRect.top - popOverFullHeight),
-        );
-      }
-    }
-  }
-  previousOpenValueRef.current = open;
+  const { listHeightRef, popoverTriggerRef, aboveListSectionHeight, maxListHeight } = pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
 
   const resetField = () => {
     setSearchQuery('');
@@ -361,56 +325,64 @@ const PieceSelector = ({
             <Separator orientation="horizontal" />
           </div>
 
-          <div
-            className=" hidden md:flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
-            style={{
-              height: listHeightRef.current + 'px',
-            }}
-          >
-            <PiecesCardList
-              debouncedQuery={debouncedQuery}
-              selectedTag={selectedTag}
-              piecesIsLoaded={piecesIsLoaded}
-              noResultsFound={noResultsFound}
-              selectedPieceMetadata={selectedPieceMetadata}
-              setSelectedMetadata={setSelectedMetadata}
-              operation={operation}
-              handleSelect={handleSelect}
-              pieceGroups={pieceGroups}
-              isLoadingPieces={isLoadingPieces}
-            />
+          {
+            (window.innerWidth || document.documentElement.clientWidth) >= 768 &&
+            <div
+              className=" flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
+              style={{
+                height: listHeightRef.current + 'px',
+              }}
+            >
+              <PiecesCardList
+                debouncedQuery={debouncedQuery}
+                selectedTag={selectedTag}
+                piecesIsLoaded={piecesIsLoaded}
+                noResultsFound={noResultsFound}
+                selectedPieceMetadata={selectedPieceMetadata}
+                setSelectedMetadata={setSelectedMetadata}
+                operation={operation}
+                handleSelect={handleSelect}
+                pieceGroups={pieceGroups}
+                isLoadingPieces={isLoadingPieces}
+              />
 
-            {debouncedQuery.length === 0 &&
-              piecesIsLoaded &&
-              !noResultsFound && (
-                <>
-                  <Separator orientation="vertical" className="h-full" />
-                  <StepsCardList
-                    selectedPieceMetadata={selectedPieceMetadata}
-                    handleSelect={handleSelect}
-                  />
-                </>
-              )}
-          </div>
-          <div
-            className="block md:hidden max-h-[300px] h-[300px]"
-            style={{
-              height: listHeightRef.current + 'px',
-            }}
-          >
-            <PiecesCardList
-              debouncedQuery={debouncedQuery}
-              selectedTag={selectedTag}
-              piecesIsLoaded={piecesIsLoaded}
-              noResultsFound={noResultsFound}
-              selectedPieceMetadata={selectedPieceMetadata}
-              setSelectedMetadata={setSelectedMetadata}
-              operation={operation}
-              handleSelect={handleSelect}
-              pieceGroups={pieceGroups}
-              isLoadingPieces={isLoadingPieces}
-            />
-          </div>
+              {debouncedQuery.length === 0 &&
+                piecesIsLoaded &&
+                !noResultsFound && (
+                  <>
+                    <Separator orientation="vertical" className="h-full" />
+                    <StepsCardList
+                      selectedPieceMetadata={selectedPieceMetadata}
+                      handleSelect={handleSelect}
+                    />
+                  </>
+                )}
+            </div>
+          }
+
+          {
+            (window.innerWidth || document.documentElement.clientWidth) < 768 &&
+            <div
+              className=" max-h-[300px] h-[300px]"
+              style={{
+                height: listHeightRef.current + 'px',
+              }}
+            >
+              <PiecesCardList
+                debouncedQuery={debouncedQuery}
+                selectedTag={selectedTag}
+                piecesIsLoaded={piecesIsLoaded}
+                noResultsFound={noResultsFound}
+                selectedPieceMetadata={selectedPieceMetadata}
+                setSelectedMetadata={setSelectedMetadata}
+                operation={operation}
+                handleSelect={handleSelect}
+                pieceGroups={pieceGroups}
+                isLoadingPieces={isLoadingPieces}
+              />
+            </div>
+          }
+
         </>
       </PopoverContent>
     </Popover>
