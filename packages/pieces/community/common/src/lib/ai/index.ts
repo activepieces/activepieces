@@ -7,6 +7,7 @@ export type AI = {
   image?: AIImage;
   moderation?: AIModeration;
   function?: AIFunction;
+  voice?: AIVoice;
 };
 
 export type AIFunction = {
@@ -15,7 +16,6 @@ export type AIFunction = {
       functions: AIFunctionDefinition[];
     } & { image: ApFile }
   ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
-  voice?: AIVoice;
 };
 
 export type AIModeration = {
@@ -48,11 +48,6 @@ export type AIImageCompletion = {
 
 export type AIChat = {
   text: (params: AIChatCompletionsCreateParams) => Promise<AIChatCompletion>;
-  function?: (
-    params: AIChatCompletionsCreateParams & {
-      functions: AIFunctionDefinition[];
-    }
-  ) => Promise<AIChatCompletion & { call: AIFunctionCall | null }>;
 };
 
 export type AIVoice = {
