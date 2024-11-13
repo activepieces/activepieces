@@ -106,6 +106,13 @@ const FlowsPage = () => {
 
   const { mutate: exportFlows, isPending: isExportPending } = useMutation({
     mutationFn: async (flows: PopulatedFlow[]) => {
+      if (flows.length === 0) {
+        return;
+      }
+      if (flows.length === 1) {
+        await flowsUtils.downloadFlow(flows[0].id);
+        return;
+      }
       const zip = await flowsUtils.downloadFlowsIntoZip(flows);
       const content = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(content);
@@ -387,7 +394,6 @@ const FlowsPage = () => {
                       className="h-9 w-full"
                       variant={'outline'}
                       onClick={() => {
-                        console.log('isDropdownOpen', isDropdownOpen);
                         setIsDropdownOpen(!isDropdownOpen);
                       }}
                     >
@@ -534,7 +540,13 @@ const FlowsPage = () => {
           <PermissionNeededTooltip
             hasPermission={doesUserHavePermissionToWriteFlow}
           >
-            <ImportFlowDialog insideBuilder={false}>
+            <ImportFlowDialog
+              insideBuilder={false}
+              onRefresh={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
+            >
               <Button
                 disabled={!doesUserHavePermissionToWriteFlow}
                 variant="outline"

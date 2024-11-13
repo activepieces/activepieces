@@ -136,7 +136,6 @@ export type ApRouterStartEdge = Edge & {
   } & {
     stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
     branchIndex: number;
-    isFallbackBranch: boolean;
   };
 };
 

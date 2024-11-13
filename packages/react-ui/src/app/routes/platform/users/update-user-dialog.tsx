@@ -25,7 +25,11 @@ import {
 } from '@/components/ui/select';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-user-api';
-import { PlatformRole, UpdateUserRequestBody } from '@activepieces/shared';
+import {
+  PlatformRole,
+  UpdateUserRequestBody,
+  User,
+} from '@activepieces/shared';
 
 import { Input } from '../../../../components/ui/input';
 
@@ -51,21 +55,20 @@ export const UpdateUserDialog = ({
     resolver: typeboxResolver(UpdateUserRequestBody),
   });
   const { toast } = useToast();
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['update-user'],
-    mutationFn: (request: {
-      platformRole: PlatformRole;
-      externalId?: string;
-    }) => platformUserApi.update(userId, request),
-    onSuccess: (_, request) => {
-      onUpdate(request.platformRole);
-      setOpen(false);
+  const { mutate, isPending } = useMutation<User, Error, UpdateUserRequestBody>(
+    {
+      mutationKey: ['update-user'],
+      mutationFn: (request) => platformUserApi.update(userId, request),
+      onSuccess: (user) => {
+        onUpdate(user.platformRole);
+        setOpen(false);
+      },
+      onError: () => {
+        toast(INTERNAL_ERROR_TOAST);
+        setOpen(false);
+      },
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-      setOpen(false);
-    },
-  });
+  );
 
   return (
     <Dialog
@@ -150,7 +153,10 @@ export const UpdateUserDialog = ({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              mutate(form.getValues());
+              mutate({
+                platformRole: form.getValues().role,
+                externalId: form.getValues().externalId,
+              });
             }}
           >
             {t('Save')}

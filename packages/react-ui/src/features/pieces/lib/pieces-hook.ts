@@ -159,7 +159,7 @@ export const piecesHooks = {
         stepMetadata?.type,
         stepMetadata?.displayName,
       ],
-      queryFn: async () => {
+      queryFn: async (): Promise<PieceSelectorItem[]> => {
         try {
           if (!stepMetadata) {
             return [];
@@ -218,7 +218,7 @@ function passSearch(
 
 export function getCoreActions(
   type: ActionType.LOOP_ON_ITEMS | ActionType.CODE | ActionType.ROUTER,
-) {
+): PieceSelectorItem[] {
   switch (type) {
     case ActionType.CODE:
       return [
@@ -247,6 +247,7 @@ export function getCoreActions(
           description: t(
             'Split your flow into branches depending on condition(s)',
           ),
+          type: ActionType.ROUTER as const,
         },
       ];
   }

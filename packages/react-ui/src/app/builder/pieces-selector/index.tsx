@@ -60,7 +60,6 @@ const PieceSelector = ({
 }: PieceSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
-
   const [selectedPieceMetadata, setSelectedMetadata] = useState<
     StepMetadata | undefined
   >(undefined);
@@ -166,6 +165,13 @@ const PieceSelector = ({
 
   const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
   const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
+
+  const {
+    listHeightRef,
+    popoverTriggerRef,
+    aboveListSectionHeight,
+    maxListHeight,
+  } = pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
 
   const resetField = () => {
     setSearchQuery('');
@@ -274,67 +280,113 @@ const PieceSelector = ({
       onOpenChange={(open) => {
         if (!open) {
           resetField();
+          listHeightRef.current = maxListHeight;
         }
         onOpenChange(open);
       }}
     >
-      <PopoverTrigger asChild={asChild}>{children}</PopoverTrigger>
+      <PopoverTrigger ref={popoverTriggerRef} asChild={asChild}>
+        {children}
+      </PopoverTrigger>
       <PopoverContent
-        className="w-[600px] p-0 shadow-lg"
+        className="w-[340px] md:w-[600px] p-0 shadow-lg"
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
         }}
       >
-        <div className="p-2">
-          <SearchInput
-            placeholder="Search"
-            value={searchQuery}
-            showDeselect={searchQuery.length > 0}
-            onChange={(e) => {
-              setSearchQuery(e);
-              setSelectedTag(PieceTagEnum.ALL);
-              setSelectedMetadata(undefined);
+        <>
+          <div
+            style={{
+              height: `${aboveListSectionHeight}px`,
             }}
-          />
-        </div>
-        <PieceTagGroup
-          selectedTag={selectedTag}
-          type={
-            operation.type === FlowOperationType.UPDATE_TRIGGER
-              ? 'trigger'
-              : 'action'
-          }
-          onSelectTag={(value) => {
-            setSelectedTag(value);
-            setSelectedMetadata(undefined);
-          }}
-        />
-        <Separator orientation="horizontal" />
-        <div className="flex overflow-y-auto max-h-[320px] h-[320px]">
-          <PiecesCardList
-            debouncedQuery={debouncedQuery}
-            selectedTag={selectedTag}
-            piecesIsLoaded={piecesIsLoaded}
-            noResultsFound={noResultsFound}
-            selectedPieceMetadata={selectedPieceMetadata}
-            setSelectedMetadata={setSelectedMetadata}
-            operation={operation}
-            handleSelect={handleSelect}
-            pieceGroups={pieceGroups}
-            isLoadingPieces={isLoadingPieces}
-          />
-
-          {debouncedQuery.length === 0 && piecesIsLoaded && !noResultsFound && (
-            <>
-              <Separator orientation="vertical" className="h-full" />
-              <StepsCardList
-                selectedPieceMetadata={selectedPieceMetadata}
-                handleSelect={handleSelect}
+          >
+            <div className="p-2">
+              <SearchInput
+                placeholder="Search"
+                value={searchQuery}
+                showDeselect={searchQuery.length > 0}
+                onChange={(e) => {
+                  setSearchQuery(e);
+                  setSelectedTag(PieceTagEnum.ALL);
+                  setSelectedMetadata(undefined);
+                }}
               />
-            </>
+            </div>
+
+            <PieceTagGroup
+              selectedTag={selectedTag}
+              type={
+                operation.type === FlowOperationType.UPDATE_TRIGGER
+                  ? 'trigger'
+                  : 'action'
+              }
+              onSelectTag={(value) => {
+                setSelectedTag(value);
+                setSelectedMetadata(undefined);
+              }}
+            />
+            <Separator orientation="horizontal" />
+          </div>
+
+          {(window.innerWidth || document.documentElement.clientWidth) >=
+            768 && (
+            <div
+              className=" flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
+              style={{
+                height: listHeightRef.current + 'px',
+              }}
+            >
+              <PiecesCardList
+                debouncedQuery={debouncedQuery}
+                selectedTag={selectedTag}
+                piecesIsLoaded={piecesIsLoaded}
+                noResultsFound={noResultsFound}
+                selectedPieceMetadata={selectedPieceMetadata}
+                setSelectedMetadata={setSelectedMetadata}
+                operation={operation}
+                handleSelect={handleSelect}
+                pieceGroups={pieceGroups}
+                isLoadingPieces={isLoadingPieces}
+              />
+
+              {debouncedQuery.length === 0 &&
+                piecesIsLoaded &&
+                !noResultsFound && (
+                  <>
+                    <Separator orientation="vertical" className="h-full" />
+                    <StepsCardList
+                      selectedPieceMetadata={selectedPieceMetadata}
+                      handleSelect={handleSelect}
+                    />
+                  </>
+                )}
+            </div>
           )}
-        </div>
+
+          {(window.innerWidth || document.documentElement.clientWidth) <
+            768 && (
+            <div
+              className=" max-h-[300px] h-[300px]"
+              style={{
+                height: listHeightRef.current + 'px',
+              }}
+            >
+              <PiecesCardList
+                debouncedQuery={debouncedQuery}
+                selectedTag={selectedTag}
+                piecesIsLoaded={piecesIsLoaded}
+                noResultsFound={noResultsFound}
+                selectedPieceMetadata={selectedPieceMetadata}
+                setSelectedMetadata={setSelectedMetadata}
+                operation={operation}
+                handleSelect={handleSelect}
+                pieceGroups={pieceGroups}
+                isLoadingPieces={isLoadingPieces}
+              />
+            </div>
+          )}
+        </>
       </PopoverContent>
     </Popover>
   );

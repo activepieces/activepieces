@@ -30,8 +30,19 @@ export const StepsCardList: React.FC<StepsCardListProps> = ({
       stepMetadata: selectedPieceMetadata,
     });
 
+  if (
+    (isNil(actionsOrTriggers) || !selectedPieceMetadata) &&
+    !isLoadingSelectedPieceMetadata
+  ) {
+    return (
+      <div className="flex flex-col gap-2 items-center justify-center h-full w-full">
+        <MoveLeft className="w-10 h-10 rtl:rotate-180" />
+        <div className="text-sm">{t('Please select a piece first')}</div>
+      </div>
+    );
+  }
   return (
-    <ScrollArea className="h-full">
+    <ScrollArea className="h-full" viewPortClassName="h-full">
       <CardList
         className="w-[350px] min-w-[350px] h-full gap-0"
         listClassName="gap-0"
@@ -69,12 +80,6 @@ export const StepsCardList: React.FC<StepsCardListProps> = ({
               ))}
             </>
           )}
-        {(isNil(actionsOrTriggers) || !selectedPieceMetadata) && (
-          <div className="flex flex-col gap-2 items-center justify-center h-[300px]">
-            <MoveLeft className="w-10 h-10 rtl:rotate-180" />
-            <div className="text-sm">{t('Please select a piece first')}</div>
-          </div>
-        )}
       </CardList>
     </ScrollArea>
   );

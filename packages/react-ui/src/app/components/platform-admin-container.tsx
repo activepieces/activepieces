@@ -1,22 +1,11 @@
 import { t } from 'i18next';
-import {
-  LayoutGrid,
-  LineChart,
-  LogsIcon,
-  Puzzle,
-  SparklesIcon,
-  UserCog,
-  Workflow,
-  Wrench,
-} from 'lucide-react';
+import { LayoutGrid, LineChart, Puzzle, Workflow, Wrench } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApFlagId, PlatformRole } from '@activepieces/shared';
-
-import { authenticationSession } from '../../lib/authentication-session';
+import { ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
@@ -36,7 +25,6 @@ export function PlatformAdminContainer({
 
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
-  const currentUser = authenticationSession.getCurrentUser();
   const links: SidebarLink[] = [
     {
       to: '/platform/analytics',
@@ -45,22 +33,10 @@ export function PlatformAdminContainer({
       locked: isLocked(!platform.analyticsEnabled),
     },
     {
-      to: '/platform/ai',
-      label: t('AI'),
-      icon: SparklesIcon,
-      locked: currentUser?.platformRole !== PlatformRole.ADMIN,
-    },
-    {
       to: '/platform/projects',
       label: t('Projects'),
       icon: LayoutGrid,
       locked: isLocked(!platform.manageProjectsEnabled),
-    },
-    {
-      to: '/platform/audit-logs',
-      label: t('Audit Logs'),
-      icon: LogsIcon,
-      locked: isLocked(!platform.auditLogEnabled),
     },
     {
       to: '/platform/pieces',
@@ -73,12 +49,6 @@ export function PlatformAdminContainer({
       label: t('Templates'),
       icon: Workflow,
       locked: isLocked(!platform.manageTemplatesEnabled),
-    },
-    {
-      to: '/platform/users',
-      label: t('Users'),
-      icon: UserCog,
-      locked: isLocked(false),
     },
     {
       to: '/platform/settings',

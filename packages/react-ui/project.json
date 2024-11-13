@@ -11,6 +11,12 @@
       "options": {
         "jestConfig": "packages/react-ui/jest.config.ts"
       }
+    },
+    "vite-typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit -p packages/react-ui/tsconfig.app.json"
+      }
     }
   }
 }

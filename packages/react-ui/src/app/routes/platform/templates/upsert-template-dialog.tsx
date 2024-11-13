@@ -36,7 +36,7 @@ const UpsertFlowTemplateSchema = Type.Object({
   }),
   description: Type.String(),
   blogUrl: Type.String(),
-  template: Type.Optional(FlowVersionTemplate),
+  template: FlowVersionTemplate,
   tags: Type.Optional(Type.Array(Type.String())),
 });
 type UpsertFlowTemplateSchema = Static<typeof UpsertFlowTemplateSchema>;
@@ -71,6 +71,7 @@ export const UpsertTemplateDialog = ({
         template: {
           ...formValue.template,
           displayName: formValue.displayName,
+          valid: formValue.template.valid ?? true,
         },
         type: TemplateType.PLATFORM,
         blogUrl: formValue.blogUrl,

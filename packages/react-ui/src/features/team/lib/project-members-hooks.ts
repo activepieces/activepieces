@@ -13,7 +13,7 @@ export const projectMembersHooks = {
       queryFn: () => {
         return projectMembersApi
           .list({
-            projectId: authenticationSession.getProjectId(),
+            projectId: authenticationSession.getProjectId()!,
             cursor: undefined,
             limit: 100,
           })

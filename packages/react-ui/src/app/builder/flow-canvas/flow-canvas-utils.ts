@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import {
   Action,
   ActionType,
-  BranchAction,
   FlowVersion,
   isNil,
   LoopOnItemsAction,
@@ -26,7 +25,7 @@ import {
 } from './types';
 
 const createBigAddButtonGraph: (
-  parentStep: LoopOnItemsAction | BranchAction | RouterAction,
+  parentStep: LoopOnItemsAction | RouterAction,
   nodeData: ApBigAddButtonNode['data'],
 ) => ApGraph = (parentStep, nodeData) => {
   const bigAddButtonNode: ApBigAddButtonNode = {

@@ -139,7 +139,9 @@ const InstallPieceDialog = ({
         <FormProvider {...form}>
           <form
             className="flex flex-col gap-4"
-            onSubmit={form.handleSubmit((data) => mutate(data))}
+            onSubmit={form.handleSubmit((data) =>
+              mutate(data as AddPieceRequestBody),
+            )}
           >
             <FormField
               name="pieceName"

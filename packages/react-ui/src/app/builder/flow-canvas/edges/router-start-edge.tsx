@@ -6,7 +6,7 @@ import { flowUtilConsts } from '../consts';
 import { ApRouterStartEdge } from '../types';
 
 import { ApAddButton } from './add-button';
-import { BranchLabel, BranchLabelProps } from './branch-label';
+import { BranchLabel } from './branch-label';
 
 export const ApRouterStartCanvasEdge = ({
   sourceX,
@@ -77,7 +77,7 @@ export const ApRouterStartCanvasEdge = ({
 
   const path = generatePath();
 
-  const brancLabelProps: BranchLabelProps =
+  const brancLabelProps =
     data.stepLocationRelativeToParent ===
     StepLocationRelativeToParent.INSIDE_BRANCH
       ? {
@@ -147,7 +147,11 @@ export const ApRouterStartCanvasEdge = ({
       >
         <BranchLabel
           key={brancLabelProps.label + brancLabelProps.targetNodeName}
-          {...brancLabelProps}
+          sourceNodeName={source}
+          targetNodeName={target}
+          stepLocationRelativeToParent={data.stepLocationRelativeToParent}
+          branchIndex={data.branchIndex}
+          label={data.label}
         />
       </foreignObject>
     </>

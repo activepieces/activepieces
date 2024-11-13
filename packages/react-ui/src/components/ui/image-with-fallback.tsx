@@ -28,7 +28,7 @@ const ImageWithFallback = ({
   const { className, ...rest } = props;
 
   return (
-    <span className="relative inline-block">
+    <span className="relative inline-block h-full ">
       {isLoading && !hasError && (
         <span className="absolute inset-0 flex items-center justify-center">
           {fallback ?? <span className="w-full h-full bg-muted"></span>}

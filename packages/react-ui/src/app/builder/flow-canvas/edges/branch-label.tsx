@@ -30,7 +30,7 @@ type BaseBranchLabel = {
   branchIndex: number;
 };
 
-export const BranchLabel = (props: BaseBranchLabel) => {
+const BranchLabel = (props: BaseBranchLabel) => {
   const [
     selectedStep,
     selectedBranchIndex,
@@ -186,4 +186,4 @@ export const BranchLabel = (props: BaseBranchLabel) => {
   );
 };
 
-export default BranchLabel;
+export { BranchLabel };

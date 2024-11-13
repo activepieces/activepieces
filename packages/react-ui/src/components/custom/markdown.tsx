@@ -43,13 +43,17 @@ const Container = ({
       })}
     >
       {variant !== MarkdownVariant.BORDERLESS && (
-        <div className="h-4 w-4 flex flex-start items-start justify-start">
+        <>
           {(variant === MarkdownVariant.INFO || variant === undefined) && (
-            <Info />
+            <Info className="w-4 h-4 mt-1" />
           )}
-          {variant === MarkdownVariant.WARNING && <AlertTriangle />}
-          {variant === MarkdownVariant.TIP && <Lightbulb />}
-        </div>
+          {variant === MarkdownVariant.WARNING && (
+            <AlertTriangle className="w-4 h-4 mt-1" />
+          )}
+          {variant === MarkdownVariant.TIP && (
+            <Lightbulb className="w-4 h-4 mt-1" />
+          )}
+        </>
       )}
       <AlertDescription>{children}</AlertDescription>
     </Alert>

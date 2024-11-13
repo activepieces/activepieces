@@ -75,6 +75,7 @@ export const ActivateLicenseDialog = ({
     loop: true,
     autoplay: true,
     animationData: celebrationAnimation,
+    animationSpeed: 4,
     rendererSettings: {
       preserveAspectRatio: 'xMidYMid slice',
     },
@@ -129,11 +130,7 @@ export const ActivateLicenseDialog = ({
         )}
         {showCelebration && (
           <div className="celebration-lottie text-center">
-            <Lottie
-              options={{ ...defaultOptions, animationSpeed: 4 }}
-              height={200}
-              width={200}
-            />
+            <Lottie options={defaultOptions} height={200} width={200} />
             <div className="text-center mt-4">
               <p className="text-md text-gray-500">
                 {t('Enjoy the awesome enterprise features')}

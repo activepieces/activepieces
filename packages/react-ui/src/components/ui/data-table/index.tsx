@@ -231,35 +231,37 @@ export function DataTable<
 
   return (
     <div>
-      <DataTableToolbar>
-        <div className="w-full flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            {filters &&
-              filters.map((filter) => (
-                <DataTableFacetedFilter
-                  key={filter.accessorKey}
-                  type={filter.type}
-                  column={table.getColumn(filter.accessorKey)}
-                  title={filter.title}
-                  options={filter.options}
-                />
-              ))}
+      {((filters && filters.length > 0) || bulkActions.length > 0) && (
+        <DataTableToolbar>
+          <div className="w-full flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {filters &&
+                filters.map((filter) => (
+                  <DataTableFacetedFilter
+                    key={filter.accessorKey}
+                    type={filter.type}
+                    column={table.getColumn(filter.accessorKey)}
+                    title={filter.title}
+                    options={filter.options}
+                  />
+                ))}
+            </div>
+            {bulkActions.length > 0 && (
+              <DataTableBulkActions
+                selectedRows={table
+                  .getSelectedRowModel()
+                  .rows.map((row) => row.original)}
+                actions={bulkActions.map((action) => ({
+                  render: (selectedRows: RowDataWithActions<TData>[]) =>
+                    action.render(selectedRows, resetSelection),
+                }))}
+              />
+            )}
           </div>
-          {bulkActions.length > 0 && (
-            <DataTableBulkActions
-              selectedRows={table
-                .getSelectedRowModel()
-                .rows.map((row) => row.original)}
-              actions={bulkActions.map((action) => ({
-                render: (selectedRows: RowDataWithActions<TData>[]) =>
-                  action.render(selectedRows, resetSelection),
-              }))}
-            />
-          )}
-        </div>
-      </DataTableToolbar>
+        </DataTableToolbar>
+      )}
 
-      <div className="rounded-md border m-">
+      <div className="rounded-md border mt-8">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
