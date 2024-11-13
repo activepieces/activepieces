@@ -39,7 +39,7 @@ export type BaseEngineOperation = {
     publicUrl: string
 }
 
-export type ExecuteValidateAuthOperation = BaseEngineOperation & {
+export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
     piece: PiecePackage
     auth: AppConnectionValue
 }

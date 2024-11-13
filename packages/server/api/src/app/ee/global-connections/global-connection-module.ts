@@ -1,38 +1,43 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
+    apId,
     ApId,
     AppConnection,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
     ListAppConnectionsRequestQuery,
-    Permission,
     PrincipalType,
     SeekPage,
-    SERVICE_KEY_SECURITY_OPENAPI,
     UpdateConnectionValueRequestBody,
-    UpsertAppConnectionRequestBody,
+    UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared'
-import {
-    FastifyPluginCallbackTypebox,
-    Type,
-} from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../helper/application-events'
-import { securityHelper } from '../helper/security-helper'
-import { appConnectionService } from './app-connection-service/app-connection-service'
+import { eventsHooks } from '../../helper/application-events'
+import { securityHelper } from '../../helper/security-helper'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 
-export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
-    app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
+export const globalConnectionModule: FastifyPluginAsyncTypebox = async (app) => {
+    // TODO add feature gaurd
+   // app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.customDomainsEnabled))
+    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
+    await app.register(globalConnectionController, { prefix: '/v1/global-connections' })
+}
+
+
+const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
+    app.post('/', UpsertGlobalConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService.upsert({
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
             type: request.body.type,
-            externalId: request.body.externalId,
+            externalId: apId(),
             value: request.body.value,
             displayName: request.body.displayName,
             pieceName: request.body.pieceName,
             ownerId: await securityHelper.getUserIdFromRequest(request),
-            scope: AppConnectionScope.PROJECT,
+            scope: AppConnectionScope.PLATFORM,
         })
         eventsHooks.get().sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
@@ -45,11 +50,11 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             .send(removeSensitiveData(appConnection))
     })
 
-    app.post('/:id', UpdateConnectionValueRequest, async (request) => {
+    app.post('/:id', UpdateGlobalConnectionRequest, async (request) => {
         const appConnection = await appConnectionService.update({
             id: request.params.id,
             projectId: request.principal.projectId,
-            scope: AppConnectionScope.PROJECT,
+            scope: AppConnectionScope.PLATFORM,
             request: request.body,
         })
         return removeSensitiveData(appConnection)
@@ -57,7 +62,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
 
     app.get(
         '/',
-        ListAppConnectionsRequest,
+        ListGlobalConnectionsRequest,
         async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
             const { displayName, pieceName, status, cursor, limit } = request.query
 
@@ -66,21 +71,21 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
                 displayName,
                 status,
                 projectId: request.principal.projectId,
-                scope: AppConnectionScope.PROJECT,
+                scope: AppConnectionScope.PLATFORM,
                 cursorRequest: cursor ?? null,
                 limit: limit ?? DEFAULT_PAGE_SIZE,
             })
 
-            const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> = {
+            return {
                 ...appConnections,
                 data: appConnections.data.map(removeSensitiveData),
             }
-            return appConnectionsWithoutSensitiveData
         },
     )
+
     app.delete(
         '/:id',
-        DeleteAppConnectionRequest,
+        DeleteGlobalConnectionRequest,
         async (request, reply): Promise<void> => {
             const connection = await appConnectionService.getOneOrThrow({
                 id: request.params.id,
@@ -95,14 +100,12 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             await appConnectionService.delete({
                 id: request.params.id,
                 platformId: request.principal.platform.id,
-                scope: AppConnectionScope.PROJECT,
-                projectId: request.principal.projectId,
+                scope: AppConnectionScope.PLATFORM,
+                projectId: null,
             })
             await reply.status(StatusCodes.NO_CONTENT).send()
         },
     )
-
-    done()
 }
 
 const DEFAULT_PAGE_SIZE = 10
@@ -114,31 +117,23 @@ const removeSensitiveData = (
     return appConnectionWithoutSensitiveData as AppConnectionWithoutSensitiveData
 }
 
-const UpsertAppConnectionRequest = {
+const UpsertGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_APP_CONNECTION,
+        allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        tags: ['app-connections'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Upsert an app connection based on the app name',
-        body: UpsertAppConnectionRequestBody,
-        Response: {
+        body: UpsertGlobalConnectionRequestBody,
+        response: {
             [StatusCodes.CREATED]: AppConnectionWithoutSensitiveData,
         },
     },
 }
 
-const UpdateConnectionValueRequest = {
+const UpdateGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_APP_CONNECTION,
+        allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        tags: ['app-connections'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Update an app connection value',
         body: UpdateConnectionValueRequestBody,
         params: Type.Object({
             id: ApId,
@@ -146,32 +141,23 @@ const UpdateConnectionValueRequest = {
     },
 }
 
-const ListAppConnectionsRequest = {
+const ListGlobalConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.READ_APP_CONNECTION,
+        allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        tags: ['app-connections'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListAppConnectionsRequestQuery,
-        description: 'List app connections',
         response: {
             [StatusCodes.OK]: SeekPage(AppConnectionWithoutSensitiveData),
         },
     },
 }
 
-
-const DeleteAppConnectionRequest = {
+const DeleteGlobalConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_APP_CONNECTION,
+        allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        tags: ['app-connections'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Delete an app connection',
         params: Type.Object({
             id: ApId,
         }),

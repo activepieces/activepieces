@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { AppConnectionType } from '../app-connection'
+import { AppConnectionScope, AppConnectionType } from '../app-connection'
 import { OAuth2AuthorizationMethod } from '../oauth2-authorization-method'
 
 const commonAuthProps = {
@@ -146,3 +146,12 @@ export const UpdateConnectionValueRequestBody = Type.Object({
 })
 
 export type UpdateConnectionValueRequestBody = Static<typeof UpdateConnectionValueRequestBody>
+
+export const UpsertGlobalConnectionRequestBody = Type.Composite([
+    Type.Omit(UpsertAppConnectionRequestBody, ['projectId', 'externalId']),
+    Type.Object({
+        scope: Type.Literal(AppConnectionScope.PLATFORM),
+    }),
+])
+
+export type UpsertGlobalConnectionRequestBody = Static<typeof UpsertGlobalConnectionRequestBody>

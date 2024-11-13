@@ -56,11 +56,7 @@ async function getOAuth2TokenUrl({
     projectId,
     pieceName,
     props,
-}: {
-    projectId: string
-    pieceName: string
-    props?: Record<string, string>
-}): Promise<string> {
+}: OAuth2TokenUrlParams): Promise<string> {
     const pieceMetadata = await pieceMetadataService.getOrThrow({
         name: pieceName,
         projectId,
@@ -80,6 +76,13 @@ async function getOAuth2TokenUrl({
             })
     }
 }
+
+type OAuth2TokenUrlParams = {
+    projectId: string | undefined
+    pieceName: string
+    props?: Record<string, string>
+}
+
 
 function resolveUrl(
     url: string,
