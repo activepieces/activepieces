@@ -49,7 +49,7 @@ type FlowImported = {
     tab?: string
 }
 type FlowImportedUsingFile = {
-    location: 'inside dashboard' | 'inside the builder',
+    location: 'inside dashboard' | 'inside the builder'
     multiple: boolean
 }
 
