@@ -40,6 +40,7 @@ import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { gitRepoModule } from './ee/git-sync/git-sync.module'
+import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { emailService } from './ee/helper/email/email-service'
 import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
@@ -277,6 +278,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
+            await app.register(globalConnectionModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -307,6 +309,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
+            await app.register(globalConnectionModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,

@@ -5,7 +5,8 @@ import {
     AppConnection,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
-    ListAppConnectionsRequestQuery,
+    EndpointScope,
+    ListGlobalConnectionsRequestQuery,
     PrincipalType,
     SeekPage,
     UpdateConnectionValueRequestBody,
@@ -13,18 +14,16 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { eventsHooks } from '../../helper/application-events'
 import { securityHelper } from '../../helper/security-helper'
-import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const globalConnectionModule: FastifyPluginAsyncTypebox = async (app) => {
-    // TODO add feature gaurd
-   // app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.customDomainsEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.globalConnectionsEnabled))
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     await app.register(globalConnectionController, { prefix: '/v1/global-connections' })
 }
-
 
 const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', UpsertGlobalConnectionRequest, async (request, reply) => {
@@ -60,52 +59,45 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
         return removeSensitiveData(appConnection)
     })
 
-    app.get(
-        '/',
-        ListGlobalConnectionsRequest,
-        async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
-            const { displayName, pieceName, status, cursor, limit } = request.query
+    app.get('/', ListGlobalConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
+        const { displayName, pieceName, status, cursor, limit } = request.query
 
-            const appConnections = await appConnectionService.list({
-                pieceName,
-                displayName,
-                status,
-                projectId: request.principal.projectId,
-                scope: AppConnectionScope.PLATFORM,
-                cursorRequest: cursor ?? null,
-                limit: limit ?? DEFAULT_PAGE_SIZE,
-            })
+        const appConnections = await appConnectionService.list({
+            pieceName,
+            displayName,
+            status,
+            projectId: request.principal.projectId,
+            scope: AppConnectionScope.PLATFORM,
+            cursorRequest: cursor ?? null,
+            limit: limit ?? DEFAULT_PAGE_SIZE,
+        })
 
-            return {
-                ...appConnections,
-                data: appConnections.data.map(removeSensitiveData),
-            }
-        },
+        return {
+            ...appConnections,
+            data: appConnections.data.map(removeSensitiveData),
+        }
+    },
     )
 
-    app.delete(
-        '/:id',
-        DeleteGlobalConnectionRequest,
-        async (request, reply): Promise<void> => {
-            const connection = await appConnectionService.getOneOrThrow({
-                id: request.params.id,
-                projectId: request.principal.projectId,
-            })
-            eventsHooks.get().sendUserEventFromRequest(request, {
-                action: ApplicationEventName.CONNECTION_DELETED,
-                data: {
-                    connection,
-                },
-            })
-            await appConnectionService.delete({
-                id: request.params.id,
-                platformId: request.principal.platform.id,
-                scope: AppConnectionScope.PLATFORM,
-                projectId: null,
-            })
-            await reply.status(StatusCodes.NO_CONTENT).send()
-        },
-    )
+    app.delete('/:id', DeleteGlobalConnectionRequest, async (request, reply): Promise<void> => {
+        const connection = await appConnectionService.getOneOrThrow({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
+        eventsHooks.get().sendUserEventFromRequest(request, {
+            action: ApplicationEventName.CONNECTION_DELETED,
+            data: {
+                connection,
+            },
+        })
+        await appConnectionService.delete({
+            id: request.params.id,
+            platformId: request.principal.platform.id,
+            scope: AppConnectionScope.PLATFORM,
+            projectId: null,
+        })
+        await reply.status(StatusCodes.NO_CONTENT).send()
+    })
 }
 
 const DEFAULT_PAGE_SIZE = 10
@@ -120,6 +112,7 @@ const removeSensitiveData = (
 const UpsertGlobalConnectionRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         body: UpsertGlobalConnectionRequestBody,
@@ -132,6 +125,7 @@ const UpsertGlobalConnectionRequest = {
 const UpdateGlobalConnectionRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         body: UpdateConnectionValueRequestBody,
@@ -144,9 +138,10 @@ const UpdateGlobalConnectionRequest = {
 const ListGlobalConnectionsRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
-        querystring: ListAppConnectionsRequestQuery,
+        querystring: ListGlobalConnectionsRequestQuery,
         response: {
             [StatusCodes.OK]: SeekPage(AppConnectionWithoutSensitiveData),
         },
@@ -156,6 +151,7 @@ const ListGlobalConnectionsRequest = {
 const DeleteGlobalConnectionRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         params: Type.Object({

@@ -10,6 +10,7 @@ import {
     LoopOnItemsActionSettings,
     PieceActionSettings,
     PieceTriggerSettings,
+    PlatformId,
     ProjectId,
     RouterActionSettingsWithValidation,
     TriggerType,
@@ -24,6 +25,7 @@ const routerSettingsValidator = TypeCompiler.Compile(RouterActionSettingsWithVal
 export const flowVersionValidationUtil = {
     async prepareRequest(
         projectId: ProjectId,
+        platformId: PlatformId,
         request: FlowOperationRequest,
     ): Promise<FlowOperationRequest> {
         const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
@@ -41,6 +43,7 @@ export const flowVersionValidationUtil = {
                         clonedRequest.request.action.valid = await validateAction({
                             settings: clonedRequest.request.action.settings,
                             projectId,
+                            platformId,
                         })
                         break
                     case ActionType.ROUTER:
@@ -65,6 +68,7 @@ export const flowVersionValidationUtil = {
                         clonedRequest.request.valid = await validateAction({
                             settings: clonedRequest.request.settings,
                             projectId,
+                            platformId,
                         })
                         break
                     }
@@ -87,6 +91,7 @@ export const flowVersionValidationUtil = {
                         clonedRequest.request.valid = await validateTrigger({
                             settings: clonedRequest.request.settings,
                             projectId,
+                            platformId,
                         })
                         break
                 }
@@ -100,9 +105,11 @@ export const flowVersionValidationUtil = {
 
 async function validateAction({
     projectId,
-    settings,
+    platformId,
+    settings,       
 }: {
     projectId: ProjectId
+    platformId: PlatformId
     settings: PieceActionSettings
 }): Promise<boolean> {
     if (
@@ -116,6 +123,7 @@ async function validateAction({
 
     const piece = await pieceMetadataService.getOrThrow({
         projectId,
+        platformId,
         name: settings.pieceName,
         version: settings.pieceVersion,
     })
@@ -137,11 +145,13 @@ async function validateAction({
 }
 
 async function validateTrigger({
+    platformId,
     settings,
     projectId,
 }: {
     settings: PieceTriggerSettings
     projectId: ProjectId
+    platformId: PlatformId
 }): Promise<boolean> {
     if (
         isNil(settings.pieceName) ||
@@ -154,6 +164,7 @@ async function validateTrigger({
 
     const piece = await pieceMetadataService.getOrThrow({
         projectId,
+        platformId,
         name: settings.pieceName,
         version: settings.pieceVersion,
     })

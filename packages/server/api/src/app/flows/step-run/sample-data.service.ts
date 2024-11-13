@@ -9,6 +9,7 @@ import {
     FlowVersion,
     FlowVersionId,
     isNil,
+    PlatformId,
     ProjectId,
     StepRunResponse,
     Trigger,
@@ -23,11 +24,13 @@ export const sampleDataService = {
         projectId,
         flowVersionId,
         stepName,
+        platformId,
     }: RunActionParams): Promise<Omit<StepRunResponse, 'id'>> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowStructureUtil.getActionOrThrow(stepName, flowVersion.trigger)
         const engineToken = await accessTokenManager.generateEngineToken({
             projectId,
+            platformId,
         })
         const { result, standardError, standardOutput } =
             await engineRunner.executeAction(engineToken, {
@@ -158,4 +161,5 @@ type RunActionParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
     stepName: string
+    platformId: PlatformId
 }

@@ -19,3 +19,6 @@ export const GetAppConnectionForWorkerRequestQuery = Type.Object({
 export type GetAppConnectionForWorkerRequestQuery = Static<
     typeof GetAppConnectionForWorkerRequestQuery
 >
+
+export const ListGlobalConnectionsRequestQuery = Type.Omit(ListAppConnectionsRequestQuery, ['projectId'])
+export type ListGlobalConnectionsRequestQuery = Static<typeof ListGlobalConnectionsRequestQuery>

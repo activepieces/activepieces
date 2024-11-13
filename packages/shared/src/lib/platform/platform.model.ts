@@ -51,6 +51,8 @@ export const Platform = Type.Object({
     manageProjectsEnabled: Type.Boolean(),
     projectRolesEnabled: Type.Boolean(),
     customDomainsEnabled: Type.Boolean(),
+    globalConnectionsEnabled: Type.Boolean(),
+    customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
     flowIssuesEnabled: Type.Boolean(),
     alertsEnabled: Type.Boolean(),

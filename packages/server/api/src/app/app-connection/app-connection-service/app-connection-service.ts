@@ -45,12 +45,12 @@ const repo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = {
     async upsert(params: UpsertParams): Promise<AppConnection> {
-        const { projectId, externalId, value, displayName, pieceName, ownerId, platformId, type, scope } = params
+        const { projectId, externalId, value, displayName, pieceName, ownerId, platformId, scope, type } = params
 
         const validatedConnectionValue = await validateConnectionValue({
             value,
             pieceName,
-            projectId,
+            projectId: projectId ?? undefined,
             platformId,
         })
 
@@ -72,6 +72,8 @@ export const appConnectionService = {
             status: AppConnectionStatus.ACTIVE,
             value: encryptedConnectionValue,
             externalId,
+            pieceName,
+            type,
             id: existingConnection?.id ?? apId(),
             scope,
             projectIds: projectId ? [projectId] : [],
@@ -92,7 +94,6 @@ export const appConnectionService = {
         const { projectId, id, request } = params
         await repo().update({
             id,
-            
             projectIds: APArrayContains('projectIds', [projectId]),
         }, {
             displayName: request.displayName,
@@ -236,6 +237,7 @@ const validateConnectionValue = async (
             const tokenUrl = await oauth2Util.getOAuth2TokenUrl({
                 projectId,
                 pieceName,
+                platformId,
                 props: value.props,
             })
             return oauth2Handler[value.type].claim({
@@ -258,6 +260,7 @@ const validateConnectionValue = async (
             const tokenUrl = await oauth2Util.getOAuth2TokenUrl({
                 projectId,
                 pieceName,
+                platformId,
                 props: value.props,
             })
             return oauth2Handler[value.type].claim({
@@ -279,6 +282,7 @@ const validateConnectionValue = async (
             const tokenUrl = await oauth2Util.getOAuth2TokenUrl({
                 projectId,
                 pieceName,
+                platformId,
                 props: value.props,
             })
             const auth = await oauth2Handler[value.type].claim({
@@ -300,6 +304,7 @@ const validateConnectionValue = async (
             await engineValidateAuth({
                 pieceName,
                 projectId,
+                platformId,
                 auth,
             })
             return auth
@@ -308,6 +313,7 @@ const validateConnectionValue = async (
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
             await engineValidateAuth({
+                platformId,
                 pieceName,
                 projectId,
                 auth: value,
@@ -335,26 +341,29 @@ const engineValidateAuth = async (
     if (environment === ApEnvironment.TESTING) {
         return
     }
-    const { pieceName, auth, projectId } = params
+    const { pieceName, auth, projectId, platformId } = params
 
     const pieceMetadata = await pieceMetadataService.getOrThrow({
         name: pieceName,
         projectId,
         version: undefined,
+        platformId,
     })
 
     const engineToken = await accessTokenManager.generateEngineToken({
+        platformId,
         projectId,
     })
+
     const engineResponse = await engineRunner.executeValidateAuth(engineToken, {
-        piece: await getPiecePackage(projectId, {
+        piece: await getPiecePackage(projectId, platformId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
             pieceType: pieceMetadata.pieceType,
             packageType: pieceMetadata.packageType,
         }),
+        platformId,
         auth,
-        projectId,
     })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
@@ -539,5 +548,6 @@ type UpdateParams = {
 type EngineValidateAuthParams = {
     pieceName: string
     projectId: ProjectId | undefined
+    platformId: string
     auth: AppConnectionValue
 }

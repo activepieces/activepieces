@@ -77,6 +77,7 @@ async function updateFlowInProject(originalFlow: PopulatedFlow, newFlow: Populat
     return flowService.update({
         id: originalFlow.id,
         projectId,
+        platformId: project.platformId,
         lock: true,
         userId: project.ownerId,
         operation: {
@@ -116,6 +117,7 @@ async function republishFlow(flowId: string, projectId: string): Promise<Project
         await flowService.update({
             id: flowId,
             projectId,
+            platformId: project.platformId,
             lock: true,
             userId: project.ownerId,
             operation: {

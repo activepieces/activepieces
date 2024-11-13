@@ -13,7 +13,7 @@ import { credentialsOauth2Service } from '../../app-connection/app-connection-se
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { oauthAppService } from '../oauth-apps/oauth-app.service'
 
-export const platformOAuth2Service: OAuth2Service<PlatformOAuth2ConnectionValue> ={
+export const platformOAuth2Service: OAuth2Service<PlatformOAuth2ConnectionValue> = {
     claim,
     refresh,
 }
@@ -66,6 +66,7 @@ async function claim({
         name: pieceName,
         version: undefined,
         projectId,
+        platformId,
     })
     if (isNil(auth) || auth.type !== PropertyType.OAUTH2) {
         throw new Error(
