@@ -7,7 +7,7 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
 let lastActionExecutionTime: number | undefined = undefined
 let lastRequestHash: string | undefined = undefined
-const MAXIUM_UPDATE_THRESHOLD = 15000
+const MAXIMUM_UPDATE_THRESHOLD = 15000
 const DEBOUNCE_THRESHOLD = 5000
 const lock = new Mutex()
 const updateLock = new Mutex()
@@ -19,7 +19,7 @@ export const progressService = {
                 clearTimeout(lastScheduledUpdateId)
             }
 
-            const shouldUpdateNow = isNil(lastActionExecutionTime) || (Date.now() - lastActionExecutionTime > MAXIUM_UPDATE_THRESHOLD)
+            const shouldUpdateNow = isNil(lastActionExecutionTime) || (Date.now() - lastActionExecutionTime > MAXIMUM_UPDATE_THRESHOLD)
             if (shouldUpdateNow || params.updateImmediate) {
                 await sendUpdateRunRequest(params)
                 return
