@@ -132,6 +132,9 @@ const ImportFlowDialog = (
       }
       setIsDialogOpen(false);
       props.onRefresh?.();
+      if (flows.length === 1) {
+        navigate(`/flows/${flows[0].id}`, { replace: true });
+      }
     },
     onError: (err) => {
       if (
