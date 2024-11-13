@@ -1,4 +1,4 @@
-import { AppSystemProp, CopilotInstanceTypes, exceptionHandler, logger, system } from '@activepieces/server-shared'
+import { AppSystemProp, CopilotInstanceTypes, logger, system } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, GenerateCodeResponse, isNil } from '@activepieces/shared'
 import OpenAI from 'openai'
 import {
@@ -215,7 +215,6 @@ export const copilotService = {
                 }, {} as Record<string, string>),
             },
         }
-    }
+    },
 
-},
 }

@@ -18,9 +18,14 @@ export class EngineConstants {
     public static readonly INPUT_FILE = './input.json'
     public static readonly OUTPUT_FILE = './output.json'
     public static readonly PIECE_SOURCES = process.env.AP_PIECES_SOURCE ?? 'FILE'
+    public static readonly TEST_MODE = process.env.AP_TEST_MODE === 'true'
 
 
     private project: Project | null = null
+
+    public get isTestMode(): boolean {
+        return EngineConstants.TEST_MODE
+    }
 
     public get baseCodeDirectory(): string {
         return EngineConstants.BASE_CODE_DIRECTORY

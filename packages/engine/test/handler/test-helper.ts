@@ -9,7 +9,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
         params?.flowVersionState ?? FlowVersionState.DRAFT,
         params?.flowRunId ?? 'flowRunId',
         params?.publicUrl ?? 'http://127.0.0.1:3000',
-        params?.internalApiUrl ??  'http://127.0.0.1:3000',
+        params?.internalApiUrl ??  'http://127.0.0.1:3000/',
         params?.retryConstants ?? {
             maxAttempts: 2,
             retryExponential: 1,

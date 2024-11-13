@@ -4,8 +4,8 @@ import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError
 
 export const createConnectionService = ({ projectId, engineToken, apiUrl }: CreateConnectionServiceParams): ConnectionService => {
     return {
-        async obtain(connectionName: string): Promise<ConnectionValue> {
-            const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(connectionName)}?projectId=${projectId}`
+        async obtain(externalId: string): Promise<ConnectionValue> {
+            const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
 
             try {
                 const response = await fetch(url, {
@@ -17,13 +17,13 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
 
                 if (!response.ok) {
                     return handleResponseError({
-                        connectionName,
+                        externalId,
                         httpStatus: response.status,
                     })
                 }
                 const connection: AppConnection = await response.json()
                 if (connection.status === AppConnectionStatus.ERROR) {
-                    throw new ConnectionExpiredError(connectionName)
+                    throw new ConnectionExpiredError(externalId)
                 }
                 return getConnectionValue(connection)
             }
@@ -41,12 +41,12 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
     }
 }
 
-const handleResponseError = ({ connectionName, httpStatus }: HandleResponseErrorParams): never => {
+const handleResponseError = ({ externalId, httpStatus }: HandleResponseErrorParams): never => {
     if (httpStatus === StatusCodes.NOT_FOUND.valueOf()) {
-        throw new ConnectionNotFoundError(connectionName)
+        throw new ConnectionNotFoundError(externalId)
     }
 
-    throw new ConnectionLoadingError(connectionName)
+    throw new ConnectionLoadingError(externalId)
 }
 
 const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
@@ -74,7 +74,7 @@ type ConnectionValue =
     | string
 
 type ConnectionService = {
-    obtain(connectionName: string): Promise<ConnectionValue>
+    obtain(externalId: string): Promise<ConnectionValue>
 }
 
 type CreateConnectionServiceParams = {
@@ -84,7 +84,7 @@ type CreateConnectionServiceParams = {
 }
 
 type HandleResponseErrorParams = {
-    connectionName: string
+    externalId: string
     httpStatus: number
 }
 

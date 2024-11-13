@@ -91,8 +91,6 @@ const ListProxyConfigRequest = {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE],
     },
     schema: {
-        tags: ['ai-providers'],
-        description: 'List ai provider configs',
         response: {
             [StatusCodes.OK]: SeekPage(AiProviderWithoutSensitiveData),
         },
@@ -104,8 +102,6 @@ const CreateProxyConfigRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        tags: ['ai-providers'],
-        description: 'Create ai provider config',
         body: Type.Omit(AiProviderConfig, [
             'id',
             'created',
@@ -123,7 +119,5 @@ const DeleteProxyConfigRequest = {
         params: Type.Object({
             provider: Type.String(),
         }),
-        tags: ['ai-providers'],
-        description: 'Delete ai provider config',
     },
 }

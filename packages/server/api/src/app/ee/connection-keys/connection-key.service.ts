@@ -21,6 +21,7 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { projectService } from '../../project/project-service'
 import { appCredentialService } from '../app-credentials/app-credentials.service'
 import { ConnectionKeyEntity } from './connection-key.entity'
 
@@ -45,7 +46,7 @@ export const connectionKeyService = {
         }
         return appConnectionService.getOne({
             projectId,
-            name: `${finalAppName}_${connectionName}`,
+            externalId: `${finalAppName}_${connectionName}`,
         })
     },
     async createConnection(
@@ -67,6 +68,7 @@ export const connectionKeyService = {
                 },
             })
         }
+        const project = await projectService.getOneOrThrow(projectId)
         // TODO this is hardcoded for now, just to make sure it's not changed on client side
         const finalAppName = `@activepieces/piece-${appCredential.appName}`
         switch (appCredential.settings.type) {
@@ -74,9 +76,11 @@ export const connectionKeyService = {
                 const apiRequest = request as UpsertApiKeyConnectionFromToken
                 return appConnectionService.upsert({
                     projectId,
+                    platformId: project.platformId,
                     request: {
                         projectId,
-                        name: `${appCredential.appName}_${connectionName}`,
+                        externalId: `${appCredential.appName}_${connectionName}`,
+                        displayName: `${appCredential.appName}_${connectionName}`,
                         pieceName: finalAppName,
                         type: AppConnectionType.SECRET_TEXT,
                         value: {
@@ -91,8 +95,10 @@ export const connectionKeyService = {
                 const apiRequest = request as UpsertOAuth2ConnectionFromToken
                 return appConnectionService.upsert({
                     projectId,
+                    platformId: project.platformId,
                     request: {
-                        name: `${appCredential.appName}_${connectionName}`,
+                        externalId: `${appCredential.appName}_${connectionName}`,
+                        displayName: `${appCredential.appName}_${connectionName}`,
                         pieceName: finalAppName,
                         projectId,
                         type: AppConnectionType.OAUTH2,
