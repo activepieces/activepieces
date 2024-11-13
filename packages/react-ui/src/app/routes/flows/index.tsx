@@ -343,7 +343,6 @@ const FlowsPage = () => {
         return (
           <div onClick={(e) => e.stopPropagation()}>
             <FlowActionMenu
-              insideBuilder={false}
               flow={flow}
               readonly={false}
               flowVersion={flow.version}
