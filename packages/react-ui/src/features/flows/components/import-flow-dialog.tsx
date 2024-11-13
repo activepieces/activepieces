@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import JSZip from 'jszip';
 import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useTelemetry } from '@/components/telemetry-provider';
 import { Button } from '@/components/ui/button';
@@ -69,6 +70,7 @@ const ImportFlowDialog = (
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [failedFiles, setFailedFiles] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const { mutate: importFlows, isPending } = useMutation<
     PopulatedFlow[],
@@ -96,7 +98,7 @@ const ImportFlowDialog = (
 
       return Promise.all(importPromises);
     },
-    onSuccess: () => {
+    onSuccess: (flows) => {
       capture({
         name: TelemetryEventName.FLOW_IMPORTED_USING_FILE,
         payload: {
@@ -126,6 +128,9 @@ const ImportFlowDialog = (
 
       setIsDialogOpen(false);
       props.onRefresh?.();
+      if (flows.length === 1) {
+        navigate(`/flows/${flows[0].id}`, { replace: true });
+      }
     },
     onError: (err) => {
       if (
@@ -167,7 +172,7 @@ const ImportFlowDialog = (
     const file = files[0];
     const newTemplates: FlowTemplate[] = [];
 
-    if (file.type === 'application/zip') {
+    if (file.type === 'application/zip' && !props.insideBuilder) {
       const zip = new JSZip();
       const zipContent = await zip.loadAsync(file);
       const jsonFiles = Object.keys(zipContent.files).filter((fileName) =>
@@ -229,7 +234,7 @@ const ImportFlowDialog = (
         <div className="flex gap-2 items-center">
           <Input
             type="file"
-            accept=".json,.zip"
+            accept={props.insideBuilder ? '.json' : '.json,.zip'}
             ref={fileInputRef}
             onChange={handleFileChange}
           />
