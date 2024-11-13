@@ -33,6 +33,9 @@ export const progressService = {
 }
 
 const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<void> => {
+    if (params.engineConstants.isTestMode) {
+        return
+    }
     await lock.runExclusive(async () => {
         lastActionExecutionTime = Date.now()
         const { flowExecutorContext, engineConstants } = params
