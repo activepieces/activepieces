@@ -55,7 +55,6 @@ interface FlowActionMenuProps {
   onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
-  insideBuilder: boolean;
 }
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
@@ -63,7 +62,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   flowVersion,
   children,
   readonly,
-  insideBuilder,
   onRename,
   onMoveTo,
   onDuplicate,
@@ -78,14 +76,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
   const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
-  const importFlowProps: ImportFlowDialogProps = insideBuilder
-    ? {
-        insideBuilder: true,
-        flowId: flow.id,
-      }
-    : {
-        insideBuilder: false,
-      };
+  const importFlowProps: ImportFlowDialogProps = {
+    insideBuilder: true,
+    flowId: flow.id,
+  };
   const { embedState } = useEmbedding();
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
