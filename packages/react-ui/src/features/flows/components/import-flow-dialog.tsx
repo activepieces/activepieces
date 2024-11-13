@@ -31,12 +31,11 @@ import { flowsApi } from '../lib/flows-api';
 export type ImportFlowDialogProps =
   | {
       insideBuilder: false;
-      onRefresh?: () => void;
+      onRefresh: () => void;
     }
   | {
       insideBuilder: true;
       flowId: string;
-      onRefresh?: () => void;
     };
 
 const readTemplateJson = async (
@@ -100,40 +99,36 @@ const ImportFlowDialog = (
 
       return Promise.all(importPromises);
     },
-    onSuccess: (flows) => {
+
+    onSuccess: (flows: PopulatedFlow[]) => {
       capture({
         name: TelemetryEventName.FLOW_IMPORTED_USING_FILE,
         payload: {
           location: props.insideBuilder
             ? 'inside the builder'
             : 'inside dashboard',
+          multiple: flows.length > 1,
         },
       });
 
-      if (failedFiles.length) {
-        toast({
-          title: t('Failed to import'),
-          variant: 'destructive',
-          description:
-            t('The following files failed to import: ') +
-            failedFiles.join(', '),
-        });
-      } else {
-        toast({
-          title: t('Import Success'),
-          description: t(
-            `Flow${templates.length === 1 ? '' : 's'} imported successfully.`,
-          ),
-          variant: 'default',
-        });
-      }
+      toast({
+        title: t(`flowsImported`, {
+          flowsCount: flows.length,
+        }),
+        variant: 'default',
+      });
 
       if (flows.length === 1) {
         navigate(`/flows/${flows[0].id}`, { replace: true });
         return;
       }
       setIsDialogOpen(false);
-      props.onRefresh?.();
+      if (flows.length === 1 || props.insideBuilder) {
+        navigate(`/flow-import-redirect/${flows[0].id}`);
+      }
+      if (!props.insideBuilder) {
+        props.onRefresh();
+      }
     },
     onError: (err) => {
       if (
