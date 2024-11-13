@@ -55,6 +55,7 @@ interface FlowActionMenuProps {
   onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  insideBuilder: boolean;
 }
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
@@ -66,6 +67,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onMoveTo,
   onDuplicate,
   onDelete,
+  insideBuilder,
 }) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const openNewWindow = useNewWindow();
@@ -194,7 +196,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </DropdownMenuItem>
         </PermissionNeededTooltip>
 
-        {!readonly && (
+        {!readonly && insideBuilder && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >

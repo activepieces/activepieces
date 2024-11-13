@@ -114,6 +114,7 @@ export const BuilderHeader = () => {
             )}
           </span>
           <FlowActionMenu
+            insideBuilder={true}
             flow={flow}
             flowVersion={flowVersion}
             readonly={!isLatestVersion}

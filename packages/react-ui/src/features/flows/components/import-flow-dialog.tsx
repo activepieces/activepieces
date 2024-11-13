@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import JSZip from 'jszip';
 import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useTelemetry } from '@/components/telemetry-provider';
 import { Button } from '@/components/ui/button';
@@ -30,12 +31,11 @@ import { flowsApi } from '../lib/flows-api';
 export type ImportFlowDialogProps =
   | {
       insideBuilder: false;
-      onRefresh?: () => void;
+      onRefresh: () => void;
     }
   | {
       insideBuilder: true;
       flowId: string;
-      onRefresh?: () => void;
     };
 
 const readTemplateJson = async (
@@ -69,7 +69,7 @@ const ImportFlowDialog = (
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [failedFiles, setFailedFiles] = useState<string[]>([]);
-
+  const navigate = useNavigate();
   const { mutate: importFlows, isPending } = useMutation<
     PopulatedFlow[],
     Error,
@@ -96,36 +96,31 @@ const ImportFlowDialog = (
 
       return Promise.all(importPromises);
     },
-    onSuccess: () => {
+    onSuccess: (flows: PopulatedFlow[]) => {
       capture({
         name: TelemetryEventName.FLOW_IMPORTED_USING_FILE,
         payload: {
           location: props.insideBuilder
             ? 'inside the builder'
             : 'inside dashboard',
+          multiple: flows.length > 1,
         },
       });
 
-      if (failedFiles.length) {
-        toast({
-          title: t('Failed to import'),
-          variant: 'destructive',
-          description:
-            t('The following files failed to import: ') +
-            failedFiles.join(', '),
-        });
-      } else {
-        toast({
-          title: t('Import Success'),
-          description: t(
-            `Flow${templates.length === 1 ? '' : 's'} imported successfully.`,
-          ),
-          variant: 'default',
-        });
-      }
+      toast({
+        title: t(`flowsImported`, {
+          flowsCount: flows.length,
+        }),
+        variant: 'default',
+      });
 
       setIsDialogOpen(false);
-      props.onRefresh?.();
+      if (flows.length === 1 || props.insideBuilder) {
+        navigate(`/flow-import-redirect/${flows[0].id}`);
+      }
+      if (!props.insideBuilder) {
+        props.onRefresh();
+      }
     },
     onError: (err) => {
       if (
