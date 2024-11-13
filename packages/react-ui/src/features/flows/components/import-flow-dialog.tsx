@@ -44,6 +44,7 @@ const readTemplateJson = async (
 ): Promise<FlowTemplate | null> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
+
     reader.onload = () => {
       try {
         const template = JSON.parse(reader.result as string) as FlowTemplate;
@@ -66,6 +67,7 @@ const ImportFlowDialog = (
 ) => {
   const { capture } = useTelemetry();
   const [templates, setTemplates] = useState<FlowTemplate[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
