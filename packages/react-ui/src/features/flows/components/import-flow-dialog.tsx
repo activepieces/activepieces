@@ -30,20 +30,21 @@ import { flowsApi } from '../lib/flows-api';
 
 export type ImportFlowDialogProps =
   | {
-    insideBuilder: false;
-    onRefresh?: () => void;
-  }
+      insideBuilder: false;
+      onRefresh?: () => void;
+    }
   | {
-    insideBuilder: true;
-    flowId: string;
-    onRefresh?: () => void;
-  };
+      insideBuilder: true;
+      flowId: string;
+      onRefresh?: () => void;
+    };
 
 const readTemplateJson = async (
   templateFile: File,
 ): Promise<FlowTemplate | null> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
+
     reader.onload = () => {
       try {
         const template = JSON.parse(reader.result as string) as FlowTemplate;
@@ -66,6 +67,7 @@ const ImportFlowDialog = (
 ) => {
   const { capture } = useTelemetry();
   const [templates, setTemplates] = useState<FlowTemplate[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -82,9 +84,9 @@ const ImportFlowDialog = (
         const flow = props.insideBuilder
           ? await flowsApi.get(props.flowId)
           : await flowsApi.create({
-            displayName: template.name,
-            projectId: authenticationSession.getProjectId()!,
-          });
+              displayName: template.name,
+              projectId: authenticationSession.getProjectId()!,
+            });
 
         return await flowsApi.update(flow.id, {
           type: FlowOperationType.IMPORT_FLOW,
@@ -151,8 +153,8 @@ const ImportFlowDialog = (
       setErrorMessage(
         failedFiles.length
           ? t(
-            'No valid templates found. The following files failed to import: ',
-          ) + failedFiles.join(', ')
+              'No valid templates found. The following files failed to import: ',
+            ) + failedFiles.join(', ')
           : t('Please select a file first'),
       );
     } else {
