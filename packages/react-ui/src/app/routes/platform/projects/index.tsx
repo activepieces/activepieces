@@ -2,16 +2,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Pencil, Plus, Trash } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
   LIMIT_QUERY_PARAM,
   RowDataWithActions,
+  BulkAction,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
@@ -102,6 +105,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     },
   },
 ];
+
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { toast } = useToast();
@@ -126,14 +130,16 @@ export default function ProjectsPage() {
     },
   });
 
-  const deleteProjectMutation = useMutation({
-    mutationFn: async (projectId: string) => {
-      await projectApi.delete(projectId);
+  const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => projectApi.delete(id)));
     },
     onSuccess: () => {
       refetch();
     },
-    onError: (error, _) => {
+    onError: (error) => {
       toast({
         title: t('Error'),
         description: errorToastMessage(error),
@@ -141,6 +147,173 @@ export default function ProjectsPage() {
       });
     },
   });
+
+  const columnsWithCheckbox: ColumnDef<
+    RowDataWithActions<ProjectWithLimits>
+  >[] = [
+    {
+      id: 'select',
+      header: ({ table }) => {
+        const selectableRows = table
+          .getRowModel()
+          .rows.filter((row) => row.original.id !== currentProject?.id);
+        const allSelectableSelected =
+          selectableRows.length > 0 &&
+          selectableRows.every((row) => row.getIsSelected());
+        const someSelectableSelected = selectableRows.some((row) =>
+          row.getIsSelected(),
+        );
+
+        return (
+          <Checkbox
+            checked={allSelectableSelected || someSelectableSelected}
+            onCheckedChange={(value) => {
+              const isChecked = !!value;
+              selectableRows.forEach((row) => row.toggleSelected(isChecked));
+
+              if (isChecked) {
+                const selectableProjects = selectableRows.map(
+                  (row) => row.original,
+                );
+                const newSelectedRows = [
+                  ...selectableProjects,
+                  ...selectedRows,
+                ];
+                const uniqueRows = Array.from(
+                  new Map(
+                    newSelectedRows.map((item) => [item.id, item]),
+                  ).values(),
+                );
+                setSelectedRows(uniqueRows);
+              } else {
+                const filteredRows = selectedRows.filter(
+                  (row) =>
+                    !selectableRows.some((r) => r.original.id === row.id),
+                );
+                setSelectedRows(filteredRows);
+              }
+            }}
+          />
+        );
+      },
+      cell: ({ row }) => {
+        const isCurrentProject = row.original.id === currentProject?.id;
+        const isChecked = selectedRows.some(
+          (selectedRow) => selectedRow.id === row.original.id,
+        );
+
+        return (
+          <Tooltip>
+            <TooltipTrigger>
+              <div className={isCurrentProject ? 'cursor-not-allowed' : ''}>
+                <Checkbox
+                  checked={isChecked}
+                  disabled={isCurrentProject}
+                  onCheckedChange={(value) => {
+                    if (isCurrentProject) return;
+
+                    const isChecked = !!value;
+                    let newSelectedRows = [...selectedRows];
+                    if (isChecked) {
+                      const exists = newSelectedRows.some(
+                        (selectedRow) => selectedRow.id === row.original.id,
+                      );
+                      if (!exists) {
+                        newSelectedRows.push(row.original);
+                      }
+                    } else {
+                      newSelectedRows = newSelectedRows.filter(
+                        (selectedRow) => selectedRow.id !== row.original.id,
+                      );
+                    }
+                    setSelectedRows(newSelectedRows);
+                    row.toggleSelected(!!value);
+                  }}
+                />
+              </div>
+            </TooltipTrigger>
+            {isCurrentProject && (
+              <TooltipContent side="right">
+                {t(
+                  'Cannot delete active project, switch to another project first',
+                )}
+              </TooltipContent>
+            )}
+          </Tooltip>
+        );
+      },
+      accessorKey: 'select',
+    },
+    ...columns,
+  ];
+
+  const bulkActions: BulkAction<ProjectWithLimits>[] = useMemo(
+    () => [
+      {
+        render: (_, resetSelection) => {
+          const canDeleteAny = selectedRows.some(
+            (row) => row.id !== currentProject?.id,
+          );
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <ConfirmationDeleteDialog
+                title={t('Delete Projects')}
+                message={t(
+                  'Are you sure you want to delete the selected projects?',
+                )}
+                entityName={t('Projects')}
+                mutationFn={async () => {
+                  const deletableProjects = selectedRows.filter(
+                    (row) => row.id !== currentProject?.id,
+                  );
+                  await bulkDeleteMutation.mutateAsync(
+                    deletableProjects.map((row) => row.id),
+                  );
+                  resetSelection();
+                  setSelectedRows([]);
+                }}
+                onError={(error) => {
+                  toast({
+                    title: t('Error'),
+                    description: errorToastMessage(error),
+                    duration: 3000,
+                  });
+                }}
+              >
+                {selectedRows.length > 0 && (
+                  <Button
+                    className="w-full mr-2"
+                    size="sm"
+                    variant="destructive"
+                    disabled={!canDeleteAny}
+                  >
+                    <Trash className="mr-2 w-4" />
+                    {`${t('Delete')} (${selectedRows.length})`}
+                  </Button>
+                )}
+              </ConfirmationDeleteDialog>
+            </div>
+          );
+        },
+      },
+      {
+        render: () => {
+          return (
+            <NewProjectDialog onCreate={() => refetch()}>
+              <Button
+                size="sm"
+                className="flex items-center justify-center gap-2"
+              >
+                <Plus className="size-4" />
+                {t('New Project')}
+              </Button>
+            </NewProjectDialog>
+          );
+        },
+      },
+    ],
+    [selectedRows, currentProject, bulkDeleteMutation],
+  );
 
   const errorToastMessage = (error: unknown): string | undefined => {
     if (validationUtils.isValidationError(error)) {
@@ -170,24 +343,16 @@ export default function ProjectsPage() {
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
           <TableTitle>{t('Projects')}</TableTitle>
-          <NewProjectDialog onCreate={() => refetch()}>
-            <Button
-              size="sm"
-              className="flex items-center justify-center gap-2"
-            >
-              <Plus className="size-4" />
-              {t('New Project')}
-            </Button>
-          </NewProjectDialog>
         </div>
         <DataTable
           onRowClick={async (project) => {
             await setCurrentProject(queryClient, project);
             navigate('/');
           }}
-          columns={columns}
+          columns={columnsWithCheckbox}
           page={data}
           isLoading={isLoading}
+          bulkActions={bulkActions}
           actions={[
             (row) => {
               return (
@@ -211,54 +376,6 @@ export default function ProjectsPage() {
                       {t('Edit project')}
                     </TooltipContent>
                   </Tooltip>
-                </div>
-              );
-            },
-            (row) => {
-              const isActiveProject = row.id === currentProject?.id;
-              const deleteButton = (
-                <Button
-                  disabled={isActiveProject}
-                  variant="ghost"
-                  className="size-8 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  <Trash className="size-4 text-destructive" />
-                </Button>
-              );
-
-              return (
-                <div className="flex items-end justify-end">
-                  <ConfirmationDeleteDialog
-                    title={t('Delete Project')}
-                    message={t('Are you sure you want to delete this project?')}
-                    entityName={t('Project')}
-                    mutationFn={async () => {
-                      await deleteProjectMutation.mutateAsync(row.id);
-                    }}
-                    onError={(error) => {
-                      toast({
-                        title: t('Error'),
-                        description: errorToastMessage(error),
-                        duration: 3000,
-                      });
-                    }}
-                  >
-                    {isActiveProject ? (
-                      <Tooltip>
-                        <TooltipTrigger>{deleteButton}</TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          {isActiveProject
-                            ? t('Cannot delete active project')
-                            : t('Delete project')}
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      deleteButton
-                    )}
-                  </ConfirmationDeleteDialog>
                 </div>
               );
             },
