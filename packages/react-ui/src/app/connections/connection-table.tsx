@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash } from 'lucide-react';
+import { CheckIcon, Trash, Pencil } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -18,6 +18,12 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
 import { UserFullName } from '@/components/ui/user-fullname';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
@@ -36,6 +42,7 @@ import { TableTitle } from '../../components/ui/table-title';
 import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
 import { NewConnectionDialog } from './new-connection-dialog';
+import { RenameConnectionDialog } from './rename-connection-dialog';
 
 type PieceIconWithPieceNameProps = {
   pieceName: string;
@@ -166,12 +173,25 @@ function AppConnectionsTable() {
       },
     },
     {
-      accessorKey: 'name',
+      accessorKey: 'displayName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Display Name')} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.name}</div>;
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-left">{row.original.displayName}</div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  {t('External ID')}: {row.original.externalId || '-'}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
       },
     },
     {
@@ -195,22 +215,9 @@ function AppConnectionsTable() {
       },
     },
     {
-      accessorKey: 'created',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
-          </div>
-        );
-      },
-    },
-    {
       accessorKey: 'updated',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Updated')} />
+        <DataTableColumnHeader column={column} title={t('Connected At')} />
       ),
       cell: ({ row }) => {
         return (
@@ -236,6 +243,41 @@ function AppConnectionsTable() {
               />
             )}
             {!row.original.owner && <div className="text-left">-</div>}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      cell: ({ row }) => {
+        return (
+          <div className="flex items-center gap-2 justify-end">
+            <PermissionNeededTooltip
+              hasPermission={userHasPermissionToWriteAppConnection}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <RenameConnectionDialog
+                    connectionId={row.original.id}
+                    currentName={row.original.displayName}
+                    onRename={() => {
+                      refetch();
+                    }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={!userHasPermissionToWriteAppConnection}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </RenameConnectionDialog>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('Rename Connection')}</p>
+                </TooltipContent>
+              </Tooltip>
+            </PermissionNeededTooltip>
           </div>
         );
       },
@@ -359,9 +401,11 @@ function AppConnectionsTable() {
   );
   return (
     <div className="flex-col w-full">
-      <div className="mb-4 flex">
-        <TableTitle>{t('Connections')}</TableTitle>
-      </div>
+      <TableTitle
+        description={t('Manage project connections to external systems.')}
+      >
+        {t('Connections')}
+      </TableTitle>
       <DataTable
         columns={columns}
         page={data}

@@ -4,6 +4,7 @@ import {
   AppConnectionWithoutSensitiveData,
   ListAppConnectionsRequestQuery,
   SeekPage,
+  UpdateConnectionValueRequestBody,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 
@@ -17,9 +18,21 @@ export const appConnectionsApi = {
     );
   },
   upsert(request: UpsertAppConnectionRequestBody): Promise<AppConnection> {
-    return api.post<AppConnection>('/v1/app-connections', request);
+    return api.post<AppConnectionWithoutSensitiveData>(
+      '/v1/app-connections',
+      request,
+    );
   },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/app-connections/${id}`);
+  },
+  update(
+    id: string,
+    request: UpdateConnectionValueRequestBody,
+  ): Promise<AppConnection> {
+    return api.post<AppConnectionWithoutSensitiveData>(
+      `/v1/app-connections/${id}`,
+      request,
+    );
   },
 };

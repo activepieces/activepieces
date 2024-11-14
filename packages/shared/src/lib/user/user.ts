@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../common/base-model'
+import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 
 export type UserId = ApId
@@ -37,7 +37,7 @@ export const User = Type.Object({
     platformRole: Type.Enum(PlatformRole),
     status: Type.Enum(UserStatus),
     externalId: Type.Optional(Type.String()),
-    platformId: Type.Union([ApId, Type.Null()]),
+    platformId: Nullable(Type.String()),
     tokenVersion: Type.Optional(Type.String()),
 })
 
@@ -47,7 +47,7 @@ export const UserMeta = Type.Object({
     id: Type.String(),
     email: Type.String(),
     firstName: Type.String(),
-    platformId: Type.Union([ApId, Type.Null()]),
+    platformId: Nullable(Type.String()),
     platformRole: Type.Enum(PlatformRole),
     lastName: Type.String(),
 })

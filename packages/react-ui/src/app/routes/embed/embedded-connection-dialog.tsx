@@ -60,11 +60,18 @@ const EmbeddedConnectionDialogContent = ({
   });
 
   const hideConnectionIframe = (
-    connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'name'>,
+    connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
   ) => {
     postMessageToParent({
       type: ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED,
-      data: { connection },
+      data: {
+        connection: connection
+          ? {
+              id: connection.id,
+              name: connection.externalId,
+            }
+          : undefined,
+      },
     });
   };
 
@@ -82,7 +89,7 @@ const EmbeddedConnectionDialogContent = ({
   ): { isValid: boolean; error?: string } => {
     const regex = new RegExp(`^${connectionNameRegex}$`);
     const isConnectionNameUsed = existingConnections.some(
-      (c) => c.name === connectionName,
+      (c) => c.externalId === connectionName,
     );
 
     if (isConnectionNameUsed) {

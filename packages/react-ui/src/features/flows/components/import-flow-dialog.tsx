@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import JSZip from 'jszip';
 import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useTelemetry } from '@/components/telemetry-provider';
 import { Button } from '@/components/ui/button';
@@ -30,36 +31,34 @@ import { flowsApi } from '../lib/flows-api';
 export type ImportFlowDialogProps =
   | {
       insideBuilder: false;
-      onRefresh?: () => void;
+      onRefresh: () => void;
     }
   | {
       insideBuilder: true;
       flowId: string;
-      onRefresh?: () => void;
     };
 
-const readTemplateJson = (
+const readTemplateJson = async (
   templateFile: File,
-  addTemplate: (template: FlowTemplate) => void,
-  onFailed: (failedFiles: string) => void,
-) => {
-  const reader = new FileReader();
-  reader.onload = () => {
-    const fileName = templateFile.name || 'unknown';
+): Promise<FlowTemplate | null> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
 
-    try {
-      const template = JSON.parse(reader.result as string) as FlowTemplate;
-      const { template: tmpl, name } = template;
-      if (!tmpl || !name || !tmpl.trigger) {
-        onFailed(fileName);
-      } else {
-        addTemplate(template);
+    reader.onload = () => {
+      try {
+        const template = JSON.parse(reader.result as string) as FlowTemplate;
+        const { template: tmpl, name } = template;
+        if (!tmpl || !name || !tmpl.trigger) {
+          resolve(null);
+        } else {
+          resolve(template);
+        }
+      } catch {
+        resolve(null);
       }
-    } catch {
-      onFailed(fileName);
-    }
-  };
-  reader.readAsText(templateFile);
+    };
+    reader.readAsText(templateFile);
+  });
 };
 
 const ImportFlowDialog = (
@@ -67,62 +66,69 @@ const ImportFlowDialog = (
 ) => {
   const { capture } = useTelemetry();
   const [templates, setTemplates] = useState<FlowTemplate[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [failedFiles, setFailedFiles] = useState<string[]>([]);
+  const navigate = useNavigate();
 
-  const { mutate: importFlow, isPending } = useMutation<
-    PopulatedFlow,
+  const { mutate: importFlows, isPending } = useMutation<
+    PopulatedFlow[],
     Error,
-    FlowTemplate
+    FlowTemplate[]
   >({
-    mutationFn: async (template: FlowTemplate) => {
-      const flow = props.insideBuilder
-        ? await flowsApi.get(props.flowId)
-        : await flowsApi.create({
-            displayName: template.name,
-            projectId: authenticationSession.getProjectId()!,
-          });
+    mutationFn: async (templates: FlowTemplate[]) => {
+      const importPromises = templates.map(async (template) => {
+        const flow = props.insideBuilder
+          ? await flowsApi.get(props.flowId)
+          : await flowsApi.create({
+              displayName: template.name,
+              projectId: authenticationSession.getProjectId()!,
+            });
 
-      return await flowsApi.update(flow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: template.name,
-          trigger: template.template.trigger,
-          schemaVersion: template.template.schemaVersion,
-        },
+        return await flowsApi.update(flow.id, {
+          type: FlowOperationType.IMPORT_FLOW,
+          request: {
+            displayName: template.name,
+            trigger: template.template.trigger,
+            schemaVersion: template.template.schemaVersion,
+          },
+        });
       });
+
+      return Promise.all(importPromises);
     },
-    onSuccess: (flow) => {
+
+    onSuccess: (flows: PopulatedFlow[]) => {
       capture({
         name: TelemetryEventName.FLOW_IMPORTED_USING_FILE,
         payload: {
           location: props.insideBuilder
             ? 'inside the builder'
             : 'inside dashboard',
+          multiple: flows.length > 1,
         },
       });
 
-      if (failedFiles.length) {
-        toast({
-          title: t('Import Warning'),
-          description:
-            t('The following files failed to import: ') +
-            failedFiles.join(', '),
-        });
-      } else {
-        toast({
-          title: t('Import Success'),
-          description: t(
-            `Flow${templates.length === 1 ? '' : 's'} imported successfully.`,
-          ),
-          variant: 'default',
-        });
-      }
+      toast({
+        title: t(`flowsImported`, {
+          flowsCount: flows.length,
+        }),
+        variant: 'default',
+      });
 
+      if (flows.length === 1) {
+        navigate(`/flows/${flows[0].id}`, { replace: true });
+        return;
+      }
       setIsDialogOpen(false);
-      props.onRefresh?.();
+      if (flows.length === 1 || props.insideBuilder) {
+        navigate(`/flow-import-redirect/${flows[0].id}`);
+      }
+      if (!props.insideBuilder) {
+        props.onRefresh();
+      }
     },
     onError: (err) => {
       if (
@@ -139,19 +145,16 @@ const ImportFlowDialog = (
 
   const handleSubmit = async () => {
     if (templates.length === 0) {
-      if (failedFiles.length) {
-        toast({
-          title: t('Import Warning'),
-          description:
-            t('The following files failed to import: ') +
-            failedFiles.join(', '),
-        });
-      } else {
-        setErrorMessage(t('Please select a file first'));
-      }
+      setErrorMessage(
+        failedFiles.length
+          ? t(
+              'No valid templates found. The following files failed to import: ',
+            ) + failedFiles.join(', ')
+          : t('Please select a file first'),
+      );
     } else {
       setErrorMessage('');
-      templates.forEach((template) => importFlow(template));
+      importFlows(templates);
     }
   };
 
@@ -167,7 +170,7 @@ const ImportFlowDialog = (
     const file = files[0];
     const newTemplates: FlowTemplate[] = [];
 
-    if (file.type === 'application/zip') {
+    if (file.type === 'application/zip' && !props.insideBuilder) {
       const zip = new JSZip();
       const zipContent = await zip.loadAsync(file);
       const jsonFiles = Object.keys(zipContent.files).filter((fileName) =>
@@ -176,29 +179,20 @@ const ImportFlowDialog = (
 
       for (const fileName of jsonFiles) {
         const fileData = await zipContent.files[fileName].async('string');
-        readTemplateJson(
-          new File([fileData], fileName),
-          (template) => {
-            if (template) newTemplates.push(template);
-          },
-          (failedFile) => {
-            setFailedFiles((prevFailedFiles) => [
-              ...prevFailedFiles,
-              failedFile,
-            ]);
-          },
-        );
+        const template = await readTemplateJson(new File([fileData], fileName));
+        if (template) {
+          newTemplates.push(template);
+        } else {
+          setFailedFiles((prevFailedFiles) => [...prevFailedFiles, fileName]);
+        }
       }
     } else if (file.type === 'application/json') {
-      readTemplateJson(
-        file,
-        (template) => {
-          if (template) newTemplates.push(template);
-        },
-        (failedFile) => {
-          setFailedFiles((prevFailedFiles) => [...prevFailedFiles, failedFile]);
-        },
-      );
+      const template = await readTemplateJson(file);
+      if (template) {
+        newTemplates.push(template);
+      } else {
+        setFailedFiles((prevFailedFiles) => [...prevFailedFiles, file.name]);
+      }
     } else {
       setErrorMessage(t('Unsupported file type'));
       return;
@@ -238,7 +232,7 @@ const ImportFlowDialog = (
         <div className="flex gap-2 items-center">
           <Input
             type="file"
-            accept=".json,.zip"
+            accept={props.insideBuilder ? '.json' : '.json,.zip'}
             ref={fileInputRef}
             onChange={handleFileChange}
           />

@@ -2,28 +2,28 @@ import {
     ActivepiecesError,
     AppConnection,
     ErrorCode,
+    GetAppConnectionForWorkerRequestQuery,
     isNil,
     PrincipalType,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
-    Type,
 } from '@fastify/type-provider-typebox'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.get('/:connectionName', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
+    app.get('/:externalId', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
         const appConnection = await appConnectionService.getOne({
             projectId: request.principal.projectId,
-            name: request.params.connectionName,
+            externalId: request.params.externalId,
         })
 
         if (isNil(appConnection)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    entityId: `connectionName=${request.params.connectionName}`,
+                    entityId: `externalId=${request.params.externalId}`,
                     entityType: 'AppConnection',
                 },
             })
@@ -40,8 +40,6 @@ const GetAppConnectionRequest = {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
     schema: {
-        params: Type.Object({
-            connectionName: Type.String(),
-        }),
+        params: GetAppConnectionForWorkerRequestQuery,
     },
 }
