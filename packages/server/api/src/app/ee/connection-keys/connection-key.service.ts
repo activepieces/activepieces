@@ -10,7 +10,7 @@ import {
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
 import {
-    ActivepiecesError, apId, AppConnection,
+    ActivepiecesError, apId,
     AppConnectionScope,
     AppConnectionType,
     AppConnectionWithoutSensitiveData,

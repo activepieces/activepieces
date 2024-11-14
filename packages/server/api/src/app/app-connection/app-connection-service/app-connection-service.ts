@@ -34,13 +34,13 @@ import {
     getPiecePackage,
     pieceMetadataService,
 } from '../../pieces/piece-metadata-service'
+import { projectRepo } from '../../project/project-service'
 import {
     AppConnectionEntity,
     AppConnectionSchema,
 } from '../app-connection.entity'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
-import { projectRepo } from '../../project/project-service'
 
 const repo = repoFactory(AppConnectionEntity)
 
@@ -134,7 +134,7 @@ export const appConnectionService = {
             return encryptedAppConnection
         }
 
-        return await this.decryptAndRefreshConnection(encryptedAppConnection, projectId)
+        return this.decryptAndRefreshConnection(encryptedAppConnection, projectId)
     },
 
     async getOneOrThrowWithoutValue(params: GetOneParams): Promise<AppConnectionWithoutSensitiveData> {
@@ -238,7 +238,7 @@ export const appConnectionService = {
 
     async decryptAndRefreshConnection(
         encryptedAppConnection: AppConnectionSchema,
-        projectId: ProjectId
+        projectId: ProjectId,
     ): Promise<AppConnection | null> {
         const appConnection = decryptConnection(encryptedAppConnection)
         if (!needRefresh(appConnection)) {
@@ -250,7 +250,13 @@ export const appConnectionService = {
             return null
         }
         return oauth2Util.removeRefreshTokenAndClientSecret(refreshedConnection)
-    }
+    },
+    async deleteAllProjectConnections(projectId: string) {
+        await repo().delete({
+            scope: AppConnectionScope.PROJECT,
+            projectIds: APArrayContains('projectIds', [projectId]),
+        })
+    },
 }
 
 async function assertProjectIds(projectIds: ProjectId[], platformId: string): Promise<void> {

@@ -10,8 +10,8 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { connectionKeyService } from './connection-key.service'
 import { projectService } from '../../project/project-service'
+import { connectionKeyService } from './connection-key.service'
 
 export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(connectionKeyController, {

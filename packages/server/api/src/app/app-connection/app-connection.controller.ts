@@ -1,7 +1,6 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ApId,
-    AppConnection,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
     ListAppConnectionsRequestQuery,
