@@ -12,7 +12,7 @@ export class MigrateConnectionNames1731428722977 implements MigrationInterface {
             ALTER TABLE "app_connection" DROP CONSTRAINT "fk_app_connection_app_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_app_connection_project_id_and_name"
+            DROP INDEX "idx_app_connection_project_id_and_name"
         `)
 
         await queryRunner.query(`
@@ -95,10 +95,10 @@ export class MigrateConnectionNames1731428722977 implements MigrationInterface {
             name: this.name,
         }, 'down')
         await queryRunner.query(`
-            DROP INDEX "public"."idx_app_connection_platform_id"
+            DROP INDEX "idx_app_connection_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_app_connection_project_ids_and_external_id"
+            DROP INDEX "idx_app_connection_project_ids_and_external_id"
         `)
         await queryRunner.query(`
             ALTER TABLE "app_connection" DROP COLUMN "scope"
