@@ -447,7 +447,7 @@ export const flowService = {
         return {
             name: flow.version.displayName,
             description: '',
-            pieces: flowPieceUtil.getUsedPieces(flow.version.trigger),
+            pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
             template: flow.version,
             tags: [],
             created: Date.now().toString(),
