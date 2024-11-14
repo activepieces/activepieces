@@ -89,7 +89,7 @@ export type StepOutput =
 
 
 type RouterStepResult = {
-    conditions: boolean[]
+    branches: boolean[]
 }
 
 export class RouterStepOutput extends GenericStepOutput<
