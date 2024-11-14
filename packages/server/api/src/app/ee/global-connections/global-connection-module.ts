@@ -2,14 +2,13 @@ import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     apId,
     ApId,
-    AppConnection,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
     EndpointScope,
     ListGlobalConnectionsRequestQuery,
     PrincipalType,
     SeekPage,
-    UpdateConnectionValueRequestBody,
+    UpdateGlobalConnectionValueRequestBody,
     UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
@@ -29,8 +28,8 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', UpsertGlobalConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService.upsert({
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
             type: request.body.type,
+            projectIds: request.body.projectIds,
             externalId: apId(),
             value: request.body.value,
             displayName: request.body.displayName,
@@ -46,17 +45,20 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
         })
         await reply
             .status(StatusCodes.CREATED)
-            .send(removeSensitiveData(appConnection))
+            .send(appConnection)
     })
 
     app.post('/:id', UpdateGlobalConnectionRequest, async (request) => {
-        const appConnection = await appConnectionService.update({
+        return appConnectionService.update({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
             scope: AppConnectionScope.PLATFORM,
-            request: request.body,
+            projectIds: null,
+            request: {
+                displayName: request.body.displayName,
+                projectIds: request.body.projectIds ?? null,
+            },
         })
-        return removeSensitiveData(appConnection)
     })
 
     app.get('/', ListGlobalConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
@@ -66,7 +68,8 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             pieceName,
             displayName,
             status,
-            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
+            projectId: null,
             scope: AppConnectionScope.PLATFORM,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
@@ -74,21 +77,16 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
 
         return {
             ...appConnections,
-            data: appConnections.data.map(removeSensitiveData),
+            data: appConnections.data.map(appConnectionService.removeSensitiveData),
         }
     },
     )
 
     app.delete('/:id', DeleteGlobalConnectionRequest, async (request, reply): Promise<void> => {
-        const connection = await appConnectionService.getOneOrThrow({
+        const connection = await appConnectionService.getOneOrThrowWithoutValue({
             id: request.params.id,
-            projectId: request.principal.projectId,
-        })
-        eventsHooks.get().sendUserEventFromRequest(request, {
-            action: ApplicationEventName.CONNECTION_DELETED,
-            data: {
-                connection,
-            },
+            platformId: request.principal.platform.id,
+            projectId: null,
         })
         await appConnectionService.delete({
             id: request.params.id,
@@ -96,18 +94,17 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             projectId: null,
         })
+        eventsHooks.get().sendUserEventFromRequest(request, {
+            action: ApplicationEventName.CONNECTION_DELETED,
+            data: {
+                connection,
+            },
+        })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
 const DEFAULT_PAGE_SIZE = 10
-
-const removeSensitiveData = (
-    appConnection: AppConnection,
-): AppConnectionWithoutSensitiveData => {
-    const { value: _, ...appConnectionWithoutSensitiveData } = appConnection
-    return appConnectionWithoutSensitiveData as AppConnectionWithoutSensitiveData
-}
 
 const UpsertGlobalConnectionRequest = {
     config: {
@@ -128,7 +125,7 @@ const UpdateGlobalConnectionRequest = {
         scope: EndpointScope.PLATFORM,
     },
     schema: {
-        body: UpdateConnectionValueRequestBody,
+        body: UpdateGlobalConnectionValueRequestBody,
         params: Type.Object({
             id: ApId,
         }),

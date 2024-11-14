@@ -13,8 +13,10 @@ import {
     ActivepiecesError, apId, AppConnection,
     AppConnectionScope,
     AppConnectionType,
+    AppConnectionWithoutSensitiveData,
     Cursor,
     ErrorCode,
+    isNil,
     ProjectId,
     SeekPage,
 } from '@activepieces/shared'
@@ -34,8 +36,10 @@ export const connectionKeyService = {
         projectId,
         token,
         appName,
-    }: GetOrDeleteConnectionFromTokenRequest): Promise<AppConnection | null> {
+    }: GetOrDeleteConnectionFromTokenRequest): Promise<AppConnectionWithoutSensitiveData | null> {
         const connectionName = await getConnectioName({ projectId, token })
+        const project = await projectService.getOneOrThrow(projectId)
+
         // TODO this is hardcoded for now, just to make sure it's not changed on client side
         const finalAppName = appName.replace('@activepieces/piece-', '')
         if (connectionName == null) {
@@ -46,18 +50,22 @@ export const connectionKeyService = {
                 },
             })
         }
-        return appConnectionService.getOne({
+        const connection = await appConnectionService.getOne({
             projectId,
+            platformId: project.platformId,
             externalId: `${finalAppName}_${connectionName}`,
         })
+        return isNil(connection) ? null : appConnectionService.removeSensitiveData(connection)
     },
     async createConnection(
         request: UpsertConnectionFromToken,
-    ): Promise<AppConnection> {
+    ): Promise<AppConnectionWithoutSensitiveData> {
         const appCredential = await appCredentialService.getOneOrThrow(
             request.appCredentialId,
         )
         const projectId = appCredential.projectId
+        const project = await projectService.getOneOrThrow(projectId)
+        
         const connectionName = await getConnectioName({
             projectId,
             token: request.token,
@@ -70,7 +78,7 @@ export const connectionKeyService = {
                 },
             })
         }
-        const project = await projectService.getOneOrThrow(projectId)
+
         // TODO this is hardcoded for now, just to make sure it's not changed on client side
         const finalAppName = `@activepieces/piece-${appCredential.appName}`
         switch (appCredential.settings.type) {
@@ -79,7 +87,7 @@ export const connectionKeyService = {
                 return appConnectionService.upsert({
                     scope: AppConnectionScope.PROJECT,
                     platformId: project.platformId,
-                    projectId,
+                    projectIds: [projectId],
                     externalId: `${appCredential.appName}_${connectionName}`,
                     displayName: `${appCredential.appName}_${connectionName}`,
                     pieceName: finalAppName,
@@ -96,7 +104,7 @@ export const connectionKeyService = {
                 return appConnectionService.upsert({
                     scope: AppConnectionScope.PROJECT,
                     platformId: project.platformId,
-                    projectId,
+                    projectIds: [projectId],
                     externalId: `${appCredential.appName}_${connectionName}`,
                     displayName: `${appCredential.appName}_${connectionName}`,
                     pieceName: finalAppName,

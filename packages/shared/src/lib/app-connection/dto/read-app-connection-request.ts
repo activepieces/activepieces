@@ -1,9 +1,10 @@
 import { Static, Type } from '@sinclair/typebox'
-import { AppConnectionStatus } from '../app-connection'
+import { AppConnectionScope, AppConnectionStatus } from '../app-connection'
 
 export const ListAppConnectionsRequestQuery = Type.Object({
     cursor: Type.Optional(Type.String({})),
     projectId: Type.String(),
+    scope: Type.Optional(Type.Enum(AppConnectionScope)),
     pieceName: Type.Optional(Type.String({})),
     displayName: Type.Optional(Type.String({})),
     status: Type.Optional(Type.Array(Type.Enum(AppConnectionStatus))),

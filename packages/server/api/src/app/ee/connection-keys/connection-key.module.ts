@@ -11,6 +11,7 @@ import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { connectionKeyService } from './connection-key.service'
+import { projectService } from '../../project/project-service'
 
 export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(connectionKeyController, {
@@ -39,10 +40,11 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
             const appConnection = await connectionKeyService.getConnection(
                 request.query,
             )
+            const platformId = await projectService.getPlatformId(request.query.projectId)
             if (appConnection !== null) {
                 await appConnectionService.delete({
                     scope: AppConnectionScope.PROJECT,
-                    platformId: appConnection.platformId,
+                    platformId,
                     projectId: request.query.projectId,
                     id: appConnection.id,
                 })

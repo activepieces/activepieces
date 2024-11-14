@@ -38,7 +38,7 @@ import { PlatformAdminContainer } from '../components/platform-admin-container';
 import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
-import AppConnectionsPage from '../routes/connections';
+import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
@@ -47,6 +47,7 @@ import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import AuditLogsPage from '../routes/platform/audit-logs';
+import { GlobalConnectionsTable } from '../routes/platform/connections';
 import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
 import { LicenseKeyPage } from '../routes/platform/settings/license-key';
@@ -354,6 +355,16 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="Projects">
           <ProjectsPage />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/connections',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Connections">
+          <GlobalConnectionsTable />
         </PageTitle>
       </PlatformAdminContainer>
     ),
