@@ -137,8 +137,8 @@ describe('router with branching different conditions', () => {
         ], RouterExecutionType.EXECUTE_ALL_MATCH)
 
         expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
-        const routerOutput = result.steps.router.output as { conditions: boolean[] }
-        expect(routerOutput.conditions).toEqual([false, false])
+        const routerOutput = result.steps.router.output as { branches: boolean[] }
+        expect(routerOutput.branches).toEqual([false, false])
         expect(result.steps.data_mapper).toBeUndefined()
         expect(result.steps.data_mapper_1).toBeUndefined()
     })
