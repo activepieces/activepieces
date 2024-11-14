@@ -20,6 +20,7 @@ RUN npm i -g npm@9.9.3 pnpm@9.12.1 cross-env@7.0.3
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
+ENV NX_DAEMON=false
 
 
 RUN apt-get update \
