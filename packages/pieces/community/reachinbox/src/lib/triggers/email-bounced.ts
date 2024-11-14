@@ -11,15 +11,7 @@ const emailBouncedMessage = `
   1. Login to the ReachInbox dashboard.
   2. Go to the "Profile" section and navigate to the "Settings" tab.
   3. Click on the "Integrations" and go to the "Webhooks". Click on the "Add Webhook" button.
-  4. Copy the above webhook URL and paste it into the "Webhook URL" field.
-
-
-  **Test URL (only generate sample data)**:
-      \`\`\`text
-      {{webhookUrl}}/test
-      \`\`\`
-
-    **Trigger Flow URL**:
+  4. Copy the following webhook URL and paste it into the "Webhook URL" field.
       \`\`\`text
       {{webhookUrl}}
       \`\`\`
