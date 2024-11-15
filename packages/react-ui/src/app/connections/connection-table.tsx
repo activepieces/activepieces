@@ -63,12 +63,12 @@ const PieceIconWithPieceName = ({ pieceName }: PieceIconWithPieceNameProps) => {
     />
   );
 };
-
+const STATUS_QUERY_PARAM = 'status';
 const filters = [
   {
     type: 'select',
     title: t('Status'),
-    accessorKey: 'status',
+    accessorKey: STATUS_QUERY_PARAM,
     options: Object.values(AppConnectionStatus).map((status) => {
       return {
         label: formatUtils.convertEnumToHumanReadable(status),
@@ -291,15 +291,16 @@ function AppConnectionsTable() {
     gcTime: 0,
     queryFn: () => {
       const searchParams = new URLSearchParams(location.search);
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM)
-        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-        : 10;
       return appConnectionsApi.list({
         projectId: authenticationSession.getProjectId()!,
-        cursor: cursor ?? undefined,
-        limit,
-        status: [],
+        cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
+        limit: searchParams.get(LIMIT_QUERY_PARAM)
+          ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
+          : 10,
+        status:
+          (searchParams.getAll(STATUS_QUERY_PARAM) as
+            | AppConnectionStatus[]
+            | undefined) ?? [],
       });
     },
   });
