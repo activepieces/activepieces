@@ -90,17 +90,27 @@ async function convertAttachment(
   files: FilesService
 ) {
   const promises = attachments.map(async (attachment) => {
-    return {
-      fileName: attachment.filename ?? `attachment-${Date.now()}`,
-      mimeType: attachment.contentType,
-      size: attachment.size,
-      data: await files.write({
-        fileName: attachment.filename ?? `attachment-${Date.now()}`,
-        data: attachment.content,
-      }),
-    };
+    try {
+      const fileName = attachment.filename ?? `attachment-${Date.now()}`;
+      return {
+        fileName,
+        mimeType: attachment.contentType,
+        size: attachment.size,
+        data: await files.write({
+          fileName: fileName,
+          data: attachment.content,
+        }),
+      };
+    } catch (error) {
+      console.error(
+        `Failed to process attachment: ${attachment.filename}`,
+        error
+      );
+      return null;
+    }
   });
-  return Promise.all(promises);
+  const results = await Promise.all(promises);
+  return results.filter((result) => result !== null);
 }
 
 async function pollRecentMessages({
