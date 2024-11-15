@@ -6,6 +6,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
+  AddActionRequest,
   FlowOperationRequest,
   FlowRun,
   FlowVersion,
@@ -104,6 +105,8 @@ export type BuilderState = {
       operation: FlowOperationRequest,
     ) => void,
   ) => void;
+  askAiButtonProps : Omit<AddActionRequest,'action'> | null;
+  setAskAiButtonProps:( props:Omit<AddActionRequest,'action'> | null) => void
 };
 
 export type BuilderInitialState = Pick<
@@ -146,7 +149,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshPieceFormSettings: false,
-
       removeStepSelection: () =>
         set({
           selectedStep: null,
@@ -187,8 +189,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                 : RightSideBarType.PIECE_SETTINGS,
             leftSidebar: !isNil(state.run)
               ? LeftSideBarType.RUN_DETAILS
-              : LeftSideBarType.NONE,
+              : state.askAiButtonProps? state.leftSidebar: LeftSideBarType.NONE,
             selectedBranchIndex: null,
+            askAiButtonProps:null
           };
         });
       },
@@ -234,7 +237,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         }),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
-      setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
+      setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar, askAiButtonProps: null }),
       setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
         set((state) => {
           return {
@@ -350,6 +353,15 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             (l) => l !== listener,
           ),
         })),
+        askAiButtonProps:null,
+        setAskAiButtonProps:(props)=>{
+        return  set(()=> ({
+            askAiButtonProps: props,
+            leftSidebar: LeftSideBarType.AI_COPILOT,
+            rightSidebar: RightSideBarType.NONE,
+            selectedStep: null
+          }))
+        }
     };
   });
 
