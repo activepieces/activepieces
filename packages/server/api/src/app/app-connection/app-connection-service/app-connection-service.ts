@@ -145,9 +145,11 @@ export const appConnectionService = {
         return connection!
     },
 
-    async delete({ id }: DeleteParams): Promise<void> {
+    async delete({ id, scope, projectId }: DeleteParams): Promise<void> {
         await repo().delete({
             id,
+            ...(projectId ? { projectIds: APArrayContains('projectIds', [projectId]) } : {}),
+            scope,
         })
     },
 
@@ -483,7 +485,8 @@ type GetOneParams = {
 }
 
 type DeleteParams = {
-    projectId: ProjectId
+    scope: AppConnectionScope
+    projectId: ProjectId | undefined
     id: AppConnectionId
 }
 

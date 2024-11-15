@@ -2,6 +2,7 @@ import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ApId,
     AppConnection,
+    AppConnectionScope,
     AppConnectionWithoutSensitiveData,
     ListAppConnectionsRequestQuery,
     Permission,
@@ -86,6 +87,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             })
             await appConnectionService.delete({
                 id: request.params.id,
+                scope: AppConnectionScope.PROJECT,
                 projectId: request.principal.projectId,
             })
             await reply.status(StatusCodes.NO_CONTENT).send()
