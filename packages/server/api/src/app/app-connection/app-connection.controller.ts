@@ -89,6 +89,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
                 id: request.params.id,
                 scope: AppConnectionScope.PROJECT,
                 projectId: request.principal.projectId,
+                platformId: request.principal.platform.id,
             })
             await reply.status(StatusCodes.NO_CONTENT).send()
         },
