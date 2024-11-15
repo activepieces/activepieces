@@ -18,10 +18,10 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { projectApi } from '@/lib/project-api';
 import { AppConnectionWithoutSensitiveData, isNil } from '@activepieces/shared';
 
 import { globalConnectionsApi } from '../lib/global-connections-api';
+import { projectHooks } from '@/hooks/project-hooks';
 
 const EditGlobalConnectionSchema = Type.Object({
   displayName: Type.String(),
@@ -47,10 +47,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: projects } = useQuery({
-    queryKey: ['projects'],
-    queryFn: () => projectApi.list({ limit: 10000 }),
-  });
+  const { data: projects } = projectHooks.useProjects();
 
   const editConnectionForm = useForm<EditGlobalConnectionSchema>({
     resolver: typeboxResolver(EditGlobalConnectionSchema),
@@ -130,7 +127,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                     <MultiSelectPieceProperty
                       placeholder={t('Select projects')}
                       options={
-                        projects?.data.map((project) => ({
+                        projects?.map((project) => ({
                           value: project.id,
                           label: project.displayName,
                         })) ?? []
