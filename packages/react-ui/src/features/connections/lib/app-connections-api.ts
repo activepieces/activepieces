@@ -17,7 +17,9 @@ export const appConnectionsApi = {
       request,
     );
   },
-  upsert(request: UpsertAppConnectionRequestBody): Promise<AppConnectionWithoutSensitiveData> {
+  upsert(
+    request: UpsertAppConnectionRequestBody,
+  ): Promise<AppConnectionWithoutSensitiveData> {
     return api.post<AppConnectionWithoutSensitiveData>(
       '/v1/app-connections',
       request,
