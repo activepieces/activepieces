@@ -13,6 +13,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             logger.debug({ data }, '[Socket#testStepRun]')
             const stepRun = await sampleDataService.runAction({
                 projectId: principal.projectId,
+                platformId: principal.platform.id,
                 flowVersionId: data.flowVersionId,
                 stepName: data.stepName,
             })

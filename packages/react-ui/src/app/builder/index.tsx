@@ -19,15 +19,16 @@ import {
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ActionType,
-  FlowRunStatus,
   PieceTrigger,
   TriggerType,
   WebsocketClientEvent,
   flowStructureUtil,
+  isFlowStateTerminal,
   isNil,
 } from '@activepieces/shared';
 
@@ -134,13 +135,10 @@ const BuilderPage = () => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
-
-    if (run && run.status === FlowRunStatus.RUNNING) {
+    if (run && !isFlowStateTerminal(run.status)) {
       const currentRunId = run.id;
-      socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (run) => {
-        if (run.id === currentRunId) {
-          setRun(run, flowVersion);
-        }
+      flowRunsApi.addRunListener(socket, currentRunId, (run) => {
+        setRun(run, flowVersion);
       });
     }
     return () => {

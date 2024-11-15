@@ -15,7 +15,6 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { telemetry } from '../helper/telemetry.utils'
-import { projectService } from '../project/project-service'
 import { proxyController } from './ai-provider-proxy'
 import { aiProviderService } from './ai-provider.service'
 
@@ -33,9 +32,7 @@ const engineAiProviderController: FastifyPluginCallbackTypebox = (
     done,
 ) => {
     fastify.get('/', ListProxyConfigRequest, async (request) => {
-        const projectId = (request.principal as unknown as EnginePrincipal)
-            .projectId
-        const platformId = await projectService.getPlatformId(projectId)
+        const platformId = (request.principal as unknown as EnginePrincipal).platform.id
         return aiProviderService.list(platformId)
     })
 

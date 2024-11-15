@@ -1,6 +1,8 @@
 import {
     ActivepiecesError,
     AppConnection,
+    assertNotNullOrUndefined,
+    EnginePrincipal,
     ErrorCode,
     GetAppConnectionForWorkerRequestQuery,
     isNil,
@@ -14,8 +16,11 @@ import { appConnectionService } from './app-connection-service/app-connection-se
 export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/:externalId', GetAppConnectionRequest, async (request): Promise<AppConnection> => {
+        const enginePrincipal = (request.principal as EnginePrincipal)
+        assertNotNullOrUndefined(enginePrincipal.projectId, 'projectId')
         const appConnection = await appConnectionService.getOne({
-            projectId: request.principal.projectId,
+            projectId: enginePrincipal.projectId,
+            platformId: enginePrincipal.platform.id,
             externalId: request.params.externalId,
         })
 

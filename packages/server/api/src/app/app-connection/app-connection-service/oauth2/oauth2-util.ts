@@ -8,6 +8,7 @@ import {
     deleteProps,
     ErrorCode,
     OAuth2GrantType,
+    PlatformId,
 } from '@activepieces/shared'
 import { isAxiosError } from 'axios'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
@@ -54,16 +55,14 @@ function isExpired(connection: BaseOAuth2ConnectionValue): boolean {
 
 async function getOAuth2TokenUrl({
     projectId,
+    platformId,
     pieceName,
     props,
-}: {
-    projectId: string
-    pieceName: string
-    props?: Record<string, string>
-}): Promise<string> {
+}: OAuth2TokenUrlParams): Promise<string> {
     const pieceMetadata = await pieceMetadataService.getOrThrow({
         name: pieceName,
         projectId,
+        platformId,
         version: undefined,
     })
     const auth = pieceMetadata.auth
@@ -80,6 +79,14 @@ async function getOAuth2TokenUrl({
             })
     }
 }
+
+type OAuth2TokenUrlParams = {
+    projectId: string | undefined
+    platformId: PlatformId
+    pieceName: string
+    props?: Record<string, string>
+}
+
 
 function resolveUrl(
     url: string,

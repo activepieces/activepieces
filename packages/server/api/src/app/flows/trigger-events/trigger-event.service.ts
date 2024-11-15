@@ -8,6 +8,7 @@ import {
     FlowId,
     getPieceMajorAndMinorVersion,
     PieceTrigger,
+    PlatformId,
     PopulatedFlow,
     ProjectId,
     SeekPage,
@@ -63,6 +64,7 @@ export const triggerEventService = {
 
     async test({
         projectId,
+        platformId,
         flow,
     }: TestParams): Promise<SeekPage<TriggerEventWithPayload>> {
         const trigger = flow.version.trigger
@@ -71,6 +73,7 @@ export const triggerEventService = {
             case TriggerType.PIECE: {
                 const engineToken = await accessTokenManager.generateEngineToken({
                     projectId,
+                    platformId,
                 })
                 const { result: testResult } = await engineRunner.executeTrigger(engineToken, {
                     hookType: TriggerHookType.TEST,
@@ -172,6 +175,7 @@ function getSourceName(trigger: Trigger): string {
 
 type TestParams = {
     projectId: ProjectId
+    platformId: PlatformId
     flow: PopulatedFlow
 }
 
