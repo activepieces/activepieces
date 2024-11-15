@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
+import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -284,6 +285,15 @@ function AppConnectionsPage() {
                 </TooltipContent>
               </Tooltip>
             </PermissionNeededTooltip>
+            <ReconnectButtonDialog
+              hasPermission={
+                userHasPermissionToWriteAppConnection && !isPlatformConnection
+              }
+              connection={row.original}
+              onConnectionCreated={() => {
+                refetch();
+              }}
+            />
           </div>
         );
       },

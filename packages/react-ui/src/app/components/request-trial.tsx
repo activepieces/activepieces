@@ -55,6 +55,7 @@ export type FeatureKey =
   | 'PIECES'
   | 'TEMPLATES'
   | 'TEAM'
+  | 'GLOBAL_CONNECTIONS'
   | 'USERS'
   | 'API'
   | 'SSO'

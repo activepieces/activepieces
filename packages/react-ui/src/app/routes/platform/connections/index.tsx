@@ -5,7 +5,9 @@ import { CheckIcon, Trash, Pencil } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
+import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,20 +29,24 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
+import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
 import { globalConnectionsApi } from '@/features/connections/lib/global-connections-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
 
+const STATUS_QUERY_PARAM = 'status';
 const filters = [
   {
     type: 'select',
     title: t('Status'),
-    accessorKey: 'status',
+    accessorKey: STATUS_QUERY_PARAM,
     options: Object.values(AppConnectionStatus).map((status) => {
       return {
         label: formatUtils.convertEnumToHumanReadable(status),
@@ -58,6 +64,7 @@ const GlobalConnectionsTable = () => {
   >([]);
   const { toast } = useToast();
   const location = useLocation();
+  const { platform } = platformHooks.useCurrentPlatform();
 
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
@@ -231,6 +238,13 @@ const GlobalConnectionsTable = () => {
                 <p>{t('Rename Connection')}</p>
               </TooltipContent>
             </Tooltip>
+            <ReconnectButtonDialog
+              connection={row.original}
+              onConnectionCreated={() => {
+                refetch();
+              }}
+              hasPermission={true}
+            />
           </div>
         );
       },
@@ -243,14 +257,16 @@ const GlobalConnectionsTable = () => {
     gcTime: 0,
     queryFn: () => {
       const searchParams = new URLSearchParams(location.search);
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM)
-        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-        : 10;
-      return globalConnectionsApi.list({
-        cursor: cursor ?? undefined,
-        limit,
-        status: [],
+      return appConnectionsApi.list({
+        projectId: authenticationSession.getProjectId()!,
+        cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
+        limit: searchParams.get(LIMIT_QUERY_PARAM)
+          ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
+          : 10,
+        status:
+          (searchParams.getAll(STATUS_QUERY_PARAM) as
+            | AppConnectionStatus[]
+            | undefined) ?? [],
       });
     },
   });
@@ -332,18 +348,30 @@ const GlobalConnectionsTable = () => {
 
   return (
     <div className="flex-col w-full">
-      <TableTitle
-        description={t('Manage platform-wide connections to external systems.')}
+      <LockedFeatureGuard
+        featureKey="GLOBAL_CONNECTIONS"
+        locked={!platform.globalConnectionsEnabled}
+        lockTitle={t('Enable Global Connections')}
+        lockDescription={t(
+          'Manage platform-wide connections to external systems.',
+        )}
+        lockVideoUrl="https://cdn.activepieces.com/videos/showcase/global-connections.mp4"
       >
-        {t('Global Connections')}
-      </TableTitle>
-      <DataTable
-        columns={columns}
-        page={data}
-        isLoading={isLoading}
-        filters={filters}
-        bulkActions={bulkActions}
-      />
+        <TableTitle
+          description={t(
+            'Manage platform-wide connections to external systems.',
+          )}
+        >
+          {t('Global Connections')}
+        </TableTitle>
+        <DataTable
+          columns={columns}
+          page={data}
+          isLoading={isLoading}
+          filters={filters}
+          bulkActions={bulkActions}
+        />
+      </LockedFeatureGuard>
     </div>
   );
 };

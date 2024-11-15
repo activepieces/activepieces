@@ -564,9 +564,9 @@ type GetOneParams = {
 
 type DeleteParams = {
     projectId: ProjectId | null
-    platformId: string
     scope: AppConnectionScope
     id: AppConnectionId
+    platformId: string
 }
 
 type ValidateConnectionValueParams = {

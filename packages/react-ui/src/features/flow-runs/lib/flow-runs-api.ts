@@ -37,28 +37,29 @@ export const flowRunsApi = {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
     const initalRun = await getInitialRun(socket, request.flowVersionId);
     onUpdate(initalRun);
-    return new Promise<void>((resolve, reject) => {
-      const handleProgress = (response: FlowRun) => {
-        if (initalRun.id !== response.id) {
-          return;
-        }
-        onUpdate(response);
-        if (isFlowStateTerminal(response.status)) {
-          socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-          socket.off('error', handleError);
-          resolve();
-        }
-      };
-
-      const handleError = (error: any) => {
+  },
+  addRunListener(
+    socket: Socket,
+    runId: string,
+    onUpdate: (response: FlowRun) => void,
+  ) {
+    const handleProgress = (response: FlowRun) => {
+      if (runId !== response.id) {
+        return;
+      }
+      onUpdate(response);
+      if (isFlowStateTerminal(response.status)) {
         socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
         socket.off('error', handleError);
-        reject(error);
-      };
+      }
+    };
+    const handleError = (error: any) => {
+      socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
+      socket.off('error', handleError);
+    };
 
-      socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-      socket.on('error', handleError);
-    });
+    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
+    socket.on('error', handleError);
   },
   testStep(
     socket: Socket,
