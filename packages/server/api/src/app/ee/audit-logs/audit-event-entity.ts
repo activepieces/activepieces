@@ -43,16 +43,8 @@ export const AuditEventEntity = new EntitySchema<AuditEventSchema>({
     },
     indices: [
         {
-            name: 'audit_event_platform_id_project_id_user_id_action_idx',
-            columns: ['platformId', 'projectId', 'userId', 'action'],
-        },
-        {
-            name: 'audit_event_platform_id_user_id_action_idx',
-            columns: ['platformId', 'userId', 'action'],
-        },
-        {
-            name: 'audit_event_platform_id_action_idx',
-            columns: ['platformId', 'action'],
+            name: 'audit_event_platform_id_project_id_user_id_idx',
+            columns: ['platformId', 'projectId', 'userId'],
         },
     ],
     relations: {

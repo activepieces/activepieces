@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Folder, Key, Link2, Logs, Users, Wand, Workflow } from 'lucide-react';
+import { Folder, Key, Link2, Logs, Users, Workflow } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -17,8 +17,6 @@ import {
 } from '@/components/ui/tooltip';
 import { auditEventsApi } from '@/features/platform-admin-panel/lib/audit-events-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
   ApplicationEvent,
@@ -33,51 +31,6 @@ export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const [searchParams] = useSearchParams();
 
-  const { data: projects } = projectHooks.useProjects();
-
-  const { data: users } = platformUserHooks.useUsers();
-
-  const filters = [
-    {
-      type: 'select',
-      title: t('Action'),
-      accessorKey: 'action',
-      options: Object.values(ApplicationEventName).map((action) => {
-        return {
-          label: formatUtils.convertEnumToHumanReadable(action),
-          value: action,
-        };
-      }),
-      icon: Wand,
-    } as const,
-    {
-      type: 'select',
-      title: t('Performed By'),
-      accessorKey: 'userId',
-      options:
-        users?.data?.map((user) => {
-          return {
-            label: user.email,
-            value: user.id,
-          };
-        }) ?? [],
-      icon: Users,
-    } as const,
-    {
-      type: 'select',
-      title: t('Project'),
-      accessorKey: 'projectId',
-      options:
-        projects?.map((project) => {
-          return {
-            label: project.displayName,
-            value: project.id,
-          };
-        }) ?? [],
-      icon: Folder,
-    } as const,
-  ];
-
   const { data: auditLogsData, isLoading } = useQuery({
     queryKey: ['audit-logs', searchParams.toString()],
     staleTime: 0,
@@ -85,15 +38,10 @@ export default function AuditLogsPage() {
     queryFn: async () => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM);
-      const action = searchParams.get('action');
-      const projectId = searchParams.get('projectId');
-      const userId = searchParams.get('userId');
+
       return auditEventsApi.list({
         cursor: cursor ?? undefined,
         limit: limit ? parseInt(limit) : undefined,
-        action: action ?? undefined,
-        projectId: projectId ?? undefined,
-        userId: userId ?? undefined,
       });
     },
   });
@@ -111,7 +59,6 @@ export default function AuditLogsPage() {
       <div className="flex flex-col  w-full">
         <TableTitle>{t('Audit Logs')}</TableTitle>
         <DataTable
-          filters={filters}
           columns={[
             {
               accessorKey: 'resource',
@@ -151,7 +98,7 @@ export default function AuditLogsPage() {
               },
             },
             {
-              accessorKey: 'userId',
+              accessorKey: 'performedBy',
               header: ({ column }) => (
                 <DataTableColumnHeader
                   column={column}
@@ -165,22 +112,20 @@ export default function AuditLogsPage() {
               },
             },
             {
-              accessorKey: 'action',
+              accessorKey: 'tasks',
               header: ({ column }) => (
                 <DataTableColumnHeader column={column} title={t('Action')} />
               ),
               cell: ({ row }) => {
                 return (
                   <div className="text-left">
-                    {formatUtils.convertEnumToHumanReadable(
-                      row.original.action,
-                    )}
+                    {convertToReadableString(row.original.action)}
                   </div>
                 );
               },
             },
             {
-              accessorKey: 'projectId',
+              accessorKey: 'projectDisplayName',
               header: ({ column }) => (
                 <DataTableColumnHeader column={column} title={t('Project')} />
               ),
@@ -215,6 +160,13 @@ export default function AuditLogsPage() {
     </LockedFeatureGuard>
   );
 }
+
+const convertToReadableString = (input: string): string => {
+  return input
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/^\w/, (c) => c.toUpperCase());
+};
 
 function convertToIcon(event: ApplicationEvent) {
   switch (event.action) {

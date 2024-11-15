@@ -1,7 +1,6 @@
 import { ListAuditEventsRequest } from '@activepieces/ee-shared'
 import {
-    EndpointScope,
-    PrincipalType,
+    assertNotNullOrUndefined,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
@@ -14,24 +13,21 @@ export const auditEventModule: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
-
-    app.get('/', ListAuditEventsRequestEndpoint, async (request) => {
-        return auditLogService.list({
-            platformId: request.principal.platform.id,
-            cursorRequest: request.query.cursor ?? null,
-            limit: request.query.limit ?? 20,
-            action: request.query.action ?? undefined,
-            projectId: request.query.projectId ?? undefined,
-            userId: request.query.userId ?? undefined,
-        })
-    })
-}
-
-
-const ListAuditEventsRequestEndpoint = {
-    schema: {
-        querystring: ListAuditEventsRequest,
-        allowedPrincipals: [PrincipalType.UNKNOWN],
-        scope: EndpointScope.PLATFORM,
-    },
+    app.get(
+        '/',
+        {
+            schema: {
+                querystring: ListAuditEventsRequest,
+            },
+        },
+        async (request) => {
+            const platformId = request.principal.platform.id
+            assertNotNullOrUndefined(platformId, 'platformId')
+            return auditLogService.list({
+                platformId,
+                cursorRequest: request.query.cursor ?? null,
+                limit: request.query.limit ?? 20,
+            })
+        },
+    )
 }

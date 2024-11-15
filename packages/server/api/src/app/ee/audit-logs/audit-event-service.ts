@@ -5,7 +5,6 @@ import { logger, networkUtls, rejectedPromiseHandler } from '@activepieces/serve
 import {
     apId,
     Cursor,
-    isNil,
     PrincipalType,
     SeekPage,
 } from '@activepieces/shared'
@@ -47,7 +46,7 @@ export const auditLogService = {
             }, params))
         }))
     },
-    async list({ platformId, cursorRequest, limit, userId, action, projectId }: ListParams): Promise<SeekPage<ApplicationEvent>> {
+    async list({ platformId, cursorRequest, limit }: ListParams): Promise<SeekPage<ApplicationEvent>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: AuditEventEntity,
@@ -58,19 +57,10 @@ export const auditLogService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = auditLogRepo().createQueryBuilder('audit_event')
-            .where({ platformId })
-        if (!isNil(userId)) {
-            queryBuilder.andWhere({ userId })
-        }
-        if (!isNil(action)) {
-            queryBuilder.andWhere({ action })
-        }
-        if (!isNil(projectId)) {
-            queryBuilder.andWhere({ projectId })
-        }
-
-        const paginationResponse = await paginator.paginate(queryBuilder)
+        const paginationResponse = await paginator.paginate(
+            auditLogRepo().createQueryBuilder('audit_event')
+                .where({ platformId }),
+        )
         return paginationHelper.createPage<ApplicationEvent>(
             paginationResponse.data,
             paginationResponse.cursor,
@@ -129,7 +119,4 @@ type ListParams = {
     platformId: string
     cursorRequest: Cursor | null
     limit: number
-    userId?: string
-    action?: string
-    projectId?: string
 }
