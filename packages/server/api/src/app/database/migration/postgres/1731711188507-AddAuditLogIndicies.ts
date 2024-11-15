@@ -3,7 +3,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddAuditLogIndicies1731711188507 implements MigrationInterface {
     name = 'AddAuditLogIndicies1731711188507'
-
+    transaction = false
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info({
             name: this.name,

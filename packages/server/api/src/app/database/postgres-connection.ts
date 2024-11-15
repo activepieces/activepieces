@@ -270,7 +270,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         StoreTriggerEventsInFile1731247581852,
         MigrateConnectionNames1731428722977,
         AddGlobalConnectionsAndRbacForPlatform1731532843905,
-        AddAuditLogIndicies1731711188507,
     ]
 
     const edition = system.getEdition()
@@ -345,6 +344,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ModifyProjectMembers1717961669938,
                 MigrateAuditEventSchema1723489038729,
                 AddAiTokensForProjectPlan1726446092010,
+                AddAuditLogIndicies1731711188507,
+
             )
             break
         case ApEdition.COMMUNITY:
