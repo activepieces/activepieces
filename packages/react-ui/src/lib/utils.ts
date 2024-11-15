@@ -15,7 +15,7 @@ const emailRegex =
 export const formatUtils = {
   emailRegex,
   convertEnumToHumanReadable(str: string) {
-    const words = str.split('_');
+    const words = str.split(/[_.]/);
     return words
       .map(
         (word) =>
