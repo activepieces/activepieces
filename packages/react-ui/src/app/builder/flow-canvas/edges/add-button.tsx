@@ -1,5 +1,5 @@
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
-import { Plus } from 'lucide-react';
+import { Plus, Sparkle } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
@@ -13,12 +13,16 @@ import {
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../consts';
 import { ApButtonData } from '../types';
+import deepEqual from 'deep-equal';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, readonly] = useBuilderStateContext((state) => [
+
+  const [activeDraggingStep, readonly, showAskAiIndicator] = useBuilderStateContext((state) => [
     state.activeDraggingStep,
     state.readonly,
+    state.askAiButtonProps && state.askAiButtonProps.stepLocationRelativeToParent === props.stepLocationRelativeToParent && state.askAiButtonProps.parentStep === props.parentStepName &&
+    (props.stepLocationRelativeToParent !== StepLocationRelativeToParent.INSIDE_BRANCH || props.branchIndex === state.askAiButtonProps.branchIndex)
   ]);
 
   const { setNodeRef } = useDroppable({
@@ -44,7 +48,33 @@ const ApAddButton = React.memo((props: ApButtonData) => {
 
   return (
     <>
-      {showDropIndicator && !readonly && (
+      {
+        showAskAiIndicator && (
+          <div
+            style={{
+              width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+              height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+            }}
+            className={cn('transition-all animate-ask-ai-background bg-[length:400%] shadow-add-button bg-gradient-to-r  from-primary/90  via-primary/55 to-primary/90 flex items-center  justify-center  rounded-xss')}
+          >
+            <Sparkle className='w-3.5 h-3.5 stroke-background/80  '></Sparkle>
+            <div
+              style={{
+                width: flowUtilConsts.AP_NODE_SIZE.STEP.width + 'px',
+                height: flowUtilConsts.AP_NODE_SIZE.STEP.height + 'px',
+                left: `${-flowUtilConsts.AP_NODE_SIZE.STEP.width / 2}px`,
+                top: `${-flowUtilConsts.AP_NODE_SIZE.STEP.height / 2}px`,
+              }}
+              className={cn(' absolute flex items-center    rounded-xss box-content ')}
+              ref={setNodeRef}
+            >
+
+
+            </div>
+          </div>
+        )
+      }
+      {showDropIndicator && !readonly && !showAskAiIndicator && (
         <div
           style={{
             width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
@@ -66,28 +96,28 @@ const ApAddButton = React.memo((props: ApButtonData) => {
           ></div>
         </div>
       )}
-      {!showDropIndicator && !readonly && (
+      {!showDropIndicator && !readonly && !showAskAiIndicator && (
         <PieceSelector
           operation={
             props.stepLocationRelativeToParent ===
-            StepLocationRelativeToParent.INSIDE_BRANCH
+              StepLocationRelativeToParent.INSIDE_BRANCH
               ? {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                    branchIndex: props.branchIndex,
-                  },
-                }
+                type: FlowOperationType.ADD_ACTION,
+                actionLocation: {
+                  parentStep: props.parentStepName,
+                  stepLocationRelativeToParent:
+                    props.stepLocationRelativeToParent,
+                  branchIndex: props.branchIndex,
+                },
+              }
               : {
-                  type: FlowOperationType.ADD_ACTION,
-                  actionLocation: {
-                    parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
-                  },
-                }
+                type: FlowOperationType.ADD_ACTION,
+                actionLocation: {
+                  parentStep: props.parentStepName,
+                  stepLocationRelativeToParent:
+                    props.stepLocationRelativeToParent,
+                },
+              }
           }
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}

@@ -36,6 +36,7 @@ import { SearchInput } from '../../../components/ui/search-input';
 
 import { PiecesCardList } from './pieces-card-list';
 import { StepsCardList } from './steps-card-list';
+import { AskAiButton } from './ask-ai';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -183,6 +184,7 @@ const PieceSelector = ({
     stepMetadata,
     actionOrTrigger,
   ) => {
+    console.log(actionOrTrigger)
     resetField();
     onOpenChange(false);
     const newStepName = pieceSelectorUtils.getStepName(
@@ -272,7 +274,7 @@ const PieceSelector = ({
       }
     }
   };
-
+  const isMobile = pieceSelectorUtils.useIsMobile();
   return (
     <Popover
       open={open}
@@ -301,7 +303,7 @@ const PieceSelector = ({
               height: `${aboveListSectionHeight}px`,
             }}
           >
-            <div className="p-2">
+            <div className="p-2 flex gap-1 items-center">
               <SearchInput
                 placeholder="Search"
                 value={searchQuery}
@@ -312,6 +314,13 @@ const PieceSelector = ({
                   setSelectedMetadata(undefined);
                 }}
               />
+              {
+                operation.type === FlowOperationType.ADD_ACTION
+                &&
+                <AskAiButton {...operation.actionLocation}
+                ></AskAiButton>
+              }
+
             </div>
 
             <PieceTagGroup
@@ -329,8 +338,7 @@ const PieceSelector = ({
             <Separator orientation="horizontal" />
           </div>
 
-          {(window.innerWidth || document.documentElement.clientWidth) >=
-            768 && (
+          {!isMobile && (
             <div
               className=" flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
               style={{
@@ -364,8 +372,7 @@ const PieceSelector = ({
             </div>
           )}
 
-          {(window.innerWidth || document.documentElement.clientWidth) <
-            768 && (
+          {isMobile && (
             <div
               className=" max-h-[300px] h-[300px]"
               style={{

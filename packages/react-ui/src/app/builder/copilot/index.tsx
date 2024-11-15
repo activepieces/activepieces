@@ -8,10 +8,11 @@ import { Socket } from 'socket.io-client';
 import { useSocket } from '@/components/socket-provider';
 import { CardList } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_MESSAGE, INTERNAL_ERROR_TOAST, toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
 import {
   Action,
   ActionType,
+  CodeAction,
   deepMergeAndCast,
   FlowOperationType,
   flowStructureUtil,
@@ -25,6 +26,10 @@ import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
 import { SidebarHeader } from '../sidebar-header';
 
 import { ChatMessage, CopilotMessage } from './chat-message';
+import { Textarea } from '../../../components/ui/textarea';
+import { pieceSelectorUtils } from '../pieces-selector/piece-selector-utils';
+import { CORE_STEP_METADATA } from '../../../features/pieces/lib/pieces-api';
+import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
 
 interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
@@ -69,12 +74,16 @@ export const CopilotSidebar = () => {
     refreshSettings,
     applyOperation,
     setLeftSidebar,
+    askAiButtonProps,
+    selectStepByName
   ] = useBuilderStateContext((state) => [
     state.selectedStep,
     state.flowVersion,
     state.refreshSettings,
     state.applyOperation,
     state.setLeftSidebar,
+    state.askAiButtonProps,
+    state.selectStepByName
   ]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const socket = useSocket();
@@ -118,7 +127,7 @@ export const CopilotSidebar = () => {
     }
     mutate({
       prompt: `${inputMessage}. ${t(
-        'Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies.',
+        'Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies, use only ES modules for dependencies.',
       )}`,
       previousContext: messages.map((message) => ({
         role: message.userType === 'user' ? 'user' : 'assistant',
@@ -171,34 +180,65 @@ export const CopilotSidebar = () => {
   };
 
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
-    if (!selectedStep) {
-      return;
-    }
-    const step = flowStructureUtil.getStepOrThrow(
-      selectedStep,
+
+    const step = flowStructureUtil.getStep(
+      selectedStep ?? '',
       flowVersion.trigger,
     );
+    if (!step && !askAiButtonProps) {
+      toast(INTERNAL_ERROR_TOAST)
+      return;
+    }
     const isCodeType = message.messageType !== 'code';
     if (isCodeType) {
       return;
     }
-    const mergedInputs = mergeInputs(
-      message.content.inputs,
-      step.settings.input,
-    );
-    if (step.type === ActionType.CODE) {
-      const newStep = deepMergeAndCast(step, {
-        settings: {
-          input: mergedInputs,
-          sourceCode: {
-            code: message.content.code,
-            packageJson: JSON.stringify(message.content.packages, null, 2),
+    if (step) {
+      const mergedInputs = mergeInputs(
+        message.content.inputs,
+        step.settings.input,
+      );
+      if (step.type === ActionType.CODE) {
+        const newStep = deepMergeAndCast(step, {
+          settings: {
+            input: mergedInputs,
+            sourceCode: {
+              code: message.content.code,
+              packageJson: JSON.stringify(message.content.packages, null, 2),
+            },
           },
-        },
-      });
-      updateAction(newStep);
-      refreshSettings();
+        });
+        updateAction(newStep);
+        refreshSettings();
+      }
     }
+    else if (askAiButtonProps) {
+      const stepName = flowStructureUtil.findUnusedName(flowVersion.trigger);
+      const codeAction = pieceSelectorUtils.getDefaultStep({
+        stepName,
+        stepMetadata: CORE_STEP_METADATA[ActionType.CODE],
+        actionOrTrigger: getCoreActions(ActionType.CODE)[0]
+      }) as CodeAction;
+      codeAction.settings = {
+        input: message.content.inputs,
+        sourceCode: {
+          code: message.content.code,
+          packageJson: JSON.stringify(message.content.packages, null, 2),
+        },
+      }
+      applyOperation({
+        type: FlowOperationType.ADD_ACTION,
+        request: {
+          action: codeAction,
+          ...askAiButtonProps
+        }
+      }, () => { })
+      selectStepByName(stepName);
+    }
+
+
+
+
   };
 
   return (
@@ -220,21 +260,22 @@ export const CopilotSidebar = () => {
             <ScrollBar />
           </CardList>
         </ScrollArea>
-        <div className="relative p-4 bg-white dark:bg-gray-900 border-t dark:border-gray-700">
-          <input
+        <div className="flex items-center py-4 px-3 gap-2 bg-white dark:bg-gray-900 border-t dark:border-gray-700">
+          <Textarea
             value={inputMessage}
-            type="text"
             className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12"
+            rows={1}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' && !e.shiftKey) {
                 handleSendMessage();
+                e.preventDefault();
               }
             }}
           />
           <button
             onClick={handleSendMessage}
-            className="absolute right-5 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600"
+            className="transform  w-8 h-8 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600"
             aria-label={t('Send')}
             disabled={isPending}
           >
