@@ -1,38 +1,38 @@
 import { api } from '@/lib/api';
 import {
   AppConnectionWithoutSensitiveData,
-  ListAppConnectionsRequestQuery,
+  ListGlobalConnectionsRequestQuery,
   SeekPage,
-  UpdateConnectionValueRequestBody,
-  UpsertAppConnectionRequestBody,
+  UpdateGlobalConnectionValueRequestBody,
+  UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared';
 
-export const appConnectionsApi = {
+export const globalConnectionsApi = {
   list(
-    request: ListAppConnectionsRequestQuery,
+    request: ListGlobalConnectionsRequestQuery,
   ): Promise<SeekPage<AppConnectionWithoutSensitiveData>> {
     return api.get<SeekPage<AppConnectionWithoutSensitiveData>>(
-      '/v1/app-connections',
+      '/v1/global-connections',
       request,
     );
   },
   upsert(
-    request: UpsertAppConnectionRequestBody,
+    request: UpsertGlobalConnectionRequestBody,
   ): Promise<AppConnectionWithoutSensitiveData> {
     return api.post<AppConnectionWithoutSensitiveData>(
-      '/v1/app-connections',
+      '/v1/global-connections',
       request,
     );
   },
   delete(id: string): Promise<void> {
-    return api.delete<void>(`/v1/app-connections/${id}`);
+    return api.delete<void>(`/v1/global-connections/${id}`);
   },
   update(
     id: string,
-    request: UpdateConnectionValueRequestBody,
+    request: UpdateGlobalConnectionValueRequestBody,
   ): Promise<AppConnectionWithoutSensitiveData> {
     return api.post<AppConnectionWithoutSensitiveData>(
-      `/v1/app-connections/${id}`,
+      `/v1/global-connections/${id}`,
       request,
     );
   },

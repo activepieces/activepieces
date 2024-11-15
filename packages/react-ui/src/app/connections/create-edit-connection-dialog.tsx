@@ -29,6 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { globalConnectionsApi } from '@/features/connections/lib/global-connections-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -43,6 +44,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   ApErrorParams,
+  AppConnectionScope,
   AppConnectionWithoutSensitiveData,
   ErrorCode,
   isNil,
@@ -67,6 +69,7 @@ type ConnectionDialogProps = {
   setOpen: (open: boolean) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
   predefinedConnectionName: string | null;
+  isGlobalConnection: boolean;
 };
 
 const CreateOrEditConnectionDialog = React.memo(
@@ -77,6 +80,7 @@ const CreateOrEditConnectionDialog = React.memo(
     onConnectionCreated,
     reconnectConnection,
     predefinedConnectionName,
+    isGlobalConnection,
   }: ConnectionDialogProps) => {
     const { auth } = piece;
 
@@ -110,6 +114,24 @@ const CreateOrEditConnectionDialog = React.memo(
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
+
+        if (isGlobalConnection) {
+          const connections = await globalConnectionsApi.list({
+            limit: 10000,
+          });
+          const existingConnection = connections.data.find(
+            (connection) => connection.displayName === formValues.displayName,
+          );
+          if (!isNil(existingConnection) && isNil(reconnectConnection)) {
+            throw new ConnectionNameAlreadyExists();
+          }
+          return globalConnectionsApi.upsert({
+            ...formValues,
+            projectIds: [],
+            scope: AppConnectionScope.PLATFORM,
+          });
+        }
+
         const connections = await appConnectionsApi.list({
           projectId: authenticationSession.getProjectId()!,
           limit: 10000,

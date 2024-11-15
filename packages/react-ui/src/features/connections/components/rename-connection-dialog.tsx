@@ -17,7 +17,9 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+
+import { appConnectionsApi } from '../lib/app-connections-api';
 
 const RenameConnectionSchema = Type.Object({
   displayName: Type.String(),
@@ -29,7 +31,7 @@ type RenameConnectionDialogProps = {
   children: React.ReactNode;
   connectionId: string;
   currentName: string;
-  onRename: (newName: string) => void;
+  onRename: () => void;
 };
 
 const RenameConnectionDialog: React.FC<RenameConnectionDialogProps> = ({
@@ -46,14 +48,20 @@ const RenameConnectionDialog: React.FC<RenameConnectionDialogProps> = ({
     },
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: (data: RenameConnectionSchema) =>
-      appConnectionsApi.update(connectionId, {
-        displayName: data.displayName,
-      }),
+  const { mutate, isPending } = useMutation<
+    AppConnectionWithoutSensitiveData,
+    Error,
+    {
+      connectionId: string;
+      displayName: string;
+    }
+  >({
+    mutationFn: ({ connectionId, displayName }) => {
+      return appConnectionsApi.update(connectionId, { displayName });
+    },
     onSuccess: () => {
       setIsRenameDialogOpen(false);
-      onRename(renameConnectionForm.getValues().displayName);
+      onRename();
       toast({
         title: t('Success'),
         description: t('Connection has been renamed.'),
@@ -76,14 +84,19 @@ const RenameConnectionDialog: React.FC<RenameConnectionDialogProps> = ({
         <Form {...renameConnectionForm}>
           <form
             className="grid space-y-4"
-            onSubmit={renameConnectionForm.handleSubmit((data) => mutate(data))}
+            onSubmit={renameConnectionForm.handleSubmit((data) =>
+              mutate({
+                connectionId,
+                displayName: data.displayName,
+              }),
+            )}
           >
             <FormField
               control={renameConnectionForm.control}
               name="displayName"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="displayName">{t('Display Name')}</Label>
+                  <Label htmlFor="displayName">{t('Name')}</Label>
                   <Input
                     {...field}
                     id="displayName"
@@ -99,7 +112,7 @@ const RenameConnectionDialog: React.FC<RenameConnectionDialogProps> = ({
                 {renameConnectionForm.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <Button loading={isPending}>{t('Rename')}</Button>
+            <Button loading={isPending}>{t('Confirm')}</Button>
           </form>
         </Form>
       </DialogContent>

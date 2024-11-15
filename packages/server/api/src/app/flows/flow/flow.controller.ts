@@ -72,6 +72,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         const updatedFlow = await flowService.update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
+            platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
             operation: request.body,
         })

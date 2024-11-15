@@ -7,7 +7,7 @@ import {
     ProjectId,
 } from '@activepieces/shared'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
-
+import { projectService } from '../../../project/project-service'
 
 export const triggerUtils = {
     async getPieceTriggerOrThrow({ trigger, projectId }: GetPieceTriggerOrThrowParams): Promise<TriggerBase> {
@@ -30,8 +30,10 @@ export const triggerUtils = {
         return pieceTrigger
     },
     async getPieceTrigger({ trigger, projectId }: GetPieceTriggerOrThrowParams): Promise<TriggerBase | null> {
+        const platformId = await projectService.getPlatformId(projectId)
         const piece = await pieceMetadataService.get({
             projectId,
+            platformId,
             name: trigger.settings.pieceName,
             version: trigger.settings.pieceVersion,
         })

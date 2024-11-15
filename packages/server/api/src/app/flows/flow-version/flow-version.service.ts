@@ -15,6 +15,7 @@ import {
     FlowVersionState,
     isNil,
     LATEST_SCHEMA_VERSION,
+    PlatformId,
     ProjectId,
     sanitizeObjectForPostgresql,
     SeekPage,
@@ -27,10 +28,10 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { projectService } from '../../project/project-service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
-
 
 const flowVersionRepo = repoFactory(FlowVersionEntity)
 
@@ -45,6 +46,7 @@ export const flowVersionService = {
         }
 
         const pieceVersion: Record<string, string> = {}
+        const platformId = await projectService.getPlatformId(projectId)
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         for (const step of steps) {
             const stepTypeIsPiece = [ActionType.PIECE, TriggerType.PIECE].includes(
@@ -53,6 +55,7 @@ export const flowVersionService = {
             if (stepTypeIsPiece) {
                 const pieceMetadata = await pieceMetadataService.getOrThrow({
                     projectId,
+                    platformId,
                     name: step.settings.pieceName,
                     version: step.settings.pieceVersion,
                     entityManager,
@@ -75,6 +78,7 @@ export const flowVersionService = {
         userId,
         userOperation,
         entityManager,
+        platformId,
     }: ApplyOperationParams): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
         let mutatedFlowVersion: FlowVersion = flowVersion
@@ -116,6 +120,7 @@ export const flowVersionService = {
                 projectId,
                 mutatedFlowVersion,
                 operation,
+                platformId,
             )
         }
 
@@ -167,11 +172,7 @@ export const flowVersionService = {
         cursorRequest,
         limit,
         flowId,
-    }: {
-        cursorRequest: Cursor | null
-        limit: number
-        flowId: string
-    }): Promise<SeekPage<FlowVersion>> {
+    }: ListFlowVersionParams): Promise<SeekPage<FlowVersion>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: FlowVersionEntity,
@@ -266,6 +267,7 @@ async function applySingleOperation(
     projectId: ProjectId,
     flowVersion: FlowVersion,
     operation: FlowOperationRequest,
+    platformId: PlatformId,
 ): Promise<FlowVersion> {
     logger.info(`applying ${operation.type} to ${flowVersion.displayName}`)
     await flowVersionSideEffects.preApplyOperation({
@@ -273,7 +275,7 @@ async function applySingleOperation(
         flowVersion,
         operation,
     })
-    operation = await flowVersionValidationUtil.prepareRequest(projectId, operation)
+    operation = await flowVersionValidationUtil.prepareRequest(projectId, platformId, operation)
     return flowOperations.apply(flowVersion, operation)
 }
 
@@ -332,9 +334,16 @@ type GetFlowVersionOrThrowParams = {
 
 type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>
 
+type ListFlowVersionParams = {
+    flowId: FlowId
+    cursorRequest: Cursor | null
+    limit: number
+}
+
 type ApplyOperationParams = {
     userId: UserId | null
     projectId: ProjectId
+    platformId: PlatformId
     flowVersion: FlowVersion
     userOperation: FlowOperationRequest
     entityManager?: EntityManager
