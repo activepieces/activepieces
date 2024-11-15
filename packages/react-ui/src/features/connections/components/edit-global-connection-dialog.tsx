@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -18,10 +18,10 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { projectHooks } from '@/hooks/project-hooks';
 import { AppConnectionWithoutSensitiveData, isNil } from '@activepieces/shared';
 
 import { globalConnectionsApi } from '../lib/global-connections-api';
-import { projectHooks } from '@/hooks/project-hooks';
 
 const EditGlobalConnectionSchema = Type.Object({
   displayName: Type.String(),
