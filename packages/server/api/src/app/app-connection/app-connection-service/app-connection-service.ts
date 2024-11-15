@@ -145,8 +145,10 @@ export const appConnectionService = {
         return connection!
     },
 
-    async delete(params: DeleteParams): Promise<void> {
-        await repo().delete(params)
+    async delete({ id }: DeleteParams): Promise<void> {
+        await repo().delete({
+            id,
+        })
     },
 
     async list({
