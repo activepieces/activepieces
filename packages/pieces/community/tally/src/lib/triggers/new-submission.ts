@@ -12,14 +12,7 @@ To set up the trigger for new form submissions, follow these steps:
 2. Select the form where you want the trigger to occur.
 3. Click on the "Integrations" section.
 4. Find the "Webhooks" integration and click on "Connect" to activate it.
-5. In the webhook settings, paste the following URLs: 
-
-  **Test URL (only generate sample data)**:
-  \`\`\`text
-  {{webhookUrl}}/test
-  \`\`\`
-
-  **Trigger Flow URL**:
+5. In the webhook settings, paste the following URL: 
   \`\`\`text
   {{webhookUrl}}
   \`\`\`
