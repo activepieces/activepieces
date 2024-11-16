@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, CreateRbacRequestBody, ErrorCode, PlatformId, Rbac, spreadIfDefined, UpdateRbacRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, CreateRbacRequestBody, ErrorCode, PlatformId, Rbac, SeekPage, spreadIfDefined, UpdateRbacRequestBody } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { RbacEntity } from './rbac.entity'
 
@@ -7,10 +7,17 @@ export const rbacRepo = repoFactory(RbacEntity)
 
 export const rbacService = {
 
-    async list(platformId: PlatformId): Promise<Rbac[]> {
-        const rbacs = await rbacRepo().findBy({ platformId })
+    async list(platformId: PlatformId): Promise<SeekPage<Rbac>> {
+        const rbacs = await rbacRepo().find({
+            where: { platformId },
+            order: { updated: 'DESC' },
+        })
 
-        return rbacs
+        return {
+            data: rbacs,
+            next: null,
+            previous: null,
+        }
     },
 
     async create(params: CreateRbacRequestBody): Promise<Rbac> {

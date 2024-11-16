@@ -107,6 +107,7 @@ const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['terminationReason', 'pau
 
 const ListRequest = {
     config: {
+        permission: Permission.READ_RUN,
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
@@ -122,6 +123,7 @@ const ListRequest = {
 
 const GetRequest = {
     config: {
+        permission: Permission.READ_RUN,
         allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER],
     },
     schema: {
@@ -151,7 +153,7 @@ const ResumeFlowRunRequest = {
 
 const RetryFlowRequest = {
     config: {
-        permission: Permission.RETRY_RUN,
+        permission: Permission.WRITE_RUN,
     },
     schema: {
         params: Type.Object({
@@ -163,7 +165,7 @@ const RetryFlowRequest = {
 
 const BulkRetryFlowRequest = {
     config: {
-        permission: Permission.RETRY_RUN,
+        permission: Permission.WRITE_RUN,
     },
     schema: {
         body: BulkRetryFlowRequestBody,

@@ -71,6 +71,11 @@ export default function PlatformSettingsLayout({
       href: '/platform/settings/license-key',
       icon: <CreditCard size={iconSize} />,
     });
+    sidebarNavItems.push({
+      title: 'RBAC',
+      href: '/platform/settings/rbac',
+      icon: <ShieldPlus size={iconSize} />,
+    });
   }
 
   return (

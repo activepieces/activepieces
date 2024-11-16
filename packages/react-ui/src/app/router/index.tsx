@@ -65,6 +65,7 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
+import { RbacPage } from '../routes/platform/settings/rbac';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -488,6 +489,18 @@ const routes = [
     ),
   },
   {
+    path: '/platform/settings/rbac',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="RBAC">
+            <RbacPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/settings',
     element: (
       <PlatformAdminContainer>
@@ -516,8 +529,8 @@ const ApRouter = () => {
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
-          initialEntries: [window.location.pathname],
-        })
+        initialEntries: [window.location.pathname],
+      })
       : createBrowserRouter(routes);
   }, [embedState.isEmbedded]);
 

@@ -5,11 +5,11 @@ import { rbacService } from './rbac.service'
 
 export const rbacController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.get('/', GetRbacRequest, async (req) => {
+    app.get('/', {}, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
 
-        return rbacService.list(platformId)
+        return await rbacService.list(platformId)
     })
 
     app.post('/', CreateRbacRequest, async (req, reply) => {
@@ -18,20 +18,12 @@ export const rbacController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateRbacRequest, async (req) => {
-        return rbacService.update(req.params.id, req.body)
+        return await rbacService.update(req.params.id, req.body)
     })
 
     app.delete('/:id', DeleteRbacRequest, async (req) => {
-        return rbacService.delete(req.params.id)
+        return await rbacService.delete(req.params.id)
     })
-}
-
-const GetRbacRequest = {
-    schema: {
-        response: {
-            [StatusCodes.OK]: Type.Array(Rbac),
-        },
-    },
 }
 
 const CreateRbacRequest = {

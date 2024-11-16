@@ -14,7 +14,8 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.WRITE_RPOJECT,
         Permission.WRITE_GIT_REPO,
         Permission.READ_GIT_REPO,
-        Permission.RETRY_RUN,
+        Permission.READ_RUN,
+        Permission.WRITE_RUN,
         Permission.READ_ISSUES,
         Permission.WRITE_ISSUES
     ],
@@ -28,7 +29,8 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_INVITATION,
         Permission.WRITE_GIT_REPO,
         Permission.READ_GIT_REPO,
-        Permission.RETRY_RUN,
+        Permission.READ_RUN,
+        Permission.WRITE_RUN,
         Permission.READ_ISSUES,
         Permission.WRITE_ISSUES
     ],
@@ -40,7 +42,8 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_PROJECT_MEMBER,
         Permission.READ_INVITATION,
         Permission.READ_GIT_REPO,
-        Permission.RETRY_RUN,
+        Permission.READ_RUN,
+        Permission.WRITE_RUN,
         Permission.READ_ISSUES,
     ],
     [ProjectMemberRole.VIEWER]: [
