@@ -257,8 +257,7 @@ const GlobalConnectionsTable = () => {
     gcTime: 0,
     queryFn: () => {
       const searchParams = new URLSearchParams(location.search);
-      return appConnectionsApi.list({
-        projectId: authenticationSession.getProjectId()!,
+      return globalConnectionsApi.list({
         cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
         limit: searchParams.get(LIMIT_QUERY_PARAM)
           ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
