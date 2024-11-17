@@ -9,6 +9,14 @@ interface InstasentAuthType {
     datasourceId: string;
 }
 
+const PROPERTY_ITERATIONS = [
+    { check: (spec: any) => spec.requiredInWebhook },
+    { check: (spec: any) => spec.important },
+    { check: (spec: any) => spec.visible !== false },
+    { check: (spec: any) => !spec.custom },
+    { check: () => true }
+];
+
 export const addOrUpdateContact = createAction({
     name: 'add_or_update_contact',
     displayName: 'Add/Update contact',
@@ -38,25 +46,18 @@ export const addOrUpdateContact = createAction({
 
                     const properties: Record<string, any> = {};
 
-                    [1,2,3,4,5].forEach((iteration) => {
+                    for (const iteration of PROPERTY_ITERATIONS) {
                         for (const spec of response.body.specs) {
                             // Ignored properties
                             if (spec.readOnly || properties[spec.uid] || IGNORED_ATTRIBUTES.includes(spec.uid)) {
                                 continue;
                             }
+
                             // Multiple iterations to sort the properties based on their attributes
-                            if (iteration === 1 && !spec.requiredInWebhook) {
+                            if (!iteration.check(spec)) {
                                 continue;
                             }
-                            if (iteration === 2 && !spec.important) {
-                                continue;
-                            }
-                            if (iteration === 3 && spec.visible === false) {
-                                continue;
-                            }
-                            if (iteration === 4 && spec.custom) {
-                                continue;
-                            }
+
                             const displayLabel = spec.displayLabel;
                             let description = spec.description;
                             if (spec.dataType === 'date') {
@@ -87,7 +88,8 @@ export const addOrUpdateContact = createAction({
                                 });
                             }
                         }
-                    })
+                    }
+
                     return properties;
                 } catch (error) {
                     throw new Error('Failed to load contact properties');
