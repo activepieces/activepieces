@@ -213,6 +213,9 @@ const BuilderPage = () => {
               <div className="absolute left-0 top-0 h-full w-full z-10 "></div>
               <FlowCanvas
                 setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
+                lefSideBarContainerWidth={
+                  leftSidePanelRef.current?.clientWidth || 0
+                }
               ></FlowCanvas>
               {middlePanelRef.current &&
                 middlePanelRef.current.clientWidth > 0 && (
