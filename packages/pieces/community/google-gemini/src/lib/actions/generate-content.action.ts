@@ -26,7 +26,7 @@ export const generateContentAction = createAction({
   },
   async run({ auth, propsValue }) {
     const genAI = new GoogleGenerativeAI(auth);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: propsValue.model });
     const result = await model.generateContent(propsValue.prompt);
     return result.response.text();
   },
