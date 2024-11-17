@@ -137,7 +137,6 @@ export const localesMap = {
   [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
 };
 
-
 export const useElementSize = (ref: RefObject<HTMLElement>) => {
   const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
@@ -161,7 +160,6 @@ export const useElementSize = (ref: RefObject<HTMLElement>) => {
 
   return size;
 };
-
 
 export const isStepFileUrl = (json: unknown): json is string => {
   return (

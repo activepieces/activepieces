@@ -188,7 +188,6 @@ export function ChatPage() {
   };
 
   const handleFileChange = (selectedFiles: File[]) => {
-
     if (selectedFiles) {
       setFiles((prevFiles) => {
         const newFiles = [...prevFiles, ...selectedFiles];
@@ -212,7 +211,6 @@ export function ChatPage() {
       />
     );
   }
-
 
   if (isLoading) return <LoadingScreen />;
 
@@ -262,28 +260,29 @@ export function ChatPage() {
           </div>
         </div>
       )}
-      <div className="w-full px-4 max-w-3xl"
-        onDragOver={e => e.preventDefault()}
+      <div
+        className="w-full px-4 max-w-3xl"
+        onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
           const selectedFiles = Array.from(e.dataTransfer.files);
           handleFileChange(selectedFiles);
-        }}>
+        }}
+      >
         <form onSubmit={onSubmit}>
-          <div className="flex flex-col items-center justify-between pe-2 pt-0 rounded-3xl bg-muted transition-all "
-          >
-            <div className={
-              cn('transition-all   overflow-hidden', {
-                'px-4 py-3 w-full ': files.length > 0
-              })
-
-            }
+          <div className="flex flex-col items-center justify-between pe-2 pt-0 rounded-3xl bg-muted transition-all ">
+            <div
+              className={cn('transition-all   overflow-hidden', {
+                'px-4 py-3 w-full ': files.length > 0,
+              })}
               style={{
-                height: `${filesPreviewContainerSize.height}px`
+                height: `${filesPreviewContainerSize.height}px`,
               }}
-
             >
-              <div ref={filesPreviewContainerRef} className="flex items-start gap-3 flex-wrap">
+              <div
+                ref={filesPreviewContainerRef}
+                className="flex items-start gap-3 flex-wrap"
+              >
                 {files.map((file, index) => (
                   <FileInputPreview
                     key={`${file.name}-${index}`}
@@ -293,7 +292,6 @@ export function ChatPage() {
                   />
                 ))}
               </div>
-
             </div>
             <div className="flex-grow flex items-center w-full">
               <div className="flex items-center ps-2">
@@ -306,7 +304,9 @@ export function ChatPage() {
                   type="file"
                   multiple
                   onChange={(e) => {
-                    handleFileChange(e.target.files && Array.from(e.target.files) || [])
+                    handleFileChange(
+                      (e.target.files && Array.from(e.target.files)) || [],
+                    );
                   }}
                   className="hidden"
                 />
@@ -316,17 +316,19 @@ export function ChatPage() {
                 minRows={1}
                 maxRows={4}
                 onPaste={(e) => {
-                  const selectedFiles = Array.from(e.clipboardData.items).filter(item => item.kind === 'file').map(item => item.getAsFile()).filter(item => !isNil(item));
+                  const selectedFiles = Array.from(e.clipboardData.items)
+                    .filter((item) => item.kind === 'file')
+                    .map((item) => item.getAsFile())
+                    .filter((item) => !isNil(item));
                   handleFileChange(selectedFiles);
                 }}
-
                 value={input}
                 onKeyDown={onKeyDown}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type your message here..."
               />
               <Button
-                disabled={!input && files.length === 0 || isSending}
+                disabled={(!input && files.length === 0) || isSending}
                 type="submit"
                 size="icon"
                 className="rounded-full min-w-8 min-h-8 h-8 w-8"

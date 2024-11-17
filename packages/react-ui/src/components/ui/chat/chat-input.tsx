@@ -3,7 +3,6 @@ import * as React from 'react';
 import { ResizableTextareaProps, Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
-
 const ChatInput = React.forwardRef<HTMLTextAreaElement, ResizableTextareaProps>(
   ({ className, ...props }, ref) => (
     <Textarea
