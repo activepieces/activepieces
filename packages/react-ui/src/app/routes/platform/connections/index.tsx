@@ -29,12 +29,10 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
-import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
 import { globalConnectionsApi } from '@/features/connections/lib/global-connections-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   AppConnectionStatus,
