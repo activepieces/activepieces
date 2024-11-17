@@ -3,16 +3,18 @@ import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
+    ApId,
     ErrorCode,
     FlowOperationType,
     isNil,
     Permission,
     Principal,
     PrincipalType,
-    ProjectMemberRole,
+    Rbac,
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { projectMemberService } from '../../project-members/project-member.service'
+import { rbacService } from '../../rbac/rbac.service'
 
 const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
 
@@ -64,11 +66,11 @@ export const assertRoleHasPermission = async (principal: Principal, permission: 
     }
     const principalRole = await getPrincipalRoleOrThrow(principal)
     const access = grantAccess({
-        principalRole,
+        principalRoleId: principalRole.id,
         routePermission: permission,
     })
     if (!access) {
-        throwPermissionDenied(principalRole, principal, permission)
+        throwPermissionDenied(principalRole.id, principal, permission)
     }
 }
 
@@ -90,15 +92,15 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
     return req.routeConfig.permission === undefined
 }
 
-export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<ProjectMemberRole> => {
+export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<Rbac> => {
     const { id: userId, projectId } = principal
 
-    const role = await projectMemberService.getRole({
+    const roleId = await projectMemberService.getRole({
         projectId,
         userId,
     })
 
-    if (isNil(role)) {
+    if (isNil(roleId)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {
@@ -109,32 +111,37 @@ export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<Pro
         })
     }
 
-    return role
+    return roleId
 
 }
 
-const grantAccess = ({ principalRole, routePermission }: GrantAccessArgs): boolean => {
+const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs): Promise<boolean> => {
     if (isNil(routePermission)) {
         return true
     }
 
-    const principalPermissions = rolePermissions[principalRole]
-    return principalPermissions.includes(routePermission)
+    const principalRole = await rbacService.get(principalRoleId)
+    
+    if(isNil(principalRole)) {
+        return false
+    }
+
+    return principalRole.permissions.includes(routePermission)
 }
 
-const throwPermissionDenied = (role: ProjectMemberRole, principal: Principal, permission: Permission | undefined): never => {
+const throwPermissionDenied = (roleId: ApId, principal: Principal, permission: Permission | undefined): never => {
     throw new ActivepiecesError({
         code: ErrorCode.PERMISSION_DENIED,
         params: {
             userId: principal.id,
             projectId: principal.projectId,
-            role,
+            roleId,
             permission,
         },
     })
 }
 
 type GrantAccessArgs = {
-    principalRole: ProjectMemberRole
+    principalRoleId: ApId
     routePermission: Permission | undefined
 }

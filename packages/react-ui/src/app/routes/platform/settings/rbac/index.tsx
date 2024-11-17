@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Pencil, Trash, Plus } from 'lucide-react';
+import { Pencil, Trash, Plus, Eye } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -9,7 +9,7 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { rbacApi } from '@/features/platform-admin-panel/lib/rbac-api';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { formatUtils } from '@/lib/utils';
-import { Rbac } from '@activepieces/shared';
+import { Rbac, RoleType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 
 import { EditRbacDialog } from './edit-rbac-dialog';
@@ -50,6 +50,12 @@ const columns: ColumnDef<RowDataWithActions<Rbac>>[] = [
                 {formatUtils.formatDate(new Date(row.original.created))}
             </div>
         ),
+    },
+    {
+        accessorKey: 'userCount',
+        accessorFn: (row) => row.userCount,
+        header: ({ column }) => <DataTableColumnHeader column={column} title={t('Users')} />,
+        cell: ({ row }) => <div className="text-left">{row.original.userCount}</div>,
     },
 ];
 
@@ -158,45 +164,53 @@ const RbacPage = () => {
                                         <EditRbacDialog
                                             rbac={row}
                                             onUpdate={() => refetch()}
+                                            disabled={row.type === RoleType.DEFAULT}
                                         >
-                                            <Pencil className="size-4" />
+                                            {row.type === RoleType.DEFAULT ? (
+                                                <Eye className="size-4" />
+                                            ) : (
+                                                <Pencil className="size-4" />
+                                            )}
                                         </EditRbacDialog>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom">
-                                        {t('Edit Role')}
+                                        {row.type === RoleType.DEFAULT ? t('View Role') : t('Edit Role')}
                                     </TooltipContent>
                                 </Tooltip>
                             </div>
                         );
                     },
                     (row) => {
-                        return (
-                            <div className="flex items-end justify-end">
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <ConfirmationDeleteDialog
-                                            title={t('Delete Role')}
-                                            message={t(
-                                                'Are you sure you want to delete this role?',
-                                            )}
-                                            entityName={`${t('RBAC')} ${row.name}`}
-                                            mutationFn={async () => deleteRbac(row.id)}
-                                        >
-                                            <Button
-                                                loading={isDeleting}
-                                                variant="ghost"
-                                                className="size-8 p-0"
+                        if (row.type !== RoleType.DEFAULT) {
+                            return (
+                                <div className="flex items-end justify-end">
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <ConfirmationDeleteDialog
+                                                title={t('Delete Role')}
+                                                message={t(
+                                                    'Are you sure you want to delete this role?',
+                                                )}
+                                                entityName={`${t('RBAC')} ${row.name}`}
+                                                mutationFn={async () => deleteRbac(row.id)}
                                             >
-                                                <Trash className="size-4 text-destructive" />
-                                            </Button>
-                                        </ConfirmationDeleteDialog>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom">
-                                        {t('Delete Role')}
-                                    </TooltipContent>
-                                </Tooltip>
-                            </div>
-                        );
+                                                <Button
+                                                    loading={isDeleting}
+                                                    variant="ghost"
+                                                    className="size-8 p-0"
+                                                >
+                                                    <Trash className="size-4 text-destructive" />
+                                                </Button>
+                                            </ConfirmationDeleteDialog>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom">
+                                            {t('Delete Role')}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </div>
+                            );
+                        }
+                        return <></>;
                     },
                 ]}
             />

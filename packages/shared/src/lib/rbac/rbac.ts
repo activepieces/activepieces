@@ -6,6 +6,8 @@ export const Rbac = Type.Object({
     name: Type.String(),
     permissions: Type.Array(Type.String()),
     platformId: Type.String(),
+    type: Type.String(),
+    userCount: Type.Number(),
 })
 
 export type Rbac = Static<typeof Rbac>

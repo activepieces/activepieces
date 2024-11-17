@@ -5,16 +5,17 @@ import { rbacApi } from '@/features/platform-admin-panel/lib/rbac-api';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Input } from '@/components/ui/input';
-import { Rbac } from '@activepieces/shared';
+import { Rbac, RoleType } from '@activepieces/shared';
 import { InitialPermissions } from './index';
 
 interface EditRbacDialogProps {
     rbac: Rbac;
     onUpdate: () => void;
     children: ReactNode;
+    disabled?: boolean;
 }
 
-export const EditRbacDialog = ({ rbac, onUpdate, children }: EditRbacDialogProps) => {
+export const EditRbacDialog = ({ rbac, onUpdate, children, disabled = false }: EditRbacDialogProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [roleName, setRoleName] = useState(rbac.name);
     const [permissions, setPermissions] = useState(rbac.permissions);
@@ -67,15 +68,24 @@ export const EditRbacDialog = ({ rbac, onUpdate, children }: EditRbacDialogProps
     };
 
     const handleSave = () => {
-        mutate();
+        if (!disabled) {
+            mutate();
+        }
     };
 
     return (
         <>
-            <Button variant="ghost" className="size-8 p-0" onClick={() => setIsOpen(true)}>{children}</Button>
+            <Button
+                variant="ghost"
+                className="size-8 p-0"
+                onClick={() => setIsOpen(true)}
+                disabled={false}
+            >
+                {children}
+            </Button>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent className="w-full max-w-2xl">
-                    <DialogTitle>{t('Edit Role')}</DialogTitle>
+                    <DialogTitle>{(rbac.type === RoleType.DEFAULT ? t('View ') : t('Edit ')) + rbac.name}</DialogTitle>
                     <div className="grid space-y-4 mt-4">
                         <div>
                             <span className="text-sm font-medium text-gray-700">{t('Name')}</span>
@@ -87,6 +97,7 @@ export const EditRbacDialog = ({ rbac, onUpdate, children }: EditRbacDialogProps
                                 type="text"
                                 placeholder={t('Role Name')}
                                 className="rounded-sm mt-2"
+                                disabled={disabled}
                             />
                         </div>
                         <div>
@@ -104,6 +115,7 @@ export const EditRbacDialog = ({ rbac, onUpdate, children }: EditRbacDialogProps
                                                     className="h-9 px-4"
                                                     variant={getButtonVariant(permission.name, 'None')}
                                                     onClick={() => handlePermissionChange(permission.name, 'None')}
+                                                    disabled={disabled}
                                                 >
                                                     None
                                                 </Button>
@@ -111,6 +123,7 @@ export const EditRbacDialog = ({ rbac, onUpdate, children }: EditRbacDialogProps
                                                     className="h-9 px-4"
                                                     variant={getButtonVariant(permission.name, 'Read')}
                                                     onClick={() => handlePermissionChange(permission.name, 'Read')}
+                                                    disabled={disabled}
                                                 >
                                                     Read
                                                 </Button>
@@ -118,6 +131,7 @@ export const EditRbacDialog = ({ rbac, onUpdate, children }: EditRbacDialogProps
                                                     className="h-9 px-4"
                                                     variant={getButtonVariant(permission.name, 'Write')}
                                                     onClick={() => handlePermissionChange(permission.name, 'Write')}
+                                                    disabled={disabled}
                                                 >
                                                     Write
                                                 </Button>
@@ -128,7 +142,9 @@ export const EditRbacDialog = ({ rbac, onUpdate, children }: EditRbacDialogProps
                                 ))}
                             </div>
                         </div>
-                        <Button onClick={handleSave}>{t('Save')}</Button>
+                        {!disabled && (
+                            <Button onClick={handleSave}>{t('Save')}</Button>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>

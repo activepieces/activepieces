@@ -23,6 +23,10 @@ export const RbacEntity = new EntitySchema<RbacSchema>({
         },
         platformId: {
             type: String,
+            nullable: true,
+        },
+        type: {
+            type: String,
             nullable: false,
         },
     },

@@ -18,9 +18,7 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
         projectId: ApIdSchema,
         platformId: ApIdSchema,
         userId: ApIdSchema,
-        role: {
-            type: String,
-        },
+        roleId: ApIdSchema,
     },
     indices: [
         {

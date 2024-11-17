@@ -90,6 +90,7 @@ export const authenticationService = {
         user,
         referringUserId,
     }: SignUpResponseParams): Promise<AuthenticationResponse> {
+        console.log('adminRole 2', user, referringUserId)
         const authnResponse = await hooks.get().postSignUp({
             user,
             referringUserId,
@@ -104,11 +105,20 @@ export const authenticationService = {
         })
         await saveNewsLetterSubscriber(user)
 
+        if (!authnResponse.projectRoleId) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'User is not a member of any project',
+                },
+            })
+        }
+
         return {
             ...userWithoutPassword,
             token: authnResponse.token,
             projectId: authnResponse.project.id,
-            projectRole: authnResponse.projectRole,
+            projectRoleId: authnResponse.projectRoleId,
         }
     },
 
@@ -121,11 +131,20 @@ export const authenticationService = {
 
         const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
 
+        if (!authnResponse.projectRoleId) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'User is not a member of any project',
+                },
+            })
+        }
+
         return {
             ...userWithoutPassword,
             token: authnResponse.token,
             projectId: authnResponse.project.id,
-            projectRole: authnResponse.projectRole,
+            projectRoleId: authnResponse.projectRoleId,
         }
     },
 }

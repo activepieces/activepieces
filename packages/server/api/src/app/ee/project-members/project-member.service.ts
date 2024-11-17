@@ -4,11 +4,13 @@ import {
     ProjectMemberWithUser,
 } from '@activepieces/ee-shared'
 import {
+    ApId,
     apId,
     Cursor,
     PlatformRole,
     ProjectId,
     ProjectMemberRole,
+    Rbac,
     SeekPage,
     UserId,
 } from '@activepieces/shared'
@@ -18,6 +20,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { rbacService } from '../rbac/rbac.service'
 import {
     ProjectMemberEntity,
 } from './project-member.entity'
@@ -28,7 +31,7 @@ export const projectMemberService = {
     async upsert({
         userId,
         projectId,
-        role,
+        roleId,
     }: UpsertParams): Promise<ProjectMember> {
         const { platformId } = await projectService.getOneOrThrow(projectId)
         const existingProjectMember = await repo().findOneBy({
@@ -44,7 +47,7 @@ export const projectMemberService = {
             userId,
             platformId,
             projectId,
-            role,
+            roleId,
         }
 
         const upsertResult = await repo().upsert(projectMember, [
@@ -82,28 +85,35 @@ export const projectMemberService = {
         )
         return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
     },
+
     async getRole({
         userId,
         projectId,
     }: {
         projectId: ProjectId
         userId: UserId
-    }): Promise<ProjectMemberRole | null> {
+    }): Promise<Rbac | null> {
         const project = await projectService.getOneOrThrow(projectId)
         const user = await userService.getOneOrFail({
             id: userId,
         })
         if (user.id === project.ownerId) {
-            return ProjectMemberRole.ADMIN
+            return await rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
-            return ProjectMemberRole.ADMIN
+            return await rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
         }
         const member = await repo().findOneBy({
             projectId,
             userId,
         })
-        return member?.role ?? null
+
+        if (!member) {
+            return null
+        }
+
+        const role = await rbacService.get(member.roleId)
+        return role ?? null
     },
     async delete(
         projectId: ProjectId,
@@ -119,7 +129,7 @@ export const projectMemberService = {
 type UpsertParams = {
     userId: string
     projectId: ProjectId
-    role: ProjectMemberRole
+    roleId: ApId
 }
 
 type NewProjectMember = Omit<ProjectMember, 'created'>

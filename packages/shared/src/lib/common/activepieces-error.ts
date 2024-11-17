@@ -115,7 +115,7 @@ ErrorCode.PERMISSION_DENIED,
 {
     userId: UserId
     projectId: ProjectId
-    role: ProjectMemberRole
+    roleId: ApId | null
     permission: Permission | undefined
 }
 >

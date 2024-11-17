@@ -25,7 +25,7 @@ export const UserInvitationEntity = new EntitySchema<UserInvitation>({
             type: String,
             nullable: true,
         },
-        projectRole: {
+        projectRoleId: {
             type: String,
             nullable: true,
         },

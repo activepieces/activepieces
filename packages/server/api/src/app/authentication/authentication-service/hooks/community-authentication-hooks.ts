@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApFlagId, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
+import { ActivepiecesError, ApFlagId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
 import { flagService } from '../../../flags/flag.service'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -6,6 +6,7 @@ import { userService } from '../../../user/user-service'
 import { userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { accessTokenManager } from '../../lib/access-token-manager'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
+import { rbacService } from '../../../ee/rbac/rbac.service'
 
 const DEFAULT_PLATFORM_NAME = 'platform'
 
@@ -70,7 +71,7 @@ async function assertUserIsInvitedToPlatformOrProject({
     }
 }
 
-async function getProjectAndToken(user: User): Promise<{ user: User, project: Project, token: string, projectRole: ProjectMemberRole }> {
+async function getProjectAndToken(user: User): Promise<{ user: User, project: Project, token: string, projectRoleId: ApId }> {
     const updatedUser = await userService.getOneOrFail({ id: user.id })
 
     const project = await projectService.getOneForUser(updatedUser)
@@ -92,10 +93,11 @@ async function getProjectAndToken(user: User): Promise<{ user: User, project: Pr
         },
         tokenVersion: user.tokenVersion,
     })
+    const adminRole = await rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
     return {
         user: updatedUser,
         token,
         project,
-        projectRole: ProjectMemberRole.ADMIN,
+        projectRoleId: adminRole.id,
     }
 }

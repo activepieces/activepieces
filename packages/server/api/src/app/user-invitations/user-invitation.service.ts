@@ -1,5 +1,5 @@
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
@@ -80,14 +80,14 @@ export const userInvitationsService = {
                     break
                 }
                 case InvitationType.PROJECT: {
-                    const { projectId, projectRole } = invitation
+                    const { projectId, projectRoleId } = invitation
                     assertNotNullOrUndefined(projectId, 'projectId')
-                    assertNotNullOrUndefined(projectRole, 'projectRole')
+                    assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
                     assertEqual(platform.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
                     await projectMemberService.upsert({
                         projectId,
                         userId: user.id,
-                        role: projectRole,
+                        roleId: projectRoleId,
                     })
                     break
                 }
@@ -102,7 +102,7 @@ export const userInvitationsService = {
         platformId,
         projectId,
         type,
-        projectRole,
+        projectRoleId,
         platformRole,
         invitationExpirySeconds,
         status,
@@ -115,7 +115,7 @@ export const userInvitationsService = {
             type,
             email: email.toLowerCase().trim(),
             platformId,
-            projectRole: type === InvitationType.PLATFORM ? undefined : projectRole!,
+            projectRoleId: type === InvitationType.PLATFORM ? undefined : projectRoleId!,
             platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
             projectId: type === InvitationType.PLATFORM ? undefined : projectId!,
         }, ['email', 'platformId', 'projectId'])
@@ -280,7 +280,7 @@ type CreateParams = {
     projectId: string | null
     status: InvitationStatus
     type: InvitationType
-    projectRole: ProjectMemberRole | null
+    projectRoleId: ApId | null
     invitationExpirySeconds: number
 }
 

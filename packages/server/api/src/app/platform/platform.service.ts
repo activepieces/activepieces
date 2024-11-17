@@ -15,6 +15,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { defaultTheme } from '../flags/theme'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
+import { rbacService } from '../ee/rbac/rbac.service'
 
 const repo = repoFactory<Platform>(PlatformEntity)
 
@@ -74,7 +75,7 @@ export const platformService = {
             platformId: savedPlatform.id,
         })
 
-
+        await rbacService.createDefaultRbac(savedPlatform.id)
         return savedPlatform
     },
 

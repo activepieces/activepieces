@@ -7,6 +7,7 @@ import {
     Principal,
     PrincipalType,
     ProjectMemberRole,
+    RoleType,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 import {
@@ -87,7 +88,9 @@ async function assertProjectAdminCanInstallPieceOnCloud(
     principal: Principal,
 ): Promise<void> {
     const role = await getPrincipalRoleOrThrow(principal)
-    if (role !== ProjectMemberRole.ADMIN) {
+
+    // TODO: WHAT SHOULD I DO HERE :(
+    if (role.name !== ProjectMemberRole.ADMIN) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {

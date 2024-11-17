@@ -11,9 +11,13 @@ export const projectMembersHooks = {
     const query = useQuery<ProjectMemberWithUser[]>({
       queryKey: ['project-members'],
       queryFn: () => {
+        const projectId = authenticationSession.getProjectId();
+        if (projectId === null) {
+          throw new Error('Project ID is null');
+        }
         return projectMembersApi
           .list({
-            projectId: authenticationSession.getProjectId(),
+            projectId: projectId,
             cursor: undefined,
             limit: 100,
           })

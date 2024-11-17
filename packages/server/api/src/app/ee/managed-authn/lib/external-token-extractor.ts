@@ -1,9 +1,10 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole } from '@activepieces/shared'
+import { ActivepiecesError, ApId, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole, RoleType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { signingKeyService } from '../../signing-key/signing-key-service'
+import { rbacService } from '../../rbac/rbac.service'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
 
@@ -36,6 +37,8 @@ export const externalTokenExtractor = {
 
             const optionalEmail = payload.email ?? payload.externalUserId
 
+            const defaultRole = await rbacService.getDefaultRoleByName(ProjectMemberRole.EDITOR)
+
             const { piecesFilterType, piecesTags } = extractPieces(payload)
             return {
                 platformId: signingKey.platformId,
@@ -44,7 +47,7 @@ export const externalTokenExtractor = {
                 externalEmail: optionalEmail,
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
-                role: payload?.role ?? ProjectMemberRole.EDITOR,
+                roleId: payload?.roleId ?? defaultRole.id,
                 tasks: payload?.tasks,
                 pieces: {
                     filterType: piecesFilterType ?? PiecesFilterType.NONE,
@@ -115,7 +118,7 @@ function externalTokenPayload() {
     const v2 = Type.Composite([v1,
         Type.Object({
             tasks: Type.Optional(Type.Number()),
-            role: Type.Optional(Type.Enum(ProjectMemberRole)),
+            roleId: Type.Optional(Type.String()),
             pieces: Type.Optional(Type.Object({
                 filterType: Type.Enum(PiecesFilterType),
                 tags: Type.Optional(Type.Array(Type.String())),
@@ -142,7 +145,7 @@ export type ExternalPrincipal = {
     externalEmail: string
     externalFirstName: string
     externalLastName: string
-    role: ProjectMemberRole
+    roleId: ApId
     pieces: {
         filterType: PiecesFilterType
         tags: string[]

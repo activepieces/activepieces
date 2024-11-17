@@ -2,22 +2,26 @@ import React from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { rolePermissions } from '@activepieces/ee-shared';
-import { ApFlagId, Permission, PlatformRole } from '@activepieces/shared';
+import { ApFlagId, Permission, PlatformRole, Rbac } from '@activepieces/shared';
+import { api } from '@/lib/api';
 
 export const useAuthorization = () => {
-  const role = authenticationSession.getUserProjectRole();
+  const roleId = authenticationSession.getUserProjectRoleId();
 
   const checkAccess = React.useCallback(
-    (permission: Permission) => {
-      if (!role) return true;
+    async (permission: Permission) => {
+      if (!roleId) return true;
+      const role = await api.post<Rbac>(`/v1/rbac/get-role`, {
+        id: roleId,
+      });
+      if (!role) return false;
 
-      return rolePermissions[role].includes(permission);
+      return role.permissions.includes(permission);
     },
-    [role],
+    [roleId],
   );
 
-  return { checkAccess, role };
+  return { checkAccess, roleId };
 };
 
 export const useShowPlatformAdminDashboard = () => {

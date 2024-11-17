@@ -49,7 +49,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
             await projectMembersLimit.limit({
                 projectId: request.body.projectId,
                 platformId: request.principal.platform.id,
-                role: request.body.projectRole,
+                roleId: request.body.projectRoleId,
             })
         }
         const platformId = request.principal.platform.id
@@ -59,7 +59,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
             platformId,
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
-            projectRole: type === InvitationType.PLATFORM ? null : request.body.projectRole,
+            projectRoleId: type === InvitationType.PLATFORM ? null : request.body.projectRoleId,
             invitationExpirySeconds: dayjs.duration(1, 'day').asSeconds(),
             status,
         })

@@ -1,17 +1,20 @@
 import {
     ActivepiecesError,
+    ApId,
     ErrorCode,
     ProjectId,
     ProjectMemberRole,
+    RoleType,
 } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectLimitsService } from './project-plan.service'
+import { rbacService } from '../rbac/rbac.service'
 
 export const projectMembersLimit = {
-    async limit({ projectId, platformId, role }: { projectId: ProjectId, platformId: string, role: ProjectMemberRole }): Promise<void> {
-        const shouldLimit = await shouldLimitMembers({ projectId, platformId, role })
+    async limit({ projectId, platformId, roleId }: { projectId: ProjectId, platformId: string, roleId: ApId }): Promise<void> {
+        const shouldLimit = await shouldLimitMembers({ projectId, platformId, roleId })
 
         if (shouldLimit) {
             throw new ActivepiecesError({
@@ -26,7 +29,7 @@ export const projectMembersLimit = {
 
 const UNLIMITED_TEAM_MEMBERS = 100
 
-async function shouldLimitMembers({ projectId, platformId, role }: { projectId: ProjectId, platformId: string, role: ProjectMemberRole }): Promise<boolean> {
+async function shouldLimitMembers({ projectId, platformId, roleId }: { projectId: ProjectId, platformId: string, roleId: ApId }): Promise<boolean> {
     if (!flagService.isCloudPlatform(platformId)) {
         return false
     }
@@ -35,7 +38,11 @@ async function shouldLimitMembers({ projectId, platformId, role }: { projectId: 
         return false
     }
     if (projectPlan.teamMembers === UNLIMITED_TEAM_MEMBERS) {
-        return role !== ProjectMemberRole.ADMIN
+        const role = await rbacService.get(roleId, RoleType.DEFAULT)
+        if (!role) {
+            return false
+        }
+        return role.type !== RoleType.DEFAULT || (role.name !== ProjectMemberRole.ADMIN)
     }
     const numberOfMembers = await projectMemberService.countTeamMembers(projectId)
     const numberOfInvitations = await userInvitationsService.countByProjectId(projectId)

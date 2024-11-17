@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
+import { RoleType } from '@activepieces/shared';
 
 interface CreateRbacDialogProps {
     onCreate: () => void;
@@ -20,7 +21,7 @@ export const CreateRbacDialog = ({ onCreate, platformId, children }: CreateRbacD
 
     const { mutate, isPending } = useMutation({
         mutationFn: async () => {
-            await rbacApi.create({ name: roleName, permissions: [], platformId });
+            await rbacApi.create({ name: roleName, permissions: [], platformId, type: RoleType.CUSTOM });
         },
         onSuccess: () => {
             onCreate();
@@ -30,7 +31,7 @@ export const CreateRbacDialog = ({ onCreate, platformId, children }: CreateRbacD
                 description: t('RBAC entry created successfully'),
                 duration: 3000,
             });
-            setRoleName(''); // Reset the input field
+            setRoleName('');
         },
         onError: () => {
             toast({

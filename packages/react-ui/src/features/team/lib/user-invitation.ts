@@ -1,5 +1,8 @@
 import {
   ListUserInvitationsRequest,
+  ProjectMemberRole,
+  Rbac,
+  RoleType,
   SeekPage,
   SendUserInvitationRequest,
   UserInvitation,
@@ -21,6 +24,11 @@ export const userInvitationApi = {
   accept(token: string): Promise<{ registered: boolean }> {
     return api.post<{ registered: boolean }>(`/v1/user-invitations/accept`, {
       invitationToken: token,
+    });
+  },
+  getDefaultRole(role: ProjectMemberRole): Promise<Rbac> {
+    return api.post<Rbac>(`/v1/rbac/default`, {
+      role,
     });
   },
 };

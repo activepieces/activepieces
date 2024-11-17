@@ -18,3 +18,8 @@ export enum Permission {
     READ_FOLDER = 'READ_FOLDER',
     WRITE_FOLDER = 'WRITE_FOLDER',
 }
+
+export enum RoleType {
+    DEFAULT = 'DEFAULT',
+    CUSTOM = 'CUSTOM',
+}

@@ -1,5 +1,6 @@
 import {
     ActivepiecesError,
+    ApId,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
@@ -89,7 +90,7 @@ async function autoVerifyUserIfEligible(user: User): Promise<void> {
 
 async function getProjectAndTokenOrThrow(
     user: User,
-): Promise<{ project: Project, token: string, projectRole: ProjectMemberRole | null }> {
+): Promise<{ project: Project, token: string, projectRoleId: ApId | null }> {
     const project = await getProjectForUserOrThrow(user)
 
     const projectRole = await projectMemberService.getRole({
@@ -102,9 +103,21 @@ async function getProjectAndTokenOrThrow(
         project,
     })
 
+    if(isNil(projectRole)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PERMISSION_DENIED,
+            params: {
+                userId: user.id,
+                projectId: project.id,
+                roleId: null,
+                permission: undefined,
+            },
+        })
+    }
+
     return {
         project,
-        projectRole,
+        projectRoleId: projectRole.id,
         token,
     }
 }
