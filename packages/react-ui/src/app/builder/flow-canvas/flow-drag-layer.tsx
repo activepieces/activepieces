@@ -24,10 +24,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 import StepDragOverlay from './step-drag-overlay';
 import { ApButtonData } from './types';
 
-type FlowDragLayerProps = {
-  children: React.ReactNode;
-};
-
 // https://github.com/clauderic/dnd-kit/pull/334#issuecomment-1965708784
 const fixCursorSnapOffset: CollisionDetection = (args) => {
   // Bail out if keyboard activated
@@ -52,7 +48,13 @@ const fixCursorSnapOffset: CollisionDetection = (args) => {
   return rectIntersection(updated);
 };
 
-const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
+const FlowDragLayer = ({
+  children,
+  lefSideBarContainerWidth,
+}: {
+  children: React.ReactNode;
+  lefSideBarContainerWidth: number;
+}) => {
   const { toast } = useToast();
   const [
     setActiveDraggingStep,
@@ -92,7 +94,8 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
       if (
         droppedAtNodeData &&
         droppedAtNodeData.parentStepName &&
-        draggedStep
+        draggedStep &&
+        draggedStep.name !== droppedAtNodeData.parentStepName
       ) {
         const isPartOfInnerFlow = flowStructureUtil.isChildOf(
           draggedStep,
@@ -101,7 +104,9 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
         if (isPartOfInnerFlow) {
           toast({
             title: t('Invalid Move'),
-            description: t('The destination location is inside the same step'),
+            description: t(
+              'The destination location is a child of the dragged step',
+            ),
             duration: 3000,
           });
           return;
@@ -148,7 +153,13 @@ const FlowDragLayer = ({ children }: FlowDragLayerProps) => {
         {children}
         <DragOverlay dropAnimation={{ duration: 0 }}></DragOverlay>
       </DndContext>
-      {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
+
+      {draggedStep && (
+        <StepDragOverlay
+          lefSideBarContainerWidth={lefSideBarContainerWidth}
+          step={draggedStep}
+        ></StepDragOverlay>
+      )}
     </>
   );
 };
