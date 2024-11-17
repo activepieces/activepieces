@@ -631,6 +631,9 @@
       "@activepieces/piece-village": [
         "packages/pieces/community/village/src/index.ts"
       ],
+      "@activepieces/piece-voice-ai": [
+        "packages/pieces/community/voice-ai/src/index.ts"
+      ],
       "@activepieces/piece-vtex": [
         "packages/pieces/community/vtex/src/index.ts"
       ],

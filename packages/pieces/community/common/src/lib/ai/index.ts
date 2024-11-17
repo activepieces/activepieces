@@ -7,6 +7,32 @@ export type AI = {
   image?: AIImage;
   moderation?: AIModeration;
   function?: AIFunction;
+  voice?: AIVoice;
+};
+
+export type AIVoice = {
+  createSpeech: (params: AISpeechCreateParams) => Promise<any>;
+  createTranscription: (
+    params: AITranscriptionCreateParams
+  ) => Promise<AITranscriptionCreateResponse>;
+};
+
+export type AISpeechCreateParams = {
+  model: string;
+  input: string;
+  voice: string;
+  speed?: number;
+  response_format?: string;
+};
+
+export type AITranscriptionCreateParams = {
+  audio: ApFile;
+  language: string;
+  model: string;
+};
+
+export type AITranscriptionCreateResponse = {
+  text: string;
 };
 
 export type AIFunction = {
@@ -92,7 +118,7 @@ export type AIFunctionArgumentDefinition = {
   properties?: unknown | null;
   required?: string[];
   [k: string]: unknown;
-}
+};
 
 export enum AIChatRole {
   SYSTEM = 'system',
@@ -120,12 +146,12 @@ export const AI = ({
     throw new Error(`AI provider ${provider} is not registered`);
   }
 
-
   return {
     provider,
     image: impl.image,
     moderation: impl.moderation,
     function: impl.function,
+    voice: impl.voice,
     chat: {
       text: async (params) => {
         try {
@@ -137,7 +163,7 @@ export const AI = ({
           }
           throw e;
         }
-      }
+      },
     },
   };
 };

@@ -2,8 +2,16 @@ import { AI, AIChatRole, AIFactory } from '../..';
 import { isNil } from '@activepieces/shared';
 import OpenAI from 'openai';
 import { imageMapper, model, ModelType } from '../utils';
-import { ApFile, Property } from '@activepieces/pieces-framework';
-import { ChatCompletionMessageParam, FunctionParameters, ModerationMultiModalInput } from 'openai/resources';
+import { Property } from '@activepieces/pieces-framework';
+import {
+  ChatCompletionMessageParam,
+  FunctionParameters,
+  ModerationMultiModalInput,
+} from 'openai/resources';
+import FormData from 'form-data';
+import mime from 'mime-types';
+import { httpClient, HttpMethod } from '../../../http';
+import { AuthenticationType } from '../../../authentication';
 
 export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
   const openaiApiVersion = 'v1';
@@ -15,17 +23,22 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
     provider: 'OPENAI',
     function: {
       call: async (params) => {
-        const messages: ChatCompletionMessageParam[] = params.messages.map((message) => ({
-          role: 'user',
-          content: [
-            { type: 'text', text: message.content },
-          ],
-        }));
+        const messages: ChatCompletionMessageParam[] = params.messages.map(
+          (message) => ({
+            role: 'user',
+            content: [{ type: 'text', text: message.content }],
+          })
+        );
         if (params.image) {
           messages.push({
             role: 'user',
             content: [
-              { type: 'image_url', image_url: { url: `data:image/${params.image.extension};base64,${params.image.base64}` } },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/${params.image.extension};base64,${params.image.base64}`,
+                },
+              },
             ],
           });
         }
@@ -38,7 +51,8 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
             function: {
               name: functionDefinition.name,
               description: functionDefinition.description,
-              parameters: functionDefinition.arguments as unknown as FunctionParameters,
+              parameters:
+                functionDefinition.arguments as unknown as FunctionParameters,
             },
           })),
         });
@@ -52,12 +66,12 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
           })),
           call: toolCall
             ? {
-              id: toolCall.id,
-              function: {
-                name: toolCall.function.name,
-                arguments: JSON.parse(toolCall.function.arguments as string),
-              },
-            }
+                id: toolCall.id,
+                function: {
+                  name: toolCall.function.name,
+                  arguments: JSON.parse(toolCall.function.arguments as string),
+                },
+              }
             : null,
           created: completion.created,
           model: completion.model,
@@ -103,7 +117,7 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
             totalTokens: completion.usage.total_tokens,
           },
         };
-      }
+      },
     },
     moderation: {
       create: async (params) => {
@@ -127,6 +141,57 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
         });
 
         return response.results[0];
+      },
+    },
+    voice: {
+      createSpeech: async (params) => {
+        const response = await sdk.audio.speech.create({
+          model: params.model,
+          input: params.input,
+          voice: params.voice as
+            | 'alloy'
+            | 'echo'
+            | 'fable'
+            | 'onyx'
+            | 'nova'
+            | 'shimmer',
+          speed: params.speed,
+          response_format: params.response_format as
+            | 'mp3'
+            | 'opus'
+            | 'aac'
+            | 'flac'
+            | 'wav'
+            | 'pcm',
+        });
+        const readableStream =
+          response.body as unknown as NodeJS.ReadableStream;
+        const buffer = await streamToBuffer(readableStream);
+        return { data: buffer };
+      },
+      createTranscription: async (params) => {
+        const form = new FormData();
+        form.append('file', params.audio.data, {
+          filename: params.audio.filename,
+          contentType: mime.lookup(params.audio.extension || '') as string,
+        });
+        form.append('model', params.model);
+        form.append('language', params.language);
+
+        const response = await httpClient.sendRequest<{ text: string }>({
+          url: `${proxyUrl}/${openaiApiVersion}/audio/transcriptions`,
+          method: HttpMethod.POST,
+          body: form,
+          headers: {
+            ...form.getHeaders(),
+            'X-AP-TOTAL-USAGE-BODY-PATH': 'usage.total_tokens',
+          },
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: engineToken,
+          },
+        });
+        return { text: response.body.text };
       },
     },
   };
@@ -206,4 +271,20 @@ export const openaiModels = [
     value: 'omni-moderation-latest',
     supported: ['moderation'],
   }),
+  model({ label: 'tts-1', value: 'tts-1', supported: ['speech'] }),
+  model({ label: 'tts-1-hd', value: 'tts-1-hd', supported: ['speech'] }),
+  model({
+    label: 'whisper-1',
+    value: 'whisper-1',
+    supported: ['transcription'],
+  }),
 ];
+
+const streamToBuffer = (stream: any) => {
+  const chunks: any[] = [];
+  return new Promise((resolve, reject) => {
+    stream.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
+    stream.on('error', (err: any) => reject(err));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+  });
+};

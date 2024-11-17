@@ -91,7 +91,13 @@ export const AI_PROVIDERS = [
 ];
 
 export const aiProps = (
-  supported: 'text' | 'image' | 'function' | 'moderation'
+  supported:
+    | 'text'
+    | 'image'
+    | 'function'
+    | 'moderation'
+    | 'speech'
+    | 'transcription'
 ) => ({
   provider: Property.Dropdown<AiProvider, true>({
     displayName: 'Provider',
