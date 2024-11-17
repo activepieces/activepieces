@@ -317,7 +317,8 @@ const PieceSelector = ({
               {
                 operation.type === FlowOperationType.ADD_ACTION
                 &&
-                <AskAiButton {...operation.actionLocation}
+                <AskAiButton action={operation.actionLocation}
+                  onClick={() => { onOpenChange(false) }}
                 ></AskAiButton>
               }
 
@@ -395,7 +396,7 @@ const PieceSelector = ({
           )}
         </>
       </PopoverContent>
-    </Popover>
+    </Popover >
   );
 };
 

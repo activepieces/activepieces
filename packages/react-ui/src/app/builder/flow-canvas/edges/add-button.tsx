@@ -14,6 +14,7 @@ import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../consts';
 import { ApButtonData } from '../types';
 import deepEqual from 'deep-equal';
+import { AskAiIndicator } from './aski-ai-indicator';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
@@ -50,28 +51,10 @@ const ApAddButton = React.memo((props: ApButtonData) => {
     <>
       {
         showAskAiIndicator && (
-          <div
-            style={{
-              width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-              height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
-            }}
-            className={cn('transition-all animate-ask-ai-background bg-[length:400%] shadow-add-button bg-gradient-to-r  from-primary/90  via-primary/55 to-primary/90 flex items-center  justify-center  rounded-xss')}
-          >
-            <Sparkle className='w-3.5 h-3.5 stroke-background/80  '></Sparkle>
-            <div
-              style={{
-                width: flowUtilConsts.AP_NODE_SIZE.STEP.width + 'px',
-                height: flowUtilConsts.AP_NODE_SIZE.STEP.height + 'px',
-                left: `${-flowUtilConsts.AP_NODE_SIZE.STEP.width / 2}px`,
-                top: `${-flowUtilConsts.AP_NODE_SIZE.STEP.height / 2}px`,
-              }}
-              className={cn(' absolute flex items-center    rounded-xss box-content ')}
-              ref={setNodeRef}
-            >
-
-
-            </div>
-          </div>
+          <AskAiIndicator
+            height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
+            width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
+          ></AskAiIndicator>
         )
       }
       {showDropIndicator && !readonly && !showAskAiIndicator && (
