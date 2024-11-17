@@ -14,19 +14,25 @@ import {
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../consts';
-import { ApBigAddButtonNode } from '../types';
 import { AskAiIndicator } from '../edges/aski-ai-indicator';
+import { ApBigAddButtonNode } from '../types';
 
 const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
     const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);
     const [pieceSelectorOpen, setPieceSelectorOpen] = useState(false);
-    const [readonly, activeDraggingStep, showAiIndicator] = useBuilderStateContext((state) => [
-      state.readonly,
-      state.activeDraggingStep,
-      state.askAiButtonProps && state.askAiButtonProps.stepLocationRelativeToParent === data.stepLocationRelativeToParent && state.askAiButtonProps.parentStep === data.parentStepName &&
-      (data.stepLocationRelativeToParent !== StepLocationRelativeToParent.INSIDE_BRANCH || data.branchIndex === state.askAiButtonProps.branchIndex)
-    ]);
+    const [readonly, activeDraggingStep, showAiIndicator] =
+      useBuilderStateContext((state) => [
+        state.readonly,
+        state.activeDraggingStep,
+        state.askAiButtonProps &&
+          state.askAiButtonProps.stepLocationRelativeToParent ===
+            data.stepLocationRelativeToParent &&
+          state.askAiButtonProps.parentStep === data.parentStepName &&
+          (data.stepLocationRelativeToParent !==
+            StepLocationRelativeToParent.INSIDE_BRANCH ||
+            data.branchIndex === state.askAiButtonProps.branchIndex),
+      ]);
     const draggableId = useId();
     const { setNodeRef } = useDroppable({
       id: draggableId,
@@ -47,132 +53,139 @@ const ApBigAddButtonCanvasNode = React.memo(
     });
     return (
       <>
+        {
+          <div
+            style={{
+              height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
+              width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+            }}
+            className="flex justify-center items-center"
+          >
+            {showAiIndicator && (
+              <AskAiIndicator
+                height={flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}
+                width={flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}
+              ></AskAiIndicator>
+            )}
 
-        {<div
-          style={{
-            height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
-            width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-          }}
-          className="flex justify-center items-center"
-        >
-
-          {showAiIndicator && <AskAiIndicator height={flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height} width={flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}>
-
-          </AskAiIndicator>}
-
-          {!readonly && !showAiIndicator && (
-            <div
-              style={{
-                height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
-                width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
-              }}
-              className=" cursor-auto border-none flex items-center justify-center relative "
-            >
+            {!readonly && !showAiIndicator && (
               <div
                 style={{
                   height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
                   width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                 }}
-                id={id}
-                className={cn('  rounded bg-accent', {
-                  'bg-primary/80': showDropIndicator || pieceSelectorOpen,
-                  'shadow-add-button': isIsStepInsideDropzone || pieceSelectorOpen,
-                  'transition-all':
-                    isIsStepInsideDropzone ||
-                    pieceSelectorOpen ||
-                    showDropIndicator,
-                })}
+                className=" cursor-auto border-none flex items-center justify-center relative "
               >
-                {!showDropIndicator && (
-                  <PieceSelector
-                    operation={
-                      data.stepLocationRelativeToParent ===
-                        StepLocationRelativeToParent.INSIDE_BRANCH
-                        ? {
-                          type: FlowOperationType.ADD_ACTION,
-                          actionLocation: {
-                            parentStep: data.parentStepName,
-                            stepLocationRelativeToParent:
-                              data.stepLocationRelativeToParent,
-                            branchIndex: data.branchIndex,
-                          },
-                        }
-                        : {
-                          type: FlowOperationType.ADD_ACTION,
-                          actionLocation: {
-                            parentStep: data.parentStepName,
-                            stepLocationRelativeToParent:
-                              data.stepLocationRelativeToParent,
-                          },
-                        }
-                    }
-                    open={pieceSelectorOpen}
-                    onOpenChange={setPieceSelectorOpen}
-                  >
-                    <Button
-                      variant="transparent"
-                      className="w-full h-full hover:bg-accent-foreground rounded"
-                    >
-                      <Plus
-                        className={cn('w-6 h-6 text-accent-foreground ', {
-                          'opacity-0': showDropIndicator || pieceSelectorOpen,
-                        })}
-                      />
-                    </Button>
-                  </PieceSelector>
-                )}
-              </div>
-              {showDropIndicator && (
                 <div
                   style={{
-                    height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
-                    width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-                    top: `-${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 -
-                      flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width / 2
-                      }px`,
+                    height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
+                    width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                   }}
-                  className=" absolute "
-                  ref={setNodeRef}
+                  id={id}
+                  className={cn('  rounded bg-accent', {
+                    'bg-primary/80': showDropIndicator || pieceSelectorOpen,
+                    'shadow-add-button':
+                      isIsStepInsideDropzone || pieceSelectorOpen,
+                    'transition-all':
+                      isIsStepInsideDropzone ||
+                      pieceSelectorOpen ||
+                      showDropIndicator,
+                  })}
                 >
-                  {' '}
+                  {!showDropIndicator && (
+                    <PieceSelector
+                      operation={
+                        data.stepLocationRelativeToParent ===
+                        StepLocationRelativeToParent.INSIDE_BRANCH
+                          ? {
+                              type: FlowOperationType.ADD_ACTION,
+                              actionLocation: {
+                                parentStep: data.parentStepName,
+                                stepLocationRelativeToParent:
+                                  data.stepLocationRelativeToParent,
+                                branchIndex: data.branchIndex,
+                              },
+                            }
+                          : {
+                              type: FlowOperationType.ADD_ACTION,
+                              actionLocation: {
+                                parentStep: data.parentStepName,
+                                stepLocationRelativeToParent:
+                                  data.stepLocationRelativeToParent,
+                              },
+                            }
+                      }
+                      open={pieceSelectorOpen}
+                      onOpenChange={setPieceSelectorOpen}
+                    >
+                      <Button
+                        variant="transparent"
+                        className="w-full h-full hover:bg-accent-foreground rounded"
+                      >
+                        <Plus
+                          className={cn('w-6 h-6 text-accent-foreground ', {
+                            'opacity-0': showDropIndicator || pieceSelectorOpen,
+                          })}
+                        />
+                      </Button>
+                    </PieceSelector>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
-          {readonly && (
-            <div
-              style={{
-                height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
-                width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-              }}
-              className="border cursor-auto border-solid border-none flex items-center justify-center relative "
-            >
-              <svg
-                height={flowUtilConsts.AP_NODE_SIZE.STEP.height}
-                width={flowUtilConsts.AP_NODE_SIZE.STEP.width}
-                className="overflow-visible  "
+                {showDropIndicator && (
+                  <div
+                    style={{
+                      height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
+                      width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+                      top: `-${
+                        flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 -
+                        flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width / 2
+                      }px`,
+                    }}
+                    className=" absolute "
+                    ref={setNodeRef}
+                  >
+                    {' '}
+                  </div>
+                )}
+              </div>
+            )}
+            {readonly && (
+              <div
                 style={{
-                  stroke:
-                    'var(--xy-edge-stroke, var(--xy-edge-stroke-default))',
+                  height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
+                  width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
                 }}
-                shapeRendering="auto"
+                className="border cursor-auto border-solid border-none flex items-center justify-center relative "
               >
-                <g>
-                  <path
-                    d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -${flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 5
-                      } v ${flowUtilConsts.AP_NODE_SIZE.STEP.height +
-                      2 *
-                      (flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
-                        5)
+                <svg
+                  height={flowUtilConsts.AP_NODE_SIZE.STEP.height}
+                  width={flowUtilConsts.AP_NODE_SIZE.STEP.width}
+                  className="overflow-visible  "
+                  style={{
+                    stroke:
+                      'var(--xy-edge-stroke, var(--xy-edge-stroke-default))',
+                  }}
+                  shapeRendering="auto"
+                >
+                  <g>
+                    <path
+                      d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -${
+                        flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 5
+                      } v ${
+                        flowUtilConsts.AP_NODE_SIZE.STEP.height +
+                        2 *
+                          (flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
+                            5)
                       }`}
-                    fill="transparent"
-                    strokeWidth="1.5"
-                  />
-                </g>
-              </svg>
-            </div>
-          )}
-        </div>}
+                      fill="transparent"
+                      strokeWidth="1.5"
+                    />
+                  </g>
+                </svg>
+              </div>
+            )}
+          </div>
+        }
 
         <Handle
           type="source"

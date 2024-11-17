@@ -1,4 +1,5 @@
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
+import deepEqual from 'deep-equal';
 import { Plus, Sparkle } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -13,18 +14,24 @@ import {
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../consts';
 import { ApButtonData } from '../types';
-import deepEqual from 'deep-equal';
+
 import { AskAiIndicator } from './aski-ai-indicator';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
 
-  const [activeDraggingStep, readonly, showAskAiIndicator] = useBuilderStateContext((state) => [
-    state.activeDraggingStep,
-    state.readonly,
-    state.askAiButtonProps && state.askAiButtonProps.stepLocationRelativeToParent === props.stepLocationRelativeToParent && state.askAiButtonProps.parentStep === props.parentStepName &&
-    (props.stepLocationRelativeToParent !== StepLocationRelativeToParent.INSIDE_BRANCH || props.branchIndex === state.askAiButtonProps.branchIndex)
-  ]);
+  const [activeDraggingStep, readonly, showAskAiIndicator] =
+    useBuilderStateContext((state) => [
+      state.activeDraggingStep,
+      state.readonly,
+      state.askAiButtonProps &&
+        state.askAiButtonProps.stepLocationRelativeToParent ===
+          props.stepLocationRelativeToParent &&
+        state.askAiButtonProps.parentStep === props.parentStepName &&
+        (props.stepLocationRelativeToParent !==
+          StepLocationRelativeToParent.INSIDE_BRANCH ||
+          props.branchIndex === state.askAiButtonProps.branchIndex),
+    ]);
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
@@ -49,14 +56,12 @@ const ApAddButton = React.memo((props: ApButtonData) => {
 
   return (
     <>
-      {
-        showAskAiIndicator && (
-          <AskAiIndicator
-            height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
-            width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
-          ></AskAiIndicator>
-        )
-      }
+      {showAskAiIndicator && (
+        <AskAiIndicator
+          height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
+          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
+        ></AskAiIndicator>
+      )}
       {showDropIndicator && !readonly && !showAskAiIndicator && (
         <div
           style={{
@@ -83,24 +88,24 @@ const ApAddButton = React.memo((props: ApButtonData) => {
         <PieceSelector
           operation={
             props.stepLocationRelativeToParent ===
-              StepLocationRelativeToParent.INSIDE_BRANCH
+            StepLocationRelativeToParent.INSIDE_BRANCH
               ? {
-                type: FlowOperationType.ADD_ACTION,
-                actionLocation: {
-                  parentStep: props.parentStepName,
-                  stepLocationRelativeToParent:
-                    props.stepLocationRelativeToParent,
-                  branchIndex: props.branchIndex,
-                },
-              }
+                  type: FlowOperationType.ADD_ACTION,
+                  actionLocation: {
+                    parentStep: props.parentStepName,
+                    stepLocationRelativeToParent:
+                      props.stepLocationRelativeToParent,
+                    branchIndex: props.branchIndex,
+                  },
+                }
               : {
-                type: FlowOperationType.ADD_ACTION,
-                actionLocation: {
-                  parentStep: props.parentStepName,
-                  stepLocationRelativeToParent:
-                    props.stepLocationRelativeToParent,
-                },
-              }
+                  type: FlowOperationType.ADD_ACTION,
+                  actionLocation: {
+                    parentStep: props.parentStepName,
+                    stepLocationRelativeToParent:
+                      props.stepLocationRelativeToParent,
+                  },
+                }
           }
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}

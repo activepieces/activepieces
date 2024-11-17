@@ -8,7 +8,12 @@ import { Socket } from 'socket.io-client';
 import { useSocket } from '@/components/socket-provider';
 import { CardList } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { INTERNAL_ERROR_MESSAGE, INTERNAL_ERROR_TOAST, toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
+import {
+  INTERNAL_ERROR_MESSAGE,
+  INTERNAL_ERROR_TOAST,
+  toast,
+  UNSAVED_CHANGES_TOAST,
+} from '@/components/ui/use-toast';
 import {
   Action,
   ActionType,
@@ -22,14 +27,15 @@ import {
   WebsocketServerEvent,
 } from '@activepieces/shared';
 
+import { Textarea } from '../../../components/ui/textarea';
+import { CORE_STEP_METADATA } from '../../../features/pieces/lib/pieces-api';
+import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
 import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
+import { pieceSelectorUtils } from '../pieces-selector/piece-selector-utils';
 import { SidebarHeader } from '../sidebar-header';
 
 import { ChatMessage, CopilotMessage } from './chat-message';
-import { Textarea } from '../../../components/ui/textarea';
-import { pieceSelectorUtils } from '../pieces-selector/piece-selector-utils';
-import { CORE_STEP_METADATA } from '../../../features/pieces/lib/pieces-api';
-import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
+import { LoadingMessage } from './loading-message';
 
 interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
@@ -75,7 +81,7 @@ export const CopilotSidebar = () => {
     applyOperation,
     setLeftSidebar,
     askAiButtonProps,
-    selectStepByName
+    selectStepByName,
   ] = useBuilderStateContext((state) => [
     state.selectedStep,
     state.flowVersion,
@@ -83,7 +89,7 @@ export const CopilotSidebar = () => {
     state.applyOperation,
     state.setLeftSidebar,
     state.askAiButtonProps,
-    state.selectStepByName
+    state.selectStepByName,
   ]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const socket = useSocket();
@@ -127,7 +133,7 @@ export const CopilotSidebar = () => {
     }
     mutate({
       prompt: `${inputMessage}. ${t(
-        'Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies, use only ES modules for dependencies.',
+        'Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies, use only ES modules for dependencies, and use axios instead of node-fetch when needed.',
       )}`,
       previousContext: messages.map((message) => ({
         role: message.userType === 'user' ? 'user' : 'assistant',
@@ -143,14 +149,6 @@ export const CopilotSidebar = () => {
   };
 
   const updateAction = (newAction: Action): void => {
-    setMessages([
-      ...messages,
-      {
-        content: t('I have updated the code piece for you.'),
-        userType: 'bot',
-        messageType: 'text',
-      },
-    ]);
     applyOperation(
       {
         type: FlowOperationType.UPDATE_ACTION,
@@ -180,13 +178,12 @@ export const CopilotSidebar = () => {
   };
 
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
-
     const step = flowStructureUtil.getStep(
       selectedStep ?? '',
       flowVersion.trigger,
     );
     if (!step && !askAiButtonProps) {
-      toast(INTERNAL_ERROR_TOAST)
+      toast(INTERNAL_ERROR_TOAST);
       return;
     }
     const isCodeType = message.messageType !== 'code';
@@ -211,13 +208,12 @@ export const CopilotSidebar = () => {
         updateAction(newStep);
         refreshSettings();
       }
-    }
-    else if (askAiButtonProps) {
+    } else if (askAiButtonProps) {
       const stepName = flowStructureUtil.findUnusedName(flowVersion.trigger);
       const codeAction = pieceSelectorUtils.getDefaultStep({
         stepName,
         stepMetadata: CORE_STEP_METADATA[ActionType.CODE],
-        actionOrTrigger: getCoreActions(ActionType.CODE)[0]
+        actionOrTrigger: getCoreActions(ActionType.CODE)[0],
       }) as CodeAction;
       codeAction.settings = {
         input: message.content.inputs,
@@ -225,20 +221,19 @@ export const CopilotSidebar = () => {
           code: message.content.code,
           packageJson: JSON.stringify(message.content.packages, null, 2),
         },
-      }
-      applyOperation({
-        type: FlowOperationType.ADD_ACTION,
-        request: {
-          action: codeAction,
-          ...askAiButtonProps
-        }
-      }, () => { })
+      };
+      applyOperation(
+        {
+          type: FlowOperationType.ADD_ACTION,
+          request: {
+            action: codeAction,
+            ...askAiButtonProps,
+          },
+        },
+        () => {},
+      );
       selectStepByName(stepName);
     }
-
-
-
-
   };
 
   return (
@@ -257,6 +252,7 @@ export const CopilotSidebar = () => {
                 onApplyCode={(message) => applyCodeToCurrentStep(message)}
               />
             ))}
+            {isPending && <LoadingMessage></LoadingMessage>}
             <ScrollBar />
           </CardList>
         </ScrollArea>
@@ -267,7 +263,7 @@ export const CopilotSidebar = () => {
             rows={1}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey && !isPending) {
                 handleSendMessage();
                 e.preventDefault();
               }

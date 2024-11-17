@@ -34,9 +34,9 @@ import {
 
 import { SearchInput } from '../../../components/ui/search-input';
 
+import { AskAiButton } from './ask-ai';
 import { PiecesCardList } from './pieces-card-list';
 import { StepsCardList } from './steps-card-list';
-import { AskAiButton } from './ask-ai';
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -72,13 +72,19 @@ const PieceSelector = ({
   const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
     PieceTagEnum.ALL,
   );
-  const [applyOperation, selectStepByName, flowVersion, setSampleData] =
-    useBuilderStateContext((state) => [
-      state.applyOperation,
-      state.selectStepByName,
-      state.flowVersion,
-      state.setSampleData,
-    ]);
+  const [
+    applyOperation,
+    selectStepByName,
+    flowVersion,
+    setSampleData,
+    setAskAiButtonProps,
+  ] = useBuilderStateContext((state) => [
+    state.applyOperation,
+    state.selectStepByName,
+    state.flowVersion,
+    state.setSampleData,
+    state.setAskAiButtonProps,
+  ]);
 
   const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
   const { metadata, isLoading: isLoadingPieces } =
@@ -184,7 +190,7 @@ const PieceSelector = ({
     stepMetadata,
     actionOrTrigger,
   ) => {
-    console.log(actionOrTrigger)
+    console.log(actionOrTrigger);
     resetField();
     onOpenChange(false);
     const newStepName = pieceSelectorUtils.getStepName(
@@ -273,6 +279,7 @@ const PieceSelector = ({
         );
       }
     }
+    setAskAiButtonProps(null);
   };
   const isMobile = pieceSelectorUtils.useIsMobile();
   return (
@@ -314,14 +321,14 @@ const PieceSelector = ({
                   setSelectedMetadata(undefined);
                 }}
               />
-              {
-                operation.type === FlowOperationType.ADD_ACTION
-                &&
-                <AskAiButton action={operation.actionLocation}
-                  onClick={() => { onOpenChange(false) }}
+              {operation.type === FlowOperationType.ADD_ACTION && (
+                <AskAiButton
+                  action={operation.actionLocation}
+                  onClick={() => {
+                    onOpenChange(false);
+                  }}
                 ></AskAiButton>
-              }
-
+              )}
             </div>
 
             <PieceTagGroup
@@ -396,7 +403,7 @@ const PieceSelector = ({
           )}
         </>
       </PopoverContent>
-    </Popover >
+    </Popover>
   );
 };
 

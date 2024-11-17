@@ -3,8 +3,8 @@ import { json } from '@codemirror/lang-json';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import { t } from 'i18next';
-import { BetweenHorizontalEnd, Package } from 'lucide-react';
-import { useState } from 'react';
+import {  Code, Package } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ type CodeEditorProps = {
   onChange: (sourceCode: SourceCode) => void;
   readonly: boolean;
   applyCodeToCurrentStep?: () => void;
+  animateBorderColorToggle: boolean;
 };
 
 const CodeEditor = ({
@@ -33,12 +34,29 @@ const CodeEditor = ({
   readonly,
   onChange,
   applyCodeToCurrentStep,
+  animateBorderColorToggle,
 }: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
   const [language, setLanguage] = useState<'typescript' | 'json'>('typescript');
   const codeApplicationEnabled = typeof applyCodeToCurrentStep === 'function';
   const { theme } = useTheme();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [borderColor, setBorderColor] = useState('border');
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    if (borderColor === 'border' && !isFirstRenderRef.current) {
+      setBorderColor('border-primary shadow-add-button');
+      setTimeout(() => setBorderColor('border'), 1000);
+      if (containerRef.current) {
+        containerRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }
+    }
+    isFirstRenderRef.current = false;
+  }, [animateBorderColorToggle]);
 
   const codeEditorTheme = theme === 'dark' ? githubDark : githubLight;
 
@@ -79,7 +97,13 @@ const CodeEditor = ({
   }
 
   return (
-    <div className="flex flex-col gap-2 border rounded py-2 px-2">
+    <div
+      className={cn(
+        'flex flex-col gap-2 border rounded py-2 px-2 transition-all ',
+        borderColor,
+      )}
+      ref={containerRef}
+    >
       <div className="flex flex-row justify-center items-center h-full">
         <div className="flex justify-start gap-4 items-center">
           <div
@@ -109,8 +133,8 @@ const CodeEditor = ({
             size={'sm'}
             onClick={applyCodeToCurrentStep}
           >
-            <BetweenHorizontalEnd className="w-3 h-3" />
-            {t('Apply code')}
+            <Code className="w-3 h-3" />
+            {t('Use code')}
           </Button>
         ) : (
           allowNpmPackagesInCodeStep && (

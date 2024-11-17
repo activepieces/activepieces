@@ -62,6 +62,7 @@ export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
                 </ChatBox>
               ) : (
                 <CodeEditor
+                  animateBorderColorToggle={false}
                   sourceCode={{
                     code: message.content.code,
                     packageJson: JSON.stringify(

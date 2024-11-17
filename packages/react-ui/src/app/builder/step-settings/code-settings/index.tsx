@@ -34,10 +34,9 @@ type CodeSettingsProps = {
 
 const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const form = useFormContext<CodeAction>();
-  const [setLeftSidebar] = useBuilderStateContext((state) => [
-    state.setLeftSidebar,
-  ]);
-
+  const [setLeftSidebar, refreshPieceFormSettings] = useBuilderStateContext(
+    (state) => [state.setLeftSidebar, state.refreshPieceFormSettings],
+  );
   return (
     <div className="flex flex-col gap-4">
       <FormField
@@ -83,6 +82,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         render={({ field }) => (
           <FormItem>
             <CodeEditor
+              animateBorderColorToggle={refreshPieceFormSettings}
               sourceCode={field.value}
               onChange={field.onChange}
               readonly={readonly}

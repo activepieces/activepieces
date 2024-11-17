@@ -105,8 +105,8 @@ export type BuilderState = {
       operation: FlowOperationRequest,
     ) => void,
   ) => void;
-  askAiButtonProps : Omit<AddActionRequest,'action'> | null;
-  setAskAiButtonProps:( props:Omit<AddActionRequest,'action'> | null) => void
+  askAiButtonProps: Omit<AddActionRequest, 'action'> | null;
+  setAskAiButtonProps: (props: Omit<AddActionRequest, 'action'> | null) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -189,9 +189,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                 : RightSideBarType.PIECE_SETTINGS,
             leftSidebar: !isNil(state.run)
               ? LeftSideBarType.RUN_DETAILS
-              : state.askAiButtonProps? state.leftSidebar: LeftSideBarType.NONE,
+              : state.askAiButtonProps
+              ? state.leftSidebar
+              : LeftSideBarType.NONE,
             selectedBranchIndex: null,
-            askAiButtonProps:null
+            askAiButtonProps: null,
           };
         });
       },
@@ -225,11 +227,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           selectedBranchIndex: null,
         }),
       exitStepSettings: () =>
-        set({
+        set((state) => ({
           rightSidebar: RightSideBarType.NONE,
+          leftSidebar:
+            state.leftSidebar === LeftSideBarType.AI_COPILOT
+              ? LeftSideBarType.NONE
+              : state.leftSidebar,
           selectedStep: null,
           selectedBranchIndex: null,
-        }),
+          askAiButtonProps: null,
+        })),
       exitPieceSelector: () =>
         set({
           rightSidebar: RightSideBarType.NONE,
@@ -237,7 +244,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         }),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
-      setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar, askAiButtonProps: null }),
+      setLeftSidebar: (leftSidebar: LeftSideBarType) =>
+        set({ leftSidebar, askAiButtonProps: null }),
       setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
         set((state) => {
           return {
@@ -353,15 +361,19 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             (l) => l !== listener,
           ),
         })),
-        askAiButtonProps:null,
-        setAskAiButtonProps:(props)=>{
-        return  set(()=> ({
-            askAiButtonProps: props,
-            leftSidebar: LeftSideBarType.AI_COPILOT,
-            rightSidebar: RightSideBarType.NONE,
-            selectedStep: null
-          }))
-        }
+      askAiButtonProps: null,
+      setAskAiButtonProps: (props) => {
+        return set((state) => ({
+          askAiButtonProps: props,
+          leftSidebar: props
+            ? LeftSideBarType.AI_COPILOT
+            : state.leftSidebar === LeftSideBarType.AI_COPILOT
+            ? LeftSideBarType.NONE
+            : state.leftSidebar,
+          rightSidebar: props ? RightSideBarType.NONE : state.rightSidebar,
+          selectedStep: props ? null : state.selectedStep,
+        }));
+      },
     };
   });
 
