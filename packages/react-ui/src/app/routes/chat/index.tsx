@@ -27,6 +27,8 @@ import { ImageDialog } from './chat-message/image-dialog';
 import { Messages, MessagesList } from './messages-list';
 
 export function ChatPage() {
+  const filesPreviewContainerRef = useRef<HTMLDivElement | null>(null);
+  const filesPreviewContainerSize = useElementSize(filesPreviewContainerRef);
   const { flowId } = useParams();
   const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -211,14 +213,14 @@ export function ChatPage() {
     );
   }
 
+
   if (isLoading) return <LoadingScreen />;
 
   const toggleImageDialog = (imageUrl: string | null) => {
     setImageDialogOpen(!!imageUrl);
     setSelectedImage(imageUrl);
   };
-  const filesPreviewContainerRef = useRef<HTMLDivElement | null>(null);
-  const filesPreviewContainerSize = useElementSize(filesPreviewContainerRef);
+
   return (
     <main
       className={cn(
@@ -314,7 +316,6 @@ export function ChatPage() {
                 minRows={1}
                 maxRows={4}
                 onPaste={(e) => {
-                  console.log('paste')
                   const selectedFiles = Array.from(e.clipboardData.items).filter(item => item.kind === 'file').map(item => item.getAsFile()).filter(item => !isNil(item));
                   handleFileChange(selectedFiles);
                 }}
