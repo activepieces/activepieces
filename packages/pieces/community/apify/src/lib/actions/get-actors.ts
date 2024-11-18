@@ -3,26 +3,24 @@ import { apifyAuth } from '../..';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getActors = createAction({
-
   name: 'getActors',
   auth: apifyAuth,
-  displayName: 'Get users Actors',
-  description: 'Gets the list of Actors the user has available',
+  displayName: "Get user's Actors",
+  description: 'Gets the list of Actors available to the user.',
   props: {},
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth;
     const headers = {
-      'Authorization': 'Bearer ' + apifyToken,
+      Authorization: 'Bearer ' + apifyToken,
       'Content-Type': 'application/json',
     };
-    
-    const url = 'https://api.apify.com/v2/acts/'
-    
+
+    const url = 'https://api.apify.com/v2/acts/';
+
     const httprequestdata = {
       method: HttpMethod.GET,
       url,
       headers,
-  
     };
 
     const response = await httpClient.sendRequest(httprequestdata);
