@@ -6,8 +6,14 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import Client from 'ssh2-sftp-client';
 import { createFile } from './lib/actions/create-file';
+import { createBinaryFile } from './lib/actions/create-binary-file';
 import { readFileContent } from './lib/actions/read-file';
 import { newOrModifiedFile } from './lib/triggers/new-modified-file';
+import { deleteDir } from './lib/actions/delete-dir';
+import { deleteFile } from './lib/actions/delete-file';
+import { list } from './lib/actions/list';
+import { createDir } from './lib/actions/create-dir';
+import { rename } from './lib/actions/rename';
 export const sftpAuth = PieceAuth.CustomAuth({
   description: 'Enter the authentication details',
   props: {
@@ -70,6 +76,15 @@ export const sftp = createPiece({
   categories: [PieceCategory.CORE, PieceCategory.DEVELOPER_TOOLS],
   authors: ["Abdallah-Alwarawreh","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: sftpAuth,
-  actions: [createFile, readFileContent],
+  actions: [
+    createBinaryFile,
+    createDir,
+    createFile,
+    deleteDir,
+    deleteFile,
+    list,
+    readFileContent,
+    rename,
+  ],
   triggers: [newOrModifiedFile],
 });
