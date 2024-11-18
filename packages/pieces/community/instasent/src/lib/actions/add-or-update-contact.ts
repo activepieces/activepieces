@@ -2,12 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getBaseUrl } from '../../index';
 import { BOOLEAN_OPTIONS, IGNORED_ATTRIBUTES, LONG_TEXT_TYPES } from '../common/constants';
-
-interface InstasentAuthType {
-    apiKey: string;
-    projectId: string;
-    datasourceId: string;
-}
+import { InstasentAuthType } from '../common/types';
 
 const PROPERTY_ITERATIONS = [
     { check: (spec: any) => spec.requiredInWebhook },

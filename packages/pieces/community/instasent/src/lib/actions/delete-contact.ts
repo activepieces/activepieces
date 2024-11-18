@@ -1,12 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getBaseUrl } from '../../index';
-
-interface InstasentAuthType {
-    apiKey: string;
-    projectId: string;
-    datasourceId: string;
-}
+import { InstasentAuthType } from '../common/types';
 
 export const deleteContact = createAction({
     name: 'delete_contact',
