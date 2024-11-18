@@ -153,6 +153,7 @@ export const ActivateLicenseDialog = ({
                 loading={isPending}
                 onClick={(e) => form.handleSubmit(handleSubmit)(e)}
                 tabIndex={3}
+                className="w-full"
               >
                 {isPending ? (
                   <LoadingSpinner className="w-4 h-4" />
@@ -160,11 +161,6 @@ export const ActivateLicenseDialog = ({
                   t('Activate')
                 )}
               </Button>
-              <DialogClose asChild>
-                <Button variant={'outline'} onClick={() => onOpenChange(false)}>
-                  {t('Close')}
-                </Button>
-              </DialogClose>
             </>
           )}
         </DialogFooter>
