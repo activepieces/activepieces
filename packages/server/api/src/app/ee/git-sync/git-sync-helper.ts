@@ -2,14 +2,12 @@ import fs from 'fs/promises'
 import path from 'path'
 import { ProjectSyncError } from '@activepieces/ee-shared'
 import { fileExists } from '@activepieces/server-shared'
-import { Flow, FlowOperationType, flowStructureUtil, FlowVersion, PopulatedFlow } from '@activepieces/shared'
+import { Flow, flowMigrations, FlowOperationType, flowStructureUtil, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
 import { GitFile } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
-import { applyMigrations } from 'packages/shared/src/lib/flows/operations/migrations'
-
 
 async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
     const flows = await flowRepo().findBy({
@@ -49,7 +47,7 @@ async function getStateFromGit(flowPath: string): Promise<GitFile[]> {
         const flow: PopulatedFlow = JSON.parse(
             await fs.readFile(path.join(flowPath, file), 'utf-8'),
         )
-        const migratedFlowVersion = applyMigrations(flow.version)
+        const migratedFlowVersion = flowMigrations.apply(flow.version)
         parsedFlows.push({
             flow: {
                 ...flow,
