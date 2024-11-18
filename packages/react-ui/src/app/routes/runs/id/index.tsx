@@ -8,6 +8,7 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { FlowRun, PopulatedFlow } from '@activepieces/shared';
+import { ReactFlowProvider } from '@xyflow/react';
 
 const FlowRunPage = () => {
   const { runId } = useParams();
@@ -48,16 +49,18 @@ const FlowRunPage = () => {
 
   return (
     data && (
-      <BuilderStateProvider
-        flow={data.flow}
-        flowVersion={data.flow.version}
-        readonly={true}
-        canExitRun={false}
-        run={data.run}
-        sampleData={sampleData ?? {}}
-      >
-        <BuilderPage />
-      </BuilderStateProvider>
+      <ReactFlowProvider>
+        <BuilderStateProvider
+          flow={data.flow}
+          flowVersion={data.flow.version}
+          readonly={true}
+          canExitRun={false}
+          run={data.run}
+          sampleData={sampleData ?? {}}
+        >
+          <BuilderPage />
+        </BuilderStateProvider>
+      </ReactFlowProvider>
     )
   );
 };

@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { PopulatedFlow } from '@activepieces/shared';
+import { ReactFlowProvider } from '@xyflow/react';
 
 const FlowBuilderPage = () => {
   const { flowId } = useParams();
@@ -39,16 +40,19 @@ const FlowBuilderPage = () => {
   }
 
   return (
-    <BuilderStateProvider
-      flow={flow!}
-      canExitRun={true}
-      flowVersion={flow!.version}
-      readonly={false}
-      run={null}
-      sampleData={sampleData ?? {}}
-    >
-      <BuilderPage />
-    </BuilderStateProvider>
+    <ReactFlowProvider>
+      <BuilderStateProvider
+        flow={flow!}
+        canExitRun={true}
+        flowVersion={flow!.version}
+        readonly={false}
+        run={null}
+        sampleData={sampleData ?? {}}
+      >
+        <BuilderPage />
+      </BuilderStateProvider>
+    </ReactFlowProvider>
+
   );
 };
 
