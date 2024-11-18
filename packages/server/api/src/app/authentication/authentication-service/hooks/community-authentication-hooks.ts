@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApFlagId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
+import { ActivepiecesError, ApFlagId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, Project, ProjectMemberRole, Rbac, User } from '@activepieces/shared'
 import { flagService } from '../../../flags/flag.service'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -71,7 +71,7 @@ async function assertUserIsInvitedToPlatformOrProject({
     }
 }
 
-async function getProjectAndToken(user: User): Promise<{ user: User, project: Project, token: string, projectRoleId: ApId }> {
+async function getProjectAndToken(user: User): Promise<{ user: User, project: Project, token: string, projectRole: Rbac }> {
     const updatedUser = await userService.getOneOrFail({ id: user.id })
 
     const project = await projectService.getOneForUser(updatedUser)
@@ -98,6 +98,6 @@ async function getProjectAndToken(user: User): Promise<{ user: User, project: Pr
         user: updatedUser,
         token,
         project,
-        projectRoleId: adminRole.id,
+        projectRole: adminRole,
     }
 }

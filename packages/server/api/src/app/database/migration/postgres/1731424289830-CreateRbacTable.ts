@@ -129,13 +129,23 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
         }
 
         await queryRunner.query(`
-            ALTER TABLE "project_member" ADD COLUMN "roleId" character varying
+            ALTER TABLE "project_member" ADD COLUMN "projectRoleId" character varying
         `)
 
-        const projectMemberRoles = await queryRunner.query(`SELECT id, role, "platformId" FROM project_member`);
+        await queryRunner.query(`
+            ALTER TABLE "project_member" 
+            ADD CONSTRAINT "fk_project_member_project_role_id" 
+            FOREIGN KEY ("projectRoleId") REFERENCES "rbac"("id") ON DELETE SET NULL
+        `)
+
+        const projectMemberRoles = await queryRunner.query(`
+            SELECT pm.id, r.name as projectRole, pm."platformId"
+            FROM project_member pm
+            LEFT JOIN rbac r ON pm."projectRoleId" = r.id
+        `);
 
         for (const projectMemberRole of projectMemberRoles) {
-            const roleName = projectMemberRole.role;
+            const roleName = projectMemberRole.projectRole;
             const rbacIdResult = await queryRunner.query(
                 `SELECT id FROM rbac WHERE name = $1 AND "platformId" = $2`,
                 [roleName, projectMemberRole.platformId]
@@ -144,23 +154,55 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
             const rbacId = rbacIdResult[0]?.id;
 
             await queryRunner.query(
-                `UPDATE "project_member" SET "roleId" = $1 WHERE id = $2`,
+                `UPDATE "project_member" SET "projectRoleId" = $1 WHERE id = $2`,
                 [rbacId, projectMemberRole.id]
             );
         }
 
-        await queryRunner.query(`
-            ALTER TABLE "project_member" DROP COLUMN "role"
-        `)
+        // Check if the column exists before attempting to drop it
+        const columnExists = await queryRunner.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name='project_member' AND column_name='projectRole'
+        `);
+
+        if (columnExists.length > 0) {
+            await queryRunner.query(`
+                ALTER TABLE "project_member" DROP COLUMN "projectRole"
+            `);
+        }
+
         await queryRunner.query(`
             ALTER TABLE "user_invitation" DROP COLUMN "projectRole"
         `)
         await queryRunner.query(`
             ALTER TABLE "user_invitation" ADD COLUMN "projectRoleId" character varying
         `)
+
+        await queryRunner.query(`
+            ALTER TABLE "user_invitation" 
+            ADD CONSTRAINT "fk_user_invitation_project_role_id" 
+            FOREIGN KEY ("projectRoleId") REFERENCES "rbac"("id") ON DELETE SET NULL
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+            ALTER TABLE "user_invitation" DROP CONSTRAINT "fk_user_invitation_project_role_id"
+        `)
+
+        await queryRunner.query(`
+            ALTER TABLE "user_invitation" DROP COLUMN "projectRoleId"
+        `)
+
+        await queryRunner.query(`
+            ALTER TABLE "project_member" DROP CONSTRAINT "fk_project_member_project_role_id"
+        `)
+
+        await queryRunner.query(`
+            ALTER TABLE "project_member" DROP COLUMN "projectRoleId"
+        `)
+
         await queryRunner.query(`
             DROP TABLE "rbac"
         `)

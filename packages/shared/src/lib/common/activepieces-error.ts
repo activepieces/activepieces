@@ -3,6 +3,7 @@ import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
 import { ProjectId, ProjectMemberRole } from '../project'
+import { Rbac } from '../rbac/rbac'
 import { UserId } from '../user'
 import { ApId } from './id-generator'
 import { Permission } from './security'
@@ -115,7 +116,7 @@ ErrorCode.PERMISSION_DENIED,
 {
     userId: UserId
     projectId: ProjectId
-    roleId: ApId | null
+    projectRole: Rbac | null
     permission: Permission | undefined
 }
 >

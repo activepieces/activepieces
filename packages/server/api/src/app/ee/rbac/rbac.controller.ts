@@ -12,12 +12,12 @@ export const rbacController: FastifyPluginAsyncTypebox = async (app) => {
         return await rbacService.list(platformId)
     })
 
-    app.post('/get-role', GetRbacRequest, async (req) => {
-        return await rbacService.get(req.body.id, req.body.type)
+    app.post('/get/:id', GetRbacRequest, async (req) => {
+        return await rbacService.get(req.params.id, req.body.type)
     })
 
     app.post('/default', GetDefaultRbacRequest, async (req) => {
-        return await rbacService.getDefaultRoleByName(req.body.role)
+        return await rbacService.getDefaultRoleByName(req.body.projectRole)
     })
 
     app.post('/', CreateRbacRequest, async (req, reply) => {
@@ -36,8 +36,10 @@ export const rbacController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetRbacRequest = {
     schema: {
-        body: Type.Object({
+        params: Type.Object({
             id: ApId,
+        }),
+        body: Type.Object({
             type: Type.Optional(Type.Enum(RoleType)),
         }),
     },
@@ -46,7 +48,7 @@ const GetRbacRequest = {
 const GetDefaultRbacRequest = {
     schema: {
         body: Type.Object({
-            role: Type.Enum(ProjectMemberRole),
+            projectRole: Type.Enum(ProjectMemberRole),
         }),
     },
 }

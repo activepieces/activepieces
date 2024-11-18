@@ -4,6 +4,7 @@ import {
     ErrorCode,
     ProjectId,
     ProjectMemberRole,
+    Rbac,
     RoleType,
 } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
@@ -13,8 +14,8 @@ import { projectLimitsService } from './project-plan.service'
 import { rbacService } from '../rbac/rbac.service'
 
 export const projectMembersLimit = {
-    async limit({ projectId, platformId, roleId }: { projectId: ProjectId, platformId: string, roleId: ApId }): Promise<void> {
-        const shouldLimit = await shouldLimitMembers({ projectId, platformId, roleId })
+    async limit({ projectId, platformId, projectRole }: { projectId: ProjectId, platformId: string, projectRole: Rbac }): Promise<void> {
+        const shouldLimit = await shouldLimitMembers({ projectId, platformId, projectRole })
 
         if (shouldLimit) {
             throw new ActivepiecesError({
@@ -29,7 +30,7 @@ export const projectMembersLimit = {
 
 const UNLIMITED_TEAM_MEMBERS = 100
 
-async function shouldLimitMembers({ projectId, platformId, roleId }: { projectId: ProjectId, platformId: string, roleId: ApId }): Promise<boolean> {
+async function shouldLimitMembers({ projectId, platformId, projectRole }: { projectId: ProjectId, platformId: string, projectRole: Rbac }): Promise<boolean> {
     if (!flagService.isCloudPlatform(platformId)) {
         return false
     }
@@ -38,11 +39,10 @@ async function shouldLimitMembers({ projectId, platformId, roleId }: { projectId
         return false
     }
     if (projectPlan.teamMembers === UNLIMITED_TEAM_MEMBERS) {
-        const role = await rbacService.get(roleId, RoleType.DEFAULT)
-        if (!role) {
+        if (!projectRole) {
             return false
         }
-        return role.type !== RoleType.DEFAULT || (role.name !== ProjectMemberRole.ADMIN)
+        return projectRole.type !== RoleType.DEFAULT || (projectRole.name !== ProjectMemberRole.ADMIN)
     }
     const numberOfMembers = await projectMemberService.countTeamMembers(projectId)
     const numberOfInvitations = await userInvitationsService.countByProjectId(projectId)

@@ -25,10 +25,6 @@ export const UserInvitationEntity = new EntitySchema<UserInvitation>({
             type: String,
             nullable: true,
         },
-        projectRoleId: {
-            type: String,
-            nullable: true,
-        },
         status: {
             type: String,
             nullable: false,
@@ -42,5 +38,14 @@ export const UserInvitationEntity = new EntitySchema<UserInvitation>({
         },
     ],
     relations: {
+        projectRole: {
+            type: 'many-to-one',
+            target: 'rbac',
+            nullable: true,
+            joinColumn: {
+                name: 'projectRoleId',
+                referencedColumnName: 'id',
+            },
+        },
     },
 })

@@ -31,7 +31,7 @@ export const projectMemberService = {
     async upsert({
         userId,
         projectId,
-        roleId,
+        projectRole,
     }: UpsertParams): Promise<ProjectMember> {
         const { platformId } = await projectService.getOneOrThrow(projectId)
         const existingProjectMember = await repo().findOneBy({
@@ -41,13 +41,17 @@ export const projectMemberService = {
         })
         const projectMemberId = existingProjectMember?.id ?? apId()
 
+        if (!projectRole) {
+            throw new Error('Project Role is not found')
+        }
+
         const projectMember: NewProjectMember = {
             id: projectMemberId,
             updated: dayjs().toISOString(),
             userId,
             platformId,
             projectId,
-            roleId,
+            projectRole,
         }
 
         const upsertResult = await repo().upsert(projectMember, [
@@ -112,8 +116,7 @@ export const projectMemberService = {
             return null
         }
 
-        const role = await rbacService.get(member.roleId)
-        return role ?? null
+        return member.projectRole ?? null
     },
     async delete(
         projectId: ProjectId,
@@ -129,7 +132,7 @@ export const projectMemberService = {
 type UpsertParams = {
     userId: string
     projectId: ProjectId
-    roleId: ApId
+    projectRole: Rbac
 }
 
 type NewProjectMember = Omit<ProjectMember, 'created'>

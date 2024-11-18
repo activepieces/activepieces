@@ -62,7 +62,7 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
         })
 
         const updatedUser = await userService.getOneOrFail({ id: user.id })
-        const { project, token, projectRoleId } = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const { project, token, projectRole } = await authenticationHelper.getProjectAndTokenOrThrow(user)
 
         if (!updatedUser.verified) {
             await otpService.createAndSend({
@@ -83,7 +83,7 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
         return {
             user: updatedUser,
             project,
-            projectRoleId,
+            projectRole,
             token,
         }
     },

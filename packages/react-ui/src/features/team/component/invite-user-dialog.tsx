@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -35,7 +35,6 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
-import { ProjectRoleSelect } from '@/features/team/component/project-role-select';
 import { userInvitationApi } from '@/features/team/lib/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -47,7 +46,6 @@ import {
   InvitationType,
   Permission,
   PlatformRole,
-  ProjectMemberRole,
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
@@ -66,7 +64,16 @@ const FormSchema = Type.Object({
     errorMessage: t('Please select platform role'),
     required: true,
   }),
-  projectRoleId: Type.String({
+  projectRole: Type.Object({
+    id: Type.String(),
+    created: Type.String(),
+    updated: Type.String(),
+    name: Type.String(),
+    permissions: Type.Array(Type.String()),
+    platformId: Type.String(),
+    type: Type.String(),
+    userCount: Type.Optional(Type.Number()),
+  }, {
     errorMessage: t('Please select project role'),
     required: true,
   }),
@@ -103,7 +110,7 @@ export function InviteUserDialog() {
           return userInvitationApi.invite({
             email: data.email.trim().toLowerCase(),
             type: data.type,
-            projectRoleId: data.projectRoleId,
+            projectRole: data.projectRole,
             projectId: project.id,
           });
       }
@@ -125,6 +132,13 @@ export function InviteUserDialog() {
     },
   });
 
+  const { data: rolesData } = useQuery({
+    queryKey: ['rbac'],
+    queryFn: () => userInvitationApi.listRoles(),
+  });
+
+  const roles = rolesData?.data ?? [];
+
   const form = useForm<FormSchema>({
     resolver: typeboxResolver(FormSchema),
     defaultValues: {
@@ -133,7 +147,7 @@ export function InviteUserDialog() {
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
-      projectRoleId: userInvitationApi.getDefaultRole(ProjectMemberRole.ADMIN).then((res) => res.id),
+      projectRole: roles?.[0],
     },
   });
 
@@ -234,11 +248,42 @@ export function InviteUserDialog() {
                     </FormItem>
                   )}
                 ></FormField>
+
                 {form.getValues().type === InvitationType.PLATFORM && (
                   <PlatformRoleSelect form={form} />
                 )}
                 {form.getValues().type === InvitationType.PROJECT && (
-                  <ProjectRoleSelect form={form} />
+                  <FormField
+                    control={form.control}
+                    name="projectRole"
+                    render={({ field }) => (
+                      <FormItem className="grid gap-2">
+                        <Label>{t('Select Project Role')}</Label>
+                        <Select
+                          onValueChange={(value) => {
+                            const selectedRole = roles.find(role => role.id === value);
+                            field.onChange(selectedRole);
+                          }}
+                          defaultValue={field.value?.id}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('Select Role')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>{t('Roles')}</SelectLabel>
+                              {roles.map((role) => (
+                                <SelectItem key={role.id} value={role.id}>
+                                  {role.name}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
 
                 {form?.formState?.errors?.root?.serverError && (

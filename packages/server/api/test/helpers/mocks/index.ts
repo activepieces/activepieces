@@ -254,7 +254,7 @@ export const createMockProjectMember = (
         platformId: projectMember?.platformId ?? apId(),
         userId: projectMember?.userId,
         projectId: projectMember?.projectId ?? apId(),
-        role: projectMember?.role ?? faker.helpers.enumValue(ProjectMemberRole),
+        projectRole: projectMember?.projectRole ?? faker.helpers.enumValue(ProjectMemberRole),
     }
 }
 

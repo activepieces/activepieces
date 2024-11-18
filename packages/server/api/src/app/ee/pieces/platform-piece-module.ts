@@ -87,10 +87,10 @@ function assertOneOfTheseScope(
 async function assertProjectAdminCanInstallPieceOnCloud(
     principal: Principal,
 ): Promise<void> {
-    const role = await getPrincipalRoleOrThrow(principal)
+    const projectRole = await getPrincipalRoleOrThrow(principal)
 
     // TODO: WHAT SHOULD I DO HERE :(
-    if (role.name !== ProjectMemberRole.ADMIN) {
+    if (projectRole.name !== ProjectMemberRole.ADMIN) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {

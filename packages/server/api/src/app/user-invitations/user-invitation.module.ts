@@ -49,9 +49,10 @@ const invitationController: FastifyPluginAsyncTypebox = async (
             await projectMembersLimit.limit({
                 projectId: request.body.projectId,
                 platformId: request.principal.platform.id,
-                roleId: request.body.projectRoleId,
+                projectRole: request.body.projectRole,
             })
         }
+
         const platformId = request.principal.platform.id
         const invitation = await userInvitationsService.create({
             email,
@@ -59,7 +60,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (
             platformId,
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
-            projectRoleId: type === InvitationType.PLATFORM ? null : request.body.projectRoleId,
+            projectRole: type === InvitationType.PLATFORM ? null : request.body.projectRole,
             invitationExpirySeconds: dayjs.duration(1, 'day').asSeconds(),
             status,
         })

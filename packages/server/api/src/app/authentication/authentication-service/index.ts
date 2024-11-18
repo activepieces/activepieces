@@ -105,7 +105,7 @@ export const authenticationService = {
         })
         await saveNewsLetterSubscriber(user)
 
-        if (!authnResponse.projectRoleId) {
+        if (!authnResponse.projectRole) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
@@ -118,7 +118,7 @@ export const authenticationService = {
             ...userWithoutPassword,
             token: authnResponse.token,
             projectId: authnResponse.project.id,
-            projectRoleId: authnResponse.projectRoleId,
+            projectRole: authnResponse.projectRole,
         }
     },
 
@@ -131,7 +131,7 @@ export const authenticationService = {
 
         const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
 
-        if (!authnResponse.projectRoleId) {
+        if (!authnResponse.projectRole) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
@@ -144,7 +144,7 @@ export const authenticationService = {
             ...userWithoutPassword,
             token: authnResponse.token,
             projectId: authnResponse.project.id,
-            projectRoleId: authnResponse.projectRoleId,
+            projectRole: authnResponse.projectRole,
         }
     },
 }

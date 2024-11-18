@@ -24,12 +24,11 @@ export const emailService = {
             platformId: userInvitation.platformId,
             projectId: userInvitation.projectId,
             type: userInvitation.type,
-            projectRoleId: userInvitation.projectRoleId,
+            projectRole: userInvitation.projectRole,
             platformRole: userInvitation.platformRole,
         })
         const { email, platformId } = userInvitation
         const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
-
         await emailSender.send({
             emails: [email],
             platformId,
@@ -229,11 +228,11 @@ async function getEntityNameForInvitation(userInvitation: UserInvitation): Promi
         }
         case InvitationType.PROJECT: {
             assertNotNullOrUndefined(userInvitation.projectId, 'projectId')
-            assertNotNullOrUndefined(userInvitation.projectRoleId, 'projectRoleId')
+            assertNotNullOrUndefined(userInvitation.projectRole, 'projectRole')
             const project = await projectService.getOneOrThrow(userInvitation.projectId)
             return {
                 name: project.displayName,
-                role: capitalizeFirstLetter(userInvitation.projectRoleId),
+                role: capitalizeFirstLetter(userInvitation.projectRole.name),
             }
         }
     }

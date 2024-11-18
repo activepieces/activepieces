@@ -18,7 +18,6 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
         projectId: ApIdSchema,
         platformId: ApIdSchema,
         userId: ApIdSchema,
-        roleId: ApIdSchema,
     },
     indices: [
         {
@@ -46,6 +45,14 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
             joinColumn: {
                 name: 'userId',
                 foreignKeyConstraintName: 'fk_project_member_user_id',
+            },
+        },
+        projectRole: {
+            type: 'many-to-one',
+            target: 'rbac',
+            joinColumn: {
+                name: 'projectRoleId',
+                referencedColumnName: 'id',
             },
         },
     },

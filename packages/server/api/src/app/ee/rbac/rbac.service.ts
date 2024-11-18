@@ -14,18 +14,18 @@ export const rbacService = {
     },
 
     async getDefaultRoleByName(name: ProjectMemberRole): Promise<Rbac> {
-        const role = await rbacRepo().findOneByOrFail({ name, type: RoleType.DEFAULT })
-        return role
+        const projectRole = await rbacRepo().findOneByOrFail({ name, type: RoleType.DEFAULT })
+        return projectRole
     },
 
     async list(platformId: PlatformId): Promise<SeekPage<Rbac>> {
         const rbacs = await rbacRepo().find({
             where: { platformId },
-            order: { updated: 'DESC' },
+            order: { created: 'DESC' },
         })
 
         for (const rbac of rbacs) {
-            rbac.userCount = await projectMemberRepo().countBy({ roleId: rbac.id })
+            rbac.userCount = await projectMemberRepo().countBy({ projectRole: { id: rbac.id } })
         }
 
         return {
@@ -42,37 +42,15 @@ export const rbacService = {
     },
 
     async createDefaultRbac(platformId: PlatformId): Promise<void> {
-        await rbacRepo().save(rbacRepo().create({
-            id: apId(),
-            name: ProjectMemberRole.ADMIN,
-            permissions: rolePermissions[ProjectMemberRole.ADMIN],
-            platformId,
-            type: RoleType.DEFAULT,
-        }))
-
-        await rbacRepo().save(rbacRepo().create({
-            id: apId(),
-            name: ProjectMemberRole.EDITOR,
-            permissions: rolePermissions[ProjectMemberRole.EDITOR],
-            platformId,
-            type: RoleType.DEFAULT,
-        }))
-
-        await rbacRepo().save(rbacRepo().create({
-            id: apId(),
-            name: ProjectMemberRole.OPERATOR,
-            permissions: rolePermissions[ProjectMemberRole.OPERATOR],
-            platformId,
-            type: RoleType.DEFAULT,
-        }))
-
-        await rbacRepo().save(rbacRepo().create({
-            id: apId(),
-            name: ProjectMemberRole.VIEWER,
-            permissions: rolePermissions[ProjectMemberRole.VIEWER],
-            platformId,
-            type: RoleType.DEFAULT,
-        }))
+        for (const projectRole of Object.values(ProjectMemberRole)) {
+            await rbacRepo().save(rbacRepo().create({
+                id: apId(),
+                name: projectRole,
+                permissions: rolePermissions[projectRole],
+                platformId,
+                type: RoleType.DEFAULT,
+            }))
+        }
     },
 
     async update(id: ApId, { name, permissions }: UpdateRbacRequestBody): Promise<Rbac> {

@@ -1,4 +1,4 @@
-import { ApId, Project, User } from '@activepieces/shared'
+import { ApId, Project, Rbac, User } from '@activepieces/shared'
 
 export enum Provider {
     EMAIL = 'EMAIL',
@@ -27,5 +27,5 @@ type PostResult = {
     user: User
     project: Project
     token: string
-    projectRoleId: ApId | null
+    projectRole: Rbac | null
 }

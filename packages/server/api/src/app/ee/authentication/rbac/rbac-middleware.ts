@@ -70,7 +70,7 @@ export const assertRoleHasPermission = async (principal: Principal, permission: 
         routePermission: permission,
     })
     if (!access) {
-        throwPermissionDenied(principalRole.id, principal, permission)
+        throwPermissionDenied(principalRole, principal, permission)
     }
 }
 
@@ -95,12 +95,12 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
 export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<Rbac> => {
     const { id: userId, projectId } = principal
 
-    const roleId = await projectMemberService.getRole({
+    const projectRole = await projectMemberService.getRole({
         projectId,
         userId,
     })
 
-    if (isNil(roleId)) {
+    if (isNil(projectRole)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {
@@ -111,7 +111,7 @@ export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<Rba
         })
     }
 
-    return roleId
+    return projectRole
 
 }
 
@@ -129,13 +129,13 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
     return principalRole.permissions.includes(routePermission)
 }
 
-const throwPermissionDenied = (roleId: ApId, principal: Principal, permission: Permission | undefined): never => {
+const throwPermissionDenied = (projectRole: Rbac, principal: Principal, permission: Permission | undefined): never => {
     throw new ActivepiecesError({
         code: ErrorCode.PERMISSION_DENIED,
         params: {
             userId: principal.id,
             projectId: principal.projectId,
-            roleId,
+            projectRole,
             permission,
         },
     })

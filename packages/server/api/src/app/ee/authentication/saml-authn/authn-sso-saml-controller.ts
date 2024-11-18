@@ -19,8 +19,8 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             body: req.body,
             query: req.query,
         })
-        const { token, project, projectRoleId } = await authenticationHelper.getProjectAndTokenOrThrow(user)
-        if (!projectRoleId) {
+        const { token, project, projectRole} = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        if (!projectRole) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
@@ -33,7 +33,7 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             token,  
             ...user,
             projectId: project.id,
-            projectRoleId,
+            projectRole,
         }
         url.searchParams.append('response', JSON.stringify(response))
         return res.redirect(url.toString())

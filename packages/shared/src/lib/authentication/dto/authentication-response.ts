@@ -1,4 +1,4 @@
-import { ApId } from '../../common/id-generator'
+import { Rbac } from '../../rbac/rbac'
 import { User } from '../../user/user'
 
 export type UserWithoutPassword = Omit<User, 'password'>
@@ -6,5 +6,5 @@ export type UserWithoutPassword = Omit<User, 'password'>
 export type AuthenticationResponse = UserWithoutPassword & {
     token: string
     projectId: string
-    projectRoleId: ApId
+    projectRole: Rbac
 }

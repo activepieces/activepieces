@@ -3,6 +3,7 @@ import { SAFE_STRING_PATTERN } from '../common'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { ProjectMemberRole } from './project-member'
+import { Rbac } from '../rbac/rbac'
 
 export const ListProjectRequestForUserQueryParams = Type.Object({
     cursor: Type.Optional(Type.String()),
@@ -32,7 +33,16 @@ export const ProjectUsage = Type.Object({
 
 export const SwitchProjectResponse = Type.Object({
     token: Type.String(),
-    projectRoleId: Type.Union([Type.String(), Type.Null()]),
+    projectRole: Type.Union([Type.Object({
+        id: Type.String(),
+        created: Type.String(),
+        updated: Type.String(),
+        name: Type.String(),
+        permissions: Type.Array(Type.String()),
+        platformId: Type.String(),
+        type: Type.String(),
+        userCount: Type.Optional(Type.Number()),
+    }), Type.Null()]),
 })
 
 export type SwitchProjectResponse = Static<typeof SwitchProjectResponse>

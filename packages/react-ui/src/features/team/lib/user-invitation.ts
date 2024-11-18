@@ -13,6 +13,7 @@ import { api } from '../../../lib/api';
 
 export const userInvitationApi = {
   invite: (request: SendUserInvitationRequest) => {
+    console.log('allooo', request);
     return api.post<UserInvitationWithLink>('/v1/user-invitations', request);
   },
   list: (request: ListUserInvitationsRequest) => {
@@ -26,9 +27,7 @@ export const userInvitationApi = {
       invitationToken: token,
     });
   },
-  getDefaultRole(role: ProjectMemberRole): Promise<Rbac> {
-    return api.post<Rbac>(`/v1/rbac/default`, {
-      role,
-    });
+  listRoles(): Promise<SeekPage<Rbac>> {
+    return api.get<SeekPage<Rbac>>(`/v1/rbac`);
   },
 };

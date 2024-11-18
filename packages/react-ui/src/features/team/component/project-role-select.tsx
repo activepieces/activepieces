@@ -60,7 +60,7 @@ const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
   return (
     <FormField
       control={form.control}
-      name="projectRole"
+      name="role"
       render={({ field }) => (
         <FormItem className="grid gap-3">
           <Label>{t('Project Role')}</Label>

@@ -7,6 +7,7 @@ import {
     PrincipalType,
     Project,
     ProjectMemberRole,
+    Rbac,
     User,
 } from '@activepieces/shared'
 import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
@@ -90,7 +91,7 @@ async function autoVerifyUserIfEligible(user: User): Promise<void> {
 
 async function getProjectAndTokenOrThrow(
     user: User,
-): Promise<{ project: Project, token: string, projectRoleId: ApId | null }> {
+): Promise<{ project: Project, token: string, projectRole: Rbac | null }> {
     const project = await getProjectForUserOrThrow(user)
 
     const projectRole = await projectMemberService.getRole({
@@ -109,7 +110,7 @@ async function getProjectAndTokenOrThrow(
             params: {
                 userId: user.id,
                 projectId: project.id,
-                roleId: null,
+                projectRole: null,
                 permission: undefined,
             },
         })
@@ -117,7 +118,7 @@ async function getProjectAndTokenOrThrow(
 
     return {
         project,
-        projectRoleId: projectRole.id,
+        projectRole: projectRole,
         token,
     }
 }

@@ -52,7 +52,7 @@ export function ProjectMemberCard({
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium leading-none">
             {member.user.firstName} {member.user.lastName} (
-            {roleToLabel[member.role]})
+            {member.projectRole.name})
           </p>
           <p className="text-sm text-muted-foreground">{member.user.email}</p>
         </div>
@@ -63,9 +63,8 @@ export function ProjectMemberCard({
             hasPermission={userHasPermissionToRemoveMember}
           >
             <ConfirmationDeleteDialog
-              title={`${t('Remove')} ${member.user.firstName} ${
-                member.user.lastName
-              }`}
+              title={`${t('Remove')} ${member.user.firstName} ${member.user.lastName
+                }`}
               message={t('Are you sure you want to remove this member?')}
               mutationFn={() => deleteMember()}
               entityName={`${member.user.firstName} ${member.user.lastName}`}

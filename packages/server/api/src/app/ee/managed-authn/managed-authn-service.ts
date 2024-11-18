@@ -40,7 +40,7 @@ export const managedAuthnService = {
         const projectMember = await projectMemberService.upsert({
             projectId: project.id,
             userId: user.id,
-            roleId: externalPrincipal.roleId,   
+            projectRole: externalPrincipal.projectRole,   
         })
 
 
@@ -57,7 +57,7 @@ export const managedAuthnService = {
             ...user,
             token,
             projectId: project.id,
-            projectRoleId: projectMember.roleId,
+            projectRole: projectMember.projectRole,
         }
     },
 }
