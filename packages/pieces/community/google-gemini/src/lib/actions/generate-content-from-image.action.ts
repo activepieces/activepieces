@@ -1,9 +1,4 @@
-import { promises as fs } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GoogleAIFileManager } from '@google/generative-ai/server';
-import { nanoid } from 'nanoid';
 import {
   Property,
   Validators,
@@ -36,42 +31,25 @@ export const generateContentFromImageAction = createAction({
       description: 'The model which will generate the completion',
       refreshers: [],
       defaultValue: defaultLLM,
-      options: async ({auth}) =>
-        getGeminiModelOptions({auth}),
+      options: async ({ auth }) => getGeminiModelOptions({ auth }),
     }),
   },
 
   async run({ auth, propsValue }) {
-    const tempDir = tmpdir();
-    const uniqueId = nanoid();
-    const tempFilePath = join(
-      tempDir,
-      `gemini-image-${uniqueId}.${propsValue.image.extension}`
-    );
-
     try {
-      const imageBuffer = Buffer.from(propsValue.image.base64, 'base64');
-      await fs.writeFile(tempFilePath, imageBuffer);
-
-      const fileManager = new GoogleAIFileManager(auth);
-      const uploadResult = await fileManager.uploadFile(tempFilePath, {
-        mimeType: `image/${propsValue.image.extension}`,
-        displayName: propsValue.image.filename,
-      });
-
       const genAI = new GoogleGenerativeAI(auth);
       const model = genAI.getGenerativeModel({ model: propsValue.model });
       const result = await model.generateContent([
         propsValue.prompt,
         {
-          fileData: {
-            fileUri: uploadResult.file.uri,
-            mimeType: uploadResult.file.mimeType,
+          inlineData: {
+            data: propsValue.image.base64,
+            mimeType: `image/${propsValue.image.extension}`,
           },
         },
       ]);
 
-      const response = await result.response;
+      const response = result.response;
       return {
         text: response.text(),
         raw: response,
@@ -79,8 +57,6 @@ export const generateContentFromImageAction = createAction({
     } catch (error) {
       console.error('Error in generate content from image:', error);
       throw error;
-    } finally {
-      await fs.unlink(tempFilePath).catch(() => void 0);
     }
   },
 });
