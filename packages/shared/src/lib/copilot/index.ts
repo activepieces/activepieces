@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 
-
 export enum AskCopilotTool {
     GENERATE_CODE = 'generate_code',
     GENERATE_HTTP_REQUEST = 'generate_http_request',
@@ -13,6 +12,7 @@ export const AskCopilotRequest = Type.Object({
     })),
     prompt: Type.String(),
     tools: Type.Array(Type.Enum(AskCopilotTool)),
+    sandboxMode: Type.Boolean({ default: true }),
 })
 
 export type AskCopilotRequest = Static<typeof AskCopilotRequest>
@@ -23,6 +23,8 @@ export const AskCopilotCodeResponse = Type.Object({
         dependencies: Type.Record(Type.String(), Type.String()),
     }),
     inputs: Type.Record(Type.String(), Type.String()),
+    icon: Type.String(),
+    title: Type.String(),
 })
 
 export type AskCopilotCodeResponse = Static<typeof AskCopilotCodeResponse>
@@ -38,7 +40,9 @@ export const AskCopilotHttpRequestResponse = Type.Object({
 
 export type AskCopilotHttpRequestResponse = Static<typeof AskCopilotHttpRequestResponse>
 
-
-export const AskCopilotResponse = Type.Union([AskCopilotCodeResponse, AskCopilotHttpRequestResponse])
+export const AskCopilotResponse = Type.Union([
+    AskCopilotCodeResponse,
+    AskCopilotHttpRequestResponse,
+])
 
 export type AskCopilotResponse = Static<typeof AskCopilotResponse>

@@ -1,13 +1,14 @@
 import { AskCopilotRequest } from '@activepieces/shared'
 import OpenAI from 'openai'
 import { processHttpRequest } from './http-agent'
+import { system } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 
-const perplexityApiKey =
-  '------ API KEY HERE ------'
+
 
 const openai = new OpenAI({
-    apiKey: perplexityApiKey,
-    baseURL: 'https://api.perplexity.ai',
+    apiKey: system.get(AppSystemProp.PERPLEXITY_API_KEY),
+    baseURL: system.get(AppSystemProp.PERPLEXITY_BASE_URL),
 })
 
 export const httpGeneratorTool = {

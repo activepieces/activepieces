@@ -139,12 +139,18 @@ const systemPropValidators: {
     [AppSystemProp.CLOUDFLARE_API_KEY]: stringValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
 
+    // Copilot
+    [AppSystemProp.PERPLEXITY_API_KEY]: stringValidator,
+    [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
+
     // WorkerSystemProps
     [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: numberValidator,
     [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
     [WorkerSystemProps.SCHEDULED_POLLING_COUNT]: numberValidator,
     [WorkerSystemProps.POLLING_POOL_SIZE]: numberValidator,
     [WorkerSystemProps.WORKER_TOKEN]: stringValidator,
+
+
 }
 
 

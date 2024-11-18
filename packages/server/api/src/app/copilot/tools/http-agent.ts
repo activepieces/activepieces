@@ -1,3 +1,5 @@
+import { system } from '@activepieces/server-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { DeepPartial, generateObject } from 'ai'
 import { z } from 'zod'
@@ -5,8 +7,7 @@ import { z } from 'zod'
 export function getModel() {
     try {
         const openai = createOpenAI({
-            apiKey:
-              '------ API KEY HERE ------',
+            apiKey: system.get(AppSystemProp.OPENAI_API_KEY),
         })
         return openai.chat('gpt-4o')
     }
