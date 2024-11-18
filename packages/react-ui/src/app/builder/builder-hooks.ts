@@ -14,6 +14,7 @@ import {
   PopulatedFlow,
   TriggerType,
   flowOperations,
+  flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
 
@@ -113,11 +114,13 @@ export type BuilderInitialState = Pick<
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 
-export const createBuilderStore = (initialState: BuilderInitialState) =>
+export const createBuilderStore = (initialState: BuilderInitialState, ) =>
   create<BuilderState>((set) => {
-    const failedStep = initialState.run?.steps
-      ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
-      : null;
+    const failedStepInRun =  initialState.run?.steps
+    ? flowRunUtils.findFailedStepInOutput(initialState.run.steps):null;
+    const initiallySelectedStep = failedStepInRun??
+      initialState.flowVersion.state === FlowVersionState.LOCKED ?
+       null: flowStructureUtil.getAllSteps(initialState.flowVersion.trigger).find(s=> !s.valid)?.name ?? 'trigger';
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
@@ -136,13 +139,12 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       readonly: initialState.readonly,
       run: initialState.run,
       saving: false,
-      selectedStep: failedStep ? failedStep : 'trigger',
+      selectedStep: initiallySelectedStep,
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       allowCanvasPanning: true,
       rightSidebar:
-        initialState.run ||
-        initialState.flowVersion.trigger.type !== TriggerType.EMPTY
+        initiallySelectedStep
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshPieceFormSettings: false,
