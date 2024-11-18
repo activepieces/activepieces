@@ -15,7 +15,7 @@ This piece requires:
 - **Datasource ID**: Your data source identifier within the project
 - **API Key**: Bearer token for authentication (specific to the data source)
 
-To generate your authentication data go to your project and add an ActivePieces data source. 
+To generate your authentication data go to your project and add an ActivePieces data source, if it's not available you can create an Instasent API data source instead.
 
 ## Actions
 
@@ -42,7 +42,8 @@ Events support attribution parameters to track which marketing campaigns led to 
 
 ## Links
 - [Instasent Website](https://instasent.com)
-- [API Documentation](https://docs.instasent.com)
+- [Ingest API Docs](https://app.swaggerhub.com/apis-docs/Instasent/instasent-ingest_api/)
+- [Instasent APIs](https://docs.instasent.com)
 
 ## Support
 For support or questions about the API, contact:
