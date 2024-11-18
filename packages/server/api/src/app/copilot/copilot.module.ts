@@ -2,6 +2,7 @@ import { ALL_PRINCIPAL_TYPES, AskCopilotRequest, AskCopilotResponse, WebsocketCl
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../websockets/websockets.service'
 import { copilotService } from './copilot.service'
+import { codeGeneratorTool } from './tools/code-generate'
 import { httpGeneratorTool } from './tools/http-generate'
 
 export const copilotModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -17,6 +18,10 @@ export const copilotModule: FastifyPluginAsyncTypebox = async (app) => {
         return httpGeneratorTool.generateHttpRequest(request.body)
     })
 
+    app.post('/generate-code', AskCopilotRequestSchema, async (request) => {
+        return codeGeneratorTool.generateCode(request.body)
+    })
+
 }
 
 
@@ -25,6 +30,8 @@ const AskCopilotRequestSchema = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
-        body: AskCopilotRequest
+        body: AskCopilotRequest,
     },
 }
+
+
