@@ -13,7 +13,7 @@ export function getModel() {
         const openai = createOpenAI({
             apiKey,
         })
-        return openai.chat('gpt-4')
+        return openai.chat('gpt-4o')
     }
     catch (error) {
         console.error('Failed to initialize OpenAI model:', error)
@@ -71,64 +71,51 @@ export async function generateCode(
             - Consider sandbox environment limitations
             ${sandboxMode ? '' : '- Use only Node.js native modules (no external packages)'}
             
-            Example of correct function naming:
+            Simple Example:
             {
-                "code": "export const code = async (inputs: { param: string }) => {
-                    // implementation
-                }"
+                "code": "export const code = async (inputs: { data: string }) => { return inputs.data.toUpperCase(); }",
+                "packages": [],
+                "inputs": [
+                    {
+                        "name": "data",
+                        "type": "string",
+                        "description": "Input string to process"
+                    }
+                ]
             }
 
-            For HTTP requests without sandbox mode, use this pattern:
+            HTTP Example:
             {
-                "code": "export const code = async (inputs: { url: string, method?: string }) => {
-                    try {
-                        const https = require('https');
-                        const url = new URL(inputs.url);
-                        
-                        return new Promise((resolve, reject) => {
-                            const req = https.request({
-                                hostname: url.hostname,
-                                path: url.pathname + url.search,
-                                method: inputs.method || 'GET',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                timeout: 5000
-                            }, (res) => {
-                                let data = '';
-                                res.on('data', chunk => data += chunk);
-                                res.on('end', () => {
-                                    if (res.statusCode >= 200 && res.statusCode < 300) {
-                                        resolve(JSON.parse(data));
-                                    } else {
-                                        reject(new Error(\`HTTP error! status: \${res.statusCode}\`));
-                                    }
-                                });
-                            });
-                            
-                            req.on('error', (error) => reject(error));
-                            req.on('timeout', () => {
-                                req.destroy();
-                                reject(new Error('Request timeout'));
-                            });
-                            
-                            req.end();
-                        });
-                    } catch (error) {
-                        throw new Error(\`Request failed: \${error.message}\`);
-                    }
-                }",
-                "packages": [],
+                "code": "export const code = async (inputs: { url: string }) => { const response = await fetch(inputs.url); return response.json(); }",
+                "packages": ["node-fetch"],
                 "inputs": [
                     {
                         "name": "url",
                         "type": "string",
-                        "description": "The URL to make the request to"
+                        "description": "URL to fetch"
+                    }
+                ]
+            }
+
+            Email Example:
+            {
+                "code": "export const code = async (inputs: { to: string, subject: string, body: string }) => { const nodemailer = require('nodemailer'); /* rest of implementation */ }",
+                "packages": ["nodemailer"],
+                "inputs": [
+                    {
+                        "name": "to",
+                        "type": "string",
+                        "description": "Recipient email"
                     },
                     {
-                        "name": "method",
+                        "name": "subject",
                         "type": "string",
-                        "description": "HTTP method (GET, POST, etc.)"
+                        "description": "Email subject"
+                    },
+                    {
+                        "name": "body",
+                        "type": "string",
+                        "description": "Email content"
                     }
                 ]
             }
@@ -138,9 +125,11 @@ export async function generateCode(
             Generate TypeScript code for this requirement:
             ${requirement}
             
-            IMPORTANT: Remember to use 'export const code = ' as the function declaration.
+            IMPORTANT: 
+            - Use 'export const code = ' as the function declaration
+            - Keep the code simple and avoid complex string literals in the response JSON
+            - Ensure proper JSON escaping for any special characters
             Remember: ${sandboxMode ? 'External packages are allowed' : 'Only Node.js native features are allowed'}
-            Ensure the code is properly typed and includes all necessary input parameters.
             `,
             temperature: 0,
         })
@@ -153,7 +142,7 @@ export async function generateCode(
             }
         }
 
-        // added a small validation to check if the code starts with 'export const code =' - we can remove it if it's not requried 
+        // Verify and fix the code format if needed
         if (!result.object.code.trim().startsWith('export const code =')) {
             const fixedCode = `export const code = ${result.object.code.trim()}`
             return {
@@ -165,6 +154,7 @@ export async function generateCode(
         return result.object
     }
     catch (error) {
+        console.error('Code generation failed:', error)
         return {
             code: '',
             packages: [],
