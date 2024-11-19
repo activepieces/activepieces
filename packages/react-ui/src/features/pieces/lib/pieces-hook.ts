@@ -22,6 +22,12 @@ import {
   StepMetadataWithSuggestions,
 } from './types';
 
+type UsePieceAndMostRecentPatchProps = {
+  name: string;
+  version: string;
+  enabled?: boolean;
+};
+
 type UsePieceProps = {
   name: string;
   version?: string;
@@ -70,13 +76,24 @@ export const piecesHooks = {
     name,
     version,
     enabled = true,
-  }: UsePieceProps) => {
+  }: UsePieceAndMostRecentPatchProps) => {
     const exactVersion = version?.startsWith('~') ? version.slice(1) : version;
     const latestPatchVersion = `~${exactVersion}`;
-    const pieceQuery = piecesHooks.usePiece({ name, version: exactVersion, enabled });
-    const latestPatchQuery = piecesHooks.usePiece({ name, version: latestPatchVersion, enabled });
+    const pieceQuery = piecesHooks.usePiece({
+      name,
+      version: exactVersion,
+      enabled,
+    });
+    const latestPatchQuery = piecesHooks.usePiece({
+      name,
+      version: latestPatchVersion,
+      enabled,
+    });
     return {
-      versions: [pieceQuery.pieceModel, latestPatchQuery.pieceModel],
+      versions: {
+        [exactVersion as string]: pieceQuery.pieceModel,
+        [latestPatchVersion as string]: latestPatchQuery.pieceModel,
+      },
       isLoading: pieceQuery.isLoading || latestPatchQuery.isLoading,
       isSuccess: pieceQuery.isSuccess && latestPatchQuery.isSuccess,
       refetch: () => {
