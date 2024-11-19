@@ -30,17 +30,23 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl }: PropsRes
                 apiUrl,
                 currentState,
             }
-            return {
-                resolvedInput: await applyFunctionToValues<T>(unresolvedInput, (token) => resolveInputAsync({
+            const resolvedInput = await applyFunctionToValues<T>(
+                JSON.parse(JSON.stringify(unresolvedInput)),
+                (token) => resolveInputAsync({
                     ...resolveOptions,
                     token,
                     censoredInput: false,
-                })),
-                censoredInput: await applyFunctionToValues<T>(unresolvedInput, (token) => resolveInputAsync({
+                }))
+            const censoredInput = await applyFunctionToValues<T>(
+                JSON.parse(JSON.stringify(unresolvedInput)),
+                (token) => resolveInputAsync({
                     ...resolveOptions,
                     token,
                     censoredInput: true,
-                })),
+                }))
+            return {
+                resolvedInput,
+                censoredInput,
             }
         },
     }
