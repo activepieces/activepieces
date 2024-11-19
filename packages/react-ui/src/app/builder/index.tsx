@@ -122,14 +122,17 @@ const BuilderPage = () => {
     builderNavBarContainer,
   );
 
-  const { versions, refetch: refetchPiece } = piecesHooks.usePieceAndItsMostRecentPatchVersion({
-    name: memorizedSelectedStep?.settings.pieceName,
-    version: memorizedSelectedStep?.settings.pieceVersion,
-    enabled:
-      memorizedSelectedStep?.type === ActionType.PIECE ||
-      memorizedSelectedStep?.type === TriggerType.PIECE,
-  });
-  const pieceModel = versions ? versions[memorizedSelectedStep?.settings.pieceVersion || ''] : undefined;
+  const { versions, refetch: refetchPiece } =
+    piecesHooks.usePieceAndItsMostRecentPatchVersion({
+      name: memorizedSelectedStep?.settings.pieceName,
+      version: memorizedSelectedStep?.settings.pieceVersion,
+      enabled:
+        memorizedSelectedStep?.type === ActionType.PIECE ||
+        memorizedSelectedStep?.type === TriggerType.PIECE,
+    });
+  const pieceModel = versions
+    ? versions[memorizedSelectedStep?.settings.pieceVersion || '']
+    : undefined;
   const socket = useSocket();
 
   useEffect(() => {

@@ -65,22 +65,31 @@ export const piecesApi = {
   },
   getVersionAndLatestPatch(
     request: GetPieceRequestParams & Required<GetPieceRequestQuery>,
-  ): Promise<Record<string,PieceMetadataModel>> {
-
-    const exactVersion = request.version.startsWith('~')? request.version.slice(1): request.version;
-    const latestPatchVersion = `~${exactVersion}`
-    const extactVersionPromise = api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
-      version: exactVersion,
-    });
-    const latestPatchVersionPromise = api.get<PieceMetadataModel>(`/v1/pieces/${request.name}`, {
-      version: latestPatchVersion,
-    });
-    return Promise.all([extactVersionPromise,latestPatchVersionPromise]).then(result=>{
-      return {
-        [exactVersion]: result[0],
-        [latestPatchVersion]: result[1]
-      }
-    })
+  ): Promise<Record<string, PieceMetadataModel>> {
+    const exactVersion = request.version.startsWith('~')
+      ? request.version.slice(1)
+      : request.version;
+    const latestPatchVersion = `~${exactVersion}`;
+    const extactVersionPromise = api.get<PieceMetadataModel>(
+      `/v1/pieces/${request.name}`,
+      {
+        version: exactVersion,
+      },
+    );
+    const latestPatchVersionPromise = api.get<PieceMetadataModel>(
+      `/v1/pieces/${request.name}`,
+      {
+        version: latestPatchVersion,
+      },
+    );
+    return Promise.all([extactVersionPromise, latestPatchVersionPromise]).then(
+      (result) => {
+        return {
+          [exactVersion]: result[0],
+          [latestPatchVersion]: result[1],
+        };
+      },
+    );
   },
 
   options<T extends DropdownState<unknown> | PiecePropertyMap>(
