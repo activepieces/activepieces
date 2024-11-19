@@ -114,18 +114,31 @@ export type BuilderInitialState = Pick<
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 
+function determineInitiallySelectedStep(
+  failedStepInRun: string | null,
+  flowVersion: FlowVersion,
+): string | null {
+  if (failedStepInRun) {
+    return failedStepInRun;
+  }
+  if (flowVersion.state === FlowVersionState.LOCKED) {
+    return null;
+  }
+  return (
+    flowStructureUtil.getAllSteps(flowVersion.trigger).find((s) => !s.valid)
+      ?.name ?? 'trigger'
+  );
+}
+
 export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set) => {
     const failedStepInRun = initialState.run?.steps
       ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
       : null;
-    const initiallySelectedStep =
-      failedStepInRun ??
-      initialState.flowVersion.state === FlowVersionState.LOCKED
-        ? null
-        : flowStructureUtil
-            .getAllSteps(initialState.flowVersion.trigger)
-            .find((s) => !s.valid)?.name ?? 'trigger';
+    const initiallySelectedStep = determineInitiallySelectedStep(
+      failedStepInRun,
+      initialState.flowVersion,
+    );
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps

@@ -125,7 +125,6 @@ const BuilderPage = () => {
   const leftSidePanelRef = useRef<HTMLDivElement>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
 
-
   const { versions, refetch: refetchPiece } =
     piecesHooks.useMostRecentAndExactPieceVersion({
       name: memorizedSelectedStep?.settings.pieceName,
@@ -182,35 +181,31 @@ const BuilderPage = () => {
         <BuilderHeader />
       </div>
       <ResizablePanelGroup direction="horizontal">
-        <>
-          <ResizablePanel
-            id="left-sidebar"
-            defaultSize={0}
-            minSize={0}
-            maxSize={39}
-            order={1}
-            ref={leftHandleRef}
-            className={cn('min-w-0 bg-background z-20', {
-              [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
-              [animateResizeClassName]: !isDraggingHandle,
-            })}
-          >
-            <div ref={leftSidePanelRef} className="w-full h-full">
-              {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
-              {leftSidebar === LeftSideBarType.RUN_DETAILS && (
-                <FlowRunDetails />
-              )}
-              {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
-              {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
-            </div>
-          </ResizablePanel>
-          <ResizableHandle
-            disabled={leftSidebar === LeftSideBarType.NONE}
-            withHandle={leftSidebar !== LeftSideBarType.NONE}
-            onDragging={setIsDraggingHandle}
-            className="z-20"
-          />
-        </>
+        <ResizablePanel
+          id="left-sidebar"
+          defaultSize={0}
+          minSize={0}
+          maxSize={39}
+          order={1}
+          ref={leftHandleRef}
+          className={cn('min-w-0 bg-background z-20', {
+            [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
+            [animateResizeClassName]: !isDraggingHandle,
+          })}
+        >
+          <div ref={leftSidePanelRef} className="w-full h-full">
+            {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
+            {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
+            {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
+            {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
+          </div>
+        </ResizablePanel>
+        <ResizableHandle
+          disabled={leftSidebar === LeftSideBarType.NONE}
+          withHandle={leftSidebar !== LeftSideBarType.NONE}
+          onDragging={setIsDraggingHandle}
+          className="z-20"
+        />
 
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
