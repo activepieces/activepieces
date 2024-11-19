@@ -124,14 +124,19 @@ const BuilderPage = () => {
   const leftHandleRef = useAnimateSidebar(leftSidebar);
   const leftSidePanelRef = useRef<HTMLDivElement>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
-  const { pieceModel, refetch: refetchPiece } = piecesHooks.usePiece({
-    name: memorizedSelectedStep?.settings.pieceName,
-    version: memorizedSelectedStep?.settings.pieceVersion,
-    enabled:
-      memorizedSelectedStep?.type === ActionType.PIECE ||
-      memorizedSelectedStep?.type === TriggerType.PIECE,
-  });
 
+
+  const { versions, refetch: refetchPiece } =
+    piecesHooks.useMostRecentAndExactPieceVersion({
+      name: memorizedSelectedStep?.settings.pieceName,
+      version: memorizedSelectedStep?.settings.pieceVersion,
+      enabled:
+        memorizedSelectedStep?.type === ActionType.PIECE ||
+        memorizedSelectedStep?.type === TriggerType.PIECE,
+    });
+  const pieceModel = versions
+    ? versions[memorizedSelectedStep?.settings.pieceVersion || '']
+    : undefined;
   const socket = useSocket();
 
   useEffect(() => {

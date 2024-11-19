@@ -9,7 +9,7 @@ import {
     StepOutputStatus,
     TriggerType,
 } from '@activepieces/shared'
-import { variableService } from '../../variables/variable-service'
+import { createPropsResolver } from '../../variables/props-resolver'
 import { FlowExecutorContext } from './flow-execution-context'
 
 export const testExecutionContext = {
@@ -44,7 +44,7 @@ export const testExecutionContext = {
                     )
                     break
                 case ActionType.LOOP_ON_ITEMS: {
-                    const { resolvedInput } = await variableService({
+                    const { resolvedInput } = await createPropsResolver({
                         apiUrl,
                         projectId,
                         engineToken,

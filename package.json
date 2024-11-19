@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.36.0",
+  "version": "0.36.1",
   "rcVersion": "0.35.0-rc.1",
   "scripts": {
     "prepare": "husky install",
@@ -227,6 +227,7 @@
     "react-ripples": "2.2.1",
     "react-router-dom": "6.11.2",
     "react-syntax-highlighter": "15.5.0",
+    "react-textarea-autosize": "8.5.5",
     "react-use": "17.5.1",
     "recharts": "2.12.7",
     "redlock": "5.0.0-beta.2",

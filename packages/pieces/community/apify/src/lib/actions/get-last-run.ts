@@ -10,22 +10,25 @@ export const getLastRun = createAction({
   props: {
     actorid: Property.ShortText({
       displayName: 'The id of the Actor (alphanumeric)',
+      // updated the description as can also use the actors user or ownername a tilde and the actor name in place of the id
       description:
-        'The id of the Actor to get run information [item of interest:defaultDatasetId] (compulsory)',
+        'The id [defaultDatasetId] of the Actor to get run information [you can also use the username then ~ then the name] (compulsory)',
       required: true,
     }),
   },
   async run(context) {
-    const apifyToken = context.auth;
+    const apifyToken = context.auth.apikey;
     const headers = {
       Authorization: 'Bearer ' + apifyToken,
       'Content-Type': 'application/json',
     };
 
+    // removed ?status=SUCCEEDED as we might need to know if a particular actor failed
     const url =
       'https://api.apify.com/v2/acts/' +
       context.propsValue.actorid +
-      '/runs/last?status=SUCCEEDED';
+      '/runs/last';
+    //?status=SUCCEEDED'
 
     const httprequestdata = {
       method: HttpMethod.GET,
@@ -34,6 +37,6 @@ export const getLastRun = createAction({
     };
 
     const response = await httpClient.sendRequest(httprequestdata);
-    return response.body;
+    return response.body.data;
   },
 });
