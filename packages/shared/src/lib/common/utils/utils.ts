@@ -92,6 +92,13 @@ export function camelCase(str: string): string {
             .replace('_', ''))
 }
 
+export function parseToJsonIfPossible(str: unknown): unknown {
+    try {
+        return JSON.parse(str as string)
+    } catch (e) {
+        return str
+    }
+}
 
 
 

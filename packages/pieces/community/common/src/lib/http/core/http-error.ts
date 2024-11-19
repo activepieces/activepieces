@@ -1,45 +1,51 @@
 import { AxiosError } from 'axios';
 
 export class HttpError extends Error {
-  constructor(
-    private readonly _requestBody: unknown,
-    private readonly _err: AxiosError
-  ) {
+  private readonly status: number;
+  private readonly responseBody: unknown;
+
+  constructor(private readonly requestBody: unknown, err: AxiosError) {
+    const status = err?.response?.status || 500;
+    const responseBody = err?.response?.data;
+
     super(
       JSON.stringify({
         response: {
-          status: _err?.response?.status || 500,
-          body: _err?.response?.data,
+          status: status,
+          body: responseBody,
         },
         request: {
-          body: _requestBody,
+          body: requestBody,
         },
       })
     );
+
+    this.status = status;
+    this.responseBody = responseBody;
   }
 
   public errorMessage() {
     return {
       response: {
-        status: this._err?.response?.status || 500,
-        body: this._err?.response?.data,
+        status: this.status,
+        body: this.responseBody,
       },
       request: {
-        body: this._requestBody,
+        body: this.requestBody,
       },
     };
   }
 
   get response() {
     return {
-      status: this._err?.response?.status || 500,
-      body: this._err?.response?.data,
+      status: this.status,
+      body: this.responseBody,
     };
   }
 
   get request() {
     return {
-      body: this._requestBody,
+      body: this.requestBody,
     };
   }
 }
