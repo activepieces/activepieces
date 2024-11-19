@@ -1,32 +1,44 @@
 import { t } from 'i18next';
 import { Sparkle } from 'lucide-react';
 
-import { AddActionRequest } from '@activepieces/shared';
+import { ApFlagId } from '@activepieces/shared';
 
-import { Button } from '../../../components/ui/button';
+import { Button, ButtonProps } from '../../../components/ui/button';
 import { useBuilderStateContext } from '../builder-hooks';
+import { flagsHooks } from '../../../hooks/flags-hooks';
+import { AskAiButtonOperations } from '../../../features/pieces/lib/types';
+import { cn } from '../../../lib/utils';
 
 const AskAiButton = ({
   onClick,
-  action,
+  operation,
+  varitant,
+  addAnimation
 }: {
   onClick: () => void;
-  action: Omit<AddActionRequest, 'action'>;
+  operation: AskAiButtonOperations;
+  varitant: ButtonProps['variant'];
+  addAnimation?: boolean
 }) => {
+  const { data: isCopilotEnabled } = flagsHooks.useFlag<boolean>(ApFlagId.CODE_COPILOT_ENABLED);
   const setAskiAiButtonProps = useBuilderStateContext(
     (state) => state.setAskAiButtonProps,
   );
+  if (!isCopilotEnabled) {
+    return <></>
+  }
   return (
     <Button
-      variant="ghost"
-      size="default"
+      variant={varitant}
+      size="sm"
       onClick={() => {
-        setAskiAiButtonProps(action);
+        console.log(operation);
+        setAskiAiButtonProps(operation);
         onClick();
       }}
     >
       <div className="flex gap-2 items-center ">
-        <Sparkle className="w-4 h-4 stroke-foreground "></Sparkle> {t('Ask AI')}
+        <Sparkle className="w-4 h-4 "></Sparkle> {t('Ask AI')}
       </div>
     </Button>
   );

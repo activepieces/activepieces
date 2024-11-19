@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { SearchX } from 'lucide-react';
+import { SearchX, WandSparkles } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -19,12 +19,13 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, TriggerType, supportUrl } from '@activepieces/shared';
+import { AddActionRequest, ApFlagId, FlowOperationType, TriggerType, supportUrl } from '@activepieces/shared';
 
 import { cn } from '../../../lib/utils';
 
 import { PieceSearchSuggestions } from './piece-search-suggestions';
 import { PieceTagEnum } from './piece-tag-group';
+import { AskAiButton } from './ask-ai';
 
 type PieceGroup = {
   title: string;
@@ -42,6 +43,7 @@ type PiecesCardListProps = {
   isLoadingPieces: boolean;
   piecesIsLoaded: boolean;
   noResultsFound: boolean;
+  closePieceSelector: () => void;
 };
 
 export const PiecesCardList: React.FC<PiecesCardListProps> = ({
@@ -53,13 +55,15 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   isLoadingPieces,
   piecesIsLoaded,
   noResultsFound,
+  operation,
+  closePieceSelector
 }) => {
   const { data: showRequestPieceButton } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
 
   const selectedItemRef = useRef<HTMLDivElement | null>(null);
-
+  const { data: areCopilotsEnabled } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COPILOTS);
   useEffect(() => {
     if (piecesIsLoaded && selectedItemRef.current) {
       selectedItemRef.current?.scrollIntoView({
@@ -106,7 +110,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                 handleSelect={handleSelect}
                 ref={
                   pieceMetadata.displayName ===
-                  selectedPieceMetadata?.displayName
+                    selectedPieceMetadata?.displayName
                     ? selectedItemRef
                     : null
                 }
@@ -115,23 +119,50 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
           </React.Fragment>
         ))}
 
-      {noResultsFound && (
-        <div className="flex flex-col gap-2 items-center justify-center h-full ">
-          <SearchX className="w-10 h-10" />
-          <div className="text-sm ">{t('No pieces found')}</div>
-          <div className="text-sm ">{t('Try adjusting your search')}</div>
-          {showRequestPieceButton && (
-            <Link
-              to={`${supportUrl}/c/feature-requests/9`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button className="h-8 px-2 ">Request Piece</Button>
-            </Link>
-          )}
-        </div>
-      )}
-    </CardList>
+
+      {
+        noResultsFound && areCopilotsEnabled && operation.type !== FlowOperationType.UPDATE_TRIGGER && (
+          <div className="flex flex-col gap-2 items-center justify-center h-full ">
+            <WandSparkles className="w-14 h-14" />
+            <div className="text-sm mb-1">{t('Let our AI assitant help you out')}</div>
+            <AskAiButton addAnimation={true} varitant={'default'} operation={operation} onClick={closePieceSelector}>
+            </AskAiButton>
+            {showRequestPieceButton && (
+              <>
+                {t('Or')}
+                < Link
+                  to={`${supportUrl}/c/feature-requests/9`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button className="h-8 px-2 " variant='ghost'>Request Piece</Button>
+                </Link>
+              </>
+
+            )}
+          </div>
+        )
+      }
+
+      {
+        noResultsFound && (!areCopilotsEnabled || operation.type === FlowOperationType.UPDATE_TRIGGER) && (
+          <div className="flex flex-col gap-2 items-center justify-center h-full ">
+            <SearchX className="w-14 h-14" />
+            <div className="text-sm ">{t('No pieces found')}</div>
+            <div className="text-sm ">{t('Try adjusting your search')}</div>
+            {showRequestPieceButton && (
+              <Link
+                to={`${supportUrl}/c/feature-requests/9`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button className="h-8 px-2 ">Request Piece</Button>
+              </Link>
+            )}
+          </div>
+        )
+      }
+    </CardList >
   );
 };
 

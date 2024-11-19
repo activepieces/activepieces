@@ -11,12 +11,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { CodeAction, MarkdownVariant } from '@activepieces/shared';
+import { ApFlagId, CodeAction, MarkdownVariant } from '@activepieces/shared';
 
 import { LeftSideBarType, useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
 import { CodeEditor } from './code-editor';
+import { flagsHooks } from '../../../../hooks/flags-hooks';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below. 
@@ -37,6 +38,8 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const [setLeftSidebar, refreshPieceFormSettings] = useBuilderStateContext(
     (state) => [state.setLeftSidebar, state.refreshPieceFormSettings],
   );
+  //TODO: ask Mo which flag to use CODE_COPILOT_ENABLED or SHOW_COPILOTS
+  const { data: isCopilotEnabled } = flagsHooks.useFlag<boolean>(ApFlagId.CODE_COPILOT_ENABLED);
   return (
     <div className="flex flex-col gap-4">
       <FormField
@@ -49,14 +52,17 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
             </div>
             <div className="flex items-center justify-between">
               <FormLabel>{t('Inputs')}</FormLabel>
-              <Button
-                variant="ghost"
-                onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
-                className="flex items-right max-w-max"
-              >
-                <Bot />
-                <span className="ml-2">{t('Ask AI')}</span>
-              </Button>
+              {
+                isCopilotEnabled && (<Button
+                  variant="ghost"
+                  onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
+                  className="flex items-right max-w-max"
+                >
+                  <Bot />
+                  <span className="ml-2">{t('Ask AI')}</span>
+                </Button>)
+              }
+
             </div>
 
             <DictionaryProperty

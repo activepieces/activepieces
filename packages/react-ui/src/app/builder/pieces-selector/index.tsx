@@ -190,7 +190,6 @@ const PieceSelector = ({
     stepMetadata,
     actionOrTrigger,
   ) => {
-    console.log(actionOrTrigger);
     resetField();
     onOpenChange(false);
     const newStepName = pieceSelectorUtils.getStepName(
@@ -321,9 +320,10 @@ const PieceSelector = ({
                   setSelectedMetadata(undefined);
                 }}
               />
-              {operation.type === FlowOperationType.ADD_ACTION && (
+              {operation.type !== FlowOperationType.UPDATE_TRIGGER && (
                 <AskAiButton
-                  action={operation.actionLocation}
+                  varitant="ghost"
+                  operation={operation}
                   onClick={() => {
                     onOpenChange(false);
                   }}
@@ -354,6 +354,7 @@ const PieceSelector = ({
               }}
             >
               <PiecesCardList
+                closePieceSelector={() => onOpenChange(false)}
                 debouncedQuery={debouncedQuery}
                 selectedTag={selectedTag}
                 piecesIsLoaded={piecesIsLoaded}
@@ -388,6 +389,7 @@ const PieceSelector = ({
               }}
             >
               <PiecesCardList
+                closePieceSelector={() => onOpenChange(false)}
                 debouncedQuery={debouncedQuery}
                 selectedTag={selectedTag}
                 piecesIsLoaded={piecesIsLoaded}

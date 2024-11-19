@@ -8,6 +8,7 @@ import { PromiseQueue } from '@/lib/promise-queue';
 import {
   AddActionRequest,
   FlowOperationRequest,
+  FlowOperationType,
   FlowRun,
   FlowVersion,
   FlowVersionState,
@@ -20,6 +21,7 @@ import {
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { useAuthorization } from '../../hooks/authorization-hooks';
+import { AskAiButtonOperations, PieceSelectorOperation } from '../../features/pieces/lib/types';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -105,8 +107,8 @@ export type BuilderState = {
       operation: FlowOperationRequest,
     ) => void,
   ) => void;
-  askAiButtonProps: Omit<AddActionRequest, 'action'> | null;
-  setAskAiButtonProps: (props: Omit<AddActionRequest, 'action'> | null) => void;
+  askAiButtonProps: AskAiButtonOperations | null;
+  setAskAiButtonProps: (props: AskAiButtonOperations| null) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -370,8 +372,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             : state.leftSidebar === LeftSideBarType.AI_COPILOT
             ? LeftSideBarType.NONE
             : state.leftSidebar,
-          rightSidebar: props ? RightSideBarType.NONE : state.rightSidebar,
-          selectedStep: props ? null : state.selectedStep,
+          rightSidebar: props &&  props.type === FlowOperationType.UPDATE_ACTION ? RightSideBarType.PIECE_SETTINGS : props? RightSideBarType.NONE : state.rightSidebar,
+          selectedStep: props &&  props.type === FlowOperationType.UPDATE_ACTION ? props.stepName: props? null : state.selectedStep,
         }));
       },
     };

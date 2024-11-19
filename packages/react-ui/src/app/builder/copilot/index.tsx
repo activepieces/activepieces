@@ -23,6 +23,7 @@ import {
   flowStructureUtil,
   GenerateCodeRequest,
   GenerateCodeResponse,
+  StepLocationRelativeToParent,
   WebsocketClientEvent,
   WebsocketServerEvent,
 } from '@activepieces/shared';
@@ -159,7 +160,7 @@ export const CopilotSidebar = () => {
   };
 
   const mergeInputs = (
-    inputsOne: Record<string, string>,
+    inputsOne: Record<string, string> | undefined,
     inputsTwo: Record<string, string> | undefined,
   ) => {
     if (!inputsOne) {
@@ -190,7 +191,52 @@ export const CopilotSidebar = () => {
     if (isCodeType) {
       return;
     }
-    if (step) {
+    if (askAiButtonProps) {
+      const stepName = askAiButtonProps.type === FlowOperationType.UPDATE_ACTION ? askAiButtonProps.stepName : flowStructureUtil.findUnusedName(flowVersion.trigger);
+      const codeAction = pieceSelectorUtils.getDefaultStep({
+        stepName,
+        stepMetadata: CORE_STEP_METADATA[ActionType.CODE],
+        actionOrTrigger: getCoreActions(ActionType.CODE)[0],
+      }) as CodeAction;
+      codeAction.settings = {
+        input: message.content.inputs,
+        sourceCode: {
+          code: message.content.code,
+          packageJson: JSON.stringify(message.content.packages, null, 2),
+        },
+      };
+      if (askAiButtonProps.type === FlowOperationType.ADD_ACTION) {
+        applyOperation(
+          {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+              action: codeAction,
+              ...askAiButtonProps.actionLocation
+            },
+          },
+          () => { },
+        );
+      }
+      else {
+        const existingStep = flowStructureUtil.getStep(askAiButtonProps.stepName, flowVersion.trigger);
+        if (existingStep) {
+          applyOperation({
+            type: FlowOperationType.UPDATE_ACTION,
+            request: {
+              displayName: existingStep.displayName,
+              name: existingStep.name,
+              settings: codeAction.settings,
+              type: ActionType.CODE,
+              valid: true
+            }
+          }, () => { })
+        }
+
+      }
+
+      selectStepByName(stepName);
+    }
+    else if (step) {
       const mergedInputs = mergeInputs(
         message.content.inputs,
         step.settings.input,
@@ -208,31 +254,6 @@ export const CopilotSidebar = () => {
         updateAction(newStep);
         refreshSettings();
       }
-    } else if (askAiButtonProps) {
-      const stepName = flowStructureUtil.findUnusedName(flowVersion.trigger);
-      const codeAction = pieceSelectorUtils.getDefaultStep({
-        stepName,
-        stepMetadata: CORE_STEP_METADATA[ActionType.CODE],
-        actionOrTrigger: getCoreActions(ActionType.CODE)[0],
-      }) as CodeAction;
-      codeAction.settings = {
-        input: message.content.inputs,
-        sourceCode: {
-          code: message.content.code,
-          packageJson: JSON.stringify(message.content.packages, null, 2),
-        },
-      };
-      applyOperation(
-        {
-          type: FlowOperationType.ADD_ACTION,
-          request: {
-            action: codeAction,
-            ...askAiButtonProps,
-          },
-        },
-        () => {},
-      );
-      selectStepByName(stepName);
     }
   };
 
