@@ -70,7 +70,7 @@ export const piecesApi = {
       ? request.version.slice(1)
       : request.version;
     const latestPatchVersion = `~${exactVersion}`;
-    const extactVersionPromise = api.get<PieceMetadataModel>(
+    const exactVersionPromise = api.get<PieceMetadataModel>(
       `/v1/pieces/${request.name}`,
       {
         version: exactVersion,
@@ -82,7 +82,7 @@ export const piecesApi = {
         version: latestPatchVersion,
       },
     );
-    return Promise.all([extactVersionPromise, latestPatchVersionPromise]).then(
+    return Promise.all([exactVersionPromise, latestPatchVersionPromise]).then(
       (result) => {
         return {
           [exactVersion]: result[0],
