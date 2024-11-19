@@ -12,10 +12,10 @@ import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
+import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
-import { flowMigrations } from './migrations'
 
 export enum FlowOperationType {
     LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
