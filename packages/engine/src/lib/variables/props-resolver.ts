@@ -95,7 +95,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     }
     const connection = await createConnectionService({ engineToken, projectId, apiUrl }).obtain(connectionName)
     const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)
-    if (isNil(pathAfterConnectionName)) {
+    if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection
     }
     return evalInScope(pathAfterConnectionName, { connection })
