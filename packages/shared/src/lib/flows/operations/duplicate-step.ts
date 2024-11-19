@@ -1,5 +1,5 @@
 import { applyFunctionToValuesSync, isNil, isString } from '../../common'
-import { Action, RouterAction } from '../actions/action'
+import { Action, BranchExecutionType, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _getImportOperations } from './import-flow'
@@ -118,8 +118,10 @@ function _duplicateBranch(
     const operations: FlowOperationRequest[] = [{
         type: FlowOperationType.ADD_BRANCH,
         request: {
+            branchName: `${clonedRouter.settings.branches[childIndex].branchName} Copy`,
             branchIndex: childIndex + 1,
             stepName: routerName,
+            conditions: clonedRouter.settings.branches[childIndex].branchType === BranchExecutionType.CONDITION ? clonedRouter.settings.branches[childIndex].conditions : undefined,
         },
     }]
 
@@ -141,6 +143,7 @@ function _duplicateBranch(
         })
         operations.push(...importOperations)
     }
+
     return operations
 }
 

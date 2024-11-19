@@ -18,7 +18,7 @@ const GitSyncPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { gitSync, isLoading, refetch } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId(),
+    authenticationSession.getProjectId()!,
     platform.gitSyncEnabled,
   );
 

@@ -15,6 +15,9 @@ import { SigningKey } from '../signing-key';
 export const ListAuditEventsRequest = Type.Object({
   limit: Type.Optional(Type.Number()),
   cursor: Type.Optional(Type.String()),
+  action: Type.Optional(Type.String()),
+  projectId: Type.Optional(Type.String()),
+  userId: Type.Optional(Type.String()),
 });
 
 export type ListAuditEventsRequest = Static<typeof ListAuditEventsRequest>;
@@ -57,7 +60,8 @@ export const ConnectionEvent = Type.Object({
   ]),
   data: Type.Object({
     connection: Type.Pick(AppConnectionWithoutSensitiveData, [
-      'name',
+      'displayName',
+      'externalId',
       'pieceName',
       'status',
       'type',
@@ -232,9 +236,9 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
     case ApplicationEventName.FOLDER_DELETED:
       return `${event.data.folder.displayName} is deleted`;
     case ApplicationEventName.CONNECTION_UPSERTED:
-      return `${event.data.connection.name} is updated`;
+      return `${event.data.connection.displayName} (${event.data.connection.externalId}) is updated`;
     case ApplicationEventName.CONNECTION_DELETED:
-      return `${event.data.connection.name} is deleted`;
+      return `${event.data.connection.displayName} (${event.data.connection.externalId}) is deleted`;
     case ApplicationEventName.USER_SIGNED_IN:
       return `User ${event.userEmail} signed in`;
     case ApplicationEventName.USER_PASSWORD_RESET:

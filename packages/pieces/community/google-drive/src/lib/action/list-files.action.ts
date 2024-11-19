@@ -15,7 +15,17 @@ export const googleDriveListFiles = createAction({
     }),
   },
   async run(context) {
-    const response = await httpClient.sendRequest({
+
+    const result = {
+      'type': 'drive#fileList',
+      'incompleteSearch': false,
+       'files': [] as unknown[],
+       
+    }
+
+    
+
+    let response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `https://www.googleapis.com/drive/v3/files?q='${context.propsValue.folderId}'+in+parents`,
       headers: {
@@ -23,6 +33,19 @@ export const googleDriveListFiles = createAction({
       },
     });
 
-    return response.body;
+    result.files = [...response.body.files];
+    while(response.body.nextPageToken)
+    {
+      response = await httpClient.sendRequest({
+        method: HttpMethod.GET,
+        url: `https://www.googleapis.com/drive/v3/files?pageToken=${response.body.nextPageToken}&q='${context.propsValue.folderId}'+in+parents`,
+        headers: {
+          Authorization: `Bearer ${context.auth.access_token}`,
+        },
+      });
+      result.files.push(...response.body.files);
+      result.incompleteSearch = result.incompleteSearch || response.body.incompleteSearch;
+    }
+    return result;
   }
 });

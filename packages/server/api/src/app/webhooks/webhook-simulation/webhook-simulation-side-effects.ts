@@ -6,7 +6,8 @@ import {
     FlowVersionId,
     isNil,
     PopulatedFlow,
-    ProjectId } from '@activepieces/shared'
+    ProjectId,
+} from '@activepieces/shared'
 import { flowService } from '../../flows/flow/flow.service'
 import { triggerHooks } from '../../flows/trigger'
 
@@ -66,19 +67,10 @@ export const webhookSideEffects = {
             flowVersionId,
         })
 
-        const response = await triggerHooks.disable({
+        await triggerHooks.disable({
             projectId,
             flowVersion,
             simulate: true,
         })
-
-        if (isNil(response) || response.status !== EngineResponseStatus.OK) {
-            throw new ActivepiecesError({
-                code: ErrorCode.TRIGGER_DISABLE,
-                params: {
-                    flowVersionId: flowVersion.id,
-                },
-            })
-        }
     },
 }

@@ -38,7 +38,7 @@ import { PlatformAdminContainer } from '../components/platform-admin-container';
 import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
-import AppConnectionsPage from '../routes/connections';
+import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
@@ -47,6 +47,8 @@ import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import AuditLogsPage from '../routes/platform/audit-logs';
+import { GlobalConnectionsTable } from '../routes/platform/connections';
+import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
 import { LicenseKeyPage } from '../routes/platform/settings/license-key';
 import TemplatesPage from '../routes/platform/templates';
@@ -338,16 +340,6 @@ const routes = [
     ),
   },
   {
-    path: '/platform/audit-logs',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Audit Logs">
-          <AuditLogsPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
     path: '/platform/pieces',
     element: (
       <PlatformAdminContainer>
@@ -368,11 +360,24 @@ const routes = [
     ),
   },
   {
+    path: '/platform/connections',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Connections">
+          <GlobalConnectionsTable />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/analytics',
     element: (
       <PlatformAdminContainer>
         <PageTitle title="Analytics">
-          <AnalyticsPage />
+          <div className="flex flex-col gap-4 w-full">
+            <AINotification />
+            <AnalyticsPage />
+          </div>
         </PageTitle>
       </PlatformAdminContainer>
     ),
@@ -383,16 +388,6 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="Templates">
           <TemplatesPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/users',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Users">
-          <UsersPage />
         </PageTitle>
       </PlatformAdminContainer>
     ),
@@ -420,12 +415,26 @@ const routes = [
     ),
   },
   {
-    path: '/platform/ai',
+    path: '/platform/settings/users',
     element: (
       <PlatformAdminContainer>
-        <PageTitle title="Universal AI">
-          <AIProvidersPage />
-        </PageTitle>
+        <PlatformSettingsLayout>
+          <PageTitle title="Users">
+            <UsersPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/ai',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="Universal AI">
+            <AIProvidersPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
       </PlatformAdminContainer>
     ),
   },
@@ -436,6 +445,18 @@ const routes = [
         <PlatformSettingsLayout>
           <PageTitle title="API Keys">
             <ApiKeysPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/audit-logs',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="Audit Logs">
+            <AuditLogsPage />
           </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>

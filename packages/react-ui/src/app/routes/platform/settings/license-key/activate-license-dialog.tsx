@@ -75,6 +75,7 @@ export const ActivateLicenseDialog = ({
     loop: true,
     autoplay: true,
     animationData: celebrationAnimation,
+    animationSpeed: 4,
     rendererSettings: {
       preserveAspectRatio: 'xMidYMid slice',
     },
@@ -129,11 +130,7 @@ export const ActivateLicenseDialog = ({
         )}
         {showCelebration && (
           <div className="celebration-lottie text-center">
-            <Lottie
-              options={{ ...defaultOptions, animationSpeed: 4 }}
-              height={200}
-              width={200}
-            />
+            <Lottie options={defaultOptions} height={200} width={200} />
             <div className="text-center mt-4">
               <p className="text-md text-gray-500">
                 {t('Enjoy the awesome enterprise features')}
@@ -151,24 +148,18 @@ export const ActivateLicenseDialog = ({
               </DialogClose>
             </div>
           ) : (
-            <>
-              <Button
-                loading={isPending}
-                onClick={(e) => form.handleSubmit(handleSubmit)(e)}
-                tabIndex={3}
-              >
-                {isPending ? (
-                  <LoadingSpinner className="w-4 h-4" />
-                ) : (
-                  t('Activate')
-                )}
-              </Button>
-              <DialogClose asChild>
-                <Button variant={'outline'} onClick={() => onOpenChange(false)}>
-                  {t('Close')}
-                </Button>
-              </DialogClose>
-            </>
+            <Button
+              loading={isPending}
+              onClick={(e) => form.handleSubmit(handleSubmit)(e)}
+              tabIndex={3}
+              className="w-full"
+            >
+              {isPending ? (
+                <LoadingSpinner className="w-4 h-4" />
+              ) : (
+                t('Activate')
+              )}
+            </Button>
           )}
         </DialogFooter>
       </DialogContent>

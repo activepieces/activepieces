@@ -51,6 +51,9 @@
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],
+      "@activepieces/piece-apify": [
+        "packages/pieces/community/apify/src/index.ts"
+      ],
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
@@ -642,6 +645,9 @@
       ],
       "@activepieces/piece-webhook": [
         "packages/pieces/community/webhook/src/index.ts"
+      ],
+      "@activepieces/piece-webling": [
+        "packages/pieces/community/webling/src/index.ts"
       ],
       "@activepieces/piece-wedof": [
         "packages/pieces/community/wedof/src/index.ts"

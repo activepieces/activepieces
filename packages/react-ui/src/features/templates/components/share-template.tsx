@@ -28,6 +28,7 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
         request: {
           displayName: template.template.displayName,
           trigger: template.template.trigger,
+          schemaVersion: template.template.schemaVersion,
         },
       });
       return updatedFlow;

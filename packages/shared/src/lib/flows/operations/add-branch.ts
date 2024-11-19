@@ -15,7 +15,7 @@ function _addBranch(flowVersion: FlowVersion, request: AddBranchRequest): FlowVe
             ...routerAction,
             settings: {
                 ...routerAction.settings,
-                branches: insertAt(routerAction.settings.branches, request.branchIndex, flowStructureUtil.createEmptyBranch(routerAction.settings.branches.length)),
+                branches: insertAt(routerAction.settings.branches, request.branchIndex, flowStructureUtil.createBranch(request.branchName, request.conditions)),
             },
             children: insertAt(routerAction.children, request.branchIndex, null),
         }

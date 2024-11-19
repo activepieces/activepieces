@@ -8,14 +8,7 @@ const message = `
 1. Log in to your [Poper Account](https://app.poper.ai/).
 2. Click on the popup for which you want to set up a trigger.
 3. On the left-side menu, click on Integrations and search for **Webhook**.
-4. Enter an appropriate webhook name and paste the following URLs:
-
-  **Test URL (only generate sample data)**:
-  \`\`\`text
-  {{webhookUrl}}/test
-  \`\`\`
-
-  **Trigger Flow URL**:
+4. Enter an appropriate webhook name and paste the following URL:
   \`\`\`text
   {{webhookUrl}}
   \`\`\`

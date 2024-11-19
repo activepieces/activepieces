@@ -106,6 +106,13 @@ const FlowsPage = () => {
 
   const { mutate: exportFlows, isPending: isExportPending } = useMutation({
     mutationFn: async (flows: PopulatedFlow[]) => {
+      if (flows.length === 0) {
+        return;
+      }
+      if (flows.length === 1) {
+        await flowsUtils.downloadFlow(flows[0].id);
+        return;
+      }
       const zip = await flowsUtils.downloadFlowsIntoZip(flows);
       const content = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(content);
@@ -340,10 +347,22 @@ const FlowsPage = () => {
               flow={flow}
               readonly={false}
               flowVersion={flow.version}
-              onRename={() => setRefresh(refresh + 1)}
-              onMoveTo={() => setRefresh(refresh + 1)}
-              onDuplicate={() => setRefresh(refresh + 1)}
-              onDelete={() => setRefresh(refresh + 1)}
+              onRename={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
+              onMoveTo={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
+              onDuplicate={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
+              onDelete={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
             >
               <EllipsisVertical className="h-10 w-10" />
             </FlowActionMenu>
@@ -375,7 +394,6 @@ const FlowsPage = () => {
                       className="h-9 w-full"
                       variant={'outline'}
                       onClick={() => {
-                        console.log('isDropdownOpen', isDropdownOpen);
                         setIsDropdownOpen(!isDropdownOpen);
                       }}
                     >
@@ -516,13 +534,19 @@ const FlowsPage = () => {
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="mb-4 flex">
+      <div className="flex">
         <TableTitle>{t('Flows')}</TableTitle>
         <div className="ml-auto flex flex-row gap-2">
           <PermissionNeededTooltip
             hasPermission={doesUserHavePermissionToWriteFlow}
           >
-            <ImportFlowDialog insideBuilder={false}>
+            <ImportFlowDialog
+              insideBuilder={false}
+              onRefresh={() => {
+                setRefresh(refresh + 1);
+                refetch();
+              }}
+            >
               <Button
                 disabled={!doesUserHavePermissionToWriteFlow}
                 variant="outline"

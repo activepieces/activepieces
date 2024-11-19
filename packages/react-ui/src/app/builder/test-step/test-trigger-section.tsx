@@ -25,7 +25,7 @@ import {
   ErrorCode,
   SeekPage,
   Trigger,
-  TriggerEvent,
+  TriggerEventWithPayload,
   TriggerTestStrategy,
   isNil,
   parseToJsonIfPossible,
@@ -46,7 +46,10 @@ type TestTriggerSectionProps = {
   flowId: string;
 };
 
-function getSelectedId(sampleData: unknown, pollResults: TriggerEvent[]) {
+function getSelectedId(
+  sampleData: unknown,
+  pollResults: TriggerEventWithPayload[],
+) {
   if (sampleData === undefined) {
     return undefined;
   }
@@ -111,7 +114,7 @@ const TestTriggerSection = React.memo(
       mutate: simulateTrigger,
       isPending: isSimulating,
       reset: resetSimulation,
-    } = useMutation<TriggerEvent[], Error, void>({
+    } = useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
         setErrorMessage(undefined);
         const ids = (
@@ -156,7 +159,7 @@ const TestTriggerSection = React.memo(
     });
 
     const { mutate: pollTrigger, isPending: isPollingTesting } = useMutation<
-      TriggerEvent[],
+      TriggerEventWithPayload[],
       Error,
       void
     >({
@@ -194,7 +197,7 @@ const TestTriggerSection = React.memo(
       },
     });
 
-    async function updateSampleData(data: TriggerEvent) {
+    async function updateSampleData(data: TriggerEventWithPayload) {
       let sampleDataFileId: string | undefined = undefined;
       if (!isNil(data.payload)) {
         const sampleFile = await sampleDataApi.save({
@@ -219,7 +222,9 @@ const TestTriggerSection = React.memo(
       setSampleData(formValues.name, data.payload);
     }
 
-    const { data: pollResults, refetch } = useQuery<SeekPage<TriggerEvent>>({
+    const { data: pollResults, refetch } = useQuery<
+      SeekPage<TriggerEventWithPayload>
+    >({
       queryKey: ['triggerEvents', flowVersionId],
       queryFn: () =>
         triggerEventsApi.list({

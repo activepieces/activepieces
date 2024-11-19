@@ -7,7 +7,6 @@ export enum ActionType {
     CODE = 'CODE',
     PIECE = 'PIECE',
     LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
-    BRANCH = 'BRANCH',
     ROUTER = 'ROUTER',
 }
 
@@ -216,11 +215,6 @@ const BranchConditionValid = (addMinLength: boolean) =>
         BranchSingleValueConditionValid(addMinLength),
     ])
 
-export const BranchActionSettingsWithValidation = Type.Object({
-    conditions: Type.Array(Type.Array(BranchConditionValid(true))),
-    inputUiInfo: SampleDataSetting,
-})
-
 export const ValidBranchCondition = BranchConditionValid(true)
 export type ValidBranchCondition = Static<typeof ValidBranchCondition>
 
@@ -278,11 +272,7 @@ export const RouterActionSettingsWithValidation = Type.Object({
 
 export type RouterActionSettings = Static<typeof RouterActionSettings>
 
-export const BranchActionSchema = Type.Object({
-    ...commonActionProps,
-    type: Type.Literal(ActionType.BRANCH),
-    settings: BranchActionSettings,
-})
+
 
 // Union of all actions
 
@@ -308,14 +298,6 @@ export const Action = Type.Recursive((action) =>
             }),
         ]),
         Type.Intersect([
-            BranchActionSchema,
-            Type.Object({
-                nextAction: Type.Optional(action),
-                onSuccessAction: Type.Optional(action),
-                onFailureAction: Type.Optional(action),
-            }),
-        ]),
-        Type.Intersect([
             Type.Object({
                 ...commonActionProps,
                 type: Type.Literal(ActionType.ROUTER),
@@ -338,16 +320,10 @@ export const SingleActionSchema = Type.Union([
     CodeActionSchema,
     PieceActionSchema,
     LoopOnItemsActionSchema,
-    BranchActionSchema,
     RouterActionSchema,
 ])
 export type Action = Static<typeof Action>
 
-export type BranchAction = Static<typeof BranchActionSchema> & {
-    nextAction?: Action
-    onFailureAction?: Action
-    onSuccessAction?: Action
-}
 
 export type RouterAction = Static<typeof RouterActionSchema> & {
     nextAction?: Action

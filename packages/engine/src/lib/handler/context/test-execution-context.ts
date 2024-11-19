@@ -1,6 +1,5 @@
 import {
     ActionType,
-    BranchStepOutput,
     flowStructureUtil,
     FlowVersion,
     GenericStepOutput,
@@ -10,7 +9,7 @@ import {
     StepOutputStatus,
     TriggerType,
 } from '@activepieces/shared'
-import { variableService } from '../../variables/variable-service'
+import { createPropsResolver } from '../../variables/props-resolver'
 import { FlowExecutorContext } from './flow-execution-context'
 
 export const testExecutionContext = {
@@ -33,14 +32,6 @@ export const testExecutionContext = {
 
             const stepType = step.type
             switch (stepType) {
-                case ActionType.BRANCH:
-                    flowExecutionContext = flowExecutionContext.upsertStep(
-                        step.name,
-                        BranchStepOutput.init({
-                            input: step.settings,
-                        }),
-                    )
-                    break
                 case ActionType.ROUTER:
                     flowExecutionContext = flowExecutionContext.upsertStep(
                         step.name,
@@ -48,11 +39,12 @@ export const testExecutionContext = {
                             input: step.settings,
                             type: stepType,
                             status: StepOutputStatus.SUCCEEDED,
+                            ...spreadIfDefined('output', sampleData?.[step.name]),
                         }),
                     )
                     break
                 case ActionType.LOOP_ON_ITEMS: {
-                    const { resolvedInput } = await variableService({
+                    const { resolvedInput } = await createPropsResolver({
                         apiUrl,
                         projectId,
                         engineToken,

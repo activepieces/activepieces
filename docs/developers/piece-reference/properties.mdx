@@ -1,6 +1,6 @@
 ---
-title: "Props"
-description: "Learn about different types of properties used in triggers / actions"
+title: 'Props'
+description: 'Learn about different types of properties used in triggers / actions'
 icon: 'input-pipe'
 ---
 
@@ -18,11 +18,11 @@ This property collects a short text input from the user.
 
 ```typescript
 Property.ShortText({
-    displayName: 'Name',
-    description: 'Enter your name',
-    required: true,
-    defaultValue: 'John Doe'
-})
+  displayName: 'Name',
+  description: 'Enter your name',
+  required: true,
+  defaultValue: 'John Doe',
+});
 ```
 
 ### Long Text
@@ -33,10 +33,10 @@ This property collects a long text input from the user.
 
 ```typescript
 Property.LongText({
-    displayName: 'Description',
-    description: 'Enter a description',
-    required: false
-})
+  displayName: 'Description',
+  description: 'Enter a description',
+  required: false,
+});
 ```
 
 ### Checkbox
@@ -47,26 +47,36 @@ This property presents a checkbox for the user to select or deselect.
 
 ```typescript
 Property.Checkbox({
-    displayName: 'Agree to Terms',
-    description: 'Check this box to agree to the terms',
-    required: true,
-    defaultValue: false
-})
+  displayName: 'Agree to Terms',
+  description: 'Check this box to agree to the terms',
+  required: true,
+  defaultValue: false,
+});
 ```
 
-### Markdown 
+### Markdown
 
-This property to show markdown snippet to the user, can be used to show documentation or instructions.
+This property displays a markdown snippet to the user, useful for documentation or instructions. It includes a `variant` option to style the markdown, using the `MarkdownVariant` enum:
+
+- **BORDERLESS**: For a minimalistic, no-border layout.
+- **INFO**: Displays informational messages.
+- **WARNING**: Alerts the user to cautionary information.
+- **TIP**: Highlights helpful tips or suggestions.
+
+The default value for `variant` is **INFO**.
 
 **Example:**
 
 ```typescript
 Property.MarkDown({
-    value: '## This is a markdown snippet'
+    value: '## This is a markdown snippet',
+    variant: MarkdownVariant.WARNING,
 }),
 ```
+
 <Tip>
-If you want to show a webhook url to the user, use `{{webhookUrl}}` in the markdown snippet.
+  If you want to show a webhook url to the user, use `{{ webhookUrl }}` in the
+  markdown snippet.
 </Tip>
 
 ### DateTime
@@ -77,11 +87,11 @@ This property collects a date and time from the user.
 
 ```typescript
 Property.DateTime({
-    displayName: 'Date and Time',
-    description: 'Select a date and time',
-    required: true,
-    defaultValue: '2023-06-09T12:00:00Z'
-})
+  displayName: 'Date and Time',
+  description: 'Select a date and time',
+  required: true,
+  defaultValue: '2023-06-09T12:00:00Z',
+});
 ```
 
 ### Number
@@ -92,10 +102,10 @@ This property collects a numeric input from the user.
 
 ```typescript
 Property.Number({
-    displayName: 'Quantity',
-    description: 'Enter a number',
-    required: true
-})
+  displayName: 'Quantity',
+  description: 'Enter a number',
+  required: true,
+});
 ```
 
 ### Static Dropdown
@@ -106,24 +116,23 @@ This property presents a dropdown menu with predefined options.
 
 ```typescript
 Property.StaticDropdown({
-    displayName: 'Country',
-    description: 'Select your country',
-    required: true,
-    options: {
-        options: [
-            {
-                label: 'Option One',
+  displayName: 'Country',
+  description: 'Select your country',
+  required: true,
+  options: {
+    options: [
+      {
+        label: 'Option One',
 
-
-                value: '1'
-            },
-            {
-                label: 'Option Two',
-                value: '2'
-            }
-        ]
-    }
-})
+        value: '1',
+      },
+      {
+        label: 'Option Two',
+        value: '2',
+      },
+    ],
+  },
+});
 ```
 
 ### Static Multiple Dropdown
@@ -134,26 +143,26 @@ This property presents a dropdown menu with multiple selection options.
 
 ```typescript
 Property.StaticMultiSelectDropdown({
-    displayName: 'Colors',
-    description: 'Select one or more colors',
-    required: true,
-    options: {
-        options: [
-            {
-                label: 'Red',
-                value: 'red'
-            },
-            {
-                label: 'Green',
-                value: 'green'
-            },
-            {
-                label: 'Blue',
-                value: 'blue'
-            }
-        ]
-    }
-})
+  displayName: 'Colors',
+  description: 'Select one or more colors',
+  required: true,
+  options: {
+    options: [
+      {
+        label: 'Red',
+        value: 'red',
+      },
+      {
+        label: 'Green',
+        value: 'green',
+      },
+      {
+        label: 'Blue',
+        value: 'blue',
+      },
+    ],
+  },
+});
 ```
 
 ### JSON
@@ -164,11 +173,11 @@ This property collects JSON data from the user.
 
 ```typescript
 Property.Json({
-    displayName: 'Data',
-    description: 'Enter JSON data',
-    required: true,
-    defaultValue: {"key": "value"}
-})
+  displayName: 'Data',
+  description: 'Enter JSON data',
+  required: true,
+  defaultValue: { key: 'value' },
+});
 ```
 
 ### Dictionary
@@ -179,14 +188,14 @@ This property collects key-value pairs from the user.
 
 ```typescript
 Property.Object({
-    displayName: 'Options',
-    description: 'Enter key-value pairs',
-    required: true,
-    defaultValue: {
-        key1: 'value1',
-        key2: 'value2'
-    }
-})
+  displayName: 'Options',
+  description: 'Enter key-value pairs',
+  required: true,
+  defaultValue: {
+    key1: 'value1',
+    key2: 'value2',
+  },
+});
 ```
 
 ### File
@@ -197,10 +206,10 @@ This property collects a file from the user, either by providing a URL or upload
 
 ```typescript
 Property.File({
-    displayName: 'File',
-    description: 'Upload a file',
-    required: true
-})
+  displayName: 'File',
+  description: 'Upload a file',
+  required: true,
+});
 ```
 
 ### Array of Strings
@@ -211,11 +220,11 @@ This property collects an array of strings from the user.
 
 ```typescript
 Property.Array({
-    displayName: 'Tags',
-    description: 'Enter tags',
-    required: false,
-    defaultValue: ['tag1', 'tag2']
-})
+  displayName: 'Tags',
+  description: 'Enter tags',
+  required: false,
+  defaultValue: ['tag1', 'tag2'],
+});
 ```
 
 ### Array of Fields
@@ -226,27 +235,27 @@ This property collects an array of objects from the user.
 
 ```typescript
 Property.Array({
-    displayName: 'Fields',
-    description: 'Enter fields',
-    properties: {
-        fieldName: Property.ShortText({
-          displayName: 'Field Name',
-          required: true,
-        }),
-        fieldType: Property.StaticDropdown({
-          displayName: 'Field Type',
-          required: true,
-          options: {
-            options: [
-              { label: 'TEXT', value: 'TEXT' },
-              { label: 'NUMBER', value: 'NUMBER' },
-            ],
-          },
-        }),
-    },
-    required: false,
-    defaultValue:[]
-})
+  displayName: 'Fields',
+  description: 'Enter fields',
+  properties: {
+    fieldName: Property.ShortText({
+      displayName: 'Field Name',
+      required: true,
+    }),
+    fieldType: Property.StaticDropdown({
+      displayName: 'Field Type',
+      required: true,
+      options: {
+        options: [
+          { label: 'TEXT', value: 'TEXT' },
+          { label: 'NUMBER', value: 'NUMBER' },
+        ],
+      },
+    }),
+  },
+  required: false,
+  defaultValue: [],
+});
 ```
 
 ## Dynamic Data Properties
@@ -261,37 +270,38 @@ This property allows for dynamically loaded options based on the user's input.
 
 ```typescript
 Property.Dropdown({
-    displayName: 'Options',
-    description: 'Select an option',
-    required: true,
-    refreshers: ['auth'],
-    refreshOnSearch: false,
-    options: async ({auth}, {searchValue}) => {
-        // Search value only works when refreshOnSearch is true
-        if (!auth) {
-            return {
-                disabled: true
-            };
-        }
-        return {
-            options: [
-                {
-                    label: 'Option One',
-                    value: '1'
-                },
-                {
-                    label: 'Option Two',
-                    value: '2'
-                }
-            ]
-        };
+  displayName: 'Options',
+  description: 'Select an option',
+  required: true,
+  refreshers: ['auth'],
+  refreshOnSearch: false,
+  options: async ({ auth }, { searchValue }) => {
+    // Search value only works when refreshOnSearch is true
+    if (!auth) {
+      return {
+        disabled: true,
+      };
     }
-})
+    return {
+      options: [
+        {
+          label: 'Option One',
+          value: '1',
+        },
+        {
+          label: 'Option Two',
+          value: '2',
+        },
+      ],
+    };
+  },
+});
 ```
-<Tip>
-When accessing the Piece auth, be sure to use exactly `auth` as it is hardcoded. However, for other properties, use their respective names.
-</Tip>
 
+<Tip>
+  When accessing the Piece auth, be sure to use exactly `auth` as it is
+  hardcoded. However, for other properties, use their respective names.
+</Tip>
 
 ### Multi-Select Dropdown
 
@@ -301,33 +311,35 @@ This property allows for multiple selections from dynamically loaded options.
 
 ```typescript
 Property.MultiSelectDropdown({
-    displayName: 'Options',
-    description: 'Select one or more options',
-    required: true,
-    refreshers: ['auth'],
-    options: async ({auth}) => {
-        if (!auth) {
-            return {
-                disabled: true
-            };
-        }
-        return {
-            options: [
-                {
-                    label: 'Option One',
-                    value: '1'
-                },
-                {
-                    label: 'Option Two',
-                    value: '2'
-                }
-            ]
-        };
+  displayName: 'Options',
+  description: 'Select one or more options',
+  required: true,
+  refreshers: ['auth'],
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+      };
     }
-})
+    return {
+      options: [
+        {
+          label: 'Option One',
+          value: '1',
+        },
+        {
+          label: 'Option Two',
+          value: '2',
+        },
+      ],
+    };
+  },
+});
 ```
+
 <Tip>
-When accessing the Piece auth, be sure to use exactly `auth` as it is hardcoded. However, for other properties, use their respective names.
+  When accessing the Piece auth, be sure to use exactly `auth` as it is
+  hardcoded. However, for other properties, use their respective names.
 </Tip>
 
 ### Dynamic Properties
@@ -338,32 +350,30 @@ This property is used to construct forms dynamically based on API responses or u
 
 ```typescript
 Property.DynamicProperties({
-    description: 'Dynamic Form',
-    displayName: 'Dynamic Form',
-    required: true,
-    refreshers: ['authentication'],
-    props: async (propsValue) => {
-        const authentication
+  description: 'Dynamic Form',
+  displayName: 'Dynamic Form',
+  required: true,
+  refreshers: ['authentication'],
+  props: async (propsValue) => {
+    const authentication = propsValue['authentication'];
+    const apiEndpoint = 'https://someapi.com';
+    const response = await fetch(apiEndpoint);
+    const data = await response.json();
 
- = propsValue['authentication'];
-        const apiEndpoint = 'https://someapi.com';
-        const response = await fetch(apiEndpoint);
-        const data = await response.json();
-        
-        const properties = {
-            prop1: Property.ShortText({
-                displayName: 'Property 1',
-                description: 'Enter property 1',
-                required: true
-            }),
-            prop2: Property.Number({
-                displayName: 'Property 2',
-                description: 'Enter property 2',
-                required: false
-            })
-        };
-        
-        return properties;
-    }
-})
+    const properties = {
+      prop1: Property.ShortText({
+        displayName: 'Property 1',
+        description: 'Enter property 1',
+        required: true,
+      }),
+      prop2: Property.Number({
+        displayName: 'Property 2',
+        description: 'Enter property 2',
+        required: false,
+      }),
+    };
+
+    return properties;
+  },
+});
 ```

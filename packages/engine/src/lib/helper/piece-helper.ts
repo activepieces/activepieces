@@ -21,7 +21,7 @@ import {
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
-import { variableService } from '../variables/variable-service'
+import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
@@ -32,7 +32,7 @@ export const pieceHelper = {
         })
 
         try {
-            const { resolvedInput } = await variableService({
+            const { resolvedInput } = await createPropsResolver({
                 apiUrl: constants.internalApiUrl,
                 projectId: params.projectId,
                 engineToken: params.engineToken,

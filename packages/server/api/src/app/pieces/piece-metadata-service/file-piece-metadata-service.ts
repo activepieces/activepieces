@@ -84,11 +84,13 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             name,
             version,
             projectId,
+            platformId,
         }): Promise<PieceMetadataModel> {
             const pieceMetadata = await this.get({
                 name,
                 version,
                 projectId,
+                platformId,
             })
 
             if (isNil(pieceMetadata)) {
@@ -116,7 +118,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             throw new Error('Creating pieces is not supported in development mode')
         },
 
-        async getExactPieceVersion({ projectId, name, version }): Promise<string> {
+        async getExactPieceVersion({ projectId, platformId, name, version }): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {
@@ -125,6 +127,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
 
             const pieceMetadata = await this.getOrThrow({
                 projectId,
+                platformId,
                 name,
                 version,
             })

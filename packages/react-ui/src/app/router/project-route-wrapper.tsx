@@ -53,6 +53,10 @@ const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     return <Navigate to="/sign-in" replace />;
   }
 
+  if (!isProjectValid && !isNil(projectId) && projectId !== currentProjectId) {
+    return <Navigate to="/flows" replace />;
+  }
+
   if (isError || !isProjectValid) {
     return <Navigate to="/404" replace />;
   }

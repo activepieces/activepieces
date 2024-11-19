@@ -5,11 +5,12 @@ import {
     UpsertConnectionFromToken,
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, AppConnectionScope } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { projectService } from '../../project/project-service'
 import { connectionKeyService } from './connection-key.service'
 
 export const connectionKeyModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -39,8 +40,11 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
             const appConnection = await connectionKeyService.getConnection(
                 request.query,
             )
+            const platformId = await projectService.getPlatformId(request.query.projectId)
             if (appConnection !== null) {
                 await appConnectionService.delete({
+                    scope: AppConnectionScope.PROJECT,
+                    platformId,
                     projectId: request.query.projectId,
                     id: appConnection.id,
                 })

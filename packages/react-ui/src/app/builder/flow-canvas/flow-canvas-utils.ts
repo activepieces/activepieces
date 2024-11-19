@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import {
   Action,
   ActionType,
-  BranchAction,
   FlowVersion,
   isNil,
   LoopOnItemsAction,
@@ -26,7 +25,7 @@ import {
 } from './types';
 
 const createBigAddButtonGraph: (
-  parentStep: LoopOnItemsAction | BranchAction | RouterAction,
+  parentStep: LoopOnItemsAction | RouterAction,
   nodeData: ApBigAddButtonNode['data'],
 ) => ApGraph = (parentStep, nodeData) => {
   const bigAddButtonNode: ApBigAddButtonNode = {
@@ -99,9 +98,7 @@ const createStepGraph: (
   return {
     nodes: [stepNode, graphEndNode],
     edges:
-      step.type !== ActionType.BRANCH &&
-      step.type !== ActionType.LOOP_ON_ITEMS &&
-      step.type !== ActionType.ROUTER
+      step.type !== ActionType.LOOP_ON_ITEMS && step.type !== ActionType.ROUTER
         ? [straightLineEdge]
         : [],
   };
@@ -123,8 +120,6 @@ const buildGraph: (step: Action | Trigger | undefined) => ApGraph = (step) => {
   const childGraph =
     step.type === ActionType.LOOP_ON_ITEMS
       ? buildLoopChildGraph(step)
-      : step.type === ActionType.BRANCH
-      ? buildBranchChildGraph(step)
       : step.type === ActionType.ROUTER
       ? buildRouterChildGraph(step)
       : null;
@@ -285,124 +280,6 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
   return {
     nodes: [loopReturnNode, ...childGraphAfterOffset.nodes, subgraphEndSubNode],
     edges: [...edges, ...childGraphAfterOffset.edges],
-  };
-};
-
-const buildBranchChildGraph = (step: BranchAction) => {
-  const trueBranchGraph = step.onSuccessAction
-    ? buildGraph(step.onSuccessAction)
-    : createBigAddButtonGraph(step, {
-        parentStepName: step.name,
-        stepLocationRelativeToParent:
-          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
-        edgeId: `${step.name}-true-start-edge`,
-      });
-
-  const falseBranchGraph = step.onFailureAction
-    ? buildGraph(step.onFailureAction)
-    : createBigAddButtonGraph(step, {
-        parentStepName: step.name,
-        stepLocationRelativeToParent:
-          StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
-        edgeId: `${step.name}-false-start-edge`,
-      });
-
-  const childGraphsAfterOffset = offsetRouterChildSteps([
-    trueBranchGraph,
-    falseBranchGraph,
-  ]);
-
-  const maxHeight = Math.max(
-    ...childGraphsAfterOffset.map((cg) => calculateGraphBoundingBox(cg).height),
-  );
-
-  const subgraphEndSubNode: ApGraphEndNode = {
-    id: `${step.name}-branch-subgraph-end`,
-    type: ApNodeType.GRAPH_END_WIDGET,
-    position: {
-      x: flowUtilConsts.AP_NODE_SIZE.STEP.width / 2,
-      y:
-        flowUtilConsts.AP_NODE_SIZE.STEP.height +
-        flowUtilConsts.VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD +
-        maxHeight +
-        flowUtilConsts.ARC_LENGTH +
-        flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS,
-    },
-    data: {},
-  };
-
-  const edges: ApEdge[] = [
-    {
-      id: `${step.name}-true-branch-start-edge`,
-      source: step.name,
-      target: `${trueBranchGraph.nodes[0].id}`,
-      type: ApEdgeType.ROUTER_START_EDGE as const,
-      data: {
-        stepLocationRelativeToParent:
-          StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
-        drawStartingVerticalLine: true,
-        label: t('True'),
-        isBranchEmpty: isNil(step.onSuccessAction),
-        drawStartingArc: true,
-        drawHorizontalLine: true,
-      },
-    },
-    {
-      id: `${step.name}-false-branch-start-edge`,
-      source: step.name,
-      target: `${falseBranchGraph.nodes[0].id}`,
-      type: ApEdgeType.ROUTER_START_EDGE as const,
-      data: {
-        stepLocationRelativeToParent:
-          StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
-        drawStartingVerticalLine: false,
-        label: t('False'),
-        isBranchEmpty: isNil(step.onFailureAction),
-        drawStartingArc: true,
-        drawHorizontalLine: true,
-      },
-    },
-
-    {
-      id: `${step.name}-false-branch-end-edge`,
-      source: `${falseBranchGraph.nodes.at(-1)!.id}`,
-      target: subgraphEndSubNode.id,
-      type: ApEdgeType.ROUTER_END_EDGE as const,
-      data: {
-        drawEndingVerticalLine: true,
-        routerOrBranchStepName: step.name,
-        isNextStepEmpty: isNil(step.nextAction),
-        verticalSpaceBetweenLastNodeInBranchAndEndLine:
-          subgraphEndSubNode.position.y -
-          childGraphsAfterOffset[1].nodes.at(-1)!.position.y -
-          flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
-          flowUtilConsts.ARC_LENGTH,
-        drawHorizontalLine: true,
-      },
-    },
-    {
-      id: `${step.name}-true-branch-end-edge`,
-      source: `${trueBranchGraph.nodes.at(-1)!.id}`,
-      target: subgraphEndSubNode.id,
-      type: ApEdgeType.ROUTER_END_EDGE as const,
-      data: {
-        drawEndingVerticalLine: false,
-        verticalSpaceBetweenLastNodeInBranchAndEndLine:
-          subgraphEndSubNode.position.y -
-          childGraphsAfterOffset[0].nodes.at(-1)!.position.y -
-          flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
-          flowUtilConsts.ARC_LENGTH,
-        drawHorizontalLine: true,
-      },
-    },
-  ];
-
-  return {
-    nodes: [
-      ...childGraphsAfterOffset.map((cg) => cg.nodes).flat(),
-      subgraphEndSubNode,
-    ],
-    edges: [...childGraphsAfterOffset.map((cg) => cg.edges).flat(), ...edges],
   };
 };
 

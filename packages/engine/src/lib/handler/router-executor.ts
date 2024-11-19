@@ -11,8 +11,11 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         executionState,
         constants,
     }) {
-        const { censoredInput, resolvedInput } = await constants.variableService.resolve<RouterActionSettings>({
-            unresolvedInput: action.settings,
+        const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<RouterActionSettings>({
+            unresolvedInput: {
+                ...action.settings,
+                inputUiInfo: undefined,
+            },
             executionState,
         })
 
@@ -36,14 +39,22 @@ async function handleRouterExecution({ action, executionState, constants, censor
     routerExecutionType: RouterExecutionType
 }): Promise<FlowExecutorContext> {
 
-    const evaluatedConditions = resolvedInput.branches.map((branch) => {
+    const evaluatedConditionsWithoutFallback = resolvedInput.branches.map((branch) => {
         return branch.branchType === BranchExecutionType.FALLBACK ? true : evaluateConditions(branch.conditions)
+    })
+
+    const evaluatedConditions = resolvedInput.branches.map((branch, index) => {
+        if (branch.branchType === BranchExecutionType.CONDITION) {
+            return evaluatedConditionsWithoutFallback[index]
+        }
+        const fallback = evaluatedConditionsWithoutFallback.filter((_, i) => i !== index).every((condition) => !condition)
+        return fallback
     })
 
     const routerOutput = RouterStepOutput.init({
         input: censoredInput,
     }).setOutput({
-        conditions: evaluatedConditions,
+        branches: evaluatedConditions,
     })
     executionState = executionState.upsertStep(action.name, routerOutput)
 

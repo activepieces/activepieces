@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash } from 'lucide-react';
 
@@ -13,23 +13,19 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-user-api';
+import { platformUserHooks } from '@/hooks/platform-user-hooks';
+import { platformUserApi } from '@/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
-import { UserStatus } from '@activepieces/shared';
+import { PlatformRole, UserStatus } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/ui/table-title';
 
-import { UpdateUserRoleDialog } from './update-role-dialog';
+import { UpdateUserDialog } from './update-user-dialog';
 
 export default function UsersPage() {
   const { toast } = useToast();
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => {
-      return platformUserApi.list();
-    },
-  });
+  const { data, isLoading, refetch } = platformUserHooks.useUsers();
 
   const { mutate: deleteUser, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-user'],
@@ -133,7 +129,11 @@ export default function UsersPage() {
               ),
               cell: ({ row }) => {
                 return (
-                  <div className="text-left">{row.original.platformRole}</div>
+                  <div className="text-left">
+                    {row.original.platformRole === PlatformRole.ADMIN
+                      ? t('Admin')
+                      : t('Member')}
+                  </div>
                 );
               },
             },
@@ -156,7 +156,13 @@ export default function UsersPage() {
                 <DataTableColumnHeader column={column} title={t('Status')} />
               ),
               cell: ({ row }) => {
-                return <div className="text-left">{row.original.status}</div>;
+                return (
+                  <div className="text-left">
+                    {row.original.status === UserStatus.ACTIVE
+                      ? t('Active')
+                      : t('Inactive')}
+                  </div>
+                );
               },
             },
           ]}
@@ -169,15 +175,16 @@ export default function UsersPage() {
                 <div className="flex items-end justify-end">
                   <Tooltip>
                     <TooltipTrigger>
-                      <UpdateUserRoleDialog
+                      <UpdateUserDialog
                         userId={row.id}
                         role={row.platformRole}
+                        externalId={row.externalId}
                         onUpdate={() => refetch()}
                       >
                         <Button variant="ghost" className="size-8 p-0">
                           <Pencil className="size-4" />
                         </Button>
-                      </UpdateUserRoleDialog>
+                      </UpdateUserDialog>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {t('Edit user')}
@@ -192,7 +199,7 @@ export default function UsersPage() {
                   <Tooltip>
                     <TooltipTrigger>
                       <Button
-                        disabled={isDeleting}
+                        disabled={isUpdatingStatus}
                         variant="ghost"
                         className="size-8 p-0"
                         loading={isUpdatingStatus}

@@ -5,7 +5,6 @@ import dayjs from 'dayjs'
 import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { projectService } from '../../project/project-service'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import {
     PieceMetadataEntity,
@@ -42,19 +41,10 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             })
             return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
         },
-        async get({ projectId, version, name }): Promise<PieceMetadataModel | undefined> {
-            let platformId: string | undefined = undefined
-            if (!isNil(projectId)) {
-                // TODO: this might be database intensive, consider caching, passing platform id from caller cause major changes
-                // Don't use GetOneOrThrow Anonymous Token generates random string for project id
-                const project = await projectService.getOne(projectId)
-                platformId = project?.platformId
-            }
+        async get({ projectId, platformId, version, name }): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)
-
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release: undefined })
             const piece = originalPieces.find((piece) => {
-
                 const strictlyLessThan = (isNil(versionToSearch) || (
                     semVer.compare(piece.version, versionToSearch.nextExcludedVersion) < 0
                     && semVer.compare(piece.version, versionToSearch.baseVersion) >= 0
@@ -63,8 +53,8 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             })
             return piece
         },
-        async getOrThrow({ projectId, version, name }): Promise<PieceMetadataModel> {
-            const piece = await this.get({ projectId, version, name })
+        async getOrThrow({ projectId, version, name, platformId }): Promise<PieceMetadataModel> {
+            const piece = await this.get({ projectId, version, name, platformId })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
@@ -111,7 +101,7 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
                 created: existingMetadata.created,
             })
         },
-        async getExactPieceVersion({ name, version, projectId }): Promise<string> {
+        async getExactPieceVersion({ name, version, projectId, platformId }): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {
@@ -122,6 +112,7 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
                 projectId,
                 name,
                 version,
+                platformId,
             })
 
             return pieceMetadata.version

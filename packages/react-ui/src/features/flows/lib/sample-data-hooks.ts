@@ -10,6 +10,7 @@ export const sampleDataHooks = {
       queryKey: ['sampleData', flowVersion?.id],
       enabled: !!flowVersion,
       staleTime: 0,
+      retry: 4,
       refetchOnWindowFocus: false,
       queryFn: async () => {
         const steps = flowStructureUtil.getAllSteps(flowVersion!.trigger);

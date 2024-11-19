@@ -114,9 +114,9 @@ export const BuilderHeader = () => {
             )}
           </span>
           <FlowActionMenu
+            insideBuilder={true}
             flow={flow}
             flowVersion={flowVersion}
-            insideBuilder={true}
             readonly={!isLatestVersion}
             onDelete={() => {
               navigate('/flows');

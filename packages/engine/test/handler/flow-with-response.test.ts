@@ -7,15 +7,15 @@ describe('flow with response', () => {
 
     it('should execute return response successfully', async () => {
         const input = {
-            status: 200,
-            headers: {
-                'random': 'header',
-            },
-            body: {
-                data: {
+            responseType: 'json',
+            fields: {
+                status: 200,
+                headers: {
+                    'random': 'header',
+                },
+                body: {
                     'hello': 'world',
                 },
-                body_type: 'json',
             },
         }
         const response = {
@@ -27,15 +27,16 @@ describe('flow with response', () => {
                 'hello': 'world',
             },
         }
+
         const result = await flowExecutor.execute({
             action: buildPieceAction({
                 name: 'http',
-                pieceName: '@activepieces/piece-http',
+                pieceName: '@activepieces/piece-webhook',
                 actionName: 'return_response',
                 input,
             }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
         })
-
+   
         expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
         expect(result.verdictResponse).toEqual({
             reason: FlowRunStatus.STOPPED,

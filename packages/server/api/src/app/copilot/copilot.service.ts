@@ -1,5 +1,5 @@
 import { AppSystemProp, CopilotInstanceTypes, logger, system } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, GenerateCodeResponse } from '@activepieces/shared'
+import { assertNotNullOrUndefined, GenerateCodeResponse, isNil } from '@activepieces/shared'
 import OpenAI from 'openai'
 import {
     ChatCompletionMessageParam,
@@ -11,7 +11,7 @@ type GenerateCodeParams = {
     previousContext: ChatCompletionMessageParam[]
 }
 
-const CODE_TOOLS: ChatCompletionTool[] = [ 
+const CODE_TOOLS: ChatCompletionTool[] = [
     {
         type: 'function',
         function: {
@@ -203,10 +203,10 @@ export const copilotService = {
         const response = JSON.parse(result.choices[0].message.tool_calls[0].function.arguments) as OpenAIResponse
         return {
             code: response.code,
-            inputs: response.inputs.reduce((acc, curr) => {
+            inputs: !isNil(response.inputs) ? response.inputs.reduce((acc, curr) => {
                 acc[curr.key] = curr.value
                 return acc
-            }, {} as Record<string, string>),
+            }, {} as Record<string, string>) : {},
             packageJson: {
                 // TODO resolve exact version
                 dependencies: response.packages.reduce((acc, curr) => {
@@ -216,4 +216,5 @@ export const copilotService = {
             },
         }
     },
+
 }

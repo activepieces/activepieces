@@ -1,6 +1,15 @@
 import { WebhookResponse } from '@activepieces/pieces-framework'
-import { logger, networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { EventPayload, FlowId, FlowVersion, PopulatedFlow } from '@activepieces/shared'
+import {
+    logger,
+    networkUtls,
+    rejectedPromiseHandler,
+} from '@activepieces/server-shared'
+import {
+    EventPayload,
+    FlowId,
+    FlowVersion,
+    PopulatedFlow,
+} from '@activepieces/shared'
 import { workerApiService } from '../api/server-api.service'
 import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
 
@@ -24,21 +33,39 @@ export const webhookUtils = {
         const webhookPrefix = await this.getWebhookPrefix()
         return `${webhookPrefix}/${flowId}${suffix}`
     },
-    async extractPayloadAndSave({ flowVersion, payload, projectId, engineToken, workerToken, simulate }: SaveSampleDataParams): Promise<unknown[]> {
-        const payloads: unknown[] = await triggerConsumer.extractPayloads(engineToken, {
-            projectId,
-            flowVersion,
-            payload,
-            simulate,
-        })
-
-        rejectedPromiseHandler(workerApiService(workerToken).savePayloadsAsSampleData({
-            flowId: flowVersion.flowId,
-            projectId,
-            payloads,
-        }))
+    async extractPayload({
+        flowVersion,
+        payload,
+        projectId,
+        engineToken,
+        simulate,
+    }: ExtractPayloadParams): Promise<unknown[]> {
+        const payloads: unknown[] = await triggerConsumer.extractPayloads(
+            engineToken,
+            {
+                projectId,
+                flowVersion,
+                payload,
+                simulate,
+            },
+        )
         return payloads
     },
+    async savePayloadsAsSampleData({
+        flowVersion,
+        projectId,
+        workerToken,
+        payloads,
+    }: SaveSampleDataParams): Promise<void> {
+        rejectedPromiseHandler(
+            workerApiService(workerToken).savePayloadsAsSampleData({
+                flowId: flowVersion.flowId,
+                projectId,
+                payloads,
+            }),
+        )
+    },
+
     async handshake({
         populatedFlow,
         payload,
@@ -73,12 +100,17 @@ type GetWebhookUrlParams = {
     simulate?: boolean
 }
 
-type SaveSampleDataParams = {
+type ExtractPayloadParams = {
     engineToken: string
     projectId: string
-    workerToken: string
     flowVersion: FlowVersion
     payload: EventPayload
     simulate: boolean
 }
 
+type SaveSampleDataParams = {
+    flowVersion: FlowVersion
+    projectId: string
+    workerToken: string
+    payloads: unknown[]
+}

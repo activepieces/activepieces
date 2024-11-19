@@ -67,7 +67,7 @@ export const StepSettingsProvider = ({
       pieceModel ?? null,
     );
     formSchemaRef.current = true;
-    setFormSchema(schema);
+    setFormSchema(schema as TObject<any>);
   }
 
   const updateFormSchema = useCallback(

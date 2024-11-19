@@ -3,34 +3,35 @@ import { AxiosError } from 'axios';
 import { ArrowUpIcon, Paperclip } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useEffect, useRef, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
 import { LoadingScreen } from '@/app/components/loading-screen';
 import { FileInputPreview } from '@/app/routes/chat/file-input-preview';
 import { Button } from '@/components/ui/button';
 import { ChatInput } from '@/components/ui/chat/chat-input';
-import {
-  FormResultTypes,
-  humanInputApi,
-} from '@/features/human-input/lib/human-input-api';
-import { cn } from '@/lib/utils';
+import { humanInputApi } from '@/features/human-input/lib/human-input-api';
+import { cn, useElementSize } from '@/lib/utils';
 import {
   ApErrorParams,
   ChatUIResponse,
   ErrorCode,
   isNil,
   USE_DRAFT_QUERY_PARAM_NAME,
+  HumanInputFormResultTypes,
 } from '@activepieces/shared';
 
-import { ImageDialog } from './image-dialog';
+import NotFoundPage from '../404-page';
+
+import { ImageDialog } from './chat-message/image-dialog';
 import { Messages, MessagesList } from './messages-list';
 
 export function ChatPage() {
+  const filesPreviewContainerRef = useRef<HTMLDivElement | null>(null);
+  const filesPreviewContainerSize = useElementSize(filesPreviewContainerRef);
   const { flowId } = useParams();
   const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
   const messagesRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
 
   const {
     data: chatUI,
@@ -68,34 +69,41 @@ export function ChatPage() {
 
   const botName =
     chatUI?.props.botName ?? `${chatUI?.platformName ?? 'Activepieces'} Bot`;
-
   const { mutate: sendMessage, isPending: isSending } = useMutation({
     mutationFn: async ({ isRetrying }: { isRetrying: boolean }) => {
       if (!flowId || !chatId) return null;
+
+      // Get input and files based on whether we're retrying
       const savedInput = isRetrying ? previousInputRef.current : input;
       const savedFiles = isRetrying ? previousFilesRef.current : files;
+
+      // Save current values for potential retry
       previousInputRef.current = savedInput;
       previousFilesRef.current = savedFiles;
+
+      // Clear input fields
       setInput('');
       setFiles([]);
+
+      // Only add messages to UI if not retrying
       if (!isRetrying) {
-        const fileMessages: Messages = savedFiles.map((file) => {
-          const isImage = file.type.startsWith('image/');
-          return {
-            role: 'user' as const,
-            content: URL.createObjectURL(file),
-            type: isImage ? ('image' as const) : ('file' as const),
-            mimeType: file.type,
-            fileName: file.name,
-          };
-        });
+        // Convert files to message format
         setMessages([
           ...messages,
-          ...fileMessages,
-          { role: 'user', content: savedInput },
+          {
+            role: 'user',
+            textContent: savedInput,
+            files: savedFiles.map((file) => ({
+              url: URL.createObjectURL(file),
+              mimeType: file.type,
+            })),
+          },
         ]);
       }
+
       scrollToBottom();
+
+      // Send message to API
       return humanInputApi.sendMessage({
         flowId,
         chatId: chatId.current,
@@ -104,52 +112,59 @@ export function ChatPage() {
         useDraft,
       });
     },
+
     onSuccess: (result) => {
       if (!result) {
         setSendingError({
           code: ErrorCode.NO_CHAT_RESPONSE,
           params: {},
         });
-      } else if ('type' in result) {
+        return;
+      }
+
+      if ('type' in result) {
+        setSendingError(null);
+
         switch (result.type) {
-          case FormResultTypes.FILE:
+          case HumanInputFormResultTypes.FILE: {
             if ('url' in result.value) {
-              const isImage = result.value.mimeType?.startsWith('image/');
-              setSendingError(null);
               setMessages([
                 ...messages,
                 {
                   role: 'bot',
-                  content: result.value.url,
-                  type: isImage ? 'image' : 'file',
-                  mimeType: result.value.mimeType,
+                  files: [
+                    {
+                      url: result.value.url,
+                      mimeType: result.value.mimeType,
+                    },
+                  ],
                 },
               ]);
             }
             break;
-          case FormResultTypes.MARKDOWN:
-            setSendingError(null);
+          }
+
+          case HumanInputFormResultTypes.MARKDOWN: {
+            const validFiles = (result.files ?? []).filter(
+              (file) => 'url' in file && 'mimeType' in file,
+            );
+
             setMessages([
               ...messages,
-              { role: 'bot', content: result.value, type: 'text' as const },
-              ...(result.files ?? []).map((file) => {
-                const isImage =
-                  'mimeType' in file
-                    ? file.mimeType?.startsWith('image/')
-                    : false;
-                return {
-                  role: 'bot' as const,
-                  content: 'url' in file ? file.url : file.base64Url,
-                  type: isImage ? ('image' as const) : ('file' as const),
-                  mimeType: 'mimeType' in file ? file.mimeType : undefined,
-                  fileName: 'fileName' in file ? file.fileName : undefined,
-                };
-              }),
+              {
+                role: 'bot',
+                textContent: result.value,
+                files: validFiles.length > 0 ? validFiles : undefined,
+              },
             ]);
+            break;
+          }
         }
       }
+
       scrollToBottom();
     },
+
     onError: (error: AxiosError) => {
       setSendingError(error.response?.data as ApErrorParams);
       scrollToBottom();
@@ -172,8 +187,7 @@ export function ChatPage() {
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = event.target.files && Array.from(event.target.files);
+  const handleFileChange = (selectedFiles: File[]) => {
     if (selectedFiles) {
       setFiles((prevFiles) => {
         const newFiles = [...prevFiles, ...selectedFiles];
@@ -189,7 +203,14 @@ export function ChatPage() {
     setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
 
-  if (!flowId || isLoadingError) return <Navigate to="/404" />;
+  if (!flowId || isLoadingError) {
+    return (
+      <NotFoundPage
+        title="Hmm... this chat isn't here"
+        description="The chat you're looking for isn't here or maybe hasn't been published by the owner yet"
+      />
+    );
+  }
 
   if (isLoading) return <LoadingScreen />;
 
@@ -239,23 +260,39 @@ export function ChatPage() {
           </div>
         </div>
       )}
-      <div className="w-full px-4 max-w-3xl">
-        <form ref={formRef} onSubmit={onSubmit}>
-          <div className="flex flex-col items-center justify-between pe-2 pt-0 rounded-3xl bg-muted">
-            {files.length > 0 && (
-              <div className="px-4 py-3 w-full">
-                <div className="flex items-start gap-3 overflow-x-auto">
-                  {files.map((file, index) => (
-                    <FileInputPreview
-                      key={`${file.name}-${index}`}
-                      file={file}
-                      index={index}
-                      onRemove={removeFile}
-                    />
-                  ))}
-                </div>
+      <div
+        className="w-full px-4 max-w-3xl"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          const selectedFiles = Array.from(e.dataTransfer.files);
+          handleFileChange(selectedFiles);
+        }}
+      >
+        <form onSubmit={onSubmit}>
+          <div className="flex flex-col items-center justify-between pe-2 pt-0 rounded-3xl bg-muted transition-all ">
+            <div
+              className={cn('transition-all   overflow-hidden', {
+                'px-4 py-3 w-full ': files.length > 0,
+              })}
+              style={{
+                height: `${filesPreviewContainerSize.height}px`,
+              }}
+            >
+              <div
+                ref={filesPreviewContainerRef}
+                className="flex items-start gap-3 flex-wrap"
+              >
+                {files.map((file, index) => (
+                  <FileInputPreview
+                    key={`${file.name}-${index}`}
+                    file={file}
+                    index={index}
+                    onRemove={removeFile}
+                  />
+                ))}
               </div>
-            )}
+            </div>
             <div className="flex-grow flex items-center w-full">
               <div className="flex items-center ps-2">
                 <label htmlFor="file-upload" className="cursor-pointer p-2">
@@ -266,19 +303,32 @@ export function ChatPage() {
                   id="file-upload"
                   type="file"
                   multiple
-                  onChange={handleFileChange}
+                  onChange={(e) => {
+                    handleFileChange(
+                      (e.target.files && Array.from(e.target.files)) || [],
+                    );
+                  }}
                   className="hidden"
                 />
               </div>
               <ChatInput
                 autoFocus
+                minRows={1}
+                maxRows={4}
+                onPaste={(e) => {
+                  const selectedFiles = Array.from(e.clipboardData.items)
+                    .filter((item) => item.kind === 'file')
+                    .map((item) => item.getAsFile())
+                    .filter((item) => !isNil(item));
+                  handleFileChange(selectedFiles);
+                }}
                 value={input}
                 onKeyDown={onKeyDown}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type your message here..."
               />
               <Button
-                disabled={!input || isSending}
+                disabled={(!input && files.length === 0) || isSending}
                 type="submit"
                 size="icon"
                 className="rounded-full min-w-8 min-h-8 h-8 w-8"

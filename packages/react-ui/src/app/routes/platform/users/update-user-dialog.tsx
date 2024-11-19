@@ -24,41 +24,51 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-user-api';
-import { PlatformRole, UpdateUserRequestBody } from '@activepieces/shared';
+import { platformUserApi } from '@/lib/platform-user-api';
+import {
+  PlatformRole,
+  UpdateUserRequestBody,
+  User,
+} from '@activepieces/shared';
 
-export const UpdateUserRoleDialog = ({
+import { Input } from '../../../../components/ui/input';
+
+export const UpdateUserDialog = ({
   children,
   onUpdate,
   userId,
   role,
+  externalId,
 }: {
   children: React.ReactNode;
   onUpdate: (role: PlatformRole) => void;
   userId: string;
   role: PlatformRole;
+  externalId?: string;
 }) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<{ role: PlatformRole }>({
+  const form = useForm<{ role: PlatformRole; externalId?: string }>({
     defaultValues: {
       role,
+      externalId,
     },
     resolver: typeboxResolver(UpdateUserRequestBody),
   });
   const { toast } = useToast();
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['update-user'],
-    mutationFn: (request: { platformRole: PlatformRole }) =>
-      platformUserApi.update(userId, request),
-    onSuccess: (_, request) => {
-      onUpdate(request.platformRole);
-      setOpen(false);
+  const { mutate, isPending } = useMutation<User, Error, UpdateUserRequestBody>(
+    {
+      mutationKey: ['update-user'],
+      mutationFn: (request) => platformUserApi.update(userId, request),
+      onSuccess: (user) => {
+        onUpdate(user.platformRole);
+        setOpen(false);
+      },
+      onError: () => {
+        toast(INTERNAL_ERROR_TOAST);
+        setOpen(false);
+      },
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-      setOpen(false);
-    },
-  });
+  );
 
   return (
     <Dialog
@@ -81,6 +91,7 @@ export const UpdateUserRoleDialog = ({
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="role">{t('Role')}</Label>
                   <Select
+                    name="role"
                     defaultValue={field.value}
                     onValueChange={field.onChange}
                     required
@@ -92,7 +103,9 @@ export const UpdateUserRoleDialog = ({
                       <SelectGroup>
                         {Object.values(PlatformRole).map((role) => (
                           <SelectItem value={role} key={role}>
-                            {role}
+                            {role === PlatformRole.ADMIN
+                              ? t('Admin')
+                              : t('Member')}
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -102,6 +115,20 @@ export const UpdateUserRoleDialog = ({
                 </FormItem>
               )}
             />
+            <FormField
+              name="externalId"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="externalId">{t('External ID')}</Label>
+                  <Input
+                    id="externalId"
+                    value={field.value}
+                    onChange={field.onChange}
+                  ></Input>
+                </FormItem>
+              )}
+            />
+
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>
                 {form.formState.errors.root.serverError.message}
@@ -126,7 +153,10 @@ export const UpdateUserRoleDialog = ({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              mutate({ platformRole: form.getValues().role });
+              mutate({
+                platformRole: form.getValues().role,
+                externalId: form.getValues().externalId,
+              });
             }}
           >
             {t('Save')}

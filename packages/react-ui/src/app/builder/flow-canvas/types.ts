@@ -50,9 +50,7 @@ export type ApButtonData =
       parentStepName: string;
       stepLocationRelativeToParent:
         | StepLocationRelativeToParent.AFTER
-        | StepLocationRelativeToParent.INSIDE_LOOP
-        | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
-        | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
+        | StepLocationRelativeToParent.INSIDE_LOOP;
     }
   | {
       edgeId: string;
@@ -135,18 +133,10 @@ export type ApRouterStartEdge = Edge & {
     label: string;
     drawHorizontalLine: boolean;
     drawStartingVerticalLine: boolean;
-  } & (
-    | {
-        stepLocationRelativeToParent:
-          | StepLocationRelativeToParent.INSIDE_FALSE_BRANCH
-          | StepLocationRelativeToParent.INSIDE_TRUE_BRANCH;
-      }
-    | {
-        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
-        branchIndex: number;
-        isFallbackBranch: boolean;
-      }
-  );
+  } & {
+    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
+    branchIndex: number;
+  };
 };
 
 export type ApRouterEndEdge = Edge & {

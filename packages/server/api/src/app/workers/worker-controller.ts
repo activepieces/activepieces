@@ -6,6 +6,7 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { dedupeService } from '../flows/trigger/dedupe'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
+import { projectService } from '../project/project-service'
 import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
 import { flowConsumer } from './consumer'
 import { webhookResponseWatcher } from './helper/webhook-response-watcher'
@@ -76,6 +77,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             })),
         )
         rejectedPromiseHandler(Promise.all(savePayloads))
+        await webhookSimulationService.delete({ flowId, projectId })
         return {}
     })
 
@@ -133,10 +135,13 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData }) {
+    const projectId = await getProjectId(queueName, job.data)   
+    const platformId = await projectService.getPlatformId(projectId)
     const engineToken = await accessTokenManager.generateEngineToken({
         jobId: job.id,
         queueToken: token,
-        projectId: await getProjectId(queueName, job.data),
+        projectId,
+        platformId,
     })
     return {
         data: job.data,

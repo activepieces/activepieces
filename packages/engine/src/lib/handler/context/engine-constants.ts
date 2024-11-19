@@ -1,5 +1,5 @@
 import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
-import { VariableService } from '../../variables/variable-service'
+import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
     maxAttempts: number
@@ -18,9 +18,14 @@ export class EngineConstants {
     public static readonly INPUT_FILE = './input.json'
     public static readonly OUTPUT_FILE = './output.json'
     public static readonly PIECE_SOURCES = process.env.AP_PIECES_SOURCE ?? 'FILE'
+    public static readonly TEST_MODE = process.env.AP_TEST_MODE === 'true'
 
 
     private project: Project | null = null
+
+    public get isTestMode(): boolean {
+        return EngineConstants.TEST_MODE
+    }
 
     public get baseCodeDirectory(): string {
         return EngineConstants.BASE_CODE_DIRECTORY
@@ -40,7 +45,7 @@ export class EngineConstants {
         public readonly retryConstants: RetryConstants,
         public readonly engineToken: string,
         public readonly projectId: ProjectId,
-        public readonly variableService: VariableService,
+        public readonly propsResolver: PropsResolver,
         public readonly testSingleStepMode: boolean,
         public readonly progressUpdateType: ProgressUpdateType,
         public readonly serverHandlerId: string | null,
@@ -59,7 +64,7 @@ export class EngineConstants {
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
             input.projectId,
-            new VariableService({
+            createPropsResolver({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
                 apiUrl: input.internalApiUrl,
@@ -83,7 +88,7 @@ export class EngineConstants {
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
             input.projectId,
-            new VariableService({
+            createPropsResolver({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
                 apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
@@ -106,7 +111,7 @@ export class EngineConstants {
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
             input.projectId,
-            new VariableService({
+            createPropsResolver({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
                 apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
@@ -129,7 +134,7 @@ export class EngineConstants {
             DEFAULT_RETRY_CONSTANTS,
             input.engineToken,
             input.projectId,
-            new VariableService({
+            createPropsResolver({
                 projectId: input.projectId,
                 engineToken: input.engineToken,
                 apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),

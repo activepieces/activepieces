@@ -50,6 +50,7 @@ type FlowImported = {
 }
 type FlowImportedUsingFile = {
     location: 'inside dashboard' | 'inside the builder'
+    multiple: boolean
 }
 
 type FlowIssueClicked = {

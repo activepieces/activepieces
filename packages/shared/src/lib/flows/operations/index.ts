@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../common'
-import { BranchActionSchema, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
+import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { EmptyTrigger, PieceTrigger, Trigger } from '../triggers/trigger'
@@ -12,7 +12,7 @@ import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
-import { applyMigrations } from './migrations'
+import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
@@ -43,6 +43,8 @@ export const DeleteBranchRequest = Type.Object({
 export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),
     stepName: Type.String(),
+    conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
+    branchName: Type.String(),
 })
 
 export const DuplicateBranchRequest = Type.Object({
@@ -54,8 +56,6 @@ export type AddBranchRequest = Static<typeof AddBranchRequest>
 export type DuplicateBranchRequest = Static<typeof DuplicateBranchRequest>
 
 export enum StepLocationRelativeToParent {
-    INSIDE_TRUE_BRANCH = 'INSIDE_TRUE_BRANCH',
-    INSIDE_FALSE_BRANCH = 'INSIDE_FALSE_BRANCH',
     AFTER = 'AFTER',
     INSIDE_LOOP = 'INSIDE_LOOP',
     INSIDE_BRANCH = 'INSIDE_BRANCH',
@@ -73,6 +73,7 @@ export type LockFlowRequest = Static<typeof LockFlowRequest>
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
     trigger: Trigger,
+    schemaVersion: Nullable(Type.String()),
 })
 
 export type ImportFlowRequest = Static<typeof ImportFlowRequest>
@@ -99,7 +100,6 @@ export const UpdateActionRequest = Type.Union([
     CodeActionSchema,
     LoopOnItemsActionSchema,
     PieceActionSchema,
-    BranchActionSchema,
     RouterActionSchema,
 ])
 
@@ -356,10 +356,15 @@ export const flowOperations = {
                 break
             }
             case FlowOperationType.IMPORT_FLOW: {
-                let migratedVersion = applyMigrations(clonedVersion)
-                const operations = _importFlow(migratedVersion, operation.request)
+                const migratedFlow = flowMigrations.apply({
+                    ...clonedVersion,
+                    trigger: operation.request.trigger,
+                    displayName: operation.request.displayName,
+                    schemaVersion: operation.request.schemaVersion,
+                })
+                const operations = _importFlow(clonedVersion, migratedFlow)
                 operations.forEach((operation) => {
-                    migratedVersion = flowOperations.apply(migratedVersion, operation)
+                    clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })
                 break
             }

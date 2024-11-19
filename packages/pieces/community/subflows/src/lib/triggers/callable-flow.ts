@@ -4,7 +4,7 @@ import {
   StoreScope,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { callableFlowKey, CallableFlowRequest } from '../common';
+import { callableFlowKey, CallableFlowRequest, MOCK_CALLBACK_IN_TEST_FLOW_URL } from '../common';
 
 export const callableFlow = createTrigger({
   name: 'callableFlow',
@@ -26,9 +26,11 @@ export const callableFlow = createTrigger({
     // ignore
   },
   async test(context) {
-    return [{
-      data: context.propsValue.exampleData
-    }];
+    const request: CallableFlowRequest = {
+      data: context.propsValue.exampleData,
+      callbackUrl: MOCK_CALLBACK_IN_TEST_FLOW_URL
+    }
+    return [request];
   },
   async run(context) {
     return [context.payload.body];

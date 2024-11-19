@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.34.10",
+  "version": "0.36.1",
   "rcVersion": "0.35.0-rc.1",
   "scripts": {
     "prepare": "husky install",
@@ -80,7 +80,7 @@
     "@segment/analytics-node": "2.1.0",
     "@sendgrid/mail": "8.0.0",
     "@sentry/node": "7.64.0",
-    "@sinclair/typebox": "0.33.17",
+    "@sinclair/typebox": "0.33.18",
     "@slack/web-api": "7.0.4",
     "@socket.io/redis-adapter": "8.2.1",
     "@supabase/supabase-js": "2.45.4",
@@ -227,6 +227,7 @@
     "react-ripples": "2.2.1",
     "react-router-dom": "6.11.2",
     "react-syntax-highlighter": "15.5.0",
+    "react-textarea-autosize": "8.5.5",
     "react-use": "17.5.1",
     "recharts": "2.12.7",
     "redlock": "5.0.0-beta.2",
@@ -326,6 +327,7 @@
     "@types/qs": "6.9.7",
     "@types/react": "18.3.1",
     "@types/react-dom": "18.3.0",
+    "@types/react-lottie": "1.2.10",
     "@types/recharts": "1.8.29",
     "@types/semver": "7.5.6",
     "@types/snowflake-sdk": "1.6.20",

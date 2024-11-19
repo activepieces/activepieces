@@ -9,3 +9,5 @@ export type CallableFlowRequest = {
 export type CallableFlowResponse = {
     data: unknown;
 }
+
+export const MOCK_CALLBACK_IN_TEST_FLOW_URL = 'MOCK';
