@@ -23,6 +23,7 @@ const isInputNameLiteral = (
 ): inputName is inputNameLiteral => {
   return inputName.match(/settings\.input\./) !== null;
 };
+
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
   allowDynamicValues: boolean;
@@ -33,6 +34,7 @@ type AutoFormFieldWrapperProps = {
   disabled: boolean;
   field: ControllerRenderProps;
   inputName: string;
+  customDynamicComponent?: React.ReactNode;
 };
 
 const AutoFormFieldWrapper = ({
@@ -45,6 +47,7 @@ const AutoFormFieldWrapper = ({
   property,
   disabled,
   field,
+  customDynamicComponent,
 }: AutoFormFieldWrapperProps) => {
   const form = useFormContext<Action | Trigger>();
   const toggled =
@@ -127,11 +130,13 @@ const AutoFormFieldWrapper = ({
       </FormLabel>
 
       {toggled && (
-        <TextInputWithMentions
-          disabled={disabled}
-          onChange={field.onChange}
-          initialValue={field.value ?? property.defaultValue ?? null}
-        ></TextInputWithMentions>
+        customDynamicComponent ?? (
+          <TextInputWithMentions
+            disabled={disabled}
+            onChange={field.onChange}
+            initialValue={field.value ?? property.defaultValue ?? null}
+          />
+        )
       )}
       {!placeBeforeLabelText && !toggled && <div>{children}</div>}
       {property.description && !hideDescription && (

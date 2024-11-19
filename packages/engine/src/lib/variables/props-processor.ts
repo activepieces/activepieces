@@ -2,6 +2,7 @@ import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, P
 import { AUTHENTICATION_PROPERTY_NAME, isNil } from '@activepieces/shared'
 import { z } from 'zod'
 import { processors } from './processors'
+import { arrayFlatterProcessor } from './processors/array-flatter'
 
 
 
@@ -39,7 +40,7 @@ export const propsProcessor = {
                 continue
             }
             if (property.type === PropertyType.ARRAY && property.properties) {
-                const arrayOfObjects = value
+                const arrayOfObjects = arrayFlatterProcessor(property, value)
                 const processedArray = []
                 const processedErrors = []
                 for (const item of arrayOfObjects) {
@@ -62,7 +63,7 @@ export const propsProcessor = {
             }
             const processor = processors[property.type]
             if (processor) {
-                processedInput[key] = await processor(property, value)
+                processedInput[key] = await processor(property, processedInput[key])
             }
 
             const shouldValidate = key !== AUTHENTICATION_PROPERTY_NAME && property.type !== PropertyType.MARKDOWN

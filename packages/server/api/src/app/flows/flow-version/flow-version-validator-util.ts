@@ -233,7 +233,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 ])
                 break
             case PropertyType.ARRAY:
-                propsSchema[name] = Type.Union([Type.Array(Type.Unknown({})), Type.String()])
+                propsSchema[name] = Type.Union([Type.Array(Type.Unknown({})), Type.String(), Type.Record(Type.String(), Type.Unknown())])
                 break
             case PropertyType.OBJECT:
                 propsSchema[name] = Type.Union([
