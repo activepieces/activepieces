@@ -66,6 +66,27 @@ export const piecesHooks = {
       refetch: query.refetch,
     };
   },
+  usePieceAndItsMostRecentPatchVersion: ({ name, version, enabled = true }: UsePieceProps) => {
+    const query = useQuery<Record<string,PieceMetadataModel>, Error>({
+      queryKey: ['piece', name, version, 'usePieceAndItsMostRecentPatchVersion'],
+      queryFn: () => {
+        if(!version)
+        {
+          console.log(version)
+          return {}
+        }
+        return piecesApi.getVersionAndLatestPatch({version,name})
+      },
+      staleTime: Infinity,
+      enabled,
+    });
+    return {
+      versions: query.data,
+      isLoading: query.isLoading,
+      isSuccess: query.isSuccess,
+      refetch: query.refetch,
+    };
+  },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
     return useQueries({
       queries: names.map((name) => ({
