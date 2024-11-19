@@ -26,6 +26,7 @@ import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
+import { ArrayPiecePropertyInLoopMode } from './array-loop-mode-property';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -106,6 +107,14 @@ const selectFormComponentForProperty = ({
           disabled={disabled}
           inputName={inputName}
           allowDynamicValues={allowDynamicValues}
+          customDynamicComponent={
+            <ArrayPiecePropertyInLoopMode
+              disabled={disabled}
+              arrayProperty={property}
+              inputName={inputName}
+              useMentionTextInput={useMentionTextInput}
+            />
+          }
         >
           <ArrayPieceProperty
             disabled={disabled}
