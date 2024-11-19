@@ -12,7 +12,7 @@ export const uploadFileAction = createAction({
       displayName: 'File Path',
       required: true,
       description:
-        'The path on the sftp server for store the data. e.g. `./myfolder/test.mp3',
+        'The path on the sftp server to store the file. e.g. `./myfolder/test.mp3`',
     }),
     fileContent: Property.File({
       displayName: 'File content',

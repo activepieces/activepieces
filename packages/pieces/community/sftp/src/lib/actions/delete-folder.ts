@@ -11,6 +11,7 @@ export const deleteFolderAction = createAction({
     folderPath: Property.ShortText({
       displayName: 'Folder Path',
       required: true,
+      description: 'The path of the folder to delete e.g. `./myfolder`',
     }),
     recursive: Property.Checkbox({
       displayName: 'Recursive',
