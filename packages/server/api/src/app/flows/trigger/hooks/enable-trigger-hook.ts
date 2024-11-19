@@ -28,6 +28,7 @@ import {
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
+import { projectService } from '../../../project/project-service'
 import { flowQueue } from '../../../workers/queue'
 import { triggerUtils } from './trigger-utils'
 
@@ -66,9 +67,10 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         flowId: flowVersion.flowId,
         simulate,
     })
-
+    const platformId = await projectService.getPlatformId(projectId)    
     const engineToken = await accessTokenManager.generateEngineToken({
         projectId,
+        platformId,
     })
 
     const engineHelperResponse = await engineRunner.executeTrigger(engineToken, {

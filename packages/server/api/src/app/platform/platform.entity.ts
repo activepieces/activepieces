@@ -124,6 +124,14 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
+        globalConnectionsEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
+        customRolesEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
         emailAuthEnabled: {
             type: Boolean,
             nullable: false,

@@ -126,7 +126,7 @@ const EmbeddedConnectionDialogContent = ({
     if (connectionName && connections && !hasErrorRef.current) {
       const validationResult = validateConnectionName(
         connectionName,
-        connections.data,
+        connections,
       );
 
       if (!validationResult.isValid) {
@@ -153,6 +153,7 @@ const EmbeddedConnectionDialogContent = ({
       reconnectConnection={null}
       predefinedConnectionName={connectionName}
       piece={pieceModel}
+      isGlobalConnection={false}
       open={isDialogOpen}
       onConnectionCreated={hideConnectionIframe}
       setOpen={(open) => {

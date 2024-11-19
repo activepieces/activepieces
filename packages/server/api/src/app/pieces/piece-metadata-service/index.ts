@@ -4,6 +4,7 @@ import {
     assertNotNullOrUndefined,
     PackageType,
     PiecePackage,
+    PlatformId,
     PrivatePiecePackage,
     PublicPiecePackage,
     SuggestionType,
@@ -28,13 +29,15 @@ const initPieceMetadataService = (): PieceMetadataService => {
 export const pieceMetadataService = initPieceMetadataService()
 
 export const getPiecePackage = async (
-    projectId: string,
+    projectId: string | undefined,
+    platformId: PlatformId | undefined,
     pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>,
 ): Promise<PiecePackage> => {
     const pieceMetadata = await pieceMetadataService.getOrThrow({
         name: pkg.pieceName,
         version: pkg.pieceVersion,
         projectId,
+        platformId,
     })
     switch (pkg.packageType) {
         case PackageType.ARCHIVE: {

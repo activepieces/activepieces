@@ -9,10 +9,14 @@ import {
     UpsertOAuth2ConnectionFromToken,
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, AppConnection,
+import {
+    ActivepiecesError, apId,
+    AppConnectionScope,
     AppConnectionType,
+    AppConnectionWithoutSensitiveData,
     Cursor,
     ErrorCode,
+    isNil,
     ProjectId,
     SeekPage,
 } from '@activepieces/shared'
@@ -32,8 +36,10 @@ export const connectionKeyService = {
         projectId,
         token,
         appName,
-    }: GetOrDeleteConnectionFromTokenRequest): Promise<AppConnection | null> {
+    }: GetOrDeleteConnectionFromTokenRequest): Promise<AppConnectionWithoutSensitiveData | null> {
         const connectionName = await getConnectioName({ projectId, token })
+        const project = await projectService.getOneOrThrow(projectId)
+
         // TODO this is hardcoded for now, just to make sure it's not changed on client side
         const finalAppName = appName.replace('@activepieces/piece-', '')
         if (connectionName == null) {
@@ -44,18 +50,22 @@ export const connectionKeyService = {
                 },
             })
         }
-        return appConnectionService.getOne({
+        const connection = await appConnectionService.getOne({
             projectId,
+            platformId: project.platformId,
             externalId: `${finalAppName}_${connectionName}`,
         })
+        return isNil(connection) ? null : appConnectionService.removeSensitiveData(connection)
     },
     async createConnection(
         request: UpsertConnectionFromToken,
-    ): Promise<AppConnection> {
+    ): Promise<AppConnectionWithoutSensitiveData> {
         const appCredential = await appCredentialService.getOneOrThrow(
             request.appCredentialId,
         )
         const projectId = appCredential.projectId
+        const project = await projectService.getOneOrThrow(projectId)
+        
         const connectionName = await getConnectioName({
             projectId,
             token: request.token,
@@ -68,25 +78,23 @@ export const connectionKeyService = {
                 },
             })
         }
-        const project = await projectService.getOneOrThrow(projectId)
+
         // TODO this is hardcoded for now, just to make sure it's not changed on client side
         const finalAppName = `@activepieces/piece-${appCredential.appName}`
         switch (appCredential.settings.type) {
             case AppCredentialType.API_KEY: {
                 const apiRequest = request as UpsertApiKeyConnectionFromToken
                 return appConnectionService.upsert({
-                    projectId,
+                    scope: AppConnectionScope.PROJECT,
                     platformId: project.platformId,
-                    request: {
-                        projectId,
-                        externalId: `${appCredential.appName}_${connectionName}`,
-                        displayName: `${appCredential.appName}_${connectionName}`,
-                        pieceName: finalAppName,
+                    projectIds: [projectId],
+                    externalId: `${appCredential.appName}_${connectionName}`,
+                    displayName: `${appCredential.appName}_${connectionName}`,
+                    pieceName: finalAppName,
+                    type: AppConnectionType.SECRET_TEXT,
+                    value: {
                         type: AppConnectionType.SECRET_TEXT,
-                        value: {
-                            type: AppConnectionType.SECRET_TEXT,
-                            secret_text: apiRequest.apiKey,
-                        },
+                        secret_text: apiRequest.apiKey,
                     },
                     ownerId: null,
                 })
@@ -94,23 +102,21 @@ export const connectionKeyService = {
             case AppCredentialType.OAUTH2: {
                 const apiRequest = request as UpsertOAuth2ConnectionFromToken
                 return appConnectionService.upsert({
-                    projectId,
+                    scope: AppConnectionScope.PROJECT,
                     platformId: project.platformId,
-                    request: {
-                        externalId: `${appCredential.appName}_${connectionName}`,
-                        displayName: `${appCredential.appName}_${connectionName}`,
-                        pieceName: finalAppName,
-                        projectId,
+                    projectIds: [projectId],
+                    externalId: `${appCredential.appName}_${connectionName}`,
+                    displayName: `${appCredential.appName}_${connectionName}`,
+                    pieceName: finalAppName,
+                    type: AppConnectionType.OAUTH2,
+                    value: {
                         type: AppConnectionType.OAUTH2,
-                        value: {
-                            type: AppConnectionType.OAUTH2,
-                            redirect_url: apiRequest.redirectUrl,
-                            code: apiRequest.code,
-                            props: apiRequest.props,
-                            scope: appCredential.settings.scope,
-                            client_id: appCredential.settings.clientId,
-                            client_secret: appCredential.settings.clientSecret!,
-                        },
+                        redirect_url: apiRequest.redirectUrl,
+                        code: apiRequest.code,
+                        props: apiRequest.props,
+                        scope: appCredential.settings.scope,
+                        client_id: appCredential.settings.clientId,
+                        client_secret: appCredential.settings.clientSecret!,
                     },
                     ownerId: null,
                 })

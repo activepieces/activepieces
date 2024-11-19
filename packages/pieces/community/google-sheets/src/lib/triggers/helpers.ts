@@ -52,6 +52,7 @@ export async function createFileNotification(
 	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
 	fileId: string,
 	url: string,
+	includeTeamDrives?: boolean,
 ) {
 	const authClient = new OAuth2Client();
 	authClient.setCredentials(auth);
@@ -62,6 +63,7 @@ export async function createFileNotification(
 	const channelId = nanoid();
 	return await drive.files.watch({
 		fileId: fileId,
+		supportsAllDrives: includeTeamDrives,
 		requestBody: {
 			id: channelId,
 			expiration: (dayjs().add(6, 'day').unix() * 1000).toString(),

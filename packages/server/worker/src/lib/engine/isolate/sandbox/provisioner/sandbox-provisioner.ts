@@ -12,7 +12,7 @@ const globalCodesPath = path.resolve('cache', 'codes')
 
 export const sandboxProvisioner = {
     async provision({
-        projectId,
+        customPiecesPathKey,
         pieces = [],
         codeSteps = [],
         ...cacheInfo
@@ -21,7 +21,7 @@ export const sandboxProvisioner = {
 
             const cacheKey = extractProvisionCacheKey(cacheInfo)
 
-            const customPiecesPath = path.resolve('cache', 'custom', projectId)
+            const customPiecesPath = path.resolve('cache', 'custom', customPiecesPathKey)
             await executionFiles.provision({
                 pieces,
                 codeSteps,
@@ -70,7 +70,7 @@ export const sandboxProvisioner = {
 type ProvisionParams = TypedProvisionCacheInfo & {
     pieces?: PiecePackage[]
     codeSteps?: CodeArtifact[]
-    projectId: string
+    customPiecesPathKey: string
 }
 
 type ReleaseParams = {

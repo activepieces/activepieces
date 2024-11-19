@@ -1,5 +1,12 @@
 import { t } from 'i18next';
-import { LayoutGrid, LineChart, Puzzle, Workflow, Wrench } from 'lucide-react';
+import {
+  LayoutGrid,
+  LineChart,
+  Link,
+  Puzzle,
+  Workflow,
+  Wrench,
+} from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
@@ -43,6 +50,12 @@ export function PlatformAdminContainer({
       label: t('Pieces'),
       locked: isLocked(!platform.managePiecesEnabled),
       icon: Puzzle,
+    },
+    {
+      to: '/platform/connections',
+      label: t('Connections'),
+      icon: Link,
+      locked: isLocked(!platform.globalConnectionsEnabled),
     },
     {
       to: '/platform/templates',

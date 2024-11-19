@@ -2,13 +2,12 @@ import fs from 'fs/promises'
 import path from 'path'
 import { ProjectSyncError } from '@activepieces/ee-shared'
 import { fileExists } from '@activepieces/server-shared'
-import { Flow, FlowOperationType, flowStructureUtil, FlowVersion, PopulatedFlow } from '@activepieces/shared'
+import { Flow, flowMigrations, FlowOperationType, flowStructureUtil, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { projectService } from '../../project/project-service'
 import { GitFile } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
-
 
 async function getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
     const flows = await flowRepo().findBy({
@@ -48,8 +47,12 @@ async function getStateFromGit(flowPath: string): Promise<GitFile[]> {
         const flow: PopulatedFlow = JSON.parse(
             await fs.readFile(path.join(flowPath, file), 'utf-8'),
         )
+        const migratedFlowVersion = flowMigrations.apply(flow.version)
         parsedFlows.push({
-            flow,
+            flow: {
+                ...flow,
+                version: migratedFlowVersion,
+            },
             baseFilename: path.basename(file, '.json'),
         })
     }
@@ -72,11 +75,12 @@ async function updateFlowInProject(originalFlow: PopulatedFlow, newFlow: Populat
 ): Promise<PopulatedFlow> {
     const project = await projectService.getOneOrThrow(projectId)
 
-    const newFlowVersion = updateFlowSecrets(originalFlow, newFlow) 
+    const newFlowVersion = updateFlowSecrets(originalFlow, newFlow)
 
     return flowService.update({
         id: originalFlow.id,
         projectId,
+        platformId: project.platformId,
         lock: true,
         userId: project.ownerId,
         operation: {
@@ -99,7 +103,7 @@ function updateFlowSecrets(originalFlow: PopulatedFlow, newFlow: PopulatedFlow):
         return step
     })
 }
-  
+
 async function republishFlow(flowId: string, projectId: string): Promise<ProjectSyncError | null> {
     const project = await projectService.getOneOrThrow(projectId)
     const flow = await flowService.getOnePopulated({ id: flowId, projectId })
@@ -116,6 +120,7 @@ async function republishFlow(flowId: string, projectId: string): Promise<Project
         await flowService.update({
             id: flowId,
             projectId,
+            platformId: project.platformId,
             lock: true,
             userId: project.ownerId,
             operation: {
