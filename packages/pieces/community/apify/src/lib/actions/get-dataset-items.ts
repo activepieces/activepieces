@@ -10,12 +10,13 @@ export const getDatasetItems = createAction({
   props: {
     runid: Property.ShortText({
       displayName: 'The runid of the Actor (alphanumeric)',
-      description: 'The runid of the completed Actors run (compulsory).',
+      description:
+        'The runid of the completed Actors run [defaultDatasetId] (compulsory)',
       required: true,
     }),
   },
   async run(context) {
-    const apifyToken = context.auth;
+    const apifyToken = context.auth.apikey;
     const headers = {
       Authorization: 'Bearer ' + apifyToken,
       'Content-Type': 'application/json',
