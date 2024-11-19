@@ -2,15 +2,16 @@ import { sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 
-export const list = createAction({
+export const listFolderContentsAction = createAction({
   auth: sftpAuth,
-  name: 'list',
-  displayName: 'List',
-  description: 'List the contents of a directory',
+  name: 'listFolderContents',
+  displayName: 'List Folder Contents',
+  description: 'Lists the contents of a given folder.',
   props: {
     directoryPath: Property.ShortText({
       displayName: 'Directory Path',
       required: true,
+      description: 'The path of the folder to list e.g. `./myfolder`',
     }),
   },
   async run(context) {

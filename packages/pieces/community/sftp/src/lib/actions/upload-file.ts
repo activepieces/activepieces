@@ -2,15 +2,17 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { sftpAuth } from '../..';
 
-export const createBinaryFile = createAction({
+export const uploadFileAction = createAction({
   auth: sftpAuth,
-  name: 'create_binary_file',
-  displayName: 'Create File',
-  description: 'Create a new file in the given path',
+  name: 'upload_file',
+  displayName: 'Upload File',
+  description: 'Upload a file to the given path.',
   props: {
     fileName: Property.ShortText({
       displayName: 'File Path',
       required: true,
+      description:
+        'The path on the sftp server for store the data. e.g. `./myfolder/test.mp3',
     }),
     fileContent: Property.File({
       displayName: 'File content',

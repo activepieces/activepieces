@@ -2,15 +2,16 @@ import { sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 
-export const createDir = createAction({
+export const createFolderAction = createAction({
   auth: sftpAuth,
-  name: 'createDir',
-  displayName: 'Create directory',
-  description: 'Create a directory',
+  name: 'createFolder',
+  displayName: 'Create Folder',
+  description: 'Creates a folder at given path.',
   props: {
-    directoryPath: Property.ShortText({
-      displayName: 'Directory Path',
+    folderPath: Property.ShortText({
+      displayName: 'Folder Path',
       required: true,
+      description: 'The new folder path e.g. `./myfolder`',
     }),
     recursive: Property.Checkbox({
       displayName: 'Recursive',
@@ -20,8 +21,8 @@ export const createDir = createAction({
   },
   async run(context) {
     const { host, port, username, password } = context.auth;
-    const directoryPath = context.propsValue['directoryPath'];
-    const recursive = context.propsValue['recursive'] ?? false;
+    const directoryPath = context.propsValue.folderPath;
+    const recursive = context.propsValue.recursive ?? false;
     const sftp = new Client();
 
     try {

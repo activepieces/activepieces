@@ -2,26 +2,29 @@ import { sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 
-export const deleteDir = createAction({
+export const renameFileOrFolderAction = createAction({
   auth: sftpAuth,
-  name: 'delete_dir',
-  displayName: 'Delete Directory',
-  description: 'Delete a directory',
+  name: 'renameFileOrFolder',
+  displayName: 'Rename File or Folder',
+  description: 'Renames a file or folder at given path.',
   props: {
-    directoryPath: Property.ShortText({
-      displayName: 'Directory Path',
+    oldPath: Property.ShortText({
+      displayName: 'Old Path',
       required: true,
+      description:
+        'The path of the file or folder to rename e.g. `./myfolder/test.mp3`',
     }),
-    recursive: Property.Checkbox({
-      displayName: 'Recursive',
-      defaultValue: false,
-      required: false,
+    newPath: Property.ShortText({
+      displayName: 'New Path',
+      required: true,
+      description:
+        'The new path of the file or folder e.g. `./myfolder/new-name.mp3`',
     }),
   },
   async run(context) {
     const { host, port, username, password } = context.auth;
-    const directoryPath = context.propsValue['directoryPath'];
-    const recursive = context.propsValue['recursive'] ?? false;
+    const oldPath = context.propsValue.oldPath;
+    const newPath = context.propsValue.newPath;
     const sftp = new Client();
 
     try {
@@ -33,7 +36,7 @@ export const deleteDir = createAction({
         readyTimeout: 15000,
       });
 
-      await sftp.rmdir(directoryPath, recursive);
+      await sftp.rename(oldPath, newPath);
 
       return {
         status: 'success',
