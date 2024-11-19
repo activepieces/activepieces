@@ -148,20 +148,18 @@ export const ActivateLicenseDialog = ({
               </DialogClose>
             </div>
           ) : (
-            <>
-              <Button
-                loading={isPending}
-                onClick={(e) => form.handleSubmit(handleSubmit)(e)}
-                tabIndex={3}
-                className="w-full"
-              >
-                {isPending ? (
-                  <LoadingSpinner className="w-4 h-4" />
-                ) : (
-                  t('Activate')
-                )}
-              </Button>
-            </>
+            <Button
+              loading={isPending}
+              onClick={(e) => form.handleSubmit(handleSubmit)(e)}
+              tabIndex={3}
+              className="w-full"
+            >
+              {isPending ? (
+                <LoadingSpinner className="w-4 h-4" />
+              ) : (
+                t('Activate')
+              )}
+            </Button>
           )}
         </DialogFooter>
       </DialogContent>

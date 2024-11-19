@@ -16,38 +16,69 @@ import { ApNode } from './types';
 const verticalPaddingOnFitView = 100;
 const duration = 500;
 // Calculate the node's position in relation to the canvas
-const calculateNodePositionInCanvas = (canvasWidth: number, node: Node, zoom: number) => ({
-  x: node.position.x + canvasWidth / 2 - (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoom) / 2,
-  y: node.position.y + flowUtilConsts.AP_NODE_SIZE.GRAPH_END_WIDGET.height + verticalPaddingOnFitView * zoom,
+const calculateNodePositionInCanvas = (
+  canvasWidth: number,
+  node: Node,
+  zoom: number,
+) => ({
+  x:
+    node.position.x +
+    canvasWidth / 2 -
+    (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoom) / 2,
+  y:
+    node.position.y +
+    flowUtilConsts.AP_NODE_SIZE.GRAPH_END_WIDGET.height +
+    verticalPaddingOnFitView * zoom,
 });
 
 // Check if the node is out of view
-const isNodeOutOfView = (nodePosition: { x: number; y: number }, canvas: { width: number; height: number }) =>
-  nodePosition.y > canvas.height || nodePosition.x > canvas.width || nodePosition.x < 0;
+const isNodeOutOfView = (
+  nodePosition: { x: number; y: number },
+  canvas: { width: number; height: number },
+) =>
+  nodePosition.y > canvas.height ||
+  nodePosition.x > canvas.width ||
+  nodePosition.x < 0;
 
-const calculateViewportDelta = (nodePosition: { x: number; y: number }, canvas: { width: number; height: number }) => ({
-  x: nodePosition.x > canvas.width
-    ? -1 * (nodePosition.x - canvas.width + flowUtilConsts.AP_NODE_SIZE.STEP.width * 2)
-    : nodePosition.x < 0
+const calculateViewportDelta = (
+  nodePosition: { x: number; y: number },
+  canvas: { width: number; height: number },
+) => ({
+  x:
+    nodePosition.x > canvas.width
+      ? -1 *
+        (nodePosition.x -
+          canvas.width +
+          flowUtilConsts.AP_NODE_SIZE.STEP.width * 2)
+      : nodePosition.x < 0
       ? -1 * nodePosition.x
       : 0,
-  y: nodePosition.y > canvas.height
-    ? nodePosition.y - canvas.height + flowUtilConsts.AP_NODE_SIZE.STEP.height
-    : 0,
+  y:
+    nodePosition.y > canvas.height
+      ? nodePosition.y - canvas.height + flowUtilConsts.AP_NODE_SIZE.STEP.height
+      : 0,
 });
 
 const CanvasControls = ({
   canvasWidth,
   canvasHeight,
   hasCanvasBeenInitialised,
-  selectedStep
+  selectedStep,
 }: {
   canvasWidth: number;
   canvasHeight: number;
   hasCanvasBeenInitialised: boolean;
-  selectedStep: string | null
+  selectedStep: string | null;
 }) => {
-  const { zoomIn, zoomOut, zoomTo, setViewport, getNodes, getNode, getViewport, fitView } = useReactFlow();
+  const {
+    zoomIn,
+    zoomOut,
+    zoomTo,
+    setViewport,
+    getNodes,
+    getNode,
+    getViewport,
+  } = useReactFlow();
   const handleZoomIn = useCallback(() => {
     zoomIn({
       duration,
@@ -89,11 +120,9 @@ const CanvasControls = ({
           duration: isInitialRenderCall ? 0 : duration,
         },
       );
-
     },
     [getNodes, canvasHeight, setViewport, canvasWidth],
   );
-
 
   useEffect(() => {
     if (!hasCanvasBeenInitialised) return;
@@ -117,10 +146,17 @@ const CanvasControls = ({
       width: canvasWidth / viewport.zoom,
     };
 
-    const nodePositionInRelationToCanvas = calculateNodePositionInCanvas(canvasWidth, node, viewport.zoom);
+    const nodePositionInRelationToCanvas = calculateNodePositionInCanvas(
+      canvasWidth,
+      node,
+      viewport.zoom,
+    );
 
     if (isNodeOutOfView(nodePositionInRelationToCanvas, canvas)) {
-      const delta = calculateViewportDelta(nodePositionInRelationToCanvas, canvas);
+      const delta = calculateViewportDelta(
+        nodePositionInRelationToCanvas,
+        canvas,
+      );
 
       setViewport({
         x: viewport.x + delta.x,
@@ -130,9 +166,8 @@ const CanvasControls = ({
     }
   };
 
-
   return (
-    <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row" >
+    <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row">
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="secondary" size="sm" onClick={handleZoomReset}>

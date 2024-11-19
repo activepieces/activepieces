@@ -72,16 +72,23 @@ const constructContainerKey = (
 };
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [setRun, flowVersion, leftSidebar, rightSidebar, run, canExitRun, selectedStep] =
-    useBuilderStateContext((state) => [
-      state.setRun,
-      state.flowVersion,
-      state.leftSidebar,
-      state.rightSidebar,
-      state.run,
-      state.canExitRun,
-      state.selectedStep
-    ]);
+  const [
+    setRun,
+    flowVersion,
+    leftSidebar,
+    rightSidebar,
+    run,
+    canExitRun,
+    selectedStep,
+  ] = useBuilderStateContext((state) => [
+    state.setRun,
+    state.flowVersion,
+    state.leftSidebar,
+    state.rightSidebar,
+    state.run,
+    state.canExitRun,
+    state.selectedStep,
+  ]);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
     (state) => {
@@ -188,12 +195,8 @@ const BuilderPage = () => {
               {leftSidebar === LeftSideBarType.RUN_DETAILS && (
                 <FlowRunDetails />
               )}
-              {leftSidebar === LeftSideBarType.VERSIONS && (
-                <FlowVersionsList />
-              )}
-              {leftSidebar === LeftSideBarType.AI_COPILOT && (
-                <CopilotSidebar />
-              )}
+              {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
+              {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
             </div>
           </ResizablePanel>
           <ResizableHandle
@@ -206,7 +209,7 @@ const BuilderPage = () => {
 
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
-            <div className="absolute left-0 top-0 h-full w-full z-10 " ></div>
+            <div className="absolute left-0 top-0 h-full w-full z-10 "></div>
             <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
               lefSideBarContainerWidth={
@@ -223,10 +226,7 @@ const BuilderPage = () => {
                 ></CanvasControls>
               )}
 
-            <ShowPoweredBy
-              position="absolute"
-              show={platform?.showPoweredBy}
-            />
+            <ShowPoweredBy position="absolute" show={platform?.showPoweredBy} />
             <DataSelector
               parentHeight={middlePanelSize.height}
               parentWidth={middlePanelSize.width}
@@ -273,7 +273,7 @@ const BuilderPage = () => {
           </ResizablePanel>
         </>
       </ResizablePanelGroup>
-    </div >
+    </div>
   );
 };
 

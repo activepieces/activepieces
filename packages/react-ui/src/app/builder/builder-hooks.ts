@@ -114,13 +114,18 @@ export type BuilderInitialState = Pick<
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 
-export const createBuilderStore = (initialState: BuilderInitialState, ) =>
+export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set) => {
-    const failedStepInRun =  initialState.run?.steps
-    ? flowRunUtils.findFailedStepInOutput(initialState.run.steps):null;
-    const initiallySelectedStep = failedStepInRun??
-      initialState.flowVersion.state === FlowVersionState.LOCKED ?
-       null: flowStructureUtil.getAllSteps(initialState.flowVersion.trigger).find(s=> !s.valid)?.name ?? 'trigger';
+    const failedStepInRun = initialState.run?.steps
+      ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
+      : null;
+    const initiallySelectedStep =
+      failedStepInRun ??
+      initialState.flowVersion.state === FlowVersionState.LOCKED
+        ? null
+        : flowStructureUtil
+            .getAllSteps(initialState.flowVersion.trigger)
+            .find((s) => !s.valid)?.name ?? 'trigger';
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
@@ -143,10 +148,9 @@ export const createBuilderStore = (initialState: BuilderInitialState, ) =>
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       allowCanvasPanning: true,
-      rightSidebar:
-        initiallySelectedStep
-          ? RightSideBarType.PIECE_SETTINGS
-          : RightSideBarType.NONE,
+      rightSidebar: initiallySelectedStep
+        ? RightSideBarType.PIECE_SETTINGS
+        : RightSideBarType.NONE,
       refreshPieceFormSettings: false,
 
       removeStepSelection: () =>

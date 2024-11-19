@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { ReactFlowProvider } from '@xyflow/react';
 import { Navigate, useParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
@@ -7,7 +8,6 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { PopulatedFlow } from '@activepieces/shared';
-import { ReactFlowProvider } from '@xyflow/react';
 
 const FlowBuilderPage = () => {
   const { flowId } = useParams();
@@ -52,7 +52,6 @@ const FlowBuilderPage = () => {
         <BuilderPage />
       </BuilderStateProvider>
     </ReactFlowProvider>
-
   );
 };
 
