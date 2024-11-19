@@ -123,7 +123,7 @@ const BuilderPage = () => {
   );
 
   const { versions, refetch: refetchPiece } =
-    piecesHooks.usePieceAndItsMostRecentPatchVersion({
+    piecesHooks.useMostRecentAndExactPieceVersion({
       name: memorizedSelectedStep?.settings.pieceName,
       version: memorizedSelectedStep?.settings.pieceVersion,
       enabled:

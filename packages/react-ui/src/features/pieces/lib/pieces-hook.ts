@@ -66,32 +66,23 @@ export const piecesHooks = {
       refetch: query.refetch,
     };
   },
-  usePieceAndItsMostRecentPatchVersion: ({
+  useMostRecentAndExactPieceVersion: ({
     name,
     version,
     enabled = true,
   }: UsePieceProps) => {
-    const query = useQuery<Record<string, PieceMetadataModel>, Error>({
-      queryKey: [
-        'piece',
-        name,
-        version,
-        'usePieceAndItsMostRecentPatchVersion',
-      ],
-      queryFn: () => {
-        if (!version) {
-          return {};
-        }
-        return piecesApi.getVersionAndLatestPatch({ version, name });
-      },
-      staleTime: Infinity,
-      enabled,
-    });
+    const exactVersion = version?.startsWith('~') ? version.slice(1) : version;
+    const latestPatchVersion = `~${exactVersion}`;
+    const pieceQuery = piecesHooks.usePiece({ name, version: exactVersion, enabled });
+    const latestPatchQuery = piecesHooks.usePiece({ name, version: latestPatchVersion, enabled });
     return {
-      versions: query.data,
-      isLoading: query.isLoading,
-      isSuccess: query.isSuccess,
-      refetch: query.refetch,
+      versions: [pieceQuery.pieceModel, latestPatchQuery.pieceModel],
+      isLoading: pieceQuery.isLoading || latestPatchQuery.isLoading,
+      isSuccess: pieceQuery.isSuccess && latestPatchQuery.isSuccess,
+      refetch: () => {
+        pieceQuery.refetch();
+        latestPatchQuery.refetch();
+      },
     };
   },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
