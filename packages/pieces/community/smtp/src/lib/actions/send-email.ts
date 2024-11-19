@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { ApFile, Property, createAction } from '@activepieces/pieces-framework';
 import { smtpAuth } from '../..';
 import { smtpCommon } from '../common';
 import { Attachment, Headers } from 'nodemailer/lib/mailer';
@@ -64,38 +64,39 @@ export const sendEmail = createAction({
       displayName: 'Custom Headers',
       required: false,
     }),
-    attachment: Property.File({
-      displayName: 'Attachment',
-      description: 'File to attach to the email you want to send',
+    attachments: Property.Array({
+      displayName: 'Attachments',
       required: false,
-    }),
-    attachment_name: Property.ShortText({
-      displayName: 'Attachment Name',
-      description: 'In case you want to change the name of the attachment',
-      required: false,
+      properties: {
+        file: Property.File({
+          displayName: 'File',
+          description: 'File to attach to the email you want to send',
+          required: true,
+        }),
+        name: Property.ShortText({
+          displayName: 'Attachment Name',
+          description: 'In case you want to change the name of the attachment',
+          required: false,
+        }),
+      }
     }),
   },
   run: async ({ auth, propsValue }) => {
     const transporter = smtpCommon.createSMTPTransport(auth);
 
-    const attachment = propsValue['attachment'];
+    const attachments = propsValue['attachments'] as {file: ApFile; name: string | undefined; }[];
 
-    let attachment_data: Attachment[] = [];
-
-    if (attachment) {
+    const attachment_data: Attachment[] = attachments.map(({file, name}) => {
       const lookupResult = mime.lookup(
-        attachment.extension ? attachment.extension : ''
+        file.extension ? file.extension : ''
       );
-      const attachmentOption: Attachment[] = [
-        {
-          filename: propsValue.attachment_name ?? attachment.filename,
-          content: attachment?.base64,
-          contentType: lookupResult ? lookupResult : undefined,
-          encoding: 'base64',
-        },
-      ];
-      attachment_data = attachmentOption;
-    }
+      return {
+        filename: name ?? file.filename,
+        content: file?.base64,
+        contentType: lookupResult ? lookupResult : undefined,
+        encoding: 'base64',
+      };
+    });
 
     const info = await transporter.sendMail({
       from: getFrom(propsValue.senderName, propsValue.from),
@@ -106,7 +107,7 @@ export const sendEmail = createAction({
       subject: propsValue.subject,
       text: propsValue.body_type === 'plain_text' ? propsValue.body : undefined,
       html: propsValue.body_type === 'html' ? propsValue.body : undefined,
-      attachments: attachment ? attachment_data : undefined,
+      attachments: attachment_data ? attachment_data : undefined,
       headers: propsValue.customHeaders as Headers,
     });
 
@@ -117,6 +118,6 @@ export const sendEmail = createAction({
 function getFrom(senderName: string|undefined, from: string) {
   if (senderName) {
     return `"${senderName}" <${from}>`
-  } 
+  }
   return from;
 }

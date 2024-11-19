@@ -13,7 +13,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         executionState,
         constants,
     }) {
-        const { resolvedInput, censoredInput } = await constants.variableService.resolve<LoopOnActionResolvedSettings>({
+        const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<LoopOnActionResolvedSettings>({
             unresolvedInput: {
                 items: action.settings.items,
             },

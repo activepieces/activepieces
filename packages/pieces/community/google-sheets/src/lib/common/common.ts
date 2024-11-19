@@ -1,4 +1,8 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import {
+  Property,
+  OAuth2PropertyValue,
+  PiecePropValueSchema,
+} from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
@@ -7,6 +11,9 @@ import {
   getAccessTokenOrThrow,
 } from '@activepieces/pieces-common';
 import { isString } from '@activepieces/shared';
+import { google, sheets_v4, drive_v3 } from 'googleapis';
+import { OAuth2Client } from 'googleapis-common';
+import { googleSheetsAuth } from '../../';
 
 export const googleSheetsCommon = {
   baseUrl: 'https://sheets.googleapis.com/v4/spreadsheets',
@@ -549,4 +556,65 @@ export enum ValueInputOption {
 export enum Dimension {
   ROWS = 'ROWS',
   COLUMNS = 'COLUMNS',
+}
+
+export async function copyFile(
+  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+  title: string,
+  fileId?: string
+) {
+  const authClient = new OAuth2Client();
+  authClient.setCredentials(auth);
+
+  const drive = google.drive({ version: 'v3', auth: authClient });
+
+  return await drive.files.copy({
+    fileId,
+    fields: '*',
+    supportsAllDrives: true,
+    requestBody: {
+      name: title,
+    },
+  });
+}
+
+export async function moveFile(
+  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+  fileId: string,
+  folderId: string
+) {
+  const response = await httpClient.sendRequest<drive_v3.Schema$File>({
+    method: HttpMethod.PUT,
+    url: `https://www.googleapis.com/drive/v2/files/${fileId}`,
+    queryParams: {
+      addParents: folderId,
+    },
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: auth.access_token,
+    },
+  });
+
+  return response.body;
+}
+
+export async function createSpreadsheet(
+  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+  title: string
+) {
+  const response = await httpClient.sendRequest<sheets_v4.Schema$Spreadsheet>({
+    method: HttpMethod.POST,
+    url: 'https://sheets.googleapis.com/v4/spreadsheets',
+    body: {
+      properties: {
+        title,
+      },
+    },
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: auth.access_token,
+    },
+  });
+
+  return response.body;
 }

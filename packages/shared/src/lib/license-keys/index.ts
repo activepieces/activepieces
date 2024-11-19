@@ -40,6 +40,8 @@ export const LicenseKeyEntity = Type.Object({
     flowIssuesEnabled: Type.Boolean(),
     alertsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
+    globalConnectionsEnabled: Type.Boolean(),
+    customRolesEnabled: Type.Boolean(),
 })
 
 export type LicenseKeyEntity = Static<typeof LicenseKeyEntity>

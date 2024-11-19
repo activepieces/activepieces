@@ -1,4 +1,2 @@
 export * from './permission'
-
-
-export const SAFE_STRING_PATTERN = '^[^:/?&=#@]+$'
+export const SAFE_STRING_PATTERN = '^[^./]+$'

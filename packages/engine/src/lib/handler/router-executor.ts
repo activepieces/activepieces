@@ -11,7 +11,7 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
         executionState,
         constants,
     }) {
-        const { censoredInput, resolvedInput } = await constants.variableService.resolve<RouterActionSettings>({
+        const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<RouterActionSettings>({
             unresolvedInput: {
                 ...action.settings,
                 inputUiInfo: undefined,
@@ -54,7 +54,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
     const routerOutput = RouterStepOutput.init({
         input: censoredInput,
     }).setOutput({
-        conditions: evaluatedConditions,
+        branches: evaluatedConditions,
     })
     executionState = executionState.upsertStep(action.name, routerOutput)
 

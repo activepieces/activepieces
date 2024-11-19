@@ -4,16 +4,20 @@ import { useEffect, useRef } from 'react';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { Action, Trigger } from '@activepieces/shared';
 
-type StepDragTemplateProps = {
+const StepDragOverlay = ({
+  step,
+  lefSideBarContainerWidth,
+}: {
   step: Action | Trigger;
-};
-
-const StepDragOverlay = ({ step }: StepDragTemplateProps) => {
+  lefSideBarContainerWidth: number;
+}) => {
   const shadowRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       if (shadowRef.current) {
-        shadowRef.current.style.left = `${event.clientX - 50}px`;
+        shadowRef.current.style.left = `${
+          event.clientX - 50 - lefSideBarContainerWidth
+        }px`;
         shadowRef.current.style.top = `${event.clientY - 125}px`;
       }
     };

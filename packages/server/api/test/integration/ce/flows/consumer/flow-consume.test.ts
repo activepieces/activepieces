@@ -132,6 +132,7 @@ describe('flow execution', () => {
         await databaseConnection().getRepository('flow_run').save([mockFlowRun])
 
         const engineToken = await accessTokenManager.generateEngineToken({
+            platformId: mockPlatform.id,
             projectId: mockProject.id,
         })
         await flowJobExecutor.executeFlow({

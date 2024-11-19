@@ -75,7 +75,6 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     !isNil(selectedAction) && (selectedAction.requireAuth ?? true);
   const showAuthForTrigger =
     !isNil(selectedTrigger) && (selectedTrigger.requireAuth ?? true);
-
   return (
     <div className="flex flex-col gap-4 w-full">
       {!pieceModel && (

@@ -4,6 +4,7 @@ import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execut
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { PiecePackage } from '../pieces'
+import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
 
 export enum EngineOperationType {
@@ -39,8 +40,9 @@ export type BaseEngineOperation = {
     publicUrl: string
 }
 
-export type ExecuteValidateAuthOperation = BaseEngineOperation & {
+export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
     piece: PiecePackage
+    platformId: PlatformId
     auth: AppConnectionValue
 }
 

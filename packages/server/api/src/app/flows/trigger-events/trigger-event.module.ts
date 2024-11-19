@@ -41,6 +41,7 @@ const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
         return triggerEventService.test({
             projectId: request.principal.projectId,
             flow,
+            platformId: request.principal.platform.id,
         })
     })
 

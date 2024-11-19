@@ -18,8 +18,8 @@ export const analyticsService = {
         const totalProjects = await countProjects(platformId)
         const { totalUsers, activeUsers } = await analyzeUsers(platformId)
         const tasksUsage = await tasksReport(platformId)
-        const { uniquePiecesUsed, topPieces } = await analyzePieces(flows)
-        const activeFlowsWithAI = await numberOfFlowsWithAI(flows)
+        const { uniquePiecesUsed, topPieces } = await analyzePieces(flows, platformId)
+        const activeFlowsWithAI = await numberOfFlowsWithAI(flows, platformId)
         const { topProjects, activeProjects } = await analyzeProjects(flows)
         return {
             totalUsers,
@@ -63,13 +63,14 @@ async function analyzeProjects(flows: PopulatedFlow[]) {
 }
 
 
-async function numberOfFlowsWithAI(flows: PopulatedFlow[]) {
+async function numberOfFlowsWithAI(flows: PopulatedFlow[], platformId: PlatformId) {
     const aiPiecePromises = flows.flatMap(flow => {
         const usedPieces = flowPieceUtil.getUsedPieces(flow.version.trigger)
         return usedPieces.map(piece => pieceMetadataService.getOrThrow({
             name: piece,
             version: undefined,
             projectId: flow.projectId,
+            platformId,
             entityManager: undefined,
         }))
     })
@@ -77,7 +78,7 @@ async function numberOfFlowsWithAI(flows: PopulatedFlow[]) {
     return pieceMetadataList.filter(pieceMetadata => pieceMetadata.categories?.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE)).length
 }
 
-async function analyzePieces(flows: PopulatedFlow[]) {
+async function analyzePieces(flows: PopulatedFlow[], platformId: PlatformId) {
     const pieces: Record<string, AnalyticsPieceReportItem> = {}
     for (const flow of flows) {
         const usedPieces = flowPieceUtil.getUsedPieces(flow.version.trigger)
@@ -87,6 +88,7 @@ async function analyzePieces(flows: PopulatedFlow[]) {
                     name: piece,
                     version: undefined,
                     projectId: flow.projectId,
+                    platformId,
                     entityManager: undefined,
                 })
                 pieces[piece] = {

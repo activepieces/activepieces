@@ -50,7 +50,7 @@ export const AI_PROVIDERS = [
     models: [
       model({
         label: 'claude-3-5-sonnet',
-        value: 'claude-3-5-sonnet-20240620',
+        value: 'claude-3-5-sonnet-latest',
         supported: ['text', 'function'],
       }),
       model({
@@ -61,6 +61,11 @@ export const AI_PROVIDERS = [
       model({
         label: 'claude-3-sonnet',
         value: 'claude-3-sonnet-20240229',
+        supported: ['text', 'function'],
+      }),
+      model({
+        label: 'claude-3-5-haiku',
+        value: 'claude-3-5-haiku-latest',
         supported: ['text', 'function'],
       }),
       model({

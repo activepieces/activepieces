@@ -160,16 +160,16 @@ import { AppConnectionsSetNull1730627612799 } from './migration/postgres/1730627
 import { AddFlowSchemaVersion1730760434336 } from './migration/postgres/1730760434336-AddFlowSchemaVersion'
 import { StoreTriggerEventsInFile1731247581852 } from './migration/postgres/1731247581852-StoreTriggerEventsInFile'
 import { MigrateConnectionNames1731428722977 } from './migration/postgres/1731428722977-MigrateConnectionNames'
+import { AddGlobalConnectionsAndRbacForPlatform1731532843905 } from './migration/postgres/1731532843905-AddGlobalConnectionsAndRbacForPlatform'
+import { AddAuditLogIndicies1731711188507 } from './migration/postgres/1731711188507-AddAuditLogIndicies'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
-
     if (useSsl === 'true') {
         return {
             ca: system.get(AppSystemProp.POSTGRES_SSL_CA)?.replace(/\\n/g, '\n'),
         }
     }
-
     return false
 }
 
@@ -269,6 +269,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         SwitchToRouter1731019013340,
         StoreTriggerEventsInFile1731247581852,
         MigrateConnectionNames1731428722977,
+        AddGlobalConnectionsAndRbacForPlatform1731532843905,
     ]
 
     const edition = system.getEdition()
@@ -343,6 +344,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ModifyProjectMembers1717961669938,
                 MigrateAuditEventSchema1723489038729,
                 AddAiTokensForProjectPlan1726446092010,
+                AddAuditLogIndicies1731711188507,
+
             )
             break
         case ApEdition.COMMUNITY:

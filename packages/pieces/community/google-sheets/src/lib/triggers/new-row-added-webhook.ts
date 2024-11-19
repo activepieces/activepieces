@@ -55,6 +55,7 @@ export const newRowAddedTrigger = createTrigger({
 			context.auth,
 			spreadsheet_id,
 			context.webhookUrl,
+			context.propsValue.include_team_drives,
 		);
 
 		// store channel response
@@ -127,6 +128,7 @@ export const newRowAddedTrigger = createTrigger({
 				context.auth,
 				context.propsValue.spreadsheet_id,
 				context.webhookUrl,
+				context.propsValue.include_team_drives,
 			);
 			// store channel response
 			await context.store.put<WebhookInformation>(
