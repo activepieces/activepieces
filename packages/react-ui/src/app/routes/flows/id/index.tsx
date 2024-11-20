@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { ReactFlowProvider } from '@xyflow/react';
 import { Navigate, useParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
@@ -39,16 +40,18 @@ const FlowBuilderPage = () => {
   }
 
   return (
-    <BuilderStateProvider
-      flow={flow!}
-      canExitRun={true}
-      flowVersion={flow!.version}
-      readonly={false}
-      run={null}
-      sampleData={sampleData ?? {}}
-    >
-      <BuilderPage />
-    </BuilderStateProvider>
+    <ReactFlowProvider>
+      <BuilderStateProvider
+        flow={flow!}
+        canExitRun={true}
+        flowVersion={flow!.version}
+        readonly={false}
+        run={null}
+        sampleData={sampleData ?? {}}
+      >
+        <BuilderPage />
+      </BuilderStateProvider>
+    </ReactFlowProvider>
   );
 };
 

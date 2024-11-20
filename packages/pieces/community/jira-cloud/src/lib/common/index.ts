@@ -1,5 +1,6 @@
 import {
 	AuthenticationType,
+	HttpError,
 	HttpMessageBody,
 	HttpMethod,
 	HttpRequest,

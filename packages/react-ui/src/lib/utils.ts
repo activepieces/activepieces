@@ -87,7 +87,6 @@ export const formatUtils = {
             remainingSeconds > 0 ? ` ${remainingSeconds} seconds` : ''
           }`;
     }
-
     return short ? `${seconds} s` : `${seconds} seconds`;
   },
 };
