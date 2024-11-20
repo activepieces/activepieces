@@ -54,7 +54,6 @@ export const propsProcessor = {
                 }
                 processedInput[key] = processedArray
                 const isThereErrors = processedErrors.some(error => Object.keys(error).length > 0)
-                console.error('ERRRRRRRORS ', processedErrors)
                 if (isThereErrors) {
                     errors[key] = {
                         properties: processedErrors,
