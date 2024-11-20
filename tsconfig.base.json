@@ -308,6 +308,9 @@
       "@activepieces/piece-instagram-business": [
         "packages/pieces/community/instagram-business/src/index.ts"
       ],
+      "@activepieces/piece-instasent": [
+        "packages/pieces/community/instasent/src/index.ts"
+      ],
       "@activepieces/piece-intercom": [
         "packages/pieces/community/intercom/src/index.ts"
       ],
