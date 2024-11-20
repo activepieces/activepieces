@@ -148,22 +148,22 @@ export const insertMultipleRowsAction = createAction({
 						fields['values'] = Property.LongText({
 							displayName: 'CSV',
 							required: true,
-							description: 'Enter the values to insert in CSV format.',
+							description: "Provide values in CSV format. Ensure the first row contains column headers that match the sheet's column names.",
 						});
 						break;
 					case 'json':
 						fields['values'] = Property.Json({
 							displayName: 'JSON',
 							required: true,
-							description: 'Enter the values to insert in JSON format.',
+							description: "Provide values in JSON format. Ensure the column names match the sheet's header.",
 							defaultValue: [
 								{
-									A: 'value1',
-									B: 'value2',
+									column1: 'value1',
+									column2: 'value2',
 								},
 								{
-									A: 'value3',
-									B: 'value4',
+									column1: 'value3',
+									column2: 'value4',
 								},
 							],
 						});
@@ -328,15 +328,34 @@ export const insertMultipleRowsAction = createAction({
 	},
 });
 
-function convertJsonToRawValues(json: string | any[], headers: Record<string, any>): any[] {
-	if (Array.isArray(json)) {
-		return json;
-	}
-	try {
-		return JSON.parse(json as string);
-	} catch (error) {
-		throw new Error('Invalid JSON format');
-	}
+function convertJsonToRawValues(json: string | any[], labelHeaders: Record<string, any>): any[] {
+
+	let data: Record<string, any>[];
+
+	// If the input is a JSON string
+	if (typeof json === 'string') {
+        try {
+            data = JSON.parse(json);
+        } catch (error) {
+            throw new Error('Invalid JSON format for row values');
+        }
+    } else {
+        // If the input is already an array of objects, use it directly
+        data = json;
+    }
+
+	// Ensure the input is an array of objects
+    if (!Array.isArray(data) || typeof data[0] !== 'object') {
+        throw new Error('Input must be an array of objects or a valid JSON string representing it.');
+    }
+
+	return data.map((row:Record<string,any>)=>{
+		return Object.entries(labelHeaders).reduce((acc, [labelColumn, csvHeader]) => {
+			acc[labelColumn]=row[csvHeader] ?? "";
+			return acc;
+		}, {} as Record<string, any>);
+
+	})
 }
 
 function convertCsvToRawValues(
@@ -344,12 +363,24 @@ function convertCsvToRawValues(
 	delimiter: string,
 	labelHeaders: Record<string, any>,
 ) {
-	const rows: string[] = csvText.split('\n');
-	const headers = rows[0].split(delimiter);
+	// Split CSV into rows
+    const rows = csvText.trim().split('\n');
+
+	// Extract the input headers from the first row
+    const headers = rows[0].split(delimiter);
+
+	// Create a mapping of input headers to existing label names like "A", "B", "C", etc.
+	const newHeaders = Object.entries(labelHeaders).reduce((acc, [labelColumn, csvHeader]) => {
+		const index = headers.indexOf(csvHeader);
+		if (index > -1) acc[index] = labelColumn;
+		return acc;
+	}, [] as string[]);
+
+	// Process each row of data and map it to the new labeled headers
 	const result = rows.slice(1).map((row) => {
 		const values = row.split(delimiter);
-		return headers.reduce((obj, header, index) => {
-			obj[header] = values[index];
+		return newHeaders.reduce((obj, header, index) => {
+			obj[header] = values[index] ?? "";
 			return obj;
 		}, {} as Record<string, any>);
 	});
