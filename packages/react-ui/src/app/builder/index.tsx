@@ -143,10 +143,8 @@ const BuilderPage = () => {
       socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
       socket.removeAllListeners(WebsocketClientEvent.TEST_STEP_FINISHED);
       socket.removeAllListeners(WebsocketClientEvent.TEST_FLOW_RUN_STARTED);
-      socket.removeAllListeners(WebsocketClientEvent.GENERATE_CODE_FINISHED);
-      socket.removeAllListeners(
-        WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED,
-      );
+      socket.removeAllListeners(WebsocketClientEvent.ASK_COPILOT_FINISHED);
+
     };
   }, [socket, refetchPiece, run]);
 

@@ -15,10 +15,11 @@ import {
   deepMergeAndCast,
   flowHelper,
   FlowOperationType,
-  GenerateCodeRequest,
-  GenerateCodeResponse,
+  AskCopilotCodeResponse,
+  AskCopilotRequest,
   WebsocketClientEvent,
   WebsocketServerEvent,
+  AskCopilotTool,
 } from '@activepieces/shared';
 
 import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
@@ -40,17 +41,19 @@ const initialMessages: CopilotMessage[] = [
 
 async function getCodeResponse(
   socket: Socket<DefaultEventsMap, DefaultEventsMap>,
-  request: GenerateCodeRequest,
-): Promise<GenerateCodeResponse> {
+  request: AskCopilotRequest,
+): Promise<AskCopilotCodeResponse> {
   const id = nanoid();
-  socket.emit(WebsocketServerEvent.GENERATE_CODE, {
+  debugger;
+  socket.emit(WebsocketServerEvent.ASK_COPILOT, {
     ...request,
     id,
   });
-  return new Promise<GenerateCodeResponse>((resolve, reject) => {
+  return new Promise<AskCopilotCodeResponse>((resolve, reject) => {
     socket.on(
-      WebsocketClientEvent.GENERATE_CODE_FINISHED,
-      (response: GenerateCodeResponse) => {
+      WebsocketClientEvent.ASK_COPILOT_FINISHED,
+      (response: AskCopilotCodeResponse) => {
+        debugger;
         resolve(response);
       },
     );
@@ -86,9 +89,10 @@ export const CopilotSidebar = () => {
     }, 1);
   };
   const { isPending, mutate } = useMutation({
-    mutationFn: (request: GenerateCodeRequest) =>
+    mutationFn: (request: AskCopilotRequest) =>
       getCodeResponse(socket, request),
-    onSuccess: (response: GenerateCodeResponse) => {
+    onSuccess: (response: AskCopilotCodeResponse) => {
+      debugger;
       setMessages((prevMessages) => [
         ...prevMessages,
         {
@@ -120,11 +124,13 @@ export const CopilotSidebar = () => {
       prompt: `${inputMessage}. ${t(
         'Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies.',
       )}`,
-      previousContext: messages.map((message) => ({
+      context: messages.map((message) => ({
         role: message.userType === 'user' ? 'user' : 'assistant',
         content: JSON.stringify(message.content),
       })),
+      tools:[AskCopilotTool.GENERATE_CODE]
     });
+    
     setMessages([
       ...messages,
       { content: inputMessage, userType: 'user', messageType: 'text' },
