@@ -2,7 +2,6 @@ import {
   createAction,
   OAuth2PropertyValue,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   Country,
@@ -13,6 +12,8 @@ import {
   updateContact,
 } from '../common';
 import { leadConnectorAuth } from '../..';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const updateContactAction = createAction({
   auth: leadConnectorAuth,
@@ -36,12 +37,10 @@ export const updateContactAction = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       required: false,
-      validators: [Validators.email],
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
       required: false,
-      validators: [Validators.phoneNumber],
     }),
     companyName: Property.ShortText({
       displayName: 'Company Name',
@@ -50,7 +49,6 @@ export const updateContactAction = createAction({
     website: Property.ShortText({
       displayName: 'Website',
       required: false,
-      validators: [Validators.url],
     }),
     tags: Property.MultiSelectDropdown({
       displayName: 'Tags',
@@ -137,6 +135,12 @@ export const updateContactAction = createAction({
   },
 
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      email: z.string().email().optional(),
+      phone: z.string().optional(),
+      website: z.string().url().optional(),
+    });
+
     const {
       id,
       firstName,

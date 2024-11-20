@@ -6,11 +6,12 @@ import {
   createPiece,
   PieceAuth,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { kimaiCreateTimesheetAction } from './lib/actions/create-timesheet';
 import { makeClient } from './lib/common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const kimaiAuth = PieceAuth.CustomAuth({
   description: `
@@ -24,7 +25,6 @@ export const kimaiAuth = PieceAuth.CustomAuth({
     base_url: Property.ShortText({
       displayName: 'Server URL',
       description: 'Kimai Instance URL (e.g. https://demo.kimai.org)',
-      validators: [Validators.url],
       required: true,
     }),
     user: Property.ShortText({
@@ -39,6 +39,12 @@ export const kimaiAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
+    if (auth) {
+      await propsValidation.validateZod(auth, {
+        base_url: z.string().url(),
+      });
+    }
+
     if (!auth) {
       return {
         valid: false,

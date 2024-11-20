@@ -1,7 +1,6 @@
 import {
   PieceAuth,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { getProducts } from './api';
 
@@ -19,8 +18,7 @@ export const cartloomAuth = PieceAuth.CustomAuth({
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
       description: 'The API key for your Cartloom account',
-      required: true,
-      validators: [Validators.pattern(/^[a-zA-Z0-9]+$/)],
+      required: true
     }),
   },
   validate: async ({ auth }) => {

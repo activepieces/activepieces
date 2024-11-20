@@ -1,7 +1,6 @@
 import {
   Property,
   createAction,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   optionalTimeFormats,
@@ -13,6 +12,8 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -54,7 +55,6 @@ export const nextDayofWeek = createAction({
         'The time that you would like to get the date and time of. This must be in 24h format.',
       required: false,
       defaultValue: '00:00',
-      validators: [Validators.pattern(/^\d\d:\d\d$/)],
     }),
     currentTime: Property.Checkbox({
       displayName: 'Use Current Time',
@@ -82,6 +82,10 @@ export const nextDayofWeek = createAction({
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      time: z.string().regex(/^\d\d:\d\d$/),
+    });
+
     const timeFormat = context.propsValue.timeFormat;
     const timeZone = context.propsValue.timeZone as string;
     const dayIndex = context.propsValue.weekday as number;
@@ -108,8 +112,6 @@ export const nextDayofWeek = createAction({
         `Invalid input \ndayIndex: ${dayIndex} \nhours: ${hours} \nminutes: ${minutes}`
       );
     }
-
-
 
     // Set the time
     nextOccurrence = nextOccurrence.hour(hours).minute(minutes).second(0).millisecond(0);

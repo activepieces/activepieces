@@ -1,8 +1,9 @@
 import {
   PieceAuth,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 import { getVersion } from './api';
 
 export type MatomoAuthType = {
@@ -29,20 +30,17 @@ export const matomoAuth = PieceAuth.CustomAuth({
       description:
         'The domain of your Matomo account: https://matomo.example.com',
       required: true,
-      validators: [Validators.url],
     }),
     tokenAuth: PieceAuth.SecretText({
       displayName: 'Token Auth',
       description: 'The Token Auth key from your Matomo account',
       required: true,
-      validators: [Validators.pattern(/^[a-zA-Z0-9]+$/)],
     }),
     siteId: Property.ShortText({
       displayName: 'Site ID',
       description:
         'The site ID that will be associated to this connection. Site IDs can be found on the main Websites page.',
       required: true,
-      validators: [Validators.pattern(/^[0-9]+$/)],
     }),
   },
   validate: async ({ auth }) => {
@@ -62,6 +60,12 @@ export const matomoAuth = PieceAuth.CustomAuth({
 });
 
 const validateAuth = async (auth: MatomoAuthType) => {
+  await propsValidation.validateZod(auth, {
+    domain: z.string().url(),
+    tokenAuth: z.string().regex(/^[a-zA-Z0-9]+$/),
+    siteId: z.string().regex(/^[0-9]+$/),
+  });
+
   const response = await getVersion(auth);
   if (response.success !== true) {
     throw new Error(

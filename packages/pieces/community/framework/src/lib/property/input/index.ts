@@ -1,5 +1,4 @@
 import { Type } from '@sinclair/typebox';
-import { Validators } from '../../validators/validators';
 import { ArrayProperty } from './array-property';
 import { CheckboxProperty } from './checkbox-property';
 import { DateTimeProperty } from './date-time-property';
@@ -69,7 +68,6 @@ export const Property = {
       ...request,
       valueSchema: undefined,
       type: PropertyType.SHORT_TEXT,
-      defaultValidators: [Validators.string],
     } as unknown as R extends true
       ? ShortTextProperty<true>
       : ShortTextProperty<false>;
@@ -114,7 +112,6 @@ export const Property = {
   ): R extends true ? NumberProperty<true> : NumberProperty<false> {
     return {
       ...request,
-      defaultValidators: [Validators.number],
       valueSchema: undefined,
       type: PropertyType.NUMBER,
     } as unknown as R extends true
@@ -217,7 +214,6 @@ export const Property = {
   ): R extends true ? DateTimeProperty<true> : DateTimeProperty<false> {
     return {
       ...request,
-      defaultValidators: [Validators.datetimeIso],
       valueSchema: undefined,
       type: PropertyType.DATE_TIME,
     } as unknown as R extends true
@@ -229,7 +225,6 @@ export const Property = {
   ): R extends true ? FileProperty<true> : FileProperty<false> {
     return {
       ...request,
-      defaultValidators: [Validators.file],
       valueSchema: undefined,
       type: PropertyType.FILE,
     } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;

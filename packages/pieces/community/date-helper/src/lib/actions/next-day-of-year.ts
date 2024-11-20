@@ -1,7 +1,6 @@
 import {
   Property,
   createAction,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   optionalTimeFormats,
@@ -13,6 +12,8 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -58,7 +59,6 @@ export const nextDayofYear = createAction({
         'The day of the month that you would like to get the date and time of.',
       required: true,
       defaultValue: 1,
-      validators: [Validators.minValue(1), Validators.maxValue(31)],
     }),
     time: Property.ShortText({
       displayName: '24h Time',
@@ -66,7 +66,6 @@ export const nextDayofYear = createAction({
         'The time that you would like to get the date and time of. This must be in 24h format.',
       required: false,
       defaultValue: '00:00',
-      validators: [Validators.pattern(/^\d\d:\d\d$/)],
     }),
     currentTime: Property.Checkbox({
       displayName: 'Use Current Time',
@@ -94,6 +93,11 @@ export const nextDayofYear = createAction({
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      day: z.number().min(1).max(31),
+      time: z.string().regex(/^\d\d:\d\d$/),
+    });
+
     const timeFormat = context.propsValue.timeFormat;
     const timeZone = context.propsValue.timeZone as string;
     const currentTime = context.propsValue.currentTime as boolean;

@@ -1,4 +1,4 @@
-import { ErrorMessages, formatErrorMessage, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
+import { InputPropertyMap, PieceAuthProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, isNil } from '@activepieces/shared'
 import { processors } from './processors'
 
@@ -67,6 +67,7 @@ export const propsProcessor = {
             if (!shouldValidate) {
                 continue
             }
+         /*
             // Short Circuit
             // If the value is required, we don't allow it to be undefined or null
             if (isNil(value) && property.required) {
@@ -79,7 +80,9 @@ export const propsProcessor = {
             if (isNil(value) && !property.required) {
                 continue
             }
-
+*/
+            // TODO URGENT FIX
+            /*
             const validators = [
                 ...(property.defaultValidators ?? []),
                 ...(property.validators ?? []),
@@ -92,7 +95,9 @@ export const propsProcessor = {
                     propErrors.push(error)
                 }
             }
+                
             if (propErrors.length) errors[key] = propErrors
+            */
         }
         return { processedInput, errors }
     },

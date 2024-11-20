@@ -2,11 +2,12 @@ import {
   createAction,
   Property,
   StoreScope,
-  Validators,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../..';
 import { sleep } from '../common/common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const askAssistant = createAction({
   auth: openaiAuth,
@@ -57,13 +58,16 @@ export const askAssistant = createAction({
     }),
     memoryKey: Property.ShortText({
       displayName: 'Memory Key',
-      validators: [Validators.maxLength(128)],
       description:
         'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave your assistant without memory of previous messages.',
       required: false,
     }),
   },
   async run({ auth, propsValue, store }) {
+    await propsValidation.validateZod(propsValue, {
+      memoryKey: z.string().max(128).optional(),
+    });
+
     const openai = new OpenAI({
       apiKey: auth,
     });

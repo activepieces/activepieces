@@ -1,4 +1,4 @@
-import { Property, Validators } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 
 export const purchaseId = Property.ShortText({
   displayName: 'Purchase ID',
@@ -10,7 +10,6 @@ export const purchaserEmailAddress = Property.ShortText({
   displayName: 'Email Address',
   description: 'The email address of the subscriber',
   required: true,
-  validators: [Validators.email],
 });
 
 export const purchasesPageNumber = Property.Number({
@@ -19,21 +18,18 @@ export const purchasesPageNumber = Property.Number({
     'Page number. Each page of results will contain up to 50 purchases.',
   required: true,
   defaultValue: 1,
-  validators: [Validators.number, Validators.nonZero],
 });
 
 export const transactionId = Property.Number({
   displayName: 'Transaction ID',
   description: 'The transaction ID',
   required: true,
-  validators: [Validators.number],
 });
 
 export const productId = Property.Number({
   displayName: 'Product ID',
   description: 'The product ID',
   required: true,
-  validators: [Validators.number],
 });
 
 // Create purchase
@@ -95,42 +91,36 @@ export const transactionTime = Property.DateTime({
   displayName: 'Transaction Time',
   description: 'The transaction time',
   required: false,
-  validators: [Validators.datetimeIso],
 });
 
 export const subtotal = Property.Number({
   displayName: 'Subtotal',
   description: 'The subtotal',
   required: false,
-  validators: [Validators.number],
 });
 
 export const shipping = Property.Number({
   displayName: 'Shipping',
   description: 'The shipping',
   required: false,
-  validators: [Validators.number],
 });
 
 export const discount = Property.Number({
   displayName: 'Discount',
   description: 'The discount',
   required: false,
-  validators: [Validators.number],
 });
 
 export const tax = Property.Number({
   displayName: 'Tax',
   description: 'The tax',
   required: false,
-  validators: [Validators.number],
 });
 
 export const total = Property.Number({
   displayName: 'Total',
   description: 'The total',
   required: false,
-  validators: [Validators.number],
 });
 
 export const products = {
@@ -158,13 +148,11 @@ export const products = {
     displayName: 'Unit Price',
     description: 'The unit price of the product',
     required: true,
-    validators: [Validators.number],
   }),
   quantity: Property.Number({
     displayName: 'Quantity',
     description: 'The quantity of the product',
     required: true,
-    validators: [Validators.number],
   }),
 };
 
