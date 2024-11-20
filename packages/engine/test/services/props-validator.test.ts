@@ -154,6 +154,22 @@ describe('Property Validation', () => {
             )
             expect(validJsonStringErrors).toEqual({})
 
+            const { errors: validArrayErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { json: [1, 2, 3] },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(validArrayErrors).toEqual({})
+
+            const { errors: validArrayStringErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { json: '[1, 2, 3]' },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(validArrayStringErrors).toEqual({})
+
             const { errors: invalidJsonErrors } = await propsProcessor.applyProcessorsAndValidators(
                 { json: 'not a json object' },
                 props,
@@ -161,7 +177,7 @@ describe('Property Validation', () => {
                 false,
             )
             expect(invalidJsonErrors).toEqual({
-                json: ['Expected JSON object, received: not a json object'],
+                json: ['Expected JSON, received: not a json object'],
             })
 
             const { errors: nullErrors } = await propsProcessor.applyProcessorsAndValidators(
@@ -171,7 +187,7 @@ describe('Property Validation', () => {
                 false,
             )
             expect(nullErrors).toEqual({
-                json: ['Expected JSON object, received: null'],
+                json: ['Expected JSON, received: null'],
             })
         })
     })

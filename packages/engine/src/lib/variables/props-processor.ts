@@ -1,5 +1,5 @@
 import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
-import { AUTHENTICATION_PROPERTY_NAME, isNil } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject } from '@activepieces/shared'
 import { z } from 'zod'
 import { processors } from './processors'
 
@@ -128,10 +128,12 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
             })
             break
         case PropertyType.JSON:
-            schema = z.record(z.any(), {
-                required_error: `Expected JSON object, received: ${originalValue}`,
-                invalid_type_error: `Expected JSON object, received: ${originalValue}`,
-            })
+            schema = z.any().refine(
+                (val) => isObject(val) || Array.isArray(val),
+                {
+                    message: `Expected JSON, received: ${originalValue}`,
+                },
+            )
             break
         case PropertyType.FILE:
             schema = z.record(z.any(), {
