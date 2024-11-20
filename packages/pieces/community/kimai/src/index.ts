@@ -90,7 +90,7 @@ export const kimai = createPiece({
   description: 'Open-source time tracking software',
 
   auth: kimaiAuth,
-  minimumSupportedRelease: '0.6.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/kimai.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["facferreira","kishanprmr","MoShizzle","abuaboud"],

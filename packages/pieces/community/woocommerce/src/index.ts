@@ -64,7 +64,7 @@ export const woocommerce = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/woocommerce.png',
   categories: [PieceCategory.COMMERCE],
   auth: wooAuth,
-  minimumSupportedRelease: '0.7.1',
+  minimumSupportedRelease: '0.30.0',
   authors: ["TaskMagicKyle","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   actions: [
     wooCreateCustomer,

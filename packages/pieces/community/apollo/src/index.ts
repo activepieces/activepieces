@@ -11,7 +11,7 @@ export const apolloAuth = PieceAuth.SecretText({
 export const apollo = createPiece({
   displayName: "Apollo",
   auth: apolloAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: "https://cdn.activepieces.com/pieces/apollo.png",
   authors: ['abuaboud'],
   actions: [matchPerson, enrichCompany],

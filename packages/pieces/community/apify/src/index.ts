@@ -34,7 +34,7 @@ export const apify = createPiece({
   displayName: 'Apify',
   description: 'Your full‑stack platform for web scraping',
   auth: apifyAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apify.svg',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   authors: ['buttonsbond'],

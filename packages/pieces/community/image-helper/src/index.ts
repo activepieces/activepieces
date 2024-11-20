@@ -12,7 +12,7 @@ export const imageHelper = createPiece({
   description: 'Tools for image manipulations',
 
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/image-helper.png',
   authors: ["AbdullahBitar","kishanprmr","abuaboud"],
   categories: [PieceCategory.CORE],

@@ -71,7 +71,7 @@ export const sftp = createPiece({
   displayName: 'SFTP',
   description: 'Secure file transfer protocol',
 
-  minimumSupportedRelease: '0.7.1',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sftp.svg',
   categories: [PieceCategory.CORE, PieceCategory.DEVELOPER_TOOLS],
   authors: [

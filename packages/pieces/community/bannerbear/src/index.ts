@@ -13,7 +13,7 @@ export const bannerbear = createPiece({
   displayName: 'Bannerbear',
   description: 'Automate image generation',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
   categories: [PieceCategory.MARKETING],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
