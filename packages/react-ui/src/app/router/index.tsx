@@ -50,6 +50,7 @@ import AuditLogsPage from '../routes/platform/audit-logs';
 import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
 import { LicenseKeyPage } from '../routes/platform/settings/license-key';
+import { RbacPage } from '../routes/platform/settings/rbac';
 import TemplatesPage from '../routes/platform/templates';
 import UsersPage from '../routes/platform/users';
 import { FlowRunPage } from '../routes/runs/id';
@@ -65,7 +66,6 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
-import { RbacPage } from '../routes/platform/settings/rbac';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -529,8 +529,8 @@ const ApRouter = () => {
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
-        initialEntries: [window.location.pathname],
-      })
+          initialEntries: [window.location.pathname],
+        })
       : createBrowserRouter(routes);
   }, [embedState.isEmbedded]);
 

@@ -1,6 +1,8 @@
+import { rolePermissions } from '@activepieces/ee-shared'
 import { fileCompressor } from '@activepieces/server-shared'
 import {
     ActionType,
+    apId,
     ExecutionType,
     FlowRunStatus,
     FlowStatus,
@@ -8,9 +10,13 @@ import {
     PackageType,
     PieceType,
     ProgressUpdateType,
+    ProjectMemberRole,
+    Rbac,
+    RoleType,
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { flowJobExecutor } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
@@ -30,10 +36,24 @@ let app: FastifyInstance | null = null
 beforeAll(async () => {
     await databaseConnection().initialize()
     app = await setupServer()
+
+    for (const role of Object.values(ProjectMemberRole)) {
+        const rbacRole: Rbac = {
+            name: role,
+            permissions: rolePermissions[role],
+            type: RoleType.DEFAULT,
+            id: apId(),
+            created: dayjs().toISOString(),
+            updated: dayjs().toISOString(),
+        }
+        await databaseConnection().getRepository('rbac').save(rbacRole)
+    }
+
     await app.listen({
         host: '0.0.0.0',
         port: 3000,
     })
+
 })
 
 afterAll(async () => {

@@ -1,4 +1,5 @@
-import { ActivepiecesError, ApFlagId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, Project, ProjectMemberRole, Rbac, User } from '@activepieces/shared'
+import { ActivepiecesError, ApFlagId, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, Project, Rbac, User } from '@activepieces/shared'
+import { projectMemberService } from '../../../ee/project-members/project-member.service'
 import { flagService } from '../../../flags/flag.service'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -6,7 +7,6 @@ import { userService } from '../../../user/user-service'
 import { userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { accessTokenManager } from '../../lib/access-token-manager'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
-import { rbacService } from '../../../ee/rbac/rbac.service'
 
 const DEFAULT_PLATFORM_NAME = 'platform'
 
@@ -93,11 +93,20 @@ async function getProjectAndToken(user: User): Promise<{ user: User, project: Pr
         },
         tokenVersion: user.tokenVersion,
     })
-    const adminRole = await rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
+    const projectRole = await projectMemberService.getRole({ userId: user.id, projectId: project.id })
+
+    if (isNil(projectRole)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVITATION_ONLY_SIGN_UP,
+            params: {
+                message: 'No project role found for user',
+            },
+        })
+    }
     return {
         user: updatedUser,
         token,
         project,
-        projectRole: adminRole,
+        projectRole,
     }
 }

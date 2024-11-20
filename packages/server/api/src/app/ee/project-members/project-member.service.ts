@@ -103,19 +103,16 @@ export const projectMemberService = {
         projectId: ProjectId
         userId: UserId
     }): Promise<Rbac | null> {
-        console.log('HAHAHAA 1')
         const project = await projectService.getOneOrThrow(projectId)
         const user = await userService.getOneOrFail({
             id: userId,
         })
 
-        console.log('HAHAHAA 2', project)
-        console.log('HAHAHAA 3', user)
         if (user.id === project.ownerId) {
-            return await rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
+            return rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
-            return await rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
+            return rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
         }
         const member = await repo()
             .createQueryBuilder('project_member')
@@ -123,8 +120,6 @@ export const projectMemberService = {
             .where('project_member.projectId = :projectId', { projectId })
             .andWhere('project_member.userId = :userId', { userId })
             .getOne()
-
-        console.log('HAHAHAA 4', member)
 
         if (!member) {
             return null

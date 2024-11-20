@@ -102,7 +102,7 @@ async function getProjectAndTokenOrThrow(
         project,
     })
 
-    if(isNil(projectRole)) {
+    if (isNil(projectRole)) {
         throw new ActivepiecesError({
             code: ErrorCode.PERMISSION_DENIED,
             params: {

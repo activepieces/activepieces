@@ -1,4 +1,4 @@
-import { ApId, Project, Rbac, User } from '@activepieces/shared'
+import { Project, Rbac, User } from '@activepieces/shared'
 
 export enum Provider {
     EMAIL = 'EMAIL',

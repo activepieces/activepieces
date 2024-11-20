@@ -3,7 +3,6 @@ import {
     ErrorCode,
     Permission,
     ProjectId,
-    ProjectMemberRole,
     Rbac,
     RoleType,
 } from '@activepieces/shared'

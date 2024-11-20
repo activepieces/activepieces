@@ -1,8 +1,8 @@
+import { rolePermissions } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApId, apId, CreateRbacRequestBody, ErrorCode, PlatformId, ProjectMemberRole, Rbac, RoleType, SeekPage, spreadIfDefined, UpdateRbacRequestBody } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
-import { RbacEntity } from './rbac.entity'
-import { rolePermissions } from '../../database/migration/postgres/1731424289830-CreateRbacTable'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
+import { RbacEntity } from './rbac.entity'
 
 
 export const rbacRepo = repoFactory(RbacEntity)

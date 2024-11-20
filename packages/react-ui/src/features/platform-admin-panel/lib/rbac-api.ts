@@ -1,5 +1,10 @@
 import { api } from '@/lib/api';
-import { CreateRbacRequestBody, UpdateRbacRequestBody, Rbac, SeekPage } from '@activepieces/shared';
+import {
+  CreateRbacRequestBody,
+  UpdateRbacRequestBody,
+  Rbac,
+  SeekPage,
+} from '@activepieces/shared';
 
 export const rbacApi = {
   async list() {

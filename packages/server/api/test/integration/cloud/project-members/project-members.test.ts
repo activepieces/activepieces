@@ -1,8 +1,10 @@
 import {
     ApiKeyResponseWithValue,
+    rolePermissions,
 } from '@activepieces/ee-shared'
-import { Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
+import { apId, Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, Rbac, RoleType, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -23,6 +25,18 @@ let app: FastifyInstance | null = null
 beforeAll(async () => {
     await databaseConnection().initialize()
     app = await setupServer()
+
+    for (const role of Object.values(ProjectMemberRole)) {
+        const rbacRole: Rbac = {
+            name: role,
+            permissions: rolePermissions[role],
+            type: RoleType.DEFAULT,
+            id: apId(),
+            created: dayjs().toISOString(),
+            updated: dayjs().toISOString(),
+        }
+        await databaseConnection().getRepository('rbac').save(rbacRole)
+    }
 })
 
 beforeEach(async () => {
@@ -101,12 +115,13 @@ describe('Project Member API', () => {
                 // arrange
                 const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
 
+                const rbacRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: testRole }) as Rbac
           
                 const mockProjectMember = createMockProjectMember({
                     userId: mockMember.id,
                     platformId: mockPlatform.id,
                     projectId: mockProject.id,
-                    role: testRole,
+                    projectRole: rbacRole,
                 })
                 await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -167,12 +182,13 @@ describe('Project Member API', () => {
             // arrange
             const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
 
+            const rbacRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: testRole }) as Rbac
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockMember.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                role: testRole,
+                projectRole: rbacRole,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 

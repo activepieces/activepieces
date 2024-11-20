@@ -12,10 +12,10 @@ import {
     UpdatePlatformRequestBody,
     UserId } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
+import { rbacService } from '../ee/rbac/rbac.service'
 import { defaultTheme } from '../flags/theme'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
-import { rbacService } from '../ee/rbac/rbac.service'
 
 const repo = repoFactory<Platform>(PlatformEntity)
 

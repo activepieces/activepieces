@@ -1,6 +1,7 @@
 import {
     CustomDomain,
     OtpType,
+    rolePermissions,
 } from '@activepieces/ee-shared'
 import {
     apId,
@@ -9,6 +10,8 @@ import {
     Platform,
     PlatformRole,
     ProjectMemberRole,
+    Rbac,
+    RoleType,
     User,
     UserStatus,
 } from '@activepieces/shared'
@@ -39,6 +42,18 @@ let app: FastifyInstance | null = null
 beforeAll(async () => {
     await databaseConnection().initialize()
     app = await setupServer()
+
+    for (const role of Object.values(ProjectMemberRole)) {
+        const rbacRole: Rbac = {
+            name: role,
+            permissions: rolePermissions[role],
+            type: RoleType.DEFAULT,
+            id: apId(),
+            created: dayjs().toISOString(),
+            updated: dayjs().toISOString(),
+        }
+        await databaseConnection().getRepository('rbac').save(rbacRole)
+    }
 })
 
 beforeEach(async () => {
@@ -216,12 +231,14 @@ describe('Authentication API', () => {
             })
             await databaseConnection().getRepository('project').save(mockProject)
 
+            const editorRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: ProjectMemberRole.EDITOR }) as Rbac
+            
             const mockedUpEmail = faker.internet.email()
             const mockUserInvitation = createMockUserInvitation({
                 projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 email: mockedUpEmail,
-                projectRole: ProjectMemberRole.ADMIN,
+                projectRole: editorRole,
                 type: InvitationType.PROJECT,
                 status: InvitationStatus.ACCEPTED,
                 created: dayjs().toISOString(),

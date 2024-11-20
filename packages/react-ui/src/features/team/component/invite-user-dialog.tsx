@@ -64,19 +64,22 @@ const FormSchema = Type.Object({
     errorMessage: t('Please select platform role'),
     required: true,
   }),
-  projectRole: Type.Object({
-    id: Type.String(),
-    created: Type.String(),
-    updated: Type.String(),
-    name: Type.String(),
-    permissions: Type.Array(Type.String()),
-    platformId: Type.String(),
-    type: Type.String(),
-    userCount: Type.Optional(Type.Number()),
-  }, {
-    errorMessage: t('Please select project role'),
-    required: true,
-  }),
+  projectRole: Type.Object(
+    {
+      id: Type.String(),
+      created: Type.String(),
+      updated: Type.String(),
+      name: Type.String(),
+      permissions: Type.Array(Type.String()),
+      platformId: Type.String(),
+      type: Type.String(),
+      userCount: Type.Optional(Type.Number()),
+    },
+    {
+      errorMessage: t('Please select project role'),
+      required: true,
+    },
+  ),
 });
 
 type FormSchema = Static<typeof FormSchema>;
@@ -88,9 +91,9 @@ export function InviteUserDialog() {
   const { refetch } = userInvitationsHooks.useInvitations();
   const { project } = projectHooks.useCurrentProject();
   const currentUser = authenticationSession.getCurrentUser();
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToInviteUser = checkAccess(
-    Permission.WRITE_INVITATION
+  const { useCheckAccess } = useAuthorization();
+  const userHasPermissionToInviteUser = useCheckAccess(
+    Permission.WRITE_INVITATION,
   );
 
   const { mutate, isPending } = useMutation<
@@ -188,11 +191,11 @@ export function InviteUserDialog() {
             <DialogDescription>
               {invitationLink
                 ? t(
-                  'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.',
-                )
+                    'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.',
+                  )
                 : t(
-                  'Type the email address of the user you want to invite, the invitation expires in 24 hours.',
-                )}
+                    'Type the email address of the user you want to invite, the invitation expires in 24 hours.',
+                  )}
             </DialogDescription>
           </DialogHeader>
 
@@ -232,10 +235,10 @@ export function InviteUserDialog() {
                             <SelectLabel>{t('Invite To')}</SelectLabel>
                             {currentUser?.platformRole ===
                               PlatformRole.ADMIN && (
-                                <SelectItem value={InvitationType.PLATFORM}>
-                                  {t('Entire Platform')}
-                                </SelectItem>
-                              )}
+                              <SelectItem value={InvitationType.PLATFORM}>
+                                {t('Entire Platform')}
+                              </SelectItem>
+                            )}
                             {platform.projectRolesEnabled && (
                               <SelectItem value={InvitationType.PROJECT}>
                                 {project.displayName} (Current)
@@ -261,7 +264,9 @@ export function InviteUserDialog() {
                         <Label>{t('Select Project Role')}</Label>
                         <Select
                           onValueChange={(value) => {
-                            const selectedRole = roles.find(role => role.id === value);
+                            const selectedRole = roles.find(
+                              (role) => role.id === value,
+                            );
                             field.onChange(selectedRole);
                           }}
                           defaultValue={field.value?.id}

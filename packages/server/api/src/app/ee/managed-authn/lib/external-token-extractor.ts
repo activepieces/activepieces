@@ -1,10 +1,10 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole, Rbac } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole, Rbac } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
-import { signingKeyService } from '../../signing-key/signing-key-service'
 import { rbacService } from '../../rbac/rbac.service'
+import { signingKeyService } from '../../signing-key/signing-key-service'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
 
@@ -47,7 +47,7 @@ export const externalTokenExtractor = {
                 externalEmail: optionalEmail,
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
-                projectRole: payload?.projectRole?? defaultRole,
+                projectRole: payload?.projectRole ?? defaultRole,
                 tasks: payload?.tasks,
                 pieces: {
                     filterType: piecesFilterType ?? PiecesFilterType.NONE,
@@ -124,7 +124,7 @@ function externalTokenPayload() {
                 updated: Type.String(),
                 name: Type.String(),
                 permissions: Type.Array(Type.String()),
-                platformId: Type.String(),
+                platformId: Type.Optional(Type.String()),
                 type: Type.String(),
                 userCount: Type.Optional(Type.Number()),
             })),

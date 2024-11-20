@@ -1,5 +1,5 @@
 import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { apId, CreateRbacRequestBody, PrincipalType, UpdateRbacRequestBody } from '@activepieces/shared'
+import { apId, CreateRbacRequestBody, PrincipalType, RoleType, UpdateRbacRequestBody } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -267,6 +267,7 @@ describe('Custom Domain API', () => {
                 name: faker.lorem.word(),
                 permissions: ['read', 'write'],
                 platformId: 'FAKE ID',
+                type: faker.helpers.enumValue(RoleType),
             }
 
             const response = await app?.inject({

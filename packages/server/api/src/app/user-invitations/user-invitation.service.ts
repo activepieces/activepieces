@@ -1,5 +1,5 @@
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectMemberRole, Rbac, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, Rbac, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
@@ -66,7 +66,6 @@ export const userInvitationsService = {
             platformId,
             count: invitations.length,
         }, '[provisionUserInvitation] list invitations')
-        console.log('invitations', invitations)
         for (const invitation of invitations) {
             logger.info({
                 invitation,
@@ -85,7 +84,6 @@ export const userInvitationsService = {
                     const { projectId, projectRole } = invitation
                     assertNotNullOrUndefined(projectId, 'projectId')
                     assertNotNullOrUndefined(projectRole, 'projectRole')
-                    console.log('HAHAHAA 3', platform.projectRolesEnabled)
                     assertEqual(platform.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
                     await projectMemberService.upsert({
                         projectId,
@@ -95,7 +93,6 @@ export const userInvitationsService = {
                     break
                 }
             }
-            console.log('HAHAHAA 1', invitation)
             await repo().delete({
                 id: invitation.id,
             })

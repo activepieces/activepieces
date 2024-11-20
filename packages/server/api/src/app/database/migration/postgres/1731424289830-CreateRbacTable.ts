@@ -14,7 +14,6 @@ export enum Permission {
     READ_FLOW = 'READ_FLOW',
     WRITE_FLOW = 'WRITE_FLOW',
     UPDATE_FLOW_STATUS = 'UPDATE_FLOW_STATUS',
-    WRITE_RPOJECT = 'WRITE_RPOJECT',
     WRITE_INVITATION = 'WRITE_INVITATION',
     READ_INVITATION = 'READ_INVITATION', 
     READ_PROJECT_MEMBER = 'READ_PROJECT_MEMBER',
@@ -27,6 +26,12 @@ export enum Permission {
     WRITE_ISSUES = 'WRITE_ISSUES',
     READ_FOLDER = 'READ_FOLDER',
     WRITE_FOLDER = 'WRITE_FOLDER',
+    WRITE_EMAIL_ALERT = 'WRITE_EMAIL_ALERT',
+    READ_EMAIL_ALERT = 'READ_EMAIL_ALERT',
+    WRITE_PROJECT = 'WRITE_PROJECT',
+    READ_PROJECT = 'READ_PROJECT',
+    WRITE_INSTALL_PIECE = 'WRITE_INSTALL_PIECE',
+    READ_INSTALL_PIECE = 'READ_INSTALL_PIECE',
 }
 
 
@@ -41,13 +46,18 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.WRITE_PROJECT_MEMBER,
         Permission.WRITE_INVITATION,
         Permission.READ_INVITATION,
-        Permission.WRITE_RPOJECT,
         Permission.WRITE_GIT_REPO,
         Permission.READ_GIT_REPO,
         Permission.READ_RUN,
         Permission.WRITE_RUN,
         Permission.READ_ISSUES,
-        Permission.WRITE_ISSUES
+        Permission.WRITE_ISSUES,
+        Permission.WRITE_EMAIL_ALERT,
+        Permission.READ_EMAIL_ALERT,
+        Permission.WRITE_PROJECT,
+        Permission.READ_PROJECT,
+        Permission.WRITE_INSTALL_PIECE,
+        Permission.READ_INSTALL_PIECE,
     ],
     [ProjectMemberRole.EDITOR]: [
         Permission.READ_APP_CONNECTION,
@@ -62,7 +72,12 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_RUN,
         Permission.WRITE_RUN,
         Permission.READ_ISSUES,
-        Permission.WRITE_ISSUES
+        Permission.WRITE_ISSUES,
+        Permission.WRITE_EMAIL_ALERT,
+        Permission.READ_EMAIL_ALERT,
+        Permission.READ_PROJECT,
+        Permission.WRITE_INSTALL_PIECE,
+        Permission.READ_INSTALL_PIECE,
     ],
     [ProjectMemberRole.OPERATOR]: [
         Permission.READ_APP_CONNECTION,
@@ -75,6 +90,10 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_RUN,
         Permission.WRITE_RUN,
         Permission.READ_ISSUES,
+        Permission.WRITE_EMAIL_ALERT,
+        Permission.READ_EMAIL_ALERT,
+        Permission.READ_PROJECT,
+        Permission.READ_INSTALL_PIECE,
     ],
     [ProjectMemberRole.VIEWER]: [
         Permission.READ_APP_CONNECTION,
@@ -82,8 +101,12 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_PROJECT_MEMBER,
         Permission.READ_INVITATION,
         Permission.READ_ISSUES,
+        Permission.READ_EMAIL_ALERT,
+        Permission.READ_PROJECT,
+        Permission.READ_INSTALL_PIECE,
     ],
 }
+
 
 
 
@@ -104,28 +127,28 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
             )
         `)
         
-        const platformIds = await queryRunner.query(`SELECT id FROM platform`); 
+        const platformIds = await queryRunner.query('SELECT id FROM platform') 
 
         for (const platformId of platformIds) {
             await queryRunner.query(
-                `INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)`,
-                [apId(), ProjectMemberRole.VIEWER, JSON.stringify(rolePermissions[ProjectMemberRole.VIEWER]), platformId, RoleType.DEFAULT]
-            );
+                'INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+                [apId(), ProjectMemberRole.VIEWER, JSON.stringify(rolePermissions[ProjectMemberRole.VIEWER]), platformId, RoleType.DEFAULT],
+            )
 
             await queryRunner.query(
-                `INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)`,
-                [apId(), ProjectMemberRole.EDITOR, JSON.stringify(rolePermissions[ProjectMemberRole.EDITOR]), platformId, RoleType.DEFAULT]
-            );
+                'INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+                [apId(), ProjectMemberRole.EDITOR, JSON.stringify(rolePermissions[ProjectMemberRole.EDITOR]), platformId, RoleType.DEFAULT],
+            )
 
             await queryRunner.query(
-                `INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)`,
-                [apId(), ProjectMemberRole.ADMIN, JSON.stringify(rolePermissions[ProjectMemberRole.ADMIN]), platformId, RoleType.DEFAULT]
-            );
+                'INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+                [apId(), ProjectMemberRole.ADMIN, JSON.stringify(rolePermissions[ProjectMemberRole.ADMIN]), platformId, RoleType.DEFAULT],
+            )
 
             await queryRunner.query(
-                `INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)`,
-                [apId(), ProjectMemberRole.OPERATOR, JSON.stringify(rolePermissions[ProjectMemberRole.OPERATOR]), platformId, RoleType.DEFAULT]
-            );
+                'INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+                [apId(), ProjectMemberRole.OPERATOR, JSON.stringify(rolePermissions[ProjectMemberRole.OPERATOR]), platformId, RoleType.DEFAULT],
+            )
         }
 
         await queryRunner.query(`
@@ -142,21 +165,21 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
             SELECT pm.id, r.name as projectRole, pm."platformId"
             FROM project_member pm
             LEFT JOIN rbac r ON pm."projectRoleId" = r.id
-        `);
+        `)
 
         for (const projectMemberRole of projectMemberRoles) {
-            const roleName = projectMemberRole.projectRole;
+            const roleName = projectMemberRole.projectRole
             const rbacIdResult = await queryRunner.query(
-                `SELECT id FROM rbac WHERE name = $1 AND "platformId" = $2`,
-                [roleName, projectMemberRole.platformId]
-            );
+                'SELECT id FROM rbac WHERE name = $1 AND "platformId" = $2',
+                [roleName, projectMemberRole.platformId],
+            )
 
-            const rbacId = rbacIdResult[0]?.id;
+            const rbacId = rbacIdResult[0]?.id
 
             await queryRunner.query(
-                `UPDATE "project_member" SET "projectRoleId" = $1 WHERE id = $2`,
-                [rbacId, projectMemberRole.id]
-            );
+                'UPDATE "project_member" SET "projectRoleId" = $1 WHERE id = $2',
+                [rbacId, projectMemberRole.id],
+            )
         }
 
         // Check if the column exists before attempting to drop it
@@ -164,17 +187,17 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
             SELECT column_name 
             FROM information_schema.columns 
             WHERE table_name='project_member' AND column_name='projectRole'
-        `);
+        `)
 
         if (columnExists.length > 0) {
             await queryRunner.query(`
                 ALTER TABLE "project_member" DROP COLUMN "projectRole"
-            `);
+            `)
         }
 
         await queryRunner.query(`
             ALTER TABLE "project_member" DROP COLUMN "role"
-        `);
+        `)
 
         await queryRunner.query(`
             ALTER TABLE "user_invitation" DROP COLUMN "projectRole"

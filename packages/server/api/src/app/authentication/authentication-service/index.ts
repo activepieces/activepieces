@@ -90,7 +90,6 @@ export const authenticationService = {
         user,
         referringUserId,
     }: SignUpResponseParams): Promise<AuthenticationResponse> {
-        console.log('adminRole 2', user, referringUserId)
         const authnResponse = await hooks.get().postSignUp({
             user,
             referringUserId,

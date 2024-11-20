@@ -100,14 +100,19 @@ const AddAlertEmailDialog = React.memo(
               <Button
                 variant="outline"
                 className="mt-4 w-full flex items-center space-x-2"
-                disabled={projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false}
+                disabled={
+                  projectRole?.permissions.includes(
+                    Permission.WRITE_EMAIL_ALERT,
+                  ) === false
+                }
               >
                 <Plus className="size-4" />
                 <span>{t('Add email')}</span>
               </Button>
             </DialogTrigger>
           </TooltipTrigger>
-          {projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false && (
+          {projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) ===
+            false && (
             <TooltipContent side="bottom">
               {t('Only project admins can do this')}
             </TooltipContent>

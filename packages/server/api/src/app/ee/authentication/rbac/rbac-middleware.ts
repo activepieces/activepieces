@@ -1,4 +1,3 @@
-import { rolePermissions } from '@activepieces/ee-shared'
 import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -65,7 +64,7 @@ export const assertRoleHasPermission = async (principal: Principal, permission: 
         return
     }
     const principalRole = await getPrincipalRoleOrThrow(principal)
-    const access = grantAccess({
+    const access = await grantAccess({
         principalRoleId: principalRole.id,
         routePermission: permission,
     })
@@ -122,7 +121,7 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
 
     const principalRole = await rbacService.get(principalRoleId)
     
-    if(isNil(principalRole)) {
+    if (isNil(principalRole)) {
         return false
     }
 

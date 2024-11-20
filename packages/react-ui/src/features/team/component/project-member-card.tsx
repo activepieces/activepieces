@@ -20,8 +20,8 @@ export function ProjectMemberCard({
   member: ProjectMemberWithUser;
 }) {
   const { refetch } = projectMembersHooks.useProjectMembers();
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToRemoveMember = checkAccess(
+  const { useCheckAccess } = useAuthorization();
+  const userHasPermissionToRemoveMember = useCheckAccess(
     Permission.WRITE_PROJECT_MEMBER,
   );
   const { project } = projectHooks.useCurrentProject();
@@ -57,8 +57,9 @@ export function ProjectMemberCard({
             hasPermission={userHasPermissionToRemoveMember}
           >
             <ConfirmationDeleteDialog
-              title={`${t('Remove')} ${member.user.firstName} ${member.user.lastName
-                }`}
+              title={`${t('Remove')} ${member.user.firstName} ${
+                member.user.lastName
+              }`}
               message={t('Are you sure you want to remove this member?')}
               mutationFn={() => deleteMember()}
               entityName={`${member.user.firstName} ${member.user.lastName}`}

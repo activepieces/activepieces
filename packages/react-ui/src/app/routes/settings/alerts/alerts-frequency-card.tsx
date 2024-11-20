@@ -65,7 +65,8 @@ const AlertFrequencyCard = React.memo(() => {
         <CardDescription>
           {t('Choose what you want to be notified about.')}
         </CardDescription>
-        {projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false && (
+        {projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) ===
+          false && (
           <p>
             <span className="text-destructive">*</span>{' '}
             {t('Only project admins can change this setting.')}
@@ -79,7 +80,10 @@ const AlertFrequencyCard = React.memo(() => {
           onClick={() => onChangeStatus(NotificationStatus.ALWAYS)}
           icon={<BellIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.ALWAYS}
-          disabled={projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false}
+          disabled={
+            projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) ===
+            false
+          }
         />
         <AlertOption
           title={t('First Seen')}
@@ -87,7 +91,10 @@ const AlertFrequencyCard = React.memo(() => {
           onClick={() => onChangeStatus(NotificationStatus.NEW_ISSUE)}
           icon={<EyeOpenIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.NEW_ISSUE}
-          disabled={projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false}
+          disabled={
+            projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) ===
+            false
+          }
         />
         <AlertOption
           title={t('Never')}
@@ -95,7 +102,10 @@ const AlertFrequencyCard = React.memo(() => {
           onClick={() => onChangeStatus(NotificationStatus.NEVER)}
           icon={<EyeNoneIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.NEVER}
-          disabled={projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false}
+          disabled={
+            projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) ===
+            false
+          }
         />
       </CardContent>
     </Card>

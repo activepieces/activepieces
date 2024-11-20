@@ -14,11 +14,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import {
-  ApFlagId,
-  Permission,
-  ProjectWithLimits,
-} from '@activepieces/shared';
+import { ApFlagId, Permission, ProjectWithLimits } from '@activepieces/shared';
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();
@@ -34,7 +30,8 @@ export default function GeneralPage() {
         aiTokens: project?.plan?.aiTokens,
       },
     },
-    disabled: projectRole?.permissions.includes(Permission.WRITE_PROJECT) === false,
+    disabled:
+      projectRole?.permissions.includes(Permission.WRITE_PROJECT) === false,
     resolver: typeboxResolver(ProjectWithLimits),
   });
 

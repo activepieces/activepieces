@@ -13,13 +13,12 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
         return res.redirect(loginResponse.redirectUrl)
     })
     app.post('/acs', AcsRequest, async (req, res) => {
-        console.log('adminRole 3')
         const { saml, platformId } = await getSamlConfigOrThrow(req)
         const user = await authnSsoSamlService.acs( platformId, saml, {
             body: req.body,
             query: req.query,
         })
-        const { token, project, projectRole} = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const { token, project, projectRole } = await authenticationHelper.getProjectAndTokenOrThrow(user)
         if (!projectRole) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,

@@ -22,6 +22,8 @@ let app: FastifyInstance | null = null
 beforeAll(async () => {
     await databaseConnection().initialize()
     app = await setupServer()
+
+    
 })
 
 afterAll(async () => {

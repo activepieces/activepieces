@@ -37,7 +37,7 @@ export const SwitchProjectResponse = Type.Object({
         updated: Type.String(),
         name: Type.String(),
         permissions: Type.Array(Type.String()),
-        platformId: Type.String(),
+        platformId: Type.Optional(Type.String()),
         type: Type.String(),
         userCount: Type.Optional(Type.Number()),
     }), Type.Null()]),
