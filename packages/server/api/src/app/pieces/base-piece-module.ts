@@ -152,7 +152,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 searchValue: request.searchValue,
             })
 
-            return result
+            return result.options
         },
     )
 

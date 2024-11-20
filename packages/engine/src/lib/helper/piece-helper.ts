@@ -2,6 +2,7 @@ import {
     DropdownProperty,
     DropdownState,
     DynamicProperties,
+    DynamicPropsValue,
     MultiSelectDropdownProperty,
     PieceMetadata,
     PiecePropertyMap,
@@ -25,7 +26,7 @@ import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
-    async executeProps({ params, piecesSource, executionState, constants, searchValue }: { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }) {
+    async executeProps({ params, piecesSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult> {
         const property = await pieceLoader.getPropOrThrow({
             params,
             piecesSource,
@@ -37,7 +38,7 @@ export const pieceHelper = {
                 projectId: params.projectId,
                 engineToken: params.engineToken,
             }).resolve<
-            StaticPropsValue<PiecePropertyMap>
+                StaticPropsValue<PiecePropertyMap>
             >({
                 unresolvedInput: params.input,
                 executionState,
@@ -58,27 +59,42 @@ export const pieceHelper = {
 
             if (property.type === PropertyType.DYNAMIC) {
                 const dynamicProperty = property as DynamicProperties<boolean>
-                return await dynamicProperty.props(resolvedInput, ctx)
+                const props = await dynamicProperty.props(resolvedInput, ctx)
+                return {
+                    type: 'dynamicproperties',
+                    options: props,
+                }
             }
 
             if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
                 const multiSelectProperty = property as MultiSelectDropdownProperty<
-                unknown,
-                boolean
+                    unknown,
+                    boolean
                 >
-                return await multiSelectProperty.options(resolvedInput, ctx)
+                const options = await multiSelectProperty.options(resolvedInput, ctx)
+                return {
+                    type: 'dropdown',
+                    options,
+                }
             }
 
             const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            return await dropdownProperty.options(resolvedInput, ctx)
+            const options = await dropdownProperty.options(resolvedInput, ctx)
+            return {
+                type: 'dropdown',
+                options,
+            }
         }
         catch (e) {
             console.error(e)
             return {
-                disabled: true,
-                options: [],
-                placeholder: 'Throws an error, reconnect or refresh the page',
-            } as DropdownState<unknown>
+                type: 'dropdown',
+                options: {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Throws an error, reconnect or refresh the page',
+                },
+            }
         }
     },
 
@@ -139,4 +155,15 @@ export const pieceHelper = {
             authors: piece.authors,
         }
     },
+}
+
+
+type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }
+
+type ExecutePropsResult = {
+    type: 'dropdown'
+    options: DropdownState<unknown>
+} | {
+    type: 'dynamicproperties'
+    options: Record<string, DynamicPropsValue>
 }

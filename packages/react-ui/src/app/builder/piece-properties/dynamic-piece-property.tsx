@@ -21,7 +21,7 @@ type DynamicPropertiesProps = {
   disabled: boolean;
 };
 const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
-  const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
+  const [flowVersion, readonly] = useBuilderStateContext((state) => [state.flowVersion, state.readonly]);
   const form = useFormContext<Action | Trigger>();
   const { updateFormSchema } = useStepSettingsContext();
   const isFirstRender = useRef(true);
@@ -110,6 +110,14 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
           );
           setPropertyMap(response);
           updateFormSchema(`settings.input.${props.propertyName}`, response);
+
+          if (!readonly) {
+            const schemaInput: Record<string, unknown> = form.getValues()?.settings?.inputUiInfo?.schema ?? {};
+            form.setValue(`settings.inputUiInfo.schema`, {
+              ...schemaInput,
+              [props.propertyName]: response
+            } as Record<string, unknown>);
+          }
 
           form.setValue(`settings.input.${props.propertyName}`, defaultValue, {
             shouldValidate: true,
