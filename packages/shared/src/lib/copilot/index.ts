@@ -12,7 +12,6 @@ export const AskCopilotRequest = Type.Object({
     })),
     prompt: Type.String(),
     tools: Type.Array(Type.Enum(AskCopilotTool)),
-    sandboxMode: Type.Boolean({ default: true }),
 })
 
 export type AskCopilotRequest = Static<typeof AskCopilotRequest>
