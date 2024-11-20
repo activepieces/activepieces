@@ -37,7 +37,7 @@ export const matrix = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/matrix.png',
   categories: [PieceCategory.COMMUNICATION],
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   authors: ["MyWay","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: matrixAuth,
   actions: [

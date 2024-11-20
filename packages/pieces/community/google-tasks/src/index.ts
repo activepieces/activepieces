@@ -19,7 +19,7 @@ export const googleTasksAuth = PieceAuth.OAuth2({
 });
 
 export const googleTasks = createPiece({
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
   categories: [PieceCategory.PRODUCTIVITY],
   actions: [

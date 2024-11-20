@@ -13,7 +13,7 @@ export const village = createPiece({
   displayName: 'Village',
   description: 'The Social Capital API',
   auth: villageAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/village.png',
   categories: [
     PieceCategory.PRODUCTIVITY,

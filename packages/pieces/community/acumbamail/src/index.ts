@@ -22,7 +22,7 @@ export const acumbamail = createPiece({
   displayName: 'Acumbamail',
   description: 'Easily send email and SMS campaigns and boost your business',
   auth: acumbamailAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/acumbamail.png',
   authors: ["kishanprmr","abuaboud"],
   actions: [

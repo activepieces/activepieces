@@ -36,7 +36,7 @@ export const brilliantDirectories = createPiece({
   description: 'All-in-one membership software',
 
   auth: brilliantDirectoriesAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/brilliant-directories.png',
   categories: [],
   authors: ["ShayPunter","dennisrongo","kishanprmr","MoShizzle","abuaboud"],

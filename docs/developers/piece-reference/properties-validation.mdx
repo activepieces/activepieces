@@ -8,6 +8,10 @@ Activepieces uses Zod for runtime validation of piece properties. Zod provides a
 
 To use Zod validation in your piece, first import the validation helper and Zod:
 
+<Warning>
+Please make sure the `minimumSupportedRelease` is set to at least `0.36.1` for the validation to work.
+</Warning>
+
 ```typescript
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { propsValidation } from '@activepieces/pieces-common';

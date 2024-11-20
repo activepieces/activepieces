@@ -20,7 +20,7 @@ export const jiraCloud = createPiece({
 	description: 'Issue tracking and project management',
 
 	auth: jiraCloudAuth,
-	minimumSupportedRelease: '0.9.0',
+	minimumSupportedRelease: '0.30.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/jira.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],

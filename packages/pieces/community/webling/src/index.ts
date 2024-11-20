@@ -51,7 +51,7 @@ export const weblingAuth = PieceAuth.CustomAuth({
 export const webling = createPiece({
   displayName: 'Webling',
   auth: weblingAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/webling.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ['felifluid'],

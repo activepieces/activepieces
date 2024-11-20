@@ -37,7 +37,7 @@ export const microsoftExcel = createPiece({
   description: 'Spreadsheet software by Microsoft',
 
   auth: excelAuth,
-  minimumSupportedRelease: '0.8.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud"],
