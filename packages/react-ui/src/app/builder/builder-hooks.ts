@@ -64,7 +64,8 @@ export type BuilderState = {
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
   saving: boolean;
-  refreshPieceFormSettings: boolean;
+  /** change this value to trigger the step form to set its values from the step */
+  refreshStepFormSettingsToggle: boolean;
   selectedBranchIndex: number | null;
   refreshSettings: () => void;
   setSelectedBranchIndex: (index: number | null) => void;
@@ -150,7 +151,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         initialState.flowVersion.trigger.type !== TriggerType.EMPTY
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
-      refreshPieceFormSettings: false,
+      refreshStepFormSettingsToggle: false,
       removeStepSelection: () =>
         set({
           selectedStep: null,
@@ -182,6 +183,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       },
       selectStepByName: (stepName: string) => {
         set((state) => {
+          if(stepName === state.selectedStep)
+          {
+            return state;
+          }
           return {
             selectedStep: stepName,
             rightSidebar:
@@ -191,8 +196,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                 : RightSideBarType.PIECE_SETTINGS,
             leftSidebar: !isNil(state.run)
               ? LeftSideBarType.RUN_DETAILS
-              : state.askAiButtonProps
-              ? state.leftSidebar
               : LeftSideBarType.NONE,
             selectedBranchIndex: null,
             askAiButtonProps: null,
@@ -339,8 +342,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       },
       refreshSettings: () =>
         set((state) => ({
-          refreshPieceFormSettings: !state.refreshPieceFormSettings,
+          refreshStepFormSettingsToggle: !state.refreshStepFormSettingsToggle,
         })),
+
       selectedBranchIndex: null,
       operationListeners: [],
       addOperationListener: (

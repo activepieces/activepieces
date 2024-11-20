@@ -9,23 +9,20 @@ import { useSocket } from '@/components/socket-provider';
 import { CardList } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
-  INTERNAL_ERROR_MESSAGE,
   INTERNAL_ERROR_TOAST,
   toast,
   UNSAVED_CHANGES_TOAST,
 } from '@/components/ui/use-toast';
 import {
-  Action,
   ActionType,
   CodeAction,
-  deepMergeAndCast,
   FlowOperationType,
   flowStructureUtil,
   GenerateCodeRequest,
   GenerateCodeResponse,
-  StepLocationRelativeToParent,
   WebsocketClientEvent,
   WebsocketServerEvent,
+  isNil,
 } from '@activepieces/shared';
 
 import { Textarea } from '../../../components/ui/textarea';
@@ -76,21 +73,21 @@ export const CopilotSidebar = () => {
   const [messages, setMessages] = useState<CopilotMessage[]>(initialMessages);
   const [inputMessage, setInputMessage] = useState('');
   const [
-    selectedStep,
     flowVersion,
     refreshSettings,
     applyOperation,
     setLeftSidebar,
     askAiButtonProps,
     selectStepByName,
+    setAskAiButtonProps
   ] = useBuilderStateContext((state) => [
-    state.selectedStep,
     state.flowVersion,
     state.refreshSettings,
     state.applyOperation,
     state.setLeftSidebar,
     state.askAiButtonProps,
     state.selectStepByName,
+    state.setAskAiButtonProps
   ]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const socket = useSocket();
@@ -149,41 +146,32 @@ export const CopilotSidebar = () => {
     scrollToLastMessage();
   };
 
-  const updateAction = (newAction: Action): void => {
-    applyOperation(
-      {
-        type: FlowOperationType.UPDATE_ACTION,
-        request: newAction,
-      },
-      () => toast(UNSAVED_CHANGES_TOAST),
-    );
-  };
 
-  const mergeInputs = (
-    inputsOne: Record<string, string> | undefined,
-    inputsTwo: Record<string, string> | undefined,
-  ) => {
-    if (!inputsOne) {
-      return {};
+  const mergeInputs = ({ currentInput, newInput }:
+    {
+      currentInput: Record<string, any> | undefined,
+      newInput: Record<string, any> | undefined,
     }
-    return Object.keys(inputsOne).reduce(
-      (acc: Record<string, string>, input) => {
-        acc[input] = inputsOne[input];
-        if (inputsTwo && inputsTwo[input] !== undefined) {
-          acc[input] = inputsTwo[input];
-        }
-        return acc;
-      },
-      {},
-    );
+  ) => {
+    if (!currentInput) {
+      return newInput ?? {};
+    }
+
+    return Object.keys(newInput ?? {}).reduce((acc, key) => {
+      if (!isNil(currentInput[key])) {
+        acc[key] = currentInput[key];
+      }
+      else if (newInput) {
+        acc[key] = newInput[key];
+      }
+      return acc;
+    }, {} as Record<string, string>)
+
   };
 
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
-    const step = flowStructureUtil.getStep(
-      selectedStep ?? '',
-      flowVersion.trigger,
-    );
-    if (!step && !askAiButtonProps) {
+    if (!askAiButtonProps) {
+      console.log('no ask ai button props')
       toast(INTERNAL_ERROR_TOAST);
       return;
     }
@@ -214,47 +202,43 @@ export const CopilotSidebar = () => {
               ...askAiButtonProps.actionLocation
             },
           },
-          () => { },
+          () => toast(UNSAVED_CHANGES_TOAST),
         );
+        selectStepByName(stepName);
+        setAskAiButtonProps({
+          type: FlowOperationType.UPDATE_ACTION,
+          stepName: codeAction.name
+        });
       }
       else {
-        const existingStep = flowStructureUtil.getStep(askAiButtonProps.stepName, flowVersion.trigger);
-        if (existingStep) {
+        const step = flowStructureUtil.getStep(askAiButtonProps.stepName, flowVersion.trigger);
+        if (step) {
+          const mergedInputs = mergeInputs(
+            {
+              newInput: message.content.inputs,
+              currentInput: step.type === ActionType.CODE ? step.settings.input : undefined,
+            }
+          );
           applyOperation({
             type: FlowOperationType.UPDATE_ACTION,
             request: {
-              displayName: existingStep.displayName,
-              name: existingStep.name,
-              settings: codeAction.settings,
+              displayName: step.displayName,
+              name: step.name,
+              settings: {
+                ...codeAction.settings,
+                input: mergedInputs,
+                errorHandlingOptions: step.type === ActionType.CODE || step.type === ActionType.PIECE ? step.settings.errorHandlingOptions : codeAction.settings.errorHandlingOptions,
+              },
               type: ActionType.CODE,
               valid: true
             }
-          }, () => { })
+          }, () => toast(UNSAVED_CHANGES_TOAST));
         }
 
       }
 
-      selectStepByName(stepName);
     }
-    else if (step) {
-      const mergedInputs = mergeInputs(
-        message.content.inputs,
-        step.settings.input,
-      );
-      if (step.type === ActionType.CODE) {
-        const newStep = deepMergeAndCast(step, {
-          settings: {
-            input: mergedInputs,
-            sourceCode: {
-              code: message.content.code,
-              packageJson: JSON.stringify(message.content.packages, null, 2),
-            },
-          },
-        });
-        updateAction(newStep);
-        refreshSettings();
-      }
-    }
+    refreshSettings();
   };
 
   return (

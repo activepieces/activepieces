@@ -7,18 +7,15 @@ import { Button, ButtonProps } from '../../../components/ui/button';
 import { useBuilderStateContext } from '../builder-hooks';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 import { AskAiButtonOperations } from '../../../features/pieces/lib/types';
-import { cn } from '../../../lib/utils';
 
 const AskAiButton = ({
   onClick,
   operation,
   varitant,
-  addAnimation
 }: {
   onClick: () => void;
   operation: AskAiButtonOperations;
   varitant: ButtonProps['variant'];
-  addAnimation?: boolean
 }) => {
   const { data: isCopilotEnabled } = flagsHooks.useFlag<boolean>(ApFlagId.CODE_COPILOT_ENABLED);
   const setAskiAiButtonProps = useBuilderStateContext(

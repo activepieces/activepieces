@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { SearchX, WandSparkles } from 'lucide-react';
+import { SearchX, Star, WandSparkles } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -19,7 +19,7 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { AddActionRequest, ApFlagId, FlowOperationType, TriggerType, supportUrl } from '@activepieces/shared';
+import { ApFlagId, FlowOperationType, TriggerType, supportUrl } from '@activepieces/shared';
 
 import { cn } from '../../../lib/utils';
 
@@ -124,8 +124,8 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         noResultsFound && areCopilotsEnabled && operation.type !== FlowOperationType.UPDATE_TRIGGER && (
           <div className="flex flex-col gap-2 items-center justify-center h-full ">
             <WandSparkles className="w-14 h-14" />
-            <div className="text-sm mb-1">{t('Let our AI assitant help you out')}</div>
-            <AskAiButton addAnimation={true} varitant={'default'} operation={operation} onClick={closePieceSelector}>
+            <div className="text-sm mb-3">{t('Let our AI assitant help you out')}</div>
+            <AskAiButton varitant={'default'} operation={operation} onClick={closePieceSelector}>
             </AskAiButton>
             {showRequestPieceButton && (
               <>
@@ -135,7 +135,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Button className="h-8 px-2 " variant='ghost'>Request Piece</Button>
+                  <Button variant='ghost' size='sm'>Request Piece</Button>
                 </Link>
               </>
 
