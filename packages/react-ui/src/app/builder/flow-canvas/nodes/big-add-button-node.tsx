@@ -14,7 +14,10 @@ import {
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../consts';
-import { AskAiIndicator } from '../edges/ask-ai-indicator';
+import {
+  AskAiIndicator,
+  shouldShowAskAiIndicator,
+} from '../edges/ask-ai-indicator';
 import { ApBigAddButtonNode } from '../types';
 
 const ApBigAddButtonCanvasNode = React.memo(
@@ -25,16 +28,7 @@ const ApBigAddButtonCanvasNode = React.memo(
       useBuilderStateContext((state) => [
         state.readonly,
         state.activeDraggingStep,
-        state.askAiButtonProps &&
-        state.askAiButtonProps.type === FlowOperationType.ADD_ACTION &&
-        state.askAiButtonProps.actionLocation.stepLocationRelativeToParent ===
-        data.stepLocationRelativeToParent &&
-        state.askAiButtonProps.actionLocation.parentStep === data.parentStepName &&
-        (data.stepLocationRelativeToParent !==
-          StepLocationRelativeToParent.INSIDE_BRANCH ||
-          (state.askAiButtonProps.actionLocation.stepLocationRelativeToParent !==
-            StepLocationRelativeToParent.INSIDE_BRANCH) ||
-          data.branchIndex === state.askAiButtonProps.actionLocation.branchIndex),
+        shouldShowAskAiIndicator(state, data),
       ]);
     const draggableId = useId();
     const { setNodeRef } = useDroppable({
@@ -99,24 +93,24 @@ const ApBigAddButtonCanvasNode = React.memo(
                     <PieceSelector
                       operation={
                         data.stepLocationRelativeToParent ===
-                          StepLocationRelativeToParent.INSIDE_BRANCH
+                        StepLocationRelativeToParent.INSIDE_BRANCH
                           ? {
-                            type: FlowOperationType.ADD_ACTION,
-                            actionLocation: {
-                              parentStep: data.parentStepName,
-                              stepLocationRelativeToParent:
-                                data.stepLocationRelativeToParent,
-                              branchIndex: data.branchIndex,
-                            },
-                          }
+                              type: FlowOperationType.ADD_ACTION,
+                              actionLocation: {
+                                parentStep: data.parentStepName,
+                                stepLocationRelativeToParent:
+                                  data.stepLocationRelativeToParent,
+                                branchIndex: data.branchIndex,
+                              },
+                            }
                           : {
-                            type: FlowOperationType.ADD_ACTION,
-                            actionLocation: {
-                              parentStep: data.parentStepName,
-                              stepLocationRelativeToParent:
-                                data.stepLocationRelativeToParent,
-                            },
-                          }
+                              type: FlowOperationType.ADD_ACTION,
+                              actionLocation: {
+                                parentStep: data.parentStepName,
+                                stepLocationRelativeToParent:
+                                  data.stepLocationRelativeToParent,
+                              },
+                            }
                       }
                       open={pieceSelectorOpen}
                       onOpenChange={setPieceSelectorOpen}
@@ -139,9 +133,10 @@ const ApBigAddButtonCanvasNode = React.memo(
                     style={{
                       height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
                       width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-                      top: `-${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 -
+                      top: `-${
+                        flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 -
                         flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width / 2
-                        }px`,
+                      }px`,
                     }}
                     className=" absolute "
                     ref={setNodeRef}
@@ -171,12 +166,14 @@ const ApBigAddButtonCanvasNode = React.memo(
                 >
                   <g>
                     <path
-                      d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -${flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 5
-                        } v ${flowUtilConsts.AP_NODE_SIZE.STEP.height +
+                      d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -${
+                        flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 5
+                      } v ${
+                        flowUtilConsts.AP_NODE_SIZE.STEP.height +
                         2 *
-                        (flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
-                          5)
-                        }`}
+                          (flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
+                            5)
+                      }`}
                       fill="transparent"
                       strokeWidth="1.5"
                     />

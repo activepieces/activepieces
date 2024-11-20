@@ -1,6 +1,5 @@
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
-import deepEqual from 'deep-equal';
-import { Plus, Sparkle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
@@ -15,7 +14,7 @@ import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../consts';
 import { ApButtonData } from '../types';
 
-import { AskAiIndicator } from './ask-ai-indicator';
+import { AskAiIndicator, shouldShowAskAiIndicator } from './ask-ai-indicator';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
@@ -24,16 +23,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
     useBuilderStateContext((state) => [
       state.activeDraggingStep,
       state.readonly,
-      state.askAiButtonProps &&
-      state.askAiButtonProps.type === FlowOperationType.ADD_ACTION &&
-      state.askAiButtonProps.actionLocation.stepLocationRelativeToParent ===
-      props.stepLocationRelativeToParent &&
-      state.askAiButtonProps.actionLocation.parentStep === props.parentStepName &&
-      (props.stepLocationRelativeToParent !==
-        StepLocationRelativeToParent.INSIDE_BRANCH ||
-        (state.askAiButtonProps.actionLocation.stepLocationRelativeToParent !==
-          StepLocationRelativeToParent.INSIDE_BRANCH) ||
-        props.branchIndex === state.askAiButtonProps.actionLocation.branchIndex)
+      shouldShowAskAiIndicator(state, props),
     ]);
 
   const { setNodeRef } = useDroppable({
@@ -91,24 +81,24 @@ const ApAddButton = React.memo((props: ApButtonData) => {
         <PieceSelector
           operation={
             props.stepLocationRelativeToParent ===
-              StepLocationRelativeToParent.INSIDE_BRANCH
+            StepLocationRelativeToParent.INSIDE_BRANCH
               ? {
-                type: FlowOperationType.ADD_ACTION,
-                actionLocation: {
-                  parentStep: props.parentStepName,
-                  stepLocationRelativeToParent:
-                    props.stepLocationRelativeToParent,
-                  branchIndex: props.branchIndex,
-                },
-              }
+                  type: FlowOperationType.ADD_ACTION,
+                  actionLocation: {
+                    parentStep: props.parentStepName,
+                    stepLocationRelativeToParent:
+                      props.stepLocationRelativeToParent,
+                    branchIndex: props.branchIndex,
+                  },
+                }
               : {
-                type: FlowOperationType.ADD_ACTION,
-                actionLocation: {
-                  parentStep: props.parentStepName,
-                  stepLocationRelativeToParent:
-                    props.stepLocationRelativeToParent,
-                },
-              }
+                  type: FlowOperationType.ADD_ACTION,
+                  actionLocation: {
+                    parentStep: props.parentStepName,
+                    stepLocationRelativeToParent:
+                      props.stepLocationRelativeToParent,
+                  },
+                }
           }
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}

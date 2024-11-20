@@ -6,7 +6,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
-  AddActionRequest,
   FlowOperationRequest,
   FlowOperationType,
   FlowRun,
@@ -21,8 +20,8 @@ import {
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
+import { AskAiButtonOperations } from '../../features/pieces/lib/types';
 import { useAuthorization } from '../../hooks/authorization-hooks';
-import { AskAiButtonOperations, PieceSelectorOperation } from '../../features/pieces/lib/types';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -110,7 +109,7 @@ export type BuilderState = {
     ) => void,
   ) => void;
   askAiButtonProps: AskAiButtonOperations | null;
-  setAskAiButtonProps: (props: AskAiButtonOperations| null) => void;
+  setAskAiButtonProps: (props: AskAiButtonOperations | null) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -167,9 +166,12 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       allowCanvasPanning: true,
-      rightSidebar: initiallySelectedStep && (initiallySelectedStep !== 'trigger' || initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
-        ? RightSideBarType.PIECE_SETTINGS
-        : RightSideBarType.NONE,
+      rightSidebar:
+        initiallySelectedStep &&
+        (initiallySelectedStep !== 'trigger' ||
+          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
+          ? RightSideBarType.PIECE_SETTINGS
+          : RightSideBarType.NONE,
       refreshPieceFormSettings: false,
 
       removeStepSelection: () =>
@@ -203,8 +205,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       },
       selectStepByName: (stepName: string) => {
         set((state) => {
-          if(stepName === state.selectedStep)
-          {
+          if (stepName === state.selectedStep) {
             return state;
           }
           return {
@@ -396,8 +397,18 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             : state.leftSidebar === LeftSideBarType.AI_COPILOT
             ? LeftSideBarType.NONE
             : state.leftSidebar,
-          rightSidebar: props &&  props.type === FlowOperationType.UPDATE_ACTION ? RightSideBarType.PIECE_SETTINGS : props? RightSideBarType.NONE : state.rightSidebar,
-          selectedStep: props &&  props.type === FlowOperationType.UPDATE_ACTION ? props.stepName: props? null : state.selectedStep,
+          rightSidebar:
+            props && props.type === FlowOperationType.UPDATE_ACTION
+              ? RightSideBarType.PIECE_SETTINGS
+              : props
+              ? RightSideBarType.NONE
+              : state.rightSidebar,
+          selectedStep:
+            props && props.type === FlowOperationType.UPDATE_ACTION
+              ? props.stepName
+              : props
+              ? null
+              : state.selectedStep,
         }));
       },
     };

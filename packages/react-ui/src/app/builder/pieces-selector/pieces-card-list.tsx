@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { SearchX, Star, WandSparkles } from 'lucide-react';
+import { SearchX, WandSparkles } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -19,13 +19,18 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, FlowOperationType, TriggerType, supportUrl } from '@activepieces/shared';
+import {
+  ApFlagId,
+  FlowOperationType,
+  TriggerType,
+  supportUrl,
+} from '@activepieces/shared';
 
 import { cn } from '../../../lib/utils';
 
+import { AskAiButton } from './ask-ai';
 import { PieceSearchSuggestions } from './piece-search-suggestions';
 import { PieceTagEnum } from './piece-tag-group';
-import { AskAiButton } from './ask-ai';
 
 type PieceGroup = {
   title: string;
@@ -56,14 +61,16 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   piecesIsLoaded,
   noResultsFound,
   operation,
-  closePieceSelector
+  closePieceSelector,
 }) => {
   const { data: showRequestPieceButton } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
 
   const selectedItemRef = useRef<HTMLDivElement | null>(null);
-  const { data: areCopilotsEnabled } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COPILOTS);
+  const { data: areCopilotsEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COPILOTS,
+  );
   useEffect(() => {
     if (piecesIsLoaded && selectedItemRef.current) {
       selectedItemRef.current?.scrollIntoView({
@@ -110,7 +117,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                 handleSelect={handleSelect}
                 ref={
                   pieceMetadata.displayName ===
-                    selectedPieceMetadata?.displayName
+                  selectedPieceMetadata?.displayName
                     ? selectedItemRef
                     : null
                 }
@@ -119,33 +126,39 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
           </React.Fragment>
         ))}
 
-
-      {
-        noResultsFound && areCopilotsEnabled && operation.type !== FlowOperationType.UPDATE_TRIGGER && (
+      {noResultsFound &&
+        areCopilotsEnabled &&
+        operation.type !== FlowOperationType.UPDATE_TRIGGER && (
           <div className="flex flex-col gap-2 items-center justify-center h-full ">
             <WandSparkles className="w-14 h-14" />
-            <div className="text-sm mb-3">{t('Let our AI assitant help you out')}</div>
-            <AskAiButton varitant={'default'} operation={operation} onClick={closePieceSelector}>
-            </AskAiButton>
+            <div className="text-sm mb-3">
+              {t('Let our AI assitant help you out')}
+            </div>
+            <AskAiButton
+              varitant={'default'}
+              operation={operation}
+              onClick={closePieceSelector}
+            ></AskAiButton>
             {showRequestPieceButton && (
               <>
                 {t('Or')}
-                < Link
+                <Link
                   to={`${supportUrl}/c/feature-requests/9`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Button variant='ghost' size='sm'>Request Piece</Button>
+                  <Button variant="ghost" size="sm">
+                    Request Piece
+                  </Button>
                 </Link>
               </>
-
             )}
           </div>
-        )
-      }
+        )}
 
-      {
-        noResultsFound && (!areCopilotsEnabled || operation.type === FlowOperationType.UPDATE_TRIGGER) && (
+      {noResultsFound &&
+        (!areCopilotsEnabled ||
+          operation.type === FlowOperationType.UPDATE_TRIGGER) && (
           <div className="flex flex-col gap-2 items-center justify-center h-full ">
             <SearchX className="w-14 h-14" />
             <div className="text-sm ">{t('No pieces found')}</div>
@@ -160,9 +173,8 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
               </Link>
             )}
           </div>
-        )
-      }
-    </CardList >
+        )}
+    </CardList>
   );
 };
 

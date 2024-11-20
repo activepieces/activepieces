@@ -36,14 +36,16 @@ export const DictionaryProperty = ({
       id: `${id.current}`,
     };
   });
-  const valuesArrayRef = useRef(
-    valuesArray
-  );
-  const haveValuesChangedFromOutside = valuesArrayRef.current.length !== valuesArray.length || valuesArray.reduce((acc, _, index) => {
-    return acc ||
-      valuesArrayRef.current[index].key !== valuesArray[index].key ||
-      valuesArrayRef.current[index].value !== valuesArray[index].value
-  }, false)
+  const valuesArrayRef = useRef(valuesArray);
+  const haveValuesChangedFromOutside =
+    valuesArrayRef.current.length !== valuesArray.length ||
+    valuesArray.reduce((acc, _, index) => {
+      return (
+        acc ||
+        valuesArrayRef.current[index].key !== valuesArray[index].key ||
+        valuesArrayRef.current[index].value !== valuesArray[index].value
+      );
+    }, false);
 
   if (haveValuesChangedFromOutside) {
     valuesArrayRef.current = valuesArray;

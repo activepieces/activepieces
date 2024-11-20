@@ -79,7 +79,7 @@ export const CopilotSidebar = () => {
     setLeftSidebar,
     askAiButtonProps,
     selectStepByName,
-    setAskAiButtonProps
+    setAskAiButtonProps,
   ] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.refreshSettings,
@@ -87,7 +87,7 @@ export const CopilotSidebar = () => {
     state.setLeftSidebar,
     state.askAiButtonProps,
     state.selectStepByName,
-    state.setAskAiButtonProps
+    state.setAskAiButtonProps,
   ]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const socket = useSocket();
@@ -146,13 +146,13 @@ export const CopilotSidebar = () => {
     scrollToLastMessage();
   };
 
-
-  const mergeInputs = ({ currentInput, newInput }:
-    {
-      currentInput: Record<string, any> | undefined,
-      newInput: Record<string, any> | undefined,
-    }
-  ) => {
+  const mergeInputs = ({
+    currentInput,
+    newInput,
+  }: {
+    currentInput: Record<string, any> | undefined;
+    newInput: Record<string, any> | undefined;
+  }) => {
     if (!currentInput) {
       return newInput ?? {};
     }
@@ -160,18 +160,16 @@ export const CopilotSidebar = () => {
     return Object.keys(newInput ?? {}).reduce((acc, key) => {
       if (!isNil(currentInput[key])) {
         acc[key] = currentInput[key];
-      }
-      else if (newInput) {
+      } else if (newInput) {
         acc[key] = newInput[key];
       }
       return acc;
-    }, {} as Record<string, string>)
-
+    }, {} as Record<string, string>);
   };
 
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
     if (!askAiButtonProps) {
-      console.log('no ask ai button props')
+      console.log('no ask ai button props');
       toast(INTERNAL_ERROR_TOAST);
       return;
     }
@@ -180,7 +178,10 @@ export const CopilotSidebar = () => {
       return;
     }
     if (askAiButtonProps) {
-      const stepName = askAiButtonProps.type === FlowOperationType.UPDATE_ACTION ? askAiButtonProps.stepName : flowStructureUtil.findUnusedName(flowVersion.trigger);
+      const stepName =
+        askAiButtonProps.type === FlowOperationType.UPDATE_ACTION
+          ? askAiButtonProps.stepName
+          : flowStructureUtil.findUnusedName(flowVersion.trigger);
       const codeAction = pieceSelectorUtils.getDefaultStep({
         stepName,
         stepMetadata: CORE_STEP_METADATA[ActionType.CODE],
@@ -199,7 +200,7 @@ export const CopilotSidebar = () => {
             type: FlowOperationType.ADD_ACTION,
             request: {
               action: codeAction,
-              ...askAiButtonProps.actionLocation
+              ...askAiButtonProps.actionLocation,
             },
           },
           () => toast(UNSAVED_CHANGES_TOAST),
@@ -207,36 +208,42 @@ export const CopilotSidebar = () => {
         selectStepByName(stepName);
         setAskAiButtonProps({
           type: FlowOperationType.UPDATE_ACTION,
-          stepName: codeAction.name
+          stepName: codeAction.name,
         });
-      }
-      else {
-        const step = flowStructureUtil.getStep(askAiButtonProps.stepName, flowVersion.trigger);
+      } else {
+        const step = flowStructureUtil.getStep(
+          askAiButtonProps.stepName,
+          flowVersion.trigger,
+        );
         if (step) {
-          const mergedInputs = mergeInputs(
+          const mergedInputs = mergeInputs({
+            newInput: message.content.inputs,
+            currentInput:
+              step.type === ActionType.CODE ? step.settings.input : undefined,
+          });
+          applyOperation(
             {
-              newInput: message.content.inputs,
-              currentInput: step.type === ActionType.CODE ? step.settings.input : undefined,
-            }
-          );
-          applyOperation({
-            type: FlowOperationType.UPDATE_ACTION,
-            request: {
-              displayName: step.displayName,
-              name: step.name,
-              settings: {
-                ...codeAction.settings,
-                input: mergedInputs,
-                errorHandlingOptions: step.type === ActionType.CODE || step.type === ActionType.PIECE ? step.settings.errorHandlingOptions : codeAction.settings.errorHandlingOptions,
+              type: FlowOperationType.UPDATE_ACTION,
+              request: {
+                displayName: step.displayName,
+                name: step.name,
+                settings: {
+                  ...codeAction.settings,
+                  input: mergedInputs,
+                  errorHandlingOptions:
+                    step.type === ActionType.CODE ||
+                    step.type === ActionType.PIECE
+                      ? step.settings.errorHandlingOptions
+                      : codeAction.settings.errorHandlingOptions,
+                },
+                type: ActionType.CODE,
+                valid: true,
               },
-              type: ActionType.CODE,
-              valid: true
-            }
-          }, () => toast(UNSAVED_CHANGES_TOAST));
+            },
+            () => toast(UNSAVED_CHANGES_TOAST),
+          );
         }
-
       }
-
     }
     refreshSettings();
   };

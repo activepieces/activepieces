@@ -3,7 +3,7 @@ import { json } from '@codemirror/lang-json';
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import { t } from 'i18next';
-import {  Code, Package } from 'lucide-react';
+import { Code, Package } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { useTheme } from '@/components/theme-provider';
