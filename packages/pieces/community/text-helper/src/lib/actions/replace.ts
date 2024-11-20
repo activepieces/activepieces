@@ -22,7 +22,6 @@ export const replace = createAction({
       displayName: 'Search Value',
       description: 'Can be plain text or a regex expression.',
       required: true,
-      validators: [],
     }),
     replaceValue: Property.ShortText({
       displayName: 'Replace Value',

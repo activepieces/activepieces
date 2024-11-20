@@ -1,8 +1,9 @@
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const generatePassword = createAction({
   name: 'generate-password',
@@ -13,7 +14,6 @@ export const generatePassword = createAction({
       displayName: 'Password Length',
       description: 'The length of the password (maximum 256)',
       required: true,
-      validators: [Validators.maxValue(256)],
     }),
     characterSet: Property.StaticDropdown({
       displayName: 'Character Set',
@@ -29,6 +29,10 @@ export const generatePassword = createAction({
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      length: z.number().max(256),
+    });
+
     const charset = context.propsValue.characterSet === 'alphanumeric'
       ? 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
       : 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';

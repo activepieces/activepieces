@@ -1,7 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyType } from "./property-type";
-import { ValidationInputType } from "../../validators/types";
 
 
 export const ShortTextProperty = Type.Composite([
@@ -11,7 +10,7 @@ export const ShortTextProperty = Type.Composite([
 
 
 export type ShortTextProperty<R extends boolean> = BasePropertySchema &
-    TPropertyValue<string, PropertyType.SHORT_TEXT, ValidationInputType.STRING, R>;
+    TPropertyValue<string, PropertyType.SHORT_TEXT, R>;
 
 
 export const LongTextProperty = Type.Composite([
@@ -20,4 +19,4 @@ export const LongTextProperty = Type.Composite([
 ])
 
 export type LongTextProperty<R extends boolean> = BasePropertySchema &
-    TPropertyValue<string, PropertyType.LONG_TEXT, ValidationInputType.STRING, R>;
+    TPropertyValue<string, PropertyType.LONG_TEXT, R>;

@@ -1,4 +1,4 @@
-import { Property, Validators, createAction } from "@activepieces/pieces-framework";
+import { Property, createAction } from "@activepieces/pieces-framework";
 import { googleDriveAuth } from "../../";
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
@@ -16,7 +16,6 @@ export const deletePermission = createAction({
         }),
         user_email: Property.ShortText({
             displayName: 'User email',
-            validators: [Validators.email],
             description: 'The email address of the user to update permissions for',
             required: true,
         }),  

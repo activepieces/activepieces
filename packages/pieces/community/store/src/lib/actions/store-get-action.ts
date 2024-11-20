@@ -2,9 +2,10 @@ import {
   createAction,
   Property,
   StoreScope,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { getScopeAndKey, PieceStoreScope } from './common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const storageGetAction = createAction({
   name: 'get',
@@ -22,7 +23,6 @@ export const storageGetAction = createAction({
     key: Property.ShortText({
       displayName: 'Key',
       required: true,
-      validators: [Validators.maxLength(128)]
     }),
     defaultValue: Property.ShortText({
       displayName: 'Default Value',
@@ -52,6 +52,10 @@ export const storageGetAction = createAction({
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      key: z.string().max(128),
+    });
+
     const { key, scope } = getScopeAndKey({
       runId: context.run.id,
       key: context.propsValue['key'],

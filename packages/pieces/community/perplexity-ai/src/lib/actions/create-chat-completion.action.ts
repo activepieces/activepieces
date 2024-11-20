@@ -2,7 +2,6 @@ import { perplexityAiAuth } from '../../';
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 
 import {
@@ -10,6 +9,9 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
+
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const createChatCompletionAction = createAction({
   auth: perplexityAiAuth,
@@ -65,7 +67,6 @@ export const createChatCompletionAction = createAction({
       required: false,
       description:
         'The amount of randomness in the response.Higher values are more random, and lower values are more deterministic.',
-      validators: [Validators.minValue(0), Validators.maxValue(2.0)],
       defaultValue: 0.2,
     }),
     max_tokens: Property.Number({
@@ -105,6 +106,10 @@ export const createChatCompletionAction = createAction({
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      temperature: z.number().min(0).max(2).optional(),
+    });
+
     const rolesArray = context.propsValue.roles
       ? (context.propsValue.roles as any)
       : [];
