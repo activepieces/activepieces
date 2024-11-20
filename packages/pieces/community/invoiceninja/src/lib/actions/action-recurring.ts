@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 
 import { invoiceninjaAuth } from '../..';

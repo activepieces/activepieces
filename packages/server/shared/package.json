@@ -11,7 +11,7 @@
     "async-mutex": "0.4.0",
     "@sinclair/typebox": "0.33.18",
     "@activepieces/import-fresh-webpack": "3.3.0",
-    "@activepieces/pieces-framework": "0.7.39",
+    "@activepieces/pieces-framework": "0.7.40",
     "clear-module": "4.1.2"
   },
   "type": "commonjs",

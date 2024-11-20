@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common';
 import { googleGeminiAuth } from '../../index';
 import {
   Property,
   StoreScope,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
+import { z } from 'zod';
 
 export const chatGemini = createAction({
   auth: googleGeminiAuth,
@@ -38,13 +38,16 @@ export const chatGemini = createAction({
     }),
     memoryKey: Property.ShortText({
       displayName: 'Memory Key',
-      validators: [Validators.maxLength(128)],
       description:
         'A memory key that will keep the chat history. Keep it empty to leave Gemini without memory of previous messages.',
       required: false,
     }),
   },
   async run({ auth, propsValue, store }) {
+    await propsValidation.validateZod(propsValue, {
+      memoryKey: z.string().max(128).optional(),
+    });
+
     const { model, prompt, memoryKey } = propsValue;
     let messageHistory: any[] | null = [];
     if (memoryKey) {

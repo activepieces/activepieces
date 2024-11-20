@@ -1,4 +1,3 @@
-import { ValidationInputType } from '../../validators/types';
 import { Type } from '@sinclair/typebox';
 import { TPropertyValue } from '../input/common';
 import { PropertyType } from '../input/property-type';
@@ -44,7 +43,6 @@ export type CustomAuthProperty<
   TPropertyValue<
     StaticPropsValue<T>,
     PropertyType.CUSTOM_AUTH,
-    ValidationInputType.ANY,
     true
   >;
 

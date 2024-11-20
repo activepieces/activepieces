@@ -1,7 +1,9 @@
-import { ErrorMessages, formatErrorMessage, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
+import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, PropertyType, StaticPropsValue } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, isNil } from '@activepieces/shared'
+import { z } from 'zod'
 import { processors } from './processors'
 import { arrayFlatterProcessor } from './processors/array-flatter'
+
 
 
 type PropsValidationError = {
@@ -84,33 +86,95 @@ export const propsProcessor = {
             if (!shouldValidate) {
                 continue
             }
-            // Short Circuit
-            // If the value is required, we don't allow it to be undefined or null
-            if (isNil(value) && property.required) {
-                errors[key] = [
-                    formatErrorMessage(ErrorMessages.REQUIRED, { userInput: value }),
-                ]
-                continue
-            }
-            // If the value is not required, we allow it to be undefined or null
-            if (isNil(value) && !property.required) {
-                continue
-            }
-
-            const validators = [
-                ...(property.defaultValidators ?? []),
-                ...(property.validators ?? []),
-            ]
-
-            const propErrors = []
-            for (const validator of validators) {
-                const error = validator.fn(property, processedInput[key], value)
-                if (!isNil(error)) {
-                    propErrors.push(error)
-                }
-            }
-            if (propErrors.length) errors[key] = propErrors
         }
+
+        for (const [key, value] of Object.entries(processedInput)) {
+            const property = props[key]
+            if (isNil(property)) {
+                continue
+            }
+
+            const validationErrors = validateProperty(property, value, resolvedInput[key])
+            if (validationErrors.length > 0) {
+                errors[key] = validationErrors
+            }
+        }
+
         return { processedInput, errors }
     },
+}
+
+const validateProperty = (property: PieceProperty, value: unknown, originalValue: unknown): string[] => {
+    let schema
+    switch (property.type) {
+        case PropertyType.SHORT_TEXT:
+        case PropertyType.LONG_TEXT:
+            schema = z.string({
+                required_error: `Expected string, received: ${originalValue}`,
+                invalid_type_error: `Expected string, received: ${originalValue}`,
+            })
+            break
+        case PropertyType.NUMBER:
+            schema = z.number({
+                required_error: `Expected number, received: ${originalValue}`,
+                invalid_type_error: `Expected number, received: ${originalValue}`,
+            })
+            break
+        case PropertyType.CHECKBOX:
+            schema = z.boolean({
+                required_error: `Expected boolean, received: ${originalValue}`,
+                invalid_type_error: `Expected boolean, received: ${originalValue}`,
+            })
+            break
+        case PropertyType.DATE_TIME:
+            schema = z.string({
+                required_error: `Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`,
+                invalid_type_error: `Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`,
+            })
+            break
+        case PropertyType.ARRAY:
+            schema = z.array(z.any(), {
+                required_error: `Expected array, received: ${originalValue}`,
+                invalid_type_error: `Expected array, received: ${originalValue}`,
+            })
+            break
+        case PropertyType.OBJECT:
+            schema = z.record(z.any(), {
+                required_error: `Expected object, received: ${originalValue}`,
+                invalid_type_error: `Expected object, received: ${originalValue}`,
+            })
+            break
+        case PropertyType.JSON:
+            schema = z.record(z.any(), {
+                required_error: `Expected JSON object, received: ${originalValue}`,
+                invalid_type_error: `Expected JSON object, received: ${originalValue}`,
+            })
+            break
+        case PropertyType.FILE:
+            schema = z.record(z.any(), {
+                required_error: `Expected file url or base64 with mimeType, received: ${originalValue}`,
+                invalid_type_error: `Expected file url or base64 with mimeType, received: ${originalValue}`,
+            })
+            break
+        default:
+            schema = z.any()
+    }
+    let finalSchema
+    if (property.required) {
+        finalSchema = schema
+    }
+    else {
+        finalSchema = schema.nullable().optional()
+    }
+
+    try {
+        finalSchema.parse(value)
+        return []
+    }
+    catch (err) {
+        if (err instanceof z.ZodError) {
+            return err.errors.map(e => e.message)
+        }
+        return []
+    }
 }

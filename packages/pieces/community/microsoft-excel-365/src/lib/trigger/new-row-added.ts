@@ -71,7 +71,6 @@ export const readNewRows = createTrigger({
         'The maximum number of rows to poll, the rest will be polled on the next run.',
       required: false,
       defaultValue: 10,
-      validators: [],
     }),
   },
   type: TriggerStrategy.POLLING,

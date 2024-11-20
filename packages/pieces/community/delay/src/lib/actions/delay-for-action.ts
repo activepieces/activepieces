@@ -1,10 +1,11 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { ExecutionType, PauseType } from '@activepieces/shared';
 import { markdownDescription } from '../common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 enum TimeUnit {
   SECONDS = 'seconds',
@@ -48,10 +49,13 @@ export const delayForAction = createAction({
       description:
         'The number of units to delay the execution of the next action',
       required: true,
-      validators: [Validators.minValue(0)],
     }),
   },
   async run(ctx) {
+    await propsValidation.validateZod(ctx.propsValue, {
+      delayFor: z.number().min(0),
+    });
+
     const unit = ctx.propsValue.unit ?? TimeUnit.SECONDS;
     let delayInMs: number;
     switch (unit) {

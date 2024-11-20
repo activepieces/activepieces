@@ -2,7 +2,6 @@ import {
   createAction,
   Property,
   StoreScope,
-  Validators,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../..';
@@ -12,6 +11,8 @@ import {
   notLLMs,
   reduceContextSize,
 } from '../common/common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const askOpenAI = createAction({
   auth: openaiAuth,
@@ -70,7 +71,6 @@ export const askOpenAI = createAction({
       required: false,
       description:
         'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-      validators: [Validators.minValue(0), Validators.maxValue(1.0)],
       defaultValue: 0.9,
     }),
     maxTokens: Property.Number({
@@ -103,7 +103,6 @@ export const askOpenAI = createAction({
     }),
     memoryKey: Property.ShortText({
       displayName: 'Memory Key',
-      validators: [Validators.maxLength(128)],
       description:
         'A memory key that will keep the chat history shared across runs and flows. Keep it empty to leave ChatGPT without memory of previous messages.',
       required: false,
@@ -118,6 +117,10 @@ export const askOpenAI = createAction({
     }),
   },
   async run({ auth, propsValue, store }) {
+    await propsValidation.validateZod(propsValue, {
+      temperature: z.number().min(0).max(1).optional(),
+      memoryKey: z.string().max(128).optional(),
+    });
     const openai = new OpenAI({
       apiKey: auth,
     });

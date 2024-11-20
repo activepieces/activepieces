@@ -1,10 +1,11 @@
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
 import { searchIssuesByJql } from '../common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const searchIssues = createAction({
   name: 'search_issues',
@@ -22,11 +23,6 @@ export const searchIssues = createAction({
       displayName: 'Max Results',
       defaultValue: 50,
       required: true,
-      validators: [
-        Validators.number,
-        Validators.minValue(1),
-        Validators.maxValue(100),
-      ],
     }),
     sanitizeJql: Property.Checkbox({
       displayName: 'Sanitize JQL',
@@ -35,6 +31,9 @@ export const searchIssues = createAction({
     }),
   },
   run: async ({ auth, propsValue }) => {
+    await propsValidation.validateZod(propsValue, {
+      maxResults: z.number().min(1).max(100),
+    });
     const { jql, maxResults, sanitizeJql } = propsValue;
     return await searchIssuesByJql({
       auth,

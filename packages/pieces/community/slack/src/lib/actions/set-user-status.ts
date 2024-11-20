@@ -1,10 +1,8 @@
 import { slackAuth } from '../../';
-import {
-  createAction,
-  Property,
-  Validators,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { WebClient } from '@slack/web-api';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const setUserStatusAction = createAction({
   auth: slackAuth,
@@ -15,7 +13,6 @@ export const setUserStatusAction = createAction({
     text: Property.ShortText({
       displayName: 'Text',
       required: true,
-      validators: [Validators.maxLength(100)],
     }),
     emoji: Property.ShortText({
       displayName: 'Emoji',
@@ -30,6 +27,10 @@ export const setUserStatusAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      text: z.string().max(100),
+    });
+
     const client = new WebClient(auth.data['authed_user']?.access_token);
     return await client.users.profile.set({
       profile: {

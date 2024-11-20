@@ -1,7 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyType } from "./property-type";
-import { ValidationInputType } from "../../validators/types";
 
 export const DateTimeProperty = Type.Composite([
   BasePropertySchema,
@@ -9,4 +8,4 @@ export const DateTimeProperty = Type.Composite([
 ])
 
 export type DateTimeProperty<R extends boolean> = BasePropertySchema &
-  TPropertyValue<string, PropertyType.DATE_TIME, ValidationInputType.DATE_TIME, R>; 
+  TPropertyValue<string, PropertyType.DATE_TIME, R>; 

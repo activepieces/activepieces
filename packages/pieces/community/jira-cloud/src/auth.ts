@@ -3,10 +3,11 @@ import {
   Property,
   ShortTextProperty,
   StaticPropsValue,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { getUsers, sendJiraRequest } from './lib/common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const jiraCloudAuth = PieceAuth.CustomAuth({
   description: `
@@ -20,13 +21,11 @@ You can generate your API token from:
       description:
         'The link of your Jira instance (e.g https://example.atlassian.net)',
       required: true,
-      validators: [Validators.url],
     }),
     email: Property.ShortText({
       displayName: 'Email',
       description: 'The email you use to login to Jira',
       required: true,
-      validators: [Validators.email],
     }),
     apiToken: PieceAuth.SecretText({
       displayName: 'API Token',
@@ -36,6 +35,11 @@ You can generate your API token from:
   },
   validate: async ({ auth }) => {
     try {
+      await propsValidation.validateZod(auth, {
+        instanceUrl: z.string().url(),
+        email: z.string().email(),
+      });
+
       await sendJiraRequest({
         auth: auth,
         method: HttpMethod.GET,

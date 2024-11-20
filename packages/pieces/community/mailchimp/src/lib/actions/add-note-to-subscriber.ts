@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   HttpRequest,
@@ -9,6 +8,8 @@ import {
   httpClient,
   AuthenticationType,
 } from '@activepieces/pieces-common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 import { mailchimpAuth } from '../..';
 import { mailchimpCommon } from '../common';
@@ -29,10 +30,13 @@ export const addNoteToSubscriber = createAction({
       displayName: 'Note',
       description: 'Note to add to the subscriber',
       required: true,
-      validators: [Validators.maxLength(1000)],
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      note: z.string().max(1000),
+    });
+
     const { list_id, email, note } = context.propsValue;
     const { access_token } = context.auth;
 

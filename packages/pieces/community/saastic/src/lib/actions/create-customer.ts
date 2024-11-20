@@ -1,14 +1,15 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   AuthenticationType,
   httpClient,
   HttpRequest,
+  propsValidation,
 } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { saasticCommon } from '../common';
 import { saasticAuth } from '../..';
 
@@ -26,14 +27,13 @@ export const createCustomer = createAction({
     }),
     last_name: Property.LongText({
       displayName: 'Last Name',
-      description: "The customer's last name.",
+      description: "The customer's last name.", 
       required: true,
     }),
     email: Property.LongText({
       displayName: 'Email',
       description: "The customer's email address.",
       required: true,
-      validators: [Validators.email],
     }),
     phone: Property.LongText({
       displayName: 'Phone',
@@ -44,11 +44,15 @@ export const createCustomer = createAction({
       displayName: 'Signup Date',
       description: 'The date the customer signed up.',
       required: false,
-      validators: [Validators.datetimeIso],
     }),
   },
 
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      email: z.string().email(),
+      signed_up_at: z.string().datetime().optional(),
+    });
+
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${saasticCommon.baseUrl}/customers`,
