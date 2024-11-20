@@ -172,7 +172,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
-      refreshPieceFormSettings: false,
+      refreshStepFormSettingsToggle: false,
 
       removeStepSelection: () =>
         set({
