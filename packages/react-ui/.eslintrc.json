@@ -130,11 +130,16 @@
         "@typescript-eslint/no-explicit-any": [
           "off"
         ],
+        "@typescript-eslint/indent": "off",
         "prettier/prettier": [
           "error",
-          {},
           {
-            "usePrettierrc": true
+            "singleQuote": true,
+            "trailingComma": "all",
+            "printWidth": 80,
+            "tabWidth": 2,
+            "useTabs": false,
+            "jsxBracketSameLine": false
           }
         ]
       }

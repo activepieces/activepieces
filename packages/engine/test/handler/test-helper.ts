@@ -1,6 +1,6 @@
 import { Action, ActionErrorHandlingOptions, ActionType, BranchCondition, BranchExecutionType, CodeAction, FlowVersionState, LoopOnItemsAction, PackageType, PieceAction, PieceType, ProgressUpdateType, RouterExecutionType } from '@activepieces/shared'
 import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
-import { VariableService } from '../../src/lib/variables/variable-service'
+import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
@@ -17,7 +17,7 @@ export const generateMockEngineConstants = (params?: Partial<EngineConstants>): 
         },
         params?.engineToken ?? 'engineToken',
         params?.projectId ?? 'projectId',
-        params?.variableService ?? new VariableService({
+        params?.propsResolver ?? createPropsResolver({
             projectId: 'projectId',
             engineToken: 'engineToken',
             apiUrl: 'http://127.0.0.1:3000',

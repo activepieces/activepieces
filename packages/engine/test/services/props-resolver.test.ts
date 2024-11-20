@@ -2,9 +2,10 @@ import { ApFile, PieceAuth, Property, Validators } from '@activepieces/pieces-fr
 import { ActionType, GenericStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
-import { VariableService } from '../../src/lib/variables/variable-service'
+import { propsProcessor } from '../../src/lib/variables/props-processor'
+import { createPropsResolver } from '../../src/lib/variables/props-resolver'
 
-const variableService = new VariableService({
+const propsResolverService = createPropsResolver({
     projectId: 'PROJECT_ID',
     engineToken: 'WORKER_TOKEN',
     apiUrl: 'http://127.0.0.1:3000',
@@ -103,27 +104,27 @@ describe('Variable Service', () => {
             }),
         )
 
-        const { resolvedInput: secondLevelResolvedInput } = await variableService.resolve({ unresolvedInput: '{{step_7.delayForInMs}}', executionState: modifiedExecutionState })
+        const { resolvedInput: secondLevelResolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_7.delayForInMs}}', executionState: modifiedExecutionState })
         expect(secondLevelResolvedInput).toEqual(20000)
-        const { resolvedInput: firstLevelResolvedInput } = await variableService.resolve({ unresolvedInput: '{{step_8.delayForInMs}}', executionState: modifiedExecutionState })
+        const { resolvedInput: firstLevelResolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_8.delayForInMs}}', executionState: modifiedExecutionState })
         expect(firstLevelResolvedInput).toEqual(20000)
 
     })
     test('Test resolve text with no variables', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: 'Hello world!', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: 'Hello world!', executionState })
         expect(resolvedInput).toEqual(
             'Hello world!',
         )
     })
 
     test('Test resolve text with double variables', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: 'Price is {{ trigger.price }}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: 'Price is {{ trigger.price }}', executionState })
         expect(resolvedInput,
         ).toEqual('Price is 6.4')
     })
 
     test('Test resolve object steps variables', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger}}', executionState })
         expect(resolvedInput).toEqual(
             {
                 items: [5, 'a'],
@@ -134,21 +135,21 @@ describe('Variable Service', () => {
     })
 
     test('Test resolve steps variables', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger.name}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.name}}', executionState })
         expect(resolvedInput).toEqual(
             'John',
         )
     })
 
     test('Test resolve multiple variables', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger.name}} {{trigger.name}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.name}} {{trigger.name}}', executionState })
         expect(
             resolvedInput,
         ).toEqual('John John')
     })
 
     test('Test resolve variable array items', async () => {
-        const { resolvedInput } = await variableService.resolve({
+        const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput:
                 '{{trigger.items[0]}} {{trigger.items[1]}}',
             executionState,
@@ -159,21 +160,21 @@ describe('Variable Service', () => {
     })
 
     test('Test resolve array variable', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger.items}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.items}}', executionState })
         expect(resolvedInput).toEqual(
             [5, 'a'],
         )
     })
 
     test('Test resolve integer from variables', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger.items[0]}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.items[0]}}', executionState })
         expect(
             resolvedInput,
         ).toEqual(5)
     })
 
     test('Test resolve text with undefined variables', async () => {
-        const { resolvedInput } = await variableService.resolve({
+        const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput:
                 'test {{configs.bar}} {{trigger.items[4]}}',
             executionState,
@@ -184,18 +185,18 @@ describe('Variable Service', () => {
     })
 
     test('Test resolve empty text', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '', executionState })
         expect(resolvedInput).toEqual('')
     })
 
 
     test('Test resolve empty variable operator', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{}}', executionState })
         expect(resolvedInput).toEqual('')
     })
 
     test('Test resolve object', async () => {
-        const { resolvedInput } = await variableService.resolve({
+        const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput:
             {
                 input: {
@@ -212,28 +213,28 @@ describe('Variable Service', () => {
     })
 
     test('Test resolve boolean from variables', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{step_1.success}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_1.success}}', executionState })
         expect(resolvedInput).toEqual(
             true,
         )
     })
 
     test('Test resolve addition from variables', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{trigger.price + 2 - 3}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger.price + 2 - 3}}', executionState })
         expect(resolvedInput).toEqual(
             6.4 + 2 - 3,
         )
     })
 
     test('Test resolve text with array variable', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: 'items are {{trigger.items}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: 'items are {{trigger.items}}', executionState })
         expect(
             resolvedInput,
         ).toEqual('items are [5,"a"]')
     })
 
     test('Test resolve text with object variable', async () => {
-        const { resolvedInput } = await variableService.resolve({
+        const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput:
                 'values from trigger step: {{trigger}}',
             executionState,
@@ -244,14 +245,14 @@ describe('Variable Service', () => {
     })
 
     test('Test use built-in Math Min function', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{Math.min(trigger.price + 2 - 3, 2)}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{Math.min(trigger.price + 2 - 3, 2)}}', executionState })
         expect(resolvedInput).toEqual(
             2,
         )
     })
 
     test('Test use built-in Math Max function', async () => {
-        const { resolvedInput } = await variableService.resolve({ unresolvedInput: '{{Math.max(trigger.price + 2, 2)}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{Math.max(trigger.price + 2, 2)}}', executionState })
         expect(resolvedInput).toEqual(
             8.4,
         )
@@ -261,7 +262,7 @@ describe('Variable Service', () => {
         const input = {
             base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
         }
-        const { resolvedInput } = await variableService.resolve({
+        const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: input,
             executionState,
         })
@@ -274,7 +275,7 @@ describe('Variable Service', () => {
         const input = {
             base64: '{{step_2}}',
         }
-        const { resolvedInput } = await variableService.resolve({
+        const { resolvedInput } = await propsResolverService.resolve({
             unresolvedInput: input,
             executionState,
         })
@@ -300,7 +301,7 @@ describe('Variable Service', () => {
                 required: true,
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(processedInput).toEqual({
             base64: null,
             base64WithMime: new ApFile('unknown.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z', 'base64'), 'png'),
@@ -333,7 +334,7 @@ describe('Variable Service', () => {
             }),
         }
 
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(processedInput.documents[0].file).toBeDefined()
         expect(processedInput.documents[0].file.extension).toBe('svg')
         expect(processedInput.documents[0].file.filename).toBe('logo.svg')
@@ -361,7 +362,7 @@ describe('Variable Service', () => {
             }),
         }
 
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(processedInput.documents[0].file).toBeNull()
         expect(errors).toEqual({
             'documents': {
@@ -384,7 +385,7 @@ describe('Variable Service', () => {
             }),
 
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(processedInput.file).toBeDefined()
         expect(processedInput.file.extension).toBe('svg')
         expect(processedInput.file.filename).toBe('logo.svg')
@@ -412,7 +413,7 @@ describe('Variable Service', () => {
                 required: false,
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
 
         expect(processedInput.file).toBeDefined()
         expect(processedInput.file.extension).toBe('html')
@@ -436,7 +437,7 @@ describe('Variable Service', () => {
             },
         }
 
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, {
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, {
             price: Property.Number({
                 displayName: 'Price',
                 required: true,
@@ -470,7 +471,7 @@ describe('Variable Service', () => {
                 required: true,
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
             required: true,
             props: {},
         }), false)
@@ -519,7 +520,7 @@ describe('Variable Service', () => {
                 required: true,
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
             required: true,
             props: {
                 age: Property.Number({
@@ -612,7 +613,7 @@ describe('Variable Service', () => {
                 required: true,
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(processedInput).toEqual({
             Asana1: '2012-02-22T02:06:58.147Z',
             Asana2: '2012-02-22T00:00:00.000Z',
@@ -659,7 +660,7 @@ describe('Variable Service', () => {
                 required: true,
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
 
         expect(processedInput).toEqual({
             invalidDateString: undefined,
@@ -691,7 +692,7 @@ describe('Variable Service', () => {
                 validators: [Validators.email],
             }),
         }
-        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
+        const { errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
             required: true,
             props: {
                 email: Property.LongText({
@@ -720,7 +721,7 @@ describe('Variable Service', () => {
                 validators: [Validators.url, Validators.oneOf(['activepieces.com', 'www.activepieces.com'])],
             }),
         }
-        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(errors).toEqual({
             text: [
                 'The value: activepiecescom. is not a valid URL',
@@ -752,7 +753,7 @@ describe('Variable Service', () => {
                 validators: [Validators.maxLength(10)],
             }),
         }
-        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(errors).toEqual({
             text1: ['The value: short must be at least 10 characters'],
             text2: ['The value: short1234678923145678 must be less than 10 characters'],
@@ -786,7 +787,7 @@ describe('Variable Service', () => {
                 validators: [Validators.minValue(10)],
             }),
         }
-        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
         expect(errors).toEqual({
             value1: ['The value: 40 must be 2 or less', 'The 40 is not a valid value, valid choices are: 1,2'],
             value2: ['The value: 4 must be at least 5 and less than or equal 10'],
