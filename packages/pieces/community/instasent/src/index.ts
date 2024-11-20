@@ -5,6 +5,7 @@ import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
 import { createEvent } from "./lib/actions/create-event";
 import { BASE_URL } from "./lib/common/constants";
 import { InstasentAuthType } from './lib/common/types';
+import { PieceCategory } from "@activepieces/shared";
 
 export const getBaseUrl = (auth: { projectId: string, datasourceId: string }) => {
     return `${BASE_URL}/project/${auth.projectId}/datasource/${auth.datasourceId}`;
@@ -66,7 +67,8 @@ export const instasentAuth = PieceAuth.CustomAuth({
 export const instasent = createPiece({
     displayName: "Instasent",
     minimumSupportedRelease: '0.20.0',
-    logoUrl: "https://instasent.s3.fr-par.scw.cloud/api-assets/instasent-icon-small.png",
+    logoUrl: "https://cdn.activepieces.com/pieces/instasent.jpg",
+    categories:[PieceCategory.MARKETING],
     authors: ["dev-instasent", "https://github.com/dev-instasent"],
     auth: instasentAuth,
     actions: [addOrUpdateContact, deleteContact, createEvent],
