@@ -4,7 +4,6 @@ import {
     ProjectMemberWithUser,
 } from '@activepieces/ee-shared'
 import {
-    ApId,
     apId,
     Cursor,
     PlatformRole,
@@ -82,10 +81,17 @@ export const projectMemberService = {
         })
         const queryBuilder = repo()
             .createQueryBuilder('project_member')
+            .leftJoinAndSelect('project_member.projectRole', 'projectRole')
             .where({ projectId })
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const enrichedData = await Promise.all(
-            data.map(enrichProjectMemberWithUser),
+            data.map(async (member) => {
+                const enrichedMember = await enrichProjectMemberWithUser(member)
+                return {
+                    ...enrichedMember,
+                    projectRole: member.projectRole,
+                }
+            }),
         )
         return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
     },
@@ -97,20 +103,28 @@ export const projectMemberService = {
         projectId: ProjectId
         userId: UserId
     }): Promise<Rbac | null> {
+        console.log('HAHAHAA 1')
         const project = await projectService.getOneOrThrow(projectId)
         const user = await userService.getOneOrFail({
             id: userId,
         })
+
+        console.log('HAHAHAA 2', project)
+        console.log('HAHAHAA 3', user)
         if (user.id === project.ownerId) {
             return await rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
             return await rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
         }
-        const member = await repo().findOneBy({
-            projectId,
-            userId,
-        })
+        const member = await repo()
+            .createQueryBuilder('project_member')
+            .leftJoinAndSelect('project_member.projectRole', 'rbac')
+            .where('project_member.projectId = :projectId', { projectId })
+            .andWhere('project_member.userId = :userId', { userId })
+            .getOne()
+
+        console.log('HAHAHAA 4', member)
 
         if (!member) {
             return null

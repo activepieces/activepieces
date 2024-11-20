@@ -17,7 +17,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
 import {
   NotificationStatus,
-  ProjectMemberRole,
+  Permission,
   ProjectWithLimits,
 } from '@activepieces/shared';
 
@@ -27,7 +27,7 @@ const AlertFrequencyCard = React.memo(() => {
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
   const { toast } = useToast();
-  const { role } = useAuthorization();
+  const { projectRole } = useAuthorization();
   const mutation = useMutation<
     ProjectWithLimits,
     Error,
@@ -65,7 +65,7 @@ const AlertFrequencyCard = React.memo(() => {
         <CardDescription>
           {t('Choose what you want to be notified about.')}
         </CardDescription>
-        {role !== ProjectMemberRole.ADMIN && (
+        {projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false && (
           <p>
             <span className="text-destructive">*</span>{' '}
             {t('Only project admins can change this setting.')}
@@ -79,7 +79,7 @@ const AlertFrequencyCard = React.memo(() => {
           onClick={() => onChangeStatus(NotificationStatus.ALWAYS)}
           icon={<BellIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.ALWAYS}
-          disabled={role !== ProjectMemberRole.ADMIN}
+          disabled={projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false}
         />
         <AlertOption
           title={t('First Seen')}
@@ -87,7 +87,7 @@ const AlertFrequencyCard = React.memo(() => {
           onClick={() => onChangeStatus(NotificationStatus.NEW_ISSUE)}
           icon={<EyeOpenIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.NEW_ISSUE}
-          disabled={role !== ProjectMemberRole.ADMIN}
+          disabled={projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false}
         />
         <AlertOption
           title={t('Never')}
@@ -95,7 +95,7 @@ const AlertFrequencyCard = React.memo(() => {
           onClick={() => onChangeStatus(NotificationStatus.NEVER)}
           icon={<EyeNoneIcon className="mt-px size-5" />}
           isActive={project?.notifyStatus === NotificationStatus.NEVER}
-          disabled={role !== ProjectMemberRole.ADMIN}
+          disabled={projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false}
         />
       </CardContent>
     </Card>

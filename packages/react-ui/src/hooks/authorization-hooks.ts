@@ -5,15 +5,15 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { ApFlagId, Permission, PlatformRole, Rbac } from '@activepieces/shared';
 
 export const useAuthorization = () => {
-  const role = authenticationSession.getUserProjectRole();
+  const projectRole = authenticationSession.getUserProjectRole();
   const checkAccess = (permission: Permission) => {
     const hasAccess = React.useMemo(() => {
-      if (!role) return true;
-      return role.permissions.includes(permission);
-    }, [role, permission]);
+      if (!projectRole) return true;
+      return projectRole.permissions.includes(permission);
+    }, [projectRole, permission]);
     return hasAccess;
   };
-  return { checkAccess, role };
+  return { checkAccess, projectRole };
 };
 export const useShowPlatformAdminDashboard = () => {
   const platformRole = authenticationSession.getUserPlatformRole();

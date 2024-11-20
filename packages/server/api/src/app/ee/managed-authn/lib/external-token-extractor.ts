@@ -1,6 +1,6 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole, Rbac, RoleType } from '@activepieces/shared'
+import { ActivepiecesError, ApId, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole, Rbac } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { signingKeyService } from '../../signing-key/signing-key-service'

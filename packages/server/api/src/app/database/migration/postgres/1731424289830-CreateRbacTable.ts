@@ -135,7 +135,7 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "project_member" 
             ADD CONSTRAINT "fk_project_member_project_role_id" 
-            FOREIGN KEY ("projectRoleId") REFERENCES "rbac"("id") ON DELETE SET NULL
+            FOREIGN KEY ("projectRoleId") REFERENCES "rbac"("id") ON DELETE CASCADE
         `)
 
         const projectMemberRoles = await queryRunner.query(`
@@ -173,6 +173,10 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
         }
 
         await queryRunner.query(`
+            ALTER TABLE "project_member" DROP COLUMN "role"
+        `);
+
+        await queryRunner.query(`
             ALTER TABLE "user_invitation" DROP COLUMN "projectRole"
         `)
         await queryRunner.query(`
@@ -182,7 +186,7 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "user_invitation" 
             ADD CONSTRAINT "fk_user_invitation_project_role_id" 
-            FOREIGN KEY ("projectRoleId") REFERENCES "rbac"("id") ON DELETE SET NULL
+            FOREIGN KEY ("projectRoleId") REFERENCES "rbac"("id") ON DELETE CASCADE
         `)
     }
 

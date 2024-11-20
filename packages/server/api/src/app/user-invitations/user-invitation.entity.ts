@@ -41,7 +41,8 @@ export const UserInvitationEntity = new EntitySchema<UserInvitation>({
         projectRole: {
             type: 'many-to-one',
             target: 'rbac',
-            nullable: true,
+            cascade: true,
+            onDelete: 'CASCADE',
             joinColumn: {
                 name: 'projectRoleId',
                 referencedColumnName: 'id',

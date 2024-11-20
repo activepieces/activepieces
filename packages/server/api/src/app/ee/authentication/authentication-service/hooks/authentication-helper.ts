@@ -1,12 +1,10 @@
 import {
     ActivepiecesError,
-    ApId,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
     PrincipalType,
     Project,
-    ProjectMemberRole,
     Rbac,
     User,
 } from '@activepieces/shared'
@@ -118,7 +116,7 @@ async function getProjectAndTokenOrThrow(
 
     return {
         project,
-        projectRole: projectRole,
+        projectRole,
         token,
     }
 }

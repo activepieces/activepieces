@@ -32,7 +32,7 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { Alert, AlertChannel } from '@activepieces/ee-shared';
-import { ProjectMemberRole } from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -54,7 +54,7 @@ const AddAlertEmailDialog = React.memo(
       resolver: typeboxResolver(FormSchema),
       defaultValues: {},
     });
-    const { role } = useAuthorization();
+    const { projectRole } = useAuthorization();
 
     const { mutate, isPending } = useMutation<Alert, Error, { email: string }>({
       mutationFn: async (params) =>
@@ -100,14 +100,14 @@ const AddAlertEmailDialog = React.memo(
               <Button
                 variant="outline"
                 className="mt-4 w-full flex items-center space-x-2"
-                disabled={role !== ProjectMemberRole.ADMIN}
+                disabled={projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false}
               >
                 <Plus className="size-4" />
                 <span>{t('Add email')}</span>
               </Button>
             </DialogTrigger>
           </TooltipTrigger>
-          {role !== ProjectMemberRole.ADMIN && (
+          {projectRole?.permissions.includes(Permission.WRITE_EMAIL_ALERT) === false && (
             <TooltipContent side="bottom">
               {t('Only project admins can do this')}
             </TooltipContent>

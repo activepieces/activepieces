@@ -41,6 +41,7 @@ import {
     ProjectMemberRole,
     ProjectPlan,
     Rbac,
+    RoleType,
     RunEnvironment,
     TemplateType,
     TriggerType,
@@ -254,7 +255,15 @@ export const createMockProjectMember = (
         platformId: projectMember?.platformId ?? apId(),
         userId: projectMember?.userId,
         projectId: projectMember?.projectId ?? apId(),
-        projectRole: projectMember?.projectRole ?? faker.helpers.enumValue(ProjectMemberRole),
+        projectRole: projectMember?.projectRole ?? {
+            name: faker.helpers.enumValue(ProjectMemberRole),
+            permissions: [],
+            type: RoleType.DEFAULT,
+            platformId: projectMember?.platformId ?? apId(),
+            id: apId(),
+            created: faker.date.recent().toISOString(),
+            updated: faker.date.recent().toISOString(),
+        },
     }
 }
 
@@ -543,6 +552,7 @@ export const createMockRbac = (rbac?: Partial<Rbac>): Rbac => {
         updated: rbac?.updated ?? faker.date.recent().toISOString(),
         permissions: rbac?.permissions ?? [],
         platformId: rbac?.platformId ?? apId(),
+        type: rbac?.type ?? faker.helpers.enumValue(RoleType),
     }
 }
 

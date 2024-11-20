@@ -2,8 +2,6 @@ import { Static, Type } from '@sinclair/typebox'
 import { SAFE_STRING_PATTERN } from '../common'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
-import { ProjectMemberRole } from './project-member'
-import { Rbac } from '../rbac/rbac'
 
 export const ListProjectRequestForUserQueryParams = Type.Object({
     cursor: Type.Optional(Type.String()),

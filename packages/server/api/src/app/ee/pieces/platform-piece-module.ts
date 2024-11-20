@@ -3,11 +3,10 @@ import {
     AddPieceRequestBody,
     EndpointScope,
     ErrorCode,
+    Permission,
     PieceScope,
     Principal,
     PrincipalType,
-    ProjectMemberRole,
-    RoleType,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 import {
@@ -90,7 +89,7 @@ async function assertProjectAdminCanInstallPieceOnCloud(
     const projectRole = await getPrincipalRoleOrThrow(principal)
 
     // TODO: WHAT SHOULD I DO HERE :(
-    if (projectRole.name !== ProjectMemberRole.ADMIN) {
+    if (projectRole.permissions.includes(Permission.WRITE_INSTALL_PIECE) === false) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {

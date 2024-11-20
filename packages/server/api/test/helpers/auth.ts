@@ -102,7 +102,7 @@ export const generateMockExternalToken = (
         externalUserId: params?.externalUserId ?? apId(),
         externalProjectId: params?.externalProjectId ?? apId(),
         email: params?.externalEmail ?? faker.internet.email(),
-        projectRole: params?.projectRole ?? faker.helpers.enumValue(ProjectMemberRole),
+        projectRole: params?.projectRole ?? undefined,
         firstName: params?.externalFirstName ?? faker.person.firstName(),
         pieces: params?.pieces ?? undefined,
         lastName: params?.externalLastName ?? faker.person.lastName(),

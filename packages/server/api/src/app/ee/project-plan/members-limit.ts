@@ -1,7 +1,7 @@
 import {
     ActivepiecesError,
-    ApId,
     ErrorCode,
+    Permission,
     ProjectId,
     ProjectMemberRole,
     Rbac,
@@ -11,7 +11,6 @@ import { flagService } from '../../flags/flag.service'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectLimitsService } from './project-plan.service'
-import { rbacService } from '../rbac/rbac.service'
 
 export const projectMembersLimit = {
     async limit({ projectId, platformId, projectRole }: { projectId: ProjectId, platformId: string, projectRole: Rbac }): Promise<void> {
@@ -42,7 +41,7 @@ async function shouldLimitMembers({ projectId, platformId, projectRole }: { proj
         if (!projectRole) {
             return false
         }
-        return projectRole.type !== RoleType.DEFAULT || (projectRole.name !== ProjectMemberRole.ADMIN)
+        return projectRole.type !== RoleType.DEFAULT || (projectRole.permissions.includes(Permission.WRITE_PROJECT) === false)
     }
     const numberOfMembers = await projectMemberService.countTeamMembers(projectId)
     const numberOfInvitations = await userInvitationsService.countByProjectId(projectId)

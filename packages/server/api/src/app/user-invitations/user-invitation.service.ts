@@ -66,6 +66,7 @@ export const userInvitationsService = {
             platformId,
             count: invitations.length,
         }, '[provisionUserInvitation] list invitations')
+        console.log('invitations', invitations)
         for (const invitation of invitations) {
             logger.info({
                 invitation,
@@ -84,6 +85,7 @@ export const userInvitationsService = {
                     const { projectId, projectRole } = invitation
                     assertNotNullOrUndefined(projectId, 'projectId')
                     assertNotNullOrUndefined(projectRole, 'projectRole')
+                    console.log('HAHAHAA 3', platform.projectRolesEnabled)
                     assertEqual(platform.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
                     await projectMemberService.upsert({
                         projectId,
@@ -93,6 +95,7 @@ export const userInvitationsService = {
                     break
                 }
             }
+            console.log('HAHAHAA 1', invitation)
             await repo().delete({
                 id: invitation.id,
             })
