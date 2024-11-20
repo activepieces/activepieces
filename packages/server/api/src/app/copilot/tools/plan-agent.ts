@@ -1,4 +1,3 @@
-import { createOpenAI } from '@ai-sdk/openai'
 import { DeepPartial, generateObject } from 'ai'
 import { z } from 'zod'
 import { getModel } from './code-agent'

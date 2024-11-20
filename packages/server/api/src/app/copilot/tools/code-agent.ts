@@ -28,6 +28,7 @@ const codeGenerationSchema = z.object({
         name: z.string(),
         type: z.string(),
         description: z.string().optional(),
+        suggestedValue: z.string()
     })).default([]),
 })
 
@@ -79,7 +80,8 @@ export async function generateCode(
                     {
                         "name": "data",
                         "type": "string",
-                        "description": "Input string to process"
+                        "description": "Input string to process",
+                        "suggestedValue": "suggest a value to put here for the user, if the type of the value is anything other than string put it inside {{}} like {{5}} or {{[1,2,3,4]}} or {{ ['jon','doe'] }}"
                     }
                 ]
             }
@@ -92,7 +94,8 @@ export async function generateCode(
                     {
                         "name": "url",
                         "type": "string",
-                        "description": "URL to fetch"
+                        "description": "URL to fetch",
+                        "suggestedValue": "suggest a value to put here for the user"
                     }
                 ]
             }
@@ -105,12 +108,14 @@ export async function generateCode(
                     {
                         "name": "to",
                         "type": "string",
-                        "description": "Recipient email"
+                        "description": "Recipient email",
+                        "suggestedValue": "jon@doe.com"
                     },
                     {
                         "name": "subject",
                         "type": "string",
-                        "description": "Email subject"
+                        "description": "Email subject",
+                        "suggestedValue": "Introduction Email"
                     },
                     {
                         "name": "body",

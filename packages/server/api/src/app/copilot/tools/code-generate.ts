@@ -1,9 +1,9 @@
-import { AskCopilotCodeResponse, AskCopilotRequest } from '@activepieces/shared'
+import { AskCopilotCodeResponse, AskCopilotRequest, ExecutionMode } from '@activepieces/shared'
 import OpenAI from 'openai'
 import { DeepPartial } from 'ai'
 import { generateCode, getModel } from './code-agent'
 import { generatePlan, type PlanResponse } from './plan-agent'
-import { system, AppSystemProp } from '@activepieces/server-shared'
+import { system, AppSystemProp, SharedSystemProp } from '@activepieces/server-shared'
 
 function getPerplexityClient() {
     const apiKey = system.get(AppSystemProp.PERPLEXITY_API_KEY)
@@ -61,7 +61,7 @@ export const codeGeneratorTool = {
         request: AskCopilotRequest,
     ): Promise<AskCopilotCodeResponse | null> {
         try {
-            const sandboxMode = request.sandboxMode ?? true
+            const sandboxMode = system.getOrThrow(SharedSystemProp.EXECUTION_MODE) !== ExecutionMode.UNSANDBOXED;
             
             let plan = await generatePlan(request.prompt, sandboxMode)
             
@@ -100,8 +100,8 @@ export const codeGeneratorTool = {
 
                 const inputs: Record<string, string> = {}
                 result.inputs?.forEach((input) => {
-                    if (input?.name && input?.type) {
-                        inputs[input.name] = input.type
+                    if (input?.name && input?.suggestedValue) {
+                        inputs[input.name] = input.suggestedValue
                     }
                 })
 
