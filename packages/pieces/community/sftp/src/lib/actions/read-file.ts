@@ -6,7 +6,7 @@ export const readFileContent = createAction({
   auth: sftpAuth,
   name: 'read_file_content',
   displayName: 'Read File Content',
-  description: 'Read the content of a file',
+  description: 'Read the content of a file.',
   props: {
     filePath: Property.ShortText({
       displayName: 'File Path',

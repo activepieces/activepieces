@@ -21,6 +21,8 @@ interface TextareaAutosizeProps extends Omit<TextareaProps, 'style'> {
   style?: Style;
 }
 
+export type ResizableTextareaProps = TextareaAutosizeProps &
+  React.RefAttributes<HTMLTextAreaElement>;
 const Textarea = React.forwardRef<
   HTMLTextAreaElement,
   TextareaAutosizeProps & React.RefAttributes<HTMLTextAreaElement>
