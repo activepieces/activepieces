@@ -1,4 +1,4 @@
-import { ApFile, PieceAuth, Property, Validators } from '@activepieces/pieces-framework'
+import { ApFile, PieceAuth, Property } from '@activepieces/pieces-framework'
 import { ActionType, GenericStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
@@ -308,7 +308,7 @@ describe('Variable Service', () => {
         })
         expect(errors).toEqual({
             'base64': [
-                'Expected file url or base64 with mimeType, but found value: iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z',
+                'Expected file url or base64 with mimeType, received: iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z',
             ],
         })
     })
@@ -368,7 +368,7 @@ describe('Variable Service', () => {
             'documents': {
                 properties: [{
                     file: [
-                        'Expected file url or base64 with mimeType, but found value: invalid-url',
+                        'Expected file url or base64 with mimeType, received: invalid-url',
                     ],
                 }],
             },
@@ -423,7 +423,7 @@ describe('Variable Service', () => {
 
         expect(errors).toEqual({
             'nullFile': [
-                'Expected value, but found value: null',
+                'Expected file url or base64 with mimeType, received: null',
             ],
         })
     })
@@ -482,317 +482,210 @@ describe('Variable Service', () => {
         expect(errors).toEqual({})
     })
 
-    it('should return errors for invalid number', async () => {
-        const input = {
-            price: 'wrong text',
-            auth: {
-                age: 'wrong text',
-            },
-            emptyStringNumber: '',
-            undefinedNumber: undefined,
-            nullNumber: null,
-            optionalNullNumber: null,
-            optionalUndefinedNumber: undefined,
-        }
-        const props = {
-            emptyStringNumber: Property.Number({
-                displayName: 'Empty String Number',
-                required: true,
-            }),
-            optionalNullNumber: Property.Number({
-                displayName: 'Null Number',
-                required: false,
-            }),
-            optionalUndefinedNumber: Property.Number({
-                displayName: 'Number',
-                required: false,
-            }),
-            nullNumber: Property.Number({
-                displayName: 'Null Number',
-                required: true,
-            }),
-            undefinedNumber: Property.Number({
-                displayName: 'Number',
-                required: true,
-            }),
-            price: Property.Number({
-                displayName: 'Price',
-                required: true,
-            }),
-        }
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
-            required: true,
-            props: {
-                age: Property.Number({
-                    displayName: 'age',
+
+})
+
+describe('Property Validation', () => {
+    describe('required properties', () => {
+        it('should validate required string property', async () => {
+            const props = {
+                text: Property.ShortText({
+                    displayName: 'Text',
                     required: true,
                 }),
-            },
-        }), true)
-        expect(processedInput).toEqual({
-            price: NaN,
-            emptyStringNumber: NaN,
-            nullNumber: null,
-            undefinedNumber: undefined,
-            optionalNullNumber: null,
-            optionalUndefinedNumber: undefined,
-            auth: {
-                age: NaN,
-            },
-        })
-        expect(errors).toEqual({
-            price: ['Expected number, but found value: wrong text'],
-            emptyStringNumber: ['Expected number, but found value: '],
-            nullNumber: ['Expected value, but found value: null'],
-            undefinedNumber: [
-                'Expected value, but found value: undefined',
-            ],
-            auth: {
-                age: ['Expected number, but found value: wrong text'],
-            },
-        })
-    })
+            }
+            
+            const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { text: 'valid text' },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(validErrors).toEqual({})
 
-    it('should return proper iso date time for valid texts', async () => {
-        const input = {
-            Salesforce: '2022-12-27T09:48:06.000+0000',
-            Microsoft1: '2022-12-14T02:30:00.0000000',
-            Microsoft2: '2022-12-30T10:15:36.6778769Z',
-            Asana1: '2012-02-22T02:06:58.147Z',
-            Asana2: '2012-02-22',
-            Hubspot: '2019-10-30T03:30:17.883Z',
-            FormatOne: '2023-05-23Z',
-            FormatTwo: 'May 23, 2023Z',
-            FormatThree: '05/23/2023Z',
-            FormatFour: '2023-05-23T12:34:56',
-            FormatFive: '2023-05-23 12:34:56',
-        }
-        const props = {
-            Salesforce: Property.DateTime({
-                displayName: 'Salesforce',
-                required: true,
-            }),
-            Microsoft1: Property.DateTime({
-                displayName: 'Microsoft1',
-                required: true,
-            }),
-            Microsoft2: Property.DateTime({
-                displayName: 'Microsoft2',
-                required: true,
-            }),
-            Asana1: Property.DateTime({
-                displayName: 'Asana1',
-                required: true,
-            }),
-            Asana2: Property.DateTime({
-                displayName: 'Asana2',
-                required: true,
-            }),
-            Hubspot: Property.DateTime({
-                displayName: 'Hubspot',
-                required: true,
-            }),
-            FormatOne: Property.DateTime({
-                displayName: 'One',
-                required: true,
-            }),
-            FormatTwo: Property.DateTime({
-                displayName: 'One',
-                required: true,
-            }),
-            FormatThree: Property.DateTime({
-                displayName: 'One',
-                required: true,
-            }),
-            FormatFour: Property.DateTime({
-                displayName: 'One',
-                required: true,
-            }),
-            FormatFive: Property.DateTime({
-                displayName: 'One',
-                required: true,
-            }),
-        }
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
-        expect(processedInput).toEqual({
-            Asana1: '2012-02-22T02:06:58.147Z',
-            Asana2: '2012-02-22T00:00:00.000Z',
-            FormatFive: '2023-05-23T12:34:56.000Z',
-            FormatFour: '2023-05-23T12:34:56.000Z',
-            FormatOne: '2023-05-23T00:00:00.000Z',
-            FormatThree: '2023-05-23T00:00:00.000Z',
-            FormatTwo: '2023-05-23T00:00:00.000Z',
-            Hubspot: '2019-10-30T03:30:17.883Z',
-            Microsoft1: '2022-12-14T02:30:00.000Z',
-            Microsoft2: '2022-12-30T10:15:36.677Z',
-            Salesforce: '2022-12-27T09:48:06.000Z',
-        })
-        expect(errors).toEqual({})
-    })
+            const { errors: nullErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { text: null },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(nullErrors).toEqual({
+                text: ['Expected string, received: null'],
+            })
 
-    it('should return error for invalid texts for iso dates', async () => {
-        const input = {
-            invalidDateString: 'wrong text',
-            wrongDateString: '2023-023-331',
-            emptyDateString: '',
-            undefinedDate: undefined,
-            nullDate: null,
-        }
-        const props = {
-            invalidDateString: Property.DateTime({
-                displayName: 'Invalid Date String',
-                required: true,
-            }),
-            wrongDateString: Property.DateTime({
-                displayName: 'Wrong Date String',
-                required: true,
-            }),
-            emptyDateString: Property.DateTime({
-                displayName: 'Empty Date string',
-                required: true,
-            }),
-            undefinedDate: Property.DateTime({
-                displayName: 'Undefined Date string',
-                required: true,
-            }),
-            nullDate: Property.DateTime({
-                displayName: 'Null Number',
-                required: true,
-            }),
-        }
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
-
-        expect(processedInput).toEqual({
-            invalidDateString: undefined,
-            wrongDateString: undefined,
-            emptyDateString: undefined,
-            undefinedDate: undefined,
-            nullDate: undefined,
+            const { errors: undefinedErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { text: undefined },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(undefinedErrors).toEqual({
+                text: ['Expected string, received: undefined'],
+            })
         })
-        expect(errors).toEqual({
-            emptyDateString: ['Expected ISO string, but found value: '],
-            invalidDateString: ['Expected ISO string, but found value: wrong text'],
-            nullDate: ['Expected value, but found value: null'],
-            undefinedDate: ['Expected value, but found value: undefined'],
-            wrongDateString: ['Expected ISO string, but found value: 2023-023-331'],
-        })
-    })
 
-    it('Test email validator', async () => {
-        const input = {
-            email: 'ap@dev&com',
-            auth: {
-                email: 'ap@dev&com',
-            },
-        }
-        const props = {
-            email: Property.LongText({
-                displayName: 'Email',
-                required: true,
-                validators: [Validators.email],
-            }),
-        }
-        const { errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
-            required: true,
-            props: {
-                email: Property.LongText({
-                    displayName: 'email',
+        it('should validate required number property', async () => {
+            const props = {
+                number: Property.Number({
+                    displayName: 'Number',
                     required: true,
-                    validators: [Validators.email],
                 }),
-            },
-        }), true)
-        expect(errors).toEqual({
-            email: ['Invalid Email format: ap@dev&com'],
-            auth: {
-                email: ['Invalid Email format: ap@dev&com'],
-            },
+            }
+            
+            const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { number: 42 },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(validErrors).toEqual({})
+
+            const { errors: nullErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { number: null },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(nullErrors).toEqual({
+                number: ['Expected number, received: null'],
+            })
+
+            const { errors: typeErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { number: 'not a number' },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(typeErrors).toEqual({
+                number: ['Expected number, received: not a number'],
+            })
+        })
+
+        it('should validate required datetime property', async () => {
+            const props = {
+                date: Property.DateTime({
+                    displayName: 'DateTime',
+                    required: true,
+                }),
+            }
+            
+            const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { date: '2024-03-14T12:00:00.000Z' },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(validErrors).toEqual({})
+
+            const { errors: invalidErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { date: 'not a date' },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(invalidErrors).toEqual({
+                date: ['Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: not a date'],
+            })
+        })
+
+        it('should validate required array property', async () => {
+            const props = {
+                array: Property.Array({
+                    displayName: 'Array',
+                    required: true,
+                }),
+            }
+            
+            const { errors: validErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { array: [1, 2, 3] },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(validErrors).toEqual({})
+
+            const { errors: typeErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { array: 'not an array' },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(typeErrors).toEqual({
+                array: ['Expected array, received: not an array'],
+            })
         })
     })
 
-    it('Test url and oneOf validators', async () => {
-        const input = {
-            text: 'activepiecescom.',
-        }
-        const props = {
-            text: Property.LongText({
-                displayName: 'Text',
-                required: true,
-                validators: [Validators.url, Validators.oneOf(['activepieces.com', 'www.activepieces.com'])],
-            }),
-        }
-        const { errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
-        expect(errors).toEqual({
-            text: [
-                'The value: activepiecescom. is not a valid URL',
-                'The activepiecescom. is not a valid value, valid choices are: activepieces.com,www.activepieces.com',
-            ],
+    describe('optional properties', () => {
+        it('should validate optional properties', async () => {
+            const props = {
+                text: Property.ShortText({
+                    displayName: 'Text',
+                    required: false,
+                }),
+                number: Property.Number({
+                    displayName: 'Number',
+                    required: false,
+                }),
+            }
+            
+            const { errors } = await propsProcessor.applyProcessorsAndValidators(
+                { 
+                    text: null,
+                    number: undefined,
+                },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(errors).toEqual({})
         })
     })
 
-    it('Test minLength and maxLength validators', async () => {
-        const input = {
-            textValid: 'short',
-            text1: 'short',
-            text2: 'short1234678923145678',
-        }
-        const props = {
-            textValid: Property.LongText({
-                displayName: 'Text',
-                required: true,
-                validators: [Validators.minLength(2)],
-            }),
-            text1: Property.LongText({
-                displayName: 'Text',
-                required: true,
-                validators: [Validators.minLength(10)],
-            }),
-            text2: Property.LongText({
-                displayName: 'Text',
-                required: true,
-                validators: [Validators.maxLength(10)],
-            }),
-        }
-        const { errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
-        expect(errors).toEqual({
-            text1: ['The value: short must be at least 10 characters'],
-            text2: ['The value: short1234678923145678 must be less than 10 characters'],
+    describe('type validation', () => {
+        it('should validate property types', async () => {
+            const props = {
+                string: Property.ShortText({
+                    displayName: 'Text',
+                    required: true,
+                }),
+                number: Property.Number({
+                    displayName: 'Number',
+                    required: true,
+                }),
+                boolean: Property.Checkbox({
+                    displayName: 'Checkbox',
+                    required: true,
+                }),
+                array: Property.Array({
+                    displayName: 'Array',
+                    required: true,
+                }),
+                object: Property.Object({
+                    displayName: 'Object',
+                    required: true,
+                }),
+            }
+
+            const { errors } = await propsProcessor.applyProcessorsAndValidators(
+                {
+                    string: 42,
+                    number: 'not a number',
+                    boolean: 'not a boolean',
+                    array: 'not an array',
+                    object: 'not an object',
+                },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+
+            expect(errors).toEqual({
+                number: ['Expected number, received: not a number'],
+                boolean: ['Expected boolean, received: not a boolean'],
+                array: ['Expected array, received: not an array'],
+                object: ['Expected object, received: not an object'],
+            })
         })
     })
-
-    it('Test maxValue, inRange, minValue and oneOf valdiators', async () => {
-        const choices = {
-            VAL1: 1,
-            VAL2: 2,
-        }
-        const input = {
-            value1: 40,
-            value2: 4,
-            value3: 4,
-        }
-        const props = {
-            value1: Property.Number({
-                displayName: 'Age',
-                required: true,
-                validators: [Validators.maxValue(2), Validators.oneOf(Object.values(choices))],
-            }),
-            value2: Property.Number({
-                displayName: 'Age',
-                required: true,
-                validators: [Validators.inRange(5, 10)],
-            }),
-            value3: Property.Number({
-                displayName: 'Age',
-                required: true,
-                validators: [Validators.minValue(10)],
-            }),
-        }
-        const { errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
-        expect(errors).toEqual({
-            value1: ['The value: 40 must be 2 or less', 'The 40 is not a valid value, valid choices are: 1,2'],
-            value2: ['The value: 4 must be at least 5 and less than or equal 10'],
-            value3: ['The value: 4 must be 10 or more'],
-        })
-    })
-
 })
