@@ -19,8 +19,8 @@ export const useAuthorization = () => {
 
 export const useShowPlatformAdminDashboard = () => {
   const platformRole = authenticationSession.getUserPlatformRole();
-  const { data: isPlatfromDemo } = flagsHooks.useFlag<boolean>(
+  const { data: isPlatformDemo } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PLATFORM_DEMO,
   );
-  return isPlatfromDemo || platformRole === PlatformRole.ADMIN;
+  return isPlatformDemo || platformRole === PlatformRole.ADMIN;
 };
