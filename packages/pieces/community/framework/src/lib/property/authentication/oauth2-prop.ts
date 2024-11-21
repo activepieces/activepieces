@@ -8,7 +8,6 @@ import { TPropertyValue } from '../input/common';
 import { PropertyType } from '../input/property-type';
 import { StaticDropdownProperty } from '../input/dropdown/static-dropdown';
 import { StaticPropsValue } from '..';
-import { ValidationInputType } from '../../validators/types';
 
 export enum OAuth2AuthorizationMethod {
   HEADER = 'HEADER',
@@ -83,7 +82,6 @@ export type OAuth2Property<
   TPropertyValue<
     OAuth2PropertyValue<T>,
     PropertyType.OAUTH2,
-    ValidationInputType.ANY,
     true
   >;
 

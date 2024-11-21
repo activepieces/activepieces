@@ -1352,6 +1352,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "matthieu-lombard",
+      "name": "Matthieu Lombard",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33624489?v=4",
+      "profile": "https://github.com/matthieu-lombard",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

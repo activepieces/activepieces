@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import {
@@ -84,7 +83,6 @@ export const askLocalAI = createAction({
       required: false,
       description:
         'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-      validators: [Validators.minValue(0), Validators.maxValue(1.0)],
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',

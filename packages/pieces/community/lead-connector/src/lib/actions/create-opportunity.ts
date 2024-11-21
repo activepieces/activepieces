@@ -2,7 +2,6 @@ import {
   createAction,
   OAuth2PropertyValue,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   createOpportunity,
@@ -13,6 +12,8 @@ import {
   LeadConnectorOpportunityStatus,
 } from '../common';
 import { leadConnectorAuth } from '../..';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const createOpportunityAction = createAction({
   auth: leadConnectorAuth,
@@ -142,11 +143,14 @@ export const createOpportunityAction = createAction({
     monetaryValue: Property.Number({
       displayName: 'Monetary Value',
       required: false,
-      validators: [Validators.number],
     }),
   },
 
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      monetaryValue: z.number().optional(),
+    });
+
     const {
       pipeline,
       stage,

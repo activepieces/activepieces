@@ -36,7 +36,7 @@ export const retable = createPiece({
   description: 'Turn your spreadsheets into smart database apps',
 
   auth: retableAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/retable.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["kishanprmr","MoShizzle","abuaboud"],

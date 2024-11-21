@@ -8,7 +8,6 @@ import {
     PlatformRole,
     PrincipalType,
     Project,
-    spreadIfDefined,
     User,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -76,10 +75,14 @@ const updateProjectLimits = async (
         piecesTags,
         piecesFilterType,
     })
+    const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
     await projectLimitsService.upsert({
-        ...DEFAULT_PLATFORM_LIMIT,
-        ...spreadIfDefined('tasks', tasks),
-        ...spreadIfDefined('aiTokens', aiTokens),
+        nickname: projectPlan?.name ?? DEFAULT_PLATFORM_LIMIT.nickname,
+        teamMembers: projectPlan?.teamMembers ?? DEFAULT_PLATFORM_LIMIT.teamMembers,
+        connections: projectPlan?.connections ?? DEFAULT_PLATFORM_LIMIT.connections,
+        minimumPollingInterval: projectPlan?.minimumPollingInterval ?? DEFAULT_PLATFORM_LIMIT.minimumPollingInterval,
+        tasks: tasks ?? projectPlan?.tasks ?? DEFAULT_PLATFORM_LIMIT.tasks,
+        aiTokens: aiTokens ?? projectPlan?.aiTokens ?? DEFAULT_PLATFORM_LIMIT.aiTokens,
         pieces,
         piecesFilterType,
     }, projectId)

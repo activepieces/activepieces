@@ -19,7 +19,7 @@ export const wootric = createPiece({
   description: 'Measure and boost customer happiness',
 
   auth: wootricAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: WOOTRIC_IMAGE_URL,
   authors: ["abuaboud"],
   actions: [createWootricSurvey],

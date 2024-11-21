@@ -82,7 +82,7 @@ export const flowise = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/flowise.png',
   auth: flowiseAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["aasimsani","kishanprmr","MoShizzle","abuaboud"],
   actions: [

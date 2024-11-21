@@ -12,7 +12,7 @@ export const messagebird = createPiece({
   displayName: 'MessageBird',
   description: 'Next generation CRM for Marketing, Services and Payments',
   auth: messageBirdAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/messagebird.png',
   categories: [PieceCategory.MARKETING],
   authors: ['kishanprmr'],

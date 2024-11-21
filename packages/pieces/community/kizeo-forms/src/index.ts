@@ -33,7 +33,7 @@ export const kizeoForms = createPiece({
   displayName: 'Kizeo Forms',
   description: 'Create custom mobile forms',
 
-  minimumSupportedRelease: '0.6.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/kizeo-forms.png',
   authors: ["BastienMe","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.FORMS_AND_SURVEYS],

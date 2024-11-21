@@ -49,7 +49,7 @@ export const googleGemini = createPiece({
   displayName: 'Google Gemini',
   auth: googleGeminiAuth,
   description: 'Use the new Gemini models from Google',
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["pfernandez98","kishanprmr","MoShizzle","AbdulTheActivePiecer","abuaboud"],

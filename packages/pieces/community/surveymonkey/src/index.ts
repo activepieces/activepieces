@@ -25,7 +25,7 @@ export const surveymonkey = createPiece({
   displayName: 'SurveyMonkey',
   description: 'Receive survey responses from SurveyMonkey',
   auth: smAuth,
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/surveymonkey.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],

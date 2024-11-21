@@ -1,6 +1,5 @@
 import {
   Property,
-  Validators
 } from '@activepieces/pieces-framework';
 import {
   fetchSubscriberByEmail,
@@ -85,7 +84,6 @@ export const tagsPageNumber = Property.Number({
   description: 'Each page of results will contain up to 50 tags.',
   required: false,
   defaultValue: 1,
-  validators: [Validators.number, Validators.nonZero],
 });
 export const sortOrder = Property.StaticDropdown({
   displayName: 'Sort Order',

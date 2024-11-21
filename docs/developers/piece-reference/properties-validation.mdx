@@ -4,184 +4,75 @@ description: "Learn about different types of properties validation "
 icon: 'magnifying-glass'
 ---
 
-Validators help ensure that user input meets certain criteria or constraints. Below are some examples of validator functions:
+Activepieces uses Zod for runtime validation of piece properties. Zod provides a powerful schema validation system that helps ensure your piece receives valid inputs.
 
-## Validators 
+To use Zod validation in your piece, first import the validation helper and Zod:
 
-### Pattern
-Checks if the processed value matches a specific regular expression.
-
-```typescript
-text: Property.LongText({
-    displayName: 'Text',
-    required: true,
-    processors: [],
-    validators: [Validators.pattern(/^[a-zA-Z0-9]+$/);],
-})
-```
-
-### Max Length
-Verifies if the processed string length is within a specified maximum limit.
+<Warning>
+Please make sure the `minimumSupportedRelease` is set to at least `0.36.1` for the validation to work.
+</Warning>
 
 ```typescript
-text: Property.LongText({
-    displayName: 'Text',
-    required: true,
-    processors: [],
-    validators: [Validators.maxLength(100)],
-})
-```
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
-### Min Length
-Verifies if the processed string length is within a specified minimum limit.
+export const getIcecreamFlavor = createAction({
+  name: 'get_icecream_flavor', // Unique name for the action.
+  displayName: 'Get Ice Cream Flavor',
+  description: 'Fetches a random ice cream flavor based on user preferences.',
+  props: {
+    sweetnessLevel: Property.Number({
+      displayName: 'Sweetness Level',
+      required: true,
+      description: 'Specify the sweetness level (0 to 10).',
+    }),
+    includeToppings: Property.Checkbox({
+      displayName: 'Include Toppings',
+      required: false,
+      description: 'Should the flavor include toppings?',
+      defaultValue: true,
+    }),
+    numberOfFlavors: Property.Number({
+      displayName: 'Number of Flavors',
+      required: true,
+      description: 'How many flavors do you want to fetch? (1-5)',
+      defaultValue: 1,
+    }),
+  },
+  async run({ propsValue }) {
+    // Validate the input properties using Zod
+    await propsValidation.validateZod(propsValue, {
+      sweetnessLevel: z.number().min(0).max(10, 'Sweetness level must be between 0 and 10.'),
+      numberOfFlavors: z.number().min(1).max(5, 'You can fetch between 1 and 5 flavors.'),
+    });
 
-```typescript
-text: Property.LongText({
-    displayName: 'Text',
-    required: true,
-    validators: [Validators.minLength(41)],
-})
-```
+    // Action logic
+    const sweetnessLevel = propsValue.sweetnessLevel;
+    const includeToppings = propsValue.includeToppings ?? true; // Default to true
+    const numberOfFlavors = propsValue.numberOfFlavors;
 
-### Min Value
-Ensures that the processed numeric value is greater than or equal to a specified minimum.
+    // Simulate fetching random ice cream flavors
+    const allFlavors = [
+      'Vanilla',
+      'Chocolate',
+      'Strawberry',
+      'Mint',
+      'Cookie Dough',
+      'Pistachio',
+      'Mango',
+      'Coffee',
+      'Salted Caramel',
+      'Blackberry',
+    ];
+    const selectedFlavors = allFlavors.slice(0, numberOfFlavors);
 
-```typescript
-age: Property.Number({
-    displayName: 'Age',
-    required: true,
-    validators: [Validators.minValue(100)],
-})
-```
+    return {
+      message: `Here are your ${numberOfFlavors} flavors: ${selectedFlavors.join(', ')}`,
+      sweetnessLevel: sweetnessLevel,
+      includeToppings: includeToppings,
+    };
+  },
+});
 
-### Max Value
-Ensures that the processed numeric value is less than or equal to a specified maximum.
-
-```typescript
-count: Property.Number({
-    displayName: 'Count',
-    required: true,
-    validators: [Validators.maxValue(7)],
-})
-```
-
-### In Range
-Checks if the processed numeric value falls within a specified range.
-
-```typescript
-score: Property.Number({
-    displayName: 'Score',
-    required: true,
-    validators: [Validators.inRange(0, 100)], // The range is inclusive (0 to 100).
-})
-```
-
-### One Of
-Validates whether the processed value is one of the specified values.
-
-```typescript
-fruit: Property.Text({
-    displayName: 'Fruit',
-    required: true,
-    validators: [Validators.oneOf(["apple", "banana", "orange"])],
-})
-```
-
-### Number
-
-Validates whether the processed value is a valid number.
-
-```typescript
-quantity: Property.Number({
-    displayName: 'Quantity',
-    required: true,
-    validators: [Validators.number],
-})
-```
-
-### Non Zero
-
-Validates whether the processed value is strictly NOT zero. Designed to be used with `Validators.number`
-
-```typescript
-numberToDivideBy: Property.Number({
-    displayName: 'Divide by',
-    required: true,
-    validators: [Validators.number, Validators.nonZero]
-})
-```
-
-### Image
-
-Verifies whether the processed value is a valid image file based on its extension.
-
-```typescript
-imageFile: Property.File({
-    displayName: 'Image File',
-    required: true,
-    validators: [Validators.image],
-})
-```
-
-### File
-Ensures that the processed value is a valid file.
-
-```typescript
-documentFile: Property.File({
-    displayName: 'Document File',
-    required: true,
-    validators: [Validators.file],
-})
-```
-### Email
-Validates whether the processed value is a valid email address.
-
-```typescript
-email: Property.Text({
-    displayName: 'Email',
-    required: true,
-    validators: [Validators.email],
-})
-```
-
-### URL
-
-Ensures that the processed value is a valid URL.
-
-```typescript
-websiteUrl: Property.Text({
-    displayName: 'Website URL',
-    required: true,
-    validators: [Validators.url],
-})
-```
-
-###  Datetime ISO
-
-Validates whether the processed value is a valid ISO-formatted date and time.
-
-```typescript
-eventDate: Property.DateTime({
-    displayName: 'Event Date',
-    required: true,
-    validators: [Validators.datetimeIso],
-})
-```
-
-### Custom
-   Example:
-
-Note: The custom validator allows you to define your own validation logic and error message. It can be used to perform complex validations beyond the provided built-in validators.
-
-```typescript
-const customValidator = {
-    type: ValidationInputType.STRING,
-    fn: (property, processedValue, userInput) => {
-        // Your custom validation logic here
-        if (validationFails) {
-            return "Validation Error: Your custom error message.";
-        }
-        return null;
-    }
-};
 ```

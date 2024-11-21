@@ -23,7 +23,7 @@ export const twilio = createPiece({
   description:
     'Cloud communications platform for building SMS, Voice & Messaging applications',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twilio.png',
   auth: twilioAuth,
   categories: [PieceCategory.COMMUNICATION],

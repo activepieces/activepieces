@@ -32,7 +32,7 @@ export const quickzu = createPiece({
   description: 'Streamline ordering from whatsapp',
 
   auth: quickzuAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/quickzu.png',
   authors: ["kishanprmr","abuaboud"],
   actions: [

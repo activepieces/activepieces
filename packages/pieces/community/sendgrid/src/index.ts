@@ -16,7 +16,7 @@ export const sendgrid = createPiece({
   description:
     'Email delivery service for sending transactional and marketing emails',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sendgrid.png',
   authors: ["ashrafsamhouri","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   categories: [PieceCategory.COMMUNICATION, PieceCategory.MARKETING],

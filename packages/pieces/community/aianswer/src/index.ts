@@ -46,7 +46,7 @@ export const aiAnswerAuth = PieceAuth.SecretText({
 export const aianswer = createPiece({
   displayName: 'AI Answer',
   auth: aiAnswerAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/aianswer.png',
   categories: [
     PieceCategory.COMMUNICATION,
