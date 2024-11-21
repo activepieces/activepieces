@@ -12,27 +12,27 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
-import { rbacApi } from '@/features/platform-admin-panel/lib/rbac-api';
+import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { RoleType } from '@activepieces/shared';
 
-interface CreateRbacDialogProps {
+interface CreateProjectRoleDialogProps {
   onCreate: () => void;
   children: ReactNode;
   platformId: string;
 }
 
-export const CreateRbacDialog = ({
+export const CreateProjectRoleDialog = ({
   onCreate,
   platformId,
   children,
-}: CreateRbacDialogProps) => {
+}: CreateProjectRoleDialogProps) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [roleName, setRoleName] = useState('');
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
-      await rbacApi.create({
+      await projectRoleApi.create({
         name: roleName,
         permissions: [],
         platformId,
@@ -44,7 +44,7 @@ export const CreateRbacDialog = ({
       setIsOpen(false);
       toast({
         title: t('Success'),
-        description: t('RBAC entry created successfully'),
+        description: t('Project Role entry created successfully'),
         duration: 3000,
       });
       setRoleName('');
@@ -52,7 +52,7 @@ export const CreateRbacDialog = ({
     onError: () => {
       toast({
         title: t('Error'),
-        description: t('Failed to create RBAC entry'),
+        description: t('Failed to create Project Role entry'),
         duration: 3000,
       });
     },

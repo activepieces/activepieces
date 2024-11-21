@@ -159,7 +159,7 @@ import { AddConnectionOwner1730123432651 } from './migration/postgres/1730123432
 import { AppConnectionsSetNull1730627612799 } from './migration/postgres/1730627612799-AppConnectionsSetNull'
 import { AddFlowSchemaVersion1730760434336 } from './migration/postgres/1730760434336-AddFlowSchemaVersion'
 import { StoreTriggerEventsInFile1731247581852 } from './migration/postgres/1731247581852-StoreTriggerEventsInFile'
-import { CreateRbacTable1731424289830 } from './migration/postgres/1731424289830-CreateRbacTable'
+import { CreateProjectRoleTable1731424289830 } from './migration/postgres/1731424289830-CreateProjectRoleTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -268,6 +268,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowSchemaVersion1730760434336,
         SwitchToRouter1731019013340,
         StoreTriggerEventsInFile1731247581852,
+        CreateProjectRoleTable1731424289830,
     ]
 
     const edition = system.getEdition()
@@ -323,7 +324,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CascadeProjectDeleteToActivity1710720610670,
                 AddBranchTypeToGit1711073772867,
                 PiecesProjectLimits1712279318440,
-                CreateRbacTable1731424289830,
                 
                 // Cloud Only Migrations, before unifing the migrations.
                 ChangeToJsonToKeepKeysOrder1685991260335,

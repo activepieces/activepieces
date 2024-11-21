@@ -14,8 +14,8 @@ import { userInvitationsHooks } from '../lib/user-invitations-hooks';
 
 export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
   const { refetch } = userInvitationsHooks.useInvitations();
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToRemoveInvitation = checkAccess(
+  const { useCheckAccess } = useAuthorization();
+  const userHasPermissionToRemoveInvitation = useCheckAccess(
     Permission.WRITE_INVITATION,
   );
   async function deleteInvitation() {

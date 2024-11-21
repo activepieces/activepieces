@@ -18,7 +18,7 @@ import { StatusCodes } from 'http-status-codes'
 import { flagService } from '../../flags/flag.service'
 import { pieceService } from '../../pieces/piece-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { getPrincipalRoleOrThrow } from '../authentication/rbac/rbac-middleware'
+import { getPrincipalRoleOrThrow } from '../authentication/project-role/project-role-middleware'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })

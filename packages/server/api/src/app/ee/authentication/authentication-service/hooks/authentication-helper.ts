@@ -5,7 +5,7 @@ import {
     isNil,
     PrincipalType,
     Project,
-    Rbac,
+    ProjectRole,
     User,
 } from '@activepieces/shared'
 import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
@@ -89,7 +89,7 @@ async function autoVerifyUserIfEligible(user: User): Promise<void> {
 
 async function getProjectAndTokenOrThrow(
     user: User,
-): Promise<{ project: Project, token: string, projectRole: Rbac | null }> {
+): Promise<{ project: Project, token: string, projectRole: ProjectRole | null }> {
     const project = await getProjectForUserOrThrow(user)
 
     const projectRole = await projectMemberService.getRole({

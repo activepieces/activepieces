@@ -84,8 +84,8 @@ const FlowRunsPage = () => {
   });
   const openNewWindow = useNewWindow();
   const flows = flowsData?.data;
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToRetryRun = checkAccess(Permission.WRITE_RUN);
+  const { useCheckAccess } = useAuthorization();
+  const userHasPermissionToRetryRun = useCheckAccess(Permission.WRITE_RUN);
 
   const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = [
     {

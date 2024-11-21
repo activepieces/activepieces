@@ -10,7 +10,7 @@ import {
     Platform,
     PlatformRole,
     ProjectMemberRole,
-    Rbac,
+    ProjectRole,
     RoleType,
     User,
     UserStatus,
@@ -44,7 +44,7 @@ beforeAll(async () => {
     app = await setupServer()
 
     for (const role of Object.values(ProjectMemberRole)) {
-        const rbacRole: Rbac = {
+        const projectRole: ProjectRole = {
             name: role,
             permissions: rolePermissions[role],
             type: RoleType.DEFAULT,
@@ -52,8 +52,8 @@ beforeAll(async () => {
             created: dayjs().toISOString(),
             updated: dayjs().toISOString(),
         }
-        await databaseConnection().getRepository('rbac').save(rbacRole)
-    }
+        await databaseConnection().getRepository('project_role').save(projectRole)
+    }  
 })
 
 beforeEach(async () => {
@@ -231,7 +231,7 @@ describe('Authentication API', () => {
             })
             await databaseConnection().getRepository('project').save(mockProject)
 
-            const editorRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: ProjectMemberRole.EDITOR }) as Rbac
+            const editorRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.EDITOR }) as ProjectRole
             
             const mockedUpEmail = faker.internet.email()
             const mockUserInvitation = createMockUserInvitation({

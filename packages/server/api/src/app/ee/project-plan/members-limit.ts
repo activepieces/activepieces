@@ -3,7 +3,7 @@ import {
     ErrorCode,
     Permission,
     ProjectId,
-    Rbac,
+    ProjectRole,
     RoleType,
 } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
@@ -12,7 +12,7 @@ import { projectMemberService } from '../project-members/project-member.service'
 import { projectLimitsService } from './project-plan.service'
 
 export const projectMembersLimit = {
-    async limit({ projectId, platformId, projectRole }: { projectId: ProjectId, platformId: string, projectRole: Rbac }): Promise<void> {
+    async limit({ projectId, platformId, projectRole }: { projectId: ProjectId, platformId: string, projectRole: ProjectRole }): Promise<void> {
         const shouldLimit = await shouldLimitMembers({ projectId, platformId, projectRole })
 
         if (shouldLimit) {
@@ -28,7 +28,7 @@ export const projectMembersLimit = {
 
 const UNLIMITED_TEAM_MEMBERS = 100
 
-async function shouldLimitMembers({ projectId, platformId, projectRole }: { projectId: ProjectId, platformId: string, projectRole: Rbac }): Promise<boolean> {
+async function shouldLimitMembers({ projectId, platformId, projectRole }: { projectId: ProjectId, platformId: string, projectRole: ProjectRole }): Promise<boolean> {
     if (!flagService.isCloudPlatform(platformId)) {
         return false
     }

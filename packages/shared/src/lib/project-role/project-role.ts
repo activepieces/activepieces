@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
 
-export const Rbac = Type.Object({
+export const ProjectRole = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
     permissions: Type.Array(Type.String()),
@@ -10,4 +10,4 @@ export const Rbac = Type.Object({
     userCount: Type.Optional(Type.Number()),
 })
 
-export type Rbac = Static<typeof Rbac>
+export type ProjectRole = Static<typeof ProjectRole>

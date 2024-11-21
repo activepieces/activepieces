@@ -135,9 +135,9 @@ export function InviteUserDialog() {
     },
   });
 
-  const { data: rolesData } = useQuery({
-    queryKey: ['rbac'],
-    queryFn: () => userInvitationApi.listRoles(),
+  const { data: rolesData, refetch: refetchRoles } = useQuery({
+    queryKey: ['project-roles'],
+    queryFn: () => userInvitationApi.listProjectRoles(),
   });
 
   const roles = rolesData?.data ?? [];
@@ -170,6 +170,7 @@ export function InviteUserDialog() {
           if (open) {
             form.reset();
             setInvitationLink('');
+            refetchRoles();
           }
         }}
       >

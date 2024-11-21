@@ -1,5 +1,5 @@
 import { rolePermissions } from '@activepieces/ee-shared'
-import { apId, PlatformRole, PrincipalType, ProjectMemberRole, Rbac, RoleType } from '@activepieces/shared'
+import { apId, PlatformRole, PrincipalType, ProjectMemberRole, ProjectRole, RoleType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
@@ -20,7 +20,7 @@ beforeAll(async () => {
     app = await setupServer()
 
     for (const role of Object.values(ProjectMemberRole)) {
-        const rbacRole: Rbac = {
+        const projectRole: ProjectRole = {
             name: role,
             permissions: rolePermissions[role],
             type: RoleType.DEFAULT,
@@ -28,8 +28,8 @@ beforeAll(async () => {
             created: dayjs().toISOString(),
             updated: dayjs().toISOString(),
         }
-        await databaseConnection().getRepository('rbac').save(rbacRole)
-    }
+        await databaseConnection().getRepository('project_role').save(projectRole)
+    }  
 })
 
 afterAll(async () => {

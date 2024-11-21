@@ -9,7 +9,7 @@ import {
     PlatformRole,
     ProjectId,
     ProjectMemberRole,
-    Rbac,
+    ProjectRole,
     SeekPage,
     UserId,
 } from '@activepieces/shared'
@@ -19,7 +19,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { rbacService } from '../rbac/rbac.service'
+import { projectRoleService } from '../project-role/project-role.service'
 import {
     ProjectMemberEntity,
 } from './project-member.entity'
@@ -102,21 +102,21 @@ export const projectMemberService = {
     }: {
         projectId: ProjectId
         userId: UserId
-    }): Promise<Rbac | null> {
+    }): Promise<ProjectRole | null> {
         const project = await projectService.getOneOrThrow(projectId)
         const user = await userService.getOneOrFail({
             id: userId,
         })
 
         if (user.id === project.ownerId) {
-            return rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
+            return projectRoleService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
-            return rbacService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
+            return projectRoleService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
         }
         const member = await repo()
             .createQueryBuilder('project_member')
-            .leftJoinAndSelect('project_member.projectRole', 'rbac')
+            .leftJoinAndSelect('project_member.projectRole', 'project_role')
             .where('project_member.projectId = :projectId', { projectId })
             .andWhere('project_member.userId = :userId', { userId })
             .getOne()
@@ -141,7 +141,7 @@ export const projectMemberService = {
 type UpsertParams = {
     userId: string
     projectId: ProjectId
-    projectRole: Rbac
+    projectRole: ProjectRole
 }
 
 type NewProjectMember = Omit<ProjectMember, 'created'>

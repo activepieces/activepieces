@@ -6,7 +6,7 @@ import {
     PlatformRole,
     PrincipalType,
     ProjectMemberRole,
-    Rbac,
+    ProjectRole,
     RoleType,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -31,7 +31,7 @@ beforeAll(async () => {
     app = await setupServer()
 
     for (const role of Object.values(ProjectMemberRole)) {
-        const rbacRole: Rbac = {
+        const projectRole: ProjectRole = {
             name: role,
             permissions: rolePermissions[role],
             type: RoleType.DEFAULT,
@@ -39,8 +39,8 @@ beforeAll(async () => {
             created: dayjs().toISOString(),
             updated: dayjs().toISOString(),
         }
-        await databaseConnection().getRepository('rbac').save(rbacRole)
-    }
+        await databaseConnection().getRepository('project_role').save(projectRole)
+    }  
 })
 
 afterAll(async () => {
@@ -70,13 +70,13 @@ describe('Flow API', () => {
             })
             await databaseConnection().getRepository('project').save([mockProject])
 
-            const rbacRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: testRole }) as Rbac
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                projectRole: rbacRole,
+                projectRole,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -127,13 +127,13 @@ describe('Flow API', () => {
             })
             await databaseConnection().getRepository('project').save([mockProject])
 
-            const rbacRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: testRole }) as Rbac
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                projectRole: rbacRole,
+                projectRole,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -216,13 +216,13 @@ describe('Flow API', () => {
             })
             await databaseConnection().getRepository('project').save([mockProject])
 
-            const rbacRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: role }) as Rbac
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: role }) as ProjectRole
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                projectRole: rbacRole,
+                projectRole,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -304,13 +304,13 @@ describe('Flow API', () => {
             })
             await databaseConnection().getRepository('project').save([mockProject])
 
-            const rbacRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: role }) as Rbac
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: role }) as ProjectRole
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                projectRole: rbacRole,
+                projectRole,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -384,13 +384,13 @@ describe('Flow API', () => {
             })
             await databaseConnection().getRepository('project').save([mockProject])
 
-            const rbacRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: testRole }) as Rbac
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                projectRole: rbacRole,
+                projectRole,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 

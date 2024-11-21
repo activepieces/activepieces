@@ -5,31 +5,34 @@ import { useState, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { rbacApi } from '@/features/platform-admin-panel/lib/rbac-api';
-import { Rbac, RoleType } from '@activepieces/shared';
+import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
+import { ProjectRole, RoleType } from '@activepieces/shared';
 
 import { InitialPermissions } from './index';
 
-interface EditRbacDialogProps {
-  rbac: Rbac;
+interface EditProjectRoleDialogProps {
+  projectRole: ProjectRole;
   onUpdate: () => void;
   children: ReactNode;
   disabled?: boolean;
 }
 
-export const EditRbacDialog = ({
-  rbac,
+export const EditProjectRoleDialog = ({
+  projectRole,
   onUpdate,
   children,
   disabled = false,
-}: EditRbacDialogProps) => {
+}: EditProjectRoleDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [roleName, setRoleName] = useState(rbac.name);
-  const [permissions, setPermissions] = useState(rbac.permissions);
+  const [roleName, setRoleName] = useState(projectRole.name);
+  const [permissions, setPermissions] = useState(projectRole.permissions);
 
   const { mutate } = useMutation({
     mutationFn: async () => {
-      await rbacApi.update(rbac.id, { name: roleName, permissions });
+      await projectRoleApi.update(projectRole.id, {
+        name: roleName,
+        permissions,
+      });
     },
     onSuccess: () => {
       setIsOpen(false);
@@ -105,8 +108,8 @@ export const EditRbacDialog = ({
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="w-full max-w-2xl">
           <DialogTitle>
-            {(rbac.type === RoleType.DEFAULT ? t('View ') : t('Edit ')) +
-              rbac.name}
+            {(projectRole.type === RoleType.DEFAULT ? t('View ') : t('Edit ')) +
+              projectRole.name}
           </DialogTitle>
           <div className="grid space-y-4 mt-4">
             <div>

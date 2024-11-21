@@ -8,6 +8,7 @@ import {
   ScrollText,
   UserCog,
   Sparkles,
+  UserCheck,
 } from 'lucide-react';
 
 import SidebarLayout from '@/app/components/sidebar-layout';
@@ -72,9 +73,9 @@ export default function PlatformSettingsLayout({
       icon: <CreditCard size={iconSize} />,
     });
     sidebarNavItems.push({
-      title: 'RBAC',
-      href: '/platform/settings/rbac',
-      icon: <ShieldPlus size={iconSize} />,
+      title: 'Project Roles',
+      href: '/platform/settings/project-role',
+      icon: <UserCheck size={iconSize} />,
     });
   }
 

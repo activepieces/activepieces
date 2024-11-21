@@ -2,7 +2,7 @@ import {
     ApiKeyResponseWithValue,
     rolePermissions,
 } from '@activepieces/ee-shared'
-import { apId, InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, Rbac, RoleType, SendUserInvitationRequest, User } from '@activepieces/shared'
+import { apId, InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, ProjectRole, RoleType, SendUserInvitationRequest, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
@@ -27,7 +27,7 @@ beforeAll(async () => {
     app = await setupServer()
 
     for (const role of Object.values(ProjectMemberRole)) {
-        const rbacRole: Rbac = {
+        const projectRole: ProjectRole = {
             name: role,
             permissions: rolePermissions[role],
             type: RoleType.DEFAULT,
@@ -35,8 +35,8 @@ beforeAll(async () => {
             created: dayjs().toISOString(),
             updated: dayjs().toISOString(),
         }
-        await databaseConnection().getRepository('rbac').save(rbacRole)
-    }
+        await databaseConnection().getRepository('project_role').save(projectRole)
+    }  
 })
 
 beforeEach(async () => {
@@ -170,7 +170,7 @@ describe('User Invitation API', () => {
             const { mockApiKey } = await createBasicEnvironment({})
             const { mockProject: mockProject2 } = await createBasicEnvironment({})
 
-            const adminRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as Rbac
+            const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
                 projectRole: adminRole,
@@ -196,7 +196,7 @@ describe('User Invitation API', () => {
         it('Invite user to Project Member using api key', async () => {
             const { mockApiKey, mockProject } = await createBasicEnvironment({})
 
-            const adminRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as Rbac
+            const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as ProjectRole
             
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
                 projectRole: adminRole,
@@ -217,7 +217,7 @@ describe('User Invitation API', () => {
 
         it('Invite user to Project Member', async () => {
             const { mockOwnerToken, mockProject } = await createBasicEnvironment({})
-            const adminRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as Rbac
+            const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
                 projectRole: adminRole,
@@ -242,10 +242,10 @@ describe('User Invitation API', () => {
             ProjectMemberRole.OPERATOR,
         ])('Fails if user role is %s', async (testRole) => {
             const { mockMember, mockProject } = await createBasicEnvironment({})
-            const rbacRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: testRole }) as Rbac
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole: rbacRole,
+                projectRole,
                 email: faker.internet.email(),
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
@@ -254,7 +254,7 @@ describe('User Invitation API', () => {
                 userId: mockMember.id,
                 platformId: mockMember.platformId!,
                 projectId: mockProject.id,
-                projectRole: rbacRole,
+                projectRole,
             })
             await databaseConnection().getRepository('project_member').save(mockProjectMember)
 
@@ -288,7 +288,7 @@ describe('User Invitation API', () => {
         it('should succeed', async () => {
             const { mockOwnerToken, mockPlatform, mockProject } = await createBasicEnvironment({})
 
-            const adminRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as Rbac
+            const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as ProjectRole
 
             const mockUserInvitation = createMockUserInvitation({
                 email: faker.internet.email(),
@@ -315,7 +315,7 @@ describe('User Invitation API', () => {
 
         it('should succeed with API key', async () => {
             const { mockApiKey, mockPlatform, mockProject } = await createBasicEnvironment({})
-            const adminRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as Rbac
+            const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as ProjectRole
 
             const mockUserInvitation = createMockUserInvitation({
                 email: faker.internet.email(),
@@ -344,7 +344,7 @@ describe('User Invitation API', () => {
         it('should return empty list with API key from another platform', async () => {
             const { mockPlatform, mockProject } = await createBasicEnvironment({})
 
-            const adminRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as Rbac
+            const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as ProjectRole
 
             const mockUserInvitation = createMockUserInvitation({
                 email: faker.internet.email(),
@@ -377,7 +377,7 @@ describe('User Invitation API', () => {
             const { mockApiKey: apiKey1 } = await createBasicEnvironment({})
             const { mockProject: project2 } = await createBasicEnvironment({})
 
-            const adminRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as Rbac
+            const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as ProjectRole
 
             const mockUserInvitation = createMockUserInvitation({
                 email: faker.internet.email(),
@@ -415,10 +415,10 @@ describe('User Invitation API', () => {
         ])('Succeed if user role is %s', async (testRole) => {
             const { mockMember, mockProject } = await createBasicEnvironment({})
 
-            const rbacRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: testRole }) as Rbac
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole: rbacRole,
+                projectRole,
                 email: faker.internet.email(),
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
@@ -427,7 +427,7 @@ describe('User Invitation API', () => {
                 userId: mockMember.id,
                 platformId: mockMember.platformId!,
                 projectId: mockProject.id,
-                projectRole: rbacRole,
+                projectRole,
             })
             await databaseConnection().getRepository('project_member').save(mockProjectMember)
 

@@ -1,5 +1,5 @@
 import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { apId, CreateRbacRequestBody, PrincipalType, RoleType, UpdateRbacRequestBody } from '@activepieces/shared'
+import { apId, CreateProjectRoleRequestBody, PrincipalType, RoleType, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -8,7 +8,7 @@ import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockCustomDomain,
-    createMockRbac,
+    createMockProjectRole,
     createMockUser,
     mockBasicSetup } from '../../../helpers/mocks'
 
@@ -209,8 +209,8 @@ describe('Custom Domain API', () => {
         })
     })
 
-    describe('Create Rbac Rule', () => {
-        it('should create a new rbac rule', async () => {
+    describe('Create Project Role', () => {
+        it('should create a new project role', async () => {
             const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -218,12 +218,12 @@ describe('Custom Domain API', () => {
                 platform: { id: mockPlatformOne.id },
             })
             
-            const rbacRule = createMockRbac({ platformId: mockPlatformOne.id })
+            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/rbac',
-                body: rbacRule,
+                url: '/v1/project-roles',
+                body: projectRole,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -231,7 +231,7 @@ describe('Custom Domain API', () => {
             
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
         })
-        it('should fail to create a new rbac rule if user is not platform owner', async () => {
+        it('should fail to create a new project role if user is not platform owner', async () => {
             const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
             const nonOwnerUserId = createMockUser()
             await databaseConnection().getRepository('user').save(nonOwnerUserId)
@@ -241,12 +241,12 @@ describe('Custom Domain API', () => {
                 platform: { id: mockPlatformOne.id },
             })
 
-            const rbacRule = createMockRbac({ platformId: mockPlatformOne.id })
+            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/rbac',
-                body: rbacRule,
+                url: '/v1/project-roles',
+                body: projectRole,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -255,7 +255,7 @@ describe('Custom Domain API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
-        it('should fail to create a new rbac rule if rbac rule is invalid', async () => {
+        it('should fail to create a new project role if project role is invalid', async () => {
             const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -263,7 +263,7 @@ describe('Custom Domain API', () => {
                 platform: { id: mockPlatformOne.id },
             })
 
-            const request: CreateRbacRequestBody = {
+            const request: CreateProjectRoleRequestBody = {
                 name: faker.lorem.word(),
                 permissions: ['read', 'write'],
                 platformId: 'FAKE ID',
@@ -272,7 +272,7 @@ describe('Custom Domain API', () => {
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/rbac',
+                url: '/v1/project-roles',
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -283,8 +283,8 @@ describe('Custom Domain API', () => {
         })
     })
 
-    describe('Get Rbac Rule', () => {
-        it('should get all rbac rules', async () => {
+    describe('Get Project Role', () => {
+        it('should get all project roles', async () => {
             const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -294,7 +294,7 @@ describe('Custom Domain API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/rbac',
+                url: '/v1/project-roles',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -302,7 +302,7 @@ describe('Custom Domain API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
-        it('should fail to get all rbac rules if user is not platform owner', async () => {
+        it('should fail to get all project roles if user is not platform owner', async () => {
             const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
             const nonOwnerUserId = createMockUser()
             await databaseConnection().getRepository('user').save(nonOwnerUserId)
@@ -314,7 +314,7 @@ describe('Custom Domain API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/rbac',
+                url: '/v1/project-roles',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -324,8 +324,8 @@ describe('Custom Domain API', () => {
         })
     })
 
-    describe('Update Rbac Rule', () => {
-        it('should update a rbac rule', async () => {
+    describe('Update Project Role', () => {
+        it('should update a project role', async () => {
             const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -333,18 +333,18 @@ describe('Custom Domain API', () => {
                 platform: { id: mockPlatformOne.id },
             })
 
-            const rbacRule = createMockRbac({ platformId: mockPlatformOne.id })
+            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
 
-            await databaseConnection().getRepository('rbac').save(rbacRule)
+            await databaseConnection().getRepository('project_role').save(projectRole)
 
-            const request: UpdateRbacRequestBody = {
+            const request: UpdateProjectRoleRequestBody = {
                 name: faker.lorem.word(),
                 permissions: ['read', 'write'],
             }
 
             const response = await app?.inject({
                 method: 'POST',
-                url: `/v1/rbac/${rbacRule.id}`,
+                url: `/v1/project-roles/${projectRole.id}`,
                 body: request,
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -355,8 +355,8 @@ describe('Custom Domain API', () => {
         })
     })
 
-    describe('Delete Rbac Rule', () => {
-        it('should delete a rbac rule', async () => {
+    describe('Delete Project Role', () => {
+        it('should delete a project role', async () => {
             const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
 
             const testToken = await generateMockToken({
@@ -365,13 +365,13 @@ describe('Custom Domain API', () => {
                 platform: { id: mockPlatformOne.id },
             })
 
-            const rbacRule = createMockRbac({ platformId: mockPlatformOne.id })
-            await databaseConnection().getRepository('rbac').save(rbacRule)
+            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            await databaseConnection().getRepository('project_role').save(projectRole)
 
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/rbac/${rbacRule.id}`,
+                url: `/v1/project-roles/${projectRole.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -380,7 +380,7 @@ describe('Custom Domain API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
 
-        it('should fail to delete a rbac rule if user is not platform owner', async () => {
+        it('should fail to delete a project role if user is not platform owner', async () => {
             const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
             const nonOwnerUserId = createMockUser()
             await databaseConnection().getRepository('user').save(nonOwnerUserId)
@@ -390,12 +390,12 @@ describe('Custom Domain API', () => {
                 platform: { id: mockPlatformOne.id },
             })
 
-            const rbacRule = createMockRbac({ platformId: mockPlatformOne.id })
-            await databaseConnection().getRepository('rbac').save(rbacRule)
+            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            await databaseConnection().getRepository('project_role').save(projectRole)
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/rbac/${rbacRule.id}`,
+                url: `/v1/project-roles/${projectRole.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -404,7 +404,7 @@ describe('Custom Domain API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
-        it('should fail to delete a rbac rule if rbac rule does not exist', async () => {
+        it('should fail to delete a project role if project role does not exist', async () => {
             const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
 
             const testToken = await generateMockToken({
@@ -415,7 +415,7 @@ describe('Custom Domain API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/rbac/${apId()}`,
+                url: `/v1/project-roles/${apId()}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

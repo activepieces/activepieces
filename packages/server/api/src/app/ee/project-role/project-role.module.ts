@@ -1,8 +1,9 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { rbacController } from './rbac.controller'
+import { projectRoleController } from './project-role.controller'
 
-export const rbacModule: FastifyPluginAsyncTypebox = async (app) => {
+export const projectRoleModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-    await app.register(rbacController, { prefix: '/v1/rbac' })
+    await app.register(projectRoleController, { prefix: '/v1/project-roles' })
 }
+    

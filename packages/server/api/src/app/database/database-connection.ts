@@ -25,7 +25,7 @@ import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
-import { RbacEntity } from '../ee/rbac/rbac.entity'
+import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
 import { ReferralEntity } from '../ee/referrals/referral.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { FileEntity } from '../file/file.entity'
@@ -76,6 +76,7 @@ function getEntities(): EntitySchema<unknown>[] {
         UserInvitationEntity,
         WorkerMachineEntity,
         AiProviderEntity,
+        ProjectRoleEntity,
     ]
 
     switch (edition) {
@@ -92,7 +93,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 FlowTemplateEntity,
                 GitRepoEntity,
                 AuditEventEntity,
-                RbacEntity,
+
                 // CLOUD
                 AppSumoEntity,
                 ReferralEntity,
@@ -166,4 +167,4 @@ export function APArrayContains<T extends ObjectLiteral>(
 }
 
 // Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
-// export const exportedConnection = databaseConnection()
+export const exportedConnection = databaseConnection()

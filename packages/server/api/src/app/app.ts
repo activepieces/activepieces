@@ -1,4 +1,4 @@
-import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, RbacEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
+import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, initializeSentry, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
@@ -30,7 +30,7 @@ import { cloudAuthenticationServiceHooks } from './ee/authentication/authenticat
 import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/enterprise-authentication-service-hooks'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
-import { rbacMiddleware } from './ee/authentication/rbac/rbac-middleware'
+import { projectRoleMiddleware } from './ee/authentication/project-role/project-role-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
@@ -52,9 +52,9 @@ import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterpr
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { projectMemberModule } from './ee/project-members/project-member.module'
+import { projectRoleModule } from './ee/project-role/project-role.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
-import { rbacModule } from './ee/rbac/rbac.module'
 import { referralModule } from './ee/referrals/referral.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
@@ -128,7 +128,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     [ApplicationEventName.USER_PASSWORD_RESET]: AuthenticationEvent,
                     [ApplicationEventName.USER_EMAIL_VERIFIED]: AuthenticationEvent,
                     [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
-                    [ApplicationEventName.RBAC_CREATED]: RbacEvent,
+                    [ApplicationEventName.PROJECT_ROLE_CREATED]: ProjectRoleEvent,
                     'flow-template': FlowTemplate,
                     'folder': Folder,
                     'user-invitation': UserInvitation,
@@ -193,7 +193,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     })
 
     app.addHook('preHandler', securityHandlerChain)
-    app.addHook('preHandler', rbacMiddleware)
+    app.addHook('preHandler', projectRoleMiddleware)
     await systemJobsSchedule.init()
     await app.register(fileModule)
     await app.register(flagModule)
@@ -279,7 +279,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
-            await app.register(rbacModule)
+            await app.register(projectRoleModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -310,7 +310,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
-            await app.register(rbacModule)
+            await app.register(projectRoleModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({
                 service: platformOAuth2Service,

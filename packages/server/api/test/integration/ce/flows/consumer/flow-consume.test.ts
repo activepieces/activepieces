@@ -11,7 +11,7 @@ import {
     PieceType,
     ProgressUpdateType,
     ProjectMemberRole,
-    Rbac,
+    ProjectRole,
     RoleType,
     RunEnvironment,
     TriggerType,
@@ -38,7 +38,7 @@ beforeAll(async () => {
     app = await setupServer()
 
     for (const role of Object.values(ProjectMemberRole)) {
-        const rbacRole: Rbac = {
+        const projectRole: ProjectRole = {
             name: role,
             permissions: rolePermissions[role],
             type: RoleType.DEFAULT,
@@ -46,7 +46,7 @@ beforeAll(async () => {
             created: dayjs().toISOString(),
             updated: dayjs().toISOString(),
         }
-        await databaseConnection().getRepository('rbac').save(rbacRole)
+        await databaseConnection().getRepository('project_role').save(projectRole)
     }
 
     await app.listen({

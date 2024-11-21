@@ -13,15 +13,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { rbacApi } from '@/features/platform-admin-panel/lib/rbac-api';
+import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { Rbac, RoleType, Permission } from '@activepieces/shared';
+import { ProjectRole, RoleType, Permission } from '@activepieces/shared';
 
-import { CreateRbacDialog } from './create-rbac-dialog';
-import { EditRbacDialog } from './edit-rbac-dialog';
+import { CreateProjectRoleDialog } from './create-project-role-dialog';
+import { EditProjectRoleDialog } from './edit-project-role-dialog';
 
-const columns: ColumnDef<RowDataWithActions<Rbac>>[] = [
+const columns: ColumnDef<RowDataWithActions<ProjectRole>>[] = [
   {
     accessorKey: 'name',
     accessorFn: (row) => row.name,
@@ -121,25 +121,23 @@ export const InitialPermissions = [
   },
 ];
 
-const RbacPage = () => {
+const ProjectRolePage = () => {
   const { toast } = useToast();
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['rbac'],
-    queryFn: () => rbacApi.list(),
+    queryKey: ['project-roles'],
+    queryFn: () => projectRoleApi.list(),
   });
 
-  console.log(data);
-
-  const { mutate: deleteRbac, isPending: isDeleting } = useMutation({
-    mutationKey: ['delete-rbac'],
-    mutationFn: (id: string) => rbacApi.delete(id),
+  const { mutate: deleteProjectRole, isPending: isDeleting } = useMutation({
+    mutationKey: ['delete-project-role'],
+    mutationFn: (id: string) => projectRoleApi.delete(id),
     onSuccess: () => {
       refetch();
       toast({
         title: t('Success'),
-        description: t('RBAC entry deleted successfully'),
+        description: t('Project Role entry deleted successfully'),
         duration: 3000,
       });
     },
@@ -151,13 +149,16 @@ const RbacPage = () => {
   return (
     <div className="flex flex-col w-full">
       <div className="flex items-center justify-between flex-row mb-4">
-        <h1 className="text-2xl font-bold">{t('RBAC Management')}</h1>
-        <CreateRbacDialog onCreate={() => refetch()} platformId={platform.id}>
+        <h1 className="text-2xl font-bold">{t('Project Role Management')}</h1>
+        <CreateProjectRoleDialog
+          onCreate={() => refetch()}
+          platformId={platform.id}
+        >
           <Button className="flex items-center">
             <Plus className="mr-2" />
             {t('New Role')}
           </Button>
-        </CreateRbacDialog>
+        </CreateProjectRoleDialog>
       </div>
       <DataTable
         columns={columns}
@@ -169,8 +170,8 @@ const RbacPage = () => {
               <div className="flex items-end justify-end">
                 <Tooltip>
                   <TooltipTrigger>
-                    <EditRbacDialog
-                      rbac={row}
+                    <EditProjectRoleDialog
+                      projectRole={row}
                       onUpdate={() => refetch()}
                       disabled={row.type === RoleType.DEFAULT}
                     >
@@ -179,7 +180,7 @@ const RbacPage = () => {
                       ) : (
                         <Pencil className="size-4" />
                       )}
-                    </EditRbacDialog>
+                    </EditProjectRoleDialog>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
                     {row.type === RoleType.DEFAULT
@@ -201,8 +202,8 @@ const RbacPage = () => {
                         message={t(
                           'Are you sure you want to delete this role?',
                         )}
-                        entityName={`${t('RBAC')} ${row.name}`}
-                        mutationFn={async () => deleteRbac(row.id)}
+                        entityName={`${t('Project Role')} ${row.name}`}
+                        mutationFn={async () => deleteProjectRole(row.id)}
                       >
                         <Button
                           loading={isDeleting}
@@ -228,5 +229,5 @@ const RbacPage = () => {
   );
 };
 
-RbacPage.displayName = 'RbacPage';
-export { RbacPage };
+ProjectRolePage.displayName = 'ProjectRolePage';
+export { ProjectRolePage };

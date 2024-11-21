@@ -110,12 +110,12 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
 
 
 
-export class CreateRbacTable1731424289830 implements MigrationInterface {
-    name = 'CreateRbacTable1731424289830'
+export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
+    name = 'CreateProjectRoleTable1731424289830'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            CREATE TABLE "rbac" (
+            CREATE TABLE "project_role" (
                 "id" character varying(21) NOT NULL,
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -131,22 +131,22 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
 
         for (const platformId of platformIds) {
             await queryRunner.query(
-                'INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+                'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
                 [apId(), ProjectMemberRole.VIEWER, JSON.stringify(rolePermissions[ProjectMemberRole.VIEWER]), platformId, RoleType.DEFAULT],
             )
 
             await queryRunner.query(
-                'INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+                'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
                 [apId(), ProjectMemberRole.EDITOR, JSON.stringify(rolePermissions[ProjectMemberRole.EDITOR]), platformId, RoleType.DEFAULT],
             )
 
             await queryRunner.query(
-                'INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+                'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
                 [apId(), ProjectMemberRole.ADMIN, JSON.stringify(rolePermissions[ProjectMemberRole.ADMIN]), platformId, RoleType.DEFAULT],
             )
 
             await queryRunner.query(
-                'INSERT INTO "rbac" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+                'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
                 [apId(), ProjectMemberRole.OPERATOR, JSON.stringify(rolePermissions[ProjectMemberRole.OPERATOR]), platformId, RoleType.DEFAULT],
             )
         }
@@ -158,27 +158,27 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "project_member" 
             ADD CONSTRAINT "fk_project_member_project_role_id" 
-            FOREIGN KEY ("projectRoleId") REFERENCES "rbac"("id") ON DELETE CASCADE
+            FOREIGN KEY ("projectRoleId") REFERENCES "project_role"("id") ON DELETE CASCADE
         `)
 
         const projectMemberRoles = await queryRunner.query(`
             SELECT pm.id, r.name as projectRole, pm."platformId"
             FROM project_member pm
-            LEFT JOIN rbac r ON pm."projectRoleId" = r.id
+            LEFT JOIN project_role r ON pm."projectRoleId" = r.id
         `)
 
         for (const projectMemberRole of projectMemberRoles) {
             const roleName = projectMemberRole.projectRole
-            const rbacIdResult = await queryRunner.query(
-                'SELECT id FROM rbac WHERE name = $1 AND "platformId" = $2',
+            const projectRoleIdResult = await queryRunner.query(
+                'SELECT id FROM project_role WHERE name = $1 AND "platformId" = $2',
                 [roleName, projectMemberRole.platformId],
             )
 
-            const rbacId = rbacIdResult[0]?.id
+            const projectRoleId = projectRoleIdResult[0]?.id
 
             await queryRunner.query(
                 'UPDATE "project_member" SET "projectRoleId" = $1 WHERE id = $2',
-                [rbacId, projectMemberRole.id],
+                [projectRoleId, projectMemberRole.id],
             )
         }
 
@@ -209,7 +209,7 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "user_invitation" 
             ADD CONSTRAINT "fk_user_invitation_project_role_id" 
-            FOREIGN KEY ("projectRoleId") REFERENCES "rbac"("id") ON DELETE CASCADE
+            FOREIGN KEY ("projectRoleId") REFERENCES "project_role"("id") ON DELETE CASCADE
         `)
     }
 
@@ -231,7 +231,7 @@ export class CreateRbacTable1731424289830 implements MigrationInterface {
         `)
 
         await queryRunner.query(`
-            DROP TABLE "rbac"
+            DROP TABLE "project_role"
         `)
     }
 

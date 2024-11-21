@@ -49,7 +49,7 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
         },
         projectRole: {
             type: 'many-to-one',
-            target: 'rbac',
+            target: 'project_role',
             cascade: true,
             onDelete: 'CASCADE',
             joinColumn: {

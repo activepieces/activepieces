@@ -1,5 +1,5 @@
 import { rolePermissions } from '@activepieces/ee-shared'
-import { apId, PiecesFilterType, PieceType, ProjectMemberRole, Rbac, RoleType } from '@activepieces/shared'
+import { apId, PiecesFilterType, PieceType, ProjectMemberRole, ProjectRole, RoleType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
@@ -25,7 +25,7 @@ beforeAll(async () => {
     app = await setupServer()
 
     for (const role of Object.values(ProjectMemberRole)) {
-        const rbacRole: Rbac = {
+        const projectRole: ProjectRole = {
             name: role,
             permissions: rolePermissions[role],
             type: RoleType.DEFAULT,
@@ -33,7 +33,7 @@ beforeAll(async () => {
             created: dayjs().toISOString(),
             updated: dayjs().toISOString(),
         }
-        await databaseConnection().getRepository('rbac').save(rbacRole)
+        await databaseConnection().getRepository('project_role').save(projectRole)
     }
 })
 
@@ -251,13 +251,13 @@ describe('Managed Authentication API', () => {
 
             const mockedEmail = faker.internet.email()
 
-            const rbacRole = await databaseConnection().getRepository('rbac').findOneByOrFail({ name: ProjectMemberRole.VIEWER }) as Rbac
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.VIEWER }) as ProjectRole
 
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
                 externalEmail: mockedEmail,
                 signingKeyId: mockSigningKey.id,
-                projectRole: rbacRole,
+                projectRole,
             })
 
             // act
@@ -286,7 +286,7 @@ describe('Managed Authentication API', () => {
             expect(generatedProjectMember?.projectId).toBe(responseBody?.projectId)
             expect(generatedProjectMember?.userId).toBe(responseBody?.id)
             expect(generatedProjectMember?.platformId).toBe(mockPlatform.id)
-            expect(generatedProjectMember?.projectRole.name).toBe(rbacRole.name)
+            expect(generatedProjectMember?.projectRole.name).toBe(projectRole.name)
         })
 
         it('Adds new user to existing project', async () => {

@@ -1,9 +1,9 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole, Rbac } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole, ProjectRole } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
-import { rbacService } from '../../rbac/rbac.service'
+import { projectRoleService } from '../../project-role/project-role.service'
 import { signingKeyService } from '../../signing-key/signing-key-service'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
@@ -37,7 +37,7 @@ export const externalTokenExtractor = {
 
             const optionalEmail = payload.email ?? payload.externalUserId
 
-            const defaultRole = await rbacService.getDefaultRoleByName(ProjectMemberRole.EDITOR)
+            const defaultRole = await projectRoleService.getDefaultRoleByName(ProjectMemberRole.EDITOR)
 
             const { piecesFilterType, piecesTags } = extractPieces(payload)
             return {
@@ -154,7 +154,7 @@ export type ExternalPrincipal = {
     externalEmail: string
     externalFirstName: string
     externalLastName: string
-    projectRole: Rbac
+    projectRole: ProjectRole
     pieces: {
         filterType: PiecesFilterType
         tags: string[]

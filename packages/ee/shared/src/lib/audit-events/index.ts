@@ -9,7 +9,7 @@ import {
   FlowVersion,
   Folder,
   Project,
-  Rbac,
+  ProjectRole,
   User,
 } from '@activepieces/shared';
 import { SigningKey } from '../signing-key';
@@ -38,7 +38,7 @@ export enum ApplicationEventName {
   USER_PASSWORD_RESET = 'user.password.reset',
   USER_EMAIL_VERIFIED = 'user.email.verified',
   SIGNING_KEY_CREATED = 'signing.key.created',
-  RBAC_CREATED = 'rbac.created',
+  PROJECT_ROLE_CREATED = 'project.role.created',
 }
 
 const BaseAuditEventProps = {
@@ -200,15 +200,15 @@ export const SigningKeyEvent = Type.Object({
 
 export type SigningKeyEvent = Static<typeof SigningKeyEvent>;
 
-export const RbacEvent = Type.Object({
+export const ProjectRoleEvent = Type.Object({
   ...BaseAuditEventProps,
-  action: Type.Literal(ApplicationEventName.RBAC_CREATED),
+  action: Type.Literal(ApplicationEventName.PROJECT_ROLE_CREATED),
   data: Type.Object({
-    rbac: Type.Pick(Rbac, ['id', 'created', 'updated', 'name', 'permissions', 'platformId']),
+    projectRole: Type.Pick(ProjectRole, ['id', 'created', 'updated', 'name', 'permissions', 'platformId']),
   }),
 });
 
-export type RbacEvent = Static<typeof RbacEvent>;
+export type ProjectRoleEvent = Static<typeof ProjectRoleEvent>;
 
 export const ApplicationEvent = Type.Union([
   ConnectionEvent,

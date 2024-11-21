@@ -9,15 +9,15 @@ import {
     Permission,
     Principal,
     PrincipalType,
-    Rbac,
+    ProjectRole,
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { projectMemberService } from '../../project-members/project-member.service'
-import { rbacService } from '../../rbac/rbac.service'
+import { projectRoleService } from '../../project-role/project-role.service'
 
 const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
 
-export const rbacMiddleware = async (req: FastifyRequest): Promise<void> => {
+export const projectRoleMiddleware = async (req: FastifyRequest): Promise<void> => {
     if (ignoreRequest(req)) {
         return
     }
@@ -91,7 +91,7 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
     return req.routeConfig.permission === undefined
 }
 
-export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<Rbac> => {
+export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<ProjectRole> => {
     const { id: userId, projectId } = principal
 
     const projectRole = await projectMemberService.getRole({
@@ -119,7 +119,7 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
         return true
     }
 
-    const principalRole = await rbacService.get(principalRoleId)
+    const principalRole = await projectRoleService.get(principalRoleId)
     
     if (isNil(principalRole)) {
         return false
@@ -128,7 +128,7 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
     return principalRole.permissions.includes(routePermission)
 }
 
-const throwPermissionDenied = (projectRole: Rbac, principal: Principal, permission: Permission | undefined): never => {
+const throwPermissionDenied = (projectRole: ProjectRole, principal: Principal, permission: Permission | undefined): never => {
     throw new ActivepiecesError({
         code: ErrorCode.PERMISSION_DENIED,
         params: {

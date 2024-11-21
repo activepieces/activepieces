@@ -1,6 +1,6 @@
 import {
   ListUserInvitationsRequest,
-  Rbac,
+  ProjectRole,
   SeekPage,
   SendUserInvitationRequest,
   UserInvitation,
@@ -25,7 +25,7 @@ export const userInvitationApi = {
       invitationToken: token,
     });
   },
-  listRoles(): Promise<SeekPage<Rbac>> {
-    return api.get<SeekPage<Rbac>>(`/v1/rbac`);
+  listProjectRoles(): Promise<SeekPage<ProjectRole>> {
+    return api.get<SeekPage<ProjectRole>>(`/v1/project-roles`);
   },
 };

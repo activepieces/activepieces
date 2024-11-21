@@ -1,5 +1,5 @@
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, Rbac, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
@@ -286,7 +286,7 @@ type CreateParams = {
     projectId: string | null
     status: InvitationStatus
     type: InvitationType
-    projectRole: Rbac | null
+    projectRole: ProjectRole | null
     invitationExpirySeconds: number
 }
 

@@ -40,7 +40,7 @@ import {
     Project,
     ProjectMemberRole,
     ProjectPlan,
-    Rbac,
+    ProjectRole,
     RoleType,
     RunEnvironment,
     TemplateType,
@@ -544,15 +544,15 @@ export const createMockFile = (file?: Partial<File>): File => {
     }
 }
 
-export const createMockRbac = (rbac?: Partial<Rbac>): Rbac => {
+export const createMockProjectRole = (projectRole?: Partial<ProjectRole>): ProjectRole => {
     return {
-        id: rbac?.id ?? apId(),
-        name: rbac?.name ?? faker.lorem.word(),
-        created: rbac?.created ?? faker.date.recent().toISOString(),
-        updated: rbac?.updated ?? faker.date.recent().toISOString(),
-        permissions: rbac?.permissions ?? [],
-        platformId: rbac?.platformId ?? apId(),
-        type: rbac?.type ?? faker.helpers.enumValue(RoleType),
+        id: projectRole?.id ?? apId(),
+        name: projectRole?.name ?? faker.lorem.word(),
+        created: projectRole?.created ?? faker.date.recent().toISOString(),
+        updated: projectRole?.updated ?? faker.date.recent().toISOString(),
+        permissions: projectRole?.permissions ?? [],
+        platformId: projectRole?.platformId ?? apId(),
+        type: projectRole?.type ?? faker.helpers.enumValue(RoleType),
     }
 }
 

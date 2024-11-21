@@ -1,15 +1,15 @@
-import { PlatformId, Rbac } from '@activepieces/shared'
+import { PlatformId, ProjectRole } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ARRAY_COLUMN_TYPE, BaseColumnSchemaPart, isPostgres } from '../../database/database-common'
 
-export type RbacSchema = Rbac & {
+export type ProjectRoleSchema = ProjectRole & {
     name: string
     permissions: string[]
     platformId: PlatformId
 }
 
-export const RbacEntity = new EntitySchema<RbacSchema>({
-    name: 'rbac',
+export const ProjectRoleEntity = new EntitySchema<ProjectRoleSchema>({
+    name: 'project_role',
     columns: {
         ...BaseColumnSchemaPart,
         name: {
