@@ -89,7 +89,7 @@ async function autoVerifyUserIfEligible(user: User): Promise<void> {
 
 async function getProjectAndTokenOrThrow(
     user: User,
-): Promise<{ project: Project, token: string, projectRole: ProjectRole | null }> {
+): Promise<{ project: Project, token: string, projectRole: ProjectRole}> {
     const project = await getProjectForUserOrThrow(user)
 
     const projectRole = await projectMemberService.getRole({

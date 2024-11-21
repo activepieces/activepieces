@@ -30,7 +30,7 @@ import { cloudAuthenticationServiceHooks } from './ee/authentication/authenticat
 import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/enterprise-authentication-service-hooks'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
-import { projectRoleMiddleware } from './ee/authentication/project-role/project-role-middleware'
+import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
 import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
@@ -193,7 +193,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     })
 
     app.addHook('preHandler', securityHandlerChain)
-    app.addHook('preHandler', projectRoleMiddleware)
+    app.addHook('preHandler', rbacMiddleware)
     await systemJobsSchedule.init()
     await app.register(fileModule)
     await app.register(flagModule)

@@ -8,6 +8,7 @@ export const ProjectMember = Type.Object({
     platformId: ApId,
     userId: ApId,
     projectId: Type.String(),
+    projectRoleId: ApId,
     projectRole: ProjectRole,
 }, {
     description: "Project member is which user is assigned to a project."

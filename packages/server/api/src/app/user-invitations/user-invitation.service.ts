@@ -54,8 +54,8 @@ export const userInvitationsService = {
         }
         const platform = await platformService.getOneOrThrow(platformId)
         const invitations = await repo().createQueryBuilder('user_invitation')
-            .leftJoinAndSelect('user_invitation.projectRole', 'projectRole')
-            .where('LOWER(user_invitation.email) = :email', { email: email.toLowerCase().trim() })
+            .leftJoinAndSelect('"user_invitation"."projectRole"', 'projectRole')
+            .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
             .andWhere({
                 platformId,
                 status: InvitationStatus.ACCEPTED,
@@ -88,7 +88,7 @@ export const userInvitationsService = {
                     await projectMemberService.upsert({
                         projectId,
                         userId: user.id,
-                        projectRole,
+                        projectRoleId: projectRole.id,
                     })
                     break
                 }
@@ -146,7 +146,7 @@ export const userInvitationsService = {
             },
         })
         const queryBuilder = repo().createQueryBuilder('user_invitation')
-            .leftJoinAndSelect('user_invitation.projectRole', 'projectRole')
+            .leftJoinAndSelect('user_invitation."projectRole"', 'projectRole')
             .where({
                 platformId: params.platformId,
                 ...spreadIfDefined('projectId', params.projectId),

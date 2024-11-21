@@ -1,33 +1,75 @@
-import { ApId, assertNotNullOrUndefined, CreateProjectRoleRequestBody, ProjectRole, RoleType, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { ApId, CreateProjectRoleRequestBody, ProjectRole, RoleType, SeekPage, UpdateProjectRoleRequestBody,ApplicationEventName } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { projectRoleService } from './project-role.service'
-
+import { eventsHooks } from '../../helper/application-events'
 export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.get('/', {}, async (req) => {
-        const platformId = req.principal.platform.id
-        assertNotNullOrUndefined(platformId, 'platformId')
-
-        return projectRoleService.list(platformId)
+    app.get('/', ListProjectRolesRequest, async (req) => {
+        return projectRoleService.list({
+            platformId: req.principal.platform.id,
+        })
     })
 
-    app.post('/get/:id', GetProjectRoleRequest, async (req) => {
-        return projectRoleService.get(req.params.id, req.body.type)
+    app.post('/:id', GetProjectRoleRequest, async (req) => {
+        return projectRoleService.getOneOrThrow({
+            id: req.params.id,
+            platformId: req.principal.platform.id,
+        })
     })
 
     app.post('/', CreateProjectRoleRequest, async (req, reply) => {
-        const result = await projectRoleService.create(req.body)
-        return reply.code(StatusCodes.CREATED).send(result)
+        const projectRole = await projectRoleService.create(req.body)
+
+        eventsHooks.get().sendUserEventFromRequest(req, {
+            action: ApplicationEventName.PROJECT_ROLE_CREATED,
+            data: {
+                projectRole,
+            },
+        })
+        return reply.code(StatusCodes.CREATED).send(projectRole)
     })
 
     app.post('/:id', UpdateProjectRoleRequest, async (req) => {
-        return projectRoleService.update(req.params.id, req.body)
+        const projectRole = await projectRoleService.update({
+            id: req.params.id,
+            platformId: req.principal.platform.id,
+            name: req.body.name,
+            permissions: req.body.permissions,
+        })
+        eventsHooks.get().sendUserEventFromRequest(req, {
+            action: ApplicationEventName.PROJECT_ROLE_UPDATED,
+            data: {
+                projectRole,
+            },
+        })
+        return projectRole
     })
 
     app.delete('/:id', DeleteProjectRoleRequest, async (req) => {
-        return projectRoleService.delete(req.params.id)
+        const projectRole = await projectRoleService.getOneOrThrow({
+            id: req.params.id,
+            platformId: req.principal.platform.id,
+        })
+        eventsHooks.get().sendUserEventFromRequest(req, {
+            action: ApplicationEventName.PROJECT_ROLE_DELETED,
+            data: {
+                projectRole,
+            },
+        })
+        return projectRoleService.delete({
+            id: req.params.id,
+            platformId: req.principal.platform.id,
+        })
     })
+}
+
+const ListProjectRolesRequest = {
+    schema: {
+        response: {
+            [StatusCodes.OK]: SeekPage(ProjectRole),
+        },
+    },
 }
 
 const GetProjectRoleRequest = {

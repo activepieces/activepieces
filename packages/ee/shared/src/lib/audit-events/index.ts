@@ -39,6 +39,8 @@ export enum ApplicationEventName {
   USER_EMAIL_VERIFIED = 'user.email.verified',
   SIGNING_KEY_CREATED = 'signing.key.created',
   PROJECT_ROLE_CREATED = 'project.role.created',
+  PROJECT_ROLE_DELETED = 'project.role.deleted',
+  PROJECT_ROLE_UPDATED = 'project.role.updated',
 }
 
 const BaseAuditEventProps = {
@@ -202,9 +204,20 @@ export type SigningKeyEvent = Static<typeof SigningKeyEvent>;
 
 export const ProjectRoleEvent = Type.Object({
   ...BaseAuditEventProps,
-  action: Type.Literal(ApplicationEventName.PROJECT_ROLE_CREATED),
+  action: Type.Union([
+    Type.Literal(ApplicationEventName.PROJECT_ROLE_CREATED),
+    Type.Literal(ApplicationEventName.PROJECT_ROLE_UPDATED),
+    Type.Literal(ApplicationEventName.PROJECT_ROLE_DELETED),
+  ]),
   data: Type.Object({
-    projectRole: Type.Pick(ProjectRole, ['id', 'created', 'updated', 'name', 'permissions', 'platformId']),
+    projectRole: Type.Pick(ProjectRole, [
+      'id',
+      'created',
+      'updated',
+      'name',
+      'permissions',
+      'platformId',
+    ]),
   }),
 });
 
@@ -220,6 +233,7 @@ export const ApplicationEvent = Type.Union([
   FolderEvent,
   SignUpEvent,
   SigningKeyEvent,
+  ProjectRoleEvent,
 ]);
 
 export type ApplicationEvent = Static<typeof ApplicationEvent>;

@@ -19,14 +19,6 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             query: req.query,
         })
         const { token, project, projectRole } = await authenticationHelper.getProjectAndTokenOrThrow(user)
-        if (!projectRole) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'User is not a member of any project',
-                },
-            })
-        }
         const url = new URL('/authenticate', `${req.protocol}://${req.hostname}`)
         const response: AuthenticationResponse = {
             token,  

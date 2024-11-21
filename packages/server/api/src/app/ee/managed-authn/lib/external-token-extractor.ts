@@ -118,16 +118,7 @@ function externalTokenPayload() {
     const v2 = Type.Composite([v1,
         Type.Object({
             tasks: Type.Optional(Type.Number()),
-            projectRole: Type.Optional(Type.Object({
-                id: Type.String(),
-                created: Type.String(),
-                updated: Type.String(),
-                name: Type.String(),
-                permissions: Type.Array(Type.String()),
-                platformId: Type.Optional(Type.String()),
-                type: Type.String(),
-                userCount: Type.Optional(Type.Number()),
-            })),
+            role: Type.Optional(Type.Enum(ProjectMemberRole)),
             pieces: Type.Optional(Type.Object({
                 filterType: Type.Enum(PiecesFilterType),
                 tags: Type.Optional(Type.Array(Type.String())),
@@ -140,7 +131,12 @@ function externalTokenPayload() {
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
         piecesTags: Type.Optional(Type.Array(Type.String())),
     })])
-    return Type.Union([v2, v3])
+
+    const v4 = Type.Composite([Type.Omit(v3, ['role']), Type.Object({
+        version: Type.Literal('v4'),
+        projectRoleId: Type.String(),
+    })])
+    return Type.Union([v2, v3, v4])
 }
 
 export const ExternalTokenPayload = externalTokenPayload()
