@@ -107,6 +107,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
       stepOutput: state.sampleData[step.name],
       propertyPath: step.name,
       displayName: displayName,
+      combineArray: true
     });
   });
 };

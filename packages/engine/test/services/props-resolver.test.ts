@@ -22,6 +22,14 @@ const executionState = FlowExecutorContext.empty()
                 items: [5, 'a'],
                 name: 'John',
                 price: 6.4,
+                users: [
+                    {
+                        name: 'Alice',
+                    },
+                    {
+                        name: 'Bob',
+                    }
+                ],
             },
         }),
     )
@@ -130,8 +138,21 @@ describe('Props resolver', () => {
                 items: [5, 'a'],
                 name: 'John',
                 price: 6.4,
+                users: [
+                    {
+                        name: 'Alice',
+                    },
+                    {
+                        name: 'Bob',
+                    },
+                ],
             },
         )
+    })
+
+    test('flatten array path', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenArrayPath(trigger, \'users.name\')}}', executionState })
+        expect(resolvedInput).toEqual(['Alice', 'Bob'])
     })
 
     test('Test resolve steps variables', async () => {

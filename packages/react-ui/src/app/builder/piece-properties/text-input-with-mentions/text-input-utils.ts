@@ -10,7 +10,7 @@ import {
 } from '@activepieces/shared';
 
 const removeIntroplationBrackets = (text: string) => {
-  return text.slice(2, text.length - 2);
+  return text.slice(2, text.length - 2).trim();
 };
 
 const removeQuotes = (text: string) => {

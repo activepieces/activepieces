@@ -16,21 +16,101 @@ type HandleStepOutputProps = {
   propertyPath: string;
   displayName: string;
   insertable?: boolean;
+  combineArray?: boolean;
 };
+
+function extractUniqueJsonPaths(
+  obj: unknown,
+  currentPath: string[] = [],
+  uniquePathsMap: Record<string, unknown> = {}
+): void {
+  if (Array.isArray(obj)) {
+    obj.forEach((item) => extractUniqueJsonPaths(item, currentPath, uniquePathsMap));
+  } else if (obj && typeof obj === "object") {
+    Object.entries(obj).forEach(([key, value]) => {
+      if (typeof value === "object" && !Array.isArray(value)) {
+        // Handle nested objects by initializing them in the map if not present
+        if (!uniquePathsMap[key]) {
+          uniquePathsMap[key] = {};
+        }
+        extractUniqueJsonPaths(value, [...currentPath, key], uniquePathsMap[key] as Record<string, unknown>);
+      } else {
+        // Handle flat properties
+        if (!uniquePathsMap[key]) {
+          uniquePathsMap[key] = [];
+        }
+        if (Array.isArray(uniquePathsMap[key]) && !((uniquePathsMap[key] as unknown[]).includes(value))) {
+          (uniquePathsMap[key] as unknown[]).push(value);
+        }
+      }
+    });
+  }
+}
+
+function buildNodeTreeFromUniquePaths(uniquePathsMap: Record<string, unknown>, parentPath: string = ''): MentionTreeNode[] | undefined {
+  if (Array.isArray(uniquePathsMap)) {
+    return undefined;
+  }
+  return Object.keys(uniquePathsMap).map((key) => {
+    const fullPath = parentPath ? `${parentPath}.${key}` : key;
+    const firstKey = key.split('.')[0];
+    return {
+      key,
+      data: {
+        propertyPath: `flattenArrayPath(${firstKey},\`${fullPath}\`)`,
+        displayName: key,
+        value: uniquePathsMap[key],
+        insertable: true
+      },
+      children: buildNodeTreeFromUniquePaths(uniquePathsMap[key] as Record<string, unknown>, fullPath)
+    }
+  })
+}
+function handleCombinedArrayStepOutput(
+  stepOutput: unknown[],
+  path: string,
+  parentDisplayName: string,
+  insertable: boolean,
+): MentionTreeNode {
+
+  const uniquePathsMap: Record<string, unknown[]> = {};
+  extractUniqueJsonPaths(stepOutput, [], uniquePathsMap);
+
+  return {
+    key: path,
+    data: {
+      propertyPath: path,
+      displayName: parentDisplayName,
+      insertable,
+      value: stepOutput.length === 0 ? 'Empty List' : undefined
+    },
+    children: buildNodeTreeFromUniquePaths(uniquePathsMap, path)
+  };
+}
 
 function traverseStepOutputAndReturnMentionTree({
   stepOutput,
   propertyPath,
   displayName,
   insertable = true,
+  combineArray = false
 }: HandleStepOutputProps): MentionTreeNode {
   if (Array.isArray(stepOutput)) {
-    return handlingArrayStepOutput(
-      stepOutput,
-      propertyPath,
-      displayName,
-      insertable,
-    );
+    if (combineArray) {
+      return handleCombinedArrayStepOutput(
+        stepOutput,
+        propertyPath,
+        displayName,
+        insertable
+      );
+    } else {
+      return handlingArrayStepOutput(
+        stepOutput,
+        propertyPath,
+        displayName,
+        insertable,
+      );
+    }
   }
   const isObject = stepOutput && typeof stepOutput === 'object';
   if (isObject) {
@@ -39,6 +119,7 @@ function traverseStepOutputAndReturnMentionTree({
       displayName,
       stepOutput,
       insertable,
+      combineArray
     );
   }
   return {
@@ -125,6 +206,7 @@ function handleObjectStepOutput(
   displayName: string,
   stepOutput: object,
   insertable: boolean,
+  combineArray: boolean
 ): MentionTreeNode {
   const isEmptyList = Object.keys(stepOutput).length === 0;
   return {
@@ -144,6 +226,7 @@ function handleObjectStepOutput(
         stepOutput: (stepOutput as Record<string, unknown>)[childPropertyKey],
         propertyPath: `${propertyPath}['${escapedKey}']`,
         displayName: childPropertyKey,
+        combineArray
       });
     }),
   };
