@@ -1,7 +1,7 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { DeepPartial, generateObject } from 'ai'
 import { z } from 'zod'
-import { system , AppSystemProp } from '@activepieces/server-shared'
+import { system, AppSystemProp } from '@activepieces/server-shared'
 
 export function getModel() {
     try {
@@ -28,7 +28,7 @@ const codeGenerationSchema = z.object({
         name: z.string(),
         type: z.string(),
         description: z.string().optional(),
-        suggestedValue: z.string()
+        suggestedValue: z.string().optional(),
     })).default([]),
 })
 
@@ -42,100 +42,130 @@ export async function generateCode(
             return {}
         }
 
+        const systemPrompt = `You are a TypeScript code generation expert for Node.js backend development.
+You are generating code for a custom automation flow block.
+
+CRITICAL REQUIREMENTS:
+1. Function Requirements:
+   - MUST start with 'export const code ='
+   - MUST be an async function
+   - MUST have proper input parameters
+   - MUST return a value (never void)
+   - Return value will be passed to the next step in the flow
+
+2. Security and Best Practices:
+   - NEVER generate OAuth token management code
+   - Use ONLY ES Module imports (import ... from ...)
+   - ALL configuration through input parameters
+   - NO environment variables or file system access
+   - ALL imports must be static (top of file)
+
+3. Input Parameters:
+   - ALL configuration must be passed via inputs
+   - Each input must have a clear description
+   - Each input must have a suggested value
+   - Input types must be explicit
+
+Environment Context:
+- This is a custom block in an automation flow
+- Code runs in a Node.js ${sandboxMode ? 'sandbox with external packages' : 'environment with only native features'}
+- Each execution must return a value for the next step
+
+GOOD EXAMPLES:
+
+1. API Request Example:
+{
+    "code": "import { fetch } from '@activepieces/piece-http';\\n\\nexport const code = async (inputs: { apiKey: string, endpoint: string }) => {\\n  try {\\n    const response = await fetch(inputs.endpoint, {\\n      headers: { Authorization: \`Bearer \${inputs.apiKey}\` }\\n    });\\n    return { data: await response.json() };\\n  } catch (error) {\\n    throw new Error(\`API request failed: \${error.message}\`);\\n  }\\n}",
+    "packages": ["@activepieces/piece-http"],
+    "inputs": [
+        {
+            "name": "apiKey",
+            "type": "string",
+            "description": "API key for authentication",
+            "suggestedValue": "your-api-key-here"
+        },
+        {
+            "name": "endpoint",
+            "type": "string",
+            "description": "API endpoint URL",
+            "suggestedValue": "https://api.example.com/data"
+        }
+    ]
+}
+
+2. Data Processing Example:
+{
+    "code": "export const code = async (inputs: { items: string[] }) => {\\n  const processed = inputs.items.map(item => item.toUpperCase());\\n  return {\\n    processedItems: processed,\\n    count: processed.length,\\n    timestamp: new Date().toISOString()\\n  };\\n}",
+    "packages": [],
+    "inputs": [
+        {
+            "name": "items",
+            "type": "array",
+            "description": "Array of strings to process",
+            "suggestedValue": "{{ ['item1', 'item2', 'item3'] }}"
+        }
+    ]
+}
+
+BAD EXAMPLES (NEVER DO THESE):
+
+1. ❌ Using require() (Wrong):
+const axios = require('axios');
+✅ Correct:
+import { fetch } from '@activepieces/piece-http';
+
+2. ❌ Environment variables (Wrong):
+const apiKey = process.env.API_KEY;
+✅ Correct:
+const apiKey = inputs.apiKey;
+
+3. ❌ No return value (Wrong):
+export const code = async (inputs) => { console.log(inputs); }
+✅ Correct:
+export const code = async (inputs) => { return { result: processedData }; }
+
+4. ❌ Missing input types (Wrong):
+export const code = async (inputs) => { ... }
+✅ Correct:
+export const code = async (inputs: { key: string }) => { ... }
+
+5. ❌ File system operations (Wrong):
+import fs from 'fs';
+const config = fs.readFileSync('config.json');
+✅ Correct:
+const config = inputs.configuration;
+
+6. ❌ OAuth token management (Wrong):
+const token = await generateOAuthToken(credentials);
+✅ Correct:
+const token = inputs.accessToken;
+
+7. ❌ Dynamic imports (Wrong):
+const module = await import('some-package');
+✅ Correct:
+import { something } from 'some-package';
+
+IMPORTANT REMINDERS:
+- Always include error handling
+- Always return meaningful data
+- Use proper TypeScript types
+- Include input validation
+- Provide clear error messages
+- Make return values useful for the next step in the flow
+- Include type definitions for complex inputs
+- Use suggested values that demonstrate the expected format`
+
         const result = await generateObject({
             model,
-            system: `
-            You are a TypeScript code generation expert for Node.js backend development.
-            Your task is to:
-            1. Generate TypeScript code based on the requirement
-            2. List any required npm packages (only if sandbox mode is enabled)
-            3. Define necessary input parameters
-            
-            CRITICAL REQUIREMENT:
-            - You MUST ALWAYS name the exported function variable 'code'
-            - The code MUST ALWAYS start with 'export const code ='
-            - This naming is required for the system to work properly
-            
-            Environment Context:
-            - Node.js backend only (no frontend frameworks)
-            - Running in a sandbox/serverless environment
-            - ${sandboxMode ? 'External packages are allowed' : 'Only Node.js native features are allowed'}
-            
-            Always follow these rules:
-            - ALWAYS use 'export const code = ' as the function declaration
-            - Code should be in TypeScript
-            - Use async/await for asynchronous operations
-            - Include type definitions for inputs
-            - Make code reusable and modular
-            - Follow best practices and clean code principles
-            - Include proper error handling and timeouts
-            - Consider sandbox environment limitations
-            ${sandboxMode ? '' : '- Use only Node.js native modules (no external packages)'}
-            
-            Simple Example:
-            {
-                "code": "export const code = async (inputs: { data: string }) => { return inputs.data.toUpperCase(); }",
-                "packages": [],
-                "inputs": [
-                    {
-                        "name": "data",
-                        "type": "string",
-                        "description": "Input string to process",
-                        "suggestedValue": "suggest a value to put here for the user, if the type of the value is anything other than string put it inside {{}} like {{5}} or {{[1,2,3,4]}} or {{ ['jon','doe'] }}"
-                    }
-                ]
-            }
-
-            HTTP Example:
-            {
-                "code": "export const code = async (inputs: { url: string }) => { const response = await fetch(inputs.url); return response.json(); }",
-                "packages": ["node-fetch"],
-                "inputs": [
-                    {
-                        "name": "url",
-                        "type": "string",
-                        "description": "URL to fetch",
-                        "suggestedValue": "suggest a value to put here for the user"
-                    }
-                ]
-            }
-
-            Email Example:
-            {
-                "code": "export const code = async (inputs: { to: string, subject: string, body: string }) => { const nodemailer = require('nodemailer'); /* rest of implementation */ }",
-                "packages": ["nodemailer"],
-                "inputs": [
-                    {
-                        "name": "to",
-                        "type": "string",
-                        "description": "Recipient email",
-                        "suggestedValue": "jon@doe.com"
-                    },
-                    {
-                        "name": "subject",
-                        "type": "string",
-                        "description": "Email subject",
-                        "suggestedValue": "Introduction Email"
-                    },
-                    {
-                        "name": "body",
-                        "type": "string",
-                        "description": "Email content"
-                    }
-                ]
-            }
-            `,
+            system: systemPrompt,
             schema: codeGenerationSchema,
-            prompt: `
-            Generate TypeScript code for this requirement:
-            ${requirement}
-            
-            IMPORTANT: 
-            - Use 'export const code = ' as the function declaration
-            - Keep the code simple and avoid complex string literals in the response JSON
-            - Ensure proper JSON escaping for any special characters
-            Remember: ${sandboxMode ? 'External packages are allowed' : 'Only Node.js native features are allowed'}
-            `,
+            prompt: `Generate TypeScript code for this automation flow requirement: ${requirement}
+Remember: 
+- ${sandboxMode ? 'External packages are allowed' : 'Use only Node.js native features'}
+- Must return useful data for the next step
+- Include proper error handling
+- All inputs must have suggested values
+- Use proper TypeScript types`,
             temperature: 0,
         })
 
@@ -144,15 +174,6 @@ export async function generateCode(
                 code: '',
                 packages: [],
                 inputs: [],
-            }
-        }
-
-        // Verify and fix the code format if needed
-        if (!result.object.code.trim().startsWith('export const code =')) {
-            const fixedCode = `export const code = ${result.object.code.trim()}`
-            return {
-                ...result.object,
-                code: fixedCode,
             }
         }
 

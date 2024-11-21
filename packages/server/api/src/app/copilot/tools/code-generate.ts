@@ -56,14 +56,32 @@ interface SearchQuery {
     reason: string;
 }
 
+function createDefaultResponse(error?: string): AskCopilotCodeResponse {
+    return {
+        code: `export const code = async (inputs: Record<string, never>) => {
+    throw new Error('${error || 'Failed to generate code. Please try again with a different prompt.'}');
+    return { error: true };
+}`,
+        packageJson: {
+            dependencies: {},
+        },
+        inputs: {},
+        icon: 'AlertTriangle',
+        title: 'Error: Code Generation Failed',
+    }
+}
+
 export const codeGeneratorTool = {
     async generateCode(
         request: AskCopilotRequest,
-    ): Promise<AskCopilotCodeResponse | null> {
+    ): Promise<AskCopilotCodeResponse> {
         try {
-            const sandboxMode = system.getOrThrow(SharedSystemProp.EXECUTION_MODE) !== ExecutionMode.UNSANDBOXED;
+            const sandboxMode = system.getOrThrow(SharedSystemProp.EXECUTION_MODE) !== ExecutionMode.UNSANDBOXED
             
             let plan = await generatePlan(request.prompt, sandboxMode)
+            if (!plan) {
+                return createDefaultResponse('Failed to generate plan')
+            }
             
             if (plan.needsResearch && Array.isArray(plan.searchQueries) && plan.searchQueries.length > 0) {
                 const searchResults = await Promise.all(
@@ -82,45 +100,47 @@ export const codeGeneratorTool = {
                     .join('\n\n')
 
                 plan = await generatePlan(request.prompt, sandboxMode, validResults)
-            }
-
-            if (plan.readyForCode && plan.context) {
-                const result = await generateCode(plan.context, sandboxMode)
-                
-                if (!result?.code) {
-                    return null
-                }
-
-                const dependencies: Record<string, string> = {}
-                result.packages?.forEach((pkg) => {
-                    if (typeof pkg === 'string' && pkg.length > 0) {
-                        dependencies[pkg] = '*'
-                    }
-                })
-
-                const inputs: Record<string, string> = {}
-                result.inputs?.forEach((input) => {
-                    if (input?.name && input?.suggestedValue) {
-                        inputs[input.name] = input.suggestedValue
-                    }
-                })
-
-                return {
-                    code: result.code,
-                    packageJson: {
-                        dependencies,
-                    },
-                    inputs,
-                    icon: plan.suggestedIcon || 'Code2',
-                    title: plan.suggestedTitle || 'Code Implementation',
+                if (!plan) {
+                    return createDefaultResponse('Failed to generate plan after research')
                 }
             }
 
-            return null
+            if (!plan.readyForCode || !plan.context) {
+                return createDefaultResponse('Plan is not ready for code generation')
+            }
+
+            const result = await generateCode(plan.context, sandboxMode)
+            if (!result?.code) {
+                return createDefaultResponse('Code generation failed')
+            }
+
+            const dependencies: Record<string, string> = {}
+            result.packages?.forEach((pkg) => {
+                if (typeof pkg === 'string' && pkg.length > 0) {
+                    dependencies[pkg] = '*'
+                }
+            })
+
+            const inputs: Record<string, string> = {}
+            result.inputs?.forEach((input) => {
+                if (input?.name && input?.suggestedValue) {
+                    inputs[input.name] = input.suggestedValue
+                }
+            })
+
+            return {
+                code: result.code,
+                packageJson: {
+                    dependencies,
+                },
+                inputs,
+                icon: plan.suggestedIcon || 'Code2',
+                title: plan.suggestedTitle || 'Code Implementation',
+            }
         }
         catch (error) {
-            console.error(error)
-            return null
+            console.error('Code generation failed:', error)
+            return createDefaultResponse(error instanceof Error ? error.message : 'Unknown error occurred')
         }
     },
 }
