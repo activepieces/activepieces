@@ -153,8 +153,9 @@ const CreateOrEditConnectionDialog = React.memo(
         setErrorMessage('');
       },
       onError: (err) => {
+        debugger;
         if (err instanceof ConnectionNameAlreadyExists) {
-          form.setError('request.externalId', {
+          form.setError('request.displayName', {
             message: t('Name is already used'),
           });
         } else if (api.isError(err)) {
