@@ -1,20 +1,37 @@
-import { exceptionHandler } from '@activepieces/server-shared'
-import { GenerateCodeRequest, GenerateCodeResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, AskCopilotRequest, AskCopilotResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../websockets/websockets.service'
 import { copilotService } from './copilot.service'
+import { codeGeneratorTool } from './tools/code-generate'
+import { httpGeneratorTool } from './tools/http-generate'
 
-export const copilotModule: FastifyPluginAsyncTypebox = async () => {
-    websocketService.addListener(WebsocketServerEvent.GENERATE_CODE, (socket) => {
-        return async (data: GenerateCodeRequest) => {
-            try {
-                const { prompt, previousContext } = data
-                const response: GenerateCodeResponse = await copilotService.generateCode({ prompt, previousContext })
-                socket.emit(WebsocketClientEvent.GENERATE_CODE_FINISHED, response)
-            }
-            catch (error) {
-                exceptionHandler.handle(error)
-            }
+export const copilotModule: FastifyPluginAsyncTypebox = async (app) => {
+    websocketService.addListener(WebsocketServerEvent.ASK_COPILOT, (socket) => {
+        return async (request: AskCopilotRequest) => {
+            const response: AskCopilotResponse | null = await copilotService.ask(request)
+            socket.emit(WebsocketClientEvent.ASK_COPILOT_FINISHED, response)
         }
     })
+
+    // TODO remove after testing
+    app.post('/ask', AskCopilotRequestSchema, async (request) => {
+        return httpGeneratorTool.generateHttpRequest(request.body)
+    })
+
+    app.post('/generate-code', AskCopilotRequestSchema, async (request) => {
+        return codeGeneratorTool.generateCode(request.body)
+    })
+
 }
+
+
+const AskCopilotRequestSchema = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        body: AskCopilotRequest,
+    },
+}
+
+
