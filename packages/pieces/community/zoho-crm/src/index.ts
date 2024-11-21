@@ -65,10 +65,14 @@ export const zohoCrm = createPiece({
     readFile,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `https://${(auth as OAuth2PropertyValue).data.location}/crm/v4`,
+        {
+          const data = (auth as OAuth2PropertyValue).data;
+          return data && data['api_domain']? `${data['api_domain']}/crm/v3` : ''
+        },    
+      
       auth: zohoCrmAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Zoho-oauthtoken ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),
   ],

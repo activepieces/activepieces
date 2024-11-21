@@ -61,10 +61,13 @@ export const zohoBooks = createPiece({
   actions: [
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `https://${(auth as OAuth2PropertyValue).data['location']}/books/v3`,
+      {
+        const data = (auth as OAuth2PropertyValue).data;
+        return data && data['api_domain']? `${data['api_domain']}/books/v3` : ''
+      },        
       auth: zohoBooksAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Zoho-oauthtoken ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),
   ],
