@@ -10,33 +10,48 @@ import { ProjectRole, RoleType } from '@activepieces/shared';
 
 import { InitialPermissions } from './index';
 
-interface EditProjectRoleDialogProps {
-  projectRole: ProjectRole;
-  onUpdate: () => void;
+interface ProjectRoleDialogProps {
+  mode: 'create' | 'edit';
+  projectRole?: ProjectRole;
+  platformId: string;
+  onSave: () => void;
   children: ReactNode;
   disabled?: boolean;
 }
 
-export const EditProjectRoleDialog = ({
+export const ProjectRoleDialog = ({
+  mode,
   projectRole,
-  onUpdate,
+  platformId,
+  onSave,
   children,
   disabled = false,
-}: EditProjectRoleDialogProps) => {
+}: ProjectRoleDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [roleName, setRoleName] = useState(projectRole.name);
-  const [permissions, setPermissions] = useState(projectRole.permissions);
+  const [roleName, setRoleName] = useState(projectRole?.name || '');
+  const [permissions, setPermissions] = useState<string[]>(
+    projectRole?.permissions || [],
+  );
 
   const { mutate } = useMutation({
     mutationFn: async () => {
-      await projectRoleApi.update(projectRole.id, {
-        name: roleName,
-        permissions,
-      });
+      if (mode === 'create') {
+        await projectRoleApi.create({
+          name: roleName,
+          permissions,
+          platformId,
+          type: RoleType.CUSTOM,
+        });
+      } else if (mode === 'edit' && projectRole) {
+        await projectRoleApi.update(projectRole.id, {
+          name: roleName,
+          permissions,
+        });
+      }
     },
     onSuccess: () => {
       setIsOpen(false);
-      onUpdate();
+      onSave();
     },
   });
 
@@ -55,7 +70,6 @@ export const EditProjectRoleDialog = ({
     } else if (level === 'Write') {
       currentPermission?.write.forEach((p) => updatedPermissions.add(p));
     }
-    console.log(updatedPermissions);
 
     setPermissions(Array.from(updatedPermissions));
   };
@@ -89,7 +103,7 @@ export const EditProjectRoleDialog = ({
     return 'ghost';
   };
 
-  const handleSave = () => {
+  const handleSubmit = () => {
     if (!disabled) {
       mutate();
     }
@@ -108,8 +122,11 @@ export const EditProjectRoleDialog = ({
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="w-full max-w-2xl">
           <DialogTitle>
-            {(projectRole.type === RoleType.DEFAULT ? t('View ') : t('Edit ')) +
-              projectRole.name}
+            {mode === 'create'
+              ? t('Create New Role')
+              : (projectRole?.type === RoleType.DEFAULT
+                  ? t('View ')
+                  : t('Edit ')) + projectRole?.name}
           </DialogTitle>
           <div className="grid space-y-4 mt-4">
             <div>
@@ -183,7 +200,11 @@ export const EditProjectRoleDialog = ({
                 ))}
               </div>
             </div>
-            {!disabled && <Button onClick={handleSave}>{t('Save')}</Button>}
+            {!disabled && (
+              <Button onClick={handleSubmit}>
+                {mode === 'create' ? t('Create') : t('Save')}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

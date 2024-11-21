@@ -14,11 +14,15 @@ import { Button } from '../../../components/ui/button';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
 
+type ProjectMemberCardProps = {
+  member: ProjectMemberWithUser;
+  setIsProjectMembersUpdated?: (value: boolean) => void;
+};
+
 export function ProjectMemberCard({
   member,
-}: {
-  member: ProjectMemberWithUser;
-}) {
+  setIsProjectMembersUpdated,
+}: ProjectMemberCardProps) {
   const { refetch } = projectMembersHooks.useProjectMembers();
   const { useCheckAccess } = useAuthorization();
   const userHasPermissionToRemoveMember = useCheckAccess(
@@ -28,6 +32,7 @@ export function ProjectMemberCard({
   const deleteMember = async () => {
     await projectMembersApi.delete(member.id);
     refetch();
+    setIsProjectMembersUpdated && setIsProjectMembersUpdated(true);
   };
 
   return (

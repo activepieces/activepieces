@@ -2,6 +2,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Pencil, Trash, Plus, Eye } from 'lucide-react';
+import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -18,53 +19,8 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ProjectRole, RoleType, Permission } from '@activepieces/shared';
 
-import { CreateProjectRoleDialog } from './create-project-role-dialog';
-import { EditProjectRoleDialog } from './edit-project-role-dialog';
-
-const columns: ColumnDef<RowDataWithActions<ProjectRole>>[] = [
-  {
-    accessorKey: 'name',
-    accessorFn: (row) => row.name,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Name')} />
-    ),
-    cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
-  },
-  {
-    accessorKey: 'updated',
-    accessorFn: (row) => row.updated,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Updated')} />
-    ),
-    cell: ({ row }) => (
-      <div className="text-left">
-        {formatUtils.formatDate(new Date(row.original.updated))}
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'created',
-    accessorFn: (row) => row.created,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Created')} />
-    ),
-    cell: ({ row }) => (
-      <div className="text-left">
-        {formatUtils.formatDate(new Date(row.original.created))}
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'userCount',
-    accessorFn: (row) => row.userCount,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Users')} />
-    ),
-    cell: ({ row }) => (
-      <div className="text-left">{row.original.userCount}</div>
-    ),
-  },
-];
+import ProjectMembersDialog from './project-members-dialog';
+import { ProjectRoleDialog } from './project-role-dialog';
 
 export const InitialPermissions = [
   {
@@ -146,19 +102,79 @@ const ProjectRolePage = () => {
     },
   });
 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedProjectRole, setSelectedProjectRole] =
+    useState<ProjectRole | null>(null);
+
+  const handleUserCountClick = (projectRole: ProjectRole) => {
+    setIsDialogOpen(true);
+    setSelectedProjectRole(projectRole);
+  };
+
+  const columns: ColumnDef<RowDataWithActions<ProjectRole>>[] = [
+    {
+      accessorKey: 'name',
+      accessorFn: (row) => row.name,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Name')} />
+      ),
+      cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
+    },
+    {
+      accessorKey: 'updated',
+      accessorFn: (row) => row.updated,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Updated')} />
+      ),
+      cell: ({ row }) => (
+        <div className="text-left">
+          {formatUtils.formatDate(new Date(row.original.updated))}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'created',
+      accessorFn: (row) => row.created,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Created')} />
+      ),
+      cell: ({ row }) => (
+        <div className="text-left">
+          {formatUtils.formatDate(new Date(row.original.created))}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'userCount',
+      accessorFn: (row) => row.userCount,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Users')} />
+      ),
+      cell: ({ row }) => (
+        <div
+          className="text-left cursor-pointer"
+          onClick={() => handleUserCountClick(row.original)}
+        >
+          {row.original.userCount}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="flex flex-col w-full">
       <div className="flex items-center justify-between flex-row mb-4">
         <h1 className="text-2xl font-bold">{t('Project Role Management')}</h1>
-        <CreateProjectRoleDialog
-          onCreate={() => refetch()}
+        <ProjectRoleDialog
+          mode="create"
+          onSave={() => refetch()}
           platformId={platform.id}
         >
           <Button className="flex items-center">
             <Plus className="mr-2" />
             {t('New Role')}
           </Button>
-        </CreateProjectRoleDialog>
+        </ProjectRoleDialog>
       </div>
       <DataTable
         columns={columns}
@@ -170,9 +186,11 @@ const ProjectRolePage = () => {
               <div className="flex items-end justify-end">
                 <Tooltip>
                   <TooltipTrigger>
-                    <EditProjectRoleDialog
+                    <ProjectRoleDialog
+                      mode="edit"
                       projectRole={row}
-                      onUpdate={() => refetch()}
+                      platformId={platform.id}
+                      onSave={() => refetch()}
                       disabled={row.type === RoleType.DEFAULT}
                     >
                       {row.type === RoleType.DEFAULT ? (
@@ -180,7 +198,7 @@ const ProjectRolePage = () => {
                       ) : (
                         <Pencil className="size-4" />
                       )}
-                    </EditProjectRoleDialog>
+                    </ProjectRoleDialog>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
                     {row.type === RoleType.DEFAULT
@@ -198,9 +216,14 @@ const ProjectRolePage = () => {
                   <Tooltip>
                     <TooltipTrigger>
                       <ConfirmationDeleteDialog
+                        isDanger={true}
                         title={t('Delete Role')}
                         message={t(
-                          'Are you sure you want to delete this role?',
+                          `Deleting this role will remove ${
+                            row.userCount
+                          } project member${
+                            row.userCount === 1 ? '' : 's'
+                          } and all associated invitations. Are you sure you want to proceed?`,
                         )}
                         entityName={`${t('Project Role')} ${row.name}`}
                         mutationFn={async () => deleteProjectRole(row.id)}
@@ -224,6 +247,15 @@ const ProjectRolePage = () => {
             return <></>;
           },
         ]}
+      />
+      <ProjectMembersDialog
+        projectRole={selectedProjectRole}
+        isOpen={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setSelectedProjectRole(null);
+        }}
+        refetch={refetch}
       />
     </div>
   );

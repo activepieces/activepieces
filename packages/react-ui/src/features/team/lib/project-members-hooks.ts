@@ -10,20 +10,17 @@ export const projectMembersHooks = {
   useProjectMembers: () => {
     const query = useQuery<ProjectMemberWithUser[]>({
       queryKey: ['project-members'],
-      queryFn: () => {
+      queryFn: async () => {
         const projectId = authenticationSession.getProjectId();
         if (projectId === null) {
           throw new Error('Project ID is null');
         }
-        return projectMembersApi
-          .list({
-            projectId: projectId,
-            cursor: undefined,
-            limit: 100,
-          })
-          .then((res) => {
-            return res.data;
-          });
+        const res = await projectMembersApi.list({
+          projectId: projectId,
+          cursor: undefined,
+          limit: 100,
+        });
+        return res.data;
       },
       staleTime: Infinity,
     });
