@@ -50,12 +50,19 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
 
     async upsertJob({ job, schedule }): Promise<void> {
         logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Upserting job')
-        if (await jobNotInQueue(job.name, job.jobId)) {
+        const existingJob = await getJobByNameAndJobId(job.name, job.jobId)
+
+        const patternChanged = !isNil(existingJob) && schedule.type === 'repeated' ? schedule.cron !== existingJob.opts.repeat?.pattern : false
+
+        if (patternChanged && !isNil(existingJob) && !isNil(existingJob.opts.repeat) && !isNil(existingJob.name)) {
+            logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Pattern changed, removing job from queue')
+            await systemJobsQueue.removeRepeatable(existingJob.name as SystemJobName, existingJob.opts.repeat, existingJob.id)
+        }
+        if (isNil(existingJob) || patternChanged) {
             logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Adding job to queue')
-            await addJobToQueue({
-                job,
-                schedule,
-            })
+            const jobOptions = configureJobOptions({ schedule, jobId: job.jobId })
+            await systemJobsQueue.add(job.name, job.data, jobOptions)
+            return;
         }
     },
 
@@ -71,14 +78,10 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
     },
 }
 
-const addJobToQueue = async <T extends SystemJobName>({ job, schedule }: AddJobToQueueParams<T>): Promise<void> => {
-    const jobOptions = configureJobOptions({ schedule, jobId: job.jobId })
-    await systemJobsQueue.add(job.name, job.data, jobOptions)
-}
 
 const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId?: string }): JobsOptions => {
     const config: JobsOptions = {}
-    
+
     switch (schedule.type) {
         case 'one-time': {
             const now = dayjs()
@@ -100,17 +103,10 @@ const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId
     }
 }
 
-const jobNotInQueue = async (name: SystemJobName, jobId?: string): Promise<boolean> => {
-    const job = await getJobByNameAndJobId(name, jobId)
-    return isNil(job)
-}
-
-const getJobByNameAndJobId = async <T extends SystemJobName>(name: T, jobId?: string): Promise<SystemJob<T> | undefined> => {
+const getJobByNameAndJobId = async <T extends SystemJobName>(name: T, jobId?: string): Promise<Job | undefined> => {
     const allSystemJobs = await systemJobsQueue.getJobs()
-    return allSystemJobs.find(job => jobId ? (job.name === name && job.id === jobId) : job.name === name) as SystemJob<T> | undefined
+    return allSystemJobs.find(job => jobId ? (job.name === name && job.id === jobId) : job.name === name)
 }
-
-type SystemJob<T extends SystemJobName> = Job<SystemJobData<T>, unknown>
 
 type AddJobToQueueParams<T extends SystemJobName> = {
     job: SystemJobDefinition<T>
