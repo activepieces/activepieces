@@ -39,7 +39,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         },
         schedule: {
             type: 'repeated',
-            cron: '0 2/4 * * *',
+            cron: '0 0,4,8,12,16,20 * * *',
         },
     })
 }

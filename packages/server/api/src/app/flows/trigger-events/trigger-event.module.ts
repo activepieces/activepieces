@@ -26,7 +26,7 @@ export const triggerEventModule: FastifyPluginAsyncTypebox = async (app) => {
         },
         schedule: {
             type: 'repeated',
-            cron: '0 0/4 * * *',
+            cron: '0 2,6,10,14,18,22 * * *',
         },
     })
 }
