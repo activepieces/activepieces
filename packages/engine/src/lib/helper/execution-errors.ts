@@ -55,12 +55,6 @@ export class StorageInvalidKeyError extends ExecutionError {
     }
 }
 
-export class StorageInvalidValueError extends ExecutionError {
-    constructor(key: string, cause?: unknown) {
-        super('StorageInvalidValueError', formatMessage(`Failed to read/write key "${key}", the value is empty`), ExecutionErrorType.USER, cause)
-    }
-}
-
 export class StorageError extends ExecutionError {
     constructor(key: string, cause?: unknown) {
         super('StorageError', formatMessage(`Failed to read/write key "${key}" due to ${JSON.stringify(cause)}`), ExecutionErrorType.ENGINE, cause)

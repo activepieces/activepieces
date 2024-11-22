@@ -3,7 +3,7 @@ import { Store, StoreScope } from '@activepieces/pieces-framework'
 import { DeleteStoreEntryRequest, FlowId, isNil, PutStoreEntryRequest, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import sizeof from 'object-sizeof'
-import { ExecutionError, FetchError, StorageError, StorageInvalidKeyError, StorageInvalidValueError, StorageLimitError } from '../helper/execution-errors'
+import { ExecutionError, FetchError, StorageError, StorageInvalidKeyError, StorageLimitError } from '../helper/execution-errors'
 
 export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServiceParams): StorageService => {
     return {
@@ -38,9 +38,6 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
             const url = buildUrl(apiUrl)
 
             try {
-                if (isNil(request.value)) {
-                    throw new StorageInvalidValueError(request.key)
-                }
                 const sizeOfValue = sizeof(request.value)
                 if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
                     throw new StorageLimitError(request.key, STORE_VALUE_MAX_SIZE)
@@ -129,7 +126,7 @@ export function createContextStore({ apiUrl, prefix, flowId, engineToken }: { ap
 }
 
 function createKey(prefix: string, scope: StoreScope, flowId: FlowId, key: string): string {
-    if (typeof key !== 'string' || key.length === 0 || key.length > STORE_KEY_MAX_LENGTH) {
+    if (isNil(key) || typeof key !== 'string' || key.length === 0 || key.length > STORE_KEY_MAX_LENGTH) {
         throw new StorageInvalidKeyError(key)
     }
     switch (scope) {
