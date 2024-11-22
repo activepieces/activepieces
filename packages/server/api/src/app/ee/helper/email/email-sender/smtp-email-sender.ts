@@ -100,10 +100,11 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
 }
 
 const initSmtpClient = (smtp: SMTPInformation | undefined): Transporter => {
+    const smtpPort = smtp?.port ?? Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT))
     return nodemailer.createTransport({
         host: smtp?.host ?? system.getOrThrow(AppSystemProp.SMTP_HOST),
-        port: smtp?.port ?? Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT)),
-        secure: smtp?.port === 465,
+        port: smtpPort,
+        secure: smtpPort === 465,
         auth: {
             user: smtp?.user ?? system.getOrThrow(AppSystemProp.SMTP_USERNAME),
             pass: smtp?.password ?? system.getOrThrow(AppSystemProp.SMTP_PASSWORD),
