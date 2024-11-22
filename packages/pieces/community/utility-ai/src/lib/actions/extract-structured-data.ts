@@ -196,7 +196,7 @@ export const extractStructuredData = createAction({
     if (isNil(args)) {
       throw new Error(
         JSON.stringify({
-          message: 'Failed to extract structured data from the input.',
+          message: response.choices[0].content?? 'Failed to extract structured data from the input.',
         })
       );
     }
