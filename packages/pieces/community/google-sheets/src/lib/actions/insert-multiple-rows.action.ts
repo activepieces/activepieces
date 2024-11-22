@@ -271,7 +271,7 @@ async function handleOverwrite(
 			data: [{
 				range: `${sheetName}!A2:ZZZ${inputRowCount + 1}`,
 				majorDimension: Dimension.ROWS,
-				values: formattedValues,
+				values: formattedValues.map(row => objectToArray(row)),
 			}],
 			valueInputOption
 		},
@@ -330,7 +330,7 @@ async function normalInsert(
 		spreadsheetId: spreadSheetId,
 		valueInputOption,
 		requestBody: {
-			values: formattedValues,
+			values: formattedValues.map(row => objectToArray(row)),
 			majorDimension: Dimension.ROWS,
 		},
 	});
@@ -356,14 +356,7 @@ function formatInputRows(
 			break;
 	}
 
-	/*
-	convert the input values to json format
-	[ 
-		{ 'A':'value1', 'B':'value2' },
-		{ 'A':'value3', 'B':'value4' },
-	]
-	*/
-	return formattedInputRows.map(row => objectToArray(row));
+	return formattedInputRows;
 }
 
 function convertJsonToRawValues(json: string | any[], labelHeaders: Record<string, any>): any[] {
