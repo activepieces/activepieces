@@ -56,7 +56,7 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
 
         if (patternChanged && !isNil(existingJob) && !isNil(existingJob.opts.repeat) && !isNil(existingJob.name)) {
             logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Pattern changed, removing job from queue')
-            await systemJobsQueue.removeRepeatable(existingJob.name as SystemJobName, existingJob.opts.repeat, existingJob.id)
+            await systemJobsQueue.removeRepeatable(existingJob.name as SystemJobName, existingJob.opts.repeat)
         }
         if (isNil(existingJob) || patternChanged) {
             logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Adding job to queue')
