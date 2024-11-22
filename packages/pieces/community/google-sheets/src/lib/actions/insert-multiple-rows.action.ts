@@ -357,15 +357,6 @@ function formatInputRows(
 	}
 
 	return formattedInputRows;
-
-	/*
-	convert the input values to json format
-	[ 
-		{ 'A':'value1', 'B':'value2' },
-		{ 'A':'value3', 'B':'value4' },
-	]
-	*/
-	// return formattedInputRows.map(row => objectToArray(row));
 }
 
 function convertJsonToRawValues(json: string | any[], labelHeaders: Record<string, any>): any[] {
