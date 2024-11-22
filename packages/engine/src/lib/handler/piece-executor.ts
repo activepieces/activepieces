@@ -206,6 +206,7 @@ function createPauseHook(hookResponse: HookResponse, pauseId: string): PauseHook
                     pauseMetadata: {
                         ...req.pauseMetadata,
                         requestId: pauseId,
+                        response: req.pauseMetadata.response ?? {},
                     },
                 }
                 break
