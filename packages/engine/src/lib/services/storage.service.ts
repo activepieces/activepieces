@@ -1,9 +1,9 @@
 import { URL } from 'node:url'
 import { Store, StoreScope } from '@activepieces/pieces-framework'
-import { DeleteStoreEntryRequest, FlowId, PutStoreEntryRequest, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
+import { DeleteStoreEntryRequest, FlowId, isNil, PutStoreEntryRequest, STORE_KEY_MAX_LENGTH, STORE_VALUE_MAX_SIZE, StoreEntry } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import sizeof from 'object-sizeof'
-import { ExecutionError, FetchError, StorageError, StorageInvalidKeyError, StorageLimitError } from '../helper/execution-errors'
+import { ExecutionError, FetchError, StorageError, StorageInvalidKeyError, StorageInvalidValueError, StorageLimitError } from '../helper/execution-errors'
 
 export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServiceParams): StorageService => {
     return {
@@ -38,6 +38,9 @@ export const createStorageService = ({ engineToken, apiUrl }: CreateStorageServi
             const url = buildUrl(apiUrl)
 
             try {
+                if (isNil(request.value)) {
+                    throw new StorageInvalidValueError(request.key)
+                }
                 const sizeOfValue = sizeof(request.value)
                 if (sizeOfValue > STORE_VALUE_MAX_SIZE) {
                     throw new StorageLimitError(request.key, STORE_VALUE_MAX_SIZE)
