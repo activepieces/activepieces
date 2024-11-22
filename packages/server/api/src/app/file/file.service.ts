@@ -58,7 +58,7 @@ export const fileService = {
         })
         if (isNil(file)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FILE_NOT_FOUND, 
+                code: ErrorCode.FILE_NOT_FOUND,
                 params: {
                     id: fileId,
                 },
@@ -91,7 +91,7 @@ export const fileService = {
     },
     async deleteStaleBulk(type: FileType) {
         const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
-        const maximumFilesToDeletePerIteration = 4000
+        const maximumFilesToDeletePerIteration = 2000
         let affected: undefined | number = undefined
         let totalAffected = 0
         while (isNil(affected) || affected === maximumFilesToDeletePerIteration) {
@@ -112,10 +112,12 @@ export const fileService = {
             totalAffected += affected
             logger.info({
                 counts: affected,
+                type,
             }, '[FileService#deleteStaleBulk] iteration completed')
         }
         logger.info({
             totalAffected,
+            type,
         }, '[FileService#deleteStaleBulk] completed')
     },
 }
