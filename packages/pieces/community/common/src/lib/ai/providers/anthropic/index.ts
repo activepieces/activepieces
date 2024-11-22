@@ -54,6 +54,7 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
             description: functionDefinition.description,
             input_schema: functionDefinition.arguments as unknown as Tool.InputSchema,
           })),
+          tool_choice:{type:'tool',name:params.functions[0].name},
         });
 
         const toolCallsResponse = completion.content.filter(
