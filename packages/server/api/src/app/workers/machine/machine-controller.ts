@@ -1,10 +1,10 @@
-import { system } from '@activepieces/server-shared'
-import { ApEdition, PrincipalType, WorkerMachineHealthcheckRequest, WorkerMachineType, WorkerPrincipal } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformMustBeOwnedByCurrentUser } from '../../ee/authentication/ee-authorization'
 import { platformService } from '../../platform/platform.service'
 import { machineService } from './machine-service'
+import { system } from '@activepieces/server-shared'
+import { ApEdition, PrincipalType, WorkerMachineHealthcheckRequest, WorkerMachineType, WorkerPrincipal } from '@activepieces/shared'
 
 export const workerMachineController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -27,10 +27,11 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
 
 
     app.post('/heartbeat', HeartbeatParams, async (request) => {
-        const { cpuUsagePercentage, ramUsagePercentage, totalAvailableRamInBytes, ip } = request.body
+        const { cpuUsagePercentage, ramUsagePercentage, totalAvailableRamInBytes, diskInfo, ip } = request.body
         const workerPrincipal = request.principal as unknown as WorkerPrincipal
         await machineService.upsert({
             cpuUsagePercentage,
+            diskInfo,
             ramUsagePercentage,
             totalAvailableRamInBytes,
             ip,

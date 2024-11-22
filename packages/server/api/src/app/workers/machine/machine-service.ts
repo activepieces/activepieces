@@ -1,7 +1,14 @@
-import { spreadIfDefined, WorkerMachineStatus, WorkerMachineWithStatus, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { repoFactory } from '../../core/db/repo-factory'
 import { WorkerMachineEntity } from './machine-entity'
+import { system, WorkerSystemProps } from '@activepieces/server-shared'
+import {
+    MachineInformation,
+    spreadIfDefined,
+    WorkerMachineStatus,
+    WorkerMachineWithStatus,
+    WorkerPrincipal,
+} from '@activepieces/shared'
 
 const workerRepo = repoFactory(WorkerMachineEntity)
 const OFFLINE_THRESHOLD = dayjs.duration(60, 's').asMilliseconds()
@@ -10,6 +17,7 @@ export const machineService = {
     async upsert(request: UpsertParams): Promise<void> {
         await workerRepo().upsert({
             information: {
+                diskInfo: request.diskInfo,
                 cpuUsagePercentage: request.cpuUsagePercentage,
                 ramUsagePercentage: request.ramUsagePercentage,
                 totalAvailableRamInBytes: request.totalAvailableRamInBytes,
@@ -22,16 +30,19 @@ export const machineService = {
         }, ['id'])
     },
     async list(): Promise<WorkerMachineWithStatus[]> {
+        const workerProps =  system.getProps(WorkerSystemProps)
+
         const workers = await workerRepo().createQueryBuilder('machine').where('machine.updated > :updated', { updated: new Date(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString()) }).getMany()
         return workers.map(worker => {
             const isOnline = dayjs(worker.updated).isAfter(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString())
-            return { ...worker, status: isOnline ? WorkerMachineStatus.ONLINE : WorkerMachineStatus.OFFLINE }
+            return { ...worker, status: isOnline ? WorkerMachineStatus.ONLINE : WorkerMachineStatus.OFFLINE, workerProps }
         })
     },
 }
 
 type UpsertParams = {
     cpuUsagePercentage: number
+    diskInfo: MachineInformation['diskInfo']
     ramUsagePercentage: number
     totalAvailableRamInBytes: number
     ip: string
