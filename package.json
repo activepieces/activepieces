@@ -112,7 +112,7 @@
     "axios-retry": "4.4.1",
     "bcrypt": "5.1.1",
     "buffer": "6.0.3",
-    "bullmq": "5.8.3",
+    "bullmq": "5.28.1",
     "cheerio": "1.0.0-rc.12",
     "chokidar": "3.6.0",
     "clarifai-nodejs-grpc": "9.7.0",
