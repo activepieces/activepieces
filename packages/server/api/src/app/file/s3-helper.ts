@@ -54,6 +54,7 @@ export const s3Helper = {
         if (s3Keys.length === 0) {
             return
         }
+        // Cloudflare R2 has a limit of 100 keys per request
         const MAX_KEYS_PER_REQUEST = 100
         const chunks = chunkArray(s3Keys, MAX_KEYS_PER_REQUEST)
 
