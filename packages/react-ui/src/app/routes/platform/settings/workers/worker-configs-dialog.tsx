@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 interface Props {
   worker: {
@@ -41,8 +42,9 @@ export const WorkerConfigsModal: React.FC<Props> = ({ worker }) => {
               <label className="text-sm font-medium text-gray-700 dark:text-gray-200 w-full sm:w-1/3">
                 {key}
               </label>
-              <input
+              <Input
                 type="text"
+                disabled={true}
                 value={value}
                 readOnly
                 className="pointer-events-none max-w-[180px] sm:flex-1 p-2 border rounded-md

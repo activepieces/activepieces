@@ -1,28 +1,107 @@
 import { useQuery } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Network, Server, ServerOff } from 'lucide-react';
+import { InfoIcon, Network, Server, ServerOff } from 'lucide-react';
 
-import { WorkerConfigsModal } from '@/app/components/worker-configs-dialog';
 import { CircularIcon } from '@/components/custom/circular-icon';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { TableTitle } from '@/components/ui/table-title';
 import { workersApi } from '@/features/platform-admin-panel/lib/workers-api';
-import { formatUtils } from '@/lib/utils';
+import { cn, useTimeAgo } from '@/lib/utils';
+import {
+  WorkerMachineStatus,
+  WorkerMachineType,
+  WorkerMachineWithStatus,
+} from '@activepieces/shared';
+
+import { WorkerConfigsModal } from './worker-configs-dialog';
+
+const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
+  {
+    id: 'hbAcAzqbOEQLzvIi6PMCF',
+    created: '2024-11-23T18:51:30.000Z',
+    updated: dayjs().subtract(10, 'seconds').toISOString(),
+    platformId: 'demo-platform',
+    type: WorkerMachineType.DEDICATED,
+    information: {
+      diskInfo: {
+        total: 337374281728,
+        free: 220669583360,
+        used: 116704698368,
+        percentage: 34.59205537845069,
+      },
+      cpuUsagePercentage: 2.335817759768149,
+      ramUsagePercentage: 52.699635773121855,
+      totalAvailableRamInBytes: 33364979712,
+      ip: '172.16.254.1',
+    },
+    status: WorkerMachineStatus.ONLINE,
+    workerProps: {
+      FLOW_WORKER_CONCURRENCY: '10',
+      POLLING_POOL_SIZE: '5',
+      SCHEDULED_WORKER_CONCURRENCY: '10',
+    },
+  },
+  {
+    id: 'kpMnBxRtYuWvZsQi9NLCJ',
+    created: '2024-11-23T19:12:45.000Z',
+    updated: dayjs().subtract(1, 'minute').toISOString(),
+    platformId: 'demo-platform',
+    type: WorkerMachineType.DEDICATED,
+    information: {
+      diskInfo: {
+        total: 536870912000,
+        free: 322122547200,
+        used: 214748364800,
+        percentage: 40.0,
+      },
+      cpuUsagePercentage: 5.6,
+      ramUsagePercentage: 45.2,
+      totalAvailableRamInBytes: 42949672960,
+      ip: '192.168.1.100',
+    },
+    status: WorkerMachineStatus.ONLINE,
+    workerProps: {
+      FLOW_WORKER_CONCURRENCY: '8',
+      POLLING_POOL_SIZE: '4',
+      SCHEDULED_WORKER_CONCURRENCY: '8',
+    },
+  },
+];
 
 export default function WorkersPage() {
-  const { data: workersData, isLoading } = useQuery({
+  /* const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_PLATFORM_DEMO,
+  ); */
+
+  const showPlatformDemo = true;
+
+  const { data: workersData, isLoading } = useQuery<WorkerMachineWithStatus[]>({
     queryKey: ['worker-machines'],
     staleTime: 0,
     gcTime: 0,
-    queryFn: async () => {
-      return workersApi.list();
-    },
+    refetchInterval: 5000,
+    queryFn: async () =>
+      showPlatformDemo ? DEMO_WORKERS_DATA : await workersApi.list(),
   });
 
   return (
     <div className="flex flex-col w-full">
       <TableTitle>{t('Workers')}</TableTitle>
+      {showPlatformDemo && (
+        <Alert variant="default" className="mt-4">
+          <div className="flex items-center gap-2">
+            <InfoIcon size={16} />
+            <AlertDescription>
+              {t(
+                'This is demo data. In a real environment, this would show your actual worker machines.',
+              )}
+            </AlertDescription>
+          </div>
+        </Alert>
+      )}
       <DataTable
         hidePagination={true}
         columns={[
@@ -48,9 +127,14 @@ export default function WorkersPage() {
             cell: ({ row }) => {
               const status = row.original.status;
               return (
-                <div className="flex gap-1 items-center p-2 capitalize">
-                  {status === 'ONLINE' ? (
-                    <Server size={14} className="text-green-500" />
+                <div
+                  className={cn('flex gap-1 items-center p-2 capitalize', {
+                    'text-success-300': status === WorkerMachineStatus.ONLINE,
+                    'text-danger-300': status === WorkerMachineStatus.OFFLINE,
+                  })}
+                >
+                  {status === WorkerMachineStatus.ONLINE ? (
+                    <Server size={14} />
                   ) : (
                     <ServerOff className="text-red-500" />
                   )}
@@ -82,11 +166,17 @@ export default function WorkersPage() {
               <DataTableColumnHeader column={column} title={t('Disk Usage')} />
             ),
             cell: ({ row }) => {
+              const diskUsage = row.original.information.diskInfo.percentage;
+              const totalDisk = row.original.information.diskInfo.total;
+              const usedDisk = (totalDisk * (diskUsage / 100)) / 1024 ** 3;
+              const formattedUsedDisk = `${usedDisk.toFixed(1)} GB`;
+              const formattedTotalDisk = `${(totalDisk / 1024 ** 3).toFixed(
+                1,
+              )} GB`;
+
               return (
-                <div className="flex items-center">
-                  <CircularIcon
-                    value={row.original.information.diskInfo.percentage}
-                  />
+                <div className="flex items-center text-sm">
+                  {formattedUsedDisk} / {formattedTotalDisk}
                 </div>
               );
             },
@@ -103,7 +193,7 @@ export default function WorkersPage() {
               const usedRam = (totalRam * (ramUsage / 100)) / 1024 ** 3;
               const formattedUsedRam = `${usedRam.toFixed(1)} GB`;
               const formattedTotalRam = `${(totalRam / 1024 ** 3).toFixed(
-                1
+                1,
               )} GB`;
 
               return (
@@ -122,11 +212,9 @@ export default function WorkersPage() {
               />
             ),
             cell: ({ row }) => {
-              return (
-                <div className="text-start">
-                  {formatUtils.formatDateOnly(new Date(row.original.updated))}
-                </div>
-              );
+              // eslint-disable-next-line react-hooks/rules-of-hooks
+              const timeAgo = useTimeAgo(new Date(row.original.updated));
+              return <div className="text-start">{timeAgo}</div>;
             },
           },
         ]}
