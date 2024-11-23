@@ -9,8 +9,10 @@ import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { TableTitle } from '@/components/ui/table-title';
 import { workersApi } from '@/features/platform-admin-panel/lib/workers-api';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, useTimeAgo } from '@/lib/utils';
 import {
+  ApFlagId,
   WorkerMachineStatus,
   WorkerMachineType,
   WorkerMachineWithStatus,
@@ -72,12 +74,9 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
 ];
 
 export default function WorkersPage() {
-  /* const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
+  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PLATFORM_DEMO,
-  ); */
-
-  const showPlatformDemo = true;
-
+  );
   const { data: workersData, isLoading } = useQuery<WorkerMachineWithStatus[]>({
     queryKey: ['worker-machines'],
     staleTime: 0,
