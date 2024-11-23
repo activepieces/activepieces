@@ -54,17 +54,21 @@ export const s3Helper = {
         if (s3Keys.length === 0) {
             return
         }
+        const MAX_KEYS_PER_REQUEST = 100
+        const chunks = chunkArray(s3Keys, MAX_KEYS_PER_REQUEST)
 
         try {
-            const deleteObjects = s3Keys.map(Key => ({ Key }))
-            await getS3Client().send(new DeleteObjectsCommand({
-                Bucket: getS3BucketName(),
-                Delete: {
-                    Objects: deleteObjects,
-                    Quiet: true,
-                },
-            }))
-            logger.info({ count: s3Keys.length }, 'files deleted from s3')
+            for (const chunk of chunks) {
+                const deleteObjects = chunk.map(Key => ({ Key }))
+                await getS3Client().send(new DeleteObjectsCommand({
+                    Bucket: getS3BucketName(),
+                    Delete: {
+                        Objects: deleteObjects,
+                        Quiet: true,
+                    },
+                }))
+                logger.info({ count: chunk.length }, 'files deleted from s3')
+            }
         }
         catch (error) {
             logger.error({ error, count: s3Keys.length }, 'failed to delete files from s3')
@@ -74,6 +78,8 @@ export const s3Helper = {
     },
 }
 
+
+const chunkArray = (array: string[], chunkSize: number) => Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => array.slice(i * chunkSize, (i + 1) * chunkSize))
 
 const constructS3Key = (platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): string => {
     const now = dayjs()
