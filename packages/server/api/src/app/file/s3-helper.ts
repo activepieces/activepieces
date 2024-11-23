@@ -1,11 +1,9 @@
 import { Readable } from 'stream'
 import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
 import { FileType, ProjectId } from '@activepieces/shared'
-import { GetObjectCommand, S3 } from '@aws-sdk/client-s3'
+import { DeleteObjectsCommand, GetObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from 'dayjs'
-
-const executionRentetionInDays = system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)!
 
 export const s3Helper = {
     async uploadFile(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string, data: Buffer): Promise<string> {
@@ -19,7 +17,6 @@ export const s3Helper = {
                 Bucket: getS3BucketName(),
                 Key: s3Key,
                 Body: Readable.from(data),
-                Expires: dayjs().add(executionRentetionInDays, 'day').toDate(),
                 ContentLength: data.length,
             })
             logger.info({
@@ -53,8 +50,37 @@ export const s3Helper = {
         })
         return getSignedUrl(client, command)
     },
+    async deleteFiles(s3Keys: string[]): Promise<void> {
+        if (s3Keys.length === 0) {
+            return
+        }
+        // Cloudflare R2 has a limit of 100 keys per request
+        const MAX_KEYS_PER_REQUEST = 100
+        const chunks = chunkArray(s3Keys, MAX_KEYS_PER_REQUEST)
+
+        try {
+            for (const chunk of chunks) {
+                const deleteObjects = chunk.map(Key => ({ Key }))
+                await getS3Client().send(new DeleteObjectsCommand({
+                    Bucket: getS3BucketName(),
+                    Delete: {
+                        Objects: deleteObjects,
+                        Quiet: true,
+                    },
+                }))
+                logger.info({ count: chunk.length }, 'files deleted from s3')
+            }
+        }
+        catch (error) {
+            logger.error({ error, count: s3Keys.length }, 'failed to delete files from s3')
+            exceptionHandler.handle(error)
+            throw error
+        }
+    },
 }
 
+
+const chunkArray = (array: string[], chunkSize: number) => Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => array.slice(i * chunkSize, (i + 1) * chunkSize))
 
 const constructS3Key = (platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): string => {
     const now = dayjs()

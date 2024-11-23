@@ -95,18 +95,22 @@ export const fileService = {
         let affected: undefined | number = undefined
         let totalAffected = 0
         while (isNil(affected) || affected === maximumFilesToDeletePerIteration) {
-            const logsFileIds = await fileRepo().find({
-                select: ['id', 'created'],
+            const staleFiles = await fileRepo().find({
+                select: ['id', 'created', 's3Key'],
                 where: {
                     type: In(types),
                     created: LessThanOrEqual(retentionDateBoundary),
                 },
                 take: maximumFilesToDeletePerIteration,
             })
+
+            const s3Keys = staleFiles.filter(f => !isNil(f.s3Key)).map(f => f.s3Key!)
+            await s3Helper.deleteFiles(s3Keys)
+
             const result = await fileRepo().delete({
                 type: In(types),
                 created: LessThanOrEqual(retentionDateBoundary),
-                id: In(logsFileIds.map(log => log.id)),
+                id: In(staleFiles.map(file => file.id)),
             })
             affected = result.affected || 0
             totalAffected += affected
