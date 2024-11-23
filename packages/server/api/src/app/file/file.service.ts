@@ -12,7 +12,7 @@ import {
     ProjectId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { Equal, In, LessThanOrEqual } from 'typeorm'
+import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
@@ -89,35 +89,15 @@ export const fileService = {
             fileName: file.fileName,
         }
     },
-    async deleteStaleBulk(type: FileType) {
+    async deleteStaleBulk(types: FileType[]) {
         const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
-        const maximumFilesToDeletePerIteration = 2000
-        let affected: undefined | number = undefined
-        let totalAffected = 0
-        while (isNil(affected) || affected === maximumFilesToDeletePerIteration) {
-            const logsFileIds = await fileRepo().find({
-                select: ['id', 'created'],
-                where: {
-                    type: Equal(type),
-                    created: LessThanOrEqual(retentionDateBoundary),
-                },
-                take: maximumFilesToDeletePerIteration,
-            })
-            const result = await fileRepo().delete({
-                type: Equal(type),
-                created: LessThanOrEqual(retentionDateBoundary),
-                id: In(logsFileIds.map(log => log.id)),
-            })
-            affected = result.affected || 0
-            totalAffected += affected
-            logger.info({
-                counts: affected,
-                type,
-            }, '[FileService#deleteStaleBulk] iteration completed')
-        }
+        const result = await fileRepo().delete({
+            type: In(types),
+            created: LessThanOrEqual(retentionDateBoundary),
+        })
         logger.info({
-            totalAffected,
-            type,
+            totalAffected: result.affected,
+            types,
         }, '[FileService#deleteStaleBulk] completed')
     },
 }
