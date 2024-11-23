@@ -51,6 +51,7 @@ import { GlobalConnectionsTable } from '../routes/platform/connections';
 import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
 import { LicenseKeyPage } from '../routes/platform/settings/license-key';
+import SettingsWorkersPage from '../routes/platform/settings/workers';
 import TemplatesPage from '../routes/platform/templates';
 import UsersPage from '../routes/platform/users';
 import { FlowRunPage } from '../routes/runs/id';
@@ -457,6 +458,18 @@ const routes = [
         <PlatformSettingsLayout>
           <PageTitle title="Audit Logs">
             <AuditLogsPage />
+          </PageTitle>
+        </PlatformSettingsLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/settings/workers',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSettingsLayout>
+          <PageTitle title="Workers">
+            <SettingsWorkersPage />
           </PageTitle>
         </PlatformSettingsLayout>
       </PlatformAdminContainer>

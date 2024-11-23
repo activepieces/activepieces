@@ -6,6 +6,7 @@ import {
   ShieldPlus,
   CreditCard,
   ScrollText,
+  Monitor,
   UserCog,
   Sparkles,
 } from 'lucide-react';
@@ -62,6 +63,11 @@ export default function PlatformSettingsLayout({
       title: t('Audit Logs'),
       href: '/platform/settings/audit-logs',
       icon: <ScrollText size={iconSize} />,
+    },
+    {
+      title: t('Workers'),
+      href: '/platform/settings/workers',
+      icon: <Monitor size={iconSize} />,
     },
   ];
 
