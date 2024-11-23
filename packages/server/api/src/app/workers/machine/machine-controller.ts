@@ -1,7 +1,7 @@
+import { PrincipalType, WorkerMachineHealthcheckRequest, WorkerPrincipal } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser } from '../../ee/authentication/ee-authorization'
 import { machineService } from './machine-service'
-import { PrincipalType, WorkerMachineHealthcheckRequest, WorkerPrincipal } from '@activepieces/shared'
 
 export const workerMachineController: FastifyPluginAsyncTypebox = async (app) => {
 

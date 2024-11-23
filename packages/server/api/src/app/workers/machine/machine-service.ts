@@ -1,6 +1,3 @@
-import dayjs from 'dayjs'
-import { repoFactory } from '../../core/db/repo-factory'
-import { WorkerMachineEntity } from './machine-entity'
 import { system, WorkerSystemProps } from '@activepieces/server-shared'
 import {
     MachineInformation,
@@ -9,6 +6,9 @@ import {
     WorkerMachineWithStatus,
     WorkerPrincipal,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { repoFactory } from '../../core/db/repo-factory'
+import { WorkerMachineEntity } from './machine-entity'
 
 const workerRepo = repoFactory(WorkerMachineEntity)
 const OFFLINE_THRESHOLD = dayjs.duration(60, 's').asMilliseconds()
