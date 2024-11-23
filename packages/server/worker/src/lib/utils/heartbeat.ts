@@ -62,7 +62,7 @@ async function getDiskInfo(): Promise<MachineInformation['diskInfo']> {
         }
         else {
             const { stdout } = await execAsync('df -k / | tail -1')
-            const [, blocks, , used, available] = stdout.trim().split(/\s+/)
+            const [, blocks, used, available] = stdout.trim().split(/\s+/)
 
             const totalBytes = parseInt(blocks) * 1024
             const usedBytes = parseInt(used) * 1024
