@@ -8,10 +8,9 @@ export enum SystemJobName {
     PIECES_ANALYTICS = 'pieces-analytics',
     PIECES_SYNC = 'pieces-sync',
     TRIAL_TRACKER = 'trial-tracker',
-    TRIGGER_DATA_CLEANER = 'trigger-data-cleaner',
+    FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
     ISSUES_REMINDER = 'issue-reminder',
     RUN_TELEMETRY = 'run-telemetry',
-    LOGS_CLEANUP_TRIGGER = 'logs-cleanup-trigger',
 }
 
 type HardDeleteProjectSystemJobData = {
@@ -31,8 +30,7 @@ type SystemJobDataMap = {
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
-    [SystemJobName.TRIGGER_DATA_CLEANER]: Record<string, never>
-    [SystemJobName.LOGS_CLEANUP_TRIGGER]: Record<string, never>
+    [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
 }
 
