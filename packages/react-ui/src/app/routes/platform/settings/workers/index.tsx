@@ -165,13 +165,12 @@ export default function WorkersPage() {
               <DataTableColumnHeader column={column} title={t('Disk Usage')} />
             ),
             cell: ({ row }) => {
-              const diskUsage = row.original.information.diskInfo.percentage;
-              const totalDisk = row.original.information.diskInfo.total;
-              const usedDisk = (totalDisk * (diskUsage / 100)) / 1024 ** 3;
-              const formattedUsedDisk = `${usedDisk.toFixed(1)} GB`;
-              const formattedTotalDisk = `${(totalDisk / 1024 ** 3).toFixed(
-                1,
-              )} GB`;
+              const diskInfo = row.original.information.diskInfo;
+              const totalDisk = diskInfo.total;
+              const freeDisk = diskInfo.free;
+              const usedDisk = totalDisk - freeDisk;
+              const formattedUsedDisk = `${(usedDisk / 1024 ** 3).toFixed(1)} GB`;
+              const formattedTotalDisk = `${(totalDisk / 1024 ** 3).toFixed(1)} GB`;
 
               return (
                 <div className="flex items-center text-sm">
