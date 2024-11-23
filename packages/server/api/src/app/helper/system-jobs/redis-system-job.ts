@@ -3,7 +3,7 @@ import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
-import { JobSchedule, SystemJobData, SystemJobDefinition, SystemJobName, SystemJobSchedule } from './common'
+import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000
@@ -46,6 +46,7 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
             systemJobsQueue.waitUntilReady(),
             systemJobWorker.waitUntilReady(),
         ])
+        await removeDeprecatedJobs()
     },
 
     async upsertJob({ job, schedule }): Promise<void> {
@@ -62,7 +63,7 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
             logger.info({ name: 'RedisSystemJob#upsertJob', jobName: job.name }, 'Adding job to queue')
             const jobOptions = configureJobOptions({ schedule, jobId: job.jobId })
             await systemJobsQueue.add(job.name, job.data, jobOptions)
-            return;
+            return
         }
     },
 
@@ -78,6 +79,22 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
     },
 }
 
+
+async function removeDeprecatedJobs() {
+    const deprecatedJobs = [
+        'trigger-data-cleaner',
+        'logs-cleanup-trigger',
+    ]
+    for (const jobName of deprecatedJobs) {
+        const job = await getJobByNameAndJobId(jobName)
+        if (isNil(job)) {
+            continue
+        }
+        if (!isNil(job.repeatJobKey)) {
+            await systemJobsQueue.removeRepeatableByKey(job.repeatJobKey!)
+        }
+    }
+}
 
 const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId?: string }): JobsOptions => {
     const config: JobsOptions = {}
@@ -103,12 +120,7 @@ const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId
     }
 }
 
-const getJobByNameAndJobId = async <T extends SystemJobName>(name: T, jobId?: string): Promise<Job | undefined> => {
+const getJobByNameAndJobId = async (name: string, jobId?: string): Promise<Job | undefined> => {
     const allSystemJobs = await systemJobsQueue.getJobs()
     return allSystemJobs.find(job => jobId ? (job.name === name && job.id === jobId) : job.name === name)
-}
-
-type AddJobToQueueParams<T extends SystemJobName> = {
-    job: SystemJobDefinition<T>
-    schedule: JobSchedule
 }
