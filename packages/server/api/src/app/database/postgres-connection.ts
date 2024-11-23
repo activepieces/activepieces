@@ -162,6 +162,7 @@ import { StoreTriggerEventsInFile1731247581852 } from './migration/postgres/1731
 import { MigrateConnectionNames1731428722977 } from './migration/postgres/1731428722977-MigrateConnectionNames'
 import { AddGlobalConnectionsAndRbacForPlatform1731532843905 } from './migration/postgres/1731532843905-AddGlobalConnectionsAndRbacForPlatform'
 import { AddAuditLogIndicies1731711188507 } from './migration/postgres/1731711188507-AddAuditLogIndicies'
+import { AddIndiciesToRunAndTriggerData1732324567513 } from './migration/postgres/1732324567513-AddIndiciesToRunAndTriggerData'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -270,6 +271,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         StoreTriggerEventsInFile1731247581852,
         MigrateConnectionNames1731428722977,
         AddGlobalConnectionsAndRbacForPlatform1731532843905,
+        AddIndiciesToRunAndTriggerData1732324567513,
     ]
 
     const edition = system.getEdition()

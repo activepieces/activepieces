@@ -26,9 +26,19 @@ export const TriggerEventEntity = new EntitySchema<TriggerEventSchema>({
     },
     indices: [
         {
+            name: 'idx_trigger_event_project_id_flow_id',
+            columns: ['projectId', 'flowId'],
+            unique: false,
+        },
+        {
             name: 'idx_trigger_event_flow_id',
             columns: ['flowId'],
             unique: false,
+        },
+        {
+            name: 'idx_trigger_event_file_id',
+            columns: ['fileId'],
+            unique: true,
         },
     ],
     relations: {
