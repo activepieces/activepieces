@@ -91,12 +91,32 @@ export const fileService = {
     },
     async deleteStaleBulk(types: FileType[]) {
         const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
-        const result = await fileRepo().delete({
-            type: In(types),
-            created: LessThanOrEqual(retentionDateBoundary),
-        })
+        const maximumFilesToDeletePerIteration = 4000
+        let affected: undefined | number = undefined
+        let totalAffected = 0
+        while (isNil(affected) || affected === maximumFilesToDeletePerIteration) {
+            const logsFileIds = await fileRepo().find({
+                select: ['id', 'created'],
+                where: {
+                    type: In(types),
+                    created: LessThanOrEqual(retentionDateBoundary),
+                },
+                take: maximumFilesToDeletePerIteration,
+            })
+            const result = await fileRepo().delete({
+                type: In(types),
+                created: LessThanOrEqual(retentionDateBoundary),
+                id: In(logsFileIds.map(log => log.id)),
+            })
+            affected = result.affected || 0
+            totalAffected += affected
+            logger.info({
+                counts: affected,
+                types,
+            }, '[FileService#deleteStaleBulk] iteration completed')
+        }
         logger.info({
-            totalAffected: result.affected,
+            totalAffected,
             types,
         }, '[FileService#deleteStaleBulk] completed')
     },
