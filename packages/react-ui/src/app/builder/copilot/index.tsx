@@ -43,7 +43,12 @@ interface DefaultEventsMap {
 const initialMessages: CopilotMessage[] = [
   {
     messageType: 'text',
-    content: t("Hi! Give me an idea and I'll write the code for it."),
+    content: t(`Hello, I am your code utility copilot 😄`),
+    userType: 'bot',
+  },
+  {
+    messageType: 'text',
+    content: t(`I am great at doing things like text/date manipulation, data aggregation, mathematical assistance and simple HTTP API requests, I am not there yet when it comes to writing code for complex 3rd party actions, but I will get there in the future.`),
     userType: 'bot',
   },
 ];
@@ -274,10 +279,11 @@ export const CopilotSidebar = () => {
         <div className="flex items-center py-4 px-3 gap-2 bg-white dark:bg-gray-900 border-t dark:border-gray-700">
           <Textarea
             value={inputMessage}
-            className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12"
-            rows={1}
+            className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12 resize-none"
             minRows={1}
+            autoFocus={true}
             maxRows={4}
+            placeholder={t('i.e Calculate the sum of a list...')}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !isPending) {
