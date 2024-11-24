@@ -1,8 +1,7 @@
 import { AskCopilotCodeResponse, AskCopilotRequest, ExecutionMode } from '@activepieces/shared'
 import OpenAI from 'openai'
-import { DeepPartial } from 'ai'
-import { generateCode, getModel } from './code-agent'
-import { generatePlan, type PlanResponse } from './plan-agent'
+import { generateCode } from './code-agent'
+import { generatePlan } from './plan-agent'
 import { system, AppSystemProp, SharedSystemProp } from '@activepieces/server-shared'
 
 function getPerplexityClient() {

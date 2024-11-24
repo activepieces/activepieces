@@ -134,9 +134,7 @@ export const CopilotSidebar = () => {
       return;
     }
     mutate({
-      prompt: `${inputMessage}. ${t(
-        'Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies, use only ES modules for dependencies, and use axios instead of node-fetch when needed.',
-      )}`,
+      prompt: inputMessage,
       context: messages.map((message) => ({
         role: message.userType === 'user' ? 'user' : 'assistant',
         content: JSON.stringify(message.content),
@@ -279,6 +277,8 @@ export const CopilotSidebar = () => {
             value={inputMessage}
             className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12"
             rows={1}
+            minRows={1}
+            maxRows={4}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !isPending) {
