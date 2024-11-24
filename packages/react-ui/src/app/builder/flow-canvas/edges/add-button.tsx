@@ -49,13 +49,8 @@ const ApAddButton = React.memo((props: ApButtonData) => {
 
   return (
     <>
-      {showAskAiIndicator && (
-        <AskAiIndicator
-          height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
-          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
-        ></AskAiIndicator>
-      )}
-      {showDropIndicator && !readonly && !showAskAiIndicator && (
+
+      {showDropIndicator && !readonly  && (
         <div
           style={{
             width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
@@ -77,7 +72,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
           ></div>
         </div>
       )}
-      {!showDropIndicator && !readonly && !showAskAiIndicator && (
+      {!showDropIndicator && !readonly && (
         <PieceSelector
           operation={
             props.stepLocationRelativeToParent ===
@@ -103,28 +98,40 @@ const ApAddButton = React.memo((props: ApButtonData) => {
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}
         >
+          <div>
+          {showAskAiIndicator && (
+        <AskAiIndicator
+          height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
+          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
+        ></AskAiIndicator>
+      )}
+      {
+        !showAskAiIndicator && (          <div
+          className={cn('rounded-xss cursor-pointer transition-all', {
+            'shadow-add-button': actionMenuOpen,
+          })}
+        >
           <div
-            className={cn('rounded-xss cursor-pointer transition-all', {
-              'shadow-add-button': actionMenuOpen,
-            })}
+            style={{
+              width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+              height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+            }}
+            className={cn(
+              'bg-light-blue  overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+              {
+                'bg-primary ': actionMenuOpen,
+              },
+            )}
           >
-            <div
-              style={{
-                width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-                height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
-              }}
-              className={cn(
-                'bg-light-blue  overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
-                {
-                  'bg-primary ': actionMenuOpen,
-                },
-              )}
-            >
-              {!actionMenuOpen && (
-                <Plus className="w-3 h-3 stroke-[3px] text-white" />
-              )}
-            </div>
+            {!actionMenuOpen && (
+              <Plus className="w-3 h-3 stroke-[3px] text-white" />
+            )}
           </div>
+        </div>)
+      }
+          </div>
+          
+
         </PieceSelector>
       )}
     </>

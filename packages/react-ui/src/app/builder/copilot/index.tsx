@@ -53,7 +53,7 @@ async function getCodeResponse(
   request: AskCopilotRequest,
 ): Promise<AskCopilotCodeResponse> {
   const id = nanoid();
-  debugger;
+  
   socket.emit(WebsocketServerEvent.ASK_COPILOT, {
     ...request,
     id,
@@ -62,7 +62,6 @@ async function getCodeResponse(
     socket.on(
       WebsocketClientEvent.ASK_COPILOT_FINISHED,
       (response: AskCopilotCodeResponse) => {
-        debugger;
         resolve(response);
       },
     );
@@ -105,7 +104,7 @@ export const CopilotSidebar = () => {
     mutationFn: (request: AskCopilotRequest) =>
       getCodeResponse(socket, request),
     onSuccess: (response: AskCopilotCodeResponse) => {
-      debugger;
+      console.log(response)
       setMessages((prevMessages) => [
         ...prevMessages,
         {

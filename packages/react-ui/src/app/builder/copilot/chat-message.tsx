@@ -26,7 +26,7 @@ export type CopilotMessage = Static<typeof CopilotMessage>;
 
 const ChatBox = ({ children }: { children: React.ReactNode }) => (
   <div
-    className={`flex max-w-xs lg:max-w-md bg-gray-100 dark:bg-gray-800 dark:text-gray-100 rounded-2xl pl-5 pr-5 pt-2 pb-2 break-word`}
+    className={`flex max-w-xs lg:max-w-md bg-gray-100 dark:bg-gray-800 dark:text-gray-100 rounded-2xl pl-5 pr-5 pt-2 pb-2 break-words`}
   >
     {children}
   </div>
