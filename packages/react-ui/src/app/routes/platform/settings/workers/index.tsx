@@ -169,8 +169,12 @@ export default function WorkersPage() {
               const totalDisk = diskInfo.total;
               const freeDisk = diskInfo.free;
               const usedDisk = totalDisk - freeDisk;
-              const formattedUsedDisk = `${(usedDisk / 1024 ** 3).toFixed(1)} GB`;
-              const formattedTotalDisk = `${(totalDisk / 1024 ** 3).toFixed(1)} GB`;
+              const formattedUsedDisk = `${(usedDisk / 1024 ** 3).toFixed(
+                1,
+              )} GB`;
+              const formattedTotalDisk = `${(totalDisk / 1024 ** 3).toFixed(
+                1,
+              )} GB`;
 
               return (
                 <div className="flex items-center text-sm">
