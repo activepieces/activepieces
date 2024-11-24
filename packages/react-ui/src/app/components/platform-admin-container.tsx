@@ -50,7 +50,7 @@ export function PlatformAdminContainer({
     },
     {
       to: '/platform/infrastructure',
-      label: t('Infrastructure'),
+      label: t('Infra'),
       icon: Server,
     },
   ];
