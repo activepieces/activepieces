@@ -1,5 +1,5 @@
-import { OtpState, OtpType, rolePermissions } from '@activepieces/ee-shared'
-import { apId, ProjectMemberRole, ProjectRole, RoleType, UserStatus } from '@activepieces/shared'
+import { OtpState, OtpType } from '@activepieces/ee-shared'
+import { UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -12,18 +12,6 @@ let app: FastifyInstance | null = null
 beforeAll(async () => {
     await databaseConnection().initialize()
     app = await setupServer()
-
-    for (const role of Object.values(ProjectMemberRole)) {
-        const projectRole: ProjectRole = {
-            name: role,
-            permissions: rolePermissions[role],
-            type: RoleType.DEFAULT,
-            id: apId(),
-            created: dayjs().toISOString(),
-            updated: dayjs().toISOString(),
-        }
-        await databaseConnection().getRepository('project_role').save(projectRole)
-    }  
 })
 
 afterAll(async () => {

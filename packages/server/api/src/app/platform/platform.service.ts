@@ -12,7 +12,6 @@ import {
     UpdatePlatformRequestBody,
     UserId } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
-import { projectRoleService } from '../ee/project-role/project-role.service'
 import { defaultTheme } from '../flags/theme'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
@@ -75,7 +74,6 @@ export const platformService = {
             platformId: savedPlatform.id,
         })
         
-        await projectRoleService.createDefaultRbac(savedPlatform.id)
         return savedPlatform
     },
 

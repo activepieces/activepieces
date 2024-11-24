@@ -1,7 +1,6 @@
 import {
     CustomDomain,
     OtpType,
-    rolePermissions,
 } from '@activepieces/ee-shared'
 import {
     apId,
@@ -11,7 +10,6 @@ import {
     PlatformRole,
     ProjectMemberRole,
     ProjectRole,
-    RoleType,
     User,
     UserStatus,
 } from '@activepieces/shared'
@@ -42,18 +40,6 @@ let app: FastifyInstance | null = null
 beforeAll(async () => {
     await databaseConnection().initialize()
     app = await setupServer()
-
-    for (const role of Object.values(ProjectMemberRole)) {
-        const projectRole: ProjectRole = {
-            name: role,
-            permissions: rolePermissions[role],
-            type: RoleType.DEFAULT,
-            id: apId(),
-            created: dayjs().toISOString(),
-            updated: dayjs().toISOString(),
-        }
-        await databaseConnection().getRepository('project_role').save(projectRole)
-    }  
 })
 
 beforeEach(async () => {

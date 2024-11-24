@@ -56,7 +56,7 @@ export const projectMemberService = {
             'platformId',
         ])
 
-        return await repo().findOneOrFail({
+        return repo().findOneOrFail({
             where: {
                 id: projectMemberId,
             },
@@ -107,19 +107,10 @@ export const projectMemberService = {
         })
 
         if (user.id === project.ownerId) {
-                        // TODO URGENT this need to be fixed
-
-            return projectRoleService.getDefaultRoleByName({
-                name: ProjectMemberRole.ADMIN,
-                platformId: project.platformId,
-            })
+            return projectRoleService.getDefaultRoleByName({ name: ProjectMemberRole.ADMIN })
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
-            // TODO URGENT this need to be fixed
-            return projectRoleService.getDefaultRoleByName({
-                name: ProjectMemberRole.ADMIN,
-                platformId: project.platformId,
-            })
+            return projectRoleService.getDefaultRoleByName({ name: ProjectMemberRole.ADMIN })
         }
         const member = await repo()
             .createQueryBuilder('project_member')

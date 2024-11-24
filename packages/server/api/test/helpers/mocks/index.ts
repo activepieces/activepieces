@@ -253,6 +253,7 @@ export const createMockProjectMember = (
         created: projectMember?.created ?? faker.date.recent().toISOString(),
         updated: projectMember?.updated ?? faker.date.recent().toISOString(),
         platformId: projectMember?.platformId ?? apId(),
+        projectRoleId: projectMember?.projectRoleId ?? apId(),
         userId: projectMember?.userId,
         projectId: projectMember?.projectId ?? apId(),
         projectRole: projectMember?.projectRole ?? {

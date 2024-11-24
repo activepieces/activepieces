@@ -127,30 +127,26 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
             )
         `)
         
-        const platformIds = await queryRunner.query('SELECT id FROM platform') 
+        await queryRunner.query(
+            'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+            [apId(), ProjectMemberRole.VIEWER, rolePermissions[ProjectMemberRole.VIEWER], null, RoleType.DEFAULT],
+        )
 
-        for (const platformId of platformIds) {
-            await queryRunner.query(
-                'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-                [apId(), ProjectMemberRole.VIEWER, JSON.stringify(rolePermissions[ProjectMemberRole.VIEWER]), platformId, RoleType.DEFAULT],
-            )
+        await queryRunner.query(
+            'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+            [apId(), ProjectMemberRole.EDITOR, rolePermissions[ProjectMemberRole.EDITOR], null, RoleType.DEFAULT],
+        )
 
-            await queryRunner.query(
-                'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-                [apId(), ProjectMemberRole.EDITOR, JSON.stringify(rolePermissions[ProjectMemberRole.EDITOR]), platformId, RoleType.DEFAULT],
-            )
+        await queryRunner.query(
+            'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+            [apId(), ProjectMemberRole.ADMIN, rolePermissions[ProjectMemberRole.ADMIN], null, RoleType.DEFAULT],
+        )
 
-            await queryRunner.query(
-                'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-                [apId(), ProjectMemberRole.ADMIN, JSON.stringify(rolePermissions[ProjectMemberRole.ADMIN]), platformId, RoleType.DEFAULT],
-            )
-
-            await queryRunner.query(
-                'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-                [apId(), ProjectMemberRole.OPERATOR, JSON.stringify(rolePermissions[ProjectMemberRole.OPERATOR]), platformId, RoleType.DEFAULT],
-            )
-        }
-
+        await queryRunner.query(
+            'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
+            [apId(), ProjectMemberRole.OPERATOR, rolePermissions[ProjectMemberRole.OPERATOR], null, RoleType.DEFAULT],
+        )
+        
         await queryRunner.query(`
             ALTER TABLE "project_member" ADD COLUMN "projectRoleId" character varying
         `)

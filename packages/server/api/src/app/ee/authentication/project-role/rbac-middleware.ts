@@ -67,8 +67,8 @@ export const assertRoleHasPermission = async (principal: Principal, permission: 
     const principalRole = await getPrincipalRoleOrThrow(principal)
     const access = await grantAccess({
         principalRoleId: principalRole.id,
-        platformId: principal.platform.id,
         routePermission: permission,
+        platformId: principal.platform.id,
     })
     if (!access) {
         throwPermissionDenied(principalRole, principal, permission)

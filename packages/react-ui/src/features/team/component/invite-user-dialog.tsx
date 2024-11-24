@@ -113,7 +113,7 @@ export function InviteUserDialog() {
           return userInvitationApi.invite({
             email: data.email.trim().toLowerCase(),
             type: data.type,
-            projectRole: data.projectRole,
+            projectRoleId: data.projectRole.id,
             projectId: project.id,
           });
       }
@@ -192,11 +192,11 @@ export function InviteUserDialog() {
             <DialogDescription>
               {invitationLink
                 ? t(
-                    'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.',
-                  )
+                  'Please copy the link below and share it with the user you want to invite, the invitation expires in 24 hours.',
+                )
                 : t(
-                    'Type the email address of the user you want to invite, the invitation expires in 24 hours.',
-                  )}
+                  'Type the email address of the user you want to invite, the invitation expires in 24 hours.',
+                )}
             </DialogDescription>
           </DialogHeader>
 
@@ -236,10 +236,10 @@ export function InviteUserDialog() {
                             <SelectLabel>{t('Invite To')}</SelectLabel>
                             {currentUser?.platformRole ===
                               PlatformRole.ADMIN && (
-                              <SelectItem value={InvitationType.PLATFORM}>
-                                {t('Entire Platform')}
-                              </SelectItem>
-                            )}
+                                <SelectItem value={InvitationType.PLATFORM}>
+                                  {t('Entire Platform')}
+                                </SelectItem>
+                              )}
                             {platform.projectRolesEnabled && (
                               <SelectItem value={InvitationType.PROJECT}>
                                 {project.displayName} (Current)

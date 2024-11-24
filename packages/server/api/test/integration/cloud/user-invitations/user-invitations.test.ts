@@ -1,10 +1,8 @@
 import {
     ApiKeyResponseWithValue,
-    rolePermissions,
 } from '@activepieces/ee-shared'
-import { apId, InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, ProjectRole, RoleType, SendUserInvitationRequest, User } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, ProjectRole, SendUserInvitationRequest, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -25,18 +23,6 @@ let app: FastifyInstance | null = null
 beforeAll(async () => {
     await databaseConnection().initialize()
     app = await setupServer()
-
-    for (const role of Object.values(ProjectMemberRole)) {
-        const projectRole: ProjectRole = {
-            name: role,
-            permissions: rolePermissions[role],
-            type: RoleType.DEFAULT,
-            id: apId(),
-            created: dayjs().toISOString(),
-            updated: dayjs().toISOString(),
-        }
-        await databaseConnection().getRepository('project_role').save(projectRole)
-    }  
 })
 
 beforeEach(async () => {
@@ -173,7 +159,7 @@ describe('User Invitation API', () => {
             const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole: adminRole,
+                projectRoleId: adminRole.id,
                 email: faker.internet.email(),
                 projectId: mockProject2.id,
                 type: InvitationType.PROJECT,
@@ -199,7 +185,7 @@ describe('User Invitation API', () => {
             const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as ProjectRole
             
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole: adminRole,
+                projectRoleId: adminRole.id,
                 email: faker.internet.email(),
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
@@ -220,7 +206,7 @@ describe('User Invitation API', () => {
             const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.ADMIN }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole: adminRole,
+                projectRoleId: adminRole.id,
                 email: faker.internet.email(),
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
@@ -245,7 +231,7 @@ describe('User Invitation API', () => {
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole,
+                projectRoleId: projectRole.id,
                 email: faker.internet.email(),
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
@@ -418,7 +404,7 @@ describe('User Invitation API', () => {
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRole,
+                projectRoleId: projectRole.id,
                 email: faker.internet.email(),
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
@@ -427,7 +413,7 @@ describe('User Invitation API', () => {
                 userId: mockMember.id,
                 platformId: mockMember.platformId!,
                 projectId: mockProject.id,
-                projectRole,
+                projectRoleId: projectRole.id,
             })
             await databaseConnection().getRepository('project_member').save(mockProjectMember)
 

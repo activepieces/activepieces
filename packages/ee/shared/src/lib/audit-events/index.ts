@@ -244,6 +244,7 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
       return convertUpdateActionToDetails(event);
     }
     case ApplicationEventName.FLOW_RUN_STARTED:
+      return `Flow run ${event.data.flowRun.id} is started`;
     case ApplicationEventName.FLOW_RUN_FINISHED: {
       return `Flow run ${event.data.flowRun.id} is finished`;
     }

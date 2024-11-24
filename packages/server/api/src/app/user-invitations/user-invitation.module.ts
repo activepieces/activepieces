@@ -24,9 +24,9 @@ import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
 import { projectMembersLimit } from '../ee/project-plan/members-limit'
+import { projectRoleService } from '../ee/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userInvitationsService } from './user-invitation.service'
-import { projectRoleService } from '../ee/project-role/project-role.service'
 
 export const invitationModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(invitationController, { prefix: '/v1/user-invitations' })
@@ -118,7 +118,7 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
     await projectMembersLimit.limit({
         projectId: request.projectId,
         platformId,
-        projectRole
+        projectRole,
     })
     return projectRole
 }

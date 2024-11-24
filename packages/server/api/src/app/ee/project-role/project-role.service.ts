@@ -1,5 +1,4 @@
-import { rolePermissions } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApId, apId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectMemberRole, ProjectRole, RoleType, SeekPage, spreadIfDefined, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectMemberRole, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
@@ -23,8 +22,8 @@ export const projectRoleService = {
         }
         return projectRole
     },
-    async getDefaultRoleByName({ name, platformId }: GetOneByNameOrThrowParams): Promise<ProjectRole> {
-        const projectRole = await projectRoleRepo().findOneBy({ platformId, name, type: RoleType.DEFAULT })
+    async getDefaultRoleByName({ name }: GetOneByNameOrThrowParams): Promise<ProjectRole> {
+        const projectRole = await projectRoleRepo().findOneBy({ name, type: RoleType.DEFAULT })
         if (isNil(projectRole)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -59,18 +58,6 @@ export const projectRoleService = {
         const projectRole = projectRoleRepo().create(params)
         projectRole.id = apId()
         return projectRoleRepo().save(projectRole)
-    },
-
-    async createDefaultRbac(platformId: PlatformId): Promise<void> {
-        for (const projectRole of Object.values(ProjectMemberRole)) {
-            await projectRoleRepo().save(projectRoleRepo().create({
-                id: apId(),
-                name: projectRole,
-                permissions: rolePermissions[projectRole],
-                platformId,
-                type: RoleType.DEFAULT,
-            }))
-        }
     },
 
     async update(params: UpdateParams): Promise<ProjectRole> {
@@ -108,7 +95,6 @@ type DeleteParms = {
 
 type GetOneByNameOrThrowParams = {
     name: ProjectMemberRole
-    platformId: PlatformId
 }
 
 type GetOneParams = {

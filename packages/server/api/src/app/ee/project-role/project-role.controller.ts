@@ -1,21 +1,13 @@
+import { ApplicationEventName } from '@activepieces/ee-shared'
 import { ApId, CreateProjectRoleRequestBody, ProjectRole, RoleType, SeekPage, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { projectRoleService } from './project-role.service'
 import { eventsHooks } from '../../helper/application-events'
-import { ApplicationEventName } from '@activepieces/ee-shared'
-
+import { projectRoleService } from './project-role.service'
 export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListProjectRolesRequest, async (req) => {
         return projectRoleService.list({
-            platformId: req.principal.platform.id,
-        })
-    })
-
-    app.post('/:id', GetProjectRoleRequest, async (req) => {
-        return projectRoleService.getOneOrThrow({
-            id: req.params.id,
             platformId: req.principal.platform.id,
         })
     })
@@ -71,17 +63,6 @@ const ListProjectRolesRequest = {
         response: {
             [StatusCodes.OK]: SeekPage(ProjectRole),
         },
-    },
-}
-
-const GetProjectRoleRequest = {
-    schema: {
-        params: Type.Object({
-            id: ApId,
-        }),
-        body: Type.Object({
-            type: Type.Optional(Type.Enum(RoleType)),
-        }),
     },
 }
 
