@@ -53,7 +53,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
             platformId,
             platformRole: type === InvitationType.PROJECT ? null : request.body.platformRole,
             projectId: type === InvitationType.PLATFORM ? null : request.body.projectId,
-            projectRole: type === InvitationType.PLATFORM ? null : projectRole,
+            projectRoleId: type === InvitationType.PLATFORM ? null : projectRole?.id ?? null,
             invitationExpirySeconds: dayjs.duration(1, 'day').asSeconds(),
             status,
         })
@@ -111,14 +111,16 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
     if (type === InvitationType.PLATFORM) {
         return null
     }
-    const projectRole = await projectRoleService.getOneOrThrow({
-        id: request.projectRoleId,
-        platformId,
-    })
+    const projectRoleId = request.projectRoleId
+    
     await projectMembersLimit.limit({
         projectId: request.projectId,
         platformId,
-        projectRole,
+        projectRoleId,
+    })
+
+    const projectRole = await projectRoleService.getOneOrThrowById({
+        id: projectRoleId,
     })
     return projectRole
 }

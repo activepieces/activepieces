@@ -108,8 +108,6 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
 }
 
 
-
-
 export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
     name = 'CreateProjectRoleTable1731424289830'
 
@@ -157,47 +155,30 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
             FOREIGN KEY ("projectRoleId") REFERENCES "project_role"("id") ON DELETE CASCADE
         `)
 
-        const projectMemberRoles = await queryRunner.query(`
-            SELECT pm.id, r.name as projectRole, pm."platformId"
-            FROM project_member pm
-            LEFT JOIN project_role r ON pm."projectRoleId" = r.id
+        const projectMembers = await queryRunner.query(`
+            SELECT id, role FROM project_member
         `)
 
-        for (const projectMemberRole of projectMemberRoles) {
-            const roleName = projectMemberRole.projectRole
+        for (const projectMember of projectMembers) {
             const projectRoleIdResult = await queryRunner.query(
-                'SELECT id FROM project_role WHERE name = $1 AND "platformId" = $2',
-                [roleName, projectMemberRole.platformId],
+                'SELECT id FROM project_role WHERE name = $1',
+                [projectMember.role],
             )
 
             const projectRoleId = projectRoleIdResult[0]?.id
 
             await queryRunner.query(
                 'UPDATE "project_member" SET "projectRoleId" = $1 WHERE id = $2',
-                [projectRoleId, projectMemberRole.id],
+                [projectRoleId, projectMember.id],
             )
-        }
-
-        // Check if the column exists before attempting to drop it
-        const columnExists = await queryRunner.query(`
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_name='project_member' AND column_name='projectRole'
-        `)
-
-        if (columnExists.length > 0) {
-            await queryRunner.query(`
-                ALTER TABLE "project_member" DROP COLUMN "projectRole"
-            `)
         }
 
         await queryRunner.query(`
             ALTER TABLE "project_member" DROP COLUMN "role"
         `)
 
-        await queryRunner.query(`
-            ALTER TABLE "user_invitation" DROP COLUMN "projectRole"
-        `)
+
+
         await queryRunner.query(`
             ALTER TABLE "user_invitation" ADD COLUMN "projectRoleId" character varying
         `)
@@ -207,9 +188,57 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
             ADD CONSTRAINT "fk_user_invitation_project_role_id" 
             FOREIGN KEY ("projectRoleId") REFERENCES "project_role"("id") ON DELETE CASCADE
         `)
+
+        const userInvitations = await queryRunner.query(`
+            SELECT id, "projectRole" FROM user_invitation
+        `)
+
+        for (const userInvitation of userInvitations) {
+            const projectRoleIdResult = await queryRunner.query(
+                'SELECT id FROM project_role WHERE name = $1',
+                [userInvitation.projectRole],
+            )
+
+            const projectRoleId = projectRoleIdResult[0]?.id
+
+            await queryRunner.query(
+                'UPDATE "user_invitation" SET "projectRoleId" = $1 WHERE id = $2',
+                [projectRoleId, userInvitation.id],
+            )
+        }
+
+        await queryRunner.query(`
+            ALTER TABLE "user_invitation" DROP COLUMN "projectRole"
+        `)
+
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        // Re-add the "projectRole" column to "user_invitation"
+        await queryRunner.query(`
+            ALTER TABLE "user_invitation" ADD COLUMN "projectRole" character varying
+        `)
+
+        // Restore "projectRole" values from "projectRoleId"
+        const userInvitations = await queryRunner.query(`
+            SELECT id, "projectRoleId" FROM user_invitation
+        `)
+
+        for (const userInvitation of userInvitations) {
+            const projectRoleNameResult = await queryRunner.query(
+                'SELECT name FROM project_role WHERE id = $1',
+                [userInvitation.projectRoleId],
+            )
+
+            const projectRoleName = projectRoleNameResult[0]?.name
+
+            await queryRunner.query(
+                'UPDATE "user_invitation" SET "projectRole" = $1 WHERE id = $2',
+                [projectRoleName, userInvitation.id],
+            )
+        }
+
+        // Drop the foreign key and column "projectRoleId" from "user_invitation"
         await queryRunner.query(`
             ALTER TABLE "user_invitation" DROP CONSTRAINT "fk_user_invitation_project_role_id"
         `)
@@ -218,6 +247,31 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
             ALTER TABLE "user_invitation" DROP COLUMN "projectRoleId"
         `)
 
+        // Re-add the "role" column to "project_member"
+        await queryRunner.query(`
+            ALTER TABLE "project_member" ADD COLUMN "role" character varying
+        `)
+
+        // Restore "role" values from "projectRoleId"
+        const projectMembers = await queryRunner.query(`
+            SELECT id, "projectRoleId" FROM project_member
+        `)
+
+        for (const projectMember of projectMembers) {
+            const projectRoleNameResult = await queryRunner.query(
+                'SELECT name FROM project_role WHERE id = $1',
+                [projectMember.projectRoleId],
+            )
+
+            const projectRoleName = projectRoleNameResult[0]?.name
+
+            await queryRunner.query(
+                'UPDATE "project_member" SET "role" = $1 WHERE id = $2',
+                [projectRoleName, projectMember.id],
+            )
+        }
+
+        // Drop the foreign key and column "projectRoleId" from "project_member"
         await queryRunner.query(`
             ALTER TABLE "project_member" DROP CONSTRAINT "fk_project_member_project_role_id"
         `)
@@ -226,6 +280,7 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
             ALTER TABLE "project_member" DROP COLUMN "projectRoleId"
         `)
 
+        // Drop the "project_role" table
         await queryRunner.query(`
             DROP TABLE "project_role"
         `)

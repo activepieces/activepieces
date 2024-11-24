@@ -11,7 +11,6 @@ import { api } from '../../../lib/api';
 
 export const userInvitationApi = {
   invite: (request: SendUserInvitationRequest) => {
-    console.log('allooo', request);
     return api.post<UserInvitationWithLink>('/v1/user-invitations', request);
   },
   list: (request: ListUserInvitationsRequest) => {

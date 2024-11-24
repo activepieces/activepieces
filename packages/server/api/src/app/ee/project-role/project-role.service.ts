@@ -9,6 +9,17 @@ export const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
 export const projectRoleService = {
 
+    async getOneOrThrowById({ id }: GetOneIdParams): Promise<ProjectRole> {
+        const projectRole = await projectRoleRepo().findOneBy({ id })
+        if (isNil(projectRole)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'project_role', entityId: id, message: 'Project Role by id not found' },
+            })
+        }
+        return projectRole
+    },
+
     async get({ id, platformId }: GetOneParams): Promise<ProjectRole | null> {
         return projectRoleRepo().findOneBy({ id, platformId })
     },
@@ -17,7 +28,7 @@ export const projectRoleService = {
         if (isNil(projectRole)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'project_role', entityId: id },
+                params: { entityType: 'project_role', entityId: id, message: 'Project Role by id and platformId not found' },
             })
         }
         return projectRole
@@ -27,16 +38,17 @@ export const projectRoleService = {
         if (isNil(projectRole)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'project_role', entityId: name },
+                params: { entityType: 'project_role', entityId: name, message: 'Project Role by name not found' },
             })
         }
         return projectRole
     },
     async list({ platformId }: ListParams): Promise<SeekPage<ProjectRole>> {
         const projectRoles = await projectRoleRepo().find({
-            where: {
-                platformId,
-            },
+            where: [
+                { platformId },
+                { type: RoleType.DEFAULT },
+            ],
             order: {
                 created: 'DESC',
             },
@@ -46,7 +58,7 @@ export const projectRoleService = {
             data: await Promise.all(projectRoles.map(async (projectRole) => {
                 return {
                     ...projectRole,
-                    userCount: await projectMemberRepo().countBy({ projectRole: { id: projectRole.id } }),
+                    userCount: await projectMemberRepo().countBy({ projectRoleId: projectRole.id }),
                 }
             })),
             next: null,
@@ -99,5 +111,9 @@ type GetOneByNameOrThrowParams = {
 
 type GetOneParams = {
     platformId: PlatformId
+    id: ApId
+}
+
+type GetOneIdParams = {
     id: ApId
 }

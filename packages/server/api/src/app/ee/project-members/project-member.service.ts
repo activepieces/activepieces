@@ -80,7 +80,6 @@ export const projectMemberService = {
         })
         const queryBuilder = repo()
             .createQueryBuilder('project_member')
-            .leftJoinAndSelect('project_member.projectRole', 'projectRole')
             .where({ projectId })
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const enrichedData = await Promise.all(
@@ -88,7 +87,9 @@ export const projectMemberService = {
                 const enrichedMember = await enrichProjectMemberWithUser(member)
                 return {
                     ...enrichedMember,
-                    projectRole: member.projectRole,
+                    projectRole: await projectRoleService.getOneOrThrowById({
+                        id: member.projectRoleId,
+                    }),
                 }
             }),
         )
@@ -112,18 +113,20 @@ export const projectMemberService = {
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
             return projectRoleService.getDefaultRoleByName({ name: ProjectMemberRole.ADMIN })
         }
-        const member = await repo()
-            .createQueryBuilder('project_member')
-            .leftJoinAndSelect('project_member.projectRole', 'project_role')
-            .where('project_member.projectId = :projectId', { projectId })
-            .andWhere('project_member.userId = :userId', { userId })
-            .getOne()
+        const member = await repo().findOneBy({
+            projectId,
+            userId,
+        })
 
         if (!member) {
             return null
         }
 
-        return member.projectRole ?? null
+        const projectRole = await projectRoleService.getOneOrThrowById({
+            id: member.projectRoleId,
+        })
+
+        return projectRole
     },
     async delete(
         projectId: ProjectId,

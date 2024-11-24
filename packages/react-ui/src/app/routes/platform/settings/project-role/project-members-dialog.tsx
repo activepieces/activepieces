@@ -1,10 +1,12 @@
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LoaderIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ProjectMemberCard } from '@/features/team/component/project-member-card';
-import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+import { projectMembersApi } from '@/features/team/lib/project-members-api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { ProjectRole } from '@activepieces/shared';
 
@@ -21,44 +23,47 @@ function ProjectMembersDialog({
   onClose,
   refetch,
 }: ProjectMembersProps) {
-  const {
-    projectMembers,
-    refetch: refetchProjectMembers,
-    isLoading,
-  } = projectMembersHooks.useProjectMembers();
   const [isProjectMembersUpdated, setIsProjectMembersUpdated] = useState(false);
   const [selectedProjectMembers, setSelectedProjectMembers] = useState<
     ProjectMemberWithUser[]
   >([]);
+
+  const {
+    data,
+    isLoading,
+    refetch: refetchProjectMembers,
+  } = useQuery({
+    queryKey: ['project-members-dialog'],
+    queryFn: () =>
+      projectMembersApi.list({
+        projectId: authenticationSession.getProjectId()!,
+        cursor: undefined,
+        limit: 100,
+      }),
+  });
 
   useEffect(() => {
     if (isOpen) {
       refetchProjectMembers().then(() => {
         if (projectRole) {
           setSelectedProjectMembers(
-            projectMembers?.filter(
-              (member) => member.projectRole.id === projectRole.id,
+            data?.data?.filter(
+              (member) => member.projectRoleId === projectRole.id,
             ) || [],
           );
         }
       });
     }
-  }, [projectMembers]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isProjectMembersUpdated) {
       refetchProjectMembers().then(() => {
         refetch();
-        if (projectRole) {
-          setSelectedProjectMembers(
-            projectMembers?.filter(
-              (member) => member.projectRole.id === projectRole.id,
-            ) || [],
-          );
-        }
+        setIsProjectMembersUpdated(false);
       });
     }
-  }, [isProjectMembersUpdated, projectRole]);
+  }, [isProjectMembersUpdated]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -80,12 +85,17 @@ function ProjectMembersDialog({
               </div>
             )}
           {!isLoading &&
-            Array.isArray(projectMembers) &&
+            Array.isArray(selectedProjectMembers) &&
             selectedProjectMembers.map((member) => (
               <ProjectMemberCard
                 key={member.id}
                 member={member}
-                setIsProjectMembersUpdated={setIsProjectMembersUpdated}
+                setIsProjectMembersUpdated={() => {
+                  setIsProjectMembersUpdated(true);
+                  setSelectedProjectMembers(
+                    selectedProjectMembers.filter((m) => m.id !== member.id),
+                  );
+                }}
               />
             ))}
         </div>

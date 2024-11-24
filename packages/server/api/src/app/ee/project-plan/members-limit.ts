@@ -1,19 +1,20 @@
 import {
     ActivepiecesError,
+    ApId,
     ErrorCode,
     Permission,
     ProjectId,
-    ProjectRole,
     RoleType,
 } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { projectMemberService } from '../project-members/project-member.service'
+import { projectRoleService } from '../project-role/project-role.service'
 import { projectLimitsService } from './project-plan.service'
 
 export const projectMembersLimit = {
-    async limit({ projectId, platformId, projectRole }: { projectId: ProjectId, platformId: string, projectRole: ProjectRole }): Promise<void> {
-        const shouldLimit = await shouldLimitMembers({ projectId, platformId, projectRole })
+    async limit({ projectId, platformId, projectRoleId }: { projectId: ProjectId, platformId: string, projectRoleId: ApId }): Promise<void> {
+        const shouldLimit = await shouldLimitMembers({ projectId, platformId, projectRoleId })
 
         if (shouldLimit) {
             throw new ActivepiecesError({
@@ -28,7 +29,7 @@ export const projectMembersLimit = {
 
 const UNLIMITED_TEAM_MEMBERS = 100
 
-async function shouldLimitMembers({ projectId, platformId, projectRole }: { projectId: ProjectId, platformId: string, projectRole: ProjectRole }): Promise<boolean> {
+async function shouldLimitMembers({ projectId, platformId, projectRoleId }: { projectId: ProjectId, platformId: string, projectRoleId: ApId }): Promise<boolean> {
     if (!flagService.isCloudPlatform(platformId)) {
         return false
     }
@@ -37,6 +38,10 @@ async function shouldLimitMembers({ projectId, platformId, projectRole }: { proj
         return false
     }
     if (projectPlan.teamMembers === UNLIMITED_TEAM_MEMBERS) {
+        const projectRole = await projectRoleService.getOneOrThrow({
+            id: projectRoleId,
+            platformId,
+        })
         if (!projectRole) {
             return false
         }

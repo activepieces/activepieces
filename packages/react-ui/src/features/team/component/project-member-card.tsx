@@ -16,7 +16,7 @@ import { projectMembersHooks } from '../lib/project-members-hooks';
 
 type ProjectMemberCardProps = {
   member: ProjectMemberWithUser;
-  setIsProjectMembersUpdated?: (value: boolean) => void;
+  setIsProjectMembersUpdated: () => void;
 };
 
 export function ProjectMemberCard({
@@ -32,7 +32,7 @@ export function ProjectMemberCard({
   const deleteMember = async () => {
     await projectMembersApi.delete(member.id);
     refetch();
-    setIsProjectMembersUpdated && setIsProjectMembersUpdated(true);
+    setIsProjectMembersUpdated();
   };
 
   return (
