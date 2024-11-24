@@ -1,8 +1,10 @@
-import { ApId, CreateProjectRoleRequestBody, ProjectRole, RoleType, SeekPage, UpdateProjectRoleRequestBody,ApplicationEventName } from '@activepieces/shared'
+import { ApId, CreateProjectRoleRequestBody, ProjectRole, RoleType, SeekPage, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { projectRoleService } from './project-role.service'
 import { eventsHooks } from '../../helper/application-events'
+import { ApplicationEventName } from '@activepieces/ee-shared'
+
 export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListProjectRolesRequest, async (req) => {

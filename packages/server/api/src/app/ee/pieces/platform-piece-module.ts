@@ -5,7 +5,6 @@ import {
     ErrorCode,
     Permission,
     PieceScope,
-    Principal,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
@@ -18,7 +17,7 @@ import { StatusCodes } from 'http-status-codes'
 import { flagService } from '../../flags/flag.service'
 import { pieceService } from '../../pieces/piece-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { getPrincipalRoleOrThrow } from '../authentication/project-role/rbac-middleware'
+import { assertRoleHasPermission } from '../authentication/project-role/rbac-middleware'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -34,7 +33,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
         const platformId = req.principal.platform.id
         if (flagService.isCloudPlatform(platformId)) {
             assertOneOfTheseScope(req.body.scope, [PieceScope.PROJECT])
-            await assertProjectAdminCanInstallPieceOnCloud(req.principal)
+            await assertRoleHasPermission(req.principal, Permission.WRITE_INSTALL_PIECE)
         }
         else {
             assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
@@ -83,19 +82,3 @@ function assertOneOfTheseScope(
         })
     }
 }
-async function assertProjectAdminCanInstallPieceOnCloud(
-    principal: Principal,
-): Promise<void> {
-    const projectRole = await getPrincipalRoleOrThrow(principal)
-
-    // TODO: WHAT SHOULD I DO HERE :(
-    if (projectRole.permissions.includes(Permission.WRITE_INSTALL_PIECE) === false) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {
-                message: 'Only platform admin can install a piece',
-            },
-        })
-    }
-}
-

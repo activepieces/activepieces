@@ -1,6 +1,6 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole, ProjectRole } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, PlatformId, ProjectMemberRole, ProjectRole } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { projectRoleService } from '../../project-role/project-role.service'
@@ -37,7 +37,8 @@ export const externalTokenExtractor = {
 
             const optionalEmail = payload.email ?? payload.externalUserId
 
-            const defaultRole = await projectRoleService.getDefaultRoleByName(ProjectMemberRole.EDITOR)
+            const projectRole = await getProjectRole(payload, signingKey.platformId)
+
 
             const { piecesFilterType, piecesTags } = extractPieces(payload)
             return {
@@ -47,7 +48,7 @@ export const externalTokenExtractor = {
                 externalEmail: optionalEmail,
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
-                projectRole: payload?.projectRole ?? defaultRole,
+                projectRole,
                 tasks: payload?.tasks,
                 pieces: {
                     filterType: piecesFilterType ?? PiecesFilterType.NONE,
@@ -107,6 +108,21 @@ function extractPieces(payload: ExternalTokenPayload) {
     }
 }
 
+async function getProjectRole(payload: ExternalTokenPayload, platformId: PlatformId) {
+    if ('version' in payload && payload.version === 'v4') {
+        const projectRole = await projectRoleService.getOneOrThrow({
+            id: payload.projectRoleId,
+            platformId,
+        })
+        return projectRole
+    }
+    const roleByName = await projectRoleService.getDefaultRoleByName({
+        name: payload.role ?? ProjectMemberRole.EDITOR,
+        platformId,
+    })
+    return roleByName
+}
+
 function externalTokenPayload() {
     const v1 = Type.Object({
         externalUserId: Type.String(),
@@ -132,7 +148,7 @@ function externalTokenPayload() {
         piecesTags: Type.Optional(Type.Array(Type.String())),
     })])
 
-    const v4 = Type.Composite([Type.Omit(v3, ['role']), Type.Object({
+    const v4 = Type.Composite([Type.Omit(v3, ['role', 'version']), Type.Object({
         version: Type.Literal('v4'),
         projectRoleId: Type.String(),
     })])

@@ -107,10 +107,19 @@ export const projectMemberService = {
         })
 
         if (user.id === project.ownerId) {
-            return projectRoleService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
+                        // TODO URGENT this need to be fixed
+
+            return projectRoleService.getDefaultRoleByName({
+                name: ProjectMemberRole.ADMIN,
+                platformId: project.platformId,
+            })
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
-            return projectRoleService.getDefaultRoleByName(ProjectMemberRole.ADMIN)
+            // TODO URGENT this need to be fixed
+            return projectRoleService.getDefaultRoleByName({
+                name: ProjectMemberRole.ADMIN,
+                platformId: project.platformId,
+            })
         }
         const member = await repo()
             .createQueryBuilder('project_member')

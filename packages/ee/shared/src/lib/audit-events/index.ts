@@ -271,6 +271,12 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
       return `User ${event.data.user?.email} signed up using email from ${event.data.source}`;
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return `${event.data.signingKey.displayName} is created`;
+    case ApplicationEventName.PROJECT_ROLE_CREATED:
+      return `${event.data.projectRole.name} is created`;
+    case ApplicationEventName.PROJECT_ROLE_UPDATED:
+      return `${event.data.projectRole.name} is updated`;
+    case ApplicationEventName.PROJECT_ROLE_DELETED:
+      return `${event.data.projectRole.name} is deleted`;
   }
 }
 

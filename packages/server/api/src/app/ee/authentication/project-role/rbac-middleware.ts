@@ -7,6 +7,7 @@ import {
     FlowOperationType,
     isNil,
     Permission,
+    PlatformId,
     Principal,
     PrincipalType,
     ProjectRole,
@@ -66,6 +67,7 @@ export const assertRoleHasPermission = async (principal: Principal, permission: 
     const principalRole = await getPrincipalRoleOrThrow(principal)
     const access = await grantAccess({
         principalRoleId: principalRole.id,
+        platformId: principal.platform.id,
         routePermission: permission,
     })
     if (!access) {
@@ -114,12 +116,15 @@ export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<Pro
 
 }
 
-const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs): Promise<boolean> => {
+const grantAccess = async ({ principalRoleId, routePermission, platformId }: GrantAccessArgs): Promise<boolean> => {
     if (isNil(routePermission)) {
         return true
     }
 
-    const principalRole = await projectRoleService.get(principalRoleId)
+    const principalRole = await projectRoleService.getOneOrThrow({
+        id: principalRoleId,
+        platformId,
+    })
     
     if (isNil(principalRole)) {
         return false
@@ -143,4 +148,5 @@ const throwPermissionDenied = (projectRole: ProjectRole, principal: Principal, p
 type GrantAccessArgs = {
     principalRoleId: ApId
     routePermission: Permission | undefined
+    platformId: PlatformId
 }
