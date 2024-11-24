@@ -40,17 +40,12 @@ interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
 }
 
-const initialMessages: CopilotMessage[] = [
-  {
-    messageType: 'text',
-    content: t(`Hello, I am your code utility copilot 😄`),
-    userType: 'bot',
-  },
-  {
-    messageType: 'text',
-    content: t(`I am great at doing things like text/date manipulation, data aggregation, mathematical assistance and simple HTTP API requests, I am not there yet when it comes to writing code for complex 3rd party actions, but I will get there in the future.`),
-    userType: 'bot',
-  },
+const COPILOT_WELCOME_MESSAGES: CopilotMessage[] = [
+    {
+        messageType: 'text',
+        content: 'welcome',
+        userType: 'bot',
+    },
 ];
 
 async function getCodeResponse(
@@ -77,7 +72,7 @@ async function getCodeResponse(
 }
 
 export const CopilotSidebar = () => {
-  const [messages, setMessages] = useState<CopilotMessage[]>(initialMessages);
+  const [messages, setMessages] = useState<CopilotMessage[]>(COPILOT_WELCOME_MESSAGES);
   const [inputMessage, setInputMessage] = useState('');
   const [
     flowVersion,

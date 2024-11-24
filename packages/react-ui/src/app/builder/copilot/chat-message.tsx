@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox';
 import { Bot } from 'lucide-react';
-import React from 'react';
+import React, { forwardRef } from 'react';
+import { WelcomeMessage } from './welcome-message';
 
 import { CodeEditor } from '../step-settings/code-settings/code-editor';
 
@@ -37,52 +38,59 @@ interface ChatMessageProps {
   onApplyCode: (message: CopilotMessage) => void;
 }
 
-export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
+export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
   ({ message, onApplyCode }, ref) => {
     const isUser = message.userType === 'user';
     const isBot = message.userType === 'bot';
     const isCode = message.messageType === 'code';
+    const isWelcome = message.messageType === 'text' && message.content === 'welcome';
 
     return (
       <div
-        className={`flex ${
-          isUser ? 'justify-end' : 'justify-start'
-        } gap-2 px-4`}
         ref={ref}
+        className={`flex gap-2 mx-2 ${
+          isUser ? 'justify-end' : 'justify-start'
+        }`}
       >
-        {isBot && (
+        {isWelcome ? (
+          <WelcomeMessage message={message} />
+        ) : (
           <>
-            <div className="min-w-8 min-h-8 max-h-8 max-w-8 border rounded-full border-gray-300 dark:border-gray-600 flex items-center justify-center">
-              <Bot className="h-6 w-6 text-gray-500 dark:text-gray-400" />
-            </div>
-            <div className={`w-full min-w-0`}>
-              {!isCode ? (
-                <ChatBox>
-                  <p>{message.content}</p>
-                </ChatBox>
-              ) : (
-                <CodeEditor
-                  animateBorderColorToggle={false}
-                  sourceCode={{
-                    code: message.content.code,
-                    packageJson: JSON.stringify(
-                      message.content.packages,
-                      null,
-                      2,
-                    ),
-                  }}
-                  readonly={true}
-                  onChange={() => {}}
-                  applyCodeToCurrentStep={() => onApplyCode(message)}
-                ></CodeEditor>
-              )}
-            </div>
+            {isBot && (
+              <>
+                <div className="min-w-8 min-h-8 max-h-8 max-w-8 border rounded-full border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                  <Bot className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                </div>
+                <div className={`w-full min-w-0`}>
+                  {!isCode ? (
+                    <ChatBox>
+                      <p>{message.content}</p>
+                    </ChatBox>
+                  ) : (
+                    <CodeEditor
+                      animateBorderColorToggle={false}
+                      sourceCode={{
+                        code: message.content.code,
+                        packageJson: JSON.stringify(
+                          message.content.packages,
+                          null,
+                          2,
+                        ),
+                      }}
+                      readonly={true}
+                      onChange={() => {}}
+                      applyCodeToCurrentStep={() => onApplyCode(message)}
+                    ></CodeEditor>
+                  )}
+                </div>
+              </>
+            )}
+            {isUser && (
+              <ChatBox>
+                <p>{message.content}</p>
+              </ChatBox>
+            )}
           </>
-        )}
-        {isUser && (
-          <ChatBox>
-            <p>{message.content}</p>
-          </ChatBox>
         )}
       </div>
     );
