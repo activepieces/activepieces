@@ -23,7 +23,6 @@ export function getModel() {
 
 const codeGenerationSchema = z.object({
     code: z.string(),
-    packages: z.array(z.string()).default([]),
     inputs: z.array(z.object({
         name: z.string(),
         type: z.string(),
@@ -34,7 +33,6 @@ const codeGenerationSchema = z.object({
 
 export async function generateCode(
     requirement: string,
-    sandboxMode: boolean,
 ): Promise<DeepPartial<typeof codeGenerationSchema>> {
     try {
         const model = getModel()
@@ -44,7 +42,7 @@ export async function generateCode(
 
         const systemPrompt = `
         You are a TypeScript code generation expert for automation flows.
-        You are generating code for a SINGLE STEP in an automation flow, NOT a backend service.
+        You are generating code for a single step in an automation flow, NOT a backend service.
         
         FLOW CONTEXT:
         - This code will run as one step in a larger flow
@@ -83,74 +81,18 @@ export async function generateCode(
            - Don't try to handle multiple operations
            - Let the flow orchestrate complex processes
 
-        Perfect Examples:
-
-        1. Simple API Request:
+        Perfect Example (Gmail API Usage):
         {
-            "code": "export const code = async (inputs: { url: string }) => {\\n  try {\\n    const response = await fetch(inputs.url);\\n    if (!response.ok) throw new Error(\`HTTP error! status: \${response.status}\`);\\n    return { data: await response.json() };\\n  } catch (error) {\\n    throw new Error(\`Request failed: \${error.message}\`);\\n  }\\n}",
-            "packages": [],
+            "code": "export const code = async (inputs: { accessToken: string }) => {\\n  try {\\n    const auth = new google.auth.OAuth2();\\n    auth.setCredentials({ access_token: inputs.accessToken });\\n\\n    const gmail = google.gmail({ version: 'v1', auth });\\n    const response = await gmail.users.messages.list({\\n      userId: 'me',\\n      maxResults: 10\\n    });\\n\\n    return { messages: response.data.messages || [] };\\n  } catch (error) {\\n    throw new Error(\`Gmail API error: \${error.message}\`);\\n  }\\n}",
             "inputs": [
                 {
-                    "name": "url",
+                    "name": "accessToken",
                     "type": "string",
-                    "description": "API endpoint URL",
-                    "suggestedValue": "https://api.example.com/data"
+                    "description": "Gmail API access token",
+                    "suggestedValue": "{{ connections.gmail.accessToken }}"
                 }
             ]
         }
-
-        2. Authenticated API Request:
-        {
-            "code": "export const code = async (inputs: { url: string, apiKey: string }) => {\\n  try {\\n    const response = await fetch(inputs.url, {\\n      headers: { Authorization: \`Bearer \${inputs.apiKey}\` }\\n    });\\n    if (!response.ok) throw new Error(\`HTTP error! status: \${response.status}\`);\\n    return { data: await response.json() };\\n  } catch (error) {\\n    throw new Error(\`Request failed: \${error.message}\`);\\n  }\\n}",
-            "packages": [],
-            "inputs": [
-                {
-                    "name": "url",
-                    "type": "string",
-                    "description": "API endpoint URL",
-                    "suggestedValue": "https://api.example.com/data"
-                },
-                {
-                    "name": "apiKey",
-                    "type": "string",
-                    "description": "API key for authentication",
-                    "suggestedValue": "{{ connections.service.apiKey }}"
-                }
-            ]
-        }
-
-        3. Data Processing:
-        {
-            "code": "export const code = async (inputs: { data: string[] }) => {\\n  try {\\n    const processed = inputs.data.map(item => item.toUpperCase());\\n    return {\\n      result: processed,\\n      count: processed.length\\n    };\\n  } catch (error) {\\n    throw new Error(\`Processing failed: \${error.message}\`);\\n  }\\n}",
-            "packages": [],
-            "inputs": [
-                {
-                    "name": "data",
-                    "type": "string[]",
-                    "description": "Array of strings to process",
-                    "suggestedValue": "{{ ['item1', 'item2'] }}"
-                }
-            ]
-        }
-
-        BAD EXAMPLES (NEVER DO THESE):
-        1. ❌ Using external HTTP libraries (Wrong):
-           import axios from 'axios';
-           -or-
-           import { fetch } from 'node-fetch';
-        ✅ Correct:
-           Use native fetch
-
-        2. ❌ OAuth Implementation (Wrong):
-           const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUrl);
-        ✅ Correct:
-           const auth = new google.auth.OAuth2();
-           auth.setCredentials({ access_token: inputs.accessToken });
-
-        3. ❌ Environment Variables (Wrong):
-           process.env.API_KEY
-        ✅ Correct:
-           inputs.apiKey
 
         IMPORTANT REMINDERS:
         - This is ONE STEP in a flow
@@ -165,21 +107,13 @@ export async function generateCode(
             model,
             system: systemPrompt,
             schema: codeGenerationSchema,
-            prompt: `Generate TypeScript code for this automation flow requirement: ${requirement}
-Remember: 
-- ${sandboxMode ? 'External packages are allowed' : 'Use only Node.js native features'}
-- Must return useful data for the next step
-- Include proper error handling
-- All inputs must have suggested values
-- Use proper TypeScript types
-- Use native fetch for HTTP requests`,
+            prompt: `Generate TypeScript code for this automation flow requirement: ${requirement}`,
             temperature: 0,
         })
 
         if (!result?.object) {
             return {
                 code: '',
-                packages: [],
                 inputs: [],
             }
         }
@@ -190,7 +124,6 @@ Remember:
         console.error('Code generation failed:', error)
         return {
             code: '',
-            packages: [],
             inputs: [],
         }
     }
