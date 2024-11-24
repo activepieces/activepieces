@@ -44,31 +44,9 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     },
   },
   {
-    accessorKey: 'createdAt',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Created')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'members',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Members')} />
-    ),
-    cell: ({ row }) => {
-      return <div className="text-left">{row.original.usage.teamMembers}</div>;
-    },
-  },
-  {
     accessorKey: 'tasks',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Tasks')} />
+      <DataTableColumnHeader column={column} title={t('(Used/Total) Tasks')} />
     ),
     cell: ({ row }) => {
       return (
@@ -82,7 +60,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
     accessorKey: 'ai-tokens',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('AI Credits')} />
+      <DataTableColumnHeader column={column} title={t('(Used/Total) AI Credits')} />
     ),
     cell: ({ row }) => {
       return (
@@ -95,6 +73,39 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       );
     },
   },
+  {
+    accessorKey: 'users',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('(Activated/Total) Users')} />
+    ),
+    cell: ({ row }) => {
+      return <div className="text-left">{row.original.analytics.activeUsers} / {row.original.analytics.totalUsers}</div>;
+    },
+  },
+  {
+    accessorKey: 'flows',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('(Active/Total) Flows')} />
+    ),
+    cell: ({ row }) => {
+      return <div className="text-left">{row.original.analytics.activeFlows} / {row.original.analytics.totalFlows}</div>;
+    },
+  },
+  {
+    accessorKey: 'createdAt',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Created')} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">
+          {formatUtils.formatDate(new Date(row.original.created))}
+        </div>
+      );
+    },
+  },
+ 
+  
   {
     accessorKey: 'externalId',
     header: ({ column }) => (
