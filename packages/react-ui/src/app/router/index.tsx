@@ -8,7 +8,7 @@ import {
 } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
-import PlatformSettingsLayout from '@/app/components/platform-settings-layout';
+import PlatformSecondSidebarLayout from '@/app/components/platform-second-sidebar-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
@@ -341,16 +341,6 @@ const routes = [
     ),
   },
   {
-    path: '/platform/pieces',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Platform Pieces">
-          <PlatformPiecesPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
     path: '/platform/projects',
     element: (
       <PlatformAdminContainer>
@@ -361,12 +351,14 @@ const routes = [
     ),
   },
   {
-    path: '/platform/connections',
+    path: '/platform/setup/pieces',
     element: (
       <PlatformAdminContainer>
-        <PageTitle title="Connections">
-          <GlobalConnectionsTable />
-        </PageTitle>
+        <PlatformSecondSidebarLayout type="setup">
+          <PageTitle title="Pieces">
+            <PlatformPiecesPage />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
     ),
   },
@@ -384,16 +376,6 @@ const routes = [
     ),
   },
   {
-    path: '/platform/templates',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Templates">
-          <TemplatesPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
     path: '/platform',
     element: (
       <PlatformAdminContainer>
@@ -404,50 +386,72 @@ const routes = [
     ),
   },
   {
-    path: '/platform/settings/branding',
+    path: '/platform/setup/connections',
     element: (
       <PlatformAdminContainer>
-        <PlatformSettingsLayout>
+        <PlatformSecondSidebarLayout type="setup">
+          <PageTitle title="Connections">
+            <GlobalConnectionsTable />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/setup/templates',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="setup">
+          <PageTitle title="Templates">
+            <TemplatesPage />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/setup/branding',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="setup">
           <PageTitle title="Branding">
             <BrandingPage />
           </PageTitle>
-        </PlatformSettingsLayout>
+        </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
     ),
   },
   {
-    path: '/platform/settings/users',
+    path: '/platform/users',
     element: (
       <PlatformAdminContainer>
-        <PlatformSettingsLayout>
-          <PageTitle title="Users">
-            <UsersPage />
-          </PageTitle>
-        </PlatformSettingsLayout>
+        <PageTitle title="Users">
+          <UsersPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
   {
-    path: '/platform/settings/ai',
+    path: '/platform/setup/ai',
     element: (
       <PlatformAdminContainer>
-        <PlatformSettingsLayout>
+        <PlatformSecondSidebarLayout type="setup">
           <PageTitle title="Universal AI">
             <AIProvidersPage />
           </PageTitle>
-        </PlatformSettingsLayout>
+        </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
     ),
   },
   {
-    path: '/platform/settings/api-keys',
+    path: '/platform/security/api-keys',
     element: (
       <PlatformAdminContainer>
-        <PlatformSettingsLayout>
+        <PlatformSecondSidebarLayout type="security">
           <PageTitle title="API Keys">
             <ApiKeysPage />
           </PageTitle>
-        </PlatformSettingsLayout>
+        </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
     ),
   },
@@ -455,68 +459,88 @@ const routes = [
     path: '/platform/settings/audit-logs',
     element: (
       <PlatformAdminContainer>
-        <PlatformSettingsLayout>
+        <PlatformSecondSidebarLayout type="security">
           <PageTitle title="Audit Logs">
             <AuditLogsPage />
           </PageTitle>
-        </PlatformSettingsLayout>
+        </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
     ),
   },
   {
-    path: '/platform/settings/workers',
+    path: '/platform/infrastructure/workers',
     element: (
       <PlatformAdminContainer>
-        <PlatformSettingsLayout>
+        <PlatformSecondSidebarLayout type="infrastructure">
           <PageTitle title="Workers">
             <SettingsWorkersPage />
           </PageTitle>
-        </PlatformSettingsLayout>
+        </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
     ),
   },
   {
-    path: '/platform/settings/signing-keys',
+    path: '/platform/security/signing-keys',
     element: (
       <PlatformAdminContainer>
-        <PlatformSettingsLayout>
+        <PlatformSecondSidebarLayout type="security">
           <PageTitle title="Signing Keys">
             <SigningKeysPage />
           </PageTitle>
-        </PlatformSettingsLayout>
+        </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
     ),
   },
   {
-    path: '/platform/settings/sso',
+    path: '/platform/security/sso',
     element: (
       <PlatformAdminContainer>
-        <PlatformSettingsLayout>
+        <PlatformSecondSidebarLayout type="security">
           <PageTitle title="SSO">
             <SSOPage />
           </PageTitle>
-        </PlatformSettingsLayout>
+        </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
     ),
   },
   {
-    path: '/platform/settings/license-key',
+    path: '/platform/setup/license-key',
     element: (
       <PlatformAdminContainer>
-        <PlatformSettingsLayout>
+        <PlatformSecondSidebarLayout type="setup">
           <PageTitle title="LicenseKey">
             <LicenseKeyPage />
           </PageTitle>
-        </PlatformSettingsLayout>
+        </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
     ),
   },
   {
-    path: '/platform/settings',
+    path: '/platform/setup',
     element: (
       <PlatformAdminContainer>
-        <PageTitle title="Platform Settings">
-          <Navigate to="/platform/settings/branding" replace />
+        <PageTitle title="Platform Setup">
+          <Navigate to="/platform/setup/ai" replace />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/infrastructure',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Platform Infrastructure">
+          <Navigate to="/platform/infrastructure/workers" replace />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/security',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Platform Security">
+          <Navigate to="/platform/security/audit-logs" replace />
         </PageTitle>
       </PlatformAdminContainer>
     ),
