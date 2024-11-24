@@ -8,9 +8,7 @@ export const CreateProjectRoleRequestBody = Type.Object({
     }),
     permissions: Type.Array(Type.String()),
     platformId: ApId,
-    type: Type.String({
-        enum: [RoleType.DEFAULT, RoleType.CUSTOM],
-    }),
+    type: Type.Enum(RoleType),
 })
 
 export type CreateProjectRoleRequestBody = Static<typeof CreateProjectRoleRequestBody>

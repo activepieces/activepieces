@@ -30,7 +30,7 @@ export const projectMemberService = {
     async upsert({
         userId,
         projectId,
-        projectRole,
+        projectRoleId,
     }: UpsertParams): Promise<ProjectMember> {
         const { platformId } = await projectService.getOneOrThrow(projectId)
         const existingProjectMember = await repo().findOneBy({
@@ -40,9 +40,6 @@ export const projectMemberService = {
         })
         const projectMemberId = existingProjectMember?.id ?? apId()
 
-        if (!projectRole) {
-            throw new Error('Project Role is not found')
-        }
 
         const projectMember: NewProjectMember = {
             id: projectMemberId,
@@ -50,19 +47,21 @@ export const projectMemberService = {
             userId,
             platformId,
             projectId,
-            projectRole,
+            projectRoleId,
         }
 
-        const upsertResult = await repo().upsert(projectMember, [
+        await repo().upsert(projectMember, [
             'projectId',
             'userId',
             'platformId',
         ])
 
-        return {
-            ...projectMember,
-            created: upsertResult.generatedMaps[0].created,
-        }
+        return await repo().findOneOrFail({
+            where: {
+                id: projectMemberId,
+            },
+            relations: ['projectRole'],
+        })
     },
     async list(
         projectId: ProjectId,
@@ -95,7 +94,6 @@ export const projectMemberService = {
         )
         return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
     },
-
     async getRole({
         userId,
         projectId,
@@ -141,10 +139,10 @@ export const projectMemberService = {
 type UpsertParams = {
     userId: string
     projectId: ProjectId
-    projectRole: ProjectRole
+    projectRoleId: string
 }
 
-type NewProjectMember = Omit<ProjectMember, 'created'>
+type NewProjectMember = Omit<ProjectMember, 'created' | 'projectRole'>
 
 async function enrichProjectMemberWithUser(
     projectMember: ProjectMember,

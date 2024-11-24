@@ -17,7 +17,7 @@ import { projectRoleService } from '../../project-role/project-role.service'
 
 const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
 
-export const projectRoleMiddleware = async (req: FastifyRequest): Promise<void> => {
+export const rbacMiddleware = async (req: FastifyRequest): Promise<void> => {
     if (ignoreRequest(req)) {
         return
     }

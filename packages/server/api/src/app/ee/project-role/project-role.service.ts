@@ -1,6 +1,5 @@
 import { rolePermissions } from '@activepieces/ee-shared'
-import { system } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApId, apId, CreateProjectRoleRequestBody, ErrorCode, PlatformId, ProjectMemberRole, ProjectRole, RoleType, SeekPage, spreadIfDefined, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectMemberRole, ProjectRole, RoleType, SeekPage, spreadIfDefined, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
@@ -9,31 +8,48 @@ import { ProjectRoleEntity } from './project-role.entity'
 export const projectRoleRepo = repoFactory(ProjectRoleEntity)
 export const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
-const IS_COMMUNITY_EDITION = system.getEdition() === ApEdition.COMMUNITY
-
 export const projectRoleService = {
 
-    async get(id: ApId, type?: RoleType): Promise<ProjectRole | null> {
-        return projectRoleRepo().findOneBy({ id, type })
+    async get({ id, platformId }: GetOneParams): Promise<ProjectRole | null> {
+        return projectRoleRepo().findOneBy({ id, platformId })
     },
-
-    async getDefaultRoleByName(name: ProjectMemberRole): Promise<ProjectRole> {
-        const projectRole = await projectRoleRepo().findOneByOrFail({ name, type: RoleType.DEFAULT })
+    async getOneOrThrow({ id, platformId }: GetOneParams): Promise<ProjectRole> {
+        const projectRole = await projectRoleRepo().findOneBy({ id, platformId })
+        if (isNil(projectRole)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'project_role', entityId: id },
+            })
+        }
         return projectRole
     },
-
-    async list(platformId: PlatformId): Promise<SeekPage<ProjectRole>> {
+    async getDefaultRoleByName({ name, platformId }: GetOneByNameOrThrowParams): Promise<ProjectRole> {
+        const projectRole = await projectRoleRepo().findOneBy({ platformId, name, type: RoleType.DEFAULT })
+        if (isNil(projectRole)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'project_role', entityId: name },
+            })
+        }
+        return projectRole
+    },
+    async list({ platformId }: ListParams): Promise<SeekPage<ProjectRole>> {
         const projectRoles = await projectRoleRepo().find({
-            where: { platformId },
-            order: { created: 'DESC' },
+            where: {
+                platformId,
+            },
+            order: {
+                created: 'DESC',
+            },
         })
 
-        for (const projectRole of projectRoles) {
-            projectRole.userCount = await projectMemberRepo().countBy({ projectRole: { id: projectRole.id } })
-        }
-
         return {
-            data: projectRoles,
+            data: await Promise.all(projectRoles.map(async (projectRole) => {
+                return {
+                    ...projectRole,
+                    userCount: await projectMemberRepo().countBy({ projectRole: { id: projectRole.id } }),
+                }
+            })),
             next: null,
             previous: null,
         }
@@ -46,9 +62,6 @@ export const projectRoleService = {
     },
 
     async createDefaultRbac(platformId: PlatformId): Promise<void> {
-        if (IS_COMMUNITY_EDITION) {
-            return
-        }
         for (const projectRole of Object.values(ProjectMemberRole)) {
             await projectRoleRepo().save(projectRoleRepo().create({
                 id: apId(),
@@ -60,26 +73,45 @@ export const projectRoleService = {
         }
     },
 
-    async update(id: ApId, { name, permissions }: UpdateProjectRoleRequestBody): Promise<ProjectRole> {
-        const updateResult = await projectRoleRepo().update(id, {
-            ...spreadIfDefined('name', name),
-            ...spreadIfDefined('permissions', permissions),
+    async update(params: UpdateParams): Promise<ProjectRole> {
+        await projectRoleRepo().update({
+            id: params.id,
+            platformId: params.platformId,
+        }, {
+            ...spreadIfDefined('name', params.name),
+            ...spreadIfDefined('permissions', params.permissions),
         })
-
-        if (updateResult.affected === 0) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'project_role',
-                    entityId: id,
-                },
-            })
-        }
-
-        return projectRoleRepo().findOneByOrFail({ id })
+        return this.getOneOrThrow({ id: params.id, platformId: params.platformId })
     },
 
-    async delete(id: ApId): Promise<void> {
-        await projectRoleRepo().delete({ id })
+    async delete({ id, platformId }: DeleteParms): Promise<void> {
+        await projectRoleRepo().delete({ id, platformId })
     },
+}
+
+type UpdateParams = {
+    id: ApId
+    name: string | undefined
+    platformId: PlatformId
+    permissions: string[] | undefined
+}
+
+type ListParams = {
+    platformId: PlatformId
+}
+
+type DeleteParms = {
+    id: ApId
+    platformId: PlatformId
+}
+
+
+type GetOneByNameOrThrowParams = {
+    name: ProjectMemberRole
+    platformId: PlatformId
+}
+
+type GetOneParams = {
+    platformId: PlatformId
+    id: ApId
 }

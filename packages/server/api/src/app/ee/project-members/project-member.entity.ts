@@ -8,7 +8,7 @@ import {
 
 export type ProjectMemberSchema = ProjectMember & {
     user: User
-    project: Project
+    project: Project,
 }
 
 export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
@@ -18,6 +18,7 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
         projectId: ApIdSchema,
         platformId: ApIdSchema,
         userId: ApIdSchema,
+        projectRoleId: ApIdSchema,
     },
     indices: [
         {
