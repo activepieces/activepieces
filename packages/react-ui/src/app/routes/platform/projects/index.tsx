@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -35,7 +35,7 @@ import { NewProjectDialog } from './new-project-dialog';
 
 const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
-    accessorKey: 'name',
+    accessorKey: 'displayName',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Name')} />
     ),
@@ -134,9 +134,11 @@ export default function ProjectsPage() {
     queryFn: () => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM);
+      const displayName = searchParams.get('displayName')?? undefined;
       return projectApi.list({
         cursor: cursor ?? undefined,
         limit: limit ? parseInt(limit) : undefined,
+        displayName
       });
     },
   });
@@ -360,6 +362,13 @@ export default function ProjectsPage() {
             await setCurrentProject(queryClient, project);
             navigate('/');
           }}
+          filters={[{
+            type: 'input',
+            title: t('Name'),
+            accessorKey: 'displayName',
+            options: [],
+            icon: CheckIcon,
+          }]}
           columns={columnsWithCheckbox}
           page={data}
           isLoading={isLoading}

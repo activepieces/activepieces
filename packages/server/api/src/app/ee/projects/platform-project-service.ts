@@ -23,7 +23,7 @@ import {
     spreadIfDefined,
     UserStatus,
 } from '@activepieces/shared'
-import { EntityManager, Equal, In, IsNull } from 'typeorm'
+import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -142,6 +142,7 @@ type GetAllParams = {
     principalId: string
     platformId: string
     externalId?: string
+    displayName?:string
     cursorRequest: Cursor | null
     limit: number
 }
@@ -164,11 +165,15 @@ function isCustomerPlatform(platformId: string | undefined): boolean {
     }
     return !flagService.isCloudPlatform(platformId)
 }
-async function createFilters({ platformId, principalType, principalId, externalId }: GetAllParams) {
+async function createFilters({ platformId, principalType, principalId, externalId,displayName }: GetAllParams) {
+    const displayNameFilter = displayName? {
+        displayName:ILike(`%${displayName}%`)
+    }: {};
     const commonFilter = {
         deleted: IsNull(),
         ...spreadIfDefined('platformId', platformId),
         ...spreadIfDefined('externalId', externalId),
+        ...displayNameFilter
     }
     switch (principalType) {
         case PrincipalType.SERVICE: {

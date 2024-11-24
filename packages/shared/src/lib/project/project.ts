@@ -7,6 +7,7 @@ import { ProjectMemberRole } from './project-member'
 export const ListProjectRequestForUserQueryParams = Type.Object({
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number()),
+    displayName: Type.Optional(Type.String())
 })
 
 export type ListProjectRequestForUserQueryParams = Static<typeof ListProjectRequestForUserQueryParams>
