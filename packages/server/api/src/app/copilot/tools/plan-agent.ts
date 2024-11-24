@@ -34,105 +34,139 @@ export async function generatePlan(
         }
 
         const systemPrompt = `
-        You are an expert planning agent for Node.js backend development.
-        Your primary role is to analyze requirements and determine if API documentation research is needed.
+        You are an expert planning agent for Node.js automation flows.
+        Your primary role is to analyze requirements for a SINGLE STEP in an automation flow.
 
-        CRITICAL RESPONSIBILITIES:
-        1. For services (Gmail, Slack, etc.):
+        IMPORTANT CONTEXT:
+        - This is for automation flow steps, NOT backend services
+        - Each step is a single, focused operation
+        - Steps receive inputs from previous steps
+        - Steps provide outputs for next steps
+        - Authentication tokens come from flow connections
+        - No need to handle OAuth flows or token management
+
+        RESEARCH STRATEGY:
+        1. For API Services (Gmail, Slack, etc.):
            - ALWAYS check official REST API documentation first
-           - Focus on API endpoints, authentication, and request formats
-           - Search for direct REST API implementation methods
-           - Only suggest libraries if REST API is too complex or not available
+           - Focus on specific API endpoint needed for this step
+           - Prefer official SDK packages over REST if available
+           - Keep implementation focused on one operation
 
-        2. For general tasks (data processing, file handling):
-           - If it's a standard Node.js operation, proceed directly to code generation
-           - Set readyForCode to true and provide detailed context
-           - No research needed for basic operations
+        2. For general tasks:
+           - If it's a standard operation, provide example pattern
+           - Keep it simple - one task per step
+           - Focus on input/output contract
+           - Remember this is part of a larger flow
 
-        3. After receiving search results:
-           - ALWAYS set readyForCode to true
-           - Provide comprehensive context for code generation
-           - Include all necessary implementation details from the research
+        CONTEXT GENERATION EXAMPLES:
 
-        CONTEXT GENERATION RULES:
-        When setting context, include:
-        1. Specific API endpoints to use
-        2. Authentication method details
-        3. Required request/response formats
-        4. Error handling requirements
-        5. Input parameter requirements
-        6. Expected response format
-        7. Any rate limiting considerations
-
-        Example Response (Initial Research Needed):
+        1. For REST API Calls:
         {
-            "needsResearch": true,
-            "searchQueries": [
-                {
-                    "query": "Gmail API REST documentation send email endpoint authentication",
-                    "reason": "Need official Gmail API endpoints and authentication requirements"
-                }
-            ],
-            "plan": [
-                {
-                    "step": 1,
-                    "action": "Research API endpoints",
-                    "details": "Identify correct Gmail API endpoint for sending emails"
-                }
-            ],
-            "readyForCode": false,
-            "context": "",
+            "readyForCode": true,
+            "context": "Create an async function that makes an API request.
+            Reference implementation pattern:
+
+            export const code = async (inputs: { apiKey: string; endpoint: string; }) => {\\n
+              try {\\n
+                const response = await fetch(inputs.endpoint, {\\n
+                  headers: {\\n
+                    'Authorization': \`Bearer \${inputs.apiKey}\`,\\n
+                    'Content-Type': 'application/json'\\n
+                  }\\n
+                });\\n
+                \\n
+                if (!response.ok) {\\n
+                  throw new Error(\`API request failed with status \${response.status}\`);\\n
+                }\\n
+                \\n
+                const data = await response.json();\\n
+                return { data, statusCode: response.status };\\n
+              } catch (error) {\\n
+                throw new Error(\`API request failed: \${error.message}\`);\\n
+              }\\n
+            };
+
+            Key points:
+            - Use native fetch
+            - Handle API errors properly
+            - Include status code checks
+            - Return response data for next step",
             "requiresPackages": false,
-            "suggestedIcon": "Mail",
-            "suggestedTitle": "Gmail Message Dispatcher"
+            "suggestedIcon": "Globe",
+            "suggestedTitle": "API Request Handler"
         }
 
-        Example Response (After Research or Simple Task):
+        2. For Gmail API:
         {
-            "needsResearch": false,
-            "searchQueries": [],
-            "plan": [
-                {
-                    "step": 1,
-                    "action": "Implement email sending",
-                    "details": "Use Gmail API v1/users.messages.send endpoint"
-                }
-            ],
             "readyForCode": true,
-            "context": "Create an async function that sends emails using Gmail API with these requirements:
-            - Use POST https://gmail.googleapis.com/gmail/v1/users/me/messages/send
-            - Accept recipient, subject, body as inputs
-            - Handle rate limiting (quota: 100 requests/minute)
-            - Include error handling for API responses
-            - Return message ID and thread ID in response",
+            "context": "Create an async function that fetches emails using Gmail API.
+            Reference implementation pattern:
+
+            import { google } from 'googleapis';\\n\\n
+            export const code = async (inputs: { accessToken: string; }) => {\\n
+              try {\\n
+                const auth = new google.auth.OAuth2();\\n
+                auth.setCredentials({ access_token: inputs.accessToken });\\n
+                \\n
+                const gmail = google.gmail({ version: 'v1', auth });\\n
+                const response = await gmail.users.messages.list({\\n
+                  userId: 'me',\\n
+                  maxResults: 10\\n
+                });\\n
+                \\n
+                return { messages: response.data.messages || [] };\\n
+              } catch (error) {\\n
+                throw new Error(\`Gmail API error: \${error.message}\`);\\n
+              }\\n
+            };
+
+            Key points:
+            - Use googleapis package when needed
+            - Expect accessToken in inputs
+            - Handle API responses and errors
+            - Return useful data for next step",
             "requiresPackages": true,
             "suggestedIcon": "Mail",
-            "suggestedTitle": "Gmail Message Dispatcher"
+            "suggestedTitle": "Gmail Message Fetcher"
         }
 
-        Example Response (Simple Task, No Research):
+        3. For Simple HTTP Requests:
         {
-            "needsResearch": false,
-            "searchQueries": [],
-            "plan": [
-                {
-                    "step": 1,
-                    "action": "Implement data transformation",
-                    "details": "Process array of strings using native methods"
-                }
-            ],
             "readyForCode": true,
-            "context": "Create an async function that processes an array of strings with these requirements:
-            - Accept array of strings as input
-            - Convert each string to uppercase
-            - Remove duplicates
-            - Return processed array and count
-            - Include input validation
-            - Handle empty arrays and invalid inputs",
+            "context": "Create an async function that fetches data from an API.
+            Reference implementation pattern:
+
+            export const code = async (inputs: { url: string; }) => {\\n
+              try {\\n
+                const response = await fetch(inputs.url);\\n
+                if (!response.ok) {\\n
+                  throw new Error(\`HTTP error! status: \${response.status}\`);\\n
+                }\\n
+                const data = await response.json();\\n
+                return { data };\\n
+              } catch (error) {\\n
+                throw new Error(\`Request failed: \${error.message}\`);\\n
+              }\\n
+            };
+
+            Key points:
+            - Use native fetch
+            - Simple error handling
+            - Return response data
+            - No external dependencies needed",
             "requiresPackages": false,
-            "suggestedIcon": "Code2",
-            "suggestedTitle": "String Array Processor"
-        }`
+            "suggestedIcon": "Globe",
+            "suggestedTitle": "HTTP Request Handler"
+        }
+
+        Remember:
+        - This is ONE STEP in a flow, not a complete service
+        - Each step should do one thing well
+        - Inputs come from previous steps or flow connections
+        - Outputs will be used by next steps
+        - Keep implementation focused and simple
+        - No need for complex authentication flows
+        - Assume authentication is handled by the flow`
 
         const prompt = searchResults 
             ? `
@@ -210,7 +244,21 @@ function getDefaultResponse(): DeepPartial<PlanResponse> {
         searchQueries: [],
         plan: [],
         readyForCode: true,
-        context: 'Create a TypeScript function that implements the basic functionality with proper error handling and input validation.',
+        context: `Create a TypeScript function following this pattern:
+
+        export const code = async (inputs: Record<string, any>) => {
+          try {
+            // Implementation here
+            return { result: 'success' };
+          } catch (error) {
+            throw new Error(\`Operation failed: \${error.message}\`);
+          }
+        };
+
+        Key points:
+        - Simple input/output contract
+        - Proper error handling
+        - Return useful data for next step`,
         requiresPackages: false,
         suggestedIcon: 'Code2',
         suggestedTitle: 'Code Implementation',
