@@ -23,9 +23,9 @@ type SelectPiecePropertyProps = {
 };
 const DynamicDropdownPieceProperty = React.memo(
   (props: SelectPiecePropertyProps) => {
-    const [flowVersion,readonly] = useBuilderStateContext((state) => [
+    const [flowVersion, readonly] = useBuilderStateContext((state) => [
       state.flowVersion,
-      state.readonly
+      state.readonly,
     ]);
     const form = useFormContext<Action | Trigger>();
     const isFirstRender = useRef(true);

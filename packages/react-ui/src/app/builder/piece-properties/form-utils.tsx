@@ -35,13 +35,12 @@ function addAuthToPieceProps(
   requireAuth: boolean,
 ): PiecePropertyMap {
   if (!requireAuth || isNil(auth)) {
-    const newProps = Object.keys(props).reduce((acc,key)=>{
-      if(key!=='auth')
-      {
-        acc[key]=props[key];
+    const newProps = Object.keys(props).reduce((acc, key) => {
+      if (key !== 'auth') {
+        acc[key] = props[key];
       }
       return acc;
-    },{} as PiecePropertyMap)
+    }, {} as PiecePropertyMap);
     return newProps;
   }
   return {
@@ -78,8 +77,12 @@ function buildInputSchemaForStep(
         actionNameOrTriggerName &&
         piece.triggers[actionNameOrTriggerName]
       ) {
-        console.log(actionNameOrTriggerName+' : '+ piece.triggers[actionNameOrTriggerName].requireAuth)
-        console.log( piece.auth)
+        console.log(
+          actionNameOrTriggerName +
+            ' : ' +
+            piece.triggers[actionNameOrTriggerName].requireAuth,
+        );
+        console.log(piece.auth);
         return formUtils.buildSchema(
           addAuthToPieceProps(
             piece.triggers[actionNameOrTriggerName].props,
