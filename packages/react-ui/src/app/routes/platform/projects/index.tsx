@@ -46,7 +46,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
     accessorKey: 'tasks',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('(Used/Total) Tasks')} />
+      <DataTableColumnHeader column={column} title={t('Used Tasks')} />
     ),
     cell: ({ row }) => {
       return (
@@ -60,7 +60,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
     accessorKey: 'ai-tokens',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('(Used/Total) AI Credits')} />
+      <DataTableColumnHeader column={column} title={t('Used AI Credits')} />
     ),
     cell: ({ row }) => {
       return (
@@ -76,7 +76,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
     accessorKey: 'users',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('(Activated/Total) Users')} />
+      <DataTableColumnHeader column={column} title={t('Active Users')} />
     ),
     cell: ({ row }) => {
       return <div className="text-left">{row.original.analytics.activeUsers} / {row.original.analytics.totalUsers}</div>;
@@ -85,7 +85,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
     accessorKey: 'flows',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('(Active/Total) Flows')} />
+      <DataTableColumnHeader column={column} title={t('Active Flows')} />
     ),
     cell: ({ row }) => {
       return <div className="text-left">{row.original.analytics.activeFlows} / {row.original.analytics.totalFlows}</div>;
