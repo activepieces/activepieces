@@ -12,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
+import { toast } from '@/components/ui/use-toast';
 
 const initialPermissions = [
   {
@@ -126,6 +127,12 @@ export const ProjectRoleDialog = ({
     onSuccess: () => {
       setIsOpen(false);
       onSave();
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: "Role name already exists",
+      });
     },
   });
 

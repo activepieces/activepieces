@@ -51,7 +51,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
         await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
         
         const projectRole = await projectRoleService.getOneOrThrow({
-            id: req.params.id,
+            name: req.params.name,
             platformId: req.principal.platform.id,
         })
         eventsHooks.get().sendUserEventFromRequest(req, {
@@ -61,7 +61,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
             },
         })
         return projectRoleService.delete({
-            id: req.params.id,
+            name: req.params.name,
             platformId: req.principal.platform.id,
         })
     })
@@ -99,7 +99,7 @@ const UpdateProjectRoleRequest = {
 const DeleteProjectRoleRequest = {
     schema: {
         params: Type.Object({
-            id: ApId,
+            name: ApId,
         }),
         response: {
             [StatusCodes.NO_CONTENT]: Type.Null(),

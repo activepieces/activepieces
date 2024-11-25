@@ -23,18 +23,32 @@ export const projectRoleService = {
     async get({ id, platformId }: GetOneParams): Promise<ProjectRole | null> {
         return projectRoleRepo().findOneBy({ id, platformId })
     },
-    async getOneOrThrow({ id, platformId }: GetOneParams): Promise<ProjectRole> {
-        const projectRole = await projectRoleRepo().findOneBy({ id, platformId })
+    async getOneOrThrow({ name, platformId }: GetOneByNameParams): Promise<ProjectRole> {
+        if(isNil(name)){
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'project_role', entityId: name, message: 'Project Role name is required' },
+            })
+        }
+        const projectRole = await projectRoleRepo().createQueryBuilder('projectRole')
+            .where('LOWER(projectRole.name) = LOWER(:name)', { name })
+            .andWhere('projectRole.platformId = :platformId', { platformId })
+            .getOne()
+
         if (isNil(projectRole)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'project_role', entityId: id, message: 'Project Role by id and platformId not found' },
+                params: { entityType: 'project_role', entityId: name, message: 'Project Role by name and platformId not found' },
             })
         }
         return projectRole
     },
     async getDefaultRoleByName({ name }: GetOneByNameOrThrowParams): Promise<ProjectRole> {
-        const projectRole = await projectRoleRepo().findOneBy({ name, type: RoleType.DEFAULT })
+        const projectRole = await projectRoleRepo().createQueryBuilder('projectRole')
+            .where('LOWER(projectRole.name) = LOWER(:name)', { name })
+            .andWhere('projectRole.type = :type', { type: RoleType.DEFAULT })
+            .getOne()
+            
         if (isNil(projectRole)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -67,6 +81,18 @@ export const projectRoleService = {
     },
 
     async create(params: CreateProjectRoleRequestBody): Promise<ProjectRole> {
+        const projectNameExists = await projectRoleRepo().createQueryBuilder('projectRole')
+            .where('LOWER(projectRole.name) = LOWER(:name)', { name: params.name })
+            .andWhere('projectRole.platformId = :platformId', { platformId: params.platformId })
+            .getOne()
+            
+        if (projectNameExists) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'project_role', entityId: params.name, message: 'Project Role name already exists' },
+            })
+        }
+
         const projectRole = projectRoleRepo().create(params)
         projectRole.id = apId()
         return projectRoleRepo().save(projectRole)
@@ -80,11 +106,11 @@ export const projectRoleService = {
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('permissions', params.permissions),
         })
-        return this.getOneOrThrow({ id: params.id, platformId: params.platformId })
+        return projectRoleRepo().findOneByOrFail({ id: params.id, platformId: params.platformId })
     },
 
-    async delete({ id, platformId }: DeleteParms): Promise<void> {
-        await projectRoleRepo().delete({ id, platformId })
+    async delete({ name, platformId }: DeleteParms): Promise<void> {
+        await projectRoleRepo().delete({ name, platformId })
     },
 }
 
@@ -100,7 +126,7 @@ type ListParams = {
 }
 
 type DeleteParms = {
-    id: ApId
+    name: ApId
     platformId: PlatformId
 }
 
@@ -112,6 +138,11 @@ type GetOneByNameOrThrowParams = {
 type GetOneParams = {
     platformId: PlatformId
     id: ApId
+}
+
+type GetOneByNameParams = {
+    name?: string
+    platformId: PlatformId
 }
 
 type GetOneIdParams = {

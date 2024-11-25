@@ -163,7 +163,7 @@ const ProjectRolePage = () => {
           actions={[
             (row) => {
               return (
-                <div className="flex items-end justify-end">
+                <div className="flex items-center justify-center">
                   <Tooltip>
                     <TooltipTrigger>
                       <ProjectRoleDialog
@@ -192,7 +192,7 @@ const ProjectRolePage = () => {
             (row) => {
               if (row.type !== RoleType.DEFAULT) {
                 return (
-                  <div className="flex items-end justify-end">
+                  <div className="flex items-center justify-center">
                     <Tooltip>
                       <TooltipTrigger>
                         <ConfirmationDeleteDialog

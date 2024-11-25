@@ -123,7 +123,7 @@ export function DataTable<
             ),
             cell: ({ row }) => {
               return (
-                <div className="flex items-end justify-end gap-4">
+                <div className="flex justify-end gap-4">
                   {actions.map((action, index) => {
                     return (
                       <React.Fragment key={index}>

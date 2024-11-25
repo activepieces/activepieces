@@ -38,7 +38,7 @@ export const SendUserInvitationRequest = Type.Union([
         type: Type.Literal(InvitationType.PROJECT),
         email: Type.String(),
         projectId: Type.String(),
-        projectRoleId: Type.String(),
+        projectRole: Type.String(),
     }),
     Type.Object({
         type: Type.Literal(InvitationType.PLATFORM),

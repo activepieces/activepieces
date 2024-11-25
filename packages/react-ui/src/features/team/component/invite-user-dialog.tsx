@@ -66,9 +66,9 @@ const FormSchema = Type.Object({
     errorMessage: t('Please select platform role'),
     required: true,
   }),
-  projectRoleId: Type.Optional(
+  projectRole: Type.Optional(
     Type.String({
-      required: false,
+      required: true,
     }),
   ),
 });
@@ -104,7 +104,7 @@ export function InviteUserDialog() {
           return userInvitationApi.invite({
             email: data.email.trim().toLowerCase(),
             type: data.type,
-            projectRoleId: data.projectRoleId!,
+            projectRole: data.projectRole!,
             projectId: project.id,
           });
       }
@@ -143,13 +143,13 @@ export function InviteUserDialog() {
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
-      projectRoleId: roles?.[0]?.id,
+      projectRole: roles?.[0]?.name,
     },
   });
 
   const onSubmit = (data: FormSchema) => {
-    if (data.type === InvitationType.PROJECT && !data.projectRoleId) {
-      form.setError('projectRoleId', {
+    if (data.type === InvitationType.PROJECT && !data.projectRole) {
+      form.setError('projectRole', {
         type: 'required',
         message: t('Please select a project role'),
       });
@@ -262,16 +262,16 @@ export function InviteUserDialog() {
                 {form.getValues().type === InvitationType.PROJECT && (
                   <FormField
                     control={form.control}
-                    name="projectRoleId"
+                    name="projectRole"
                     render={({ field }) => (
                       <FormItem className="grid gap-2">
                         <Label>{t('Select Project Role')}</Label>
                         <Select
                           onValueChange={(value) => {
                             const selectedRole = roles.find(
-                              (role) => role.id === value,
+                              (role) => role.name === value,
                             );
-                            field.onChange(selectedRole?.id);
+                            field.onChange(selectedRole?.name);
                           }}
                           defaultValue={field.value}
                         >
@@ -282,7 +282,7 @@ export function InviteUserDialog() {
                             <SelectGroup>
                               <SelectLabel>{t('Roles')}</SelectLabel>
                               {roles.map((role) => (
-                                <SelectItem key={role.id} value={role.id}>
+                                <SelectItem key={role.name} value={role.name}>
                                   {role.name}
                                 </SelectItem>
                               ))}

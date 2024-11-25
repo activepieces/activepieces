@@ -13,8 +13,8 @@ import { projectRoleService } from '../project-role/project-role.service'
 import { projectLimitsService } from './project-plan.service'
 
 export const projectMembersLimit = {
-    async limit({ projectId, platformId, projectRoleId }: { projectId: ProjectId, platformId: string, projectRoleId: ApId }): Promise<void> {
-        const shouldLimit = await shouldLimitMembers({ projectId, platformId, projectRoleId })
+    async limit({ projectId, platformId, projectRoleName }: { projectId: ProjectId, platformId: string, projectRoleName: string }): Promise<void> {
+        const shouldLimit = await shouldLimitMembers({ projectId, platformId, projectRoleName })
 
         if (shouldLimit) {
             throw new ActivepiecesError({
@@ -29,7 +29,7 @@ export const projectMembersLimit = {
 
 const UNLIMITED_TEAM_MEMBERS = 100
 
-async function shouldLimitMembers({ projectId, platformId, projectRoleId }: { projectId: ProjectId, platformId: string, projectRoleId: ApId }): Promise<boolean> {
+async function shouldLimitMembers({ projectId, platformId, projectRoleName }: { projectId: ProjectId, platformId: string, projectRoleName: string }): Promise<boolean> {
     if (!flagService.isCloudPlatform(platformId)) {
         return false
     }
@@ -39,7 +39,7 @@ async function shouldLimitMembers({ projectId, platformId, projectRoleId }: { pr
     }
     if (projectPlan.teamMembers === UNLIMITED_TEAM_MEMBERS) {
         const projectRole = await projectRoleService.getOneOrThrow({
-            id: projectRoleId,
+            name: projectRoleName,
             platformId,
         })
         if (!projectRole) {

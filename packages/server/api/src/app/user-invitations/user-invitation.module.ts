@@ -111,16 +111,17 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
     if (type === InvitationType.PLATFORM) {
         return null
     }
-    const projectRoleId = request.projectRoleId
+    const projectRoleName = request.projectRole
     
     await projectMembersLimit.limit({
         projectId: request.projectId,
         platformId,
-        projectRoleId,
+        projectRoleName,
     })
 
-    const projectRole = await projectRoleService.getOneOrThrowById({
-        id: projectRoleId,
+    const projectRole = await projectRoleService.getOneOrThrow({
+        name: projectRoleName,
+        platformId,
     })
     return projectRole
 }
