@@ -157,8 +157,8 @@ async function handleWebhook({
     }
     if (
         flow.status !== FlowStatus.ENABLED &&
-    !saveSampleData &&
-    flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED
+        !saveSampleData &&
+        flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED
     ) {
         return {
             status: StatusCodes.NOT_FOUND,
@@ -218,16 +218,15 @@ const convertBody = async (
 
         for (const [key, value] of requestBodyEntries) {
             if (isMultipartFile(value)) {
-                const file = await stepFileService.saveAndEnrich(
-                    {
-                        file: value.data as Buffer,
-                        fileName: value.filename,
-                        stepName: 'trigger',
-                        flowId,
-                    },
-                    request.hostname,
+                const file = await stepFileService.saveAndEnrich({
+                    data: value.data as Buffer,
+                    fileName: value.filename,
+                    stepName: 'trigger',
+                    flowId,
+                    contentLength: value.data.length,
+                    hostname: request.hostname,
                     projectId,
-                )
+                })
                 jsonResult[key] = file.url
             }
             else {

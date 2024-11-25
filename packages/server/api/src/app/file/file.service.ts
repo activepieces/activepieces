@@ -2,6 +2,7 @@ import { AppSystemProp, fileCompressor, logger, system } from '@activepieces/ser
 import {
     ActivepiecesError,
     apId,
+    assertNotNullOrUndefined,
     ErrorCode,
     File,
     FileCompression,
@@ -29,19 +30,24 @@ export const fileService = {
             type: params.type,
             fileName: params.fileName,
             compression: params.compression,
-            size: params.data.length,
+            size: params.size,
             metadata: params.metadata,
         }
         const location = getLocationForFile(params.type)
         switch (location) {
-            case FileLocation.DB:
+            case FileLocation.DB: {
+                assertNotNullOrUndefined(params.data, 'data is required')
                 return fileRepo().save({
                     ...baseFile,
                     location: FileLocation.DB,
                     data: params.data,
                 })
+            }
             case FileLocation.S3: {
-                const s3Key = await s3Helper.uploadFile(params.platformId, params.projectId, params.type, baseFile.id, params.data)
+                const s3Key = s3Helper.constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                if (!isNil(params.data)) {
+                    await s3Helper.uploadFile(s3Key, params.data)
+                }
                 return fileRepo().save({
                     ...baseFile,
                     location: FileLocation.S3,
@@ -155,7 +161,8 @@ function isExecutionDataFileThatExpires(type: FileType) {
 type SaveParams = {
     fileId?: FileId | undefined
     projectId?: ProjectId
-    data: Buffer
+    data: Buffer | null
+    size: number
     type: FileType
     platformId?: string
     fileName?: string

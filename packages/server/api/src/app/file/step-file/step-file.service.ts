@@ -3,23 +3,21 @@ import {
     File,
     FileCompression,
     FileType,
-    StepFileWithUrl,
+    isNil,
+    StepFileUpsertResponse,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { domainHelper } from '../../helper/domain-helper'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { fileService } from '../file.service'
+import { s3Helper } from '../s3-helper'
 
 const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
 export const stepFileService = {
-    async saveAndEnrich(
-        params: SaveParams,
-        hostname: string,
-        projectId: string,
-    ): Promise<StepFileWithUrl> {
+    async saveAndEnrich(params: SaveParams): Promise<StepFileUpsertResponse> {
         const file = await fileService.save({
-            data: params.file,
+            data: params.data ?? null,
             metadata: {
                 stepName: params.stepName,
                 flowId: params.flowId,
@@ -27,37 +25,45 @@ export const stepFileService = {
             fileName: params.fileName,
             type: FileType.FLOW_STEP_FILE,
             compression: FileCompression.NONE,
-            projectId,
+            projectId: params.projectId,
+            size: params.contentLength,
         })
-        return enrichWithUrl(hostname, file)
+        return {
+            uploadUrl: await constructUploadUrl(file.s3Key, params.data, params.contentLength),
+            url: await constructDownloadUrl(params.hostname, file),
+        }
     },
 }
 
-async function enrichWithUrl(
-    hostname: string,
-    file: File,
-): Promise<StepFileWithUrl> {
-    const jwtSecret = await jwtUtils.getJwtSecret()
+async function constructUploadUrl(s3Key: string | undefined, data: Buffer | undefined, contentLength: number): Promise<string | undefined> {
+    const dataSent = !isNil(data)
+    const isNotS3 = isNil(s3Key)
+    if (isNotS3 || dataSent) {
+        return undefined
+    }
+    return s3Helper.putS3SignedUrl(s3Key, contentLength)
+}
+
+async function constructDownloadUrl(hostname: string, file: File): Promise<string> {
     const accessToken = await jwtUtils.sign({
         payload: {
             fileId: file.id,
         },
         expiresInSeconds: dayjs.duration(executionRetentionInDays, 'days').asSeconds(),
-        key: jwtSecret,
+        key: await jwtUtils.getJwtSecret(),
     })
-    const url = await domainHelper.get().constructApiUrlFromRequest({
+    return domainHelper.get().constructApiUrlFromRequest({
         domain: hostname,
         path: `v1/step-files/signed?token=${accessToken}`,
     })
-    return {
-        ...file,
-        url,
-    }
 }
 
 type SaveParams = {
     fileName: string
     flowId: string
     stepName: string
-    file: Buffer
+    data: Buffer | undefined
+    contentLength: number
+    hostname: string
+    projectId: string
 }
