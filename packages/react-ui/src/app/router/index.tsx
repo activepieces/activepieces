@@ -12,13 +12,13 @@ import PlatformSecondSidebarLayout from '@/app/components/platform-second-sideba
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
-import AIProvidersPage from '@/app/routes/platform/ai-providers';
 import AnalyticsPage from '@/app/routes/platform/analytics';
-import { PlatformPiecesPage } from '@/app/routes/platform/pieces';
-import { ApiKeysPage } from '@/app/routes/platform/settings/api-keys';
-import { BrandingPage } from '@/app/routes/platform/settings/branding';
-import { SigningKeysPage } from '@/app/routes/platform/settings/signing-keys';
-import { SSOPage } from '@/app/routes/platform/settings/sso';
+import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
+import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
+import { SSOPage } from '@/app/routes/platform/security/sso';
+import AIProvidersPage from '@/app/routes/platform/setup/ai-providers';
+import { BrandingPage } from '@/app/routes/platform/setup/branding';
+import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
 import { FlowRunsPage } from '@/app/routes/runs';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
@@ -46,13 +46,13 @@ import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
-import AuditLogsPage from '../routes/platform/audit-logs';
-import { GlobalConnectionsTable } from '../routes/platform/connections';
+import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
-import { LicenseKeyPage } from '../routes/platform/settings/license-key';
-import SettingsWorkersPage from '../routes/platform/settings/workers';
-import TemplatesPage from '../routes/platform/templates';
+import AuditLogsPage from '../routes/platform/security/audit-logs';
+import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
+import { LicenseKeyPage } from '../routes/platform/setup/license-key';
+import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
@@ -456,7 +456,7 @@ const routes = [
     ),
   },
   {
-    path: '/platform/settings/audit-logs',
+    path: '/platform/security/audit-logs',
     element: (
       <PlatformAdminContainer>
         <PlatformSecondSidebarLayout type="security">

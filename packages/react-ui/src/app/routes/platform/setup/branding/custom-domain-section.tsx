@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircleIcon, Trash } from 'lucide-react';
 
-import { AddCustomDomainDialog } from '@/app/routes/platform/settings/branding/add-custom-domain';
+import { AddCustomDomainDialog } from '@/app/routes/platform/setup/branding/add-custom-domain';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/seperator';

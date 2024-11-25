@@ -13,12 +13,10 @@ import {
 import { Input } from '@/components/ui/input';
 
 interface Props {
-  worker: {
-    workerProps?: Record<string, string>;
-  };
+  workerProps: Record<string, string>;
 }
 
-export const WorkerConfigsModal: React.FC<Props> = ({ worker }) => {
+export const WorkerConfigsModal: React.FC<Props> = ({ workerProps }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -34,7 +32,7 @@ export const WorkerConfigsModal: React.FC<Props> = ({ worker }) => {
           <DialogTitle>{t('Environment Variables')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-          {Object.entries(worker.workerProps ?? {}).map(([key, value]) => (
+          {Object.entries(workerProps ?? {}).map(([key, value]) => (
             <div
               key={key}
               className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 p-2 rounded-md bg-gray-50 dark:bg-gray-800 border dark:border-gray-700"
@@ -45,7 +43,7 @@ export const WorkerConfigsModal: React.FC<Props> = ({ worker }) => {
               <Input
                 type="text"
                 disabled={true}
-                value={value}
+                value={value as string}
                 readOnly
                 className="pointer-events-none max-w-[180px] sm:flex-1 p-2 border rounded-md
                     bg-white dark:bg-gray-900

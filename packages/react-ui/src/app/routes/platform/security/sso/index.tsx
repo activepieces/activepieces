@@ -4,9 +4,9 @@ import { LockIcon, MailIcon, Earth } from 'lucide-react';
 import React from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { AllowedDomainDialog } from '@/app/routes/platform/settings/sso/allowed-domain';
-import { NewOAuth2Dialog } from '@/app/routes/platform/settings/sso/oauth2-dialog';
-import { ConfigureSamlDialog } from '@/app/routes/platform/settings/sso/saml-dialog';
+import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
+import { NewOAuth2Dialog } from '@/app/routes/platform/security/sso/oauth2-dialog';
+import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
