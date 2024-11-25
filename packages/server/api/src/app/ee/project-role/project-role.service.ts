@@ -24,7 +24,7 @@ export const projectRoleService = {
         return projectRoleRepo().findOneBy({ id, platformId })
     },
     async getOneOrThrow({ name, platformId }: GetOneByNameParams): Promise<ProjectRole> {
-        if(isNil(name)){
+        if (isNil(name)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'project_role', entityId: name, message: 'Project Role name is required' },

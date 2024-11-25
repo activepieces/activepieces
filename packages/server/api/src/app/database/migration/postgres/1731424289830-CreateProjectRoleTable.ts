@@ -1,4 +1,4 @@
-import { apId, RoleType } from '@activepieces/shared'
+import { RoleType } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 enum ProjectMemberRole {
@@ -109,22 +109,22 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
 
         await queryRunner.query(
             'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-            ["aJVBSSJ3YqZ7r1laFjM0a", ProjectMemberRole.VIEWER, rolePermissions[ProjectMemberRole.VIEWER], null, RoleType.DEFAULT],
+            ['aJVBSSJ3YqZ7r1laFjM0a', ProjectMemberRole.VIEWER, rolePermissions[ProjectMemberRole.VIEWER], null, RoleType.DEFAULT],
         )
 
         await queryRunner.query(
             'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-            ["sjWe85TwaFYxyhn2AgOha", ProjectMemberRole.EDITOR, rolePermissions[ProjectMemberRole.EDITOR], null, RoleType.DEFAULT],
+            ['sjWe85TwaFYxyhn2AgOha', ProjectMemberRole.EDITOR, rolePermissions[ProjectMemberRole.EDITOR], null, RoleType.DEFAULT],
         )
 
         await queryRunner.query(
             'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-            ["461ueYHzMykyk5dIL8HzQ", ProjectMemberRole.ADMIN, rolePermissions[ProjectMemberRole.ADMIN], null, RoleType.DEFAULT],
+            ['461ueYHzMykyk5dIL8HzQ', ProjectMemberRole.ADMIN, rolePermissions[ProjectMemberRole.ADMIN], null, RoleType.DEFAULT],
         )
 
         await queryRunner.query(
             'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
-            ["3Wl9IAw5aM0HLafHgMYkb", ProjectMemberRole.OPERATOR, rolePermissions[ProjectMemberRole.OPERATOR], null, RoleType.DEFAULT],
+            ['3Wl9IAw5aM0HLafHgMYkb', ProjectMemberRole.OPERATOR, rolePermissions[ProjectMemberRole.OPERATOR], null, RoleType.DEFAULT],
         )
 
         await queryRunner.query(`

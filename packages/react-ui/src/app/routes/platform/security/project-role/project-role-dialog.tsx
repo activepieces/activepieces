@@ -10,9 +10,9 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
-import { toast } from '@/components/ui/use-toast';
 
 const initialPermissions = [
   {
@@ -131,7 +131,7 @@ export const ProjectRoleDialog = ({
     onError: (error) => {
       toast({
         title: 'Error',
-        description: "Role name already exists",
+        description: 'Role name already exists',
       });
     },
   });
