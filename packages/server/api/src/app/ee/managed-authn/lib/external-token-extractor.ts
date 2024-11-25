@@ -1,6 +1,6 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, ErrorCode, isNil, PiecesFilterType, PlatformId, ProjectMemberRole } from '@activepieces/shared'
+import { ActivepiecesError, ApId, ErrorCode, isNil, PiecesFilterType, PlatformId, DefaultProjectRole } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { projectRoleService } from '../../project-role/project-role.service'
@@ -37,7 +37,7 @@ export const externalTokenExtractor = {
 
             const optionalEmail = payload.email ?? payload.externalUserId
 
-            const projectRole = await getProjectRole(payload, signingKey.platformId)
+            const projectRole = await getProjectRole(payload)
 
             const { piecesFilterType, piecesTags } = extractPieces(payload)
             return {
@@ -107,18 +107,20 @@ function extractPieces(payload: ExternalTokenPayload) {
     }
 }
 
-async function getProjectRole(payload: ExternalTokenPayload, platformId: PlatformId) {
-    if ('version' in payload && payload.version === 'v4') {
-        const projectRole = await projectRoleService.getOneOrThrow({
+async function getProjectRole(payload: ExternalTokenPayload) {
+    if ('projectRoleId' in payload && !isNil(payload.projectRoleId))  {
+        return projectRoleService.getOneOrThrowById({
             id: payload.projectRoleId,
-            platformId,
         })
-        return projectRole
     }
-    const roleByName = await projectRoleService.getDefaultRoleByName({
-        name: payload.role ?? ProjectMemberRole.EDITOR,
+    if ('role' in payload && !isNil(payload.role)) {
+        return projectRoleService.getDefaultRoleByName({
+            name: payload.role,
+        })
+    }
+    return projectRoleService.getDefaultRoleByName({
+        name: DefaultProjectRole.EDITOR,
     })
-    return roleByName
 }
 
 function externalTokenPayload() {
@@ -132,7 +134,7 @@ function externalTokenPayload() {
     const v2 = Type.Composite([v1,
         Type.Object({
             tasks: Type.Optional(Type.Number()),
-            role: Type.Optional(Type.Enum(ProjectMemberRole)),
+            role: Type.Optional(Type.Enum(DefaultProjectRole)),
             pieces: Type.Optional(Type.Object({
                 filterType: Type.Enum(PiecesFilterType),
                 tags: Type.Optional(Type.Array(Type.String())),

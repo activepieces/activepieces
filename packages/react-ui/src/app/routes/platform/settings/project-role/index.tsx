@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { Pencil, Trash, Plus, Eye } from 'lucide-react';
 import { useState } from 'react';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -84,6 +85,7 @@ const ProjectRolePage = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-roles'],
     queryFn: () => projectRoleApi.list(),
+    enabled: platform.projectRolesEnabled,
   });
 
   const { mutate: deleteProjectRole, isPending: isDeleting } = useMutation({
@@ -162,102 +164,112 @@ const ProjectRolePage = () => {
   ];
 
   return (
-    <div className="flex flex-col w-full">
-      <div className="flex items-center justify-between flex-row mb-4">
-        <h1 className="text-2xl font-bold">{t('Project Role Management')}</h1>
-        <ProjectRoleDialog
-          mode="create"
-          onSave={() => refetch()}
-          platformId={platform.id}
-        >
-          <Button className="flex items-center">
-            <Plus className="mr-2" />
-            {t('New Role')}
-          </Button>
-        </ProjectRoleDialog>
-      </div>
-      <DataTable
-        columns={columns}
-        page={data}
-        isLoading={isLoading}
-        actions={[
-          (row) => {
-            return (
-              <div className="flex items-end justify-end">
-                <Tooltip>
-                  <TooltipTrigger>
-                    <ProjectRoleDialog
-                      mode="edit"
-                      projectRole={row}
-                      platformId={platform.id}
-                      onSave={() => refetch()}
-                      disabled={row.type === RoleType.DEFAULT}
-                    >
-                      {row.type === RoleType.DEFAULT ? (
-                        <Eye className="size-4" />
-                      ) : (
-                        <Pencil className="size-4" />
-                      )}
-                    </ProjectRoleDialog>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {row.type === RoleType.DEFAULT
-                      ? t('View Role')
-                      : t('Edit Role')}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            );
-          },
-          (row) => {
-            if (row.type !== RoleType.DEFAULT) {
+    <LockedFeatureGuard
+      featureKey="TEAM"
+      locked={!platform.projectRolesEnabled}
+      lockTitle={t('Project Role Management')}
+      lockDescription={t(
+        'Define custom roles and permissions to control what your team members can access and modify',
+      )}
+      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
+    >
+      <div className="flex flex-col w-full">
+        <div className="flex items-center justify-between flex-row mb-4">
+          <h1 className="text-2xl font-bold">{t('Project Role Management')}</h1>
+          <ProjectRoleDialog
+            mode="create"
+            onSave={() => refetch()}
+            platformId={platform.id}
+          >
+            <Button className="flex items-center">
+              <Plus className="mr-2" />
+              {t('New Role')}
+            </Button>
+          </ProjectRoleDialog>
+        </div>
+        <DataTable
+          columns={columns}
+          page={data}
+          isLoading={isLoading}
+          actions={[
+            (row) => {
               return (
                 <div className="flex items-end justify-end">
                   <Tooltip>
                     <TooltipTrigger>
-                      <ConfirmationDeleteDialog
-                        isDanger={true}
-                        title={t('Delete Role')}
-                        message={t(
-                          `Deleting this role will remove ${
-                            row.userCount
-                          } project member${
-                            row.userCount === 1 ? '' : 's'
-                          } and all associated invitations. Are you sure you want to proceed?`,
-                        )}
-                        entityName={`${t('Project Role')} ${row.name}`}
-                        mutationFn={async () => deleteProjectRole(row.id)}
+                      <ProjectRoleDialog
+                        mode="edit"
+                        projectRole={row}
+                        platformId={platform.id}
+                        onSave={() => refetch()}
+                        disabled={row.type === RoleType.DEFAULT}
                       >
-                        <Button
-                          loading={isDeleting}
-                          variant="ghost"
-                          className="size-8 p-0"
-                        >
-                          <Trash className="size-4 text-destructive" />
-                        </Button>
-                      </ConfirmationDeleteDialog>
+                        {row.type === RoleType.DEFAULT ? (
+                          <Eye className="size-4" />
+                        ) : (
+                          <Pencil className="size-4" />
+                        )}
+                      </ProjectRoleDialog>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      {t('Delete Role')}
+                      {row.type === RoleType.DEFAULT
+                        ? t('View Role')
+                        : t('Edit Role')}
                     </TooltipContent>
                   </Tooltip>
                 </div>
               );
-            }
-            return <></>;
-          },
-        ]}
-      />
-      <ProjectMembersDialog
-        projectRole={selectedProjectRole}
-        isOpen={isDialogOpen}
-        onClose={() => {
-          setIsDialogOpen(false);
-          setSelectedProjectRole(null);
-        }}
-        refetch={refetch}
-      />
-    </div>
+            },
+            (row) => {
+              if (row.type !== RoleType.DEFAULT) {
+                return (
+                  <div className="flex items-end justify-end">
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <ConfirmationDeleteDialog
+                          isDanger={true}
+                          title={t('Delete Role')}
+                          message={t(
+                            `Deleting this role will remove ${
+                              row.userCount
+                            } project member${
+                              row.userCount === 1 ? '' : 's'
+                            } and all associated invitations. Are you sure you want to proceed?`,
+                          )}
+                          entityName={`${t('Project Role')} ${row.name}`}
+                          mutationFn={async () => deleteProjectRole(row.id)}
+                        >
+                          <Button
+                            loading={isDeleting}
+                            variant="ghost"
+                            className="size-8 p-0"
+                          >
+                            <Trash className="size-4 text-destructive" />
+                          </Button>
+                        </ConfirmationDeleteDialog>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {t('Delete Role')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                );
+              }
+              return <></>;
+            },
+          ]}
+        />
+        <ProjectMembersDialog
+          projectRole={selectedProjectRole}
+          isOpen={isDialogOpen}
+          onClose={() => {
+            setIsDialogOpen(false);
+            setSelectedProjectRole(null);
+          }}
+          refetch={refetch}
+        />
+      </div>
+    </LockedFeatureGuard>
   );
 };
 

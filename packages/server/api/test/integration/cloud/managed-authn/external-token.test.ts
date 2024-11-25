@@ -1,8 +1,9 @@
-import { apId, PiecesFilterType, PieceType, ProjectMemberRole, ProjectRole } from '@activepieces/shared'
+import { apId, PiecesFilterType, PieceType, DefaultProjectRole, ProjectRole } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { initializeDatabase } from '../../../../src/app/database'
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockExternalToken } from '../../../helpers/auth'
@@ -18,8 +19,8 @@ import {
 
 let app: FastifyInstance | null = null
 
-beforeAll(async () => {
-    await databaseConnection().initialize()
+beforeAll(async () => { 
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 
@@ -237,13 +238,13 @@ describe('Managed Authentication API', () => {
 
             const mockedEmail = faker.internet.email()
 
-            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: ProjectMemberRole.VIEWER }) as ProjectRole
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER }) as ProjectRole
 
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
                 externalEmail: mockedEmail,
                 signingKeyId: mockSigningKey.id,
-                projectRole,
+                projectRoleId: projectRole.id,
             })
 
             // act
@@ -262,17 +263,15 @@ describe('Managed Authentication API', () => {
 
             const generatedProjectMember = await databaseConnection()
                 .getRepository('project_member')
-                .createQueryBuilder('project_member')
-                .leftJoinAndSelect('project_member.projectRole', 'projectRole')
-                .where('project_member.userId = :userId', { userId: responseBody?.id })
-                .andWhere('project_member.platformId = :platformId', { platformId: mockPlatform.id })
-                .andWhere('project_member.projectId = :projectId', { projectId: responseBody?.projectId })
-                .getOne()
+                .findOneBy({
+                    projectId: responseBody?.projectId,
+                    userId: responseBody?.id,
+                })
 
             expect(generatedProjectMember?.projectId).toBe(responseBody?.projectId)
             expect(generatedProjectMember?.userId).toBe(responseBody?.id)
             expect(generatedProjectMember?.platformId).toBe(mockPlatform.id)
-            expect(generatedProjectMember?.projectRole.name).toBe(projectRole.name)
+            expect(generatedProjectMember?.projectRoleId).toBe(projectRole.id)
         })
 
         it('Adds new user to existing project', async () => {

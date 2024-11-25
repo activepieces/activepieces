@@ -14,17 +14,17 @@ import {
 } from '@/components/ui/select';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
+import { ApFlagId, DefaultProjectRole } from '@activepieces/shared';
 
 type ProjectRoleSelectProps = {
   form: UseFormReturn<any>;
 };
 
 const RolesDisplayNames: { [k: string]: string } = {
-  [ProjectMemberRole.ADMIN]: t('Admin'),
-  [ProjectMemberRole.EDITOR]: t('Editor'),
-  [ProjectMemberRole.OPERATOR]: t('Operator'),
-  [ProjectMemberRole.VIEWER]: t('Viewer'),
+  [DefaultProjectRole.ADMIN]: t('Admin'),
+  [DefaultProjectRole.EDITOR]: t('Editor'),
+  [DefaultProjectRole.OPERATOR]: t('Operator'),
+  [DefaultProjectRole.VIEWER]: t('Viewer'),
 };
 
 const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
@@ -34,9 +34,9 @@ const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
     ApFlagId.IS_CLOUD_PLATFORM,
   );
 
-  const invitationRoles = Object.values(ProjectMemberRole)
+  const invitationRoles = Object.values(DefaultProjectRole)
     .filter((f) => {
-      if (f === ProjectMemberRole.ADMIN) {
+      if (f === DefaultProjectRole.ADMIN) {
         return true;
       }
       const showNonAdmin =

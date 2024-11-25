@@ -9,7 +9,6 @@ export const ProjectMember = Type.Object({
     userId: ApId,
     projectId: Type.String(),
     projectRoleId: ApId,
-    projectRole: ProjectRole,
 }, {
     description: "Project member is which user is assigned to a project."
 });
@@ -17,7 +16,8 @@ export const ProjectMember = Type.Object({
 export type ProjectMember = Static<typeof ProjectMember>;
 
 export const ProjectMemberWithUser = Type.Composite([ProjectMember, Type.Object({
-    user: UserMeta
+    user: UserMeta,
+    projectRole: ProjectRole,
 })])
 
 export type ProjectMemberWithUser = Static<typeof ProjectMemberWithUser>;

@@ -1,11 +1,12 @@
 import {
     ApiKeyResponseWithValue,
 } from '@activepieces/ee-shared'
-import { Platform, PlatformRole, PrincipalType, Project, ProjectMemberRole, ProjectRole, User } from '@activepieces/shared'
+import { Platform, PlatformRole, PrincipalType, Project, DefaultProjectRole, ProjectRole, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { initializeDatabase } from '../../../../src/app/database'
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
@@ -21,7 +22,7 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 
@@ -44,9 +45,12 @@ describe('Project Member API', () => {
             it('should return project members', async () => {
                 const { mockApiKey, mockProject, mockMember } = await createBasicEnvironment()
 
+                const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER }) as ProjectRole
+
                 const mockProjectMember = createMockProjectMember({
                     projectId: mockProject.id,
                     userId: mockMember.id,
+                    projectRoleId: projectRole.id,
                 })
                 await databaseConnection()
                     .getRepository('project_member')
@@ -70,9 +74,12 @@ describe('Project Member API', () => {
                 const { mockApiKey, mockMember } = await createBasicEnvironment()
                 const { mockProject: mockProject2 } = await createBasicEnvironment()
 
+                const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER }) as ProjectRole
+
                 const mockProjectMember = createMockProjectMember({
                     projectId: mockProject2.id,
                     userId: mockMember.id,
+                    projectRoleId: projectRole.id,
                 })
                 await databaseConnection()
                     .getRepository('project_member')
@@ -93,10 +100,10 @@ describe('Project Member API', () => {
         describe('List project members by user', () => {
 
             it.each([
-                ProjectMemberRole.ADMIN,
-                ProjectMemberRole.EDITOR,
-                ProjectMemberRole.VIEWER,
-                ProjectMemberRole.OPERATOR,
+                DefaultProjectRole.ADMIN,
+                DefaultProjectRole.EDITOR,
+                DefaultProjectRole.VIEWER,
+                DefaultProjectRole.OPERATOR,
             ])('Succeeds if user role is %s', async (testRole) => {
                 // arrange
                 const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
@@ -107,7 +114,7 @@ describe('Project Member API', () => {
                     userId: mockMember.id,
                     platformId: mockPlatform.id,
                     projectId: mockProject.id,
-                    projectRole,
+                    projectRoleId: projectRole.id,
                 })
                 await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -141,9 +148,12 @@ describe('Project Member API', () => {
         it('Deletes project member', async () => {
             const { mockOwnerToken, mockProject, mockMember } = await createBasicEnvironment()
 
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.ADMIN }) as ProjectRole
+
             const mockProjectMember = createMockProjectMember({
                 projectId: mockProject.id,
                 userId: mockMember.id,
+                projectRoleId: projectRole.id,
             })
             await databaseConnection()
                 .getRepository('project_member')
@@ -161,9 +171,9 @@ describe('Project Member API', () => {
         })
 
         it.each([
-            ProjectMemberRole.EDITOR,
-            ProjectMemberRole.VIEWER,
-            ProjectMemberRole.OPERATOR,
+            DefaultProjectRole.EDITOR,
+            DefaultProjectRole.VIEWER,
+            DefaultProjectRole.OPERATOR,
         ])('Fails if user role is %s', async (testRole) => {
             // arrange
             const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
@@ -174,7 +184,7 @@ describe('Project Member API', () => {
                 userId: mockMember.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                projectRole,
+                projectRoleId: projectRole.id,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -208,9 +218,12 @@ describe('Project Member API', () => {
         it('Delete project member from api', async () => {
             const { mockApiKey, mockProject, mockMember } = await createBasicEnvironment()
 
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.ADMIN }) as ProjectRole
+
             const mockProjectMember = createMockProjectMember({
                 projectId: mockProject.id,
                 userId: mockMember.id,
+                projectRoleId: projectRole.id,
             })
             await databaseConnection()
                 .getRepository('project_member')
@@ -231,10 +244,13 @@ describe('Project Member API', () => {
             const { mockApiKey, mockMember } = await createBasicEnvironment()
             const { mockProject: mockProject2 } = await createBasicEnvironment()
 
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.ADMIN }) as ProjectRole
+
             const mockProjectMember = createMockProjectMember({
                 projectId: mockProject2.id,
                 platformId: mockProject2.platformId,
                 userId: mockMember.id,
+                projectRoleId: projectRole.id,
             })
             await databaseConnection()
                 .getRepository('project_member')

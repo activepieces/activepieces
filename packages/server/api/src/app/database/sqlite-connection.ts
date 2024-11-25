@@ -69,7 +69,7 @@ import { AddConnectionOwnerSqlite1730121414658 } from './migration/sqlite/173012
 import { AppConnectionsSetNullSqlite1730627777709 } from './migration/sqlite/1730627777709-AppConnectionsSetNullSqlite'
 import { AddFlowSchemaVersionSqlite1730760312426 } from './migration/sqlite/1730760312426-AddFlowSchemaVersionSqlite'
 import { StoreTriggerEventsInFileSqlite1731247180217 } from './migration/sqlite/1731247180217-StoreTriggerEventsInFileSqlite'
-import { CreateProjectRoleTable1732146211077 } from './migration/sqlite/1732146211077-CreateProjectRoleTable'
+import { CreateProjectRoleTableSqlite1732482844483 } from './migration/sqlite/1732482844483-CreateProjectRoleTableSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -157,7 +157,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowSchemaVersionSqlite1730760312426,
         SwitchToRouter1731019013340,
         StoreTriggerEventsInFileSqlite1731247180217,
-        CreateProjectRoleTable1732146211077,
+        CreateProjectRoleTableSqlite1732482844483,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

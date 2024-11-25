@@ -34,6 +34,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
+import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
 import { userInvitationApi } from '@/features/team/lib/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -44,6 +45,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   InvitationType,
+  isNil,
   Permission,
   PlatformRole,
   UserInvitationWithLink,
@@ -64,21 +66,10 @@ const FormSchema = Type.Object({
     errorMessage: t('Please select platform role'),
     required: true,
   }),
-  projectRole: Type.Object(
-    {
-      id: Type.String(),
-      created: Type.String(),
-      updated: Type.String(),
-      name: Type.String(),
-      permissions: Type.Array(Type.String()),
-      platformId: Type.String(),
-      type: Type.String(),
-      userCount: Type.Optional(Type.Number()),
-    },
-    {
-      errorMessage: t('Please select project role'),
-      required: true,
-    },
+  projectRoleId: Type.Optional(
+    Type.String({
+      required: false,
+    }),
   ),
 });
 
@@ -113,7 +104,7 @@ export function InviteUserDialog() {
           return userInvitationApi.invite({
             email: data.email.trim().toLowerCase(),
             type: data.type,
-            projectRoleId: data.projectRole.id,
+            projectRoleId: data.projectRoleId!,
             projectId: project.id,
           });
       }
@@ -135,9 +126,11 @@ export function InviteUserDialog() {
     },
   });
 
-  const { data: rolesData, refetch: refetchRoles } = useQuery({
+  const { data: rolesData } = useQuery({
     queryKey: ['project-roles'],
-    queryFn: () => userInvitationApi.listProjectRoles(),
+    queryFn: () => projectRoleApi.list(),
+    enabled:
+      !isNil(platform.projectRolesEnabled) && platform.projectRolesEnabled,
   });
 
   const roles = rolesData?.data ?? [];
@@ -146,13 +139,24 @@ export function InviteUserDialog() {
     resolver: typeboxResolver(FormSchema),
     defaultValues: {
       email: '',
-      type: platform.manageProjectsEnabled
+      type: platform.projectRolesEnabled
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
-      projectRole: roles?.[0],
+      projectRoleId: roles?.[0]?.id,
     },
   });
+
+  const onSubmit = (data: FormSchema) => {
+    if (data.type === InvitationType.PROJECT && !data.projectRoleId) {
+      form.setError('projectRoleId', {
+        type: 'required',
+        message: t('Please select a project role'),
+      });
+      return;
+    }
+    mutate(data);
+  };
 
   const copyInvitationLink = () => {
     navigator.clipboard.writeText(invitationLink);
@@ -170,7 +174,6 @@ export function InviteUserDialog() {
           if (open) {
             form.reset();
             setInvitationLink('');
-            refetchRoles();
           }
         }}
       >
@@ -203,7 +206,7 @@ export function InviteUserDialog() {
           {!invitationLink ? (
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit((data) => mutate(data))}
+                onSubmit={form.handleSubmit(onSubmit)}
                 className="flex flex-col gap-4"
               >
                 <FormField
@@ -259,7 +262,7 @@ export function InviteUserDialog() {
                 {form.getValues().type === InvitationType.PROJECT && (
                   <FormField
                     control={form.control}
-                    name="projectRole"
+                    name="projectRoleId"
                     render={({ field }) => (
                       <FormItem className="grid gap-2">
                         <Label>{t('Select Project Role')}</Label>
@@ -268,9 +271,9 @@ export function InviteUserDialog() {
                             const selectedRole = roles.find(
                               (role) => role.id === value,
                             );
-                            field.onChange(selectedRole);
+                            field.onChange(selectedRole?.id);
                           }}
-                          defaultValue={field.value?.id}
+                          defaultValue={field.value}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder={t('Select Role')} />

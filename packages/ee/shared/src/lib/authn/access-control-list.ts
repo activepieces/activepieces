@@ -1,7 +1,7 @@
-import { Permission, ProjectMemberRole } from '@activepieces/shared'
+import { Permission, DefaultProjectRole } from '@activepieces/shared'
 
-export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
-    [ProjectMemberRole.ADMIN]: [
+export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
+    [DefaultProjectRole.ADMIN]: [
         Permission.READ_APP_CONNECTION,
         Permission.WRITE_APP_CONNECTION,
         Permission.READ_FLOW,
@@ -21,10 +21,8 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_ALERT,
         Permission.WRITE_PROJECT,
         Permission.READ_PROJECT,
-        Permission.WRITE_INSTALL_PIECE,
-        Permission.READ_INSTALL_PIECE,
     ],
-    [ProjectMemberRole.EDITOR]: [
+    [DefaultProjectRole.EDITOR]: [
         Permission.READ_APP_CONNECTION,
         Permission.WRITE_APP_CONNECTION,
         Permission.READ_FLOW,
@@ -40,7 +38,7 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.WRITE_ISSUES,
         Permission.READ_PROJECT
     ],
-    [ProjectMemberRole.OPERATOR]: [
+    [DefaultProjectRole.OPERATOR]: [
         Permission.READ_APP_CONNECTION,
         Permission.WRITE_APP_CONNECTION,
         Permission.READ_FLOW,
@@ -52,15 +50,13 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.WRITE_RUN,
         Permission.READ_ISSUES,
         Permission.READ_PROJECT,
-        Permission.READ_INSTALL_PIECE,
     ],
-    [ProjectMemberRole.VIEWER]: [
+    [DefaultProjectRole.VIEWER]: [
         Permission.READ_APP_CONNECTION,
         Permission.READ_FLOW,
         Permission.READ_PROJECT_MEMBER,
         Permission.READ_INVITATION,
         Permission.READ_ISSUES,
         Permission.READ_PROJECT,
-        Permission.READ_INSTALL_PIECE,
     ],
 }

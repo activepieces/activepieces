@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectMemberRole, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, DefaultProjectRole, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
@@ -106,7 +106,7 @@ type DeleteParms = {
 
 
 type GetOneByNameOrThrowParams = {
-    name: ProjectMemberRole
+    name: DefaultProjectRole
 }
 
 type GetOneParams = {

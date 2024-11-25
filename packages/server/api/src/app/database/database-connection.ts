@@ -46,6 +46,7 @@ import { UserInvitationEntity } from '../user-invitations/user-invitation.entity
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
+import { databaseSeeds } from './seeds'
 import { createSqlLiteDataSource } from './sqlite-connection'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
@@ -137,6 +138,7 @@ export const databaseConnection = () => {
     }
     return _databaseConnection
 }
+
 
 export function APArrayContains<T extends ObjectLiteral>(
     columnName: string,

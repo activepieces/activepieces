@@ -1,21 +1,21 @@
 import { apId, RoleType } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export enum ProjectMemberRole {
+enum ProjectMemberRole {
     ADMIN = 'ADMIN',
     EDITOR = 'EDITOR',
     OPERATOR = 'OPERATOR',
     VIEWER = 'VIEWER',
 }
 
-export enum Permission {
+enum Permission {
     READ_APP_CONNECTION = 'READ_APP_CONNECTION',
     WRITE_APP_CONNECTION = 'WRITE_APP_CONNECTION',
     READ_FLOW = 'READ_FLOW',
     WRITE_FLOW = 'WRITE_FLOW',
     UPDATE_FLOW_STATUS = 'UPDATE_FLOW_STATUS',
     WRITE_INVITATION = 'WRITE_INVITATION',
-    READ_INVITATION = 'READ_INVITATION', 
+    READ_INVITATION = 'READ_INVITATION',
     READ_PROJECT_MEMBER = 'READ_PROJECT_MEMBER',
     WRITE_PROJECT_MEMBER = 'WRITE_PROJECT_MEMBER',
     WRITE_GIT_REPO = 'WRITE_GIT_REPO',
@@ -26,16 +26,14 @@ export enum Permission {
     WRITE_ISSUES = 'WRITE_ISSUES',
     READ_FOLDER = 'READ_FOLDER',
     WRITE_FOLDER = 'WRITE_FOLDER',
-    WRITE_EMAIL_ALERT = 'WRITE_EMAIL_ALERT',
-    READ_EMAIL_ALERT = 'READ_EMAIL_ALERT',
+    WRITE_ALERT = 'WRITE_ALERT',
+    READ_ALERT = 'READ_ALERT',
     WRITE_PROJECT = 'WRITE_PROJECT',
     READ_PROJECT = 'READ_PROJECT',
-    WRITE_INSTALL_PIECE = 'WRITE_INSTALL_PIECE',
-    READ_INSTALL_PIECE = 'READ_INSTALL_PIECE',
 }
 
 
-export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
+const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
     [ProjectMemberRole.ADMIN]: [
         Permission.READ_APP_CONNECTION,
         Permission.WRITE_APP_CONNECTION,
@@ -52,12 +50,10 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.WRITE_RUN,
         Permission.READ_ISSUES,
         Permission.WRITE_ISSUES,
-        Permission.WRITE_EMAIL_ALERT,
-        Permission.READ_EMAIL_ALERT,
+        Permission.WRITE_ALERT,
+        Permission.READ_ALERT,
         Permission.WRITE_PROJECT,
         Permission.READ_PROJECT,
-        Permission.WRITE_INSTALL_PIECE,
-        Permission.READ_INSTALL_PIECE,
     ],
     [ProjectMemberRole.EDITOR]: [
         Permission.READ_APP_CONNECTION,
@@ -73,11 +69,7 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.WRITE_RUN,
         Permission.READ_ISSUES,
         Permission.WRITE_ISSUES,
-        Permission.WRITE_EMAIL_ALERT,
-        Permission.READ_EMAIL_ALERT,
-        Permission.READ_PROJECT,
-        Permission.WRITE_INSTALL_PIECE,
-        Permission.READ_INSTALL_PIECE,
+        Permission.READ_PROJECT
     ],
     [ProjectMemberRole.OPERATOR]: [
         Permission.READ_APP_CONNECTION,
@@ -90,10 +82,7 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_RUN,
         Permission.WRITE_RUN,
         Permission.READ_ISSUES,
-        Permission.WRITE_EMAIL_ALERT,
-        Permission.READ_EMAIL_ALERT,
         Permission.READ_PROJECT,
-        Permission.READ_INSTALL_PIECE,
     ],
     [ProjectMemberRole.VIEWER]: [
         Permission.READ_APP_CONNECTION,
@@ -101,9 +90,7 @@ export const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_PROJECT_MEMBER,
         Permission.READ_INVITATION,
         Permission.READ_ISSUES,
-        Permission.READ_EMAIL_ALERT,
         Permission.READ_PROJECT,
-        Permission.READ_INSTALL_PIECE,
     ],
 }
 
@@ -124,7 +111,7 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
                 CONSTRAINT "PK_3c677495ab48997b2dc02048289" PRIMARY KEY ("id")
             )
         `)
-        
+
         await queryRunner.query(
             'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
             [apId(), ProjectMemberRole.VIEWER, rolePermissions[ProjectMemberRole.VIEWER], null, RoleType.DEFAULT],
@@ -144,7 +131,7 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
             'INSERT INTO "project_role" ("id", "name", "permissions", "platformId", "type") VALUES ($1, $2, $3, $4, $5)',
             [apId(), ProjectMemberRole.OPERATOR, rolePermissions[ProjectMemberRole.OPERATOR], null, RoleType.DEFAULT],
         )
-        
+
         await queryRunner.query(`
             ALTER TABLE "project_member" ADD COLUMN "projectRoleId" character varying
         `)

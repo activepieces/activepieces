@@ -1,5 +1,5 @@
 import { ProjectMember } from '@activepieces/ee-shared'
-import { Project, User } from '@activepieces/shared'
+import { Project, ProjectRole, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -9,6 +9,7 @@ import {
 export type ProjectMemberSchema = ProjectMember & {
     user: User
     project: Project
+    projectRole: ProjectRole
 }
 
 export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({

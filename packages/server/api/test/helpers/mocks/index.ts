@@ -38,7 +38,6 @@ import {
     Platform,
     PlatformRole,
     Project,
-    ProjectMemberRole,
     ProjectPlan,
     ProjectRole,
     RoleType,
@@ -245,7 +244,9 @@ export const createMockPlatformWithOwner = (
 }
 
 export const createMockProjectMember = (
-    projectMember?: Partial<ProjectMember>,
+    projectMember?: Omit<Partial<ProjectMember>, 'projectRoleId'> & {
+        projectRoleId: string
+    },
 ): ProjectMember => {
     assertNotNullOrUndefined(projectMember?.userId, 'userId')
     return {
@@ -253,18 +254,9 @@ export const createMockProjectMember = (
         created: projectMember?.created ?? faker.date.recent().toISOString(),
         updated: projectMember?.updated ?? faker.date.recent().toISOString(),
         platformId: projectMember?.platformId ?? apId(),
-        projectRoleId: projectMember?.projectRoleId ?? apId(),
+        projectRoleId: projectMember.projectRoleId,
         userId: projectMember?.userId,
         projectId: projectMember?.projectId ?? apId(),
-        projectRole: projectMember?.projectRole ?? {
-            name: faker.helpers.enumValue(ProjectMemberRole),
-            permissions: [],
-            type: RoleType.DEFAULT,
-            platformId: projectMember?.platformId ?? apId(),
-            id: apId(),
-            created: faker.date.recent().toISOString(),
-            updated: faker.date.recent().toISOString(),
-        },
     }
 }
 

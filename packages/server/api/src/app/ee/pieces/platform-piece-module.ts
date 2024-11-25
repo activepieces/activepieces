@@ -6,6 +6,7 @@ import {
     Permission,
     PieceScope,
     PrincipalType,
+    DefaultProjectRole,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 import {
@@ -17,7 +18,7 @@ import { StatusCodes } from 'http-status-codes'
 import { flagService } from '../../flags/flag.service'
 import { pieceService } from '../../pieces/piece-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { assertRoleHasPermission } from '../authentication/project-role/rbac-middleware'
+import { projectMemberService } from '../project-members/project-member.service'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -33,7 +34,18 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
         const platformId = req.principal.platform.id
         if (flagService.isCloudPlatform(platformId)) {
             assertOneOfTheseScope(req.body.scope, [PieceScope.PROJECT])
-            await assertRoleHasPermission(req.principal, Permission.WRITE_INSTALL_PIECE)
+            const platformRole = await projectMemberService.getRole({
+                projectId: req.principal.projectId,
+                userId: req.principal.id,
+            })
+            if(platformRole?.name === DefaultProjectRole.ADMIN) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: {
+                        message: 'Only admin role is allowed for cloud platform',
+                    },
+                })
+            }
         }
         else {
             assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])

@@ -8,7 +8,7 @@ import {
     Cursor,
     PlatformRole,
     ProjectId,
-    ProjectMemberRole,
+    DefaultProjectRole,
     ProjectRole,
     SeekPage,
     UserId,
@@ -60,7 +60,6 @@ export const projectMemberService = {
             where: {
                 id: projectMemberId,
             },
-            relations: ['projectRole'],
         })
     },
     async list(
@@ -108,10 +107,10 @@ export const projectMemberService = {
         })
 
         if (user.id === project.ownerId) {
-            return projectRoleService.getDefaultRoleByName({ name: ProjectMemberRole.ADMIN })
+            return projectRoleService.getDefaultRoleByName({ name: DefaultProjectRole.ADMIN })
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
-            return projectRoleService.getDefaultRoleByName({ name: ProjectMemberRole.ADMIN })
+            return projectRoleService.getDefaultRoleByName({ name: DefaultProjectRole.ADMIN })
         }
         const member = await repo().findOneBy({
             projectId,
@@ -153,8 +152,12 @@ async function enrichProjectMemberWithUser(
     const user = await userService.getOneOrFail({
         id: projectMember.userId,
     })
+    const projectRole = await projectRoleService.getOneOrThrowById({
+        id: projectMember.projectRoleId,
+    })
     return {
         ...projectMember,
+        projectRole,
         user: {
             platformId: user.platformId,
             platformRole: user.platformRole,

@@ -2,11 +2,15 @@
 import {
     PlatformRole,
     PrincipalType,
+    DefaultProjectRole,
+    RoleType,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { projectRoleService } from 'packages/server/api/src/app/ee/project-role/project-role.service'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { initializeDatabase } from '../../../../src/app/database'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
@@ -20,10 +24,8 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
-
-    
 })
 
 afterAll(async () => {
@@ -220,6 +222,9 @@ describe('Enterprise User API', () => {
             // arrange
             const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup()
 
+            const adminRole = await projectRoleService.getDefaultRoleByName({
+                name: DefaultProjectRole.ADMIN,
+            })
             const mockUser = createMockUser({ platformId: mockPlatform.id })
             await databaseConnection().getRepository('user').save([mockUser])
 
@@ -227,6 +232,7 @@ describe('Enterprise User API', () => {
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
+                projectRoleId: adminRole.id,
             })
             await databaseConnection().getRepository('project_member').save(mockProjectMember)
 

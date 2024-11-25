@@ -2,6 +2,7 @@ import { OtpType } from '@activepieces/ee-shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { initializeDatabase } from '../../../../src/app/database'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
 import { CLOUD_PLATFORM_ID, createMockPlatform, createMockUser } from '../../../helpers/mocks'
@@ -9,7 +10,7 @@ import { CLOUD_PLATFORM_ID, createMockPlatform, createMockUser } from '../../../
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 

@@ -1,6 +1,5 @@
 import {
   ListUserInvitationsRequest,
-  ProjectRole,
   SeekPage,
   SendUserInvitationRequest,
   UserInvitation,
@@ -23,8 +22,5 @@ export const userInvitationApi = {
     return api.post<{ registered: boolean }>(`/v1/user-invitations/accept`, {
       invitationToken: token,
     });
-  },
-  listProjectRoles(): Promise<SeekPage<ProjectRole>> {
-    return api.get<SeekPage<ProjectRole>>(`/v1/project-roles`);
   },
 };

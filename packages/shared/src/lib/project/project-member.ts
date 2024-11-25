@@ -1,4 +1,4 @@
-export enum ProjectMemberRole {
+export enum DefaultProjectRole {
     ADMIN = 'ADMIN',
     EDITOR = 'EDITOR',
     OPERATOR = 'OPERATOR',
