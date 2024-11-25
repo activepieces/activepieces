@@ -299,9 +299,15 @@ async function handleDuplicates(
 	duplicateColumn: string,
 	valueInputOption: ValueInputOption
 ) {
+
 	const uniqueValues = formattedInputRows.filter(
 		(inputRow) => !existingSheetValues.some(
-			(existingRow) => existingRow.values[duplicateColumn] === inputRow[duplicateColumn]
+			(existingRow) => {
+				const existingValue = existingRow?.values?.[duplicateColumn];
+				const inputValue = inputRow?.[duplicateColumn];
+				return existingValue != null && inputValue != null && 
+					String(existingValue).toLowerCase().trim() === String(inputValue).toLowerCase().trim();
+			}
 		)
 	);
 
