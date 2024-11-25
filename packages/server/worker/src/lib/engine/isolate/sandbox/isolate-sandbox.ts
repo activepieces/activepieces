@@ -2,7 +2,7 @@ import { exec } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process, { arch, cwd } from 'node:process'
-import { fileExists, getEngineTimeout, logger, PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
+import { AppSystemProp, fileExists, getEngineTimeout, logger, PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import { ExecuteSandboxResult } from '../../engine-runner'
 
@@ -199,6 +199,8 @@ export class IsolateSandbox {
             AP_PAUSED_FLOW_TIMEOUT_DAYS: system.getOrThrow(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
             AP_BASE_CODE_DIRECTORY: IsolateSandbox.sandboxCodesCachePath,
             AP_MAX_FILE_SIZE_MB: system.getOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB),
+            AP_FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
+            AP_S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
         }
     }
 

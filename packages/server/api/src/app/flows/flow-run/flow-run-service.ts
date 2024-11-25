@@ -455,6 +455,7 @@ async function updateLogs({ flowRunId, projectId, executionState }: UpdateLogs):
         fileId,
         projectId,
         data: serializedLogs,
+        size: serializedLogs.byteLength,
         type: FileType.FLOW_RUN_LOG,
         compression: FileCompression.GZIP,
     })
