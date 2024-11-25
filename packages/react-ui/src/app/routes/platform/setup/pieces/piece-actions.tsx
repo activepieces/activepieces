@@ -1,13 +1,10 @@
+import { TooltipContent } from '@radix-ui/react-tooltip';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Eye, EyeOff, Pin, PinOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
