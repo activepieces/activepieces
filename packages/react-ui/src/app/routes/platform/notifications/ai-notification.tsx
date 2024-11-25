@@ -9,12 +9,12 @@ import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-a
 
 const AINotification = () => {
   const navigate = useNavigate();
-  const { data: providers } = useQuery({
+  const { data: providers, isLoading } = useQuery({
     queryKey: ['ai-providers'],
     queryFn: () => aiProviderApi.list(),
   });
 
-  if (providers && providers.data.length > 0) {
+  if ((providers && providers.data.length > 0) || isLoading) {
     return null;
   }
   return (
