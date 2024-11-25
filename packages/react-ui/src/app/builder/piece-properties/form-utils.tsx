@@ -77,12 +77,6 @@ function buildInputSchemaForStep(
         actionNameOrTriggerName &&
         piece.triggers[actionNameOrTriggerName]
       ) {
-        console.log(
-          actionNameOrTriggerName +
-            ' : ' +
-            piece.triggers[actionNameOrTriggerName].requireAuth,
-        );
-        console.log(piece.auth);
         return formUtils.buildSchema(
           addAuthToPieceProps(
             piece.triggers[actionNameOrTriggerName].props,
