@@ -33,7 +33,7 @@ export const progressService = {
 }
 
 const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<void> => {
-    if (params.engineConstants.isTestMode) {
+    if (params.engineConstants.isRunningApTests) {
         return
     }
     await lock.runExclusive(async () => {
