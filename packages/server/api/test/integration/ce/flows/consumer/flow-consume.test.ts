@@ -14,8 +14,8 @@ import {
 import { FastifyInstance } from 'fastify'
 import { flowJobExecutor } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
-import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { initializeDatabase } from '../../../../../src/app/database'
+import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../../src/app/server'
 import {
     createMockFlow,

@@ -4,11 +4,11 @@ import {
 } from '@activepieces/ee-shared'
 import {
     apId,
+    DefaultProjectRole,
     InvitationStatus,
     InvitationType,
     Platform,
     PlatformRole,
-    DefaultProjectRole,
     ProjectRole,
     User,
     UserStatus,
@@ -17,8 +17,8 @@ import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { initializeDatabase } from '../../../../src/app/database'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'

@@ -50,6 +50,7 @@ import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
+import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
@@ -67,7 +68,6 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { FlagRouteGuard } from './flag-route-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
-import { ProjectRolePage } from '../routes/platform/settings/project-role';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();

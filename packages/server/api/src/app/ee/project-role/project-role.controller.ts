@@ -3,8 +3,8 @@ import { ApId, CreateProjectRoleRequestBody, ProjectRole, SeekPage, UpdateProjec
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { eventsHooks } from '../../helper/application-events'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { projectRoleService } from './project-role.service'
-import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
 export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -15,6 +15,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateProjectRoleRequest, async (req, reply) => {
+        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
         await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
         const projectRole = await projectRoleService.create(req.body)
 
@@ -27,7 +28,9 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.code(StatusCodes.CREATED).send(projectRole)
     })
 
-    app.post('/:id', UpdateProjectRoleRequest, async (req) => {
+    app.post('/:id', UpdateProjectRoleRequest, async (req, reply) => {
+        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
+        await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
         const projectRole = await projectRoleService.update({
             id: req.params.id,
             platformId: req.principal.platform.id,
@@ -43,7 +46,10 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
         return projectRole
     })
 
-    app.delete('/:id', DeleteProjectRoleRequest, async (req) => {
+    app.delete('/:id', DeleteProjectRoleRequest, async (req, reply) => {
+        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
+        await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
+        
         const projectRole = await projectRoleService.getOneOrThrow({
             id: req.params.id,
             platformId: req.principal.platform.id,

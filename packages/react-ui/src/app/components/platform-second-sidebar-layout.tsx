@@ -11,6 +11,7 @@ import {
   Workflow,
   Link,
   Puzzle,
+  ScanFace,
 } from 'lucide-react';
 
 import SidebarLayout, { SidebarItem } from '@/app/components/sidebar-layout';
@@ -89,7 +90,7 @@ export default function PlatformSecondSidebarLayout({
         {
           title: t('Project Roles'),
           href: '/platform/security/project-roles',
-          icon: <ShieldPlus size={iconSize} />,
+          icon: <ScanFace size={iconSize} />,
         },
         {
           title: t('API Keys'),

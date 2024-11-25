@@ -101,9 +101,8 @@ const AddAlertEmailDialog = React.memo(
                 variant="outline"
                 className="mt-4 w-full flex items-center space-x-2"
                 disabled={
-                  projectRole?.permissions.includes(
-                    Permission.WRITE_ALERT,
-                  ) === false
+                  projectRole?.permissions.includes(Permission.WRITE_ALERT) ===
+                  false
                 }
               >
                 <Plus className="size-4" />

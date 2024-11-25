@@ -32,6 +32,7 @@ import { EditGlobalConnectionDialog } from '@/features/connections/components/ed
 import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
 import { globalConnectionsApi } from '@/features/connections/lib/global-connections-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -39,7 +40,6 @@ import {
   AppConnectionWithoutSensitiveData,
   Permission,
 } from '@activepieces/shared';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 
 const STATUS_QUERY_PARAM = 'status';
 const filters = [
@@ -318,7 +318,7 @@ const GlobalConnectionsTable = () => {
                   <Button
                     className="w-full mr-2"
                     size="sm"
-                disabled={!userHasPermissionToWriteAppConnection}
+                    disabled={!userHasPermissionToWriteAppConnection}
                     variant="destructive"
                   >
                     <Trash className="mr-2 w-4" />

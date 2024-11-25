@@ -1,16 +1,16 @@
 import {
     apId,
+    DefaultProjectRole,
     FlowOperationType,
     FlowStatus,
     PlatformRole,
     PrincipalType,
-    DefaultProjectRole,
     ProjectRole,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { initializeDatabase } from '../../../../src/app/database'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {

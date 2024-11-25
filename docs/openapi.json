@@ -1653,6 +1653,109 @@
           "data"
         ]
       },
+      "project.role.created": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          },
+          "platformId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "projectDisplayName": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "userEmail": {
+            "type": "string"
+          },
+          "ip": {
+            "type": "string"
+          },
+          "action": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "project.role.created"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "project.role.updated"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "project.role.deleted"
+                ]
+              }
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "projectRole": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "created": {
+                    "type": "string"
+                  },
+                  "updated": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "platformId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "created",
+                  "updated",
+                  "name",
+                  "permissions"
+                ]
+              }
+            },
+            "required": [
+              "projectRole"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "platformId",
+          "action",
+          "data"
+        ]
+      },
       "flow-template": {
         "type": "object",
         "properties": {
@@ -1973,13 +2076,48 @@
             "type": "string",
             "nullable": true
           },
-          "projectRole": {
+          "projectRoleId": {
             "type": "string",
-            "enum": [
-              "ADMIN",
-              "EDITOR",
-              "OPERATOR",
-              "VIEWER"
+            "nullable": true
+          },
+          "projectRole": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "created": {
+                "type": "string"
+              },
+              "updated": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "platformId": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "userCount": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "id",
+              "created",
+              "updated",
+              "name",
+              "permissions",
+              "type"
             ],
             "nullable": true
           }
@@ -2018,33 +2156,9 @@
           "projectId": {
             "type": "string"
           },
-          "role": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "ADMIN"
-                ]
-              },
-              {
-                "type": "string",
-                "enum": [
-                  "EDITOR"
-                ]
-              },
-              {
-                "type": "string",
-                "enum": [
-                  "OPERATOR"
-                ]
-              },
-              {
-                "type": "string",
-                "enum": [
-                  "VIEWER"
-                ]
-              }
-            ]
+          "projectRoleId": {
+            "pattern": "^[0-9a-zA-Z]{21}$",
+            "type": "string"
           }
         },
         "required": [
@@ -2054,7 +2168,7 @@
           "platformId",
           "userId",
           "projectId",
-          "role"
+          "projectRoleId"
         ]
       },
       "project": {
@@ -10796,6 +10910,27 @@
           },
           {
             "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "PROJECT"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "PLATFORM"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "scope",
+            "required": false
+          },
+          {
+            "schema": {
               "type": "string"
             },
             "in": "query",
@@ -11288,6 +11423,12 @@
                     "customDomainsEnabled": {
                       "type": "boolean"
                     },
+                    "globalConnectionsEnabled": {
+                      "type": "boolean"
+                    },
+                    "customRolesEnabled": {
+                      "type": "boolean"
+                    },
                     "apiKeysEnabled": {
                       "type": "boolean"
                     },
@@ -11347,6 +11488,8 @@
                     "manageProjectsEnabled",
                     "projectRolesEnabled",
                     "customDomainsEnabled",
+                    "globalConnectionsEnabled",
+                    "customRolesEnabled",
                     "apiKeysEnabled",
                     "flowIssuesEnabled",
                     "alertsEnabled",
@@ -11389,40 +11532,15 @@
                       "projectId": {
                         "type": "string"
                       },
-                      "projectRole": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "enum": [
-                              "ADMIN"
-                            ]
-                          },
-                          {
-                            "type": "string",
-                            "enum": [
-                              "EDITOR"
-                            ]
-                          },
-                          {
-                            "type": "string",
-                            "enum": [
-                              "OPERATOR"
-                            ]
-                          },
-                          {
-                            "type": "string",
-                            "enum": [
-                              "VIEWER"
-                            ]
-                          }
-                        ]
+                      "projectRoleId": {
+                        "type": "string"
                       }
                     },
                     "required": [
                       "type",
                       "email",
                       "projectId",
-                      "projectRole"
+                      "projectRoleId"
                     ]
                   },
                   {
@@ -11537,13 +11655,48 @@
                       "type": "string",
                       "nullable": true
                     },
-                    "projectRole": {
+                    "projectRoleId": {
                       "type": "string",
-                      "enum": [
-                        "ADMIN",
-                        "EDITOR",
-                        "OPERATOR",
-                        "VIEWER"
+                      "nullable": true
+                    },
+                    "projectRole": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "permissions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "platformId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "userCount": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "created",
+                        "updated",
+                        "name",
+                        "permissions",
+                        "type"
                       ],
                       "nullable": true
                     },
@@ -11700,7 +11853,7 @@
                 "type": "object",
                 "properties": {
                   "displayName": {
-                    "pattern": "^[^:/?&=#@]+$",
+                    "pattern": "^[^./]+$",
                     "type": "string"
                   },
                   "externalId": {
@@ -12131,7 +12284,7 @@
                     ]
                   },
                   "displayName": {
-                    "pattern": "^[^:/?&=#@]+$",
+                    "pattern": "^[^./]+$",
                     "type": "string"
                   },
                   "plan": {

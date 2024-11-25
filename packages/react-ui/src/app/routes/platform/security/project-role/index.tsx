@@ -9,6 +9,7 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,
@@ -18,65 +19,10 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ProjectRole, RoleType, Permission } from '@activepieces/shared';
+import { ProjectRole, RoleType } from '@activepieces/shared';
 
 import ProjectMembersDialog from './project-members-dialog';
 import { ProjectRoleDialog } from './project-role-dialog';
-
-export const InitialPermissions = [
-  {
-    name: 'App Connections',
-    description: 'Read and write app connections',
-    read: [Permission.READ_APP_CONNECTION],
-    write: [Permission.READ_APP_CONNECTION, Permission.WRITE_APP_CONNECTION],
-  },
-  {
-    name: 'Flows',
-    description: 'Read and write flows',
-    read: [Permission.READ_FLOW],
-    write: [
-      Permission.READ_FLOW,
-      Permission.UPDATE_FLOW_STATUS,
-      Permission.WRITE_FLOW,
-    ],
-  },
-  {
-    name: 'Project Members',
-    description: 'Read and write project members',
-    read: [Permission.READ_PROJECT_MEMBER],
-    write: [Permission.READ_PROJECT_MEMBER, Permission.WRITE_PROJECT_MEMBER],
-  },
-  {
-    name: 'Invitations',
-    description: 'Read and write invitations',
-    read: [Permission.READ_INVITATION],
-    write: [Permission.READ_INVITATION, Permission.WRITE_INVITATION],
-  },
-  {
-    name: 'Git Repos',
-    description: 'Read and write git repos',
-    read: [Permission.READ_GIT_REPO],
-    write: [Permission.READ_GIT_REPO, Permission.WRITE_GIT_REPO],
-  },
-  {
-    name: 'Runs',
-    description: 'Read and write runs',
-    read: [Permission.READ_RUN],
-    write: [Permission.READ_RUN, Permission.WRITE_RUN],
-  },
-  {
-    name: 'Issues',
-    description: 'Read and write issues',
-    read: [Permission.READ_ISSUES],
-    write: [Permission.READ_ISSUES, Permission.WRITE_ISSUES],
-  },
-  {
-    name: 'Folders',
-    description: 'Read and write folders',
-    read: [Permission.READ_FOLDER],
-    write: [Permission.READ_FOLDER, Permission.WRITE_FOLDER],
-  },
-];
 
 const ProjectRolePage = () => {
   const { toast } = useToast();
@@ -115,6 +61,14 @@ const ProjectRolePage = () => {
 
   const columns: ColumnDef<RowDataWithActions<ProjectRole>>[] = [
     {
+      accessorKey: 'id',
+      accessorFn: (row) => row.id,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('ID')} />
+      ),
+      cell: ({ row }) => <div className="text-left">{row.original.id}</div>,
+    },
+    {
       accessorKey: 'name',
       accessorFn: (row) => row.name,
       header: ({ column }) => (
@@ -135,22 +89,14 @@ const ProjectRolePage = () => {
       ),
     },
     {
-      accessorKey: 'created',
-      accessorFn: (row) => row.created,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
-      ),
-      cell: ({ row }) => (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
-        </div>
-      ),
-    },
-    {
       accessorKey: 'userCount',
       accessorFn: (row) => row.userCount,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Users')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Users')}
+          className="text-center"
+        />
       ),
       cell: ({ row }) => (
         <div
@@ -173,20 +119,43 @@ const ProjectRolePage = () => {
       )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
     >
-      <div className="flex flex-col w-full">
-        <div className="flex items-center justify-between flex-row mb-4">
-          <h1 className="text-2xl font-bold">{t('Project Role Management')}</h1>
-          <ProjectRoleDialog
-            mode="create"
-            onSave={() => refetch()}
-            platformId={platform.id}
-          >
-            <Button className="flex items-center">
-              <Plus className="mr-2" />
-              {t('New Role')}
-            </Button>
-          </ProjectRoleDialog>
+      <div className="flex-col w-full">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex flex-col gap-2">
+            <TableTitle>{t('Project Role Management')}</TableTitle>
+            <div className="text-sm text-muted-foreground">
+              {t(
+                'Define custom roles and permissions that can be assigned to your team members',
+              )}
+            </div>
+          </div>
+          {!platform.customRolesEnabled && (
+            <Tooltip>
+              <TooltipTrigger>
+                <Button size="sm" className="flex items-center gap-2" disabled>
+                  <Plus className="size-4" />
+                  {t('New Role')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {t('Contact sales to unlock custom roles')}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {platform.customRolesEnabled && (
+            <ProjectRoleDialog
+              mode="create"
+              onSave={() => refetch()}
+              platformId={platform.id}
+            >
+              <Button size="sm" className="flex items-center gap-2">
+                <Plus className="size-4" />
+                {t('New Role')}
+              </Button>
+            </ProjectRoleDialog>
+          )}
         </div>
+
         <DataTable
           columns={columns}
           page={data}

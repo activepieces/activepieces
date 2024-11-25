@@ -6,9 +6,9 @@ import {
 import {
     apId,
     Cursor,
+    DefaultProjectRole,
     PlatformRole,
     ProjectId,
-    DefaultProjectRole,
     ProjectRole,
     SeekPage,
     UserId,

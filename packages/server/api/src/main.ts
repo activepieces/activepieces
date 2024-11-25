@@ -2,10 +2,10 @@
 import { logger, system } from '@activepieces/server-shared'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
+import { initializeDatabase } from './app/database'
 import { initializeLock } from './app/helper/lock'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
-import { initializeDatabase } from './app/database'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {

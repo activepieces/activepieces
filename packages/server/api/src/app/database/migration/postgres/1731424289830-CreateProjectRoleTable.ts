@@ -29,7 +29,6 @@ enum Permission {
     WRITE_ALERT = 'WRITE_ALERT',
     READ_ALERT = 'READ_ALERT',
     WRITE_PROJECT = 'WRITE_PROJECT',
-    READ_PROJECT = 'READ_PROJECT',
 }
 
 
@@ -53,7 +52,6 @@ const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.WRITE_ALERT,
         Permission.READ_ALERT,
         Permission.WRITE_PROJECT,
-        Permission.READ_PROJECT,
     ],
     [ProjectMemberRole.EDITOR]: [
         Permission.READ_APP_CONNECTION,
@@ -69,7 +67,6 @@ const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.WRITE_RUN,
         Permission.READ_ISSUES,
         Permission.WRITE_ISSUES,
-        Permission.READ_PROJECT
     ],
     [ProjectMemberRole.OPERATOR]: [
         Permission.READ_APP_CONNECTION,
@@ -82,7 +79,6 @@ const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_RUN,
         Permission.WRITE_RUN,
         Permission.READ_ISSUES,
-        Permission.READ_PROJECT,
     ],
     [ProjectMemberRole.VIEWER]: [
         Permission.READ_APP_CONNECTION,
@@ -90,7 +86,6 @@ const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
         Permission.READ_PROJECT_MEMBER,
         Permission.READ_INVITATION,
         Permission.READ_ISSUES,
-        Permission.READ_PROJECT,
     ],
 }
 

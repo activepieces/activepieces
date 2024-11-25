@@ -1,12 +1,12 @@
 import {
     ApiKeyResponseWithValue,
 } from '@activepieces/ee-shared'
-import { InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, DefaultProjectRole, ProjectRole, SendUserInvitationRequest, User } from '@activepieces/shared'
+import { DefaultProjectRole, InvitationStatus, InvitationType, Platform, PlatformRole, PrincipalType, Project, ProjectRole, SendUserInvitationRequest, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { initializeDatabase } from '../../../../src/app/database'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'

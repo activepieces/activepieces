@@ -2,8 +2,8 @@ import { apId, CreateProjectRoleRequestBody, PrincipalType, RoleType, UpdateProj
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { initializeDatabase } from '../../../../src/app/database'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockProjectRole, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
@@ -116,7 +116,7 @@ describe('Project Role API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
 
-        it('should fail to get all project roles if user is not platform owner', async () => {
+        it('should able to get all project roles if user is not platform owner', async () => {
             const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
             const nonOwnerUserId = createMockUser()
             await databaseConnection().getRepository('user').save(nonOwnerUserId)
@@ -134,7 +134,7 @@ describe('Project Role API', () => {
                 },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 
@@ -165,6 +165,36 @@ describe('Project Role API', () => {
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('should fail to update if user is not platform owner', async () => {
+            const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const nonOwnerUserId = createMockUser()
+            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: nonOwnerUserId.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            await databaseConnection().getRepository('project_role').save(projectRole)
+
+            const request: UpdateProjectRoleRequestBody = {
+                name: faker.lorem.word(),
+                permissions: ['read', 'write'],
+            }
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/project-roles/${projectRole.id}`,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 

@@ -1,6 +1,6 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, ErrorCode, isNil, PiecesFilterType, PlatformId, DefaultProjectRole } from '@activepieces/shared'
+import { ActivepiecesError, ApId, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { projectRoleService } from '../../project-role/project-role.service'
@@ -108,11 +108,6 @@ function extractPieces(payload: ExternalTokenPayload) {
 }
 
 async function getProjectRole(payload: ExternalTokenPayload) {
-    if ('projectRoleId' in payload && !isNil(payload.projectRoleId))  {
-        return projectRoleService.getOneOrThrowById({
-            id: payload.projectRoleId,
-        })
-    }
     if ('role' in payload && !isNil(payload.role)) {
         return projectRoleService.getDefaultRoleByName({
             name: payload.role,
@@ -148,11 +143,7 @@ function externalTokenPayload() {
         piecesTags: Type.Optional(Type.Array(Type.String())),
     })])
 
-    const v4 = Type.Composite([Type.Omit(v3, ['role', 'version']), Type.Object({
-        version: Type.Literal('v4'),
-        projectRoleId: Type.String(),
-    })])
-    return Type.Union([v2, v3, v4])
+    return Type.Union([v2, v3])
 }
 
 export const ExternalTokenPayload = externalTokenPayload()

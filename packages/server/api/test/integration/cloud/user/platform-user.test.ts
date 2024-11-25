@@ -1,16 +1,15 @@
 
 import {
+    DefaultProjectRole,
     PlatformRole,
     PrincipalType,
-    DefaultProjectRole,
-    RoleType,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { projectRoleService } from 'packages/server/api/src/app/ee/project-role/project-role.service'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { initializeDatabase } from '../../../../src/app/database'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { projectRoleService } from '../../../../src/app/ee/project-role/project-role.service'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
