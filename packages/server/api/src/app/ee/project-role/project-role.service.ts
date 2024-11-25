@@ -25,12 +25,6 @@ export const projectRoleService = {
         return projectRoleRepo().findOneBy({ id, platformId })
     },
     async getOneOrThrow({ name, platformId }: GetOneByNameParams): Promise<ProjectRole> {
-        if (isNil(name)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'project_role', entityId: name, message: 'Project Role name is required' },
-            })
-        }
         const projectRole = await projectRoleRepo().createQueryBuilder('projectRole')
             .where('LOWER(projectRole.name) = LOWER(:name)', { name })
             .andWhere(new Brackets(qb => {
@@ -145,7 +139,7 @@ type GetOneParams = {
 }
 
 type GetOneByNameParams = {
-    name?: string
+    name: string
     platformId: PlatformId
 }
 

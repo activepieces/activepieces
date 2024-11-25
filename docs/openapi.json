@@ -2307,6 +2307,29 @@
               "tasks",
               "aiTokens"
             ]
+          },
+          "analytics": {
+            "type": "object",
+            "properties": {
+              "totalUsers": {
+                "type": "number"
+              },
+              "activeUsers": {
+                "type": "number"
+              },
+              "totalFlows": {
+                "type": "number"
+              },
+              "activeFlows": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "totalUsers",
+              "activeUsers",
+              "totalFlows",
+              "activeFlows"
+            ]
           }
         },
         "required": [
@@ -2318,7 +2341,8 @@
           "notifyStatus",
           "platformId",
           "usage",
-          "plan"
+          "plan",
+          "analytics"
         ]
       },
       "flow": {
@@ -11532,7 +11556,7 @@
                       "projectId": {
                         "type": "string"
                       },
-                      "projectRoleId": {
+                      "projectRole": {
                         "type": "string"
                       }
                     },
@@ -11540,7 +11564,7 @@
                       "type",
                       "email",
                       "projectId",
-                      "projectRoleId"
+                      "projectRole"
                     ]
                   },
                   {
@@ -12014,6 +12038,29 @@
                         "tasks",
                         "aiTokens"
                       ]
+                    },
+                    "analytics": {
+                      "type": "object",
+                      "properties": {
+                        "totalUsers": {
+                          "type": "number"
+                        },
+                        "activeUsers": {
+                          "type": "number"
+                        },
+                        "totalFlows": {
+                          "type": "number"
+                        },
+                        "activeFlows": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "totalUsers",
+                        "activeUsers",
+                        "totalFlows",
+                        "activeFlows"
+                      ]
                     }
                   },
                   "required": [
@@ -12025,7 +12072,8 @@
                     "notifyStatus",
                     "platformId",
                     "usage",
-                    "plan"
+                    "plan",
+                    "analytics"
                   ]
                 }
               }
@@ -12214,6 +12262,29 @@
                               "tasks",
                               "aiTokens"
                             ]
+                          },
+                          "analytics": {
+                            "type": "object",
+                            "properties": {
+                              "totalUsers": {
+                                "type": "number"
+                              },
+                              "activeUsers": {
+                                "type": "number"
+                              },
+                              "totalFlows": {
+                                "type": "number"
+                              },
+                              "activeFlows": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "totalUsers",
+                              "activeUsers",
+                              "totalFlows",
+                              "activeFlows"
+                            ]
                           }
                         },
                         "required": [
@@ -12225,7 +12296,8 @@
                           "notifyStatus",
                           "platformId",
                           "usage",
-                          "plan"
+                          "plan",
+                          "analytics"
                         ]
                       }
                     },
@@ -12481,6 +12553,29 @@
                         "tasks",
                         "aiTokens"
                       ]
+                    },
+                    "analytics": {
+                      "type": "object",
+                      "properties": {
+                        "totalUsers": {
+                          "type": "number"
+                        },
+                        "activeUsers": {
+                          "type": "number"
+                        },
+                        "totalFlows": {
+                          "type": "number"
+                        },
+                        "activeFlows": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "totalUsers",
+                        "activeUsers",
+                        "totalFlows",
+                        "activeFlows"
+                      ]
                     }
                   },
                   "required": [
@@ -12492,7 +12587,8 @@
                     "notifyStatus",
                     "platformId",
                     "usage",
-                    "plan"
+                    "plan",
+                    "analytics"
                   ]
                 }
               }
