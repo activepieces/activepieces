@@ -10,6 +10,7 @@ import {
   LIMIT_QUERY_PARAM,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,
@@ -26,8 +27,6 @@ import {
   summarizeApplicationEvent,
 } from '@activepieces/ee-shared';
 import { isNil } from '@activepieces/shared';
-
-import { TableTitle } from '../../../../components/ui/table-title';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();

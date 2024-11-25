@@ -1,5 +1,12 @@
 import { t } from 'i18next';
-import { LayoutGrid, LineChart, Server, Users, Wrench } from 'lucide-react';
+import {
+  LayoutGrid,
+  LineChart,
+  Server,
+  Shield,
+  Users,
+  Wrench,
+} from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
@@ -47,6 +54,11 @@ export function PlatformAdminContainer({
       to: '/platform/setup',
       label: t('Setup'),
       icon: Wrench,
+    },
+    {
+      to: '/platform/security',
+      label: t('Security'),
+      icon: Shield,
     },
     {
       to: '/platform/infrastructure',

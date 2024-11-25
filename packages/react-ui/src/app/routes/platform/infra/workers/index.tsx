@@ -34,17 +34,17 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
         used: 116704698368,
         percentage: 34.59205537845069,
       },
+      workerProps: {
+        FLOW_WORKER_CONCURRENCY: '8',
+        POLLING_POOL_SIZE: '4',
+        SCHEDULED_WORKER_CONCURRENCY: '8',
+      },
       cpuUsagePercentage: 2.335817759768149,
       ramUsagePercentage: 52.699635773121855,
       totalAvailableRamInBytes: 33364979712,
       ip: '172.16.254.1',
     },
     status: WorkerMachineStatus.ONLINE,
-    workerProps: {
-      FLOW_WORKER_CONCURRENCY: '10',
-      POLLING_POOL_SIZE: '5',
-      SCHEDULED_WORKER_CONCURRENCY: '10',
-    },
   },
   {
     id: 'kpMnBxRtYuWvZsQi9NLCJ',
@@ -59,17 +59,17 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
         used: 214748364800,
         percentage: 40.0,
       },
+      workerProps: {
+        FLOW_WORKER_CONCURRENCY: '8',
+        POLLING_POOL_SIZE: '4',
+        SCHEDULED_WORKER_CONCURRENCY: '8',
+      },
       cpuUsagePercentage: 5.6,
       ramUsagePercentage: 45.2,
       totalAvailableRamInBytes: 42949672960,
       ip: '192.168.1.100',
     },
     status: WorkerMachineStatus.ONLINE,
-    workerProps: {
-      FLOW_WORKER_CONCURRENCY: '8',
-      POLLING_POOL_SIZE: '4',
-      SCHEDULED_WORKER_CONCURRENCY: '8',
-    },
   },
 ];
 
@@ -220,7 +220,11 @@ export default function WorkersPage() {
             },
           },
         ]}
-        actions={[(row) => <WorkerConfigsModal worker={row} />]}
+        actions={[
+          (row) => (
+            <WorkerConfigsModal workerProps={row.information.workerProps} />
+          ),
+        ]}
         page={{ data: workersData ?? [], previous: '', next: '' }}
         isLoading={isLoading}
       />
