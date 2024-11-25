@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/select';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared';
 import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
 
 type ProjectRoleSelectProps = {
@@ -41,8 +40,7 @@ const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
         return true;
       }
       const showNonAdmin =
-        !isCloudPlatform ||
-        project?.plan.teamMembers !== DEFAULT_FREE_PLAN_LIMIT.teamMembers;
+        !isCloudPlatform || project?.plan.teamMembers !== 100;
       return showNonAdmin;
     })
     .map((role) => {
