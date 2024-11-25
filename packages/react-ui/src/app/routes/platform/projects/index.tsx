@@ -79,7 +79,12 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       <DataTableColumnHeader column={column} title={t('Active Users')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.analytics.activeUsers} / {row.original.analytics.totalUsers}</div>;
+      return (
+        <div className="text-left">
+          {row.original.analytics.activeUsers} /{' '}
+          {row.original.analytics.totalUsers}
+        </div>
+      );
     },
   },
   {
@@ -88,7 +93,12 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       <DataTableColumnHeader column={column} title={t('Active Flows')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left">{row.original.analytics.activeFlows} / {row.original.analytics.totalFlows}</div>;
+      return (
+        <div className="text-left">
+          {row.original.analytics.activeFlows} /{' '}
+          {row.original.analytics.totalFlows}
+        </div>
+      );
     },
   },
   {
@@ -104,8 +114,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       );
     },
   },
- 
-  
+
   {
     accessorKey: 'externalId',
     header: ({ column }) => (
@@ -134,11 +143,11 @@ export default function ProjectsPage() {
     queryFn: () => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM);
-      const displayName = searchParams.get('displayName')?? undefined;
+      const displayName = searchParams.get('displayName') ?? undefined;
       return projectApi.list({
         cursor: cursor ?? undefined,
         limit: limit ? parseInt(limit) : undefined,
-        displayName
+        displayName,
       });
     },
   });
@@ -362,13 +371,15 @@ export default function ProjectsPage() {
             await setCurrentProject(queryClient, project);
             navigate('/');
           }}
-          filters={[{
-            type: 'input',
-            title: t('Name'),
-            accessorKey: 'displayName',
-            options: [],
-            icon: CheckIcon,
-          }]}
+          filters={[
+            {
+              type: 'input',
+              title: t('Name'),
+              accessorKey: 'displayName',
+              options: [],
+              icon: CheckIcon,
+            },
+          ]}
           columns={columnsWithCheckbox}
           page={data}
           isLoading={isLoading}
