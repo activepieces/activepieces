@@ -36,7 +36,7 @@ const ProjectRolePage = () => {
 
   const { mutate: deleteProjectRole, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-project-role'],
-    mutationFn: (id: string) => projectRoleApi.delete(id),
+    mutationFn: (name: string) => projectRoleApi.delete(name),
     onSuccess: () => {
       refetch();
       toast({
@@ -206,7 +206,7 @@ const ProjectRolePage = () => {
                             } and all associated invitations. Are you sure you want to proceed?`,
                           )}
                           entityName={`${t('Project Role')} ${row.name}`}
-                          mutationFn={async () => deleteProjectRole(row.id)}
+                          mutationFn={async () => deleteProjectRole(row.name)}
                         >
                           <Button
                             loading={isDeleting}

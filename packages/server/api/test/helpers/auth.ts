@@ -1,5 +1,5 @@
 import { SigningKeyId } from '@activepieces/ee-shared'
-import { apId, Principal, PrincipalType } from '@activepieces/shared'
+import { apId, DefaultProjectRole, Principal, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
 import {
@@ -100,7 +100,7 @@ export const generateMockExternalToken = (
 ): GenerateMockExternalTokenReturn => {
     const mockExternalTokenPayload: ExternalTokenPayload = {
         externalUserId: params?.externalUserId ?? apId(),
-        projectRoleId: params?.projectRoleId ?? undefined,
+        role: params?.projectRole as DefaultProjectRole ?? DefaultProjectRole.ADMIN,
         externalProjectId: params?.externalProjectId ?? apId(),
         email: params?.externalEmail ?? faker.internet.email(),
         firstName: params?.externalFirstName ?? faker.person.firstName(),

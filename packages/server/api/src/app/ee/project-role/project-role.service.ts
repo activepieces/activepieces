@@ -1,4 +1,5 @@
 import { ActivepiecesError, apId, ApId, CreateProjectRoleRequestBody, DefaultProjectRole, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { Brackets } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
@@ -32,7 +33,10 @@ export const projectRoleService = {
         }
         const projectRole = await projectRoleRepo().createQueryBuilder('projectRole')
             .where('LOWER(projectRole.name) = LOWER(:name)', { name })
-            .andWhere('projectRole.platformId = :platformId', { platformId })
+            .andWhere(new Brackets(qb => {
+                qb.where('projectRole.platformId = :platformId', { platformId })
+                    .orWhere('projectRole.platformId IS NULL')
+            }))
             .getOne()
 
         if (isNil(projectRole)) {

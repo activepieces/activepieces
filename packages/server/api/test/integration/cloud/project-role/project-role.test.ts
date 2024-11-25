@@ -1,4 +1,4 @@
-import { apId, CreateProjectRoleRequestBody, PrincipalType, RoleType, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { CreateProjectRoleRequestBody, PrincipalType, RoleType, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -212,7 +212,7 @@ describe('Project Role API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/project-roles/${projectRole.id}`,
+                url: `/v1/project-roles/${projectRole.name}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -255,7 +255,7 @@ describe('Project Role API', () => {
 
             const response = await app?.inject({
                 method: 'DELETE',
-                url: `/v1/project-roles/${apId()}`,
+                url: `/v1/project-roles/${faker.lorem.word()}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

@@ -30,7 +30,7 @@ export const projectMemberService = {
     async upsert({
         userId,
         projectId,
-        projectRoleId,
+        projectRoleName,
     }: UpsertParams): Promise<ProjectMember> {
         const { platformId } = await projectService.getOneOrThrow(projectId)
         const existingProjectMember = await repo().findOneBy({
@@ -40,6 +40,10 @@ export const projectMemberService = {
         })
         const projectMemberId = existingProjectMember?.id ?? apId()
 
+        const projectRole = await projectRoleService.getOneOrThrow({
+            name: projectRoleName,
+            platformId,
+        })
 
         const projectMember: NewProjectMember = {
             id: projectMemberId,
@@ -47,7 +51,7 @@ export const projectMemberService = {
             userId,
             platformId,
             projectId,
-            projectRoleId,
+            projectRoleId: projectRole.id,
         }
 
         await repo().upsert(projectMember, [
@@ -141,7 +145,7 @@ export const projectMemberService = {
 type UpsertParams = {
     userId: string
     projectId: ProjectId
-    projectRoleId: string
+    projectRoleName: string
 }
 
 type NewProjectMember = Omit<ProjectMember, 'created' | 'projectRole'>

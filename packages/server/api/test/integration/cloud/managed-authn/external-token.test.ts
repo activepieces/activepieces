@@ -244,7 +244,7 @@ describe('Managed Authentication API', () => {
                 platformId: mockPlatform.id,
                 externalEmail: mockedEmail,
                 signingKeyId: mockSigningKey.id,
-                projectRoleId: projectRole.id,
+                projectRole: projectRole.name,
             })
 
             // act

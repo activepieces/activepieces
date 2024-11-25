@@ -1,6 +1,6 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType } from '@activepieces/shared'
+import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { projectRoleService } from '../../project-role/project-role.service'
@@ -47,7 +47,7 @@ export const externalTokenExtractor = {
                 externalEmail: optionalEmail,
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
-                projectRoleId: projectRole.id,
+                projectRole: projectRole.name,
                 tasks: payload?.tasks,
                 pieces: {
                     filterType: piecesFilterType ?? PiecesFilterType.NONE,
@@ -157,7 +157,7 @@ export type ExternalPrincipal = {
     externalEmail: string
     externalFirstName: string
     externalLastName: string
-    projectRoleId: ApId
+    projectRole: string
     pieces: {
         filterType: PiecesFilterType
         tags: string[]

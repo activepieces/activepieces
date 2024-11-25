@@ -6,6 +6,7 @@ import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-send
 import { emailService } from '../ee/helper/email/email-service'
 import { platformDomainHelper } from '../ee/helper/platform-domain-helper'
 import { projectMemberService } from '../ee/project-members/project-member.service'
+import { projectRoleService } from '../ee/project-role/project-role.service'
 import { jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -84,10 +85,15 @@ export const userInvitationsService = {
                     assertNotNullOrUndefined(projectId, 'projectId')
                     assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
                     assertEqual(platform.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
+
+                    const projectRole = await projectRoleService.getOneOrThrowById({
+                        id: projectRoleId,
+                    })
+                    
                     await projectMemberService.upsert({
                         projectId,
                         userId: user.id,
-                        projectRoleId,
+                        projectRoleName: projectRole.name,
                     })
                     break
                 }

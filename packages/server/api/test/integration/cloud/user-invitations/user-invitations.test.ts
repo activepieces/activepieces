@@ -160,7 +160,7 @@ describe('User Invitation API', () => {
             const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.ADMIN }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRoleId: adminRole.id,
+                projectRole: adminRole.name,
                 email: faker.internet.email(),
                 projectId: mockProject2.id,
                 type: InvitationType.PROJECT,
@@ -186,7 +186,7 @@ describe('User Invitation API', () => {
             const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.ADMIN }) as ProjectRole
             
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRoleId: adminRole.id,
+                projectRole: adminRole.name,
                 email: faker.internet.email(),
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
@@ -207,7 +207,7 @@ describe('User Invitation API', () => {
             const adminRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.ADMIN }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRoleId: adminRole.id,
+                projectRole: adminRole.name,
                 email: faker.internet.email(),
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
@@ -232,7 +232,7 @@ describe('User Invitation API', () => {
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRoleId: projectRole.id,
+                projectRole: projectRole.name,
                 email: faker.internet.email(),
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
@@ -405,7 +405,7 @@ describe('User Invitation API', () => {
             const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                projectRoleId: projectRole.id,
+                projectRole: projectRole.name,
                 email: faker.internet.email(),
                 projectId: mockProject.id,
                 type: InvitationType.PROJECT,
