@@ -27,13 +27,17 @@ export const moveFileAction = createAction({
 
     const drive = google.drive({ version: 'v3', auth: authClient });
 
-    const file = await drive.files.get({ fileId });
+    const file = await drive.files.get({
+      fileId,
+      supportsAllDrives: context.propsValue.include_team_drives,
+    });
 
     const response = await drive.files.update({
       fileId: fileId,
       fields: '*',
       removeParents: file.data.parents?.join(','),
       addParents: folderId,
+      supportsAllDrives: context.propsValue.include_team_drives,
     });
 
     return response.data;
