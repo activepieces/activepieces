@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState, useEffect, useRef } from 'react';
 
-import { CreateTagDialog } from '@/app/routes/platform/pieces/create-tag-dialog';
+import { CreateTagDialog } from '@/app/routes/platform/setup/pieces/create-tag-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {

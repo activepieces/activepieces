@@ -4,10 +4,10 @@ import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { ApplyTags } from '@/app/routes/platform/pieces/apply-tags';
-import { PieceActions } from '@/app/routes/platform/pieces/piece-actions';
-import { SyncPiecesButton } from '@/app/routes/platform/pieces/sync-pieces';
-import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/pieces/update-oauth2-dialog';
+import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
+import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
+import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
+import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -22,7 +22,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceScope } from '@activepieces/shared';
 
-import { TableTitle } from '../../../../components/ui/table-title';
+import { TableTitle } from '../../../../../components/ui/table-title';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();

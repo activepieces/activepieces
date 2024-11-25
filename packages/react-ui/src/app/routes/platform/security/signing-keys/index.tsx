@@ -6,7 +6,7 @@ import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { NewSigningKeyDialog } from '@/app/routes/platform/settings/signing-keys/new-signing-key-dialog';
+import { NewSigningKeyDialog } from '@/app/routes/platform/security/signing-keys/new-signing-key-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';

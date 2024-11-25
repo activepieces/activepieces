@@ -22,7 +22,7 @@ import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-a
 import type { AiProviderMetadata } from '@activepieces/pieces-common';
 import { AiProviderConfig } from '@activepieces/shared';
 
-import { ApMarkdown } from '../../../../components/custom/markdown';
+import { ApMarkdown } from '../../../../../components/custom/markdown';
 
 const EnableAiProviderConfigInput = Type.Composite([
   Type.Omit(AiProviderConfig, ['id', 'created', 'updated', 'platformId']),

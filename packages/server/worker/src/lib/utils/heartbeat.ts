@@ -1,7 +1,7 @@
 import { exec } from 'child_process'
 import os from 'os'
 import { promisify } from 'util'
-import { networkUtls } from '@activepieces/server-shared'
+import { networkUtls, system, WorkerSystemProps } from '@activepieces/server-shared'
 import { MachineInformation, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
@@ -28,6 +28,11 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         ramUsagePercentage: ramUsage,
         totalAvailableRamInBytes: totalRamInBytes,
         ip,
+        workerProps: {
+            FLOW_WORKER_CONCURRENCY: system.getOrThrow<string>(WorkerSystemProps.FLOW_WORKER_CONCURRENCY),
+            POLLING_POOL_SIZE: system.getOrThrow<string>(WorkerSystemProps.POLLING_POOL_SIZE),
+            SCHEDULED_WORKER_CONCURRENCY: system.getOrThrow<string>(WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY),
+        },
     }
 }
 

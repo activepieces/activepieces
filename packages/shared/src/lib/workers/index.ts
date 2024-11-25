@@ -20,6 +20,7 @@ export const MachineInformation = Type.Object({
         used: Type.Number(),
         percentage: Type.Number(),
     }),
+    workerProps: Type.Record(Type.String(), Type.String()),
     ramUsagePercentage: Type.Number(),
     totalAvailableRamInBytes: Type.Number(),
     ip: Type.String(),
@@ -31,7 +32,6 @@ export const WorkerMachine = Type.Object({
     ...BaseModelSchema,
     platformId: ApId,
     type: Type.Enum(WorkerMachineType),
-    workerProps: Type.Record(Type.String(), Type.String()),
     information: MachineInformation,
 })
 

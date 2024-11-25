@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { Plus, Trash } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { NewApiKeyDialog } from '@/app/routes/platform/settings/api-keys/new-api-key-dialog';
+import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';

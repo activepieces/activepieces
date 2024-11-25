@@ -1,9 +1,9 @@
 import { t } from 'i18next';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { AppearanceSection } from '@/app/routes/platform/settings/branding/appearance-section';
-import { CustomDomainsCard } from '@/app/routes/platform/settings/branding/custom-domain-section';
-import { SmtpSection } from '@/app/routes/platform/settings/branding/smtp-section';
+import { AppearanceSection } from '@/app/routes/platform/setup/branding/appearance-section';
+import { CustomDomainsCard } from '@/app/routes/platform/setup/branding/custom-domain-section';
+import { SmtpSection } from '@/app/routes/platform/setup/branding/smtp-section';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export const BrandingPage = () => {

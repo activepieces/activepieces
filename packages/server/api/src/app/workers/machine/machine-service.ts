@@ -1,4 +1,3 @@
-import { system, WorkerSystemProps } from '@activepieces/server-shared'
 import {
     MachineInformation,
     spreadIfDefined,
@@ -21,6 +20,7 @@ export const machineService = {
                 cpuUsagePercentage: request.cpuUsagePercentage,
                 ramUsagePercentage: request.ramUsagePercentage,
                 totalAvailableRamInBytes: request.totalAvailableRamInBytes,
+                workerProps: request.workerProps,
                 ip: request.ip,
             },
             updated: dayjs().toISOString(),
@@ -30,12 +30,10 @@ export const machineService = {
         }, ['id'])
     },
     async list(): Promise<WorkerMachineWithStatus[]> {
-        const workerProps =  system.getProps(WorkerSystemProps)
-
         const workers = await workerRepo().createQueryBuilder('machine').where('machine.updated > :updated', { updated: new Date(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString()) }).getMany()
         return workers.map(worker => {
             const isOnline = dayjs(worker.updated).isAfter(dayjs().subtract(OFFLINE_THRESHOLD, 'ms').toISOString())
-            return { ...worker, status: isOnline ? WorkerMachineStatus.ONLINE : WorkerMachineStatus.OFFLINE, workerProps }
+            return { ...worker, status: isOnline ? WorkerMachineStatus.ONLINE : WorkerMachineStatus.OFFLINE }
         })
     },
 }
@@ -46,5 +44,6 @@ type UpsertParams = {
     ramUsagePercentage: number
     totalAvailableRamInBytes: number
     ip: string
+    workerProps: Record<string, string>
     workerPrincipal: WorkerPrincipal
 }

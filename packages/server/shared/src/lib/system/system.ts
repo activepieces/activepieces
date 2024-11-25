@@ -177,23 +177,6 @@ export const system = {
             this.getOrThrow<ContainerType>(SharedSystemProp.CONTAINER_TYPE),
         )
     },
-
-    /**
-     * Get all properties of a specific kind
-     * @param propType The type of system properties to filter (e.g., WorkerSystemProps)
-     * @returns A record of matching properties and their values
-     */
-    getProps<T extends SystemProp>(propType: Record<string, T>): Partial<Record<T, string>> {
-        const result: Partial<Record<T, string>> = {}
-
-        Object.entries(systemPropDefaultValues).forEach(([key, value]) => {
-            if (Object.values(propType).includes(key as T)) {
-                result[key as T] = getEnvVar(key as T) ?? value
-            }
-        })
-
-        return result
-    },
 }
 
 const getEnvVar = (prop: SystemProp): string | undefined => {
