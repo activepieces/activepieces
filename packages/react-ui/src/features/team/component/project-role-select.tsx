@@ -15,7 +15,7 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared';
-import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
+import { ApFlagId, DefaultProjectRole } from '@activepieces/shared';
 
 type ProjectRoleSelectProps = {
   form: UseFormReturn<any>;
