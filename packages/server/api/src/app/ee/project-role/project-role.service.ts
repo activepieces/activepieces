@@ -109,7 +109,7 @@ export const projectRoleService = {
         return projectRoleRepo().findOneByOrFail({ id: params.id, platformId: params.platformId })
     },
 
-    async delete({ name, platformId }: DeleteParms): Promise<void> {
+    async delete({ name, platformId }: DeleteParams): Promise<void> {
         await projectRoleRepo().delete({ name, platformId })
     },
 }
@@ -125,7 +125,7 @@ type ListParams = {
     platformId: PlatformId
 }
 
-type DeleteParms = {
+type DeleteParams = {
     name: ApId
     platformId: PlatformId
 }
