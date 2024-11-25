@@ -463,7 +463,7 @@ export const flowService = {
         }
     },
 
-    async count({ projectId, folderId,status }: CountParams): Promise<number> {
+    async count({ projectId, folderId, status }: CountParams): Promise<number> {
         if (folderId === undefined) {
             return flowRepo().countBy({ projectId, status })
         }
@@ -471,7 +471,7 @@ export const flowService = {
         return flowRepo().countBy({
             folderId: folderId !== 'NULL' ? folderId : IsNull(),
             projectId,
-            status
+            status,
         })
     },
 
@@ -556,7 +556,7 @@ type GetTemplateParams = {
 
 type CountParams = {
     projectId: ProjectId
-    folderId?: string,
+    folderId?: string
     status?: FlowStatus
 }
 

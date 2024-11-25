@@ -4,7 +4,7 @@ import {
     MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { logger, system } from '@activepieces/server-shared'
+import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -66,7 +66,7 @@ export const platformProjectService = {
             )
             .where(filters)
             .groupBy('project.id') 
-            .addGroupBy('"project_plan"."id"'); 
+            .addGroupBy('"project_plan"."id"') 
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const projects: ProjectWithLimits[] = await Promise.all(
@@ -142,7 +142,7 @@ type GetAllParams = {
     principalId: string
     platformId: string
     externalId?: string
-    displayName?:string
+    displayName?: string
     cursorRequest: Cursor | null
     limit: number
 }
@@ -165,15 +165,15 @@ function isCustomerPlatform(platformId: string | undefined): boolean {
     }
     return !flagService.isCloudPlatform(platformId)
 }
-async function createFilters({ platformId, principalType, principalId, externalId,displayName }: GetAllParams) {
-    const displayNameFilter = displayName? {
-        displayName:ILike(`%${displayName}%`)
-    }: {};
+async function createFilters({ platformId, principalType, principalId, externalId, displayName }: GetAllParams) {
+    const displayNameFilter = displayName ? {
+        displayName: ILike(`%${displayName}%`),
+    } : {}
     const commonFilter = {
         deleted: IsNull(),
         ...spreadIfDefined('platformId', platformId),
         ...spreadIfDefined('externalId', externalId),
-        ...displayNameFilter
+        ...displayNameFilter,
     }
     switch (principalType) {
         case PrincipalType.SERVICE: {
@@ -225,23 +225,23 @@ async function enrichProject(
     project: Project,
 ): Promise<ProjectWithLimits> {
     const totalUsers = await projectMemberRepo().countBy({
-            projectId:project.id
+        projectId: project.id,
     })
     const activeUsers = await projectMemberRepo()
-    .createQueryBuilder("project_member")
-    .leftJoin("user","user",'user.id = project_member."userId"')
-    .groupBy("user.id")
-    .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
-    .getCount();
+        .createQueryBuilder('project_member')
+        .leftJoin('user', 'user', 'user.id = project_member."userId"')
+        .groupBy('user.id')
+        .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
+        .getCount()
   
     const totalFlows = await flowService.count({
-        projectId:project.id,
-    });
+        projectId: project.id,
+    })
 
     const activeFlows = await flowService.count({
-        projectId:project.id,
-        status: FlowStatus.ENABLED
-    });
+        projectId: project.id,
+        status: FlowStatus.ENABLED,
+    })
 
   
     return {
@@ -254,12 +254,12 @@ async function enrichProject(
             project.id,
             projectUsageService.getCurrentingStartPeriod(project.created),
         ),
-       analytics:{ 
-        activeFlows,
-        totalFlows,
-        totalUsers,
-        activeUsers
-       }
+        analytics: { 
+            activeFlows,
+            totalFlows,
+            totalUsers,
+            activeUsers,
+        },
     }
 }
 

@@ -7,7 +7,7 @@ import { ProjectMemberRole } from './project-member'
 export const ListProjectRequestForUserQueryParams = Type.Object({
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number()),
-    displayName: Type.Optional(Type.String())
+    displayName: Type.Optional(Type.String()),
 })
 
 export type ListProjectRequestForUserQueryParams = Static<typeof ListProjectRequestForUserQueryParams>
@@ -70,11 +70,11 @@ export const Project = Type.Object({
 
 const projectAnalytics = Type.Object(
     {
-        totalUsers:Type.Number(),
+        totalUsers: Type.Number(),
         activeUsers: Type.Number(),
         totalFlows: Type.Number(),
-        activeFlows: Type.Number()
-    }
+        activeFlows: Type.Number(),
+    },
 )
 export type Project = Static<typeof Project>
 
@@ -83,7 +83,7 @@ export const ProjectWithLimits = Type.Composite([
     Type.Object({
         usage: ProjectUsage,
         plan: ProjectPlan,
-        analytics: projectAnalytics
+        analytics: projectAnalytics,
     }),
 
 ])
