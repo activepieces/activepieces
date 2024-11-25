@@ -16,7 +16,7 @@ export const taskadeAuth = PieceAuth.SecretText({
 export const taskade = createPiece({
 	displayName: 'Taskade',
 	auth: taskadeAuth,
-	minimumSupportedRelease: '0.20.0',
+	minimumSupportedRelease: '0.30.0',
 	categories: [PieceCategory.PRODUCTIVITY],
 	description: 'collaboration platform for remote teams to organize and manage projects',
 	logoUrl: 'https://cdn.activepieces.com/pieces/taskade.png',

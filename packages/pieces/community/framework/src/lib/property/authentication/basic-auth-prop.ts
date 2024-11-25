@@ -2,7 +2,6 @@ import { Static, Type } from '@sinclair/typebox';
 import { TPropertyValue } from '../input/common';
 import { PropertyType } from '../input/property-type';
 import { BasePieceAuthSchema } from './common';
-import { ValidationInputType } from '../../validators/types';
 
 export const BasicAuthPropertyValue = Type.Object({
   username: Type.String(),
@@ -40,7 +39,6 @@ export type BasicAuthProperty =
   TPropertyValue<
     BasicAuthPropertyValue,
     PropertyType.BASIC_AUTH,
-    ValidationInputType.ANY,
     true
   >;
 

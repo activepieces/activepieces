@@ -28,6 +28,7 @@ module.exports = {
         1500: '1500ms',
       },
       colors: {
+        'light-blue': 'hsl(var(--light-blue))',
         warning: {
           DEFAULT: 'hsl(var(--warning))',
           100: 'hsl(var(--warning-100))',

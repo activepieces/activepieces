@@ -190,7 +190,7 @@ export const amazonS3 = createPiece({
   description: 'Scalable storage in the cloud',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-s3.png',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: amazonS3Auth,

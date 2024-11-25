@@ -6,16 +6,17 @@ import {
     Cursor,
     ErrorCode,
     Flow,
-    flowHelper,
     FlowId,
     FlowOperationRequest,
     FlowOperationType,
+    flowPieceUtil,
     FlowStatus,
     FlowTemplateWithoutProjectInformation,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
     isNil,
+    PlatformId,
     PopulatedFlow,
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
@@ -155,7 +156,7 @@ export const flowService = {
         projectId,
         versionId,
         removeConnectionsName = false,
-        removeSampleData = false,   
+        removeSampleData = false,
         entityManager,
     }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
         const flow = await flowRepo(entityManager).findOneBy({
@@ -205,6 +206,7 @@ export const flowService = {
         id,
         userId,
         projectId,
+        platformId,
         operation,
         lock = true,
     }: UpdateParams): Promise<PopulatedFlow> {
@@ -221,6 +223,7 @@ export const flowService = {
                     id,
                     userId,
                     projectId,
+                    platformId,
                 })
             }
             else if (operation.type === FlowOperationType.CHANGE_STATUS) {
@@ -256,6 +259,7 @@ export const flowService = {
                     lastVersion = await flowVersionService.applyOperation({
                         userId,
                         projectId,
+                        platformId,
                         flowVersion: lastVersion,
                         userOperation: {
                             type: FlowOperationType.IMPORT_FLOW,
@@ -267,6 +271,7 @@ export const flowService = {
                 await flowVersionService.applyOperation({
                     userId,
                     projectId,
+                    platformId,
                     flowVersion: lastVersion,
                     userOperation: operation,
                 })
@@ -366,6 +371,7 @@ export const flowService = {
         id,
         userId,
         projectId,
+        platformId,
     }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
@@ -386,6 +392,7 @@ export const flowService = {
                 flowVersion: flowVersionToPublish,
                 userId,
                 projectId,
+                platformId,
                 entityManager,
             })
 
@@ -414,9 +421,9 @@ export const flowService = {
                 projectId,
             })
 
-            await flowSideEffects.preDelete({
+            rejectedPromiseHandler(flowSideEffects.preDelete({
                 flowToDelete,
-            })
+            }))
 
             await flowRepo().delete({ id })
         }
@@ -447,7 +454,7 @@ export const flowService = {
         return {
             name: flow.version.displayName,
             description: '',
-            pieces: flowHelper.getUsedPieces(flow.version.trigger),
+            pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
             template: flow.version,
             tags: [],
             created: Date.now().toString(),
@@ -456,14 +463,15 @@ export const flowService = {
         }
     },
 
-    async count({ projectId, folderId }: CountParams): Promise<number> {
+    async count({ projectId, folderId, status }: CountParams): Promise<number> {
         if (folderId === undefined) {
-            return flowRepo().countBy({ projectId })
+            return flowRepo().countBy({ projectId, status })
         }
 
         return flowRepo().countBy({
             folderId: folderId !== 'NULL' ? folderId : IsNull(),
             projectId,
+            status,
         })
     },
 
@@ -481,6 +489,7 @@ const lockFlowVersionIfNotLocked = async ({
     flowVersion,
     userId,
     projectId,
+    platformId,
     entityManager,
 }: LockFlowVersionIfNotLockedParams): Promise<FlowVersion> => {
     if (flowVersion.state === FlowVersionState.LOCKED) {
@@ -490,6 +499,7 @@ const lockFlowVersionIfNotLocked = async ({
     return flowVersionService.applyOperation({
         userId,
         projectId,
+        platformId,
         flowVersion,
         userOperation: {
             type: FlowOperationType.LOCK_FLOW,
@@ -547,6 +557,7 @@ type GetTemplateParams = {
 type CountParams = {
     projectId: ProjectId
     folderId?: string
+    status?: FlowStatus
 }
 
 type UpdateParams = {
@@ -555,6 +566,7 @@ type UpdateParams = {
     projectId: ProjectId
     operation: FlowOperationRequest
     lock?: boolean
+    platformId: PlatformId
 }
 
 type UpdateStatusParams = {
@@ -573,6 +585,7 @@ type UpdateFailureCountParams = {
 type UpdatePublishedVersionIdParams = {
     id: FlowId
     userId: UserId | null
+    platformId: PlatformId
     projectId: ProjectId
 }
 
@@ -587,6 +600,7 @@ type LockFlowVersionIfNotLockedParams = {
     flowVersion: FlowVersion
     userId: UserId | null
     projectId: ProjectId
+    platformId: PlatformId
     entityManager: EntityManager
 }
 

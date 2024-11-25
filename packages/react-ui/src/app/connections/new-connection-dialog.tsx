@@ -20,12 +20,17 @@ import { isNil } from '@activepieces/shared';
 import { CreateOrEditConnectionDialog } from './create-edit-connection-dialog';
 
 type NewConnectionDialogProps = {
-  onConnectionCreated: (res: { name: string; id: string }) => void;
+  onConnectionCreated: (res: { externalId: string; id: string }) => void;
   children: React.ReactNode;
+  isGlobalConnection: boolean;
 };
 
 const NewConnectionDialog = React.memo(
-  ({ onConnectionCreated, children }: NewConnectionDialogProps) => {
+  ({
+    onConnectionCreated,
+    children,
+    isGlobalConnection,
+  }: NewConnectionDialogProps) => {
     const [dialogTypesOpen, setDialogTypesOpen] = useState(false);
     const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
     const [selectedPiece, setSelectedPiece] = useState<
@@ -55,7 +60,13 @@ const NewConnectionDialog = React.memo(
             piece={selectedPiece}
             predefinedConnectionName={null}
             open={connectionDialogOpen}
-            onConnectionCreated={onConnectionCreated}
+            isGlobalConnection={isGlobalConnection}
+            onConnectionCreated={(res) =>
+              onConnectionCreated({
+                id: res.id,
+                externalId: res.externalId,
+              })
+            }
             setOpen={setConnectionDialogOpen}
           ></CreateOrEditConnectionDialog>
         )}

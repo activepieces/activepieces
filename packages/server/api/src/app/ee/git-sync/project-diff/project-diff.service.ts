@@ -1,5 +1,5 @@
 import { ProjectOperationType } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined, flowHelper, isNil, PopulatedFlow } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, Step, TriggerType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { ProjectMappingState } from './project-mapping-state'
 
@@ -48,8 +48,25 @@ function findFlowsToUpdate({ gitFiles, projectFlows, mapping }: DiffParams): Pro
 }
 
 function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): boolean {
-    return fromFlow.version.displayName !== targetFlow.version.displayName
-        || JSON.stringify(flowHelper.normalize(fromFlow.version).trigger) !== JSON.stringify(flowHelper.normalize(targetFlow.version).trigger)
+
+    const normalizedFromFlow = normalize(fromFlow.version)
+    const normalizedTargetFlow = normalize(targetFlow.version)
+    return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
+        || JSON.stringify(normalizedFromFlow.trigger) !== JSON.stringify(normalizedTargetFlow.trigger)
+}
+
+
+function normalize(flowVersion: FlowVersion): FlowVersion {
+    const flowUpgradable = flowPieceUtil.makeFlowAutoUpgradable(flowVersion)
+    return flowStructureUtil.transferFlow(flowUpgradable, (step) => {
+        const clonedStep: Step = JSON.parse(JSON.stringify(step))
+        clonedStep.settings.inputUiInfo = DEFAULT_SAMPLE_DATA_SETTINGS
+        const authExists = clonedStep?.settings?.input?.auth
+        if (authExists && [ActionType.PIECE, TriggerType.PIECE].includes(step.type)) {
+            clonedStep.settings.input.auth = ''
+        }
+        return clonedStep
+    })
 }
 
 

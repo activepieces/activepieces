@@ -13,6 +13,7 @@ export const textHelper = createPiece({
   displayName: 'Text Helper',
   description: 'Tools for text processing',
   auth: PieceAuth.None(),
+  minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/text-helper.svg',
   authors: [
     'joeworkman',

@@ -27,7 +27,7 @@ export const googleCalendarAuth = PieceAuth.OAuth2({
 });
 
 export const googleCalendar = createPiece({
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-calendar.png',
   categories: [PieceCategory.PRODUCTIVITY],
   displayName: 'Google Calendar',
@@ -42,6 +42,7 @@ export const googleCalendar = createPiece({
     'MoShizzle',
     'khaledmashaly',
     'abuaboud',
+    'ikus060',
   ],
   auth: googleCalendarAuth,
   actions: [

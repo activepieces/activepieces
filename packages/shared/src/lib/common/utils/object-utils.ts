@@ -43,7 +43,7 @@ export function sanitizeObjectForPostgresql<T>(input: T): T {
     })
 }
 
-export function applyFunctionToValuesSync<T>(obj: unknown, apply: (str: unknown) => unknown): T {
+export function applyFunctionToValuesSync<T>(obj: unknown, apply: (str: string) => unknown): T {
     if (isNil(obj)) {
         return obj as T
     }
@@ -62,11 +62,11 @@ export function applyFunctionToValuesSync<T>(obj: unknown, apply: (str: unknown)
             obj[key] = applyFunctionToValuesSync(value, apply)
         }
     }
-    return apply(obj) as T
+    return obj as T
 }
 
 
-export async function applyFunctionToValues<T>(obj: unknown, apply: (str: unknown) => Promise<unknown>): Promise<T> {
+export async function applyFunctionToValues<T>(obj: unknown, apply: (str: string) => Promise<unknown>): Promise<T> {
     if (isNil(obj)) {
         return obj as T
     }
@@ -85,7 +85,7 @@ export async function applyFunctionToValues<T>(obj: unknown, apply: (str: unknow
             obj[key] = await applyFunctionToValues(value, apply)
         }
     }
-    return await apply(obj) as T
+    return obj as T
 }
 
 export const isObject = (obj: unknown): obj is Record<string, unknown> => {

@@ -1,43 +1,38 @@
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import { logger } from '@activepieces/server-shared'
 import {
     ActionType,
     ActivepiecesError,
     apId,
-    BranchActionSettingsWithValidation,
     Cursor,
     ErrorCode,
-    flowHelper,
     FlowId,
     FlowOperationRequest,
+    flowOperations,
     FlowOperationType,
+    flowStructureUtil,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
-    ImportFlowRequest,
     isNil,
-    LoopOnItemsActionSettings,
-    PieceActionSettings,
-    PieceTriggerSettings,
-    ProjectId, sanitizeObjectForPostgresql, SeekPage, TriggerType, UserId,
+    LATEST_SCHEMA_VERSION,
+    PlatformId,
+    ProjectId,
+    sanitizeObjectForPostgresql,
+    SeekPage,
+    TriggerType,
+    UserId,
 } from '@activepieces/shared'
-import { TSchema, Type } from '@sinclair/typebox'
-import { TypeCompiler } from '@sinclair/typebox/compiler'
 import dayjs from 'dayjs'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { projectService } from '../../project/project-service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
+import { flowVersionValidationUtil } from './flow-version-validator-util'
 
-const branchSettingsValidator = TypeCompiler.Compile(
-    BranchActionSettingsWithValidation,
-)
-const loopSettingsValidator = TypeCompiler.Compile(
-    LoopOnItemsActionSettings,
-)
 const flowVersionRepo = repoFactory(FlowVersionEntity)
 
 export const flowVersionService = {
@@ -50,23 +45,29 @@ export const flowVersionService = {
             return flowVersion
         }
 
-        return flowHelper.transferFlowAsync(flowVersion, async (step) => {
-            const clonedStep = JSON.parse(JSON.stringify(step))
+        const pieceVersion: Record<string, string> = {}
+        const platformId = await projectService.getPlatformId(projectId)
+        const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        for (const step of steps) {
             const stepTypeIsPiece = [ActionType.PIECE, TriggerType.PIECE].includes(
                 step.type,
             )
-
             if (stepTypeIsPiece) {
                 const pieceMetadata = await pieceMetadataService.getOrThrow({
                     projectId,
+                    platformId,
                     name: step.settings.pieceName,
                     version: step.settings.pieceVersion,
                     entityManager,
                 })
-
-                clonedStep.settings.pieceVersion = pieceMetadata.version
+                pieceVersion[step.settings.pieceName] = pieceMetadata.version
             }
-
+        }
+        return flowStructureUtil.transferFlow(flowVersion, (step) => {
+            const clonedStep = JSON.parse(JSON.stringify(step))
+            if (pieceVersion[step.settings.pieceName]) {
+                clonedStep.settings.pieceVersion = pieceVersion[step.settings.pieceName]
+            }
             return clonedStep
         })
     },
@@ -77,6 +78,7 @@ export const flowVersionService = {
         userId,
         userOperation,
         entityManager,
+        platformId,
     }: ApplyOperationParams): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
         let mutatedFlowVersion: FlowVersion = flowVersion
@@ -88,19 +90,16 @@ export const flowVersionService = {
                     versionId: userOperation.request.versionId,
                     removeConnectionsName: false,
                 })
-
-                operations = handleImportFlowOperation(flowVersion, previousVersion)
+                operations = [{
+                    type: FlowOperationType.IMPORT_FLOW,
+                    request: {
+                        trigger: previousVersion.trigger,
+                        displayName: previousVersion.displayName,
+                        schemaVersion: previousVersion.schemaVersion,
+                    },
+                }]
                 break
             }
-
-            case FlowOperationType.IMPORT_FLOW: {
-                operations = handleImportFlowOperation(
-                    flowVersion,
-                    userOperation.request,
-                )
-                break
-            }
-
             case FlowOperationType.LOCK_FLOW: {
                 mutatedFlowVersion = await this.lockPieceVersions({
                     projectId,
@@ -111,28 +110,17 @@ export const flowVersionService = {
                 operations = [userOperation]
                 break
             }
-
-            case FlowOperationType.DUPLICATE_ACTION: {
-                mutatedFlowVersion = await this.getFlowVersionOrThrow({
-                    flowId: flowVersion.flowId,
-                    versionId: flowVersion.id,
-                })
-
-                operations = [userOperation]
-                break
-            }
-
             default: {
                 operations = [userOperation]
                 break
             }
         }
-
         for (const operation of operations) {
             mutatedFlowVersion = await applySingleOperation(
                 projectId,
                 mutatedFlowVersion,
                 operation,
+                platformId,
             )
         }
 
@@ -140,7 +128,9 @@ export const flowVersionService = {
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
         }
-        return flowVersionRepo(entityManager).save(sanitizeObjectForPostgresql(mutatedFlowVersion))
+        return flowVersionRepo(entityManager).save(
+            sanitizeObjectForPostgresql(mutatedFlowVersion),
+        )
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
@@ -182,11 +172,7 @@ export const flowVersionService = {
         cursorRequest,
         limit,
         flowId,
-    }: {
-        cursorRequest: Cursor | null
-        limit: number
-        flowId: string
-    }): Promise<SeekPage<FlowVersion>> {
+    }: ListFlowVersionParams): Promise<SeekPage<FlowVersion>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: FlowVersionEntity,
@@ -198,14 +184,17 @@ export const flowVersionService = {
             },
         })
         const paginationResult = await paginator.paginate(
-            flowVersionRepo().createQueryBuilder('flow_version').leftJoinAndMapOne(
-                'flow_version.updatedByUser',
-                'user',
-                'user',
-                'flow_version."updatedBy" = "user"."id"',
-            ).where({
-                flowId,
-            }),
+            flowVersionRepo()
+                .createQueryBuilder('flow_version')
+                .leftJoinAndMapOne(
+                    'flow_version.updatedByUser',
+                    'user',
+                    'user',
+                    'flow_version."updatedBy" = "user"."id"',
+                )
+                .where({
+                    flowId,
+                }),
         )
         return paginationHelper.createPage<FlowVersion>(
             paginationResult.data,
@@ -219,7 +208,9 @@ export const flowVersionService = {
         removeSampleData = false,
         entityManager,
     }: GetFlowVersionOrThrowParams): Promise<FlowVersion> {
-        const flowVersion: FlowVersion | null = await flowVersionRepo(entityManager).findOne({
+        const flowVersion: FlowVersion | null = await flowVersionRepo(
+            entityManager,
+        ).findOne({
             where: {
                 flowId,
                 id: versionId,
@@ -241,7 +232,11 @@ export const flowVersionService = {
             })
         }
 
-        return removeSecretsFromFlow(flowVersion, removeConnectionsName, removeSampleData)
+        return removeSecretsFromFlow(
+            flowVersion,
+            removeConnectionsName,
+            removeSampleData,
+        )
     },
     async createEmptyVersion(
         flowId: FlowId,
@@ -260,6 +255,7 @@ export const flowVersionService = {
                 valid: false,
                 displayName: 'Select Trigger',
             },
+            schemaVersion: LATEST_SCHEMA_VERSION,
             valid: false,
             state: FlowVersionState.DRAFT,
         }
@@ -271,6 +267,7 @@ async function applySingleOperation(
     projectId: ProjectId,
     flowVersion: FlowVersion,
     operation: FlowOperationRequest,
+    platformId: PlatformId,
 ): Promise<FlowVersion> {
     logger.info(`applying ${operation.type} to ${flowVersion.displayName}`)
     await flowVersionSideEffects.preApplyOperation({
@@ -278,8 +275,8 @@ async function applySingleOperation(
         flowVersion,
         operation,
     })
-    operation = await prepareRequest(projectId, operation)
-    return flowHelper.apply(flowVersion, operation)
+    operation = await flowVersionValidationUtil.prepareRequest(projectId, platformId, operation)
+    return flowOperations.apply(flowVersion, operation)
 }
 
 async function removeSecretsFromFlow(
@@ -287,21 +284,18 @@ async function removeSecretsFromFlow(
     removeConnectionNames: boolean,
     removeSampleData: boolean,
 ): Promise<FlowVersion> {
-    const flowVersionWithArtifacts: FlowVersion = JSON.parse(
-        JSON.stringify(flowVersion),
-    )
-    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
-    for (const step of steps) {
+    return flowStructureUtil.transferFlow(flowVersion, (step) => {
+        const clonedStep = JSON.parse(JSON.stringify(step))
         if (removeConnectionNames) {
-            step.settings.input = replaceConnections(step.settings.input)
+            clonedStep.settings.input = replaceConnections(clonedStep.settings.input)
         }
-        if (removeSampleData && !isNil(step?.settings?.inputUiInfo)) {
-            step.settings.inputUiInfo.sampleDataFileId = undefined
-            step.settings.inputUiInfo.currentSelectedData = undefined
-            step.settings.inputUiInfo.lastTestDate = undefined
+        if (removeSampleData && !isNil(clonedStep?.settings?.inputUiInfo)) {
+            clonedStep.settings.inputUiInfo.sampleDataFileId = undefined
+            clonedStep.settings.inputUiInfo.currentSelectedData = undefined
+            clonedStep.settings.inputUiInfo.lastTestDate = undefined
         }
-    }
-    return flowVersionWithArtifacts
+        return clonedStep
+    })
 }
 
 function replaceConnections(
@@ -330,282 +324,6 @@ function replaceConnections(
     return replacedObj
 }
 
-function handleImportFlowOperation(
-    flowVersion: FlowVersion,
-    operation: ImportFlowRequest,
-): FlowOperationRequest[] {
-    const actionsToRemove = flowHelper
-        .getAllStepsAtFirstLevel(flowVersion.trigger)
-        .filter((step) => flowHelper.isAction(step.type))
-    const operations: FlowOperationRequest[] = actionsToRemove.map((step) => ({
-        type: FlowOperationType.DELETE_ACTION,
-        request: {
-            name: step.name,
-        },
-    }))
-    operations.push({
-        type: FlowOperationType.UPDATE_TRIGGER,
-        request: operation.trigger,
-    })
-    operations.push({
-        type: FlowOperationType.CHANGE_NAME,
-        request: {
-            displayName: operation.displayName,
-        },
-    })
-    operations.push(...flowHelper.getImportOperations(operation.trigger))
-    return operations
-}
-
-async function prepareRequest(
-    projectId: ProjectId,
-    request: FlowOperationRequest,
-): Promise<FlowOperationRequest> {
-    const clonedRequest: FlowOperationRequest = JSON.parse(
-        JSON.stringify(request),
-    )
-    switch (clonedRequest.type) {
-        case FlowOperationType.ADD_ACTION:
-            clonedRequest.request.action.valid = true
-            switch (clonedRequest.request.action.type) {
-                case ActionType.LOOP_ON_ITEMS:
-                    clonedRequest.request.action.valid = loopSettingsValidator.Check(
-                        clonedRequest.request.action.settings,
-                    )
-                    break
-                case ActionType.BRANCH:
-                    clonedRequest.request.action.valid = branchSettingsValidator.Check(
-                        clonedRequest.request.action.settings,
-                    )
-                    break
-                case ActionType.PIECE:
-                    clonedRequest.request.action.valid = await validateAction({
-                        settings: clonedRequest.request.action.settings,
-                        projectId,
-                    })
-                    break
-                case ActionType.CODE: {
-                    break
-                }
-            }
-            break
-        case FlowOperationType.UPDATE_ACTION:
-            clonedRequest.request.valid = true
-            switch (clonedRequest.request.type) {
-                case ActionType.LOOP_ON_ITEMS:
-                    clonedRequest.request.valid = loopSettingsValidator.Check(
-                        clonedRequest.request.settings,
-                    )
-                    break
-                case ActionType.BRANCH:
-                    clonedRequest.request.valid = branchSettingsValidator.Check(
-                        clonedRequest.request.settings,
-                    )
-                    break
-                case ActionType.PIECE: {
-                    clonedRequest.request.valid = await validateAction({
-                        settings: clonedRequest.request.settings,
-                        projectId,
-                    })
-                    break
-                }
-                case ActionType.CODE: {
-                    break
-                }
-            }
-            break
-        case FlowOperationType.DELETE_ACTION: {
-            break
-        }
-        case FlowOperationType.UPDATE_TRIGGER:
-            switch (clonedRequest.request.type) {
-                case TriggerType.EMPTY:
-                    clonedRequest.request.valid = false
-                    break
-                case TriggerType.PIECE:
-                    clonedRequest.request.valid = await validateTrigger({
-                        settings: clonedRequest.request.settings,
-                        projectId,
-                    })
-                    break
-            }
-            break
-
-        default:
-            break
-    }
-    return clonedRequest
-}
-
-async function validateAction({
-    projectId,
-    settings,
-}: {
-    projectId: ProjectId
-    settings: PieceActionSettings
-}): Promise<boolean> {
-    if (
-        isNil(settings.pieceName) ||
-        isNil(settings.pieceVersion) ||
-        isNil(settings.actionName) ||
-        isNil(settings.input)
-    ) {
-        return false
-    }
-
-    const piece = await pieceMetadataService.getOrThrow({
-        projectId,
-        name: settings.pieceName,
-        version: settings.pieceVersion,
-    })
-
-    if (isNil(piece)) {
-        return false
-    }
-
-    const action = piece.actions[settings.actionName]
-    if (isNil(action)) {
-        return false
-    }
-
-    const props = action.props
-    if (!isNil(piece.auth) && action.requireAuth) {
-        props.auth = piece.auth
-    }
-    return validateProps(props, settings.input)
-}
-
-async function validateTrigger({
-    settings,
-    projectId,
-}: {
-    settings: PieceTriggerSettings
-    projectId: ProjectId
-}): Promise<boolean> {
-    if (
-        isNil(settings.pieceName) ||
-        isNil(settings.pieceVersion) ||
-        isNil(settings.triggerName) ||
-        isNil(settings.input)
-    ) {
-        return false
-    }
-
-    const piece = await pieceMetadataService.getOrThrow({
-        projectId,
-        name: settings.pieceName,
-        version: settings.pieceVersion,
-    })
-    if (isNil(piece)) {
-        return false
-    }
-    const trigger = piece.triggers[settings.triggerName]
-    if (isNil(trigger)) {
-        return false
-    }
-    const props = trigger.props
-    if (!isNil(piece.auth)) {
-        props.auth = piece.auth
-    }
-    return validateProps(props, settings.input)
-}
-
-
-function validateProps(
-    props: PiecePropertyMap,
-    input: Record<string, unknown>,
-): boolean {
-    const propsSchema = buildSchema(props)
-    const propsValidator = TypeCompiler.Compile(propsSchema)
-    return propsValidator.Check(input)
-}
-
-function buildSchema(props: PiecePropertyMap): TSchema {
-    const entries = Object.entries(props)
-    const nonNullableUnknownPropType = Type.Not(
-        Type.Union([Type.Null(), Type.Undefined()]),
-        Type.Unknown(),
-    )
-    const propsSchema: Record<string, TSchema> = {}
-    for (const [name, property] of entries) {
-        switch (property.type) {
-            case PropertyType.MARKDOWN:
-                propsSchema[name] = Type.Optional(
-                    Type.Union([Type.Null(), Type.Undefined(), Type.Never(), Type.Unknown()]),
-                )
-                break
-            case PropertyType.DATE_TIME:
-            case PropertyType.SHORT_TEXT:
-            case PropertyType.LONG_TEXT:
-            case PropertyType.FILE:
-                propsSchema[name] = Type.String({
-                    minLength: property.required ? 1 : undefined,
-                })
-                break
-            case PropertyType.CHECKBOX:
-                propsSchema[name] = Type.Union([Type.Boolean(), Type.String({})])
-                break
-            case PropertyType.NUMBER:
-                // Because it could be a variable
-                propsSchema[name] = Type.Union([Type.String({}), Type.Number({})])
-                break
-            case PropertyType.STATIC_DROPDOWN:
-                propsSchema[name] = nonNullableUnknownPropType
-                break
-            case PropertyType.DROPDOWN:
-                propsSchema[name] = nonNullableUnknownPropType
-                break
-            case PropertyType.BASIC_AUTH:
-            case PropertyType.CUSTOM_AUTH:
-            case PropertyType.SECRET_TEXT:
-            case PropertyType.OAUTH2:
-                // Only accepts connections variable.
-                propsSchema[name] = Type.Union([
-                    Type.RegExp(RegExp('{{1}{connections.(.*?)}{1}}')),
-                    Type.String(),
-                ])
-                break
-            case PropertyType.ARRAY:
-                // Only accepts connections variable.
-                propsSchema[name] = Type.Union([
-                    Type.Array(Type.Unknown({})),
-                    Type.String(),
-                ])
-                break
-            case PropertyType.OBJECT:
-                propsSchema[name] = Type.Union([
-                    Type.Record(Type.String(), Type.Any()),
-                    Type.String(),
-                ])
-                break
-            case PropertyType.JSON:
-                propsSchema[name] = Type.Union([
-                    Type.Record(Type.String(), Type.Any()),
-                    Type.Array(Type.Any()),
-                    Type.String(),
-                ])
-                break
-            case PropertyType.MULTI_SELECT_DROPDOWN:
-                propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()])
-                break
-            case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-                propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()])
-                break
-            case PropertyType.DYNAMIC:
-                propsSchema[name] = Type.Record(Type.String(), Type.Any())
-                break
-        }
-
-        if (!property.required) {
-            propsSchema[name] = Type.Optional(
-                Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]),
-            )
-        }
-    }
-
-    return Type.Object(propsSchema)
-}
-
 type GetFlowVersionOrThrowParams = {
     flowId: FlowId
     versionId: FlowVersionId | undefined
@@ -616,9 +334,16 @@ type GetFlowVersionOrThrowParams = {
 
 type NewFlowVersion = Omit<FlowVersion, 'created' | 'updated'>
 
+type ListFlowVersionParams = {
+    flowId: FlowId
+    cursorRequest: Cursor | null
+    limit: number
+}
+
 type ApplyOperationParams = {
     userId: UserId | null
     projectId: ProjectId
+    platformId: PlatformId
     flowVersion: FlowVersion
     userOperation: FlowOperationRequest
     entityManager?: EntityManager

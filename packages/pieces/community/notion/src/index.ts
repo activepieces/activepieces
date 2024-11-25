@@ -31,7 +31,7 @@ export const notion = createPiece({
   description: 'The all-in-one workspace',
   logoUrl: 'https://cdn.activepieces.com/pieces/notion.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   authors: [
     'ShayPunter',
     'kishanprmr',

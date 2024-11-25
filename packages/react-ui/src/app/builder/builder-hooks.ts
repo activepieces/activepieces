@@ -13,7 +13,8 @@ import {
   Permission,
   PopulatedFlow,
   TriggerType,
-  flowHelper,
+  flowOperations,
+  flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
 
@@ -47,7 +48,6 @@ export enum RightSideBarType {
 }
 
 type InsertMentionHandler = (propertyPath: string) => void;
-
 export type BuilderState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
@@ -63,7 +63,9 @@ export type BuilderState = {
   allowCanvasPanning: boolean;
   saving: boolean;
   refreshPieceFormSettings: boolean;
+  selectedBranchIndex: number | null;
   refreshSettings: () => void;
+  setSelectedBranchIndex: (index: number | null) => void;
   exitRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
@@ -88,6 +90,21 @@ export type BuilderState = {
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
   setLoopIndex: (stepName: string, index: number) => void;
+  operationListeners: Array<
+    (flowVersion: FlowVersion, operation: FlowOperationRequest) => void
+  >;
+  addOperationListener: (
+    listener: (
+      flowVersion: FlowVersion,
+      operation: FlowOperationRequest,
+    ) => void,
+  ) => void;
+  removeOperationListener: (
+    listener: (
+      flowVersion: FlowVersion,
+      operation: FlowOperationRequest,
+    ) => void,
+  ) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -97,11 +114,31 @@ export type BuilderInitialState = Pick<
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
 
+function determineInitiallySelectedStep(
+  failedStepInRun: string | null,
+  flowVersion: FlowVersion,
+): string | null {
+  if (failedStepInRun) {
+    return failedStepInRun;
+  }
+  if (flowVersion.state === FlowVersionState.LOCKED) {
+    return null;
+  }
+  return (
+    flowStructureUtil.getAllSteps(flowVersion.trigger).find((s) => !s.valid)
+      ?.name ?? 'trigger'
+  );
+}
+
 export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set) => {
-    const failedStep = initialState.run?.steps
+    const failedStepInRun = initialState.run?.steps
       ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
       : null;
+    const initiallySelectedStep = determineInitiallySelectedStep(
+      failedStepInRun,
+      initialState.flowVersion,
+    );
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
@@ -120,19 +157,24 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       readonly: initialState.readonly,
       run: initialState.run,
       saving: false,
-      selectedStep: failedStep ? failedStep : 'trigger',
+      selectedStep: initiallySelectedStep,
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       allowCanvasPanning: true,
       rightSidebar:
-        initialState.run ||
-        initialState.flowVersion.trigger.type !== TriggerType.EMPTY
+        initiallySelectedStep &&
+        (initiallySelectedStep !== 'trigger' ||
+          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshPieceFormSettings: false,
 
       removeStepSelection: () =>
-        set({ selectedStep: null, rightSidebar: RightSideBarType.NONE }),
+        set({
+          selectedStep: null,
+          rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
+        }),
       setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
         set({
           allowCanvasPanning,
@@ -140,6 +182,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       setActiveDraggingStep: (stepName: string | null) =>
         set({
           activeDraggingStep: stepName,
+        }),
+      setSelectedBranchIndex: (branchIndex: number | null) =>
+        set({
+          selectedBranchIndex: branchIndex,
         }),
       setReadOnly: (readonly: boolean) => set({ readonly }),
       renameFlowClientSide: (newName: string) => {
@@ -164,6 +210,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             leftSidebar: !isNil(state.run)
               ? LeftSideBarType.RUN_DETAILS
               : LeftSideBarType.NONE,
+            selectedBranchIndex: null,
           };
         });
       },
@@ -194,15 +241,18 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           loopsIndexes: {},
           leftSidebar: LeftSideBarType.NONE,
           rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
         }),
       exitStepSettings: () =>
         set({
           rightSidebar: RightSideBarType.NONE,
           selectedStep: null,
+          selectedBranchIndex: null,
         }),
       exitPieceSelector: () =>
         set({
           rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
         }),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
@@ -244,7 +294,15 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             console.warn('Cannot apply operation while readonly');
             return state;
           }
-          const newFlowVersion = flowHelper.apply(state.flowVersion, operation);
+          const newFlowVersion = flowOperations.apply(
+            state.flowVersion,
+            operation,
+          );
+
+          state.operationListeners.forEach((listener) => {
+            listener(state.flowVersion, operation);
+          });
+
           const updateRequest = async () => {
             set({ saving: true });
             try {
@@ -281,6 +339,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             flowVersion.state === FlowVersionState.LOCKED,
           leftSidebar: LeftSideBarType.NONE,
           rightSidebar: RightSideBarType.NONE,
+          selectedBranchIndex: null,
         }));
       },
       insertMention: null,
@@ -290,6 +349,28 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       refreshSettings: () =>
         set((state) => ({
           refreshPieceFormSettings: !state.refreshPieceFormSettings,
+        })),
+      selectedBranchIndex: null,
+      operationListeners: [],
+      addOperationListener: (
+        listener: (
+          flowVersion: FlowVersion,
+          operation: FlowOperationRequest,
+        ) => void,
+      ) =>
+        set((state) => ({
+          operationListeners: [...state.operationListeners, listener],
+        })),
+      removeOperationListener: (
+        listener: (
+          flowVersion: FlowVersion,
+          operation: FlowOperationRequest,
+        ) => void,
+      ) =>
+        set((state) => ({
+          operationListeners: state.operationListeners.filter(
+            (l) => l !== listener,
+          ),
         })),
     };
   });

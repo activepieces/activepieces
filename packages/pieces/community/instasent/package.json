@@ -1,0 +1,16 @@
+{
+  "name": "@activepieces/piece-instasent",
+  "version": "0.0.1",
+  "dependencies": {
+    "@activepieces/pieces-framework": "^0.20.0",
+    "axios": "^1.6.0",
+    "zod": "^3.22.4"
+  },
+  "scripts": {
+    "build": "nx build",
+    "test": "nx test"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

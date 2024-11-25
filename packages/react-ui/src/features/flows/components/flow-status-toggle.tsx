@@ -48,7 +48,7 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
     void
   >({
     mutationFn: async (): Promise<PopulatedFlow> => {
-      return flowsApi.applyOperation(flow.id, {
+      return flowsApi.update(flow.id, {
         type: FlowOperationType.CHANGE_STATUS,
         request: {
           status: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,

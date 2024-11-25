@@ -31,9 +31,9 @@ export type PieceStepMetadata = BaseStepMetadata & {
 
 type PrimitiveStepMetadata = BaseStepMetadata & {
   type:
-    | ActionType.BRANCH
     | ActionType.CODE
     | ActionType.LOOP_ON_ITEMS
+    | ActionType.ROUTER
     | TriggerType.EMPTY;
 };
 
@@ -50,8 +50,19 @@ export type PieceSelectorOperation =
   | {
       type: FlowOperationType.ADD_ACTION;
       actionLocation: {
+        branchIndex: number;
         parentStep: string;
-        stepLocationRelativeToParent: StepLocationRelativeToParent;
+        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
+      };
+    }
+  | {
+      type: FlowOperationType.ADD_ACTION;
+      actionLocation: {
+        parentStep: string;
+        stepLocationRelativeToParent: Exclude<
+          StepLocationRelativeToParent,
+          StepLocationRelativeToParent.INSIDE_BRANCH
+        >;
       };
     }
   | { type: FlowOperationType.UPDATE_TRIGGER }
@@ -66,7 +77,7 @@ export type PieceSelectorItem =
   | {
       displayName: string;
       name: string;
-      type: ActionType.LOOP_ON_ITEMS | ActionType.BRANCH | ActionType.CODE;
+      type: ActionType.LOOP_ON_ITEMS | ActionType.ROUTER | ActionType.CODE;
       description: string;
     };
 

@@ -4,6 +4,22 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## 0.35.1
+
+### What has changed?
+
+- The 'name' attribute has been renamed to 'externalId' in the `AppConnection` entity.
+- The 'displayName' attribute has been added to the `AppConnection` entity.
+
+### When is action necessary?
+- If you are using the connections API, you should update the `name` attribute to `externalId` and add the `displayName` attribute.
+
+## 0.35.0
+
+### What has changed?
+
+- All branches are now converted to routers, and downgrade is not supported.
+
 ## 0.33.0
 
 ### What has changed?

@@ -15,11 +15,11 @@ type FlowValue = {
 export const callFlow = createAction({
   name: 'callFlow',
   displayName: 'Call Flow',
-  description: 'call another sub flow',
+  description: 'Call another sub flow',
   props: {
     flow: Property.Dropdown<FlowValue>({
-      displayName: 'Flow Title',
-      description: 'The Name of the flow to execute',
+      displayName: 'Flow',
+      description: 'The flow to execute',
       required: true,
       options: async (_, context) => {
         const allFlows = (await context.flows.list()).data;

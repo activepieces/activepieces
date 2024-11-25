@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { encodings } from '../common/encodings';
 
 export const createFile = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -13,45 +14,7 @@ export const createFile = createAction({
       required: true,
       defaultValue: 'utf8',
       options: {
-        // Checkout https://nodejs.org/api/buffer.html#buffers-and-character-encodings
-        options: [
-          {
-            value: 'ascii',
-            label: 'ASCII',
-          },
-          {
-            value: 'utf8',
-            label: 'UTF-8',
-          },
-          {
-            value: 'utf16le',
-            label: 'UTF-16LE',
-          },
-          {
-            value: 'ucs2',
-            label: 'UCS-2',
-          },
-          {
-            value: 'base64',
-            label: 'Base64',
-          },
-          {
-            value: 'base64url',
-            label: 'Base64 URL',
-          },
-          {
-            value: 'latin1',
-            label: 'Latin1',
-          },
-          {
-            value: 'binary',
-            label: 'Binary',
-          },
-          {
-            value: 'hex',
-            label: 'Hex',
-          },
-        ],
+        options: encodings,
       },
     }),
 

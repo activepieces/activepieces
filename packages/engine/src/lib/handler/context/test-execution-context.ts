@@ -1,17 +1,27 @@
-import { ActionType, BranchStepOutput, flowHelper, FlowVersion, GenericStepOutput, LoopStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
-import { variableService } from '../../variables/variable-service'
+import {
+    ActionType,
+    flowStructureUtil,
+    FlowVersion,
+    GenericStepOutput,
+    LoopStepOutput,
+    RouterStepOutput,
+    spreadIfDefined,
+    StepOutputStatus,
+    TriggerType,
+} from '@activepieces/shared'
+import { createPropsResolver } from '../../variables/props-resolver'
 import { FlowExecutorContext } from './flow-execution-context'
 
 export const testExecutionContext = {
-    async stateFromFlowVersion({ flowVersion, sampleData, excludedStepName, projectId, engineToken, apiUrl }: {
-        flowVersion: FlowVersion
-        excludedStepName?: string
-        projectId: string
-        apiUrl: string
-        engineToken: string
-        sampleData: Record<string, unknown>
-    }): Promise<FlowExecutorContext> {
-        const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)
+    async stateFromFlowVersion({
+        flowVersion,
+        excludedStepName,
+        projectId,
+        engineToken,
+        apiUrl,
+        sampleData,
+    }: TestExecutionParams): Promise<FlowExecutorContext> {
+        const flowSteps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         let flowExecutionContext = FlowExecutorContext.empty()
 
         for (const step of flowSteps) {
@@ -22,13 +32,19 @@ export const testExecutionContext = {
 
             const stepType = step.type
             switch (stepType) {
-                case ActionType.BRANCH:
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, BranchStepOutput.init({
-                        input: step.settings,
-                    }))
+                case ActionType.ROUTER:
+                    flowExecutionContext = flowExecutionContext.upsertStep(
+                        step.name,
+                        RouterStepOutput.create({
+                            input: step.settings,
+                            type: stepType,
+                            status: StepOutputStatus.SUCCEEDED,
+                            ...spreadIfDefined('output', sampleData?.[step.name]),
+                        }),
+                    )
                     break
                 case ActionType.LOOP_ON_ITEMS: {
-                    const { resolvedInput } = await variableService({
+                    const { resolvedInput } = await createPropsResolver({
                         apiUrl,
                         projectId,
                         engineToken,
@@ -36,13 +52,16 @@ export const testExecutionContext = {
                         unresolvedInput: step.settings,
                         executionState: flowExecutionContext,
                     })
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, LoopStepOutput.init({
-                        input: step.settings,
-                    }).setOutput({
-                        item: resolvedInput.items[0],
-                        index: 1,
-                        iterations: [],
-                    }))
+                    flowExecutionContext = flowExecutionContext.upsertStep(
+                        step.name,
+                        LoopStepOutput.init({
+                            input: step.settings,
+                        }).setOutput({
+                            item: resolvedInput.items[0],
+                            index: 1,
+                            iterations: [],
+                        }),
+                    )
                     break
                 }
                 case ActionType.PIECE:
@@ -53,7 +72,7 @@ export const testExecutionContext = {
                         input: step.settings,
                         type: stepType,
                         status: StepOutputStatus.SUCCEEDED,
-                        output: sampleData[step.name],
+                        ...spreadIfDefined('output', sampleData?.[step.name]),
                     }))
                     break
             }
@@ -62,3 +81,12 @@ export const testExecutionContext = {
     },
 }
 
+
+type TestExecutionParams = {
+    flowVersion: FlowVersion
+    excludedStepName?: string
+    projectId: string
+    apiUrl: string
+    engineToken: string
+    sampleData?: Record<string, unknown>
+}

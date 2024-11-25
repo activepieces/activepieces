@@ -1,16 +1,15 @@
 import {
     Action,
-    ActivepiecesError,
     apId,
-    ErrorCode,
     File,
     FileCompression,
     FileType,
-    flowHelper,
     FlowId,
+    flowStructureUtil,
     FlowVersion,
     FlowVersionId,
     isNil,
+    PlatformId,
     ProjectId,
     StepRunResponse,
     Trigger,
@@ -25,25 +24,17 @@ export const sampleDataService = {
         projectId,
         flowVersionId,
         stepName,
+        platformId,
     }: RunActionParams): Promise<Omit<StepRunResponse, 'id'>> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
-        const step = flowHelper.getStep(flowVersion, stepName)
-
-        if (isNil(step) || !flowHelper.isAction(step.type)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.STEP_NOT_FOUND,
-                params: {
-                    stepName,
-                },
-            })
-        }
+        const step = flowStructureUtil.getActionOrThrow(stepName, flowVersion.trigger)
         const engineToken = await accessTokenManager.generateEngineToken({
             projectId,
+            platformId,
         })
-
         const { result, standardError, standardOutput } =
             await engineRunner.executeAction(engineToken, {
-                stepName,
+                stepName: step.name,
                 flowVersion,
                 projectId,
                 sampleData: await sampleDataService.getSampleDataForFlow(projectId, flowVersion),
@@ -63,21 +54,14 @@ export const sampleDataService = {
         payload,
     }: SaveSampleDataParams): Promise<File> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
-        const step = flowHelper.getStep(flowVersion, stepName)
-
-        if (isNil(step)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.STEP_NOT_FOUND,
-                params: {
-                    stepName,
-                },
-            })
-        }
+        const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
         const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step)
+        const data = Buffer.from(JSON.stringify(payload))
         return fileService.save({
             projectId,
             fileId,
-            data: Buffer.from(JSON.stringify(payload)),
+            data,
+            size: data.length,
             type: FileType.SAMPLE_DATA,
             compression: FileCompression.NONE,
             metadata: {
@@ -88,19 +72,9 @@ export const sampleDataService = {
         })
     },
     async getOrReturnEmpty(params: GetSampleDataParams): Promise<unknown> {
-        const step = flowHelper.getStep(params.flowVersion, params.stepName)
-        if (isNil(step)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.STEP_NOT_FOUND,
-                params: {
-                    stepName: params.stepName,
-                },
-            })
-        }
-
+        const step = flowStructureUtil.getStepOrThrow(params.stepName, params.flowVersion.trigger)
         const sampleDataFileId = step.settings.inputUiInfo?.sampleDataFileId
         const currentSelectedData = step.settings.inputUiInfo?.currentSelectedData
-
         if (isNil(currentSelectedData) && isNil(sampleDataFileId)) {
             return {}
         }
@@ -129,7 +103,7 @@ export const sampleDataService = {
         }).andWhere('metadata->>\'flowId\' = :flowId', { flowId: params.flowId }).execute()
     },
     async getSampleDataForFlow(projectId: ProjectId, flowVersion: FlowVersion): Promise<Record<string, unknown>> {
-        const steps = flowHelper.getAllSteps(flowVersion.trigger)
+        const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         const sampleDataPromises = steps.map(async (step) => {
             const data = await sampleDataService.getOrReturnEmpty({
                 projectId,
@@ -189,4 +163,5 @@ type RunActionParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
     stepName: string
+    platformId: PlatformId
 }

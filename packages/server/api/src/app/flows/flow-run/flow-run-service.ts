@@ -116,7 +116,7 @@ export const flowRunService = {
             query: {
                 limit,
                 order: Order.DESC,
-                orderBy: 'startTime',
+                orderBy: 'created',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -147,7 +147,7 @@ export const flowRunService = {
             })
         }
         if (tags) {
-            query = APArrayContains('tags', tags, query)
+            query = query.andWhere(APArrayContains('tags', tags))
         }
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
@@ -163,6 +163,7 @@ export const flowRunService = {
             id: apId(),
             status: FlowRunStatus.RUNNING,
             startTime: new Date().toISOString(),
+            created: new Date().toISOString(),
         }
 
         await flowRunRepo().save(newFlowRun)
@@ -454,6 +455,7 @@ async function updateLogs({ flowRunId, projectId, executionState }: UpdateLogs):
         fileId,
         projectId,
         data: serializedLogs,
+        size: serializedLogs.byteLength,
         type: FileType.FLOW_RUN_LOG,
         compression: FileCompression.GZIP,
     })

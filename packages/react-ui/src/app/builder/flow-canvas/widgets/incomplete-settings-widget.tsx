@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import { BuilderState } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
-import { FlowVersion, flowHelper } from '@activepieces/shared';
+import { FlowVersion, flowStructureUtil } from '@activepieces/shared';
 
 import { flowCanvasUtils } from '../flow-canvas-utils';
 
@@ -19,13 +19,14 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
 }) => {
   const invalidSteps = useMemo(
     () =>
-      flowHelper.getAllSteps(flowVersion.trigger).filter((step) => !step.valid)
-        .length,
+      flowStructureUtil
+        .getAllSteps(flowVersion.trigger)
+        .filter((step) => !step.valid).length,
     [flowVersion],
   );
   const { fitView } = useReactFlow();
   function onClick() {
-    const invalidSteps = flowHelper
+    const invalidSteps = flowStructureUtil
       .getAllSteps(flowVersion.trigger)
       .filter((step) => !step.valid);
     if (invalidSteps.length > 0) {
@@ -48,10 +49,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
           e.preventDefault();
         }}
       >
-        {t(
-          '{invalidSteps, plural, =0 {no incomplete steps} =1 {Complete 1 step} other {Complete # steps}}',
-          { invalidSteps: invalidSteps },
-        )}
+        {t('incompleteSteps', { invalidSteps: invalidSteps })}
       </Button>
     )
   );

@@ -152,15 +152,14 @@ export default function IssuesTable() {
 
   return (
     <div className="flex-col w-full">
-      <div className="mb-4 flex">
-        <div className="flex flex-col">
-          <TableTitle>{t('Issues')}</TableTitle>
-          <span className="text-md text-muted-foreground">
-            {t(
-              'Track failed runs grouped by flow name, and mark them as resolved when fixed.',
-            )}
-          </span>
-        </div>
+      <div className=" flex">
+        <TableTitle
+          description={t(
+            'Track failed runs grouped by flow name, and mark them as resolved when fixed.',
+          )}
+        >
+          {t('Issues')}
+        </TableTitle>
         <div className="ml-auto"></div>
       </div>
       <DataTable
@@ -187,7 +186,7 @@ export default function IssuesTable() {
                         resetSelection();
                       }}
                     >
-                      <Check className="size-4" />
+                      <Check className="size-3" />
                       {t('Mark as Resolved')}{' '}
                       {selectedRows.length === 0
                         ? ''

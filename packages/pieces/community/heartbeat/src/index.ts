@@ -23,7 +23,7 @@ export const Heartbeat = createPiece({
   description: 'Monitoring and alerting made easy',
 
   auth: heartbeatAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/heartbeat.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ["kanarelo","kishanprmr","abuaboud"],

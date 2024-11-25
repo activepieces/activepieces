@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../../common'
+import { BaseModelSchema, Nullable } from '../../common'
 import { FlowVersion } from '../flow-version'
 export const FlowVersionTemplate = Type.Omit(
     FlowVersion,
@@ -21,6 +21,7 @@ export const FlowTemplate = Type.Object({
     type: Type.Enum(TemplateType),
     tags: Type.Array(Type.String()),
     pieces: Type.Array(Type.String()),
+    schemaVersion: Nullable(Type.String()),
     blogUrl: Type.Optional(Type.String()),
     template: FlowVersionTemplate,
     projectId: Type.String(),

@@ -1,6 +1,6 @@
 import path from 'path'
-import { logger, networkUtls, SharedSystemProp, system, webhookSecretsUtils, WorkerSystemProps } from '@activepieces/server-shared'
-import { Action, ActionType, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
+import { AppSystemProp, logger, networkUtls, SharedSystemProp, system, webhookSecretsUtils, WorkerSystemProps } from '@activepieces/server-shared'
+import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { executionFiles } from '../execution-files'
@@ -39,7 +39,7 @@ export const threadEngineRunner: EngineRunner = {
         }, '[threadEngineRunner#executeTrigger]')
 
         const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, operation.flowVersion)
-        const lockedVersion = await pieceEngineUtil.lockPieceInFlowVersion({
+        const lockedVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
             engineToken,
             stepName: operation.flowVersion.trigger.name,
             flowVersion: operation.flowVersion,
@@ -106,8 +106,7 @@ export const threadEngineRunner: EngineRunner = {
             flowVersionId: operation.flowVersion.id,
         }, '[threadEngineRunner#executeAction]')
 
-        const step = flowHelper.getStep(operation.flowVersion, operation.stepName) as (Action | undefined)
-        assertNotNullOrUndefined(step, 'Step not found')
+        const step = flowStructureUtil.getActionOrThrow(operation.stepName, operation.flowVersion.trigger)
         switch (step.type) {
             case ActionType.PIECE: {
                 const lockedPiece = await pieceEngineUtil.getExactPieceForStep(engineToken, step)
@@ -131,12 +130,12 @@ export const threadEngineRunner: EngineRunner = {
                 })
                 break
             }
-            case ActionType.BRANCH:
+            case ActionType.ROUTER:
             case ActionType.LOOP_ON_ITEMS:
                 break
         }
 
-        const lockedFlowVersion = await pieceEngineUtil.lockPieceInFlowVersion({
+        const lockedFlowVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
             engineToken,
             flowVersion: operation.flowVersion,
             stepName: operation.stepName,
@@ -231,5 +230,8 @@ function getEnvironmentVariables(): Record<string, string | undefined> {
         AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
         AP_BASE_CODE_DIRECTORY: `${sandboxPath}/codes`,
         AP_MAX_FILE_SIZE_MB: system.getOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB),
+        AP_FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
+        AP_S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
+        
     }
 }

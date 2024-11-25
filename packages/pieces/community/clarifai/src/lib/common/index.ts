@@ -1,4 +1,4 @@
-import { Property, Validators, ApFile } from '@activepieces/pieces-framework';
+import { Property, ApFile } from '@activepieces/pieces-framework';
 import { grpc } from 'clarifai-nodejs-grpc';
 import {
   Model,
@@ -176,14 +176,12 @@ export const CommonClarifaiProps = {
       'URL of the Clarifai model. For example https://clarifai.com/clarifai/main/models/general-image-recognition OR a specific version such as https://clarifai.com/clarifai/main/models/general-image-recognition/versions/aa7f35c01e0642fda5cf400f543e7c40. Find more models at https://clarifai.com/explore/models',
     displayName: 'Model URL',
     required: true,
-    validators: [Validators.url],
   }),
   workflowUrl: Property.ShortText({
     description:
       'URL of the Clarifai workflow. For example https://clarifai.com/clarifai/main/workflows/Demographics. Find more workflows at https://clarifai.com/explore/workflows',
     displayName: 'Workflow URL',
     required: true,
-    validators: [Validators.url],
   }),
 };
 

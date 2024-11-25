@@ -1,7 +1,8 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { useEffect, useMemo, useRef } from 'react';
+import { Pencil } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -23,6 +24,7 @@ import {
   Trigger,
   TriggerType,
   debounce,
+  isNil,
 } from '@activepieces/shared';
 
 import { PieceCardInfo } from '../../../features/pieces/components/piece-card';
@@ -31,10 +33,10 @@ import { formUtils } from '../piece-properties/form-utils';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
-import { BranchSettings } from './branch-settings';
 import { CodeSettings } from './code-settings';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
+import { RouterSettings } from './router-settings';
 import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
@@ -46,6 +48,8 @@ const StepSettingsContainer = () => {
     saving,
     flowVersion,
     refreshPieceFormSettings,
+    selectedBranchIndex,
+    setSelectedBranchIndex,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -53,6 +57,8 @@ const StepSettingsContainer = () => {
     state.saving,
     state.flowVersion,
     state.refreshPieceFormSettings,
+    state.selectedBranchIndex,
+    state.setSelectedBranchIndex,
   ]);
 
   const defaultValues = useMemo(() => {
@@ -128,6 +134,16 @@ const StepSettingsContainer = () => {
     name: 'settings.conditions',
     control: form.control,
   });
+
+  const branchesChange = useWatch({
+    name: 'settings.branches',
+    control: form.control,
+  });
+
+  const excutionTypeChange = useWatch({
+    name: 'settings.executionType',
+    control: form.control,
+  });
   const sourceCodeChange = useWatch({
     name: 'settings.sourceCode',
     control: form.control,
@@ -141,6 +157,7 @@ const StepSettingsContainer = () => {
     name: 'settings.errorHandlingOptions',
     control: form.control,
   });
+
   const displayName = useWatch({
     name: 'displayName',
     control: form.control,
@@ -155,16 +172,22 @@ const StepSettingsContainer = () => {
         JSON.stringify(form.getValues()),
       );
       currentStep.valid = form.formState.isValid;
-      if (previousSavedStep.current === null) {
+
+      const routerBranchesNumberChanged =
+        currentStep.type === ActionType.ROUTER &&
+        previousSavedStep.current?.type === ActionType.ROUTER &&
+        previousSavedStep.current.settings.branches.length !==
+          currentStep.settings.branches.length;
+      if (
+        previousSavedStep.current === null ||
+        deepEqual(currentStep, previousSavedStep.current) ||
+        routerBranchesNumberChanged
+      ) {
         previousSavedStep.current = currentStep;
         return;
       }
 
-      if (deepEqual(currentStep, previousSavedStep.current)) {
-        return;
-      }
       previousSavedStep.current = currentStep;
-
       if (currentStep.type === TriggerType.PIECE) {
         debouncedTrigger(currentStep as Trigger);
       } else {
@@ -179,9 +202,13 @@ const StepSettingsContainer = () => {
     sourceCodeChange,
     inputUIInfo,
     displayName,
+    branchesChange,
+    excutionTypeChange,
   ]);
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
+  const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
+    useState(false);
   return (
     <Form {...form}>
       <form
@@ -191,15 +218,63 @@ const StepSettingsContainer = () => {
       >
         <div ref={sidebarHeaderContainerRef}>
           <SidebarHeader onClose={() => exitStepSettings()}>
-            <EditableText
-              containerRef={sidebarHeaderContainerRef}
-              onValueChange={(value) => {
-                form.setValue('displayName', value);
-              }}
-              readonly={readonly}
-              value={modifiedStep.displayName}
-              tooltipContent={t('Edit Step Name')}
-            ></EditableText>
+            {isNil(selectedBranchIndex) ? (
+              <EditableText
+                onValueChange={(value) => {
+                  if (value) {
+                    form.setValue('displayName', value);
+                  }
+                }}
+                readonly={readonly}
+                value={modifiedStep.displayName}
+                tooltipContent={readonly ? '' : t('Edit Step Name')}
+                isEditing={isEditingStepOrBranchName}
+                setIsEditing={setIsEditingStepOrBranchName}
+              ></EditableText>
+            ) : (
+              <>
+                <div
+                  className="truncate cursor-pointer hover:underline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedBranchIndex(null);
+                  }}
+                >
+                  {modifiedStep.displayName}
+                </div>
+                /
+                <EditableText
+                  key={
+                    modifiedStep.settings.branches?.[selectedBranchIndex]
+                      ?.branchName
+                  }
+                  onValueChange={(value) => {
+                    if (value) {
+                      form.setValue(
+                        `settings.branches[${selectedBranchIndex}].branchName`,
+                        value,
+                      );
+                    }
+                  }}
+                  readonly={readonly}
+                  value={
+                    modifiedStep.settings.branches?.[selectedBranchIndex]
+                      ?.branchName
+                  }
+                  tooltipContent={readonly ? '' : t('Edit Branch Name')}
+                  isEditing={isEditingStepOrBranchName}
+                  setIsEditing={setIsEditingStepOrBranchName}
+                ></EditableText>
+              </>
+            )}
+            {!isEditingStepOrBranchName && !readonly && (
+              <Pencil
+                className="h-4 w-4 shrink-0"
+                onClick={() => {
+                  setIsEditingStepOrBranchName(true);
+                }}
+              />
+            )}
           </SidebarHeader>
         </div>
 
@@ -219,15 +294,15 @@ const StepSettingsContainer = () => {
                 {modifiedStep.type === ActionType.CODE && (
                   <CodeSettings readonly={readonly}></CodeSettings>
                 )}
-                {modifiedStep.type === ActionType.BRANCH && (
-                  <BranchSettings readonly={readonly}></BranchSettings>
-                )}
                 {modifiedStep.type === ActionType.PIECE && modifiedStep && (
                   <PieceSettings
                     step={modifiedStep}
                     flowId={flowVersion.flowId}
                     readonly={readonly}
                   ></PieceSettings>
+                )}
+                {modifiedStep.type === ActionType.ROUTER && modifiedStep && (
+                  <RouterSettings readonly={readonly}></RouterSettings>
                 )}
                 {modifiedStep.type === TriggerType.PIECE && modifiedStep && (
                   <PieceSettings

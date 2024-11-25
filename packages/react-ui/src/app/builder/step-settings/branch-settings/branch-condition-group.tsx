@@ -5,7 +5,7 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { BranchConditionToolbar } from '@/app/builder/step-settings/branch-settings/branch-condition-toolbar';
 import { BranchSingleCondition } from '@/app/builder/step-settings/branch-settings/branch-single-condition';
 import { HorizontalSeparatorWithText } from '@/components/ui/seperator';
-import { BranchAction } from '@activepieces/shared';
+import { RouterAction } from '@activepieces/shared';
 
 type BranchConditionGroupProps = {
   readonly: boolean;
@@ -14,6 +14,7 @@ type BranchConditionGroupProps = {
   onOr: () => void;
   numberOfGroups: number;
   handleDelete: (conditionIndex: number) => void;
+  branchIndex: number;
 };
 
 const BranchConditionGroup = React.memo(
@@ -24,13 +25,13 @@ const BranchConditionGroup = React.memo(
     onOr,
     handleDelete,
     numberOfGroups,
+    branchIndex,
   }: BranchConditionGroupProps) => {
-    const form = useFormContext<BranchAction>();
+    const form = useFormContext<RouterAction>();
     const { fields } = useFieldArray({
       control: form.control,
-      name: `settings.conditions.${groupIndex}`,
+      name: `settings.branches.${branchIndex}.conditions.${groupIndex}` as const,
     });
-
     return (
       <div className="flex flex-col gap-4">
         {groupIndex > 0 && (
@@ -57,6 +58,7 @@ const BranchConditionGroup = React.memo(
               conditionIndex={conditionIndex}
               deleteClick={() => handleDelete(conditionIndex)}
               showDelete={numberOfGroups !== 1 || fields.length !== 1}
+              branchIndex={branchIndex}
             />
           </React.Fragment>
         ))}

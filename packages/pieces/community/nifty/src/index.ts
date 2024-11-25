@@ -32,7 +32,7 @@ export const nifty = createPiece({
   description: 'Project management made simple',
 
   auth: niftyAuth,
-  minimumSupportedRelease: '0.7.1',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/nifty.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["kishanprmr","MoShizzle","abuaboud"],

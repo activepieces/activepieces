@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, PlayIcon, Redo, RotateCw, ChevronDown } from 'lucide-react';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -42,8 +42,14 @@ import {
 import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
 
+type SelectedRow = {
+  id: string;
+  status: FlowRunStatus;
+};
+
 const FlowRunsPage = () => {
   const [searchParams] = useSearchParams();
+  const [selectedRows, setSelectedRows] = useState<Array<SelectedRow>>([]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString()],
@@ -88,17 +94,74 @@ const FlowRunsPage = () => {
         <Checkbox
           checked={
             table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && 'indeterminate')
+            table.getIsSomePageRowsSelected()
           }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          onCheckedChange={(value) => {
+            const isChecked = !!value;
+            table.toggleAllPageRowsSelected(isChecked);
+            console.log('isChecked', isChecked);
+
+            if (isChecked) {
+              const allRows = table.getRowModel().rows.map((row) => ({
+                id: row.original.id,
+                status: row.original.status,
+              }));
+
+              const newSelectedRows = [...allRows, ...selectedRows];
+
+              const uniqueRows = Array.from(
+                new Map(
+                  newSelectedRows.map((item) => [item.id, item]),
+                ).values(),
+              );
+
+              setSelectedRows(uniqueRows);
+            } else {
+              const filteredRows = selectedRows.filter((row) => {
+                return !table
+                  .getRowModel()
+                  .rows.some((r) => r.original.id === row.id);
+              });
+              setSelectedRows(filteredRows);
+            }
+          }}
         />
       ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-        />
-      ),
+      cell: ({ row }) => {
+        const isChecked = selectedRows.some(
+          (selectedRow) =>
+            selectedRow.id === row.original.id &&
+            selectedRow.status === row.original.status,
+        );
+        return (
+          <Checkbox
+            checked={isChecked}
+            onCheckedChange={(value) => {
+              const isChecked = !!value;
+              let newSelectedRows = [...selectedRows];
+              if (isChecked) {
+                const exists = newSelectedRows.some(
+                  (selectedRow) =>
+                    selectedRow.id === row.original.id &&
+                    selectedRow.status === row.original.status,
+                );
+                if (!exists) {
+                  newSelectedRows.push({
+                    id: row.original.id,
+                    status: row.original.status,
+                  });
+                }
+              } else {
+                newSelectedRows = newSelectedRows.filter(
+                  (selectedRow) => selectedRow.id !== row.original.id,
+                );
+              }
+              setSelectedRows(newSelectedRows);
+              row.toggleSelected(!!value);
+            }}
+          />
+        );
+      },
     },
     {
       accessorKey: 'flowId',
@@ -231,12 +294,13 @@ const FlowRunsPage = () => {
   const bulkActions: BulkAction<FlowRun>[] = useMemo(
     () => [
       {
-        render: (selectedRows, resetSelection) => {
+        render: (_, resetSelection) => {
           const allFailed = selectedRows.every((row) =>
             isFailedState(row.status),
           );
           const isDisabled =
             selectedRows.length === 0 || !userHasPermissionToRetryRun;
+
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <DropdownMenu modal={false}>
@@ -261,6 +325,7 @@ const FlowRunsPage = () => {
                           strategy: FlowRetryStrategy.ON_LATEST_VERSION,
                         });
                         resetSelection();
+                        setSelectedRows([]);
                       }}
                       className="cursor-pointer"
                     >
@@ -286,6 +351,7 @@ const FlowRunsPage = () => {
                             strategy: FlowRetryStrategy.FROM_FAILED_STEP,
                           });
                           resetSelection();
+                          setSelectedRows([]);
                         }}
                         className="cursor-pointer"
                       >
@@ -303,7 +369,7 @@ const FlowRunsPage = () => {
         },
       },
     ],
-    [replayRun, userHasPermissionToRetryRun, t],
+    [replayRun, userHasPermissionToRetryRun, t, selectedRows, data],
   );
 
   const handleRowClick = useCallback(
@@ -319,10 +385,7 @@ const FlowRunsPage = () => {
 
   return (
     <div className="flex-col w-full">
-      <div className="mb-4 flex">
-        <TableTitle>{t('Flow Runs')}</TableTitle>
-        <div className="ml-auto"></div>
-      </div>
+      <TableTitle>{t('Flow Runs')}</TableTitle>
       <DataTable
         columns={columns}
         page={data}

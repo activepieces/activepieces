@@ -18,11 +18,11 @@ export const addPointsToCollection = createAction({
       description: 'Embeddings (= vectors) for the points',
       required: true,
     }),
-    embeddingsIds: Property.ShortText({
+    embeddingsIds: Property.Array({
       displayName: 'Embeddings Ids',
-      description: 'The ids of the embeddings for the points',
-      defaultValue: 'Auto',
-      required: true,
+      description:
+        'The ids of the embeddings for the points. If not provided, the ids will be generated automatically',
+      required: false,
     }),
     distance: Property.StaticDropdown({
       displayName: 'Calculation Method of distance',
@@ -79,11 +79,9 @@ export const addPointsToCollection = createAction({
         );
     }
 
-    const embeddingsIds = JSON.parse(propsValue.embeddingsIds) as
-      | string[]
-      | 'Auto';
+    const embeddingsIds = (propsValue.embeddingsIds as string[]) ?? [];
 
-    const autoEmbeddingsIds = embeddingsIds === 'Auto';
+    const autoEmbeddingsIds = embeddingsIds.length === 0;
 
     if (!autoEmbeddingsIds && embeddingsIds.length !== numberOfEmbeddings)
       throw new Error(
@@ -120,6 +118,7 @@ export const addPointsToCollection = createAction({
         on_disk_payload: propsValue.storage === 'Disk',
       });
     }
+
     const response = await client.upsert(collectionName, {
       points,
       wait: true,

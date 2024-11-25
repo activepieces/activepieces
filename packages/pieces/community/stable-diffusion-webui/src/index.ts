@@ -24,7 +24,7 @@ export const stableDiffusion = createPiece({
   description: 'A web interface for Stable Diffusion',
 
   auth: stableDiffusionAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stable-diffusion-webui.png',
   authors: ['AdamSelene', 'abuaboud'],
   actions: [textToImage],

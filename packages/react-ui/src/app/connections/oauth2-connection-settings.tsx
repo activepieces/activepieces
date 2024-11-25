@@ -165,9 +165,17 @@ const OAuth2ConnectionSettings = ({
     const clientSecret = (form.getValues().request as UpsertOAuth2Request)
       ?.value?.client_secret;
     const hasClientSecret = !isNil(clientSecret);
+    const propsValues = form.getValues('request.value.props') ?? {};
+    const arePropsValid = authProperty.props
+      ? Object.keys(authProperty.props).reduce((acc, key) => {
+          return acc && !isNil(propsValues[key]) && propsValues[key] !== '';
+        }, true)
+      : true;
+
     setReadyToConnect(
       baseCriteria &&
-        (currentOAuth2Type !== AppConnectionType.OAUTH2 || hasClientSecret),
+        (currentOAuth2Type !== AppConnectionType.OAUTH2 || hasClientSecret) &&
+        arePropsValid,
     );
   }, [watchedForm]);
 

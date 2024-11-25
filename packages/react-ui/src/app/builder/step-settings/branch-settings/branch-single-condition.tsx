@@ -12,9 +12,15 @@ import {
   BranchOperator,
   textConditions,
   singleValueConditions,
-  BranchAction,
+  RouterAction,
 } from '@activepieces/shared';
 
+import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '../../../../components/ui/tooltip';
 import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
 
 const textToBranchOperation: Record<BranchOperator, string> = {
@@ -56,6 +62,7 @@ type BranchSingleConditionProps = {
   conditionIndex: number;
   readonly: boolean;
   deleteClick: () => void;
+  branchIndex: number;
 };
 
 const BranchSingleCondition = ({
@@ -64,77 +71,114 @@ const BranchSingleCondition = ({
   conditionIndex,
   showDelete,
   readonly,
+  branchIndex,
 }: BranchSingleConditionProps) => {
-  const form = useFormContext<BranchAction>();
+  const form = useFormContext<RouterAction>();
 
-  const condition =
-    form.getValues().settings.conditions[groupIndex][conditionIndex];
+  const condition = form.getValues(
+    `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`,
+  );
+
   const isTextCondition =
     condition.operator && textConditions.includes(condition?.operator);
   const isSingleValueCondition =
     condition.operator && singleValueConditions.includes(condition?.operator);
+  const isInvalid = isSingleValueCondition
+    ? condition.firstValue.length === 0
+    : condition.firstValue.length === 0 ||
+      ('secondValue' in condition && condition.secondValue?.length === 0);
   return (
     <>
-      <div
-        className={cn('grid gap-2', {
-          'grid-cols-2': isSingleValueCondition,
-          'grid-cols-3': !isSingleValueCondition,
-        })}
-      >
-        <FormField
-          name={`settings.conditions.${groupIndex}.${conditionIndex}.firstValue`}
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <TextInputWithMentions
-                disabled={readonly}
-                placeholder={t('First value')}
-                onChange={field.onChange}
-                initialValue={field.value}
-              ></TextInputWithMentions>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          name={`settings.conditions.${groupIndex}.${conditionIndex}.operator`}
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <SearchableSelect
-                disabled={readonly}
-                value={field.value}
-                options={operationOptions}
-                placeholder={''}
-                onChange={(e) => field.onChange(e)}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {!isSingleValueCondition && (
+      <div className="flex items-center gap-2">
+        {isInvalid && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <InvalidStepIcon
+                size={16}
+                viewBox="0 0 16 16"
+                className="stroke-0 animate-fade shrink-0"
+              ></InvalidStepIcon>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t('Incomplete condition')}
+            </TooltipContent>
+          </Tooltip>
+        )}
+        <div
+          className={cn('grid gap-2 grow', {
+            'grid-cols-2': isSingleValueCondition,
+            'grid-cols-3': !isSingleValueCondition,
+          })}
+        >
           <FormField
-            name={`settings.conditions.${groupIndex}.${conditionIndex}.secondValue`}
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.firstValue`}
+            control={form.control}
+            render={({ field }) => {
+              return (
+                <FormItem>
+                  <TextInputWithMentions
+                    disabled={readonly}
+                    placeholder={t('First value')}
+                    onChange={field.onChange}
+                    initialValue={field.value}
+                  ></TextInputWithMentions>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+          <FormField
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.operator`}
             control={form.control}
             render={({ field }) => (
               <FormItem>
-                <TextInputWithMentions
-                  placeholder={t('Second value')}
+                <SearchableSelect
                   disabled={readonly}
-                  initialValue={field.value}
-                  onChange={field.onChange}
-                ></TextInputWithMentions>
+                  value={field.value}
+                  options={operationOptions}
+                  placeholder={''}
+                  onChange={(e) => {
+                    if (
+                      isSingleValueCondition &&
+                      e !== null &&
+                      !singleValueConditions.includes(e as BranchOperator)
+                    ) {
+                      form.setValue(
+                        `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
+                        '',
+                      );
+                    }
+                    field.onChange(e);
+                  }}
+                />
                 <FormMessage />
               </FormItem>
             )}
           />
-        )}
+          {!isSingleValueCondition && (
+            <FormField
+              name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`}
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <TextInputWithMentions
+                    placeholder={t('Second value')}
+                    disabled={readonly}
+                    initialValue={field.value || ''}
+                    onChange={field.onChange}
+                  ></TextInputWithMentions>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
       </div>
 
       <div className="flex justify-start items-center gap-2 mt-2">
         {isTextCondition && (
           <FormField
-            name={`settings.conditions.${groupIndex}.${conditionIndex}.caseSensitive`}
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.caseSensitive`}
             control={form.control}
             render={({ field }) => (
               <FormItem>
@@ -155,7 +199,12 @@ const BranchSingleCondition = ({
         <div className="flex-grow"></div>
         <div>
           {showDelete && (
-            <Button variant={'basic'} size={'sm'} onClick={deleteClick}>
+            <Button
+              variant={'basic'}
+              className="text-destructive gap-2 items-center"
+              size={'sm'}
+              onClick={deleteClick}
+            >
               <Trash className="w-4 h-4"></Trash> {t('Remove')}
             </Button>
           )}

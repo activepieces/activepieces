@@ -28,7 +28,7 @@ export const supabase = createPiece({
   displayName: 'Supabase',
   description: 'The open-source Firebase alternative',
   auth: supabaseAuth,
-  minimumSupportedRelease: '0.6.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/supabase.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ["kishanprmr","MoShizzle","abuaboud"],

@@ -29,14 +29,7 @@ export const moxieCRMRegisterTrigger = ({
         - Go to the **Workspace Settngs -> Connected Apps -> Integration** section.
         - Under **Custom Integration** , click on **Add Rest Hook**.
         - Click on **Integrations** section.
-        - In the endpoint field, paste the following URLs: 
-
-          **Test URL (only generate sample data)**:
-            \`\`\`text
-            {{webhookUrl}}/test
-            \`\`\`
-
-          **Trigger Flow URL**:
+        - In the endpoint field, paste the following URL: 
             \`\`\`text
             {{webhookUrl}}
             \`\`\`

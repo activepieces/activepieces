@@ -56,7 +56,7 @@ export const gristAuth = PieceAuth.CustomAuth({
 export const grist = createPiece({
   displayName: 'Grist',
   auth: gristAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/grist.png',
   description: 'open source spreadsheet',
   categories: [PieceCategory.PRODUCTIVITY],

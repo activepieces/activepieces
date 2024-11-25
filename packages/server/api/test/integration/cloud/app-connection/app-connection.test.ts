@@ -80,7 +80,8 @@ describe('AppConnection API', () => {
             })
 
             const mockUpsertAppConnectionRequest = {
-                name: 'test-app-connection',
+                externalId: 'test-app-connection',
+                displayName: 'test-app-connection',
                 pieceName: mockPieceMetadata.name,
                 projectId: mockProject.id,
                 type: 'SECRET_TEXT',
@@ -147,7 +148,8 @@ describe('AppConnection API', () => {
             })
 
             const mockUpsertAppConnectionRequest = {
-                name: 'test-app-connection',
+                externalId: 'test-app-connection',
+                displayName: 'test-app-connection',
                 pieceName: mockPieceMetadata.name,
                 projectId: mockProject.id,
                 type: 'SECRET_TEXT',

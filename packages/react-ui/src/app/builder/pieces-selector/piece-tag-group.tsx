@@ -83,7 +83,7 @@ const PieceTagGroup = ({
                 <img
                   src={tagData.icon}
                   alt={tagData.title}
-                  className="w-4 h-4"
+                  className="min-w-4 h-4"
                 />
               )}
               {tagData.title}

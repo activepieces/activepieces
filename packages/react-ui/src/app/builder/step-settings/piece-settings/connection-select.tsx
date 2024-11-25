@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
+import { Plus, Globe } from 'lucide-react';
 import { memo, useState } from 'react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
@@ -21,6 +21,7 @@ import {
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import {
+  AppConnectionScope,
   AppConnectionWithoutSensitiveData,
   PieceAction,
   PieceTrigger,
@@ -60,6 +61,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
     limit: 100,
   });
 
+  const selectedConnection = connectionsPage?.find(
+    (connection) =>
+      connection.externalId ===
+      removeBrackets(form.getValues().settings.input.auth ?? ''),
+  );
+
   return (
     <FormField
       control={form.control}
@@ -86,12 +93,15 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
             >
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
+                isGlobalConnection={
+                  reconnectConnection?.scope === AppConnectionScope.PLATFORM
+                }
                 predefinedConnectionName={null}
-                key={reconnectConnection?.name || 'newConnection'}
+                key={reconnectConnection?.externalId || 'newConnection'}
                 piece={params.piece}
                 onConnectionCreated={(connection) => {
                   refetch();
-                  field.onChange(addBrackets(connection.name));
+                  field.onChange(addBrackets(connection.externalId));
                 }}
                 open={connectionDialogOpen}
                 setOpen={setConnectionDialogOpen}
@@ -105,27 +115,28 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               >
                 <div className="relative">
                   {field.value && !field.disabled && (
-                    <Button
-                      variant="ghost"
-                      size="xs"
-                      className="z-50 absolute right-8 top-2 "
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setReconnectConnection(
-                          connectionsPage?.data?.find(
-                            (connection) =>
-                              connection.name ===
-                              removeBrackets(
-                                form.getValues().settings.input.auth ?? '',
-                              ),
-                          ) ?? null,
-                        );
-                        setSelectConnectionOpen(false);
-                        setConnectionDialogOpen(true);
-                      }}
-                    >
-                      {t('Reconnect')}
-                    </Button>
+                    <>
+                      {connectionsPage?.find(
+                        (connection) =>
+                          connection.externalId ===
+                            removeBrackets(field.value) &&
+                          connection.scope !== AppConnectionScope.PLATFORM,
+                      ) && (
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          className="z-50 absolute right-8 top-2 "
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setReconnectConnection(selectedConnection ?? null);
+                            setSelectConnectionOpen(false);
+                            setConnectionDialogOpen(true);
+                          }}
+                        >
+                          {t('Reconnect')}
+                        </Button>
+                      )}
+                    </>
                   )}
 
                   <SelectTrigger className="flex gap-2 items-center">
@@ -135,27 +146,46 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     >
                       {!isNil(field.value) &&
                       !isNil(
-                        connectionsPage?.data?.find(
+                        connectionsPage?.find(
                           (connection) =>
-                            connection.name === removeBrackets(field.value),
+                            connection.externalId ===
+                            removeBrackets(field.value),
                         ),
                       ) ? (
-                        <div className="truncate flex-grow flex-shrink">
-                          {removeBrackets(field.value)}
+                        <div className="truncate flex-grow flex-shrink flex items-center gap-2">
+                          {connectionsPage?.find(
+                            (connection) =>
+                              connection.externalId ===
+                              removeBrackets(field.value),
+                          )?.scope === AppConnectionScope.PLATFORM && (
+                            <Globe size={16} className="shrink-0" />
+                          )}
+                          {
+                            connectionsPage?.find(
+                              (connection) =>
+                                connection.externalId ===
+                                removeBrackets(field.value),
+                            )?.displayName
+                          }
                         </div>
                       ) : null}
                     </SelectValue>
                     <div className="grow"></div>
-                    {/* Hidden Button to take same space as shown button */}
-                    {field.value && (
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        className="z-50 opacity-0 pointer-events-none"
-                      >
-                        {t('Reconnect')}
-                      </Button>
-                    )}
+                    {field.value &&
+                      connectionsPage?.find(
+                        (connection) =>
+                          connection.externalId ===
+                            removeBrackets(field.value) &&
+                          connection.scope !== AppConnectionScope.PLATFORM,
+                      ) && (
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          className="z-50 opacity-0 pointer-events-none"
+                        >
+                          {t('Reconnect')}
+                        </Button>
+                      )}
                   </SelectTrigger>
                 </div>
 
@@ -173,14 +203,20 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     </span>
                   </SelectAction>
 
-                  {connectionsPage?.data &&
-                    connectionsPage.data.map((connection) => {
+                  {connectionsPage &&
+                    connectionsPage.map((connection) => {
                       return (
                         <SelectItem
-                          value={addBrackets(connection.name)}
-                          key={connection.name}
+                          value={addBrackets(connection.externalId)}
+                          key={connection.externalId}
                         >
-                          {connection.name}
+                          <div className="flex items-center gap-2">
+                            {connection.scope ===
+                              AppConnectionScope.PLATFORM && (
+                              <Globe size={16} className="shrink-0" />
+                            )}
+                            {connection.displayName}
+                          </div>
                         </SelectItem>
                       );
                     })}

@@ -11,7 +11,7 @@ export const aiUtility = createPiece({
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.UNIVERSAL_AI,
   ],
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/ai-utility.svg',
   authors: ['kishanprmr'],
   actions: [checkModeration, classifyText, extractStructuredData],

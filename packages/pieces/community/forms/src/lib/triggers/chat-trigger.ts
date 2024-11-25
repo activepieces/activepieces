@@ -1,13 +1,17 @@
 import {
   Property,
   TriggerStrategy,
-  createTrigger
+  createTrigger,
 } from '@activepieces/pieces-framework';
-import { USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
+import {
+  MarkdownVariant,
+  USE_DRAFT_QUERY_PARAM_NAME,
+} from '@activepieces/shared';
+
+const responseMarkdown = `
+This trigger sets up a chat interface. Ensure that **Respond on UI** is used in your flow`;
 
 const markdown = `
-This trigger sets up a chat interface. Ensure that **Respond on UI (Markdown)** is the final step in your flow.
-
 **Published Chat URL:**
 \`\`\`text
 {{chatUrl}}
@@ -29,6 +33,11 @@ export const onChatSubmission = createTrigger({
   props: {
     about: Property.MarkDown({
       value: markdown,
+      variant: MarkdownVariant.BORDERLESS,
+    }),
+    responseMarkdown: Property.MarkDown({
+      value: responseMarkdown,
+      variant: MarkdownVariant.WARNING,
     }),
     botName: Property.ShortText({
       displayName: 'Bot Name',
@@ -38,8 +47,8 @@ export const onChatSubmission = createTrigger({
     }),
   },
   sampleData: {
-    chatId: "MOCK_CHAT_ID",
-    message: "Hello, how are you?",
+    chatId: 'MOCK_CHAT_ID',
+    message: 'Hello, how are you?',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable() {
@@ -49,22 +58,28 @@ export const onChatSubmission = createTrigger({
     return;
   },
   async run(ctx) {
-    const item = ctx.payload.body as { chatId?: string, message?: string };
+    const item = ctx.payload.body as { chatId?: string; message?: string };
     if (!item.chatId) {
       throw new Error('Chat ID is required');
     }
     if (!item.message) {
       throw new Error('Message is required');
     }
-    const files = Object.entries(item).filter(([key]) => key.startsWith('file')).map(([key, value]) => {
-      const index = Number(key.split('[')[1].split(']')[0]);
-      return [index, value] as const;
-    }).sort(([indexA], [indexB]) => indexA - indexB).map(([_, value]) => value);
+    const files = Object.entries(item)
+      .filter(([key]) => key.startsWith('file'))
+      .map(([key, value]) => {
+        const index = Number(key.split('[')[1].split(']')[0]);
+        return [index, value] as const;
+      })
+      .sort(([indexA], [indexB]) => indexA - indexB)
+      .map(([_, value]) => value);
 
-    return [{
-      chatId: item.chatId,
-      message: item.message,
-      files,
-    }];
+    return [
+      {
+        chatId: item.chatId,
+        message: item.message,
+        files,
+      },
+    ];
   },
 });

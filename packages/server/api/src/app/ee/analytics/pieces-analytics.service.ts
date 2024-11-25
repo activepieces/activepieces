@@ -1,5 +1,5 @@
 import { logger } from '@activepieces/server-shared'
-import { ActionType, flowHelper, FlowStatus, isNil, PieceAction, PieceTrigger, TriggerType } from '@activepieces/shared'
+import { ActionType, FlowStatus, flowStructureUtil, isNil, PieceAction, PieceTrigger, TriggerType } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { FlowEntity } from '../../flows/flow/flow.entity'
 import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
@@ -7,6 +7,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { projectService } from '../../project/project-service'
 
 const flowRepo = repoFactory(FlowEntity)
 const flowVersionRepo = repoFactory(FlowVersionEntity)
@@ -46,7 +47,7 @@ async function piecesAnalyticsHandler(): Promise<void> {
         if (isNil(flowVersion)) {
             continue
         }
-        const pieces = flowHelper.getAllSteps(flowVersion.trigger).filter(
+        const pieces = flowStructureUtil.getAllSteps(flowVersion.trigger).filter(
             (step) =>
                 step.type === ActionType.PIECE || step.type === TriggerType.PIECE,
         ).map((step) => {
@@ -56,12 +57,15 @@ async function piecesAnalyticsHandler(): Promise<void> {
                 version: clonedStep.settings.pieceVersion,
             }
         })
+        const platformId = await projectService.getPlatformId(flow.projectId)
+
         for (const piece of pieces) {
-            try {
+            try {   
                 const pieceMetadata = await pieceMetadataService.getOrThrow({
                     name: piece.name,
                     version: piece.version,
                     projectId: flow.projectId,
+                    platformId,
                 })
                 const pieceId = pieceMetadata.id!
                 activeProjects[pieceId] = activeProjects[pieceId] || new Set()

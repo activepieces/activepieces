@@ -1,14 +1,15 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   HttpMethod,
   AuthenticationType,
   httpClient,
   HttpRequest,
+  propsValidation,
 } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { saasticCommon } from '../common';
 import { saasticAuth } from '../..';
 
@@ -23,7 +24,6 @@ export const createCharge = createAction({
       displayName: 'Email',
       description: "The customer's email address.",
       required: true,
-      validators: [Validators.email],
     }),
     amount: Property.Number({
       displayName: 'Amount',
@@ -44,6 +44,10 @@ export const createCharge = createAction({
   },
 
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      email: z.string().email(),
+    });
+
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${saasticCommon.baseUrl}/charges`,

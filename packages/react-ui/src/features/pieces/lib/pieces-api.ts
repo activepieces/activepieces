@@ -22,7 +22,10 @@ import {
 
 import { PieceStepMetadata, StepMetadata } from './types';
 
-export const CORE_STEP_METADATA = {
+export const CORE_STEP_METADATA: Record<
+  Exclude<ActionType, ActionType.PIECE> | TriggerType.EMPTY,
+  StepMetadata
+> = {
   [ActionType.CODE]: {
     displayName: t('Code'),
     logoUrl: 'https://cdn.activepieces.com/pieces/code.svg',
@@ -35,11 +38,11 @@ export const CORE_STEP_METADATA = {
     description: 'Iterate over a list of items',
     type: ActionType.LOOP_ON_ITEMS as const,
   },
-  [ActionType.BRANCH]: {
-    displayName: t('Branch'),
+  [ActionType.ROUTER]: {
+    displayName: 'Router',
     logoUrl: 'https://cdn.activepieces.com/pieces/branch.svg',
     description: t('Split your flow into branches depending on condition(s)'),
-    type: ActionType.BRANCH as const,
+    type: ActionType.ROUTER,
   },
   [TriggerType.EMPTY]: {
     displayName: t('Empty Trigger'),
@@ -79,6 +82,7 @@ export const piecesApi = {
       pieceVersion: piece.version,
       categories: piece.categories ?? [],
       packageType: piece.packageType,
+      auth: piece.auth,
     };
   },
   mapToSuggestions(
@@ -91,7 +95,7 @@ export const piecesApi = {
   },
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
     switch (step.type) {
-      case ActionType.BRANCH:
+      case ActionType.ROUTER:
       case ActionType.LOOP_ON_ITEMS:
       case ActionType.CODE:
       case TriggerType.EMPTY:
@@ -120,7 +124,9 @@ export const piecesApi = {
     formData.set('pieceVersion', params.pieceVersion);
     formData.set('scope', params.scope);
     if (params.packageType === PackageType.ARCHIVE) {
-      const buffer = await (params.pieceArchive as File).arrayBuffer();
+      const buffer = await (
+        params.pieceArchive as unknown as File
+      ).arrayBuffer();
       formData.append('pieceArchive', new Blob([buffer]));
     }
 

@@ -1325,6 +1325,42 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "felifluid",
+      "name": "Feli",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59516203?v=4",
+      "profile": "https://github.com/felifluid",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "mordonez",
+      "name": "Miguel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/293837?v=4",
+      "profile": "https://github.com/mordonez",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "dev-instasent",
+      "name": "Instasent DEV",
+      "avatar_url": "https://avatars.githubusercontent.com/u/116744368?v=4",
+      "profile": "https://github.com/dev-instasent",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "matthieu-lombard",
+      "name": "Matthieu Lombard",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33624489?v=4",
+      "profile": "https://github.com/matthieu-lombard",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

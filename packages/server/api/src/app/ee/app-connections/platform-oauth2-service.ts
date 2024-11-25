@@ -1,7 +1,6 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import {
     AppConnectionType,
-    assertNotNullOrUndefined,
     isNil,
     PlatformOAuth2ConnectionValue,
 } from '@activepieces/shared'
@@ -12,29 +11,28 @@ import {
 } from '../../app-connection/app-connection-service/oauth2/oauth2-service'
 import { credentialsOauth2Service } from '../../app-connection/app-connection-service/oauth2/services/credentials-oauth2-service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
-import { projectService } from '../../project/project-service'
-import { OAuthAppWithSecret } from '../oauth-apps/oauth-app.entity'
 import { oauthAppService } from '../oauth-apps/oauth-app.service'
 
-export const platformOAuth2Service: OAuth2Service<PlatformOAuth2ConnectionValue> =
-  {
-      claim,
-      refresh,
-  }
+export const platformOAuth2Service: OAuth2Service<PlatformOAuth2ConnectionValue> = {
+    claim,
+    refresh,
+}
 
 async function refresh({
     pieceName,
     projectId,
+    platformId,
     connectionValue,
 }: RefreshOAuth2Request<PlatformOAuth2ConnectionValue>): Promise<PlatformOAuth2ConnectionValue> {
-    const oauth2App = await getApp({
+    const oauth2App = await oauthAppService.getWithSecret({
         pieceName,
         clientId: connectionValue.client_id,
-        projectId,
+        platformId,
     })
     const newValue = await credentialsOauth2Service.refresh({
         pieceName,
         projectId,
+        platformId,
         connectionValue: {
             ...connectionValue,
             type: AppConnectionType.OAUTH2,
@@ -60,26 +58,28 @@ async function refresh({
 
 async function claim({
     request,
-    projectId,
     pieceName,
+    platformId,
+    projectId,
 }: ClaimOAuth2Request): Promise<PlatformOAuth2ConnectionValue> {
     const { auth } = await pieceMetadataService.getOrThrow({
         name: pieceName,
         version: undefined,
         projectId,
+        platformId,
     })
     if (isNil(auth) || auth.type !== PropertyType.OAUTH2) {
         throw new Error(
             'Cannot claim auth for non oauth2 property ' +
-        auth?.type +
-        ' ' +
-        pieceName,
+            auth?.type +
+            ' ' +
+            pieceName,
         )
     }
-    const oauth2App = await getApp({
+    const oauth2App = await oauthAppService.getWithSecret({
         pieceName,
         clientId: request.clientId,
-        projectId,
+        platformId,
     })
 
     const claimedValue = await credentialsOauth2Service.claim({
@@ -89,6 +89,7 @@ async function claim({
             clientSecret: oauth2App.clientSecret,
         },
         projectId,
+        platformId,
         pieceName,
     })
     return {
@@ -97,21 +98,3 @@ async function claim({
     }
 }
 
-async function getApp({
-    pieceName,
-    clientId,
-    projectId,
-}: {
-    clientId: string
-    pieceName: string
-    projectId: string
-}): Promise<OAuthAppWithSecret> {
-    const project = await projectService.getOne(projectId)
-    const platformId = project?.platformId
-    assertNotNullOrUndefined(platformId, 'Platform id is not defined')
-    return oauthAppService.getWithSecret({
-        pieceName,
-        clientId,
-        platformId,
-    })
-}

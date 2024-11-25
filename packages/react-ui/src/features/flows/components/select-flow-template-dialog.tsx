@@ -33,6 +33,7 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
+  MarkdownVariant,
   FlowOperationType,
   FlowTemplate,
   PopulatedFlow,
@@ -66,6 +67,7 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
         request: {
           displayName: template.name,
           trigger: template.template.trigger,
+          schemaVersion: template.template.schemaVersion,
         },
       });
     },
@@ -161,7 +163,7 @@ const SelectFlowTemplateDialog = ({
   return (
     <Dialog onOpenChange={unselectTemplate}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:min-w-[850px] flex flex-col">
+      <DialogContent className=" lg:min-w-[850px] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex min-h-9 flex-row items-center justify-start gap-2 items-center h-full">
             {selectedTemplate && (
@@ -174,10 +176,10 @@ const SelectFlowTemplateDialog = ({
           </DialogTitle>
         </DialogHeader>
         <Carousel setApi={(api) => (carousel.current = api)}>
-          <CarouselContent className="h-[680px] max-h-[680px] ">
+          <CarouselContent className="min-h-[300px] h-[70vh] max-h-[680px] ">
             <CarouselItem key="templates">
               <div>
-                <div className="p-0.5">
+                <div className="p-1 ">
                   <Input
                     type="text"
                     value={search}
@@ -189,7 +191,7 @@ const SelectFlowTemplateDialog = ({
 
                 <DialogDescription>
                   {isLoading ? (
-                    <div className="h-[620px] max-h-[620px] overflow-y-auto flex justify-center items-center">
+                    <div className="min-h-[300px] h-[70vh] max-h-[680px]  o flex justify-center items-center">
                       <LoadingSpinner />
                     </div>
                   ) : (
@@ -200,7 +202,7 @@ const SelectFlowTemplateDialog = ({
                           {t('No templates found, try adjusting your search')}
                         </div>
                       )}
-                      <ScrollArea className="h-[620px] max-h-[620px] overflow-y-auto px-1">
+                      <ScrollArea className="min-h-[260px] h-[calc(70vh-80px)] max-h-[680px]   overflow-y-auto px-1">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           {filteredTemplates?.map((template) => (
                             <TemplateCard
@@ -229,13 +231,13 @@ const SelectFlowTemplateDialog = ({
                       maxNumberOfIconsToShow={3}
                     />
                   </div>
-                  <ScrollArea className="px-2 h-[520px] max-h-[520px]">
+                  <ScrollArea className="px-2 min-h-[156px] h-[calc(70vh-144px)] max-h-[536px]">
                     <div className="mb-4 text-lg font-medium font-black">
                       {selectedTemplate?.name}
                     </div>
                     <ApMarkdown
                       markdown={selectedTemplate?.description}
-                      withBorder={false}
+                      variant={MarkdownVariant.BORDERLESS}
                     />
 
                     {selectedTemplate.blogUrl && (

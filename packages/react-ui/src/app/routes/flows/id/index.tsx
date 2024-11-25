@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { ReactFlowProvider } from '@xyflow/react';
 import { Navigate, useParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
@@ -23,18 +24,11 @@ const FlowBuilderPage = () => {
     refetchOnWindowFocus: false,
   });
 
-  const {
-    data: sampleData,
-    isLoading: isSampleDataLoading,
-    isError: isSampleDataError,
-  } = sampleDataHooks.useSampleDataForFlow(flow?.version);
+  const { data: sampleData, isLoading: isSampleDataLoading } =
+    sampleDataHooks.useSampleDataForFlow(flow?.version);
 
   if (isError) {
     return <Navigate to="/404" />;
-  }
-
-  if (isSampleDataError) {
-    return <p>Error loading sample data, contact support</p>;
   }
 
   if (isLoading || isSampleDataLoading) {
@@ -46,16 +40,18 @@ const FlowBuilderPage = () => {
   }
 
   return (
-    <BuilderStateProvider
-      flow={flow!}
-      canExitRun={true}
-      flowVersion={flow!.version}
-      readonly={false}
-      run={null}
-      sampleData={sampleData ?? {}}
-    >
-      <BuilderPage />
-    </BuilderStateProvider>
+    <ReactFlowProvider>
+      <BuilderStateProvider
+        flow={flow!}
+        canExitRun={true}
+        flowVersion={flow!.version}
+        readonly={false}
+        run={null}
+        sampleData={sampleData ?? {}}
+      >
+        <BuilderPage />
+      </BuilderStateProvider>
+    </ReactFlowProvider>
   );
 };
 

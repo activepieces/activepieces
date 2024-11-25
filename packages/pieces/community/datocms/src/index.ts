@@ -34,7 +34,7 @@ export const datocms = createPiece({
   displayName: 'Dato CMS',
   description: 'Dato is a modern headless CMS',
   auth: datoAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/datocms.png',
   authors: ['AdamSelene'],
   actions: [

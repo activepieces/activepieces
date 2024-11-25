@@ -74,8 +74,8 @@ export const BuilderHeader = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link to="/flows">
-                  <Button variant="ghost" size={'icon'} className="p-2.5">
-                    <Home />
+                  <Button variant="ghost" size={'icon'}>
+                    <Home className="h-4 w-4" />
                   </Button>
                 </Link>
               </TooltipTrigger>
@@ -114,9 +114,9 @@ export const BuilderHeader = () => {
             )}
           </span>
           <FlowActionMenu
+            insideBuilder={true}
             flow={flow}
             flowVersion={flowVersion}
-            insideBuilder={true}
             readonly={!isLatestVersion}
             onDelete={() => {
               navigate('/flows');

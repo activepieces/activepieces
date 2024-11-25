@@ -10,7 +10,7 @@ export async function findAllPieces(path?: string): Promise<string[]> {
 }
 export async function findPieceSourceDirectory(pieceName: string): Promise<string | null> {
     const piecesPath =  await findAllPieces()
-    const piecePath = piecesPath.find((p) => p.includes(pieceName))
+    const piecePath = piecesPath.find((p) => p.endsWith('/'+pieceName))
     return piecePath ?? null
 }
 

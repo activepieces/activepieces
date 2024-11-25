@@ -12,8 +12,6 @@ import {
 import {
   Action,
   ActionType,
-  BranchActionSchema,
-  BranchOperator,
   CodeActionSchema,
   isEmpty,
   LoopOnItemsActionSchema,
@@ -23,9 +21,12 @@ import {
   PieceTriggerSettings,
   Trigger,
   TriggerType,
-  ValidBranchCondition,
   isNil,
   spreadIfDefined,
+  RouterActionSchema,
+  RouterBranchesSchema,
+  SampleDataSetting,
+  RouterExecutionType,
 } from '@activepieces/shared';
 
 function addAuthToPieceProps(
@@ -33,8 +34,14 @@ function addAuthToPieceProps(
   auth: PieceAuthProperty | undefined,
   requireAuth: boolean,
 ): PiecePropertyMap {
-  if (!requireAuth) {
-    return props;
+  if (!requireAuth || isNil(auth)) {
+    const newProps = Object.keys(props).reduce((acc, key) => {
+      if (key !== 'auth') {
+        acc[key] = props[key];
+      }
+      return acc;
+    }, {} as PiecePropertyMap);
+    return newProps;
   }
   return {
     ...props,
@@ -113,22 +120,9 @@ export const formUtils = {
             items: selectedStep.settings.items ?? '',
           },
         };
-      case ActionType.BRANCH:
+      case ActionType.ROUTER:
         return {
           ...selectedStep,
-          settings: {
-            ...selectedStep.settings,
-            conditions: selectedStep.settings.conditions ?? [
-              [
-                {
-                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                  firstValue: '',
-                  secondValue: '',
-                  caseSensitive: false,
-                },
-              ],
-            ],
-          },
         };
       case ActionType.CODE: {
         const defaultCode = `export const code = async (inputs) => {
@@ -229,12 +223,14 @@ export const formUtils = {
             }),
           }),
         ]);
-      case ActionType.BRANCH:
-        return Type.Composite([
-          BranchActionSchema,
+      case ActionType.ROUTER:
+        return Type.Intersect([
+          Type.Omit(RouterActionSchema, ['settings']),
           Type.Object({
             settings: Type.Object({
-              conditions: Type.Array(Type.Array(ValidBranchCondition)),
+              branches: RouterBranchesSchema(true),
+              executionType: Type.Enum(RouterExecutionType),
+              inputUiInfo: SampleDataSetting,
             }),
           }),
         ]);

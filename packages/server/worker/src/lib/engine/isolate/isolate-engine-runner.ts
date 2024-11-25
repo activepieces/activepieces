@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import { hashUtils, logger, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
-import { Action, ActionType, apId, assertNotNullOrUndefined, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowHelper, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { Action, ActionType, apId, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { pieceEngineUtil } from '../flow-engine-util'
@@ -28,7 +28,7 @@ export const isolateEngineRunner: EngineRunner = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.NONE,
             pieces: [operation],
-            projectId: apId(),
+            customPiecesPathKey: apId(),
         })
 
         return execute(
@@ -43,7 +43,7 @@ export const isolateEngineRunner: EngineRunner = {
             '[EngineHelper#executeTrigger]',
         )
         const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, operation.flowVersion)
-        const lockedVersion = await pieceEngineUtil.lockPieceInFlowVersion({
+        const lockedVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
             engineToken,
             stepName: operation.flowVersion.trigger.name,
             flowVersion: operation.flowVersion,
@@ -53,7 +53,7 @@ export const isolateEngineRunner: EngineRunner = {
             pieceName: triggerPiece.pieceName,
             pieceVersion: triggerPiece.pieceVersion,
             pieces: [triggerPiece],
-            projectId: operation.projectId,
+            customPiecesPathKey: operation.projectId,
         })
         const input: ExecuteTriggerOperation<TriggerHookType> = {
             projectId: operation.projectId,
@@ -80,7 +80,7 @@ export const isolateEngineRunner: EngineRunner = {
             pieceName: lockedPiece.pieceName,
             pieceVersion: lockedPiece.pieceVersion,
             pieces: [lockedPiece],
-            projectId: operation.projectId,
+            customPiecesPathKey: operation.projectId,
         })
 
         const input: ExecutePropsOptions = {
@@ -93,14 +93,14 @@ export const isolateEngineRunner: EngineRunner = {
         return execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, input)
     },
     async executeValidateAuth(engineToken, operation) {
-        const { piece } = operation
+        const { piece, platformId } = operation
         const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName: lockedPiece.pieceName,
             pieceVersion: lockedPiece.pieceVersion,
             pieces: [lockedPiece],
-            projectId: operation.projectId,
+            customPiecesPathKey: platformId,
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
@@ -111,12 +111,8 @@ export const isolateEngineRunner: EngineRunner = {
         return execute(EngineOperationType.EXECUTE_VALIDATE_AUTH, sandbox, input)
     },
     async executeAction(engineToken, operation) {
-        const step = flowHelper.getStep(operation.flowVersion, operation.stepName) as
-            | Action
-            | undefined
-        assertNotNullOrUndefined(step, 'Step not found')
-
-        const lockedFlowVersion = await pieceEngineUtil.lockPieceInFlowVersion({
+        const step = flowStructureUtil.getActionOrThrow(operation.stepName, operation.flowVersion.trigger)
+        const lockedFlowVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
             engineToken,
             flowVersion: operation.flowVersion,
             stepName: operation.stepName,
@@ -177,14 +173,14 @@ async function prepareFlowSandbox(engineToken: string, runEnvironment: RunEnviro
                 flowVersionId: flowVersion.id,
                 pieces,
                 codeSteps,
-                projectId,
+                customPiecesPathKey: projectId,
             })
         case RunEnvironment.TESTING:
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
                 pieces,
                 codeSteps,
-                projectId,
+                customPiecesPathKey: projectId,
             })
     }
 }
@@ -205,7 +201,7 @@ async function getSandboxForAction(
                 pieceName,
                 pieceVersion,
                 pieces: [await pieceEngineUtil.getExactPieceForStep(engineToken, action)],
-                projectId,
+                customPiecesPathKey: projectId,
             })
         }
         case ActionType.CODE: {
@@ -222,14 +218,14 @@ async function getSandboxForAction(
                         sourceCode: action.settings.sourceCode,
                     },
                 ],
-                projectId,
+                customPiecesPathKey: projectId,
             })
         }
-        case ActionType.BRANCH:
+        case ActionType.ROUTER:
         case ActionType.LOOP_ON_ITEMS:
             return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
-                projectId,
+                customPiecesPathKey: projectId,
             })
     }
 }

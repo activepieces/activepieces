@@ -6,8 +6,14 @@ import {
 import { PieceCategory } from '@activepieces/shared';
 import Client from 'ssh2-sftp-client';
 import { createFile } from './lib/actions/create-file';
+import { uploadFileAction } from './lib/actions/upload-file';
 import { readFileContent } from './lib/actions/read-file';
 import { newOrModifiedFile } from './lib/triggers/new-modified-file';
+import { deleteFolderAction } from './lib/actions/delete-folder';
+import { deleteFileAction } from './lib/actions/delete-file';
+import { listFolderContentsAction } from './lib/actions/list';
+import { createFolderAction } from './lib/actions/create-folder';
+import { renameFileOrFolderAction } from './lib/actions/rename-file-or-folder';
 export const sftpAuth = PieceAuth.CustomAuth({
   description: 'Enter the authentication details',
   props: {
@@ -65,11 +71,26 @@ export const sftp = createPiece({
   displayName: 'SFTP',
   description: 'Secure file transfer protocol',
 
-  minimumSupportedRelease: '0.7.1',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sftp.svg',
   categories: [PieceCategory.CORE, PieceCategory.DEVELOPER_TOOLS],
-  authors: ["Abdallah-Alwarawreh","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: [
+    'Abdallah-Alwarawreh',
+    'kishanprmr',
+    'AbdulTheActivePiecer',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   auth: sftpAuth,
-  actions: [createFile, readFileContent],
+  actions: [
+    createFile,
+    uploadFileAction,
+    readFileContent,
+    deleteFileAction,
+    createFolderAction,
+    deleteFolderAction,
+    listFolderContentsAction,
+    renameFileOrFolderAction,
+  ],
   triggers: [newOrModifiedFile],
 });

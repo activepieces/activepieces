@@ -46,7 +46,7 @@ export const qdrant = createPiece({
   displayName: 'Qdrant',
   description: 'Make any action on your qdrant vector database',
   auth: qdrantAuth,
-  minimumSupportedRelease: '0.8.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/qdrant.png',
   authors: ["ArmanGiau3","kishanprmr","abuaboud"],
   categories: [PieceCategory.DEVELOPER_TOOLS],

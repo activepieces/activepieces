@@ -20,6 +20,7 @@ import { createProductAction } from './lib/actions/create-product';
 import { createTransactionAction } from './lib/actions/create-transaction';
 import { getAssetAction } from './lib/actions/get-asset';
 import { getCustomerAction } from './lib/actions/get-customer';
+import { getCustomersAction } from './lib/actions/get-customers';
 import { getCustomerOrdersAction } from './lib/actions/get-customer-orders';
 import { getFulfillmentAction } from './lib/actions/get-fulfillment';
 import { getFulfillmentsAction } from './lib/actions/get-fulfillments';
@@ -94,9 +95,9 @@ export const shopify = createPiece({
   displayName: 'Shopify',
   description: 'Ecommerce platform for online stores',
   logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
-  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud","ikus060"],
   categories: [PieceCategory.COMMERCE],
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   auth: shopifyAuth,
   actions: [
     adjustInventoryLevelAction,
@@ -111,6 +112,7 @@ export const shopify = createPiece({
     createTransactionAction,
     getAssetAction,
     getCustomerAction,
+    getCustomersAction,
     getCustomerOrdersAction,
     getFulfillmentAction,
     getFulfillmentsAction,

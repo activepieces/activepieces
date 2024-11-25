@@ -35,7 +35,7 @@ export const gotify = createPiece({
   description: 'Self-hosted push notification service',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/gotify.png',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   authors: ["MyWay","kishanprmr","khaledmashaly","abuaboud"],
   auth: gotifyAuth,
