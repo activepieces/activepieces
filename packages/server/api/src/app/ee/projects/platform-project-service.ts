@@ -21,8 +21,9 @@ import {
     ProjectWithLimits,
     SeekPage,
     spreadIfDefined,
+    UserStatus,
 } from '@activepieces/shared'
-import { EntityManager, Equal, In, IsNull } from 'typeorm'
+import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -33,7 +34,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { projectUsageService } from '../../project/usage/project-usage-service'
-import { userService } from '../../user/user-service'
+import {  userService } from '../../user/user-service'
 import { projectBillingService } from '../billing/project-billing/project-billing.service'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { projectLimitsService } from '../project-plan/project-plan.service'
@@ -41,7 +42,6 @@ import { platformProjectSideEffects } from './platform-project-side-effects'
 
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
-
 export const platformProjectService = {
     async getAll(params: GetAllParams): Promise<SeekPage<ProjectWithLimits>> {
         const { cursorRequest, limit } = params
@@ -65,9 +65,12 @@ export const platformProjectService = {
                 'project.id = "project_plan"."projectId"',
             )
             .where(filters)
+            .groupBy('project.id') 
+            .addGroupBy('"project_plan"."id"') 
+
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const projects: ProjectWithLimits[] = await Promise.all(
-            data.map(enrichWithUsageAndPlan),
+            data.map(enrichProject),
         )
         return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
     },
@@ -99,7 +102,7 @@ export const platformProjectService = {
     async getWithPlanAndUsageOrThrow(
         projectId: string,
     ): Promise<ProjectWithLimits> {
-        return enrichWithUsageAndPlan(
+        return enrichProject(
             await projectRepo().findOneByOrFail({
                 id: projectId,
                 deleted: IsNull(),
@@ -139,6 +142,7 @@ type GetAllParams = {
     principalId: string
     platformId: string
     externalId?: string
+    displayName?: string
     cursorRequest: Cursor | null
     limit: number
 }
@@ -161,11 +165,15 @@ function isCustomerPlatform(platformId: string | undefined): boolean {
     }
     return !flagService.isCloudPlatform(platformId)
 }
-async function createFilters({ platformId, principalType, principalId, externalId }: GetAllParams) {
+async function createFilters({ platformId, principalType, principalId, externalId, displayName }: GetAllParams) {
+    const displayNameFilter = displayName ? {
+        displayName: ILike(`%${displayName}%`),
+    } : {}
     const commonFilter = {
         deleted: IsNull(),
         ...spreadIfDefined('platformId', platformId),
         ...spreadIfDefined('externalId', externalId),
+        ...displayNameFilter,
     }
     switch (principalType) {
         case PrincipalType.SERVICE: {
@@ -213,9 +221,29 @@ async function getIdsOfProjects({ platformId, userId }: { platformId: string, us
     return members.map((member) => member.projectId)
 }
 
-async function enrichWithUsageAndPlan(
+async function enrichProject(
     project: Project,
 ): Promise<ProjectWithLimits> {
+    const totalUsers = await projectMemberRepo().countBy({
+        projectId: project.id,
+    })
+    const activeUsers = await projectMemberRepo()
+        .createQueryBuilder('project_member')
+        .leftJoin('user', 'user', 'user.id = project_member."userId"')
+        .groupBy('user.id')
+        .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
+        .getCount()
+  
+    const totalFlows = await flowService.count({
+        projectId: project.id,
+    })
+
+    const activeFlows = await flowService.count({
+        projectId: project.id,
+        status: FlowStatus.ENABLED,
+    })
+
+  
     return {
         ...project,
         plan: await projectLimitsService.getOrCreateDefaultPlan(
@@ -226,6 +254,12 @@ async function enrichWithUsageAndPlan(
             project.id,
             projectUsageService.getCurrentingStartPeriod(project.created),
         ),
+        analytics: { 
+            activeFlows,
+            totalFlows,
+            totalUsers,
+            activeUsers,
+        },
     }
 }
 

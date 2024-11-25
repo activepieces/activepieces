@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -35,12 +35,70 @@ import { NewProjectDialog } from './new-project-dialog';
 
 const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
   {
-    accessorKey: 'name',
+    accessorKey: 'displayName',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Name')} />
     ),
     cell: ({ row }) => {
       return <div className="text-left">{row.original.displayName}</div>;
+    },
+  },
+  {
+    accessorKey: 'tasks',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Used Tasks')} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">
+          {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
+          {formatUtils.formatNumber(row.original.plan.tasks)}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'ai-tokens',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Used AI Credits')} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">
+          {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
+          {row.original.plan.aiTokens
+            ? formatUtils.formatNumber(row.original.plan.aiTokens)
+            : '-'}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'users',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Active Users')} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">
+          {row.original.analytics.activeUsers} /{' '}
+          {row.original.analytics.totalUsers}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'flows',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Active Flows')} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <div className="text-left">
+          {row.original.analytics.activeFlows} /{' '}
+          {row.original.analytics.totalFlows}
+        </div>
+      );
     },
   },
   {
@@ -56,45 +114,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       );
     },
   },
-  {
-    accessorKey: 'members',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Members')} />
-    ),
-    cell: ({ row }) => {
-      return <div className="text-left">{row.original.usage.teamMembers}</div>;
-    },
-  },
-  {
-    accessorKey: 'tasks',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Tasks')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
-          {formatUtils.formatNumber(row.original.plan.tasks)}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'ai-tokens',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('AI Credits')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
-          {row.original.plan.aiTokens
-            ? formatUtils.formatNumber(row.original.plan.aiTokens)
-            : '-'}
-        </div>
-      );
-    },
-  },
+
   {
     accessorKey: 'externalId',
     header: ({ column }) => (
@@ -123,9 +143,11 @@ export default function ProjectsPage() {
     queryFn: () => {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM);
+      const displayName = searchParams.get('displayName') ?? undefined;
       return projectApi.list({
         cursor: cursor ?? undefined,
         limit: limit ? parseInt(limit) : undefined,
+        displayName,
       });
     },
   });
@@ -349,6 +371,15 @@ export default function ProjectsPage() {
             await setCurrentProject(queryClient, project);
             navigate('/');
           }}
+          filters={[
+            {
+              type: 'input',
+              title: t('Name'),
+              accessorKey: 'displayName',
+              options: [],
+              icon: CheckIcon,
+            },
+          ]}
           columns={columnsWithCheckbox}
           page={data}
           isLoading={isLoading}

@@ -34,8 +34,14 @@ function addAuthToPieceProps(
   auth: PieceAuthProperty | undefined,
   requireAuth: boolean,
 ): PiecePropertyMap {
-  if (!requireAuth) {
-    return props;
+  if (!requireAuth || isNil(auth)) {
+    const newProps = Object.keys(props).reduce((acc, key) => {
+      if (key !== 'auth') {
+        acc[key] = props[key];
+      }
+      return acc;
+    }, {} as PiecePropertyMap);
+    return newProps;
   }
   return {
     ...props,

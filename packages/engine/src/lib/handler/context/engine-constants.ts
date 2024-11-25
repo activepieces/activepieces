@@ -23,7 +23,7 @@ export class EngineConstants {
 
     private project: Project | null = null
 
-    public get isTestMode(): boolean {
+    public get isRunningApTests(): boolean {
         return EngineConstants.TEST_MODE
     }
 
