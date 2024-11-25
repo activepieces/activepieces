@@ -22,7 +22,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
 }
 
 const executeAction: ActionHandler<CodeAction> = async ({ action, executionState, constants }) => {
-    const { censoredInput, resolvedInput } = await constants.variableService.resolve<Record<string, unknown>>({
+    const { censoredInput, resolvedInput } = await constants.propsResolver.resolve<Record<string, unknown>>({
         unresolvedInput: action.settings.input,
         executionState,
     })

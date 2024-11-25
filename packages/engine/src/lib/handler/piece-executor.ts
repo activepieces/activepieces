@@ -9,6 +9,7 @@ import { createConnectionService } from '../services/connections.service'
 import { createFilesService } from '../services/files.service'
 import { createFlowsContext } from '../services/flows.service'
 import { createContextStore } from '../services/storage.service'
+import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
 
@@ -46,16 +47,16 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             piecesSource: constants.piecesSource,
         })
 
-        const { resolvedInput, censoredInput } = await constants.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
 
         stepOutput.input = censoredInput
 
-        const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth, pieceAction.requireAuth)
         if (Object.keys(errors).length > 0) {
-            throw new Error(JSON.stringify(errors))
+            throw new Error(JSON.stringify(errors, null, 2))
         }
 
         const hookResponse: HookResponse = {
@@ -205,6 +206,7 @@ function createPauseHook(hookResponse: HookResponse, pauseId: string): PauseHook
                     pauseMetadata: {
                         ...req.pauseMetadata,
                         requestId: pauseId,
+                        response: req.pauseMetadata.response ?? {},
                     },
                 }
                 break

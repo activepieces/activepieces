@@ -42,7 +42,7 @@ export const redisQueue: QueueManager = {
             await redisRateLimiter.rateLimitJob(params)
             return
         }
-    
+
         switch (type) {
             case JobType.REPEATING: {
                 await addRepeatingJob(params)
@@ -92,11 +92,11 @@ async function findRepeatableJobKey(flowVersionId: ApId): Promise<string | undef
     const queue = await ensureQueueExists(QueueName.SCHEDULED)
     const client = await queue.client
     const jobKey = await client.get(repeatingJobKey(flowVersionId))
+    // TODO: this temporary solution for jobs that doesn't have repeatJobKey in redis, it's also confusing because it search by flowVersionId
     if (isNil(jobKey)) {
-        logger.warn({ flowVersionId }, 'Job key not found in redis, trying to find it in the queue')
-        // TODO: this temporary solution for jobs that doesn't have repeatJobKey in redis, it's also confusing because it search by flowVersionId
         const jobs = await queue.getJobs()
         const jobKeyInRedis = jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === flowVersionId)
+        logger.warn({ flowVersionId, repeatJobKey: jobKeyInRedis?.repeatJobKey }, 'Job key not found in redis, trying to find it in the queue')
         return jobKeyInRedis?.repeatJobKey
     }
     return jobKey

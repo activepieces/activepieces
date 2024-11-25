@@ -20,12 +20,16 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { api } from '@/lib/api';
 import {
+  ApErrorParams,
+  ErrorCode,
   SeekPage,
   Trigger,
-  TriggerEvent,
+  TriggerEventWithPayload,
   TriggerTestStrategy,
   isNil,
+  parseToJsonIfPossible,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -42,7 +46,10 @@ type TestTriggerSectionProps = {
   flowId: string;
 };
 
-function getSelectedId(sampleData: unknown, pollResults: TriggerEvent[]) {
+function getSelectedId(
+  sampleData: unknown,
+  pollResults: TriggerEventWithPayload[],
+) {
   if (sampleData === undefined) {
     return undefined;
   }
@@ -107,7 +114,7 @@ const TestTriggerSection = React.memo(
       mutate: simulateTrigger,
       isPending: isSimulating,
       reset: resetSimulation,
-    } = useMutation<TriggerEvent[], Error, void>({
+    } = useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
         setErrorMessage(undefined);
         const ids = (
@@ -152,7 +159,7 @@ const TestTriggerSection = React.memo(
     });
 
     const { mutate: pollTrigger, isPending: isPollingTesting } = useMutation<
-      TriggerEvent[],
+      TriggerEventWithPayload[],
       Error,
       void
     >({
@@ -172,16 +179,33 @@ const TestTriggerSection = React.memo(
         }
       },
       onError: (error) => {
-        console.error(error);
-        setErrorMessage(
-          testStepUtils.formatErrorMessage(
-            t('Failed to run test step, please ensure settings are correct.'),
-          ),
-        );
+        if (api.isError(error)) {
+          const apError = error.response?.data as ApErrorParams;
+          let message =
+            'Failed to run test step, please ensure settings are correct.';
+          if (apError.code === ErrorCode.TEST_TRIGGER_FAILED) {
+            message = JSON.stringify(
+              {
+                message:
+                  'Failed to run test step, please ensure settings are correct.',
+                error: parseToJsonIfPossible(apError.params.message),
+              },
+              null,
+              2,
+            );
+          }
+          setErrorMessage(message);
+        } else {
+          setErrorMessage(
+            testStepUtils.formatErrorMessage(
+              t('Internal error, please try again later.'),
+            ),
+          );
+        }
       },
     });
 
-    async function updateSampleData(data: TriggerEvent) {
+    async function updateSampleData(data: TriggerEventWithPayload) {
       let sampleDataFileId: string | undefined = undefined;
       if (!isNil(data.payload)) {
         const sampleFile = await sampleDataApi.save({
@@ -206,7 +230,9 @@ const TestTriggerSection = React.memo(
       setSampleData(formValues.name, data.payload);
     }
 
-    const { data: pollResults, refetch } = useQuery<SeekPage<TriggerEvent>>({
+    const { data: pollResults, refetch } = useQuery<
+      SeekPage<TriggerEventWithPayload>
+    >({
       queryKey: ['triggerEvents', flowVersionId],
       queryFn: () =>
         triggerEventsApi.list({

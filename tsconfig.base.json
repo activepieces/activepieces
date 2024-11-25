@@ -51,6 +51,9 @@
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],
+      "@activepieces/piece-apify": [
+        "packages/pieces/community/apify/src/index.ts"
+      ],
       "@activepieces/piece-apitable": [
         "packages/pieces/community/apitable/src/index.ts"
       ],
@@ -65,6 +68,9 @@
       ],
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
+      ],
+      "@activepieces/piece-azure-communication-services": [
+        "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
@@ -304,6 +310,9 @@
       ],
       "@activepieces/piece-instagram-business": [
         "packages/pieces/community/instagram-business/src/index.ts"
+      ],
+      "@activepieces/piece-instasent": [
+        "packages/pieces/community/instasent/src/index.ts"
       ],
       "@activepieces/piece-intercom": [
         "packages/pieces/community/intercom/src/index.ts"

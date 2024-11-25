@@ -6,7 +6,8 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFilesService } from '../services/files.service'
 import { createFlowsContext } from '../services/flows.service'
 import { createContextStore } from '../services/storage.service'
-import { variableService } from '../variables/variable-service'
+import { propsProcessor } from '../variables/props-processor'
+import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
 
 type Listener = {
@@ -235,7 +236,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         piecesSource,
     })
 
-    const { resolvedInput } = await variableService({
+    const { resolvedInput } = await createPropsResolver({
         apiUrl,
         projectId,
         engineToken,
@@ -244,14 +245,10 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         executionState: FlowExecutorContext.empty(),
     })
 
-    const { processedInput, errors } = await variableService({
-        apiUrl,
-        projectId,
-        engineToken,
-    }).applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth)
+    const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth)
 
     if (Object.keys(errors).length > 0) {
-        throw new Error(JSON.stringify(errors))
+        throw new Error(JSON.stringify(errors, null, 2))
     }
 
     return { piece, pieceTrigger, processedInput }

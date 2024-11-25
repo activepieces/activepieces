@@ -97,7 +97,7 @@ export const shopify = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
   authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud","ikus060"],
   categories: [PieceCategory.COMMERCE],
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   auth: shopifyAuth,
   actions: [
     adjustInventoryLevelAction,

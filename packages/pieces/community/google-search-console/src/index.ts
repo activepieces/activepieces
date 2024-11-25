@@ -38,7 +38,7 @@ export const createAuthClient = (accessToken: string) => {
 
 export const googleSearchConsolePiece = createPiece({
   displayName: 'Google Search Console',
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   auth: googleSearchConsoleAuth,
   logoUrl: 'https://cdn.activepieces.com/pieces/google-search-console.png',
   authors: ['Gushkool'],

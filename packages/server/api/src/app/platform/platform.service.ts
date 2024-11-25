@@ -42,6 +42,8 @@ export const platformService = {
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             embeddingEnabled: false,
+            globalConnectionsEnabled: false,
+            customRolesEnabled: false,
             analyticsEnabled: false,
             defaultLocale: LocalesEnum.ENGLISH,
             emailAuthEnabled: true,
@@ -111,6 +113,8 @@ export const platformService = {
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
             ...spreadIfDefined('gitSyncEnabled', params.gitSyncEnabled),
             ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
+            ...spreadIfDefined('globalConnectionsEnabled', params.globalConnectionsEnabled),
+            ...spreadIfDefined('customRolesEnabled', params.customRolesEnabled),
             ...spreadIfDefined('ssoEnabled', params.ssoEnabled),
             ...spreadIfDefined('emailAuthEnabled', params.emailAuthEnabled),
             ...spreadIfDefined(
@@ -180,6 +184,8 @@ type UpdateParams = UpdatePlatformRequestBody & {
     ssoEnabled?: boolean
     gitSyncEnabled?: boolean
     embeddingEnabled?: boolean
+    globalConnectionsEnabled?: boolean
+    customRolesEnabled?: boolean
     customDomainsEnabled?: boolean
     customAppearanceEnabled?: boolean
     manageProjectsEnabled?: boolean

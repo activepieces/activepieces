@@ -37,7 +37,7 @@ export const ntfy = createPiece({
   description: 'Notification management made easy',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/ntfy.png',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.COMMUNICATION],
   auth: ntfyAuth,
   authors: ["MyWay","facferreira","la3rence","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],

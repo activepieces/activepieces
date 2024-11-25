@@ -385,10 +385,7 @@ const FlowRunsPage = () => {
 
   return (
     <div className="flex-col w-full">
-      <div className="mb-4 flex">
-        <TableTitle>{t('Flow Runs')}</TableTitle>
-        <div className="ml-auto"></div>
-      </div>
+      <TableTitle>{t('Flow Runs')}</TableTitle>
       <DataTable
         columns={columns}
         page={data}

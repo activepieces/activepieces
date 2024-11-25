@@ -14,7 +14,8 @@ export type OAuth2Service<CONNECTION_VALUE extends BaseOAuth2ConnectionValue> =
 
 export type RefreshOAuth2Request<T extends BaseOAuth2ConnectionValue> = {
     pieceName: string
-    projectId: string
+    projectId: string | undefined
+    platformId: string
     connectionValue: T
 }
 
@@ -31,7 +32,8 @@ export type OAuth2RequestBody = {
 }
 
 export type ClaimOAuth2Request = {
-    projectId: string
+    projectId: string | undefined
+    platformId: string
     pieceName: string
     request: OAuth2RequestBody
 }

@@ -28,7 +28,7 @@ export const nocodbAuth = PieceAuth.CustomAuth({
 export const nocodb = createPiece({
 	displayName: 'NocoDB',
 	auth: nocodbAuth,
-	minimumSupportedRelease: '0.20.0',
+	minimumSupportedRelease: '0.30.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/nocodb.png',
 	authors: ['kishanprmr'],
 	actions: [

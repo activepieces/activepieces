@@ -7,6 +7,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { projectService } from '../../project/project-service'
 
 const flowRepo = repoFactory(FlowEntity)
 const flowVersionRepo = repoFactory(FlowVersionEntity)
@@ -56,12 +57,15 @@ async function piecesAnalyticsHandler(): Promise<void> {
                 version: clonedStep.settings.pieceVersion,
             }
         })
+        const platformId = await projectService.getPlatformId(flow.projectId)
+
         for (const piece of pieces) {
-            try {
+            try {   
                 const pieceMetadata = await pieceMetadataService.getOrThrow({
                     name: piece.name,
                     version: piece.version,
                     projectId: flow.projectId,
+                    platformId,
                 })
                 const pieceId = pieceMetadata.id!
                 activeProjects[pieceId] = activeProjects[pieceId] || new Set()

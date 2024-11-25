@@ -55,7 +55,7 @@ export const vtexAuth = PieceAuth.CustomAuth({
 export const vtex = createPiece({
   displayName: 'VTEX',
   description: 'Unified commerce platform',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/vtex.png',
   categories: [PieceCategory.COMMERCE],
   authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],

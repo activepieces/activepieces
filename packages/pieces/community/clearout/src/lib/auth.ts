@@ -1,5 +1,7 @@
-import { PieceAuth, Validators } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework';
 import { getCredits } from './api';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export type ClearoutAuthType = { apiKey: string };
 
@@ -11,7 +13,6 @@ export const clearoutAuth = PieceAuth.CustomAuth({
       displayName: 'API Token',
       description: 'The API token for your Clearout account',
       required: true,
-      validators: [Validators.pattern(/^\S+$/)],
     }),
   },
   validate: async ({ auth }) => {
@@ -31,6 +32,10 @@ export const clearoutAuth = PieceAuth.CustomAuth({
 });
 
 const validateAuth = async (auth: ClearoutAuthType) => {
+  await propsValidation.validateZod(auth, {
+    apiKey: z.string().min(1),
+  });
+
   const response = await getCredits(auth);
   if (response.success !== true) {
     throw new Error(

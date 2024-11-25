@@ -8,7 +8,7 @@ export const platformUserApi = {
   delete(id: string) {
     return api.delete(`/v1/users/${id}`);
   },
-  update(id: string, request: UpdateUserRequestBody) {
-    return api.post(`/v1/users/${id}`, request);
+  update(id: string, request: UpdateUserRequestBody): Promise<User> {
+    return api.post<User>(`/v1/users/${id}`, request);
   },
 };

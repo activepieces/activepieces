@@ -22,7 +22,7 @@ export const gmailAuth = PieceAuth.OAuth2({
 });
 
 export const gmail = createPiece({
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
   categories: [
     PieceCategory.COMMUNICATION,

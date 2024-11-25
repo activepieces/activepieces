@@ -34,7 +34,10 @@ export function createFilesService({ stepName, flowId, engineToken, apiUrl }: Cr
             })
 
             if (!response.ok) {
-                throw new FileStoreError(response.body)
+                throw new FileStoreError({
+                    status: response.status,
+                    body: response.body,
+                })
             }
 
             const result = await response.json()

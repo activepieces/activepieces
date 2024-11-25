@@ -1,5 +1,4 @@
 import { Static, TObject, TSchema, Type } from "@sinclair/typebox";
-import { TypedValidatorFn, ValidationInputType } from "../../validators/types";
 import { ApFile } from "./file-property";
 import { PropertyType } from "./property-type";
 
@@ -20,14 +19,11 @@ export const TPropertyValue = <T extends TSchema, U extends PropertyType>(T: T, 
 export type TPropertyValue<
   T,
   U extends PropertyType,
-  VALIDATION_INPUT extends ValidationInputType,
   REQUIRED extends boolean
 > = {
   valueSchema: T;
   type: U;
   required: REQUIRED;
-  validators?: TypedValidatorFn<VALIDATION_INPUT>[];
-  defaultValidators?: TypedValidatorFn<VALIDATION_INPUT>[];
   // TODO this should be T or undefined
   defaultValue?: U extends PropertyType.ARRAY
     ? unknown[]

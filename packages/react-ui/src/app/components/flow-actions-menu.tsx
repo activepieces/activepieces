@@ -63,11 +63,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   flowVersion,
   children,
   readonly,
-  insideBuilder,
   onRename,
   onMoveTo,
   onDuplicate,
   onDelete,
+  insideBuilder,
 }) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const openNewWindow = useNewWindow();
@@ -77,17 +77,11 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   );
   const { useCheckAccess } = useAuthorization();
   const userHasPermissionToUpdateFlow = useCheckAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = useCheckAccess(
-    Permission.WRITE_GIT_REPO,
-  );
-  const importFlowProps: ImportFlowDialogProps = insideBuilder
-    ? {
-        insideBuilder: true,
-        flowId: flow.id,
-      }
-    : {
-        insideBuilder: false,
-      };
+  const userHasPermissionToPushToGit = useCheckAccess(Permission.WRITE_GIT_REPO);
+  const importFlowProps: ImportFlowDialogProps = {
+    insideBuilder: true,
+    flowId: flow.id,
+  };
   const { embedState } = useEmbedding();
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
@@ -202,7 +196,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </DropdownMenuItem>
         </PermissionNeededTooltip>
 
-        {!readonly && (
+        {!readonly && insideBuilder && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >

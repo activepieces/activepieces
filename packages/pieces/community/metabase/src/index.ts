@@ -48,7 +48,7 @@ export const metabase = createPiece({
   description: 'The simplest way to ask questions and learn from data',
 
   auth: metabaseAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/metabase.png',
   authors: ['AdamSelene', 'abuaboud'],
   actions: [getQuestion],

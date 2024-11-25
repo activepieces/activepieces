@@ -25,7 +25,7 @@ export class AddConnectionOwner1730123432651 implements MigrationInterface {
                     AND data->'connection' IS NOT NULL
                     AND data->'connection'->>'id' IS NOT NULL
                     AND "userId" IS NOT NULL
-                    AND "userId" IN (SELECT id FROM public.user)
+                    AND "userId" IN (SELECT id FROM "user")
                     ORDER BY (data->'connection'->>'id')::text, created DESC
                 )
                 UPDATE app_connection

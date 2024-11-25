@@ -160,7 +160,7 @@ const createUser = async (params: SignUpParams): Promise<User> => {
             trackEvents: params.trackEvents,
             newsLetter: params.newsLetter,
             password: params.password,
-            platformId: params.platformId,
+            platformId: params.platformId ?? null,
             tokenVersion: nanoid(),
         }
 
@@ -288,7 +288,9 @@ type SendTelemetryParams = {
     project: Project
 }
 
-type NewUser = Omit<User, 'id' | 'created' | 'updated'>
+type NewUser = Omit<User, 'id' | 'created' | 'updated'> & {
+    platformId: string | null
+}
 
 type SignUpParams = {
     email: string

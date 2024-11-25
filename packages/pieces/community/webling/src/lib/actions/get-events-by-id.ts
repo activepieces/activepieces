@@ -1,11 +1,8 @@
 import { weblingAuth } from '../../index';
-import {
-  createAction,
-  PiecePropValueSchema,
-  Property,
-  Validators,
-} from '@activepieces/pieces-framework';
+import { createAction, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { getCalendars, getEventsById } from '../common/helpers';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const eventsById = createAction({
   auth: weblingAuth,
@@ -19,7 +16,6 @@ export const eventsById = createAction({
       required: true,
       description:
         "Comma seperated list of event IDs (e.g. '536,525,506,535'). When at least one ID doesn't exist the whole query return a 404 error.",
-      validators: [Validators.pattern('^\\d+(,\\d+)*$')],
     }),
     calendarId: Property.Dropdown<string>({
       displayName: 'Calendar',
@@ -44,6 +40,11 @@ export const eventsById = createAction({
   async run(configValue) {
     const { eventIds: eventIds, calendarId: calendarId } =
       configValue.propsValue;
+
+    await propsValidation.validateZod(configValue.propsValue, {
+      eventIds: z.string().regex(/^\d+(,\d+)*$/),
+    });
+
     const events = await getEventsById(configValue.auth, eventIds);
     if (calendarId) {
       return events.filter((event) => event.parents.includes(calendarId));

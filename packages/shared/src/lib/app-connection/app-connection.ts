@@ -12,6 +12,11 @@ export enum AppConnectionStatus {
     ERROR = 'ERROR',
 }
 
+export enum AppConnectionScope {
+    PROJECT = 'PROJECT',
+    PLATFORM = 'PLATFORM',
+}
+
 export enum AppConnectionType {
     OAUTH2 = 'OAUTH2',
     PLATFORM_OAUTH2 = 'PLATFORM_OAUTH2',
@@ -76,10 +81,13 @@ export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> 
                             never
 
 export type AppConnection<Type extends AppConnectionType = AppConnectionType> = BaseModel<AppConnectionId> & {
-    name: string
+    externalId: string
     type: Type
+    scope: AppConnectionScope
     pieceName: string
-    projectId: string
+    displayName: string
+    projectIds: string[]
+    platformId: string
     status: AppConnectionStatus
     ownerId: string
     value: AppConnectionValue<Type>
@@ -94,13 +102,16 @@ export type CustomAuthConnection = AppConnection<AppConnectionType.CUSTOM_AUTH>
 
 export const AppConnectionWithoutSensitiveData = Type.Object({
     ...BaseModelSchema,
-    name: Type.String(),
+    externalId: Type.String(),
+    displayName: Type.String(),
     type: Type.Enum(AppConnectionType),
     pieceName: Type.String(),
-    projectId: ApId,
+    projectIds: Type.Array(ApId),
+    platformId: Nullable(Type.String()),
+    scope: Type.Enum(AppConnectionScope),
     status: Type.Enum(AppConnectionStatus),
     ownerId: Nullable(Type.String()),
-    owner: Type.Optional(Type.Union([UserMeta, Type.Null()])),
+    owner: Nullable(UserMeta),
 }, {
     description: 'App connection is a connection to an external app.',
 })

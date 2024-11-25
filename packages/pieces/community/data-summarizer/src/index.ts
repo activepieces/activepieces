@@ -8,7 +8,7 @@ import { PieceCategory } from '@activepieces/shared';
 export const dataSummarizer = createPiece({
   displayName: 'Data Summarizer',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/data-summarizer.svg',
   authors: ['tahboubali'],
   actions: [calculateAverage, calculateSum, countUniques, getMinMax],

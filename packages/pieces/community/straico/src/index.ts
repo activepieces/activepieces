@@ -48,7 +48,7 @@ export const straicoAuth = PieceAuth.SecretText({
 export const straico = createPiece({
   displayName: 'Straico',
   auth: straicoAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/straico.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   description: 'All-in-one generative AI platform',

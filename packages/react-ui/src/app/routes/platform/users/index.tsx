@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash } from 'lucide-react';
 
@@ -13,7 +13,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { platformUserApi } from '@/features/platform-admin-panel/lib/platform-user-api';
+import { platformUserHooks } from '@/hooks/platform-user-hooks';
+import { platformUserApi } from '@/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 
@@ -24,12 +25,7 @@ import { UpdateUserDialog } from './update-user-dialog';
 export default function UsersPage() {
   const { toast } = useToast();
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => {
-      return platformUserApi.list();
-    },
-  });
+  const { data, isLoading, refetch } = platformUserHooks.useUsers();
 
   const { mutate: deleteUser, isPending: isDeleting } = useMutation({
     mutationKey: ['delete-user'],

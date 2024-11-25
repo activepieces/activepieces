@@ -16,8 +16,10 @@ import { AboveFlowWidgets } from './widgets';
 export const FlowCanvas = React.memo(
   ({
     setHasCanvasBeenInitialised,
+    lefSideBarContainerWidth,
   }: {
     setHasCanvasBeenInitialised: (value: boolean) => void;
+    lefSideBarContainerWidth: number;
   }) => {
     const [allowCanvasPanning, graph, run] = useBuilderStateContext((state) => {
       const graph = flowCanvasUtils.convertFlowVersionToGraph(
@@ -83,7 +85,7 @@ export const FlowCanvas = React.memo(
         ref={containerRef}
         className="size-full relative overflow-hidden z-50"
       >
-        <FlowDragLayer>
+        <FlowDragLayer lefSideBarContainerWidth={lefSideBarContainerWidth}>
           <ReactFlow
             nodeTypes={flowUtilConsts.nodeTypes}
             nodes={graph.nodes}

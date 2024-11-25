@@ -23,6 +23,7 @@ import {
     spreadIfDefined,
 } from '@activepieces/shared'
 import { EntityManager, Equal, In, IsNull } from 'typeorm'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { flagService } from '../../flags/flag.service'
@@ -129,6 +130,7 @@ export const platformProjectService = {
         await projectRepo().delete({
             id,
         })
+        await appConnectionService.deleteAllProjectConnections(id)
     },
 }
 

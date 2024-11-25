@@ -538,7 +538,7 @@ const FlowsPage = () => {
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="mb-4 flex">
+      <div className="flex">
         <TableTitle>{t('Flows')}</TableTitle>
         <div className="ml-auto flex flex-row gap-2">
           <PermissionNeededTooltip

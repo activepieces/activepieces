@@ -2,7 +2,6 @@ import {
   Property,
   Store,
   StoreScope,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import { googleSheetsAuth } from '../..';
@@ -13,6 +12,8 @@ import {
 } from '../common/common';
 import { isNil } from '@activepieces/shared';
 import { HttpError } from '@activepieces/pieces-common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 async function getRows(
   store: Store,
@@ -93,7 +94,6 @@ export const getRowsAction = createAction({
       description: 'Which row to start from?',
       required: true,
       defaultValue: 1,
-      validators: [Validators.minValue(1)],
     }),
     markdown: Property.MarkDown({
       value: notes
@@ -109,10 +109,14 @@ export const getRowsAction = createAction({
       description: 'The number of rows to get',
       required: true,
       defaultValue: 1,
-      validators: [Validators.minValue(1)],
     }),
   },
   async run({ store, auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      startRow: z.number().min(1),
+      groupSize: z.number().min(1),
+    });
+
     try {
       return await getRows(
         store,

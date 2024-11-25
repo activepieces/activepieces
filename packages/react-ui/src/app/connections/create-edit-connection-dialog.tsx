@@ -1,13 +1,11 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { ScrollArea } from '@radix-ui/react-scroll-area';
-import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
 
-import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,12 +29,12 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/seperator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { globalConnectionsApi } from '@/features/connections/lib/global-connections-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   BasicAuthProperty,
   CustomAuthProperty,
-  CustomAuthProps,
   OAuth2Property,
   OAuth2Props,
   PieceMetadataModel,
@@ -46,24 +44,19 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   ApErrorParams,
-  AppConnectionType,
+  AppConnectionScope,
   AppConnectionWithoutSensitiveData,
-  assertNotNullOrUndefined,
   ErrorCode,
   isNil,
   UpsertAppConnectionRequestBody,
-  UpsertBasicAuthRequest,
-  UpsertCloudOAuth2Request,
-  UpsertCustomAuthRequest,
-  UpsertOAuth2Request,
-  UpsertPlatformOAuth2Request,
-  UpsertSecretTextRequest,
 } from '@activepieces/shared';
-
-import { appConnectionUtils } from '../../features/connections/lib/app-connections-utils';
 
 import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
 import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
+import {
+  newConnectionUtils,
+  ConnectionNameAlreadyExists,
+} from './new-connection-utils';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
 
@@ -71,90 +64,13 @@ type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   open: boolean;
   onConnectionCreated: (
-    res: Pick<AppConnectionWithoutSensitiveData, 'id' | 'name'>,
+    res: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
   ) => void;
   setOpen: (open: boolean) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
   predefinedConnectionName: string | null;
+  isGlobalConnection: boolean;
 };
-
-function buildConnectionSchema(
-  piece: PieceMetadataModelSummary | PieceMetadataModel,
-) {
-  const auth = piece.auth;
-  if (isNil(auth)) {
-    return Type.Object({
-      request: Type.Composite([
-        Type.Omit(UpsertAppConnectionRequestBody, ['name']),
-      ]),
-    });
-  }
-  const connectionSchema = Type.Object({
-    name: Type.String({
-      pattern: '^[A-Za-z0-9_\\-@\\+\\.]*$',
-      minLength: 1,
-      errorMessage: t('Name can only contain letters, numbers and underscores'),
-    }),
-  });
-
-  switch (auth.type) {
-    case PropertyType.SECRET_TEXT:
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(UpsertSecretTextRequest, ['name']),
-          connectionSchema,
-        ]),
-      });
-    case PropertyType.BASIC_AUTH:
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(UpsertBasicAuthRequest, ['name']),
-          connectionSchema,
-        ]),
-      });
-    case PropertyType.CUSTOM_AUTH:
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(UpsertCustomAuthRequest, ['name', 'value']),
-          connectionSchema,
-          Type.Object({
-            value: Type.Object({
-              props: formUtils.buildSchema(
-                (piece.auth as CustomAuthProperty<any>).props,
-              ),
-            }),
-          }),
-        ]),
-      });
-    case PropertyType.OAUTH2:
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(
-            Type.Union([
-              UpsertOAuth2Request,
-              UpsertCloudOAuth2Request,
-              UpsertPlatformOAuth2Request,
-            ]),
-            ['name'],
-          ),
-          connectionSchema,
-        ]),
-      });
-    default:
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(UpsertAppConnectionRequestBody, ['name']),
-          connectionSchema,
-        ]),
-      });
-  }
-}
-class ConnectionNameAlreadyExists extends Error {
-  constructor() {
-    super('Connection name already exists');
-    this.name = 'ConnectionNameAlreadyExists';
-  }
-}
 
 const CreateOrEditConnectionDialog = React.memo(
   ({
@@ -164,21 +80,24 @@ const CreateOrEditConnectionDialog = React.memo(
     onConnectionCreated,
     reconnectConnection,
     predefinedConnectionName,
+    isGlobalConnection,
   }: ConnectionDialogProps) => {
     const { auth } = piece;
 
-    const formSchema = buildConnectionSchema(piece);
+    const formSchema = newConnectionUtils.buildConnectionSchema(piece);
+    const { externalId, displayName } = newConnectionUtils.getConnectionName(
+      piece,
+      reconnectConnection,
+      predefinedConnectionName,
+    );
     const form = useForm<{
       request: UpsertAppConnectionRequestBody;
     }>({
       defaultValues: {
-        request: createDefaultValues(
+        request: newConnectionUtils.createDefaultValues(
           piece,
-          getConnectionName(
-            piece,
-            reconnectConnection,
-            predefinedConnectionName,
-          ),
+          externalId,
+          displayName,
         ),
       },
       mode: 'onChange',
@@ -190,16 +109,35 @@ const CreateOrEditConnectionDialog = React.memo(
       form.trigger();
     });
     const [errorMessage, setErrorMessage] = useState('');
+
     const { mutate, isPending } = useMutation({
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
+
+        if (isGlobalConnection) {
+          const connections = await globalConnectionsApi.list({
+            limit: 10000,
+          });
+          const existingConnection = connections.data.find(
+            (connection) => connection.displayName === formValues.displayName,
+          );
+          if (!isNil(existingConnection) && isNil(reconnectConnection)) {
+            throw new ConnectionNameAlreadyExists();
+          }
+          return globalConnectionsApi.upsert({
+            ...formValues,
+            projectIds: [],
+            scope: AppConnectionScope.PLATFORM,
+          });
+        }
+
         const connections = await appConnectionsApi.list({
           projectId: authenticationSession.getProjectId()!,
           limit: 10000,
         });
         const existingConnection = connections.data.find(
-          (connection) => connection.name === formValues.name,
+          (connection) => connection.displayName === formValues.displayName,
         );
         if (!isNil(existingConnection) && isNil(reconnectConnection)) {
           throw new ConnectionNameAlreadyExists();
@@ -210,13 +148,13 @@ const CreateOrEditConnectionDialog = React.memo(
         setOpen(false);
         onConnectionCreated({
           id: connection.id,
-          name: connection.name,
+          externalId: connection.externalId,
         });
         setErrorMessage('');
       },
       onError: (err) => {
         if (err instanceof ConnectionNameAlreadyExists) {
-          form.setError('request.name', {
+          form.setError('request.displayName', {
             message: t('Name is already used'),
           });
         } else if (api.isError(err)) {
@@ -255,7 +193,7 @@ const CreateOrEditConnectionDialog = React.memo(
             <DialogTitle>
               {reconnectConnection
                 ? t('Reconnect {displayName} Connection', {
-                    displayName: reconnectConnection.name,
+                    displayName: reconnectConnection.displayName,
                   })
                 : t('Create {displayName} Connection', {
                     displayName: piece.displayName,
@@ -272,22 +210,18 @@ const CreateOrEditConnectionDialog = React.memo(
                 className="flex flex-col gap-4"
               >
                 <FormField
-                  name="request.name"
+                  name="request.displayName"
                   control={form.control}
                   render={({ field }) => (
                     <FormItem className="flex flex-col gap-2">
-                      <FormLabel htmlFor="name">
+                      <FormLabel htmlFor="displayName">
                         {t('Connection Name')}
                       </FormLabel>
                       <FormControl>
                         <Input
-                          disabled={
-                            !isNil(reconnectConnection) ||
-                            !isNil(predefinedConnectionName)
-                          }
                           {...field}
                           required
-                          id="name"
+                          id="displayName"
                           type="text"
                           placeholder={t('Connection name')}
                         />
@@ -350,105 +284,3 @@ const CreateOrEditConnectionDialog = React.memo(
 
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
 export { CreateOrEditConnectionDialog };
-
-function getConnectionName(
-  piece: PieceMetadataModelSummary | PieceMetadataModel,
-  reconnectConnection: AppConnectionWithoutSensitiveData | null,
-  predefinedConnectionName: string | null,
-): string {
-  if (reconnectConnection) {
-    return reconnectConnection.name;
-  }
-  if (predefinedConnectionName) {
-    return predefinedConnectionName;
-  }
-  return appConnectionUtils.findName(piece.name);
-}
-
-function createDefaultValues(
-  piece: PieceMetadataModelSummary | PieceMetadataModel,
-  suggestedConnectionName: string,
-): Partial<UpsertAppConnectionRequestBody> {
-  const projectId = authenticationSession.getProjectId();
-  assertNotNullOrUndefined(projectId, 'projectId');
-  if (!piece.auth) {
-    throw new Error(`Unsupported property type: ${piece.auth}`);
-  }
-  switch (piece.auth.type) {
-    case PropertyType.SECRET_TEXT:
-      return {
-        name: suggestedConnectionName,
-        pieceName: piece.name,
-        projectId,
-        type: AppConnectionType.SECRET_TEXT,
-        value: {
-          type: AppConnectionType.SECRET_TEXT,
-          secret_text: '',
-        },
-      };
-    case PropertyType.BASIC_AUTH:
-      return {
-        name: suggestedConnectionName,
-        pieceName: piece.name,
-        projectId,
-        type: AppConnectionType.BASIC_AUTH,
-        value: {
-          type: AppConnectionType.BASIC_AUTH,
-          username: '',
-          password: '',
-        },
-      };
-    case PropertyType.CUSTOM_AUTH: {
-      return {
-        name: suggestedConnectionName,
-        pieceName: piece.name,
-        projectId,
-        type: AppConnectionType.CUSTOM_AUTH,
-        value: {
-          type: AppConnectionType.CUSTOM_AUTH,
-          props: extractDefaultPropsValues(piece.auth.props),
-        },
-      };
-    }
-    case PropertyType.OAUTH2:
-      return {
-        name: suggestedConnectionName,
-        pieceName: piece.name,
-        projectId,
-        type: AppConnectionType.CLOUD_OAUTH2,
-        value: {
-          type: AppConnectionType.CLOUD_OAUTH2,
-          scope: piece.auth.scope.join(' '),
-          authorization_method: piece.auth?.authorizationMethod,
-          client_id: '',
-          props: extractDefaultPropsValues(piece.auth.props),
-          code: '',
-        },
-      };
-    default:
-      throw new Error(`Unsupported property type: ${piece.auth}`);
-  }
-}
-
-const extractDefaultPropsValues = (
-  props: CustomAuthProps | OAuth2Props | undefined,
-) => {
-  if (!props) {
-    return {};
-  }
-  return Object.entries(props).reduce((acc, [propName, prop]) => {
-    if (prop.defaultValue) {
-      return {
-        ...acc,
-        [propName]: prop.defaultValue,
-      };
-    }
-    if (prop.type === PropertyType.CHECKBOX) {
-      return {
-        ...acc,
-        [propName]: false,
-      };
-    }
-    return acc;
-  }, {});
-};

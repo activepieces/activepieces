@@ -4,6 +4,8 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { eventsHooks } from '../../helper/application-events'
 import { projectRoleService } from './project-role.service'
+import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+
 export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListProjectRolesRequest, async (req) => {
@@ -13,6 +15,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateProjectRoleRequest, async (req, reply) => {
+        await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
         const projectRole = await projectRoleService.create(req.body)
 
         eventsHooks.get().sendUserEventFromRequest(req, {

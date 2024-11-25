@@ -70,6 +70,10 @@ import { AppConnectionsSetNullSqlite1730627777709 } from './migration/sqlite/173
 import { AddFlowSchemaVersionSqlite1730760312426 } from './migration/sqlite/1730760312426-AddFlowSchemaVersionSqlite'
 import { StoreTriggerEventsInFileSqlite1731247180217 } from './migration/sqlite/1731247180217-StoreTriggerEventsInFileSqlite'
 import { CreateProjectRoleTableSqlite1732482844483 } from './migration/sqlite/1732482844483-CreateProjectRoleTableSqlite'
+import { MigrateConnectionNamesSqlite1731443310900 } from './migration/sqlite/1731443310900-MigrateConnectionNamesSqlite'
+import { AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 } from './migration/sqlite/1731604290560-AddGlobalConnectionsAndRbacForPlatformSqlite'
+import { AddIndiciesToTriggerEventSqlite1732324359348 } from './migration/sqlite/1732324359348-AddIndiciesToTriggerEventSqlite'
+import { AddIndiciesToRunSqlite1732324481815 } from './migration/sqlite/1732324481815-AddIndiciesToRunSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -158,6 +162,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         SwitchToRouter1731019013340,
         StoreTriggerEventsInFileSqlite1731247180217,
         CreateProjectRoleTableSqlite1732482844483,
+        MigrateConnectionNamesSqlite1731443310900,
+        AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560,
+        AddIndiciesToTriggerEventSqlite1732324359348,
+        AddIndiciesToRunSqlite1732324481815,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

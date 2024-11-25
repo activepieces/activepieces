@@ -22,6 +22,12 @@ import {
   StepMetadataWithSuggestions,
 } from './types';
 
+type UsePieceAndMostRecentPatchProps = {
+  name: string;
+  version: string;
+  enabled?: boolean;
+};
+
 type UsePieceProps = {
   name: string;
   version?: string;
@@ -64,6 +70,36 @@ export const piecesHooks = {
       isLoading: query.isLoading,
       isSuccess: query.isSuccess,
       refetch: query.refetch,
+    };
+  },
+  useMostRecentAndExactPieceVersion: ({
+    name,
+    version,
+    enabled = true,
+  }: UsePieceAndMostRecentPatchProps) => {
+    const exactVersion = version?.startsWith('~') ? version.slice(1) : version;
+    const latestPatchVersion = `~${exactVersion}`;
+    const pieceQuery = piecesHooks.usePiece({
+      name,
+      version: exactVersion,
+      enabled,
+    });
+    const latestPatchQuery = piecesHooks.usePiece({
+      name,
+      version: latestPatchVersion,
+      enabled,
+    });
+    return {
+      versions: {
+        [exactVersion as string]: pieceQuery.pieceModel,
+        [latestPatchVersion as string]: latestPatchQuery.pieceModel,
+      },
+      isLoading: pieceQuery.isLoading || latestPatchQuery.isLoading,
+      isSuccess: pieceQuery.isSuccess && latestPatchQuery.isSuccess,
+      refetch: () => {
+        pieceQuery.refetch();
+        latestPatchQuery.refetch();
+      },
     };
   },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
@@ -159,7 +195,7 @@ export const piecesHooks = {
         stepMetadata?.type,
         stepMetadata?.displayName,
       ],
-      queryFn: async () => {
+      queryFn: async (): Promise<PieceSelectorItem[]> => {
         try {
           if (!stepMetadata) {
             return [];
@@ -218,7 +254,7 @@ function passSearch(
 
 export function getCoreActions(
   type: ActionType.LOOP_ON_ITEMS | ActionType.CODE | ActionType.ROUTER,
-) {
+): PieceSelectorItem[] {
   switch (type) {
     case ActionType.CODE:
       return [
@@ -247,6 +283,7 @@ export function getCoreActions(
           description: t(
             'Split your flow into branches depending on condition(s)',
           ),
+          type: ActionType.ROUTER as const,
         },
       ];
   }

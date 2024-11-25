@@ -1,7 +1,6 @@
 import { actualBudgetAuth } from '../..';
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import { Transaction } from '../common/models';
@@ -33,7 +32,6 @@ export const importTransaction = createAction({
       displayName: 'Amount',
       description: 'The dollar value of the transaction',
       required: false,
-      validators: [Validators.number],
     }),
     category: Property.ShortText({
       displayName: 'Category ID',

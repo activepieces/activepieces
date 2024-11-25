@@ -1,10 +1,9 @@
 import { logger } from '@activepieces/server-shared'
-import { FileType, TelemetryEventName } from '@activepieces/shared'
+import { TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyPluginAsync } from 'fastify'
 import { Between } from 'typeorm'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { fileService } from '../../file/file.service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
@@ -29,20 +28,8 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         },
     })
     await webhookResponseWatcher.init()
-    systemJobHandlers.registerJobHandler(SystemJobName.LOGS_CLEANUP_TRIGGER, async () => {
-        await fileService.deleteStaleBulk(FileType.FLOW_RUN_LOG)
-    })
-    await systemJobsSchedule.upsertJob({
-        job: {
-            name: SystemJobName.LOGS_CLEANUP_TRIGGER,
-            data: {},
-        },
-        schedule: {
-            type: 'repeated',
-            cron: '0 * */1 * *',
-        },
-    })
 }
+
 async function runTelemetryHandler(_job: SystemJobData<SystemJobName.RUN_TELEMETRY>) {
     if (!telemetry.isEnabled()) {
         return

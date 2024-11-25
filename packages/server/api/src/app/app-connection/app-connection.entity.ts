@@ -1,19 +1,18 @@
 import {
     AppConnection,
     AppConnectionStatus,
-    Project,
     User,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
-    ApIdSchema,
+    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
+    isPostgres,
     JSONB_COLUMN_TYPE,
 } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
 export type AppConnectionSchema = Omit<AppConnection, 'value'> & {
-    project: Project
     value: EncryptedObject
     owner: User
 }
@@ -22,7 +21,10 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
     name: 'app_connection',
     columns: {
         ...BaseColumnSchemaPart,
-        name: {
+        displayName: {
+            type: String,
+        },
+        externalId: {
             type: String,
         },
         type: {
@@ -32,6 +34,10 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             type: String,
             default: AppConnectionStatus.ACTIVE,
         },
+        platformId: {
+            type: String,
+            nullable: false,
+        },
         pieceName: {
             type: String,
         },
@@ -39,16 +45,26 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             type: String,
             nullable: true,
         },
-        projectId: ApIdSchema,
+        projectIds: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
+        },
+        scope: {
+            type: String,
+        },
         value: {
             type: JSONB_COLUMN_TYPE,
         },
     },
     indices: [
         {
-            name: 'idx_app_connection_project_id_and_name',
-            columns: ['projectId', 'name'],
-            unique: true,
+            name: 'idx_app_connection_project_ids_and_external_id',
+            columns: ['projectIds', 'externalId'],
+        },
+        {
+            name: 'idx_app_connection_platform_id',
+            columns: ['platformId'],
         },
         {
             name: 'idx_app_connection_owner_id',
@@ -56,16 +72,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         },
     ],
     relations: {
-        project: {
-            type: 'many-to-one',
-            target: 'project',
-            cascade: true,
-            onDelete: 'CASCADE',
-            joinColumn: {
-                name: 'projectId',
-                foreignKeyConstraintName: 'fk_app_connection_app_project_id',
-            },
-        },
         owner: {
             type: 'many-to-one',
             target: 'user',

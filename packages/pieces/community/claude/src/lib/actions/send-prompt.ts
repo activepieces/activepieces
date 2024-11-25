@@ -1,12 +1,13 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import Anthropic from '@anthropic-ai/sdk';
 import mime from 'mime-types';
 import { claudeAuth } from '../..';
 import { TextBlock } from '@anthropic-ai/sdk/resources';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 const billingIssueMessage = `Error Occurred: 429 \n
 
@@ -39,7 +40,8 @@ export const askClaude = createAction({
           { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
           { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet' },
           { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
-          { value: 'claude-3-5-sonnet-20240620', label: 'Claude 3.5 Sonnet' },
+          { value: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet' },
+          { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
         ],
       },
     }),
@@ -53,7 +55,6 @@ export const askClaude = createAction({
       required: false,
       description:
         'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
-      validators: [Validators.minValue(0), Validators.maxValue(1.0)],
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
@@ -77,6 +78,10 @@ export const askClaude = createAction({
     }),
   },
   async run({ auth, propsValue }) {
+    await propsValidation.validateZod(propsValue, {
+      temperature: z.number().min(0).max(1.0).optional(),
+    });
+
     const anthropic = new Anthropic({
       apiKey: auth,
     });

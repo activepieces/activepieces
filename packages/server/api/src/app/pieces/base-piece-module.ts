@@ -88,8 +88,10 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
             const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
+            const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
             return pieceMetadataService.getOrThrow({
                 projectId,
+                platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
             })
@@ -105,8 +107,10 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
             const decodedName = decodeURIComponent(name)
             const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
+            const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
             return pieceMetadataService.getOrThrow({
                 projectId,
+                platformId,
                 name: decodedName,
                 version,
             })
@@ -126,7 +130,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         OptionsPieceRequest,
         async (req) => {
             const request = req.body
-            const { projectId } = req.principal
+            const { projectId, platform } = req.principal
             const flow = await flowService.getOnePopulatedOrThrow({
                 projectId,
                 id: request.flowId,
@@ -134,10 +138,11 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             })
             const engineToken = await accessTokenManager.generateEngineToken({
                 projectId,
+                platformId: platform.id,
             })
             const sampleData = await sampleDataService.getSampleDataForFlow(projectId, flow.version)
             const { result } = await engineRunner.executeProp(engineToken, {
-                piece: await getPiecePackage(projectId, request),
+                piece: await getPiecePackage(projectId, platform.id, request),
                 flowVersion: flow.version,
                 propertyName: request.propertyName,
                 actionOrTriggerName: request.actionOrTriggerName,

@@ -147,7 +147,7 @@ export const flowRunService = {
             })
         }
         if (tags) {
-            query = APArrayContains('tags', tags, query)
+            query = query.andWhere(APArrayContains('tags', tags))
         }
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)

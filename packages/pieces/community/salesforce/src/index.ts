@@ -45,7 +45,7 @@ export const salesforce = createPiece({
   displayName: 'Salesforce',
   description: 'CRM software solutions and enterprise cloud computing',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/salesforce.png',
   authors: ["HKudria","tanoggy","landonmoir","kishanprmr","khaledmashaly","abuaboud"],
   categories: [PieceCategory.SALES_AND_CRM],

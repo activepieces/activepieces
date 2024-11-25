@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import JSZip from 'jszip';
 import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { useTelemetry } from '@/components/telemetry-provider';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,21 @@ import {
   DialogHeader,
   DialogTrigger,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectGroup,
+  SelectLabel,
+  SelectItem,
+} from '@/components/ui/select';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
@@ -35,34 +48,29 @@ export type ImportFlowDialogProps =
   | {
       insideBuilder: true;
       flowId: string;
-      onRefresh: () => void;
     };
 
-const readTemplateJson = (
+const readTemplateJson = async (
   templateFile: File,
-  addTemplate: (template: FlowTemplate) => void,
-  setFailedFiles: (failedFiles: string[]) => void,
-) => {
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const template = JSON.parse(reader.result as string);
-      if (!template.template || !template.name || !template.template.trigger) {
-        setFailedFiles((prevFailedFiles) => [
-          ...prevFailedFiles,
-          templateFile.name,
-        ]);
-      } else {
-        addTemplate(template as FlowTemplate);
+): Promise<FlowTemplate | null> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const template = JSON.parse(reader.result as string) as FlowTemplate;
+        const { template: tmpl, name } = template;
+        if (!tmpl || !name || !tmpl.trigger) {
+          resolve(null);
+        } else {
+          resolve(template);
+        }
+      } catch {
+        resolve(null);
       }
-    } catch (error) {
-      setFailedFiles((prevFailedFiles) => [
-        ...prevFailedFiles,
-        templateFile.name,
-      ]);
-    }
-  };
-  reader.readAsText(templateFile);
+    };
+    reader.readAsText(templateFile);
+  });
 };
 
 const ImportFlowDialog = (
@@ -70,62 +78,80 @@ const ImportFlowDialog = (
 ) => {
   const { capture } = useTelemetry();
   const [templates, setTemplates] = useState<FlowTemplate[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [failedFiles, setFailedFiles] = useState<string[]>([]);
+  const [selectedFolderName, setSelectedFolderName] = useState<
+    string | undefined
+  >(undefined);
 
-  const { mutate: importFlow, isPending } = useMutation<
-    PopulatedFlow,
+  const { folders, isLoading } = foldersHooks.useFolders();
+
+  const navigate = useNavigate();
+
+  const { mutate: importFlows, isPending } = useMutation<
+    PopulatedFlow[],
     Error,
-    FlowTemplate
+    FlowTemplate[]
   >({
-    mutationFn: async (template: FlowTemplate) => {
-      const flow = props.insideBuilder
-        ? await flowsApi.get(props.flowId)
-        : await flowsApi.create({
-            displayName: template.name,
-            projectId: authenticationSession.getProjectId()!,
-          });
+    mutationFn: async (templates: FlowTemplate[]) => {
+      const importPromises = templates.map(async (template) => {
+        const flow = props.insideBuilder
+          ? await flowsApi.get(props.flowId)
+          : await flowsApi.create({
+              displayName: template.name,
+              projectId: authenticationSession.getProjectId()!,
+              folderName:
+                selectedFolderName === undefined ||
+                selectedFolderName === 'Uncategorized'
+                  ? undefined
+                  : selectedFolderName,
+            });
 
-      return await flowsApi.update(flow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: template.name,
-          trigger: template.template.trigger,
-          schemaVersion: template.template.schemaVersion,
-        },
+        return await flowsApi.update(flow.id, {
+          type: FlowOperationType.IMPORT_FLOW,
+          request: {
+            displayName: template.name,
+            trigger: template.template.trigger,
+            schemaVersion: template.template.schemaVersion,
+          },
+        });
       });
+
+      return Promise.all(importPromises);
     },
-    onSuccess: (flow) => {
+
+    onSuccess: (flows: PopulatedFlow[]) => {
       capture({
         name: TelemetryEventName.FLOW_IMPORTED_USING_FILE,
         payload: {
           location: props.insideBuilder
             ? 'inside the builder'
             : 'inside dashboard',
+          multiple: flows.length > 1,
         },
       });
 
-      if (failedFiles.length) {
-        toast({
-          title: t('Import Warning'),
-          description:
-            t('The following files failed to import: ') +
-            failedFiles.join(', '),
-        });
-      } else {
-        toast({
-          title: t('Import Success'),
-          description: t(
-            `Flow${templates.length === 1 ? '' : 's'} imported successfully.`,
-          ),
-          variant: 'default',
-        });
-      }
+      toast({
+        title: t(`flowsImported`, {
+          flowsCount: flows.length,
+        }),
+        variant: 'default',
+      });
 
+      if (flows.length === 1) {
+        navigate(`/flows/${flows[0].id}`, { replace: true });
+        return;
+      }
       setIsDialogOpen(false);
-      props.onRefresh();
+      if (flows.length === 1 || props.insideBuilder) {
+        navigate(`/flow-import-redirect/${flows[0].id}`);
+      }
+      if (!props.insideBuilder) {
+        props.onRefresh();
+      }
     },
     onError: (err) => {
       if (
@@ -142,19 +168,16 @@ const ImportFlowDialog = (
 
   const handleSubmit = async () => {
     if (templates.length === 0) {
-      if (failedFiles.length) {
-        toast({
-          title: t('Import Warning'),
-          description:
-            t('The following files failed to import: ') +
-            failedFiles.join(', '),
-        });
-      } else {
-        setErrorMessage(t('Please select a file first'));
-      }
+      setErrorMessage(
+        failedFiles.length
+          ? t(
+              'No valid templates found. The following files failed to import: ',
+            ) + failedFiles.join(', ')
+          : t('Please select a file first'),
+      );
     } else {
       setErrorMessage('');
-      templates.forEach((template) => importFlow(template));
+      importFlows(templates);
     }
   };
 
@@ -170,7 +193,7 @@ const ImportFlowDialog = (
     const file = files[0];
     const newTemplates: FlowTemplate[] = [];
 
-    if (file.type === 'application/zip') {
+    if (file.type === 'application/zip' && !props.insideBuilder) {
       const zip = new JSZip();
       const zipContent = await zip.loadAsync(file);
       const jsonFiles = Object.keys(zipContent.files).filter((fileName) =>
@@ -179,28 +202,30 @@ const ImportFlowDialog = (
 
       for (const fileName of jsonFiles) {
         const fileData = await zipContent.files[fileName].async('string');
-        readTemplateJson(
-          new File([fileData], fileName),
-          (template) => {
-            if (template) newTemplates.push(template);
-          },
-          setFailedFiles,
-        );
+        const template = await readTemplateJson(new File([fileData], fileName));
+        if (template) {
+          newTemplates.push(template);
+        } else {
+          setFailedFiles((prevFailedFiles) => [...prevFailedFiles, fileName]);
+        }
       }
     } else if (file.type === 'application/json') {
-      readTemplateJson(
-        file,
-        (template) => {
-          if (template) newTemplates.push(template);
-        },
-        setFailedFiles,
-      );
+      const template = await readTemplateJson(file);
+      if (template) {
+        newTemplates.push(template);
+      } else {
+        setFailedFiles((prevFailedFiles) => [...prevFailedFiles, file.name]);
+      }
     } else {
       setErrorMessage(t('Unsupported file type'));
       return;
     }
 
     setTemplates(newTemplates);
+  };
+
+  const handleFolderSelect = (folderName: string | undefined) => {
+    setSelectedFolderName(folderName);
   };
 
   return (
@@ -231,22 +256,64 @@ const ImportFlowDialog = (
             )}
           </div>
         </DialogHeader>
-        <div className="flex gap-2 items-center">
-          <Input
-            type="file"
-            accept=".json,.zip"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-          />
-          <Button onClick={handleSubmit} loading={isPending}>
-            {t('Import')}
-          </Button>
+        <div className="flex flex-col gap-4">
+          <div className="w-full flex justify-between items-center">
+            <span className="w-16 text-sm font-medium text-gray-700">
+              {t('Flow')}
+            </span>
+            <Input
+              id="file-input"
+              type="file"
+              accept={props.insideBuilder ? '.json' : '.json,.zip'}
+              ref={fileInputRef}
+              onChange={handleFileChange}
+            />
+          </div>
+          {!props.insideBuilder && (
+            <div className="w-full flex justify-between items-center">
+              <span className="w-16 text-sm font-medium text-gray-700">
+                {t('Folder')}
+              </span>
+              {isLoading ? (
+                <div className="flex justify-center items-center w-full">
+                  <LoadingSpinner className="h-5 w-5" />
+                </div>
+              ) : (
+                <Select
+                  onValueChange={handleFolderSelect}
+                  defaultValue={selectedFolderName}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('Select a folder')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>{t('Folders')}</SelectLabel>
+                      <SelectItem value="Uncategorized">
+                        {t('Uncategorized')}
+                      </SelectItem>
+                      {folders?.map((folder) => (
+                        <SelectItem key={folder.id} value={folder.displayName}>
+                          {folder.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
         </div>
         {errorMessage && (
           <FormError formMessageId="import-flow-error-message" className="mt-4">
             {errorMessage}
           </FormError>
         )}
+        <DialogFooter>
+          <Button onClick={handleSubmit} loading={isPending}>
+            {t('Import')}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
