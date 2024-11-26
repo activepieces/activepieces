@@ -41,7 +41,7 @@ async function shouldLimitMembers({ projectId, platformId, projectRoleName }: { 
             name: projectRoleName,
             platformId,
         })
-        return projectRole.type !== RoleType.DEFAULT || (projectRole.permissions.includes(Permission.WRITE_PROJECT) === false)
+        return projectRole.type !== RoleType.DEFAULT || (projectRole.permissions?.includes(Permission.WRITE_PROJECT) === false)
     }
     const numberOfMembers = await projectMemberService.countTeamMembers(projectId)
     const numberOfInvitations = await userInvitationsService.countByProjectId(projectId)

@@ -101,7 +101,7 @@ const AddAlertEmailDialog = React.memo(
                 variant="outline"
                 className="mt-4 w-full flex items-center space-x-2"
                 disabled={
-                  projectRole?.permissions.includes(Permission.WRITE_ALERT) ===
+                  projectRole?.permissions?.includes(Permission.WRITE_ALERT) ===
                   false
                 }
               >
@@ -110,7 +110,7 @@ const AddAlertEmailDialog = React.memo(
               </Button>
             </DialogTrigger>
           </TooltipTrigger>
-          {projectRole?.permissions.includes(Permission.WRITE_ALERT) ===
+          {projectRole?.permissions?.includes(Permission.WRITE_ALERT) ===
             false && (
             <TooltipContent side="bottom">
               {t('Only project admins can do this')}

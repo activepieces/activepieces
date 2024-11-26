@@ -127,7 +127,7 @@ const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs
         return false
     }
 
-    return principalRole.permissions.includes(routePermission)
+    return principalRole.permissions?.includes(routePermission)
 }
 
 const throwPermissionDenied = (projectRole: ProjectRole, principal: Principal, permission: Permission | undefined): never => {

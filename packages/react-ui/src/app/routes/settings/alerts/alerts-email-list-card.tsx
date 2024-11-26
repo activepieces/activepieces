@@ -100,7 +100,7 @@ export default function AlertsEmailsCard() {
                         className="size-8 p-0"
                         onClick={() => deleteMutation.mutate(alert)}
                         disabled={
-                          projectRole?.permissions.includes(
+                          projectRole?.permissions?.includes(
                             Permission.WRITE_ALERT,
                           ) === false
                         }
@@ -109,7 +109,7 @@ export default function AlertsEmailsCard() {
                       </Button>
                     </div>
                   </TooltipTrigger>
-                  {projectRole?.permissions.includes(Permission.WRITE_ALERT) ===
+                  {projectRole?.permissions?.includes(Permission.WRITE_ALERT) ===
                     false && (
                     <TooltipContent side="bottom">
                       {t('Only project admins can do this')}

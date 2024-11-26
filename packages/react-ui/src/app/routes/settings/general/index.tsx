@@ -31,7 +31,7 @@ export default function GeneralPage() {
       },
     },
     disabled:
-      projectRole?.permissions.includes(Permission.WRITE_PROJECT) === false,
+      projectRole?.permissions?.includes(Permission.WRITE_PROJECT) === false,
     resolver: typeboxResolver(ProjectWithLimits),
   });
 
@@ -143,7 +143,7 @@ export default function GeneralPage() {
               )}
             </form>
           </Form>
-          {projectRole?.permissions.includes(Permission.WRITE_PROJECT) && (
+          {projectRole?.permissions?.includes(Permission.WRITE_PROJECT) && (
             <div className="flex gap-2 justify-end mt-4">
               <Button
                 onClick={(e) => {
