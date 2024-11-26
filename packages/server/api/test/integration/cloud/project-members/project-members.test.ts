@@ -174,7 +174,7 @@ describe('Project Member API', () => {
                 },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('PERMISSION_DENIED')
             expect(responseBody?.params?.userId).toBe(adminOfProjectTwo.id)
