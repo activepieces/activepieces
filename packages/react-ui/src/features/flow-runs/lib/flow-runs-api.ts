@@ -12,7 +12,6 @@ import {
   WebsocketClientEvent,
   CreateStepRunRequestBody,
   StepRunResponse,
-  isFlowStateTerminal,
   BulkRetryFlowRequestBody,
 } from '@activepieces/shared';
 
@@ -37,32 +36,6 @@ export const flowRunsApi = {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
     const initialRun = await getInitialRun(socket, request.flowVersionId);
     onUpdate(initialRun);
-  },
-  addRunListener(
-    socket: Socket,
-    runId: string,
-    onUpdate: (response: FlowRun) => void,
-  ) {
-    const handleProgress = (response: FlowRun) => {
-      if (runId !== response.id) {
-        return;
-      }
-      onUpdate(response);
-      if (isFlowStateTerminal(response.status)) {
-        socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-        socket.off('error', handleError);
-        console.log('clear FLOW_RUN_PROGRESS listener' + response.id);
-      }
-    };
-    const handleError = (error: any) => {
-      socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-      socket.off('error', handleError);
-      console.log('clear FLOW_RUN_PROGRESS listener', error);
-    };
-
-    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-    console.log('listened to FLOW_RUN_PROGRESS');
-    socket.on('error', handleError);
   },
   testStep(
     socket: Socket,
@@ -111,11 +84,9 @@ function getInitialRun(
       }
 
       socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-      console.log('clear TEST_FLOW_RUN_STARTED listener' + run.id);
       resolve(run);
     };
 
     socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-    console.log('listened to TEST_FLOW_RUN_STARTED');
   });
 }
