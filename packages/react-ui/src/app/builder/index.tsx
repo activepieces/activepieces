@@ -28,7 +28,6 @@ import {
   TriggerType,
   WebsocketClientEvent,
   flowStructureUtil,
-  isFlowStateTerminal,
   isNil,
 } from '@activepieces/shared';
 
@@ -148,7 +147,7 @@ const BuilderPage = () => {
       refetchPiece();
     });
     socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (runId) => {
-      if (run?.id === runId) {
+      if (run && run?.id === runId) {
         fetchAndUpdateRun(runId, {
           onSuccess: (run) => {
             setRun(run, flowVersion);
@@ -166,14 +165,6 @@ const BuilderPage = () => {
         WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED,
       );
     };
-  }, []);
-
-  useEffect(() => {
-    if (run && !isFlowStateTerminal(run.status)) {
-      flowRunsApi.addRunListener(socket, run.id, (run) => {
-        setRun(run, flowVersion);
-      });
-    }
   }, [socket.id, run?.id]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
