@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { Socket } from 'socket.io-client';
+
 import { api } from '@/lib/api';
 import {
   FlowRun,
@@ -36,31 +37,6 @@ export const flowRunsApi = {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
     const initalRun = await getInitialRun(socket, request.flowVersionId);
     onUpdate(initalRun);
-  },
-  addRunListener(
-    socket: Socket,
-    runId: string,
-    onUpdate: (response: FlowRun) => void,
-  ) {
-    const handleProgress = async (response: FlowRun) => {
-      if (runId !== response.id) {
-        return;
-      }
-
-      const populatedRun = await flowRunsApi.getPopulated(runId);
-      onUpdate(populatedRun);
-      if (isFlowStateTerminal(response.status)) {
-        socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-        socket.off('error', handleError);
-      }
-    };
-    const handleError = (error: any) => {
-      socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-      socket.off('error', handleError);
-    };
-
-    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-    socket.on('error', handleError);
   },
   testStep(
     socket: Socket,

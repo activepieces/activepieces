@@ -21,6 +21,11 @@ export const UpdateRunProgressResponse = Type.Object({
 export type UpdateRunProgressResponse = Static<typeof UpdateRunProgressResponse>
 
 
+export const NotifyFrontendRequest = Type.Object({
+    runId: Type.String(),
+})
+export type NotifyFrontendRequest = Static<typeof NotifyFrontendRequest>
+
 export const RemoveStableJobEngineRequest = Type.Object({
     flowId: Type.Optional(Type.String()),
     flowVersionId: Type.String(),

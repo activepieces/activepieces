@@ -40,6 +40,7 @@ import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { useMutation } from '@tanstack/react-query';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -138,16 +139,22 @@ const BuilderPage = () => {
     : undefined;
   const socket = useSocket();
 
+  const { mutate: fetchAndUpdateRun } = useMutation({
+    mutationFn: flowRunsApi.getPopulated,
+  });
   useEffect(() => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
-    if (run && !isFlowStateTerminal(run.status)) {
-      const currentRunId = run.id;
-      flowRunsApi.addRunListener(socket, currentRunId, (run) => {
-        setRun(run, flowVersion);
-      });
-    }
+    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (runId) => {
+      if (run?.id === runId) {
+        fetchAndUpdateRun(runId, {
+          onSuccess: (run) => {
+            setRun(run, flowVersion);
+          },
+        });
+      }
+    });
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
       socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);

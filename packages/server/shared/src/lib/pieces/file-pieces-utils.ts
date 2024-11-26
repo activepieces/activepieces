@@ -147,7 +147,7 @@ async function loadPieceFromFolder(
 async function clearPieceCache(pieceName: string): Promise<void> {
     const directoryPath = await findDirectoryByPackageName(pieceName)
     if (directoryPath && directoryPath in pieceCache) {
-        pieceCache = { ...pieceCache, [directoryPath]: null }
+        pieceCache[directoryPath] = null;
     }
 }
 

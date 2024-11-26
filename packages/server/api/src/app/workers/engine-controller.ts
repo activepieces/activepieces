@@ -1,5 +1,5 @@
 import { GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowId, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, ProjectId, RemoveStableJobEngineRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowId, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, ProjectId, RemoveStableJobEngineRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -72,16 +72,15 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
+    app.post('/notify-frontend', NotifyFrontendParams, async (request) => {
+        const { runId } = request.body
+        app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
+    })
+
     app.post('/update-run', UpdateRunProgress, async (request) => {
         const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
-        if (runDetails.status !== FlowRunStatus.RUNNING && progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
-            await webhookResponseWatcher.publish(
-                httpRequestId,
-                workerHandlerId,
-                await getFlowResponse(runDetails),
-            )
-        }
+        await handleWebhookResponse(runDetails, progressUpdateType, workerHandlerId, httpRequestId)
 
         const runWithoutSteps = await flowRunService.updateStatus({
             flowRunId: runId,
@@ -92,7 +91,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             tags: runDetails.tags ?? [],
         })
         let uploadUrl: string | undefined
-        if (!isNil(executionStateContentLength)) {
+        const updateLogs = !isNil(executionStateContentLength)
+        if (updateLogs) {
             uploadUrl = await flowRunService.updateLogsAndReturnUploadUrl({
                 flowRunId: runId,
                 logsFileId: runWithoutSteps.logsFileId ?? undefined,
@@ -100,6 +100,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 executionStateString: executionStateBuffer,
                 executionStateContentLength,
             })
+        } else {
+            app.io.to(request.principal.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runId)
         }
 
         if (runDetails.status === FlowRunStatus.PAUSED) {
@@ -113,7 +115,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
         const projectId = request.principal.projectId
-        app.io.to(projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runWithoutSteps)
         await disableFlowIfQuotaExceeded(projectId, runWithoutSteps.flowId, runDetails.status)
         await markJobAsCompleted(runWithoutSteps.status, runWithoutSteps.id, request.principal as unknown as EnginePrincipal, runDetails.error)
         const response: UpdateRunProgressResponse = {
@@ -204,6 +205,15 @@ async function disableFlowIfQuotaExceeded(projectId: ProjectId, flowId: FlowId, 
     }
 }
 
+async function handleWebhookResponse(runDetails: FlowRunResponse, progressUpdateType: ProgressUpdateType, workerHandlerId: string | null | undefined, httpRequestId: string | null | undefined): Promise<void> {
+    if (runDetails.status !== FlowRunStatus.RUNNING && progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
+        await webhookResponseWatcher.publish(
+            httpRequestId,
+            workerHandlerId,
+            await getFlowResponse(runDetails),
+        )
+    }
+}
 async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal, error: unknown): Promise<void> {
     switch (status) {
         case FlowRunStatus.FAILED:
@@ -353,6 +363,15 @@ const GetFileRequestParams = {
         params: Type.Object({
             fileId: Type.String(),
         }),
+    },
+}
+
+const NotifyFrontendParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: NotifyFrontendRequest,
     },
 }
 

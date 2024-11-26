@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { FileLocation, isNil, logSerializer, StepOutput, UpdateRunProgressRequest, UpdateRunProgressResponse } from '@activepieces/shared'
+import { FileLocation, isNil, logSerializer, NotifyFrontendRequest, StepOutput, UpdateRunProgressRequest, UpdateRunProgressResponse } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -66,8 +66,6 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
             return
         }
         lastRequestHash = requestHash
-
-
         const response = await sendProgressUpdate(params.engineConstants, request)
         if (!response.ok) {
             throw new ProgressUpdateError('Failed to send progress update', response)
@@ -78,8 +76,8 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
                 throw new ProgressUpdateError('Upload URL is not available', response)
             }
             await uploadExecutionState(responseBody.uploadUrl, executionState)
-            return
         }
+        await notifyFrontend(engineConstants, engineConstants.flowRunId)
     })
 }
 
@@ -105,6 +103,20 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): 
         },
         retries: 3,
         retryDelay: 3000,
+    })
+}
+
+const notifyFrontend = async (engineConstants: EngineConstants, runId: string): Promise<void> => {
+    const request: NotifyFrontendRequest = {
+        runId,
+    }
+    await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/notify-frontend`).toString(), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${engineConstants.engineToken}`,
+        },
+        body: JSON.stringify(request),
     })
 }
 
