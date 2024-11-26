@@ -29,6 +29,7 @@ export enum timeFormat {
   format12 = 'DD/MM/YYYY',
   format13 = 'DD/MM/YY',
   format14 = 'X',
+  format15 = 'x'
 }
 
 export enum timeFormatLabel {
@@ -46,7 +47,13 @@ export enum timeFormatLabel {
   format11 = 'DD-MM-YYYY (17-09-2023)',
   format12 = 'DD/MM/YYYY (17/09/2023)',
   format13 = 'DD/MM/YY (17/09/23)',
-  format14 = 'X (1694949838)',
+  format14 = 'X (1410715640)',
+  format15 = 'x (1410715640579)',
+}
+
+const correctedFormats: Record<string,string> = { 
+  [timeFormat.format00] : 'ddd MMM DD YYYY HH:mm:ss',
+  [timeFormat.format01] : 'ddd MMM DD HH:mm:ss YYYY'
 }
 
 export enum timeParts {
@@ -61,11 +68,14 @@ export enum timeParts {
   monthName = 'monthName',
 }
 
-
+export const getCorrectedFormat = (format:string) =>{
+  return format.replaceAll('DDDD','dddd').replaceAll('DDD','ddd');
+}
 export function parseDate(date: string, format: string): dayjs.Dayjs {
-  const djs = dayjs(date, format);
+  const correctedFormat = getCorrectedFormat(format);
+  const djs = dayjs(date, correctedFormat);
   if (!djs.isValid()) {
-    throw new Error(`Failed to parse the date: ${date} with format: ${format}`);
+    throw new Error(`Failed to parse the date: ${date} with format: ${correctedFormat}`);
   }
   return djs;
 }
@@ -81,7 +91,8 @@ export const timeFormatDescription = `Here's what each part of the format (e.g.,
 \nHH : Hour (2 digits) - Example: 11
 \nmm : Minute (2 digits) - Example: 23
 \nss : Second (2 digits) - Example: 58
-\nX : Time in Unix format - Example: 1694949838`;
+\nX : Time in Unix format - Example: 1694949838
+\nx : Time in Unix format (milliseconds precision) - Example: 1410715640579`;
 
 export const optionalTimeFormats = [
   { label: timeFormatLabel.format00, value: timeFormat.format00 },
@@ -99,6 +110,7 @@ export const optionalTimeFormats = [
   { label: timeFormatLabel.format12, value: timeFormat.format12 },
   { label: timeFormatLabel.format13, value: timeFormat.format13 },
   { label: timeFormatLabel.format14, value: timeFormat.format14 },
+  { label: timeFormatLabel.format15, value: timeFormat.format15 },
 ];
 
 export const timeZoneOptions = [
