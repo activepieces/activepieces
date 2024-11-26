@@ -111,10 +111,10 @@ export const projectMemberService = {
         })
 
         if (user.id === project.ownerId) {
-            return projectRoleService.getDefaultRoleByName({ name: DefaultProjectRole.ADMIN })
+            return projectRoleService.getOneOrThrow({ name: DefaultProjectRole.ADMIN, platformId: project.platformId })
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
-            return projectRoleService.getDefaultRoleByName({ name: DefaultProjectRole.ADMIN })
+            return projectRoleService.getOneOrThrow({ name: DefaultProjectRole.ADMIN, platformId: project.platformId })
         }
         const member = await repo().findOneBy({
             projectId,

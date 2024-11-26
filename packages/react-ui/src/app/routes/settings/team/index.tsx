@@ -62,7 +62,7 @@ export default function TeamPage() {
                   <ProjectMemberCard
                     key={member.id}
                     member={member}
-                    setIsProjectMembersUpdated={() => {}}
+                    onUpdate={() => {}}
                   ></ProjectMemberCard>
                 ))}
             </div>

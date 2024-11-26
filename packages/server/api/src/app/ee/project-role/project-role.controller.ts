@@ -17,7 +17,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateProjectRoleRequest, async (req, reply) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, reply)
         await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
-        const projectRole = await projectRoleService.create(req.body)
+        const projectRole = await projectRoleService.create(req.principal.platform.id, req.body)
 
         eventsHooks.get().sendUserEventFromRequest(req, {
             action: ApplicationEventName.PROJECT_ROLE_CREATED,

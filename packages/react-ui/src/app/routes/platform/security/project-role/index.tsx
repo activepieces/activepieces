@@ -61,14 +61,6 @@ const ProjectRolePage = () => {
 
   const columns: ColumnDef<RowDataWithActions<ProjectRole>>[] = [
     {
-      accessorKey: 'id',
-      accessorFn: (row) => row.id,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('ID')} />
-      ),
-      cell: ({ row }) => <div className="text-left">{row.original.id}</div>,
-    },
-    {
       accessorKey: 'name',
       accessorFn: (row) => row.name,
       header: ({ column }) => (

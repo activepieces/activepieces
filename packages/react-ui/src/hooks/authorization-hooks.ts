@@ -2,14 +2,14 @@ import React from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ApFlagId, Permission, PlatformRole } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission, PlatformRole } from '@activepieces/shared';
 
 export const useAuthorization = () => {
   const projectRole = authenticationSession.getUserProjectRole();
 
   const useCheckAccess = (permission: Permission) => {
     return React.useMemo(() => {
-      if (!projectRole) return true;
+      if (isNil(projectRole)) return false;
       return projectRole.permissions.includes(permission);
     }, [permission]);
   };

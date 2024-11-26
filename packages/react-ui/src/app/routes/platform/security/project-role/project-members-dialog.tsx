@@ -1,13 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LoaderIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
-
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ProjectMemberCard } from '@/features/team/component/project-member-card';
 import { projectMembersApi } from '@/features/team/lib/project-members-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { ProjectRole } from '@activepieces/shared';
 
 type ProjectMembersProps = {
@@ -21,49 +18,22 @@ function ProjectMembersDialog({
   projectRole,
   isOpen,
   onClose,
-  refetch,
 }: ProjectMembersProps) {
-  const [isProjectMembersUpdated, setIsProjectMembersUpdated] = useState(false);
-  const [selectedProjectMembers, setSelectedProjectMembers] = useState<
-    ProjectMemberWithUser[]
-  >([]);
 
-  const {
-    data,
-    isLoading,
-    refetch: refetchProjectMembers,
-  } = useQuery({
-    queryKey: ['project-members-dialog'],
-    queryFn: () =>
-      projectMembersApi.list({
+  const { data: selectedProjectMembers, isLoading, refetch: refetchProjectMembers } = useQuery({
+    queryKey: ['project-members'],
+    gcTime: 0,
+    staleTime: 0,
+    queryFn: async () => {
+      const page = await projectMembersApi.list({
         projectId: authenticationSession.getProjectId()!,
         cursor: undefined,
         limit: 100,
-      }),
+      })
+      return page.data
+    },
   });
 
-  useEffect(() => {
-    if (isOpen) {
-      refetchProjectMembers().then(() => {
-        if (projectRole) {
-          setSelectedProjectMembers(
-            data?.data?.filter(
-              (member) => member.projectRoleId === projectRole.id,
-            ) || [],
-          );
-        }
-      });
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isProjectMembersUpdated) {
-      refetchProjectMembers().then(() => {
-        refetch();
-        setIsProjectMembersUpdated(false);
-      });
-    }
-  }, [isProjectMembersUpdated]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -90,11 +60,8 @@ function ProjectMembersDialog({
               <ProjectMemberCard
                 key={member.id}
                 member={member}
-                setIsProjectMembersUpdated={() => {
-                  setIsProjectMembersUpdated(true);
-                  setSelectedProjectMembers(
-                    selectedProjectMembers.filter((m) => m.id !== member.id),
-                  );
+                onUpdate={() => {
+                  refetchProjectMembers()
                 }}
               />
             ))}

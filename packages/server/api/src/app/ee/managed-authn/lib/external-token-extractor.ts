@@ -1,6 +1,6 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType } from '@activepieces/shared'
+import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { projectRoleService } from '../../project-role/project-role.service'
@@ -37,7 +37,7 @@ export const externalTokenExtractor = {
 
             const optionalEmail = payload.email ?? payload.externalUserId
 
-            const projectRole = await getProjectRole(payload)
+            const projectRole = await getProjectRole(payload, signingKey.platformId)
 
             const { piecesFilterType, piecesTags } = extractPieces(payload)
             return {
@@ -107,14 +107,16 @@ function extractPieces(payload: ExternalTokenPayload) {
     }
 }
 
-async function getProjectRole(payload: ExternalTokenPayload) {
+async function getProjectRole(payload: ExternalTokenPayload, platformId: PlatformId) {
     if ('role' in payload && !isNil(payload.role)) {
-        return projectRoleService.getDefaultRoleByName({
+        return projectRoleService.getOneOrThrow({
             name: payload.role,
+            platformId,
         })
     }
-    return projectRoleService.getDefaultRoleByName({
+    return projectRoleService.getOneOrThrow({
         name: DefaultProjectRole.EDITOR,
+        platformId,
     })
 }
 

@@ -114,7 +114,6 @@ export const ProjectRoleDialog = ({
         await projectRoleApi.create({
           name: roleName,
           permissions,
-          platformId,
           type: RoleType.CUSTOM,
         });
       } else if (mode === 'edit' && projectRole) {

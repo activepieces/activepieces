@@ -7,7 +7,6 @@ export const CreateProjectRoleRequestBody = Type.Object({
         pattern: SAFE_STRING_PATTERN,
     }),
     permissions: Type.Array(Type.String()),
-    platformId: ApId,
     type: Type.Enum(RoleType),
 })
 

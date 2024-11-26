@@ -16,12 +16,12 @@ import { projectMembersHooks } from '../lib/project-members-hooks';
 
 type ProjectMemberCardProps = {
   member: ProjectMemberWithUser;
-  setIsProjectMembersUpdated: () => void;
+  onUpdate: () => void;
 };
 
 export function ProjectMemberCard({
   member,
-  setIsProjectMembersUpdated,
+  onUpdate,
 }: ProjectMemberCardProps) {
   const { refetch } = projectMembersHooks.useProjectMembers();
   const { useCheckAccess } = useAuthorization();
@@ -32,7 +32,7 @@ export function ProjectMemberCard({
   const deleteMember = async () => {
     await projectMembersApi.delete(member.id);
     refetch();
-    setIsProjectMembersUpdated();
+    onUpdate();
   };
 
   return (
