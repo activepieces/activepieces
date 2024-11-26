@@ -30,6 +30,7 @@ export const moveFileAction = createAction({
     const file = await drive.files.get({
       fileId,
       supportsAllDrives: context.propsValue.include_team_drives,
+      fields: 'id,parents',
     });
 
     const response = await drive.files.update({
