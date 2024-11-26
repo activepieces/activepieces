@@ -134,6 +134,7 @@ const BuilderPage = () => {
         memorizedSelectedStep?.type === ActionType.PIECE ||
         memorizedSelectedStep?.type === TriggerType.PIECE,
     });
+
   const pieceModel = versions
     ? versions[memorizedSelectedStep?.settings.pieceVersion || '']
     : undefined;
@@ -165,7 +166,15 @@ const BuilderPage = () => {
         WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED,
       );
     };
-  }, [socket, refetchPiece, run]);
+  }, []);
+
+  useEffect(() => {
+    if (run && !isFlowStateTerminal(run.status)) {
+      flowRunsApi.addRunListener(socket, run.id, (run) => {
+        setRun(run, flowVersion);
+      });
+    }
+  }, [socket.id, run?.id]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
