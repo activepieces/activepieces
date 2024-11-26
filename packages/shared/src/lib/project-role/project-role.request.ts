@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 import { RoleType, SAFE_STRING_PATTERN } from '../common'
-import { ApId } from '../common/id-generator'
 
 export const CreateProjectRoleRequestBody = Type.Object({
     name: Type.String({
