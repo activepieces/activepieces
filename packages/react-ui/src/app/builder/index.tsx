@@ -133,21 +133,15 @@ const BuilderPage = () => {
         memorizedSelectedStep?.type === ActionType.PIECE ||
         memorizedSelectedStep?.type === TriggerType.PIECE,
     });
+
   const pieceModel = versions
     ? versions[memorizedSelectedStep?.settings.pieceVersion || '']
     : undefined;
   const socket = useSocket();
-
   useEffect(() => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
-    if (run && !isFlowStateTerminal(run.status)) {
-      const currentRunId = run.id;
-      flowRunsApi.addRunListener(socket, currentRunId, (run) => {
-        setRun(run, flowVersion);
-      });
-    }
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
       socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
@@ -158,7 +152,15 @@ const BuilderPage = () => {
         WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED,
       );
     };
-  }, [socket, refetchPiece, run]);
+  }, []);
+
+  useEffect(() => {
+    if (run && !isFlowStateTerminal(run.status)) {
+      flowRunsApi.addRunListener(socket, run.id, (run) => {
+        setRun(run, flowVersion);
+      });
+    }
+  }, [socket.id, run?.id]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
