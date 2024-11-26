@@ -9,10 +9,10 @@ import { DataSeed } from './data-seed'
 const projectMemberRoleRepo = repoFactory(ProjectRoleEntity)
 
 const roleIds: Record<DefaultProjectRole, string> = {
-    [DefaultProjectRole.ADMIN]: 'aJVBSSJ3YqZ7r1laFjM0a',
+    [DefaultProjectRole.ADMIN]: '461ueYHzMykyk5dIL8HzQ',
     [DefaultProjectRole.EDITOR]: 'sjWe85TwaFYxyhn2AgOha', 
-    [DefaultProjectRole.OPERATOR]: '461ueYHzMykyk5dIL8HzQ',
-    [DefaultProjectRole.VIEWER]: '3Wl9IAw5aM0HLafHgMYkb',
+    [DefaultProjectRole.OPERATOR]: '3Wl9IAw5aM0HLafHgMYkb',
+    [DefaultProjectRole.VIEWER]: 'aJVBSSJ3YqZ7r1laFjM0a',
 }
 
 export const rolesSeed: DataSeed = {

@@ -159,7 +159,9 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
             ALTER TABLE "project_member" DROP COLUMN "role"
         `)
 
-
+        await queryRunner.query(`
+            ALTER TABLE "project_member" ALTER COLUMN "projectRoleId" SET NOT NULL
+        `)
 
         await queryRunner.query(`
             ALTER TABLE "user_invitation" ADD COLUMN "projectRoleId" character varying
@@ -172,7 +174,7 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
         `)
 
         const userInvitations = await queryRunner.query(`
-            SELECT id, "projectRole" FROM user_invitation
+            SELECT id, "projectRole" FROM user_invitation where "projectRole" is not null
         `)
 
         for (const userInvitation of userInvitations) {
