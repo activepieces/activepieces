@@ -1,9 +1,13 @@
 import crypto from 'crypto'
-import { isNil, logSerializer, StepOutput, UpdateRunProgressRequest, UpdateRunProgressResponse } from '@activepieces/shared'
+import { FileLocation, isNil, logSerializer, StepOutput, UpdateRunProgressRequest, UpdateRunProgressResponse } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
+import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import fetchRetry from 'fetch-retry'
+import { ProgressUpdateError } from '../helper/execution-errors'
+
+const FILE_STORAGE_LOCATION = process.env.AP_FILE_STORAGE_LOCATION as FileLocation
+const USE_SIGNED_URL = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && FILE_STORAGE_LOCATION === FileLocation.S3
 
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
 let lastActionExecutionTime: number | undefined = undefined
@@ -53,7 +57,7 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
             workerHandlerId: engineConstants.serverHandlerId ?? null,
             httpRequestId: engineConstants.httpRequestId ?? null,
             runDetails: runDetailsWithoutSteps,
-            executionStateBuffer: executionState.toString(),
+            executionStateBuffer: USE_SIGNED_URL ? undefined : executionState.toString(),
             executionStateContentLength: executionState.byteLength,
             progressUpdateType: engineConstants.progressUpdateType,
         }
@@ -63,14 +67,17 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
         }
         lastRequestHash = requestHash
 
-     
-        const response = await sendProgressUpdate(params.engineConstants, request)
 
-        if (response.ok) {
+        const response = await sendProgressUpdate(params.engineConstants, request)
+        if (!response.ok) {
+            throw new ProgressUpdateError('Failed to send progress update', response)
+        }
+        if (USE_SIGNED_URL) {
             const responseBody: UpdateRunProgressResponse = await response.json()
-            if (responseBody.uploadUrl) {
-                await uploadExecutionState(responseBody.uploadUrl, request.executionStateBuffer)
+            if (isNil(responseBody.uploadUrl)) {
+                throw new ProgressUpdateError('Upload URL is not available', response)
             }
+            await uploadExecutionState(responseBody.uploadUrl, executionState)
             return
         }
     })
@@ -89,7 +96,7 @@ const sendProgressUpdate = async (engineConstants: EngineConstants, request: Upd
     })
 }
 
-const uploadExecutionState = async (uploadUrl: string, executionState: string): Promise<void> => {
+const uploadExecutionState = async (uploadUrl: string, executionState: Buffer): Promise<void> => {
     await fetchWithRetry(uploadUrl, {
         method: 'PUT',
         body: executionState,

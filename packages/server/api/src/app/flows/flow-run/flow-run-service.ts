@@ -31,6 +31,7 @@ import {
     APArrayContains,
 } from '../../database/database-connection'
 import { fileService } from '../../file/file.service'
+import { s3Helper } from '../../file/s3-helper'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -41,7 +42,6 @@ import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
-import { s3Helper } from '../../file/s3-helper'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 
@@ -346,7 +346,7 @@ export const flowRunService = {
             })
         }
         return getUploadUrl(file.s3Key, executionState, executionStateContentLength)
-    }
+    },
 }
 
 async function filterFlowRunsAndApplyFilters(
@@ -395,10 +395,10 @@ async function filterFlowRunsAndApplyFilters(
 
 const getUploadUrl = async (s3Key: string | undefined, executionDate: unknown, contentLength: number): Promise<string | undefined> => {
     if (!isNil(executionDate)) {
-        return undefined;
+        return undefined
     }
     assertNotNullOrUndefined(s3Key, 's3Key')
-    return await s3Helper.putS3SignedUrl(s3Key, contentLength)
+    return s3Helper.putS3SignedUrl(s3Key, contentLength)
 }
 
 const getFlowRunOrCreate = async (

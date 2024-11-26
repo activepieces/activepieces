@@ -1,6 +1,5 @@
 import { nanoid } from 'nanoid';
 import { Socket } from 'socket.io-client';
-
 import { api } from '@/lib/api';
 import {
   FlowRun,
@@ -48,7 +47,7 @@ export const flowRunsApi = {
         return;
       }
 
-      const populatedRun = await flowRunsApi.getPopulated(runId)
+      const populatedRun = await flowRunsApi.getPopulated(runId);
       onUpdate(populatedRun);
       if (isFlowStateTerminal(response.status)) {
         socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);

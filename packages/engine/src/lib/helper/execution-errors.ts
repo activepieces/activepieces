@@ -73,6 +73,14 @@ export class PausedFlowTimeoutError extends ExecutionError {
     }
 }
 
+export class ProgressUpdateError extends ExecutionError {
+    constructor(message: string, cause?: unknown) {
+        super('ProgressUpdateError', JSON.stringify({
+            message,
+        }, null, 2), ExecutionErrorType.ENGINE, cause)
+    }
+}
+
 export class FileSizeError extends ExecutionError {
     constructor(currentFileSize: number, maximumSupportSize: number, cause?: unknown) {
         super('FileSizeError', JSON.stringify({

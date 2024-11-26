@@ -1,4 +1,4 @@
-import { ExecutioOutputFile } from '@activepieces/shared'
+import { ExecutioOutputFile } from './execution/execution-output'
 
 export const logSerializer = {
     async serialize(log: ExecutioOutputFile): Promise<Buffer> {
