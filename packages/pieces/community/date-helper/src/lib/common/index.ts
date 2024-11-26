@@ -86,8 +86,7 @@ export const timeFormatDescription = `Here's what each part of the format (e.g.,
 \nHH : Hour (2 digits) - Example: 11
 \nmm : Minute (2 digits) - Example: 23
 \nss : Second (2 digits) - Example: 58
-\nX : Time in Unix format - Example: 1694949838
-\nx : Time in Unix format (milliseconds precision) - Example: 1410715640579`;
+\nX : Time in Unix format - Example: 1694949838`;
 
 export const optionalTimeFormats = [
   { label: timeFormatLabel.format00, value: timeFormat.format00 },
