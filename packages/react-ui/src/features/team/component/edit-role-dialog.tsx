@@ -28,9 +28,14 @@ import { projectMembersApi } from '../lib/project-members-api';
 interface EditRoleDialogProps {
   member: ProjectMemberWithUser;
   onSave: () => void;
+  disabled: boolean;
 }
 
-export function EditRoleDialog({ member, onSave }: EditRoleDialogProps) {
+export function EditRoleDialog({
+  member,
+  onSave,
+  disabled,
+}: EditRoleDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(member.projectRole.name);
   const { data: rolesData } = useQuery({
@@ -72,7 +77,7 @@ export function EditRoleDialog({ member, onSave }: EditRoleDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="size-8 p-0">
+        <Button variant="ghost" className="size-8 p-0" disabled={disabled}>
           <Pencil className="size-4" />
         </Button>
       </DialogTrigger>

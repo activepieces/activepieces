@@ -5,6 +5,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { ApFlagId, Permission, PlatformRole } from '@activepieces/shared';
 
 export const useAuthorization = () => {
+  // TODO: make sure to update the role in the local storage
   const projectRole = authenticationSession.getUserProjectRole();
 
   const useCheckAccess = (permission: Permission) => {
