@@ -376,7 +376,7 @@ const FlowsPage = () => {
     () => [
       {
         render: (_, resetSelection) => {
-          const isDisabled = selectedRows.length === 0;
+        
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <DropdownMenu
@@ -384,26 +384,25 @@ const FlowsPage = () => {
                 open={isDropdownOpen}
                 onOpenChange={setIsDropdownOpen}
               >
-                <DropdownMenuTrigger asChild disabled={isDisabled}>
-                  <MessageTooltip
-                    message={t('Select at least one flow to perform actions')}
-                    isDisabled={isDisabled}
+                {
+                  selectedRows.length > 0 ?  <DropdownMenuTrigger asChild>
+                  
+                  <Button
+                    className="h-9 w-full"
+                    variant={'default'}
+                    onClick={() => {
+                      setIsDropdownOpen(!isDropdownOpen);
+                    }}
                   >
-                    <Button
-                      disabled={isDisabled}
-                      className="h-9 w-full"
-                      variant={'outline'}
-                      onClick={() => {
-                        setIsDropdownOpen(!isDropdownOpen);
-                      }}
-                    >
-                      {selectedRows.length > 0
-                        ? `${t('Actions')} (${selectedRows.length})`
-                        : t('Actions')}
-                      <ChevronDown className="h-3 w-4 ml-2" />
-                    </Button>
-                  </MessageTooltip>
-                </DropdownMenuTrigger>
+                    {selectedRows.length > 0
+                      ? `${t('Actions')} (${selectedRows.length})`
+                      : t('Actions')}
+                    <ChevronDown className="h-3 w-4 ml-2" />
+                  </Button>
+         
+              </DropdownMenuTrigger>: null
+                }
+               
                 <DropdownMenuContent>
                   <PermissionNeededTooltip
                     hasPermission={userHasPermissionToPushToGit}
