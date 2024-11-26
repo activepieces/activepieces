@@ -45,7 +45,6 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
         })
         return projectRole
     })
-
     app.delete('/:name', DeleteProjectRoleRequest, async (req, reply) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, reply)
         await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)

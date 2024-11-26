@@ -14,14 +14,18 @@ import { Button } from '../../../components/ui/button';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
 
+import { EditRoleDialog } from './edit-role-dialog';
+
 type ProjectMemberCardProps = {
   member: ProjectMemberWithUser;
   setIsProjectMembersUpdated: () => void;
+  refetchProjectMembers?: () => void;
 };
 
 export function ProjectMemberCard({
   member,
   setIsProjectMembersUpdated,
+  refetchProjectMembers,
 }: ProjectMemberCardProps) {
   const { refetch } = projectMembersHooks.useProjectMembers();
   const { useCheckAccess } = useAuthorization();
@@ -35,9 +39,15 @@ export function ProjectMemberCard({
     setIsProjectMembersUpdated();
   };
 
+  const handleEditRole = () => {
+    if (refetchProjectMembers) {
+      refetchProjectMembers();
+    }
+  };
+
   return (
     <div
-      className="flex items-center justify-between space-x-4"
+      className="w-full flex items-center justify-between space-x-4"
       key={member.id}
     >
       <div className="flex items-center space-x-4">
@@ -61,6 +71,11 @@ export function ProjectMemberCard({
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToRemoveMember}
           >
+            <EditRoleDialog
+              member={member}
+              onSave={handleEditRole}
+              disabled={!userHasPermissionToRemoveMember}
+            />
             <ConfirmationDeleteDialog
               title={`${t('Remove')} ${member.user.firstName} ${
                 member.user.lastName

@@ -128,7 +128,6 @@ type DeleteParams = {
     platformId: PlatformId
 }
 
-
 type GetOneByNameOrThrowParams = {
     name: DefaultProjectRole
 }
