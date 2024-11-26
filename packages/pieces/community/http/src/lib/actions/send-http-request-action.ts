@@ -162,12 +162,15 @@ export const httpSendRequestAction = createAction({
 
     assertNotNullOrUndefined(method, 'Method');
     assertNotNullOrUndefined(url, 'URL');
-
+    let parsedQueryparam = queryParams
+    if(typeof queryParams === 'string'){
+      parsedQueryparam = JSON.parse(queryParams)
+    } 
     const request: HttpRequest = {
       method,
       url,
       headers: headers as HttpHeaders,
-      queryParams: queryParams as QueryParams,
+      queryParams: parsedQueryparam as QueryParams,
       timeout: timeout ? timeout * 1000 : 0,
     };
     if (body) {
