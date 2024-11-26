@@ -54,7 +54,8 @@ const AddAlertEmailDialog = React.memo(
       resolver: typeboxResolver(FormSchema),
       defaultValues: {},
     });
-    const { projectRole } = useAuthorization();
+    const { useCheckAccess } = useAuthorization();
+    const writeAlertPermission = useCheckAccess(Permission.WRITE_ALERT);
 
     const { mutate, isPending } = useMutation<Alert, Error, { email: string }>({
       mutationFn: async (params) =>
@@ -100,18 +101,14 @@ const AddAlertEmailDialog = React.memo(
               <Button
                 variant="outline"
                 className="mt-4 w-full flex items-center space-x-2"
-                disabled={
-                  projectRole?.permissions?.includes(Permission.WRITE_ALERT) ===
-                  false
-                }
+                disabled={writeAlertPermission === false}
               >
                 <Plus className="size-4" />
                 <span>{t('Add email')}</span>
               </Button>
             </DialogTrigger>
           </TooltipTrigger>
-          {projectRole?.permissions?.includes(Permission.WRITE_ALERT) ===
-            false && (
+          {writeAlertPermission === false && (
             <TooltipContent side="bottom">
               {t('Only project admins can do this')}
             </TooltipContent>

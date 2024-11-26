@@ -33,7 +33,6 @@ export const ProjectUsage = Type.Object({
 
 export const SwitchProjectResponse = Type.Object({
     token: Type.String(),
-    projectRole: Type.Union([ProjectRole, Type.Null()]),
 })
 
 export type SwitchProjectResponse = Static<typeof SwitchProjectResponse>

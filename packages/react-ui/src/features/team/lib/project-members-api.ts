@@ -4,7 +4,7 @@ import {
   ProjectMemberWithUser,
   UpdateProjectMemberRoleRequestBody,
 } from '@activepieces/ee-shared';
-import { SeekPage } from '@activepieces/shared';
+import { ProjectRole, SeekPage } from '@activepieces/shared';
 
 export const projectMembersApi = {
   list(request: ListProjectMembersRequestQuery) {
@@ -12,6 +12,9 @@ export const projectMembersApi = {
       '/v1/project-members',
       request,
     );
+  },
+  me() {
+    return api.get<ProjectRole | null>('/v1/project-members/role');
   },
   update(memberId: string, request: UpdateProjectMemberRoleRequestBody) {
     return api.post<void>(`/v1/project-members/${memberId}`, request);

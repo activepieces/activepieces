@@ -20,6 +20,12 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
 
+    app.get('/role', GetCurrentProjectMemberRoleRequest, async (request) => {
+        return  projectMemberService.getRole({
+            projectId: request.principal.projectId,
+            userId: request.principal.id,
+        })
+    })
 
     app.get('/', ListProjectMembersRequestQueryOptions, async (request) => {
         return projectMemberService.list(
@@ -50,6 +56,16 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 }
 
 
+
+const GetCurrentProjectMemberRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        permission: Permission.READ_PROJECT_MEMBER,
+    },
+    schema: {
+
+    },
+}
 
 const UpdateProjectMemberRoleRequest = {
     config: {
