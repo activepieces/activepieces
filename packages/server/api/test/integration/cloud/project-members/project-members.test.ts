@@ -1,5 +1,6 @@
 import {
     ApiKeyResponseWithValue,
+    UpdateProjectMemberRoleRequestBody,
 } from '@activepieces/ee-shared'
 import { DefaultProjectRole, Platform, PlatformRole, PrincipalType, Project, ProjectRole, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
@@ -16,6 +17,7 @@ import {
     createMockPlatform,
     createMockProject,
     createMockProjectMember,
+    createMockProjectRole,
     createMockUser,
 } from '../../../helpers/mocks'
 
@@ -39,7 +41,143 @@ afterAll(async () => {
 })
 
 describe('Project Member API', () => {
- 
+
+
+    describe('Update project member role', () => {
+        it('should update a project role for a member', async () => {
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await createBasicEnvironment()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUserOne.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            await databaseConnection().getRepository('project_role').save(projectRole)
+
+            const mockProjectMemberOne = createMockProjectMember({ platformId: mockPlatformOne.id, projectId: mockProjectOne.id, projectRoleId: projectRole.id, userId: mockUserOne.id })
+            await databaseConnection().getRepository('project_member').save(mockProjectMemberOne)
+
+            const request: UpdateProjectMemberRoleRequestBody = {
+                role: projectRole.name,
+            }
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/project-members/${mockProjectMemberOne.id}`,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('should fail to update project role when user does not have permission', async () => {
+            const { mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await createBasicEnvironment()
+            
+            // Create a user who is not in the project
+            const viewerUser = createMockUser({
+                platformId: mockPlatformOne.id,
+                platformRole: PlatformRole.MEMBER,
+            })
+            await databaseConnection().getRepository('user').save(viewerUser)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: viewerUser.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ 
+                name: DefaultProjectRole.VIEWER,
+            }) as ProjectRole
+
+            // Create a project member to try to modify
+            const mockProjectMember = createMockProjectMember({ 
+                platformId: mockPlatformOne.id, 
+                projectId: mockProjectOne.id, 
+                projectRoleId: projectRole.id,
+                userId: viewerUser.id,
+            })
+            await databaseConnection().getRepository('project_member').save(mockProjectMember)
+
+            const request: UpdateProjectMemberRoleRequestBody = {
+                role: DefaultProjectRole.ADMIN,
+            }
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/project-members/${mockProjectMember.id}`,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+
+        it('should fail to update project role when user is admin of another project', async () => {
+            // Create first project with its platform
+            const { mockProject: projectOne, mockPlatform } = await createBasicEnvironment()
+            
+            // Create second project in the same platform
+            const adminOfProjectTwo = createMockUser({
+                platformId: mockPlatform.id,
+                platformRole: PlatformRole.MEMBER,
+            })
+            await databaseConnection().getRepository('user').save(adminOfProjectTwo)
+
+            const projectTwo = createMockProject({
+                ownerId: adminOfProjectTwo.id,
+                platformId: mockPlatform.id,
+            })
+            await databaseConnection().getRepository('project').save(projectTwo)
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: adminOfProjectTwo.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // Create member in first project to try to modify
+            const memberToModify = createMockUser({
+                platformId: mockPlatform.id,
+                platformRole: PlatformRole.MEMBER,
+            })
+            await databaseConnection().getRepository('user').save(memberToModify)
+
+            const viewerRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ 
+                name: DefaultProjectRole.VIEWER,
+            }) as ProjectRole
+
+            const projectMember = createMockProjectMember({ 
+                platformId: mockPlatform.id, 
+                projectId: projectOne.id, 
+                projectRoleId: viewerRole.id,
+                userId: memberToModify.id,
+            })
+            await databaseConnection().getRepository('project_member').save(projectMember)
+
+            const request: UpdateProjectMemberRoleRequestBody = {
+                role: DefaultProjectRole.ADMIN,
+            }
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/project-members/${projectMember.id}`,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        })
+    })
+
     describe('List project members Endpoint', () => {
         describe('List project members from api', () => {
             it('should return project members', async () => {
@@ -109,7 +247,7 @@ describe('Project Member API', () => {
                 const { mockPlatform, mockProject, mockMember } = await createBasicEnvironment()
 
                 const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
-          
+
                 const mockProjectMember = createMockProjectMember({
                     userId: mockMember.id,
                     platformId: mockPlatform.id,
@@ -140,7 +278,7 @@ describe('Project Member API', () => {
                 expect(response?.statusCode).toBe(StatusCodes.OK)
             })
 
-        
+
         })
     })
 
@@ -316,7 +454,7 @@ async function createBasicEnvironment(): Promise<{
         platformRole: PlatformRole.MEMBER,
     })
     await databaseConnection().getRepository('user').save(mockMember)
-    
+
     return {
         mockOwner,
         mockPlatform,

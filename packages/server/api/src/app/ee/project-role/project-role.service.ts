@@ -115,11 +115,6 @@ type DeleteParams = {
     platformId: PlatformId
 }
 
-type GetOneParams = {
-    platformId: PlatformId
-    id: ApId
-}
-
 type GetOneByNameParams = {
     name: string
     platformId: PlatformId

@@ -14,6 +14,8 @@ import { Button } from '../../../components/ui/button';
 import { projectMembersApi } from '../lib/project-members-api';
 import { projectMembersHooks } from '../lib/project-members-hooks';
 
+import { EditRoleDialog } from './edit-role-dialog';
+
 type ProjectMemberCardProps = {
   member: ProjectMemberWithUser;
   onUpdate: () => void;
@@ -35,9 +37,13 @@ export function ProjectMemberCard({
     onUpdate();
   };
 
+  const handleEditRole = () => {
+    refetch();
+  };
+
   return (
     <div
-      className="flex items-center justify-between space-x-4"
+      className="w-full flex items-center justify-between space-x-4"
       key={member.id}
     >
       <div className="flex items-center space-x-4">
@@ -61,6 +67,11 @@ export function ProjectMemberCard({
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToRemoveMember}
           >
+            <EditRoleDialog
+              member={member}
+              onSave={handleEditRole}
+              disabled={!userHasPermissionToRemoveMember}
+            />
             <ConfirmationDeleteDialog
               title={`${t('Remove')} ${member.user.firstName} ${
                 member.user.lastName
