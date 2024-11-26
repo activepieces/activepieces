@@ -1,6 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   ApEdition,
@@ -9,17 +11,14 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
-import { useQuery } from '@tanstack/react-query';
-import { projectMembersApi } from '@/features/team/lib/project-members-api';
 
 export const useAuthorization = () => {
-
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
 
-  const { data: projectRole , isLoading } = useQuery({
+  const { data: projectRole, isLoading } = useQuery({
     queryKey: ['project-role', authenticationSession.getProjectId()],
     queryFn: async () => {
-      const projectRole = await projectMembersApi.me();
+      const projectRole = await authenticationApi.me();
       return projectRole;
     },
     enabled: !isNil(edition) && edition !== ApEdition.COMMUNITY,
@@ -27,11 +26,11 @@ export const useAuthorization = () => {
 
   const useCheckAccess = (permission: Permission) => {
     return React.useMemo(() => {
-      if (isLoading || edition !== ApEdition.COMMUNITY) {
+      if (isLoading || edition === ApEdition.COMMUNITY) {
         return true;
       }
       return projectRole?.permissions?.includes(permission) ?? true;
-    }, [permission]);
+    }, [permission, projectRole, edition]);
   };
 
   return { useCheckAccess };
