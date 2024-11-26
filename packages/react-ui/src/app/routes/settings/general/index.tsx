@@ -19,7 +19,8 @@ import { ApFlagId, Permission, ProjectWithLimits } from '@activepieces/shared';
 export default function GeneralPage() {
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
-  const { projectRole } = useAuthorization();
+
+  const { useCheckAccess } = useAuthorization();
   const { toast } = useToast();
 
   const form = useForm({
@@ -30,8 +31,7 @@ export default function GeneralPage() {
         aiTokens: project?.plan?.aiTokens,
       },
     },
-    disabled:
-      projectRole?.permissions?.includes(Permission.WRITE_PROJECT) === false,
+    disabled: useCheckAccess(Permission.WRITE_PROJECT) === false,
     resolver: typeboxResolver(ProjectWithLimits),
   });
 
@@ -143,7 +143,7 @@ export default function GeneralPage() {
               )}
             </form>
           </Form>
-          {projectRole?.permissions?.includes(Permission.WRITE_PROJECT) && (
+          {useCheckAccess(Permission.WRITE_PROJECT) && (
             <div className="flex gap-2 justify-end mt-4">
               <Button
                 onClick={(e) => {

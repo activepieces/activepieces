@@ -5,7 +5,6 @@ import {
     isNil,
     PrincipalType,
     Project,
-    ProjectRole,
     User,
 } from '@activepieces/shared'
 import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
@@ -15,7 +14,6 @@ import { platformService } from '../../../../platform/platform.service'
 import { projectService } from '../../../../project/project-service'
 import { userService } from '../../../../user/user-service'
 import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
-import { projectMemberService } from '../../../project-members/project-member.service'
 import { platformProjectService } from '../../../projects/platform-project-service'
 
 async function getProjectForUserOrThrow(user: User): Promise<Project> {
@@ -89,34 +87,15 @@ async function autoVerifyUserIfEligible(user: User): Promise<void> {
 
 async function getProjectAndTokenOrThrow(
     user: User,
-): Promise<{ project: Project, token: string, projectRole: ProjectRole }> {
+): Promise<{ project: Project, token: string }> {
     const project = await getProjectForUserOrThrow(user)
-
-    const projectRole = await projectMemberService.getRole({
-        projectId: project.id,
-        userId: user.id,
-    })
 
     const token = await populateTokenWithPlatformInfo({
         user,
         project,
     })
-
-    if (isNil(projectRole)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.PERMISSION_DENIED,
-            params: {
-                userId: user.id,
-                projectId: project.id,
-                projectRole: null,
-                permission: undefined,
-            },
-        })
-    }
-
     return {
         project,
-        projectRole,
         token,
     }
 }

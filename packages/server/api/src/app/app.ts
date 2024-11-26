@@ -87,7 +87,6 @@ import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tagsModule } from './tags/tags-module'
 import { platformUserModule } from './user/platform/platform-user-module'
-import { userModule } from './user/user.module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
@@ -208,7 +207,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(openapiModule)
     await app.register(triggerEventModule)
     await app.register(appEventRoutingModule)
-    await app.register(userModule)
     await app.register(authenticationModule)
     await app.register(copilotModule),
     await app.register(requestWriterModule),

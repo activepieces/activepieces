@@ -43,7 +43,8 @@ export default function AlertsEmailsCard() {
     queryKey: ['alerts-email-list'],
     queryFn: fetchData,
   });
-  const { projectRole } = useAuthorization();
+  const { useCheckAccess } = useAuthorization();
+  const writeAlertPermission = useCheckAccess(Permission.WRITE_ALERT);
   const deleteMutation = useMutation<void, Error, Alert>({
     mutationFn: (alert) => alertsApi.delete(alert.id),
     onSuccess: () => {
@@ -99,18 +100,13 @@ export default function AlertsEmailsCard() {
                         variant="ghost"
                         className="size-8 p-0"
                         onClick={() => deleteMutation.mutate(alert)}
-                        disabled={
-                          projectRole?.permissions?.includes(
-                            Permission.WRITE_ALERT,
-                          ) === false
-                        }
+                        disabled={writeAlertPermission === false}
                       >
                         <Trash className="size-4 text-destructive" />
                       </Button>
                     </div>
                   </TooltipTrigger>
-                  {projectRole?.permissions?.includes(Permission.WRITE_ALERT) ===
-                    false && (
+                  {writeAlertPermission === false && (
                     <TooltipContent side="bottom">
                       {t('Only project admins can do this')}
                     </TooltipContent>

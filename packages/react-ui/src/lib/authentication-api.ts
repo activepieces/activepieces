@@ -8,6 +8,7 @@ import {
   AuthenticationResponse,
   ClaimTokenRequest,
   FederatedAuthnLoginResponse,
+  ProjectRole,
   SignInRequest,
   SignUpRequest,
   ThirdPartyAuthnProviderEnum,
@@ -30,6 +31,9 @@ export const authenticationApi = {
     return api.get<FederatedAuthnLoginResponse>(`/v1/authn/federated/login`, {
       providerName,
     });
+  },
+  me() {
+    return api.get<ProjectRole | null>('/v1/project-members/role');
   },
   claimThirdPartyRequest(request: ClaimTokenRequest) {
     return api.post<AuthenticationResponse>(

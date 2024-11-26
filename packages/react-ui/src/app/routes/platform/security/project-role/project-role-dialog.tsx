@@ -87,7 +87,6 @@ interface ProjectRoleDialogProps {
 export const ProjectRoleDialog = ({
   mode,
   projectRole,
-  platformId,
   onSave,
   children,
   disabled = false,

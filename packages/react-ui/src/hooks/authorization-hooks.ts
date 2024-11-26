@@ -1,8 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
+  ApEdition,
   ApFlagId,
   isNil,
   Permission,
@@ -10,16 +13,27 @@ import {
 } from '@activepieces/shared';
 
 export const useAuthorization = () => {
-  // TODO: make sure to update the role in the local storage
-  const projectRole = authenticationSession.getUserProjectRole();
+  const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
+
+  const { data: projectRole, isLoading } = useQuery({
+    queryKey: ['project-role', authenticationSession.getProjectId()],
+    queryFn: async () => {
+      const projectRole = await authenticationApi.me();
+      return projectRole;
+    },
+    enabled: !isNil(edition) && edition !== ApEdition.COMMUNITY,
+  });
 
   const useCheckAccess = (permission: Permission) => {
     return React.useMemo(() => {
-      return true;
-    }, [permission]);
+      if (isLoading || edition === ApEdition.COMMUNITY) {
+        return true;
+      }
+      return projectRole?.permissions?.includes(permission) ?? true;
+    }, [permission, projectRole, edition]);
   };
 
-  return { useCheckAccess, projectRole };
+  return { useCheckAccess };
 };
 
 export const useShowPlatformAdminDashboard = () => {
