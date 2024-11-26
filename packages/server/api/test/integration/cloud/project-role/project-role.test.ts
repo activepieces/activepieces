@@ -1,4 +1,4 @@
-import { CreateProjectRoleRequestBody, PrincipalType, RoleType, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { ChangeProjectRoleRequestBody, CreateProjectRoleRequestBody, PrincipalType, RoleType, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -6,7 +6,7 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockProjectRole, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
+import { createMockProjectMember, createMockProjectRole, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -195,6 +195,38 @@ describe('Project Role API', () => {
             })
 
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should update a project role for a member', async () => {
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockBasicSetup()
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUserOne.id,
+                platform: { id: mockPlatformOne.id },
+            })
+
+            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            await databaseConnection().getRepository('project_role').save(projectRole)
+
+            const mockProjectMemberOne = createMockProjectMember({ platformId: mockPlatformOne.id, projectId: mockProjectOne.id, projectRoleId: projectRole.id, userId: mockUserOne.id })
+            await databaseConnection().getRepository('project_member').save(mockProjectMemberOne)
+
+            const request: ChangeProjectRoleRequestBody = {
+                memberId: mockProjectMemberOne.id,
+                platformId: mockPlatformOne.id,
+                role: projectRole.name,
+            }
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/project-roles/change-role',
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 

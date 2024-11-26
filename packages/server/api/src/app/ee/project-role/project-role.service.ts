@@ -107,6 +107,12 @@ export const projectRoleService = {
         return projectRoleRepo().findOneByOrFail({ id: params.id, platformId: params.platformId })
     },
 
+    async changeRole(params: ChangeRoleParams): Promise<void> {
+        const projectRole = await this.getOneOrThrow({ name: params.role, platformId: params.platformId })
+
+        await projectMemberRepo().update({ id: params.memberId }, { projectRoleId: projectRole.id })
+    },
+
     async delete({ name, platformId }: DeleteParams): Promise<void> {
         await projectRoleRepo().delete({ name, platformId })
     },
@@ -128,6 +134,11 @@ type DeleteParams = {
     platformId: PlatformId
 }
 
+type ChangeRoleParams = {
+    memberId: ApId
+    platformId: PlatformId
+    role: string
+}
 
 type GetOneByNameOrThrowParams = {
     name: DefaultProjectRole

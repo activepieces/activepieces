@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ApId, CreateProjectRoleRequestBody, ProjectRole, SeekPage, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { ApId, ChangeProjectRoleRequestBody, CreateProjectRoleRequestBody, ProjectRole, SeekPage, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { eventsHooks } from '../../helper/application-events'
@@ -46,6 +46,12 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
         return projectRole
     })
 
+    app.post('/change-role', ChangeProjectRoleRequest, async (req, reply) => {
+        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
+        await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
+        return projectRoleService.changeRole(req.body)
+    })
+
     app.delete('/:name', DeleteProjectRoleRequest, async (req, reply) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, reply)
         await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
@@ -81,6 +87,15 @@ const CreateProjectRoleRequest = {
         response: {
             [StatusCodes.CREATED]: ProjectRole,
         },
+    },
+}
+
+const ChangeProjectRoleRequest = {
+    schema: {
+        body: ChangeProjectRoleRequestBody,
+    },
+    response: {
+        [StatusCodes.OK]: Type.Null(),
     },
 }
 
