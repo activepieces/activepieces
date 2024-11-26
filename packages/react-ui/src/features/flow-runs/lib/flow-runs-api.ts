@@ -43,11 +43,13 @@ export const flowRunsApi = {
     runId: string,
     onUpdate: (response: FlowRun) => void,
   ) {
-    const handleProgress = (response: FlowRun) => {
+    const handleProgress = async (response: FlowRun) => {
       if (runId !== response.id) {
         return;
       }
-      onUpdate(response);
+
+      const populatedRun = await flowRunsApi.getPopulated(runId)
+      onUpdate(populatedRun);
       if (isFlowStateTerminal(response.status)) {
         socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
         socket.off('error', handleError);

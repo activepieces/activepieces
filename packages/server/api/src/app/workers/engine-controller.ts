@@ -1,5 +1,5 @@
 import { GetRunForWorkerRequest, JobStatus, logger, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, ExecutionState, FileType, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, ExecutionState, FileType, FlowId, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, ProjectId, RemoveStableJobEngineRequest, StepOutput, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -72,8 +72,8 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.post('/update-run', UpdateStepProgress, async (request) => {
-        const { runId, workerHandlerId, runDetails, httpRequestId } = request.body
+    app.post('/update-run', UpdateRunProgress, async (request) => {
+        const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
         if (runDetails.status !== FlowRunStatus.RUNNING && progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
             await webhookResponseWatcher.publish(
@@ -83,15 +83,24 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             )
         }
 
-        const populatedRun = await flowRunService.updateStatus({
+        const runWithoutSteps = await flowRunService.updateStatus({
             flowRunId: runId,
             status: getTerminalStatus(runDetails.status),
             tasks: runDetails.tasks,
             duration: runDetails.duration,
-            executionState: getExecutionState(runDetails),
             projectId: request.principal.projectId,
             tags: runDetails.tags ?? [],
         })
+        let uploadUrl: string | undefined
+        if (!isNil(executionStateContentLength)) {
+            uploadUrl = await flowRunService.updateLogsAndReturnUploadUrl({
+                flowRunId: runId,
+                logsFileId: runWithoutSteps.logsFileId ?? undefined,
+                projectId: request.principal.projectId,
+                executionStateString: executionStateBuffer,
+                executionStateContentLength,
+            })
+        }
 
         if (runDetails.status === FlowRunStatus.PAUSED) {
             await flowRunService.pause({
@@ -103,21 +112,14 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        app.io.to(populatedRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, populatedRun)
-        if (runDetails.status === FlowRunStatus.QUOTA_EXCEEDED) {
-            logger.info({
-                projectId: populatedRun.projectId,
-                runId: populatedRun.id,
-            }, 'Disabling flow due to quota exceeded')
-            await flowService.updateStatus({
-                id: populatedRun.flowId,
-                projectId: populatedRun.projectId,
-                newStatus: FlowStatus.DISABLED,
-            })
+        const projectId = request.principal.projectId
+        app.io.to(projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, runWithoutSteps)
+        await disableFlowIfQuotaExceeded(projectId, runWithoutSteps.flowId, runDetails.status)
+        await markJobAsCompleted(runWithoutSteps.status, runWithoutSteps.id, request.principal as unknown as EnginePrincipal, runDetails.error)
+        const response: UpdateRunProgressResponse = {
+            uploadUrl,
         }
-
-        await markJobAsCompleted(populatedRun.status, populatedRun.id, request.principal as unknown as EnginePrincipal, runDetails.error)
-        return {}
+        return response
     })
 
     app.get('/check-task-limit', CheckTaskLimitParams, async (request) => {
@@ -188,6 +190,19 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
+async function disableFlowIfQuotaExceeded(projectId: ProjectId, flowId: FlowId, status: FlowRunStatus): Promise<void> {
+    if (status === FlowRunStatus.QUOTA_EXCEEDED) {
+        logger.info({
+            projectId,
+            flowId,
+        }, 'Disabling flow due to quota exceeded')
+        await flowService.updateStatus({
+            id: flowId,
+            projectId,
+            newStatus: FlowStatus.DISABLED,
+        })
+    }
+}
 
 async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal, error: unknown): Promise<void> {
     switch (status) {
@@ -249,14 +264,7 @@ async function getFlow(projectId: string, request: GetFlowVersionForWorkerReques
 }
 
 
-function getExecutionState(flowRunResponse: FlowRunResponse): ExecutionState | null {
-    if ([FlowRunStatus.TIMEOUT, FlowRunStatus.QUOTA_EXCEEDED, FlowRunStatus.INTERNAL_ERROR].includes(flowRunResponse.status)) {
-        return null
-    }
-    return {
-        steps: flowRunResponse.steps as Record<string, StepOutput>,
-    }
-}
+
 
 const getTerminalStatus = (
     status: FlowRunStatus,
@@ -348,7 +356,7 @@ const GetFileRequestParams = {
     },
 }
 
-const UpdateStepProgress = {
+const UpdateRunProgress = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
