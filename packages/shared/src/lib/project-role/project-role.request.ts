@@ -21,11 +21,3 @@ export const UpdateProjectRoleRequestBody = Type.Object({
 })
 
 export type UpdateProjectRoleRequestBody = Static<typeof UpdateProjectRoleRequestBody>
-
-export const ChangeProjectRoleRequestBody = Type.Object({
-    memberId: ApId,
-    platformId: ApId,
-    role: Type.String(),
-})
-
-export type ChangeProjectRoleRequestBody = Static<typeof ChangeProjectRoleRequestBody>

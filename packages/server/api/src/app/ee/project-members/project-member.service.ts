@@ -4,9 +4,11 @@ import {
     ProjectMemberWithUser,
 } from '@activepieces/ee-shared'
 import {
+    ApId,
     apId,
     Cursor,
     DefaultProjectRole,
+    PlatformId,
     PlatformRole,
     ProjectId,
     ProjectRole,
@@ -131,6 +133,22 @@ export const projectMemberService = {
 
         return projectRole
     },
+    async update(params: UpdateMemberRole): Promise<ProjectMember> {
+        const projectRole = await projectRoleService.getOneOrThrow({
+            name: params.role,
+            platformId: params.platformId,
+        })
+        await repo().update({ 
+            id: params.id,
+            projectId: params.projectId,
+        }, {
+            projectRoleId: projectRole.id,
+        })
+        return repo().findOneByOrFail({
+            id: params.id,
+            projectId: params.projectId,
+        })
+    },
     async delete(
         projectId: ProjectId,
         invitationId: ProjectMemberId,
@@ -149,6 +167,14 @@ type UpsertParams = {
 }
 
 type NewProjectMember = Omit<ProjectMember, 'created' | 'projectRole'>
+
+
+type UpdateMemberRole = {
+    id: ApId
+    projectId: ProjectId
+    platformId: PlatformId
+    role: string
+}
 
 async function enrichProjectMemberWithUser(
     projectMember: ProjectMember,

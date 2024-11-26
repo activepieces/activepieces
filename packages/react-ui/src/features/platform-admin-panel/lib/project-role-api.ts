@@ -18,16 +18,7 @@ export const projectRoleApi = {
   async update(id: string, requestBody: UpdateProjectRoleRequestBody) {
     return await api.post<ProjectRole>(`/v1/project-roles/${id}`, requestBody);
   },
-
   async delete(id: string) {
     return await api.delete<void>(`/v1/project-roles/${id}`);
-  },
-
-  async updateMemberRole(memberId: string, platformId: string, role: string) {
-    return await api.post<void>(`/v1/project-roles/change-role`, {
-      memberId,
-      platformId,
-      role,
-    });
   },
 };

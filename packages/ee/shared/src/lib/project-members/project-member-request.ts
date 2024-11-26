@@ -18,3 +18,10 @@ export const AcceptProjectResponse = Type.Object({
 });
 
 export type AcceptProjectResponse = Static<typeof AcceptProjectResponse>;
+
+
+export const UpdateProjectMemberRoleRequestBody = Type.Object({
+    role: Type.String(),
+})
+
+export type UpdateProjectMemberRoleRequestBody = Static<typeof UpdateProjectMemberRoleRequestBody>

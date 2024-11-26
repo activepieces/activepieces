@@ -23,17 +23,14 @@ import { toast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
+import { projectMembersApi } from '../lib/project-members-api';
+
 interface EditRoleDialogProps {
   member: ProjectMemberWithUser;
   onSave: () => void;
-  platformId: string;
 }
 
-export function EditRoleDialog({
-  member,
-  onSave,
-  platformId,
-}: EditRoleDialogProps) {
+export function EditRoleDialog({ member, onSave }: EditRoleDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(member.projectRole.name);
   const { data: rolesData } = useQuery({
@@ -45,7 +42,9 @@ export function EditRoleDialog({
 
   const { mutate, isPending } = useMutation({
     mutationFn: (newRole: string) => {
-      return projectRoleApi.updateMemberRole(member.id, platformId, newRole);
+      return projectMembersApi.update(member.id, {
+        role: newRole,
+      });
     },
     onSuccess: () => {
       toast({

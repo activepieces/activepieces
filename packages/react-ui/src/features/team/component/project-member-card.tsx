@@ -69,11 +69,7 @@ export function ProjectMemberCard({
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToRemoveMember}
           >
-            <EditRoleDialog
-              member={member}
-              onSave={handleEditRole}
-              platformId={project.platformId}
-            />
+            <EditRoleDialog member={member} onSave={handleEditRole} />
             <ConfirmationDeleteDialog
               title={`${t('Remove')} ${member.user.firstName} ${
                 member.user.lastName
