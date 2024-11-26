@@ -3,6 +3,7 @@ import React from 'react';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
 import { StepOutputStatus } from '@activepieces/shared';
@@ -18,6 +19,7 @@ type TestSampleDataViewerProps = {
   errorMessage: string | undefined;
   lastTestDate: string | undefined;
   children?: React.ReactNode;
+  consoleLogs?: string | null;
 };
 
 const TestSampleDataViewer = React.memo(
@@ -30,6 +32,7 @@ const TestSampleDataViewer = React.memo(
     errorMessage,
     lastTestDate,
     children,
+    consoleLogs,
   }: TestSampleDataViewerProps) => {
     return (
       <>
@@ -76,10 +79,32 @@ const TestSampleDataViewer = React.memo(
               </Button>
             </TestButtonTooltip>
           </div>
-          <JsonViewer
-            json={errorMessage ?? sampleData}
-            title={t('Output')}
-          ></JsonViewer>
+
+          {consoleLogs ? (
+            <Tabs defaultValue="Output">
+              <TabsList className="grid w-full grid-cols-2 w-[250px]">
+                <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
+                <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
+              </TabsList>
+              <TabsContent value="Output">
+                <JsonViewer
+                  json={errorMessage ?? sampleData}
+                  title={t('Output')}
+                ></JsonViewer>
+              </TabsContent>
+
+              <TabsContent value="Logs">
+                {consoleLogs && (
+                  <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
+                )}
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <JsonViewer
+              json={errorMessage ?? sampleData}
+              title={t('Output')}
+            ></JsonViewer>
+          )}
         </div>
       </>
     );

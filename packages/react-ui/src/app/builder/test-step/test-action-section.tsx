@@ -31,7 +31,7 @@ const TestActionSection = React.memo(
     );
     const form = useFormContext<Pick<Action, 'settings' | 'name'>>();
     const formValues = form.getValues();
-
+    const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
     const { sampleData, setSampleData } = useBuilderStateContext((state) => {
       return {
         sampleData: state.sampleData[formValues.name],
@@ -76,9 +76,16 @@ const TestActionSection = React.memo(
           sampleDataFileId,
         };
       },
-      onSuccess: ({ success, output, sampleDataFileId }) => {
+      onSuccess: ({
+        success,
+        output,
+        sampleDataFileId,
+        standardOutput,
+        standardError,
+      }) => {
         if (success) {
           setErrorMessage(undefined);
+
           const newInputUiInfo = {
             ...formValues.settings.inputUiInfo,
             sampleDataFileId,
@@ -101,6 +108,7 @@ const TestActionSection = React.memo(
           );
         }
         setSampleData(formValues.name, output);
+        setConsoleLogs(standardOutput || standardError);
         setLastTestDate(dayjs().toISOString());
       },
       onError: (error) => {
@@ -138,6 +146,7 @@ const TestActionSection = React.memo(
             sampleData={sampleData}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
+            consoleLogs={consoleLogs}
           ></TestSampleDataViewer>
         )}
       </>
