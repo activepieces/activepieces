@@ -131,15 +131,17 @@ const CodeEditor = ({
       <CodeMirror
         value={activeTab === 'code' ? code : packageJson}
         className="border-none"
-        height="250px"
+        minHeight="250px"
         width="100%"
+        height="100%"
         maxWidth="100%"
         basicSetup={{
-          foldGutter: false,
+          foldGutter: true,
           lineNumbers: true,
           searchKeymap: false,
           lintKeymap: true,
           autocompletion: true,
+          foldKeymap: true,
         }}
         lang="typescript"
         onChange={(value) => {
