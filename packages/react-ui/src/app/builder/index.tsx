@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
 
 import {
@@ -143,15 +143,6 @@ const BuilderPage = () => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
-  },[])
-
-
-  useEffect(() => {
-    if (run && !isFlowStateTerminal(run.status)) {
-      flowRunsApi.addRunListener(socket, run.id, (run) => {
-        setRun(run, flowVersion);
-      });
-    }
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
       socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
@@ -162,6 +153,15 @@ const BuilderPage = () => {
         WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED,
       );
     };
+  },[])
+
+
+  useEffect(() => {
+    if (run && !isFlowStateTerminal(run.status)) {
+      flowRunsApi.addRunListener(socket, run.id, (run) => {
+        setRun(run, flowVersion);
+      });
+    }
   }, [socket.id, run?.id]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
