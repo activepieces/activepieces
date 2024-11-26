@@ -1,5 +1,5 @@
 import { PlusCircledIcon } from '@radix-ui/react-icons';
-import { CheckIcon } from 'lucide-react';
+import { CheckIcon, ListFilterIcon, ListTodoIcon, SquareCheckBig, TagIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -41,7 +41,7 @@ const DataTableSelectPopover = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 border-dashed">
-          <PlusCircledIcon className="mr-2 size-4" />
+          <ListFilterIcon className="mr-2 size-4" />
           {title}
           {selectedValues?.size > 0 && (
             <>
