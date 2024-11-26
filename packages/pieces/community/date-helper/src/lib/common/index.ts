@@ -104,7 +104,6 @@ export const optionalTimeFormats = [
   { label: timeFormatLabel.format12, value: timeFormat.format12 },
   { label: timeFormatLabel.format13, value: timeFormat.format13 },
   { label: timeFormatLabel.format14, value: timeFormat.format14 },
-  { label: timeFormatLabel.format15, value: timeFormat.format15 },
 ];
 
 export const timeZoneOptions = [
