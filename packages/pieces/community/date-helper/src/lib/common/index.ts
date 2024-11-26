@@ -29,7 +29,6 @@ export enum timeFormat {
   format12 = 'DD/MM/YYYY',
   format13 = 'DD/MM/YY',
   format14 = 'X',
-  format15 = 'x'
 }
 
 export enum timeFormatLabel {
@@ -47,14 +46,10 @@ export enum timeFormatLabel {
   format11 = 'DD-MM-YYYY (17-09-2023)',
   format12 = 'DD/MM/YYYY (17/09/2023)',
   format13 = 'DD/MM/YY (17/09/23)',
-  format14 = 'X (1410715640)',
-  format15 = 'x (1410715640579)',
+  format14 = 'X (1694949838)',
 }
 
-const correctedFormats: Record<string,string> = { 
-  [timeFormat.format00] : 'ddd MMM DD YYYY HH:mm:ss',
-  [timeFormat.format01] : 'ddd MMM DD HH:mm:ss YYYY'
-}
+
 
 export enum timeParts {
   year = 'year',
