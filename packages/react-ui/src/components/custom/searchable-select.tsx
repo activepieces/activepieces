@@ -207,13 +207,13 @@ export const SearchableSelect = <T extends React.Key>({
                         }}
                         className="flex gap-2 flex-col items-start"
                       >
-                        <div className="flex gap-2 items-center">
+                        <div className="flex gap-2 items-center justify-between w-full">
+                          {option.label}
                           <Check
                             className={cn('flex-shrink-0 w-4 h-4', {
                               hidden: selectedIndex !== filterIndex,
                             })}
                           />
-                          {option.label}
                         </div>
                         {option.description && (
                           <div className="text-sm text-muted-foreground">

@@ -35,8 +35,8 @@ export const flowRunsApi = {
     onUpdate: (response: FlowRun) => void,
   ): Promise<void> {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
-    const initalRun = await getInitialRun(socket, request.flowVersionId);
-    onUpdate(initalRun);
+    const initialRun = await getInitialRun(socket, request.flowVersionId);
+    onUpdate(initialRun);
   },
   addRunListener(
     socket: Socket,
@@ -51,14 +51,17 @@ export const flowRunsApi = {
       if (isFlowStateTerminal(response.status)) {
         socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
         socket.off('error', handleError);
+        console.log('clear FLOW_RUN_PROGRESS listener' + response.id);
       }
     };
     const handleError = (error: any) => {
       socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
       socket.off('error', handleError);
+      console.log('clear FLOW_RUN_PROGRESS listener', error);
     };
 
     socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
+    console.log('listened to FLOW_RUN_PROGRESS');
     socket.on('error', handleError);
   },
   testStep(
@@ -79,6 +82,8 @@ export const flowRunsApi = {
             handleStepFinished,
           );
           socket.off('error', handleError);
+          console.log('clear TEST_STEP_FINISHED listener' + response.id);
+
           resolve(response);
         }
       };
@@ -86,10 +91,11 @@ export const flowRunsApi = {
       const handleError = (error: any) => {
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
         socket.off('error', handleError);
+        console.log('clear TEST_STEP_FINISHED listener', error);
         reject(error);
       };
-
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
+      console.log('listened to TEST_STEP_FINISHED');
       socket.on('error', handleError);
     });
   },
@@ -103,10 +109,13 @@ function getInitialRun(
       if (run.flowVersionId !== flowVersionId) {
         return;
       }
+
       socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+      console.log('clear TEST_FLOW_RUN_STARTED listener' + run.id);
       resolve(run);
     };
 
     socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+    console.log('listened to TEST_FLOW_RUN_STARTED');
   });
 }
