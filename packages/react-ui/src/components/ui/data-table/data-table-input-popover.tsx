@@ -1,4 +1,4 @@
-import { PlusCircledIcon } from '@radix-ui/react-icons';
+import { SearchIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -7,7 +7,6 @@ import { Button } from '../button';
 import { Input } from '../input';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import { Separator } from '../seperator';
-import { SearchCheckIcon, SearchIcon } from 'lucide-react';
 
 type DataTableInputPopoverProps = {
   title?: string;

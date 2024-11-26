@@ -1,5 +1,4 @@
-import { PlusCircledIcon } from '@radix-ui/react-icons';
-import { CheckIcon, ListFilterIcon, ListTodoIcon, SquareCheckBig, TagIcon } from 'lucide-react';
+import { CheckIcon, ListFilterIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
