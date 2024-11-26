@@ -4,11 +4,12 @@ import {
 } from '@activepieces/ee-shared'
 import {
     apId,
+    DefaultProjectRole,
     InvitationStatus,
     InvitationType,
     Platform,
     PlatformRole,
-    ProjectMemberRole,
+    ProjectRole,
     User,
     UserStatus,
 } from '@activepieces/shared'
@@ -16,6 +17,7 @@ import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
@@ -37,7 +39,7 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 
@@ -216,12 +218,14 @@ describe('Authentication API', () => {
             })
             await databaseConnection().getRepository('project').save(mockProject)
 
+            const editorRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.EDITOR }) as ProjectRole
+            
             const mockedUpEmail = faker.internet.email()
             const mockUserInvitation = createMockUserInvitation({
                 projectId: mockProject.id,
                 platformId: mockPlatform.id,
                 email: mockedUpEmail,
-                projectRole: ProjectMemberRole.ADMIN,
+                projectRole: editorRole,
                 type: InvitationType.PROJECT,
                 status: InvitationStatus.ACCEPTED,
                 created: dayjs().toISOString(),

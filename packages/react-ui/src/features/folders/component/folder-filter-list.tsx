@@ -184,8 +184,10 @@ const FolderItem = ({
 
 const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const location = useLocation();
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FLOW);
+  const { useCheckAccess } = useAuthorization();
+  const userHasPermissionToUpdateFolders = useCheckAccess(
+    Permission.WRITE_FLOW,
+  );
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get(folderIdParamName);
 

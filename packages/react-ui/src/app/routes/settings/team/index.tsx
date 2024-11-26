@@ -19,8 +19,11 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 export default function TeamPage() {
-  const { projectMembers, isLoading: projectMembersIsPending } =
-    projectMembersHooks.useProjectMembers();
+  const {
+    projectMembers,
+    isLoading: projectMembersIsPending,
+    refetch: refetchProjectMembers,
+  } = projectMembersHooks.useProjectMembers();
   const { invitations, isLoading: invitationsIsPending } =
     userInvitationsHooks.useInvitations();
 
@@ -59,10 +62,12 @@ export default function TeamPage() {
 
               {Array.isArray(projectMembers) &&
                 projectMembers.map((member: ProjectMemberWithUser) => (
-                  <ProjectMemberCard
-                    key={member.id}
-                    member={member}
-                  ></ProjectMemberCard>
+                  <div key={member.id} className="flex items-center">
+                    <ProjectMemberCard
+                      member={member}
+                      onUpdate={refetchProjectMembers}
+                    />
+                  </div>
                 ))}
             </div>
             <Separator />

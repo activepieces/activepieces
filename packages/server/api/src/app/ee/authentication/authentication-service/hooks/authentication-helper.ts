@@ -5,7 +5,7 @@ import {
     isNil,
     PrincipalType,
     Project,
-    ProjectMemberRole,
+    ProjectRole,
     User,
 } from '@activepieces/shared'
 import { Provider } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
@@ -89,7 +89,7 @@ async function autoVerifyUserIfEligible(user: User): Promise<void> {
 
 async function getProjectAndTokenOrThrow(
     user: User,
-): Promise<{ project: Project, token: string, projectRole: ProjectMemberRole | null }> {
+): Promise<{ project: Project, token: string, projectRole: ProjectRole }> {
     const project = await getProjectForUserOrThrow(user)
 
     const projectRole = await projectMemberService.getRole({
@@ -101,6 +101,18 @@ async function getProjectAndTokenOrThrow(
         user,
         project,
     })
+
+    if (isNil(projectRole)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PERMISSION_DENIED,
+            params: {
+                userId: user.id,
+                projectId: project.id,
+                projectRole: null,
+                permission: undefined,
+            },
+        })
+    }
 
     return {
         project,

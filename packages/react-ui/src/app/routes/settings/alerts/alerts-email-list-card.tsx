@@ -21,7 +21,7 @@ import { alertsApi } from '@/features/alerts/lib/alerts-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Alert } from '@activepieces/ee-shared';
-import { ProjectMemberRole } from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 
 import { AddAlertEmailDialog } from './add-alert-email-dialog';
 
@@ -43,7 +43,7 @@ export default function AlertsEmailsCard() {
     queryKey: ['alerts-email-list'],
     queryFn: fetchData,
   });
-  const { role } = useAuthorization();
+  const { projectRole } = useAuthorization();
   const deleteMutation = useMutation<void, Error, Alert>({
     mutationFn: (alert) => alertsApi.delete(alert.id),
     onSuccess: () => {
@@ -99,13 +99,18 @@ export default function AlertsEmailsCard() {
                         variant="ghost"
                         className="size-8 p-0"
                         onClick={() => deleteMutation.mutate(alert)}
-                        disabled={role !== ProjectMemberRole.ADMIN}
+                        disabled={
+                          projectRole?.permissions.includes(
+                            Permission.WRITE_ALERT,
+                          ) === false
+                        }
                       >
                         <Trash className="size-4 text-destructive" />
                       </Button>
                     </div>
                   </TooltipTrigger>
-                  {role !== ProjectMemberRole.ADMIN && (
+                  {projectRole?.permissions.includes(Permission.WRITE_ALERT) ===
+                    false && (
                     <TooltipContent side="bottom">
                       {t('Only project admins can do this')}
                     </TooltipContent>

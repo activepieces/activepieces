@@ -104,6 +104,15 @@ export const authenticationService = {
         })
         await saveNewsLetterSubscriber(user)
 
+        if (!authnResponse.projectRole) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'User is not a member of any project',
+                },
+            })
+        }
+
         return {
             ...userWithoutPassword,
             token: authnResponse.token,
@@ -120,6 +129,15 @@ export const authenticationService = {
         })
 
         const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
+
+        if (!authnResponse.projectRole) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'User is not a member of any project',
+                },
+            })
+        }
 
         return {
             ...userWithoutPassword,

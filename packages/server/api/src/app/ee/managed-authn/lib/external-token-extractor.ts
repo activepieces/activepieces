@@ -1,8 +1,9 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole } from '@activepieces/shared'
+import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
+import { projectRoleService } from '../../project-role/project-role.service'
 import { signingKeyService } from '../../signing-key/signing-key-service'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
@@ -36,6 +37,8 @@ export const externalTokenExtractor = {
 
             const optionalEmail = payload.email ?? payload.externalUserId
 
+            const projectRole = await getProjectRole(payload, signingKey.platformId)
+
             const { piecesFilterType, piecesTags } = extractPieces(payload)
             return {
                 platformId: signingKey.platformId,
@@ -44,7 +47,7 @@ export const externalTokenExtractor = {
                 externalEmail: optionalEmail,
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
-                role: payload?.role ?? ProjectMemberRole.EDITOR,
+                projectRole: projectRole.name,
                 tasks: payload?.tasks,
                 pieces: {
                     filterType: piecesFilterType ?? PiecesFilterType.NONE,
@@ -104,6 +107,19 @@ function extractPieces(payload: ExternalTokenPayload) {
     }
 }
 
+async function getProjectRole(payload: ExternalTokenPayload, platformId: PlatformId) {
+    if ('role' in payload && !isNil(payload.role)) {
+        return projectRoleService.getOneOrThrow({
+            name: payload.role,
+            platformId,
+        })
+    }
+    return projectRoleService.getOneOrThrow({
+        name: DefaultProjectRole.EDITOR,
+        platformId,
+    })
+}
+
 function externalTokenPayload() {
     const v1 = Type.Object({
         externalUserId: Type.String(),
@@ -115,7 +131,7 @@ function externalTokenPayload() {
     const v2 = Type.Composite([v1,
         Type.Object({
             tasks: Type.Optional(Type.Number()),
-            role: Type.Optional(Type.Enum(ProjectMemberRole)),
+            role: Type.Optional(Type.Enum(DefaultProjectRole)),
             pieces: Type.Optional(Type.Object({
                 filterType: Type.Enum(PiecesFilterType),
                 tags: Type.Optional(Type.Array(Type.String())),
@@ -128,6 +144,7 @@ function externalTokenPayload() {
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
         piecesTags: Type.Optional(Type.Array(Type.String())),
     })])
+
     return Type.Union([v2, v3])
 }
 
@@ -142,7 +159,7 @@ export type ExternalPrincipal = {
     externalEmail: string
     externalFirstName: string
     externalLastName: string
-    role: ProjectMemberRole
+    projectRole: string
     pieces: {
         filterType: PiecesFilterType
         tags: string[]

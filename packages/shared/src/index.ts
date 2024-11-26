@@ -69,6 +69,8 @@ export * from './lib/flows/util/flow-structure-util'
 export * from './lib/flows/operations'
 export * from './lib/flows/util/flow-piece-util'
 export * from './lib/property/markdown'
+export * from './lib/project-role/project-role'
+export * from './lib/project-role/project-role.request'
 export * from './lib/flows/operations/migrations'
 export * from './lib/flow-run/log-serializer'
 

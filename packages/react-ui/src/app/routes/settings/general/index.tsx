@@ -14,16 +14,12 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import {
-  ApFlagId,
-  ProjectMemberRole,
-  ProjectWithLimits,
-} from '@activepieces/shared';
+import { ApFlagId, Permission, ProjectWithLimits } from '@activepieces/shared';
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
-  const { role } = useAuthorization();
+  const { projectRole } = useAuthorization();
   const { toast } = useToast();
 
   const form = useForm({
@@ -34,7 +30,8 @@ export default function GeneralPage() {
         aiTokens: project?.plan?.aiTokens,
       },
     },
-    disabled: role !== ProjectMemberRole.ADMIN,
+    disabled:
+      projectRole?.permissions.includes(Permission.WRITE_PROJECT) === false,
     resolver: typeboxResolver(ProjectWithLimits),
   });
 
@@ -146,7 +143,7 @@ export default function GeneralPage() {
               )}
             </form>
           </Form>
-          {role === ProjectMemberRole.ADMIN && (
+          {projectRole?.permissions.includes(Permission.WRITE_PROJECT) && (
             <div className="flex gap-2 justify-end mt-4">
               <Button
                 onClick={(e) => {

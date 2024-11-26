@@ -17,8 +17,6 @@ import { signingKeyService } from './signing-key-service'
 export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', AddSigningKeyRequest, async (req, res) => {
         const platformId = req.principal.platform.id
-        assertNotNullOrUndefined(platformId, 'platformId')
-
         const newSigningKey = await signingKeyService.add({
             platformId,
             displayName: req.body.displayName,

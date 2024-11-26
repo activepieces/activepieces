@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { SAFE_STRING_PATTERN } from '../common'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
-import { ProjectMemberRole } from './project-member'
+import { ProjectRole } from '../project-role/project-role'
 
 export const ListProjectRequestForUserQueryParams = Type.Object({
     cursor: Type.Optional(Type.String()),
@@ -33,7 +33,7 @@ export const ProjectUsage = Type.Object({
 
 export const SwitchProjectResponse = Type.Object({
     token: Type.String(),
-    projectRole: Type.Union([Type.Enum(ProjectMemberRole), Type.Null()]),
+    projectRole: Type.Union([ProjectRole, Type.Null()]),
 })
 
 export type SwitchProjectResponse = Static<typeof SwitchProjectResponse>

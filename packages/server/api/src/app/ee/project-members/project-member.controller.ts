@@ -1,6 +1,7 @@
 import {
     ListProjectMembersRequestQuery,
     ProjectMemberWithUser,
+    UpdateProjectMemberRoleRequestBody,
 } from '@activepieces/ee-shared'
 import {
     Permission,
@@ -28,6 +29,17 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
         )
     })
 
+
+    app.post('/:id', UpdateProjectMemberRoleRequest, async (req) => {
+        return projectMemberService.update({
+            id: req.params.id,
+            role: req.body.role,
+            projectId: req.principal.projectId,
+            platformId: req.principal.platform.id,
+        })
+    })
+
+
     app.delete('/:id', DeleteProjectMemberRequest, async (request, reply) => {
         await projectMemberService.delete(
             request.principal.projectId,
@@ -37,6 +49,23 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
     })
 }
 
+
+
+const UpdateProjectMemberRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_PROJECT_MEMBER,
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        body: UpdateProjectMemberRoleRequestBody,
+    },
+    response: {
+        [StatusCodes.OK]: ProjectMemberWithUser,
+    },
+}
 
 const ListProjectMembersRequestQueryOptions = {
     config: {

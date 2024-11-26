@@ -50,6 +50,7 @@ import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
+import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
@@ -510,6 +511,18 @@ const routes = [
         <PlatformSecondSidebarLayout type="setup">
           <PageTitle title="LicenseKey">
             <LicenseKeyPage />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/security/project-roles',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="security">
+          <PageTitle title="Project Roles">
+            <ProjectRolePage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>

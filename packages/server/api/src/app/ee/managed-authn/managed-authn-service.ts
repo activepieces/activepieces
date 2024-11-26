@@ -18,6 +18,7 @@ import { pieceTagService } from '../../tags/pieces/piece-tag.service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
+import { projectRoleService } from '../project-role/project-role.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = {
@@ -39,9 +40,12 @@ export const managedAuthnService = {
         const projectMember = await projectMemberService.upsert({
             projectId: project.id,
             userId: user.id,
-            role: externalPrincipal.role,
+            projectRoleName: externalPrincipal.projectRole,
         })
 
+        const projectRole = await projectRoleService.getOneOrThrowById({
+            id: projectMember.projectRoleId,
+        })
 
         const token = await accessTokenManager.generateToken({
             id: user.id,
@@ -56,7 +60,7 @@ export const managedAuthnService = {
             ...user,
             token,
             projectId: project.id,
-            projectRole: projectMember.role,
+            projectRole,
         }
     },
 }

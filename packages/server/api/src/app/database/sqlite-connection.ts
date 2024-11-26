@@ -73,6 +73,7 @@ import { MigrateConnectionNamesSqlite1731443310900 } from './migration/sqlite/17
 import { AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 } from './migration/sqlite/1731604290560-AddGlobalConnectionsAndRbacForPlatformSqlite'
 import { AddIndiciesToTriggerEventSqlite1732324359348 } from './migration/sqlite/1732324359348-AddIndiciesToTriggerEventSqlite'
 import { AddIndiciesToRunSqlite1732324481815 } from './migration/sqlite/1732324481815-AddIndiciesToRunSqlite'
+import { CreateProjectRoleTableSqlite1732482844483 } from './migration/sqlite/1732482844483-CreateProjectRoleTableSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -160,6 +161,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowSchemaVersionSqlite1730760312426,
         SwitchToRouter1731019013340,
         StoreTriggerEventsInFileSqlite1731247180217,
+        CreateProjectRoleTableSqlite1732482844483,
         MigrateConnectionNamesSqlite1731443310900,
         AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560,
         AddIndiciesToTriggerEventSqlite1732324359348,

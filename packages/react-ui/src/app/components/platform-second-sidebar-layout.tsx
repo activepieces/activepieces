@@ -11,6 +11,7 @@ import {
   Workflow,
   Link,
   Puzzle,
+  ScanFace,
 } from 'lucide-react';
 
 import SidebarLayout, { SidebarItem } from '@/app/components/sidebar-layout';
@@ -77,9 +78,9 @@ export default function PlatformSecondSidebarLayout({
           icon: <ScrollText size={iconSize} />,
         },
         {
-          title: t('API Keys'),
-          href: '/platform/security/api-keys',
-          icon: <Key size={iconSize} />,
+          title: t('Single Sign On'),
+          href: '/platform/security/sso',
+          icon: <ShieldPlus size={iconSize} />,
         },
         {
           title: t('Signing Keys'),
@@ -87,9 +88,14 @@ export default function PlatformSecondSidebarLayout({
           icon: <Lock size={iconSize} />,
         },
         {
-          title: t('Single Sign On'),
-          href: '/platform/security/sso',
-          icon: <ShieldPlus size={iconSize} />,
+          title: t('Project Roles'),
+          href: '/platform/security/project-roles',
+          icon: <ScanFace size={iconSize} />,
+        },
+        {
+          title: t('API Keys'),
+          href: '/platform/security/api-keys',
+          icon: <Key size={iconSize} />,
         },
       ],
     },

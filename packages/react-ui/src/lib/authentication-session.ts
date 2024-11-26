@@ -45,7 +45,7 @@ export const authenticationSession = {
       JSON.stringify({
         ...this.getCurrentUser(),
         projectId,
-        projectRole: result.projectRole,
+        role: result.projectRole,
       }),
     );
     window.dispatchEvent(new Event('storage'));
