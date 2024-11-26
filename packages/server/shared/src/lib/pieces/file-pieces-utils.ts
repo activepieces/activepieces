@@ -13,7 +13,7 @@ import { AppSystemProp } from '../system/system-prop'
 
 const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 
-let pieceCache: Record<string, PieceMetadata | null> = {}
+const pieceCache: Record<string, PieceMetadata | null> = {}
 
 async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     const paths = []
@@ -147,7 +147,7 @@ async function loadPieceFromFolder(
 async function clearPieceCache(pieceName: string): Promise<void> {
     const directoryPath = await findDirectoryByPackageName(pieceName)
     if (directoryPath && directoryPath in pieceCache) {
-        pieceCache[directoryPath] = null;
+        pieceCache[directoryPath] = null
     }
 }
 

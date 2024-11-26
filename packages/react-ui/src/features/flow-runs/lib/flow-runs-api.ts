@@ -12,7 +12,6 @@ import {
   WebsocketClientEvent,
   CreateStepRunRequestBody,
   StepRunResponse,
-  isFlowStateTerminal,
   BulkRetryFlowRequestBody,
 } from '@activepieces/shared';
 
@@ -85,11 +84,9 @@ function getInitialRun(
       }
 
       socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-      console.log('clear TEST_FLOW_RUN_STARTED listener' + run.id);
       resolve(run);
     };
 
     socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-    console.log('listened to TEST_FLOW_RUN_STARTED');
   });
 }
