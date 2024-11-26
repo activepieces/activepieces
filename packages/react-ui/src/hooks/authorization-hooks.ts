@@ -2,7 +2,12 @@ import React from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ApFlagId, isNil, Permission, PlatformRole } from '@activepieces/shared';
+import {
+  ApFlagId,
+  isNil,
+  Permission,
+  PlatformRole,
+} from '@activepieces/shared';
 
 export const useAuthorization = () => {
   // TODO: make sure to update the role in the local storage

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LoaderIcon } from 'lucide-react';
+
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ProjectMemberCard } from '@/features/team/component/project-member-card';
 import { projectMembersApi } from '@/features/team/lib/project-members-api';
@@ -19,8 +20,11 @@ function ProjectMembersDialog({
   isOpen,
   onClose,
 }: ProjectMembersProps) {
-
-  const { data: selectedProjectMembers, isLoading, refetch: refetchProjectMembers } = useQuery({
+  const {
+    data: selectedProjectMembers,
+    isLoading,
+    refetch: refetchProjectMembers,
+  } = useQuery({
     queryKey: ['project-members'],
     gcTime: 0,
     staleTime: 0,
@@ -29,11 +33,10 @@ function ProjectMembersDialog({
         projectId: authenticationSession.getProjectId()!,
         cursor: undefined,
         limit: 100,
-      })
-      return page.data
+      });
+      return page.data;
     },
   });
-
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -61,7 +64,7 @@ function ProjectMembersDialog({
                 key={member.id}
                 member={member}
                 onUpdate={() => {
-                  refetchProjectMembers()
+                  refetchProjectMembers();
                 }}
               />
             ))}

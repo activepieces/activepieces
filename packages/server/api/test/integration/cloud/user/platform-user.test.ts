@@ -1,6 +1,5 @@
 
 import {
-    DefaultProjectRole,
     PlatformRole,
     PrincipalType,
     UserStatus,
@@ -9,12 +8,10 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { projectRoleService } from '../../../../src/app/ee/project-role/project-role.service'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockOtp,
-    createMockProjectMember,
     createMockUser,
     mockBasicSetup,
     setupMockApiKeyServiceAccount,

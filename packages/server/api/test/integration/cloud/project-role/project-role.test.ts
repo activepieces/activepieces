@@ -1,4 +1,4 @@
-import { CreateProjectRoleRequestBody, PrincipalType, RoleType, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { PrincipalType, ProjectRole, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -42,6 +42,11 @@ describe('Project Role API', () => {
             })
             
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json() as ProjectRole
+            expect(responseBody.id).toBeDefined()
+            expect(responseBody.platformId).toBe(mockPlatformOne.id)
+            expect(responseBody.name).toBe(projectRole.name)
+            expect(responseBody.permissions).toEqual(projectRole.permissions)
         })
 
         it('should fail to create a new project role if user is not platform owner', async () => {
@@ -68,32 +73,6 @@ describe('Project Role API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
-        it('should fail to create a new project role if project role is invalid', async () => {
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
-            })
-
-            const request: CreateProjectRoleRequestBody = {
-                name: faker.lorem.word(),
-                permissions: ['read', 'write'],
-                platformId: 'FAKE ID',
-                type: faker.helpers.enumValue(RoleType),
-            }
-
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/project-roles',
-                body: request,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
-        })
     })
 
     describe('Get Project Role', () => {

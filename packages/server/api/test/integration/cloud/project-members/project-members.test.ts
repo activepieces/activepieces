@@ -2,7 +2,7 @@ import {
     ApiKeyResponseWithValue,
     UpdateProjectMemberRoleRequestBody,
 } from '@activepieces/ee-shared'
-import { DefaultProjectRole, Platform, PlatformRole, PrincipalType, Project, ProjectRole, User } from '@activepieces/shared'
+import { DefaultProjectRole, Permission, Platform, PlatformRole, PrincipalType, Project, ProjectRole, RoleType, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -49,17 +49,18 @@ describe('Project Member API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
+                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
 
-            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id, type: RoleType.CUSTOM, permissions: [Permission.WRITE_PROJECT_MEMBER] })
             await databaseConnection().getRepository('project_role').save(projectRole)
 
             const mockProjectMemberOne = createMockProjectMember({ platformId: mockPlatformOne.id, projectId: mockProjectOne.id, projectRoleId: projectRole.id, userId: mockUserOne.id })
             await databaseConnection().getRepository('project_member').save(mockProjectMemberOne)
 
             const request: UpdateProjectMemberRoleRequestBody = {
-                role: projectRole.name,
+                role: 'VIEWER',
             }
 
             const response = await app?.inject({

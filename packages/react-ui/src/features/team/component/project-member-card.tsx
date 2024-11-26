@@ -37,10 +37,6 @@ export function ProjectMemberCard({
     onUpdate();
   };
 
-  const handleEditRole = () => {
-    refetch();
-  };
-
   return (
     <div
       className="w-full flex items-center justify-between space-x-4"
@@ -69,7 +65,9 @@ export function ProjectMemberCard({
           >
             <EditRoleDialog
               member={member}
-              onSave={handleEditRole}
+              onSave={() => {
+                refetch();
+              }}
               disabled={!userHasPermissionToRemoveMember}
             />
             <ConfirmationDeleteDialog

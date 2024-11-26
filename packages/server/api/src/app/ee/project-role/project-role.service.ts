@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ApId, CreateProjectRoleRequestBody, DefaultProjectRole, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { Brackets, Equal } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
@@ -41,7 +41,7 @@ export const projectRoleService = {
         const projectRoles = await projectRoleRepo().find({
             where: [
                 { 
-                    platformId: Equal(platformId)
+                    platformId: Equal(platformId),
                 },
                 {
                     type: RoleType.DEFAULT,
@@ -67,7 +67,7 @@ export const projectRoleService = {
     async create(platformId: string, params: CreateProjectRoleRequestBody): Promise<ProjectRole> {
         const projectRoleExists = await this.getOne({
             name: params.name,
-            platformId: platformId,
+            platformId,
         })
         if (projectRoleExists) {
             throw new ActivepiecesError({
