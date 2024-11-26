@@ -32,7 +32,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MessageTooltip } from '@/components/ui/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -376,7 +375,6 @@ const FlowsPage = () => {
     () => [
       {
         render: (_, resetSelection) => {
-        
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <DropdownMenu
@@ -384,25 +382,23 @@ const FlowsPage = () => {
                 open={isDropdownOpen}
                 onOpenChange={setIsDropdownOpen}
               >
-                {
-                  selectedRows.length > 0 ?  <DropdownMenuTrigger asChild>
-                  
-                  <Button
-                    className="h-9 w-full"
-                    variant={'default'}
-                    onClick={() => {
-                      setIsDropdownOpen(!isDropdownOpen);
-                    }}
-                  >
-                    {selectedRows.length > 0
-                      ? `${t('Actions')} (${selectedRows.length})`
-                      : t('Actions')}
-                    <ChevronDown className="h-3 w-4 ml-2" />
-                  </Button>
-         
-              </DropdownMenuTrigger>: null
-                }
-               
+                {selectedRows.length > 0 ? (
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      className="h-9 w-full"
+                      variant={'default'}
+                      onClick={() => {
+                        setIsDropdownOpen(!isDropdownOpen);
+                      }}
+                    >
+                      {selectedRows.length > 0
+                        ? `${t('Actions')} (${selectedRows.length})`
+                        : t('Actions')}
+                      <ChevronDown className="h-3 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                ) : null}
+
                 <DropdownMenuContent>
                   <PermissionNeededTooltip
                     hasPermission={userHasPermissionToPushToGit}
