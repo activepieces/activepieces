@@ -9,9 +9,11 @@ import { exceptionHandler } from '../exception-handler'
 import { logger } from '../logger'
 import { system } from '../system/system'
 import { AppSystemProp } from '../system/system-prop'
+import { ApLock, memoryLock } from '../memory-lock'
 
 const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 
+const pieceCache: Record<string, PieceMetadata | null> = {}
 
 async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     const paths = []
@@ -91,7 +93,18 @@ async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]
 async function loadPieceFromFolder(
     folderPath: string,
 ): Promise<PieceMetadata | null> {
+    let lock: ApLock | undefined
     try {
+        if (folderPath in pieceCache) {
+            return pieceCache[folderPath]
+        }
+
+        const lockKey = `piece_cache_${folderPath}`
+        lock = await memoryLock.acquire(lockKey)
+        if (folderPath in pieceCache) {
+            return pieceCache[folderPath]
+        }
+
         const indexPath = join(folderPath, 'src', 'index')
         clearModule(indexPath)
         const packageJson = importFresh<Record<string, string>>(
@@ -107,19 +120,34 @@ async function loadPieceFromFolder(
             pieceName,
             pieceVersion,
         })
-        return {
+        const metadata = {
             ...piece.metadata(),
             name: pieceName,
             version: pieceVersion,
             authors: piece.authors,
             directoryPath: folderPath,
         }
+
+        pieceCache[folderPath] = metadata
+
     }
     catch (ex) {
+        pieceCache[folderPath] = null
         logger.warn({ name: 'FilePieceMetadataService#loadPieceFromFolder', message: ex }, 'Failed to load piece from folder')
         exceptionHandler.handle(ex)
+    } finally {
+        if (lock) {
+            await lock.release()
+        }
     }
     return null
+}
+
+async function clearPieceCache(pieceName: string): Promise<void> {
+    const directoryPath = await findDirectoryByPackageName(pieceName)
+    if (directoryPath && directoryPath in pieceCache) {
+        delete pieceCache[directoryPath]
+    }
 }
 
 export const filePiecesUtils = {
@@ -127,4 +155,5 @@ export const filePiecesUtils = {
     findDirectoryByPackageName,
     findPieceDirectoryByFolderName,
     findAllPieces,
+    clearPieceCache,
 }
