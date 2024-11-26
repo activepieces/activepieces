@@ -13,6 +13,8 @@ import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { MarkdownVariant } from '@activepieces/shared';
 
+type RowValueType  = Record<string, any> 
+
 export const insertMultipleRowsAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'google-sheets-insert-multiple-rows',
@@ -69,17 +71,23 @@ export const insertMultipleRowsAction = createAction({
 
 				switch (valuesInputType) {
 					case 'csv':
+						fields['markdown'] = Property.MarkDown({
+							value: `Ensure the first row contains column headers that match the sheet's column names.`,
+							variant: MarkdownVariant.INFO,
+						});
 						fields['values'] = Property.LongText({
 							displayName: 'CSV',
 							required: true,
-							description: "Provide values in CSV format. Ensure the first row contains column headers that match the sheet's column names.",
 						});
 						break;
 					case 'json':
+						fields['markdown'] = Property.MarkDown({
+							value: `Provide values in JSON format. Ensure the column names match the sheet's header.`,
+							variant: MarkdownVariant.INFO,
+						});
 						fields['values'] = Property.Json({
 							displayName: 'JSON',
 							required: true,
-							description: "Provide values in JSON format. Ensure the column names match the sheet's header.",
 							defaultValue: [
 								{
 									column1: 'value1',
@@ -346,8 +354,8 @@ async function normalInsert(
 function formatInputRows(
 	valuesInputType: string,
 	rowValuesInput: any,
-	sheetHeaders: Record<string, any>
-): any[] {
+	sheetHeaders: RowValueType
+): RowValueType[] {
 	let formattedInputRows: any[] = [];
 
 	switch (valuesInputType) {
@@ -358,16 +366,16 @@ function formatInputRows(
 			formattedInputRows = convertJsonToRawValues(rowValuesInput as string, sheetHeaders);
 			break;
 		case 'column_names':
-			formattedInputRows = rowValuesInput as any[];
+			formattedInputRows = rowValuesInput as RowValueType[];
 			break;
 	}
 
 	return formattedInputRows;
 }
 
-function convertJsonToRawValues(json: string | any[], labelHeaders: Record<string, any>): any[] {
+function convertJsonToRawValues(json: string | Record<string,any>[], labelHeaders: RowValueType):  RowValueType[] {
 
-	let data: Record<string, any>[];
+	let data: RowValueType[];
 
 	// If the input is a JSON string
 	if (typeof json === 'string') {
@@ -386,11 +394,11 @@ function convertJsonToRawValues(json: string | any[], labelHeaders: Record<strin
 		throw new Error('Input must be an array of objects or a valid JSON string representing it.');
 	}
 
-	return data.map((row: Record<string, any>) => {
+	return data.map((row: RowValueType) => {
 		return Object.entries(labelHeaders).reduce((acc, [labelColumn, csvHeader]) => {
 			acc[labelColumn] = row[csvHeader] ?? "";
 			return acc;
-		}, {} as Record<string, any>);
+		}, {} as RowValueType);
 
 	})
 }
@@ -398,7 +406,7 @@ function convertJsonToRawValues(json: string | any[], labelHeaders: Record<strin
 function convertCsvToRawValues(
 	csvText: string,
 	delimiter: string,
-	labelHeaders: Record<string, any>,
+	labelHeaders: RowValueType,
 ) {
 	// Split CSV into rows
 	const rows = csvText.trim().split('\n');
@@ -419,7 +427,7 @@ function convertCsvToRawValues(
 		return newHeaders.reduce((obj, header, index) => {
 			obj[header] = values[index] ?? "";
 			return obj;
-		}, {} as Record<string, any>);
+		}, {} as RowValueType);
 	});
 
 	return result;
