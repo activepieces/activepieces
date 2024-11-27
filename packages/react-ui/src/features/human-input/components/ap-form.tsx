@@ -137,7 +137,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
       acc[key.toLowerCase()] = value;
       return acc;
     },
-    {} as Record<string, string>
+    {} as Record<string, string>,
   );
 
   const inputs = useRef<FormInputWithName[]>(
