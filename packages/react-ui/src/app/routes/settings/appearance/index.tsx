@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { LanguageSwitcher } from '@/app/routes/settings/appearance/language-switcher';
 import { useTheme } from '@/components/theme-provider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/seperator';
+import { Separator } from '@/components/ui/separator';
 
 export default function AppearancePage() {
   const { theme, setTheme } = useTheme();

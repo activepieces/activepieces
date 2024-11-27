@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Separator } from '@/components/ui/seperator';
+import { Separator } from '@/components/ui/separator';
 import { InvitationCard } from '@/features/team/component/invitation-card';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import { ProjectMemberCard } from '@/features/team/component/project-member-card';
