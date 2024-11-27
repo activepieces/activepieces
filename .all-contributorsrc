@@ -1361,6 +1361,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "beyondlevi",
+      "name": "beyondlevi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/57486338?v=4",
+      "profile": "https://github.com/beyondlevi",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

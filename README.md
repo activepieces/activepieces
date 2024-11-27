@@ -346,6 +346,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dev-instasent"><img src="https://avatars.githubusercontent.com/u/116744368?v=4?s=100" width="100px;" alt="Instasent DEV"/><br /><sub><b>Instasent DEV</b></sub></a><br /><a href="#plugin-dev-instasent" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/matthieu-lombard"><img src="https://avatars.githubusercontent.com/u/33624489?v=4?s=100" width="100px;" alt="Matthieu Lombard"/><br /><sub><b>Matthieu Lombard</b></sub></a><br /><a href="#plugin-matthieu-lombard" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/beyondlevi"><img src="https://avatars.githubusercontent.com/u/57486338?v=4?s=100" width="100px;" alt="beyondlevi"/><br /><sub><b>beyondlevi</b></sub></a><br /><a href="#plugin-beyondlevi" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
