@@ -256,9 +256,9 @@ export const CopilotSidebar = () => {
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
         {t('AI Copilot')}
       </SidebarHeader>
-      <div className="flex flex-col flex-grow overflow-hidden">
+      <div className="flex flex-col flex-grow overflow-hidden ">
         <ScrollArea className="flex-grow overflow-auto">
-          <CardList>
+          <CardList className='pb-3'>
             {messages.map((message, index) => (
               <ChatMessage
                 key={index}
