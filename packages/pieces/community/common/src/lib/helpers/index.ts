@@ -111,15 +111,12 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping, descript
           }
         }
       }
-      let parsedQueryparam = queryParams
-      if(typeof queryParams === 'string'){
-        parsedQueryparam = JSON.parse(queryParams)
-      }
+
       const request: HttpRequest<Record<string, unknown>> = {
         method,
         url: url['url'],
         headers: headersValue,
-        queryParams: parsedQueryparam as QueryParams,
+        queryParams: queryParams as QueryParams,
         timeout: timeout ? timeout * 1000 : 0,
       };
 
