@@ -48,7 +48,7 @@ export const projectRoleService = {
                 },
             ],
             order: {
-                created: 'DESC',
+                created: 'ASC',
             },
         })
 
