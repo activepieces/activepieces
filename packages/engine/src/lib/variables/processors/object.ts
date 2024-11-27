@@ -8,6 +8,5 @@ export const objectProcessor: ProcessorFn = (_property, value) => {
     if (typeof value === 'object' && !Array.isArray(value)) {
         return value
     }
-    console.error('Value is not an object:', value)
     return undefined
 }
