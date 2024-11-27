@@ -1,4 +1,4 @@
-import { PlusCircledIcon } from '@radix-ui/react-icons';
+import { SearchIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -6,7 +6,7 @@ import { Badge } from '../badge';
 import { Button } from '../button';
 import { Input } from '../input';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { Separator } from '../seperator';
+import { Separator } from '../separator';
 
 type DataTableInputPopoverProps = {
   title?: string;
@@ -30,7 +30,7 @@ const DataTableInputPopover = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 border-dashed">
-          <PlusCircledIcon className="mr-2 size-4" />
+          <SearchIcon className="mr-2 size-4" />
           {title}
           {filterValue.length > 0 && (
             <>
