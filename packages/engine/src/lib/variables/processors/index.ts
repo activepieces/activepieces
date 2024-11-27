@@ -5,11 +5,13 @@ import { jsonProcessor } from './json'
 import { numberProcessor } from './number'
 import { textProcessor } from './text'
 import { ProcessorFn } from './types'
+import { objectProcessor } from './object'
 
 
 
 export const processors: Partial<Record<PropertyType, ProcessorFn>> = {
     JSON: jsonProcessor,
+    OBJECT: objectProcessor,
     NUMBER: numberProcessor,
     LONG_TEXT: textProcessor,
     SHORT_TEXT: textProcessor,
