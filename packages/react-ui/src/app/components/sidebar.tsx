@@ -82,6 +82,8 @@ export type SidebarLink = {
   icon: React.ElementType;
   notification?: boolean;
   locked?: boolean;
+  hasPermission?: boolean;
+  showInEmbed?:boolean;
 };
 
 type SidebarProps = {
