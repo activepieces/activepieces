@@ -30,7 +30,7 @@ export const useAuthorization = () => {
         return true;
       }
       return projectRole?.permissions?.includes(permission) ?? true;
-    }, [permission, projectRole, edition]);
+    }, [permission, projectRole, edition,isLoading]);
   };
 
   return { useCheckAccess };

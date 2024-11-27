@@ -53,14 +53,14 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       icon: AlertCircle,
       notification: showIssuesNotification,
       showInEmbed: false,
-      hasPermission:!useCheckAccess(Permission.READ_ISSUES)
+      hasPermission:useCheckAccess(Permission.READ_ISSUES)
     },
     {
       to: '/connections',
       label: t('Connections'),
       icon: Link2,
       showInEmbed: true,
-      hasPermission:!useCheckAccess(Permission.READ_APP_CONNECTION)
+      hasPermission:useCheckAccess(Permission.READ_APP_CONNECTION)
     },
     {
       to: '/settings',
@@ -76,7 +76,6 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
         to: `/projects/${currentProjectId}${link.to}`,
       };
     });
-
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <Sidebar
