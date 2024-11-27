@@ -59,13 +59,12 @@ async function getRows(
   if (startingRow < 1)
     throw Error('Starting row : ' + startingRow + ' is less than 1' + memVal);
 
-  let endRow;
 
   if(startingRow > existingGridRowCount-1){
     return [];
   }
 
-  endRow = Math.min(startingRow + groupSize,existingGridRowCount);
+  const endRow = Math.min(startingRow + groupSize,existingGridRowCount);
 
   if (testing == false) await store.put(memKey, endRow, StoreScope.FLOW);
 
