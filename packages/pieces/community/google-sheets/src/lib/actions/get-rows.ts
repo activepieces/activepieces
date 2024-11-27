@@ -1,4 +1,5 @@
 import {
+  PiecePropValueSchema,
   Property,
   Store,
   StoreScope,
@@ -14,10 +15,11 @@ import { isNil } from '@activepieces/shared';
 import { HttpError } from '@activepieces/pieces-common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import { getWorkSheetGridSize } from '../triggers/helpers';
 
 async function getRows(
   store: Store,
-  accessToken: string,
+  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
   spreadsheetId: string,
   sheetId: number,
   memKey: string,
@@ -26,10 +28,16 @@ async function getRows(
   testing: boolean
 ) {
   const sheetName = await googleSheetsCommon.findSheetName(
-    accessToken,
+    auth.access_token,
     spreadsheetId,
     sheetId
   );
+
+  const sheetGridRange = await getWorkSheetGridSize(auth,spreadsheetId,sheetId);
+  const existingGridRowCount = sheetGridRange.rowCount ??0;
+	// const existingGridColumnCount = sheetGridRange.columnCount??26;
+
+
 
   const memVal = await store.get(memKey, StoreScope.FLOW);
 
@@ -50,11 +58,19 @@ async function getRows(
 
   if (startingRow < 1)
     throw Error('Starting row : ' + startingRow + ' is less than 1' + memVal);
-  const endRow = startingRow + groupSize;
+
+  let endRow;
+
+  if(startingRow > existingGridRowCount-1){
+    return [];
+  }
+
+  endRow = Math.min(startingRow + groupSize,existingGridRowCount);
+
   if (testing == false) await store.put(memKey, endRow, StoreScope.FLOW);
 
   const row = await getGoogleSheetRows({
-    accessToken: accessToken,
+    accessToken: auth.access_token,
     sheetName: sheetName,
     spreadSheetId: spreadsheetId,
     rowIndex_s: startingRow,
@@ -63,7 +79,7 @@ async function getRows(
 
   if (row.length == 0) {
     const allRows = await getAllGoogleSheetRows({
-      accessToken: accessToken,
+      accessToken: auth.access_token,
       sheetName: sheetName,
       spreadSheetId: spreadsheetId,
     });
@@ -120,7 +136,7 @@ export const getRowsAction = createAction({
     try {
       return await getRows(
         store,
-        auth['access_token'],
+        auth,
         propsValue['spreadsheet_id'],
         propsValue['sheet_id'],
         propsValue['memKey'],
@@ -140,7 +156,7 @@ export const getRowsAction = createAction({
     try {
       return await getRows(
         store,
-        auth['access_token'],
+        auth,
         propsValue['spreadsheet_id'],
         propsValue['sheet_id'],
         propsValue['memKey'],
