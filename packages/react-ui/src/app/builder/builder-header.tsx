@@ -24,11 +24,12 @@ import {
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, FlowVersionState, supportUrl } from '@activepieces/shared';
+import { ApFlagId, FlowVersionState, Permission, supportUrl } from '@activepieces/shared';
 
 import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderPublishButton } from './builder-publish-button';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 
 export const BuilderHeader = () => {
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ export const BuilderHeader = () => {
     () => location.pathname.startsWith('/runs'),
     [location.pathname],
   );
+  const hasPermissionToReadRuns = useAuthorization().useCheckAccess(Permission.READ_FLOW)
   const [
     flow,
     flowVersion,
@@ -155,7 +157,8 @@ export const BuilderHeader = () => {
               <TooltipContent side="bottom">{t('Support')}</TooltipContent>
             </Tooltip>
           )}
-          <Tooltip>
+          { hasPermissionToReadRuns &&
+            <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
@@ -167,7 +170,9 @@ export const BuilderHeader = () => {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('Run Logs')}</TooltipContent>
-          </Tooltip>
+            </Tooltip>
+          }
+         
 
           {!isInRunsPage && (
             <Tooltip>
