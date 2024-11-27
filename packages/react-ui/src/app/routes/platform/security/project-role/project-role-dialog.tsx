@@ -67,13 +67,7 @@ const initialPermissions = [
     description: 'Read and write issues',
     read: [Permission.READ_ISSUES],
     write: [Permission.READ_ISSUES, Permission.WRITE_ISSUES],
-  },
-  {
-    name: 'Folders',
-    description: 'Read and write folders',
-    read: [Permission.READ_FOLDER],
-    write: [Permission.READ_FOLDER, Permission.WRITE_FOLDER],
-  },
+  }
 ];
 interface ProjectRoleDialogProps {
   mode: 'create' | 'edit';
