@@ -1,5 +1,5 @@
-import { isNil } from "@activepieces/shared"
-import { ProcessorFn } from "./types";
+import { isNil } from '@activepieces/shared'
+import { ProcessorFn } from './types'
 
 export const objectProcessor: ProcessorFn = (_property, value) => {
     if (isNil(value)) {
