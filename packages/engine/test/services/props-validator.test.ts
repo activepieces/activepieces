@@ -225,6 +225,16 @@ describe('Property Validation', () => {
             expect(typeErrors).toEqual({
                 object: ['Expected object, received: not an object'],
             })
+
+            const { errors: jsonStringErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { object: JSON.stringify({ key: 'value' }) },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(jsonStringErrors).toEqual({
+                object: ['Expected object, received: {"key":"value"}'],
+            })
         })
     })
 
