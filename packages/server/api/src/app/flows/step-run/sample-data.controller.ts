@@ -1,10 +1,11 @@
 import { logger } from '@activepieces/server-shared'
-import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SaveSampleDataRequest, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { CreateStepRunRequestBody, SaveSampleDataResponse, GetSampleDataRequest, PrincipalType, SaveSampleDataRequest, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { websocketService } from '../../websockets/websockets.service'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from './sample-data.service'
+import { StatusCodes } from 'http-status-codes'
 
 export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) => {
     websocketService.addListener(WebsocketServerEvent.TEST_STEP_RUN, (socket) => {
@@ -60,6 +61,9 @@ const SaveSampleRequest = {
     },
     schema: {
         body: SaveSampleDataRequest,
+        response: {
+            [StatusCodes.OK]: SaveSampleDataResponse,
+        },
     },
 }
 

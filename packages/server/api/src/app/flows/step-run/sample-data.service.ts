@@ -1,9 +1,9 @@
 import {
     Action,
     apId,
-    File,
     FileCompression,
     FileType,
+    SaveSampleDataResponse,
     FlowId,
     flowStructureUtil,
     FlowVersion,
@@ -52,7 +52,7 @@ export const sampleDataService = {
         flowVersionId,
         stepName,
         payload,
-    }: SaveSampleDataParams): Promise<File> {
+    }: SaveSampleDataParams): Promise<SaveSampleDataResponse> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
         const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step)
