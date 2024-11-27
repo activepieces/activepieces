@@ -15,7 +15,7 @@ import {
 } from '../command';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import { ScrollArea } from '../scroll-area';
-import { Separator } from '../seperator';
+import { Separator } from '../separator';
 
 type DataTableSelectPopoverProps = {
   title?: string;

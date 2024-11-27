@@ -6,7 +6,7 @@ import { Badge } from '../badge';
 import { Button } from '../button';
 import { Input } from '../input';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { Separator } from '../seperator';
+import { Separator } from '../separator';
 
 type DataTableInputPopoverProps = {
   title?: string;
