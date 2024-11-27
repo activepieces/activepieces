@@ -30,6 +30,27 @@ export async function getWorkSheetName(
 	return sheetName;
 }
 
+export async function getWorkSheetGridSize(
+	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	spreadSheetId: string,
+	sheetId: number,
+)
+{
+	const authClient = new OAuth2Client();
+	authClient.setCredentials(auth);
+
+	const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+	const res = await sheets.spreadsheets.get({ spreadsheetId: spreadSheetId,includeGridData: true });
+	const sheetRange = res.data.sheets?.find((f) => f.properties?.sheetId == sheetId)?.properties?.gridProperties;
+
+	if (!sheetRange) {
+		throw Error(`Unable to get grid size for sheet ${sheetId} in spreadsheet ${spreadSheetId}`);
+	}
+
+	return sheetRange
+}
+
 export async function getWorkSheetValues(
 	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
 	spreadsheetId: string,
