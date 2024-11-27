@@ -8,7 +8,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { getWorkSheetName } from '../triggers/helpers';
+import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { MarkdownVariant } from '@activepieces/shared';
@@ -228,6 +228,10 @@ export const insertMultipleRowsAction = createAction({
 
 		const duplicateColumn = context.propsValue.check_for_duplicate_column?.['column_name'];
 		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
+		const sheetGridRange = await getWorkSheetGridSize(context.auth, spreadSheetId, sheetId);
+		const existingGridRowCount = sheetGridRange.rowCount ??0;
+		const existingGridColumnCount = sheetGridRange.columnCount??26;
+		
 		const existingSheetValues = await googleSheetsCommon.getValues(
 			spreadSheetId,
 			context.auth.access_token,
@@ -243,7 +247,7 @@ export const insertMultipleRowsAction = createAction({
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
 		if (overwriteValues) {
-			return handleOverwrite(sheets, spreadSheetId, sheetName, formattedValues, existingSheetValues, valueInputOption);
+			return handleOverwrite(sheets, spreadSheetId, sheetName, formattedValues, existingSheetValues,existingGridRowCount,existingGridColumnCount, valueInputOption);
 		}
 
 		if (checkForDuplicateValues) {
@@ -268,6 +272,8 @@ async function handleOverwrite(
 	sheetName: string,
 	formattedValues: any[],
 	existingSheetValues: any[],
+	existingGridRowCount:number,
+	existingGridColumnCount:number,
 	valueInputOption: ValueInputOption
 ) {
 	const existingRowCount = existingSheetValues.length;
@@ -285,17 +291,28 @@ async function handleOverwrite(
 		},
 	});
 
-	const clearRowsResponse = await sheets.spreadsheets.values.batchClear({
-		spreadsheetId: spreadSheetId,
-		requestBody: {
-			ranges: [`${sheetName}!A${inputRowCount + 2}:ZZZ${Math.max(inputRowCount + 2, existingRowCount)}`],
-		},
-	});
+	// Determine if clearing rows is necessary and within grid size
+	const clearStartRow = inputRowCount + 2; // Start clearing after the last input row
+	const clearEndRow = Math.max(clearStartRow, existingRowCount);
 
-	return {
-		...updateResponse.data,
-		...clearRowsResponse.data,
-	};
+	if(clearStartRow <= existingGridRowCount)
+	{
+		const boundedClearEndRow = Math.min(clearEndRow, existingGridRowCount);
+		const clearRowsResponse = await sheets.spreadsheets.values.batchClear({
+			spreadsheetId: spreadSheetId,
+			requestBody: {
+				ranges: [`${sheetName}!A${clearStartRow}:ZZZ${boundedClearEndRow}`],
+			},
+		});
+	
+		return {
+			...updateResponse.data,
+			...clearRowsResponse.data,
+		};
+	}
+	return updateResponse.data;
+
+	
 }
 
 async function handleDuplicates(
