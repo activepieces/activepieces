@@ -257,7 +257,7 @@ const ImportFlowDialog = (
           </div>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          <div className="w-full flex justify-between items-center">
+          <div className="w-full flex flex-col gap-2 justify-between items-start">
             <span className="w-16 text-sm font-medium text-gray-700">
               {t('Flow')}
             </span>
@@ -270,7 +270,7 @@ const ImportFlowDialog = (
             />
           </div>
           {!props.insideBuilder && (
-            <div className="w-full flex justify-between items-center">
+            <div className="w-full flex flex-col gap-2 justify-between items-start">
               <span className="w-16 text-sm font-medium text-gray-700">
                 {t('Folder')}
               </span>
