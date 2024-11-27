@@ -73,40 +73,6 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
-    app.get(
-        '/validation/:id',
-        {
-            schema: {
-                params: GetOneRequest,
-            },
-        },
-        async (request) => {
-            const platformId = request.principal.platform.id
-            assertNotNullOrUndefined(platformId, 'platformId')
-
-            return customDomainService.getDomainValidationData({
-                id: request.params.id,
-            })
-        },
-    )
-
-    app.patch(
-        '/verify/:id',
-        {
-            schema: {
-                params: GetOneRequest,
-            },
-        },
-        async (request) => {
-            const platformId = request.principal.platform.id
-            assertNotNullOrUndefined(platformId, 'platformId')
-            return customDomainService.verifyDomain({
-                id: request.params.id,
-                platformId,
-            })
-        },
-    )
-
     app.delete(
         '/:id',
         {
