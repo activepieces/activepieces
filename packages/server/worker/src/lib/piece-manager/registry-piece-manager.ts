@@ -26,7 +26,7 @@ export class RegistryPieceManager extends PieceManager {
         if (dependenciesToInstall.length === 0) {
             return
         }
-        const pnpmAddLock = await memoryLock.acquire(`pnpm-add-${projectPath}`)
+        const npmAddLock = await memoryLock.acquire(`npm-add-${projectPath}`)
 
         const cache = cacheHandler(projectPath)
 
@@ -42,7 +42,7 @@ export class RegistryPieceManager extends PieceManager {
             )
         }
         finally {
-            await pnpmAddLock.release()
+            await npmAddLock.release()
         }
     }
 

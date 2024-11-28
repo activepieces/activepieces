@@ -14,7 +14,7 @@ type PackageManagerOutput = {
 
 type CoreCommand = 'install' | 'init' | 'link'
 type ExecCommand = 'npx tsc'
-type Command = CoreCommand | ExecCommand | string
+type Command = CoreCommand | ExecCommand
 
 export type PackageInfo = {
     /**
@@ -69,7 +69,7 @@ export const packageManager = {
             '--prefer-offline',
             '--ignore-scripts',
             '--no-package-lock',
-            '--legacy-peer-deps'
+            '--legacy-peer-deps',
         ]
 
         const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
@@ -106,7 +106,7 @@ export const packageManager = {
     }: LinkParams): Promise<PackageManagerOutput> {
         const config = [
             '--no-package-lock',
-            '--legacy-peer-deps'
+            '--legacy-peer-deps',
         ]
 
         const result = await runCommand(path, 'link', linkPath, ...config)
