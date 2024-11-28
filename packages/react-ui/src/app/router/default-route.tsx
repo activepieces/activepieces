@@ -5,14 +5,7 @@ import { Permission } from "../../../../shared/src";
 
 
 
-export const DefaultRoute = ()=>{
-    const token = authenticationSession.getToken();
-    const {useCheckAccess}= useAuthorization();
-    if(!token)
-    {
-        return <Navigate to='/sign-in' replace={true}></Navigate>
-    }
-   const determineDefaultRoute = ()=>{
+export const determineDefaultRoute = (useCheckAccess: (permission:Permission)=>boolean)=>{
     if(useCheckAccess(Permission.READ_FLOW))
     {
         return '/flows'
@@ -27,5 +20,14 @@ export const DefaultRoute = ()=>{
       }
       return '/settings'
    }
-   return <Navigate to={determineDefaultRoute()} replace={true}></Navigate>
+
+export const DefaultRoute = ()=>{
+    const token = authenticationSession.getToken();
+    const {useCheckAccess}= useAuthorization();
+    if(!token)
+    {
+        return <Navigate to='/sign-in' replace={true}></Navigate>
+    }
+   
+   return <Navigate to={determineDefaultRoute(useCheckAccess)} replace={true}></Navigate>
 }

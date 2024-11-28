@@ -17,6 +17,9 @@ import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
 
 import { Header } from './header';
+import { authenticationSession } from '@/lib/authentication-session';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { determineDefaultRoute } from '../router/default-route';
 
 type Link = {
   icon: React.ReactNode;
@@ -103,7 +106,8 @@ export function Sidebar({
     ApFlagId.SHOW_COMMUNITY,
   );
   const { platform } = platformHooks.useCurrentPlatform();
-
+  const projectId = authenticationSession.getProjectId();
+  const defaultRoute = determineDefaultRoute(useAuthorization().useCheckAccess);
   return (
     <div>
       <div className="flex min-h-screen w-full  ">
@@ -112,7 +116,7 @@ export function Sidebar({
             <ScrollArea>
               <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
                 <Link
-                  to="/flows"
+                  to={isHomeDashboard? `/projects/${projectId}${defaultRoute}`: '/platform'}
                   className="h-[48px] items-center justify-center "
                 >
                   <Tooltip>
