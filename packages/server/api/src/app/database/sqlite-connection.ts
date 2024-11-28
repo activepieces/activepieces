@@ -74,6 +74,7 @@ import { AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 } from './mig
 import { AddIndiciesToTriggerEventSqlite1732324359348 } from './migration/sqlite/1732324359348-AddIndiciesToTriggerEventSqlite'
 import { AddIndiciesToRunSqlite1732324481815 } from './migration/sqlite/1732324481815-AddIndiciesToRunSqlite'
 import { CreateProjectRoleTableSqlite1732482844483 } from './migration/sqlite/1732482844483-CreateProjectRoleTableSqlite'
+import { AddProjectRelationInUserInvitationSqlite1732791068873 } from './migration/sqlite/1732791068873-AddProjectRelationInUserInvitationSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -166,6 +167,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560,
         AddIndiciesToTriggerEventSqlite1732324359348,
         AddIndiciesToRunSqlite1732324481815,
+        AddProjectRelationInUserInvitationSqlite1732791068873,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
