@@ -127,42 +127,45 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
             ['3Wl9IAw5aM0HLafHgMYkb', ProjectMemberRole.OPERATOR, rolePermissions[ProjectMemberRole.OPERATOR], null, RoleType.DEFAULT],
         )
 
-        await queryRunner.query(`
-            ALTER TABLE "project_member" ADD COLUMN "projectRoleId" character varying
+        const projectMemberExists = await queryRunner.hasTable('project_member')
+
+        if (projectMemberExists) {
+            await queryRunner.query(`
+                ALTER TABLE "project_member" ADD COLUMN "projectRoleId" character varying
         `)
 
-        await queryRunner.query(`
+            await queryRunner.query(`
             ALTER TABLE "project_member" 
             ADD CONSTRAINT "fk_project_member_project_role_id" 
             FOREIGN KEY ("projectRoleId") REFERENCES "project_role"("id") ON DELETE CASCADE
         `)
 
-        const projectMembers = await queryRunner.query(`
+            const projectMembers = await queryRunner.query(`
             SELECT id, role FROM project_member
         `)
 
-        for (const projectMember of projectMembers) {
-            const projectRoleIdResult = await queryRunner.query(
-                'SELECT id FROM project_role WHERE name = $1',
-                [projectMember.role],
-            )
+            for (const projectMember of projectMembers) {
+                const projectRoleIdResult = await queryRunner.query(
+                    'SELECT id FROM project_role WHERE name = $1',
+                    [projectMember.role],
+                )
 
-            const projectRoleId = projectRoleIdResult[0]?.id
+                const projectRoleId = projectRoleIdResult[0]?.id
 
-            await queryRunner.query(
-                'UPDATE "project_member" SET "projectRoleId" = $1 WHERE id = $2',
-                [projectRoleId, projectMember.id],
-            )
-        }
+                await queryRunner.query(
+                    'UPDATE "project_member" SET "projectRoleId" = $1 WHERE id = $2',
+                    [projectRoleId, projectMember.id],
+                )
+            }
 
-        await queryRunner.query(`
+            await queryRunner.query(`
             ALTER TABLE "project_member" DROP COLUMN "role"
         `)
 
-        await queryRunner.query(`
+            await queryRunner.query(`
             ALTER TABLE "project_member" ALTER COLUMN "projectRoleId" SET NOT NULL
         `)
-
+        }
         await queryRunner.query(`
             ALTER TABLE "user_invitation" ADD COLUMN "projectRoleId" character varying
         `)
@@ -230,39 +233,42 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "user_invitation" DROP COLUMN "projectRoleId"
         `)
+        const projectMemberExists = await queryRunner.hasTable('project_member')
 
-        // Re-add the "role" column to "project_member"
-        await queryRunner.query(`
+        if (projectMemberExists) {
+            // Re-add the "role" column to "project_member"
+            await queryRunner.query(`
             ALTER TABLE "project_member" ADD COLUMN "role" character varying
         `)
 
-        // Restore "role" values from "projectRoleId"
-        const projectMembers = await queryRunner.query(`
+            // Restore "role" values from "projectRoleId"
+            const projectMembers = await queryRunner.query(`
             SELECT id, "projectRoleId" FROM project_member
         `)
 
-        for (const projectMember of projectMembers) {
-            const projectRoleNameResult = await queryRunner.query(
-                'SELECT name FROM project_role WHERE id = $1',
-                [projectMember.projectRoleId],
-            )
+            for (const projectMember of projectMembers) {
+                const projectRoleNameResult = await queryRunner.query(
+                    'SELECT name FROM project_role WHERE id = $1',
+                    [projectMember.projectRoleId],
+                )
 
-            const projectRoleName = projectRoleNameResult[0]?.name
+                const projectRoleName = projectRoleNameResult[0]?.name
 
-            await queryRunner.query(
-                'UPDATE "project_member" SET "role" = $1 WHERE id = $2',
-                [projectRoleName, projectMember.id],
-            )
-        }
+                await queryRunner.query(
+                    'UPDATE "project_member" SET "role" = $1 WHERE id = $2',
+                    [projectRoleName, projectMember.id],
+                )
+            }
 
-        // Drop the foreign key and column "projectRoleId" from "project_member"
-        await queryRunner.query(`
+            // Drop the foreign key and column "projectRoleId" from "project_member"
+            await queryRunner.query(`
             ALTER TABLE "project_member" DROP CONSTRAINT "fk_project_member_project_role_id"
         `)
 
-        await queryRunner.query(`
+            await queryRunner.query(`
             ALTER TABLE "project_member" DROP COLUMN "projectRoleId"
         `)
+        }
 
         // Drop the "project_role" table
         await queryRunner.query(`
