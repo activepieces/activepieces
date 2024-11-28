@@ -23,12 +23,6 @@ const initialPermissions = [
     disableNone: true,
   },
   {
-    name: 'App Connections',
-    description: 'Read and write app connections',
-    read: [Permission.READ_APP_CONNECTION],
-    write: [Permission.READ_APP_CONNECTION, Permission.WRITE_APP_CONNECTION],
-  },
-  {
     name: 'Flows',
     description: 'Read and write flows',
     read: [Permission.READ_FLOW],
@@ -37,6 +31,25 @@ const initialPermissions = [
       Permission.UPDATE_FLOW_STATUS,
       Permission.WRITE_FLOW,
     ],
+    disableNone: true,
+  },
+  {
+    name: 'App Connections',
+    description: 'Read and write app connections',
+    read: [Permission.READ_APP_CONNECTION],
+    write: [Permission.READ_APP_CONNECTION, Permission.WRITE_APP_CONNECTION],
+  },
+  {
+    name: 'Runs',
+    description: 'Read and write runs',
+    read: [Permission.READ_RUN],
+    write: [Permission.READ_RUN, Permission.WRITE_RUN],
+  },
+  {
+    name: 'Issues',
+    description: 'Read and write issues',
+    read: [Permission.READ_ISSUES],
+    write: [Permission.READ_ISSUES, Permission.WRITE_ISSUES],
   },
   {
     name: 'Project Members',
@@ -56,18 +69,7 @@ const initialPermissions = [
     read: [Permission.READ_GIT_REPO],
     write: [Permission.READ_GIT_REPO, Permission.WRITE_GIT_REPO],
   },
-  {
-    name: 'Runs',
-    description: 'Read and write runs',
-    read: [Permission.READ_RUN],
-    write: [Permission.READ_RUN, Permission.WRITE_RUN],
-  },
-  {
-    name: 'Issues',
-    description: 'Read and write issues',
-    read: [Permission.READ_ISSUES],
-    write: [Permission.READ_ISSUES, Permission.WRITE_ISSUES],
-  }
+ 
 ];
 interface ProjectRoleDialogProps {
   mode: 'create' | 'edit';
