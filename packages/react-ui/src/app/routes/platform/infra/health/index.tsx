@@ -71,7 +71,7 @@ export default function WorkersPage() {
                   className={cn('flex gap-2 items-center', {
                     'text-success-300': [STATUS.UP_TO_DATE, STATUS.CONNECTED].includes(status),
                     'text-warning-300': status === STATUS.UPDATE_AVAILABLE,
-                    'text-red-700': status === STATUS.DISCONNECTED,
+                    'text-destructive-300': status === STATUS.DISCONNECTED,
                   })}
                 >
                   {[STATUS.UP_TO_DATE, STATUS.CONNECTED].includes(status) && (

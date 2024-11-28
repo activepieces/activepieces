@@ -486,7 +486,7 @@ const routes = [
     element: (
       <PlatformAdminContainer>
         <PlatformSecondSidebarLayout type="infrastructure">
-          <PageTitle title="Workers">
+          <PageTitle title="System Health">
             <SettingsHealthPage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
