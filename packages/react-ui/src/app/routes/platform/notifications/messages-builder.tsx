@@ -14,7 +14,7 @@ export const MessagesBuilder = (
         ? semver.gte(currentVersion, latestVersion)
         : false;
 
-    if (isVersionUpToDate) {
+    if (!isVersionUpToDate) {
         newMessages.push({
             id: 'version-warning',
             title: 'New Version Available',

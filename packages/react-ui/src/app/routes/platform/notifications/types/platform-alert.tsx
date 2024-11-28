@@ -27,7 +27,7 @@ export const PlatformAlert: React.FC<PlatformMessageProps> = ({
     const navigate = useNavigate();
 
     return (
-        <Alert key={id} variant={type} className={cn('flex items-start', type === 'destructive' ? ' text-destructive-300' : '')}>
+        <Alert key={id} variant={type} className={cn('flex items-start', type === 'destructive' ? 'text-destructive-300' : '')}>
             {type === 'destructive' ? (
                 <AlertCircle className="h-4 w-4" />
             ): icon}
