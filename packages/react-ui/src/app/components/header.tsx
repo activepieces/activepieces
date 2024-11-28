@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { LogOut, Shield } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
@@ -12,7 +12,6 @@ import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
-
 import { useEmbedding } from '../../components/embed-provider';
 import { Separator } from '../../components/ui/separator';
 import {
@@ -20,37 +19,21 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../components/ui/tooltip';
-
 import { FlagGuard } from './flag-guard';
-import { useSocket } from '@/components/socket-provider';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { useQuery } from '@tanstack/react-query';
-import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
-import { MessagesBuilder } from '../routes/platform/notifications/messages-builder';
-import { Message } from '../routes/platform/notifications/message';
+import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks';
+import { PlatformDialog } from '../routes/platform/notifications/paltform-dialog';
 
 export const Header = () => {
   const history = useLocation();
   const isInPlatformAdmin = history.pathname.startsWith('/platform');
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const { embedState } = useEmbedding();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const { data: currentVersion } = flagsHooks.useFlag<string>(ApFlagId.CURRENT_VERSION);
-  const { data: latestVersion } = flagsHooks.useFlag<string>(ApFlagId.LATEST_VERSION);
-  const socket = useSocket();
-  const { data: providers, isLoading } = useQuery({
-    queryKey: ['ai-providers'],
-    queryFn: () => aiProviderApi.list(),
-  });
+  const messages = notificationHooks.useNotifications();
 
-  useEffect(() => {
-    const newMessages = MessagesBuilder(currentVersion, latestVersion, socket.connected, providers, isLoading);
-    setMessages(newMessages);
-  }, [socket.connected, currentVersion, latestVersion, providers, isLoading]);
-  
   return (
     !embedState.isEmbedded && (
       <div>
+        <PlatformDialog messages={messages} />
         <div className="flex h-[60px] items-center">
           {isInPlatformAdmin ? (
             <span className="text-3xl font-bold px-4 py-2">
@@ -83,8 +66,7 @@ export const Header = () => {
                   </span>
 
                   {messages.length && !isInPlatformAdmin && (
-                    <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-destructive-300 text-white text-xs rounded-full flex items-center justify-center">
-                    </span>
+                    <span className="bg-destructive absolute right-[3px] top-[3px] size-2 rounded-full"></span>
                   )}
                 </Button>
               </Link>

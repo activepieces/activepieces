@@ -5,8 +5,7 @@ import { SparklesIcon, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
-interface PlatformMessageProps {
-    id: string;
+interface PlatformAlertProps {
     title: string;
     description: string;
     actionText?: string;
@@ -15,8 +14,7 @@ interface PlatformMessageProps {
     type?: 'default' | 'destructive';
 }
 
-export const PlatformAlert: React.FC<PlatformMessageProps> = ({
-    id,
+export const PlatformAlert: React.FC<PlatformAlertProps> = ({
     title,
     description,
     actionText,
@@ -27,7 +25,9 @@ export const PlatformAlert: React.FC<PlatformMessageProps> = ({
     const navigate = useNavigate();
 
     return (
-        <Alert key={id} variant={type} className={cn('flex items-start', type === 'destructive' ? 'text-destructive-300' : '')}>
+        <Alert variant={type} className={cn('flex items-start',{
+             'text-destructive-300': type === 'destructive'
+        })}>
             {type === 'destructive' ? (
                 <AlertCircle className="h-4 w-4" />
             ): icon}
