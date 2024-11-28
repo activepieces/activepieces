@@ -268,7 +268,6 @@ const FlowRunsPage = () => {
       const flowId = searchParams.getAll('flowId');
       const createdAfter = searchParams.get('createdAfter') || undefined;
       const createdBefore = searchParams.get('createdBefore') || undefined;
-
       return flowRunsApi.bulkRetry({
         projectId: authenticationSession.getProjectId()!,
         flowRunIds: retryParams.runIds,
@@ -303,6 +302,7 @@ const FlowRunsPage = () => {
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
+              <PermissionNeededTooltip hasPermission={userHasPermissionToRetryRun}>
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild disabled={isDisabled}>
                   <Button disabled={isDisabled} className="h-9 w-full">
@@ -312,6 +312,7 @@ const FlowRunsPage = () => {
                       : t('Retry')}
                     <ChevronDown className="h-3 w-4 ml-2" />
                   </Button>
+               
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <PermissionNeededTooltip
@@ -364,6 +365,8 @@ const FlowRunsPage = () => {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+              </PermissionNeededTooltip>
+
             </div>
           );
         },
@@ -383,6 +386,7 @@ const FlowRunsPage = () => {
     [navigate, openNewWindow],
   );
 
+  
   return (
     <div className="flex-col w-full">
       <TableTitle>{t('Flow Runs')}</TableTitle>

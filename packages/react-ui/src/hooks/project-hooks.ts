@@ -10,6 +10,7 @@ import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
+import { authenticationApi } from '@/lib/authentication-api';
 
 export const projectHooks = {
   prefetchProject: () => {
@@ -17,6 +18,13 @@ export const projectHooks = {
     usePrefetchQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project'],
       queryFn: projectApi.current,
+      staleTime: Infinity,
+    });
+  },
+  prefetchProjectRole: ()=>{
+    usePrefetchQuery({
+      queryKey: ['project-role',authenticationSession.getProjectId()],
+      queryFn: async () => authenticationApi.me(),
       staleTime: Infinity,
     });
   },

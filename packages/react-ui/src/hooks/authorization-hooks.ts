@@ -25,13 +25,12 @@ export const useAuthorization = () => {
   });
 
   const useCheckAccess = (permission: Permission) => {
-    return React.useMemo(() => {
-      if (isLoading || edition === ApEdition.COMMUNITY) {
+     if (isLoading || edition === ApEdition.COMMUNITY) {
         return true;
       }
+      console.log(projectRole)
       return projectRole?.permissions?.includes(permission) ?? true;
-    }, [permission, projectRole, edition,isLoading]);
-  };
+    }
 
   return { useCheckAccess };
 };

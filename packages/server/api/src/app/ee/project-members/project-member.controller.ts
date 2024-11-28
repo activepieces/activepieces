@@ -60,7 +60,6 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 const GetCurrentProjectMemberRoleRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
-        permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {
 
