@@ -46,7 +46,7 @@ enum TipTapNodeTypes {
 const isMentionNodeText = (item: string) => /^\{\{.*\}\}$/.test(item);
 const isStepName = (stepName:string)=>{
   const pattern = /^(step_\d+|trigger)/;
-  return pattern.test(stepName);
+  return pattern.test(stepName.trim());
 
 }
 type ParseMentionNodeFromText = {
@@ -88,7 +88,7 @@ const getStepMetadataFromPath = (
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) => {
   const stepPath = removeIntroplationBrackets(path);
-  const stepName = textMentionUtils.keysWithinPath(stepPath)[0];
+  const stepName = textMentionUtils.keysWithinPath(stepPath)[0].trim();
   const index = steps.findIndex((step) => step.name === stepName);
   return {
     dfsIndex: index,
