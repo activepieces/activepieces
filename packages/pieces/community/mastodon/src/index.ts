@@ -43,7 +43,7 @@ export const mastodon = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/mastodon.png',
   categories: [PieceCategory.COMMUNICATION],
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   authors: ["denieler","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
   auth: mastodonAuth,
   actions: [

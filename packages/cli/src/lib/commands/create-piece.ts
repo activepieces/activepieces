@@ -96,7 +96,7 @@ const generateIndexTsFile = async (pieceName: string, pieceType: string) => {
     export const ${pieceNameCamelCase} = createPiece({
       displayName: "${capitalizeFirstLetter(pieceName)}",
       auth: PieceAuth.None(),
-      minimumSupportedRelease: '0.20.0',
+      minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/${pieceName}.png",
       authors: [],
       actions: [],

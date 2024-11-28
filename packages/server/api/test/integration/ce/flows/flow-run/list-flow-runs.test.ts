@@ -1,14 +1,14 @@
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
+import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../../src/app/server'
 import { generateMockToken } from '../../../../helpers/auth'
 import { createMockPlatform, createMockProject, createMockUser } from '../../../../helpers/mocks'
-
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 

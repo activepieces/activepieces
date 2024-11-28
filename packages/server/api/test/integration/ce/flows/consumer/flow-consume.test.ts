@@ -14,6 +14,7 @@ import {
 import { FastifyInstance } from 'fastify'
 import { flowJobExecutor } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
+import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../../src/app/server'
 import {
@@ -28,12 +29,14 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+
     await app.listen({
         host: '0.0.0.0',
         port: 3000,
     })
+
 })
 
 afterAll(async () => {

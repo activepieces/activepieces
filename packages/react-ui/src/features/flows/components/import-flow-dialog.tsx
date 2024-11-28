@@ -14,9 +14,21 @@ import {
   DialogHeader,
   DialogTrigger,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectGroup,
+  SelectLabel,
+  SelectItem,
+} from '@/components/ui/select';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
@@ -71,6 +83,12 @@ const ImportFlowDialog = (
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [failedFiles, setFailedFiles] = useState<string[]>([]);
+  const [selectedFolderName, setSelectedFolderName] = useState<
+    string | undefined
+  >(undefined);
+
+  const { folders, isLoading } = foldersHooks.useFolders();
+
   const navigate = useNavigate();
 
   const { mutate: importFlows, isPending } = useMutation<
@@ -85,6 +103,11 @@ const ImportFlowDialog = (
           : await flowsApi.create({
               displayName: template.name,
               projectId: authenticationSession.getProjectId()!,
+              folderName:
+                selectedFolderName === undefined ||
+                selectedFolderName === 'Uncategorized'
+                  ? undefined
+                  : selectedFolderName,
             });
 
         return await flowsApi.update(flow.id, {
@@ -201,6 +224,10 @@ const ImportFlowDialog = (
     setTemplates(newTemplates);
   };
 
+  const handleFolderSelect = (folderName: string | undefined) => {
+    setSelectedFolderName(folderName);
+  };
+
   return (
     <Dialog
       open={isDialogOpen}
@@ -229,22 +256,64 @@ const ImportFlowDialog = (
             )}
           </div>
         </DialogHeader>
-        <div className="flex gap-2 items-center">
-          <Input
-            type="file"
-            accept={props.insideBuilder ? '.json' : '.json,.zip'}
-            ref={fileInputRef}
-            onChange={handleFileChange}
-          />
-          <Button onClick={handleSubmit} loading={isPending}>
-            {t('Import')}
-          </Button>
+        <div className="flex flex-col gap-4">
+          <div className="w-full flex flex-col gap-2 justify-between items-start">
+            <span className="w-16 text-sm font-medium text-gray-700">
+              {t('Flow')}
+            </span>
+            <Input
+              id="file-input"
+              type="file"
+              accept={props.insideBuilder ? '.json' : '.json,.zip'}
+              ref={fileInputRef}
+              onChange={handleFileChange}
+            />
+          </div>
+          {!props.insideBuilder && (
+            <div className="w-full flex flex-col gap-2 justify-between items-start">
+              <span className="w-16 text-sm font-medium text-gray-700">
+                {t('Folder')}
+              </span>
+              {isLoading ? (
+                <div className="flex justify-center items-center w-full">
+                  <LoadingSpinner className="h-5 w-5" />
+                </div>
+              ) : (
+                <Select
+                  onValueChange={handleFolderSelect}
+                  defaultValue={selectedFolderName}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('Select a folder')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>{t('Folders')}</SelectLabel>
+                      <SelectItem value="Uncategorized">
+                        {t('Uncategorized')}
+                      </SelectItem>
+                      {folders?.map((folder) => (
+                        <SelectItem key={folder.id} value={folder.displayName}>
+                          {folder.displayName}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
         </div>
         {errorMessage && (
           <FormError formMessageId="import-flow-error-message" className="mt-4">
             {errorMessage}
           </FormError>
         )}
+        <DialogFooter>
+          <Button onClick={handleSubmit} loading={isPending}>
+            {t('Import')}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

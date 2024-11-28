@@ -24,7 +24,7 @@ export const pipedrive = createPiece({
   displayName: 'Pipedrive',
   description: 'Sales CRM and pipeline management software',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
   categories: [PieceCategory.SALES_AND_CRM],
   auth: pipedriveAuth,

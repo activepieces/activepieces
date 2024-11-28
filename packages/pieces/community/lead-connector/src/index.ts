@@ -80,7 +80,7 @@ export const leadConnector = createPiece({
   displayName: 'LeadConnector',
   description: 'Lead Connector - Go High Level',
   auth: leadConnectorAuth,
-  minimumSupportedRelease: '0.9.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/lead-connector.png',
   categories: [PieceCategory.SALES_AND_CRM],
   authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],

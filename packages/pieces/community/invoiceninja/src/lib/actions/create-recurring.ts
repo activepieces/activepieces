@@ -1,12 +1,13 @@
 import {
     createAction,
     Property,
-    Validators,
   } from '@activepieces/pieces-framework';
-  
-  import { invoiceninjaAuth } from '../..';
-  
-  export const createRecurringInvoice = createAction({
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
+
+import { invoiceninjaAuth } from '../..';
+
+export const createRecurringInvoice = createAction({
     auth: invoiceninjaAuth,
     name: 'create_recurring_invoice',
     displayName: 'Create Recurring Invoice',
@@ -128,29 +129,32 @@ import {
         displayName: 'No of billing cycles',
         description: 'Enter a number. How many times should this bill be generated',
         required: false,
-    validators: [Validators.inRange(0, 999)],
-    }),
+      }),
       auto_frequency: Property.Number({
         displayName: 'Override Frequency using Frequency ID (optional)',
         description: 'Enter a number. 1-12 - corresponds to dropdown above [Daily being 1, Weekly 2 etc..]!',
         required: false,
-    validators: [Validators.inRange(1, 12)],
-    }),
+      }),
       due_date: Property.DateTime({
         displayName: 'Invoice next send date',
         description: 'e.g., 2024-01-20',
         required: true,
-        validators: [Validators.datetimeIso],
       }),
       last_date: Property.DateTime({
         displayName: 'Invoice last sent date',
         description: 'e.g., 2024-01-20',
         required: false,
-        validators: [Validators.datetimeIso],
       }),
     },
   
     async run(context) {
+      await propsValidation.validateZod(context.propsValue, {
+        nocycles: z.number().min(0).max(999).optional(),
+        auto_frequency: z.number().min(1).max(12).optional(),
+        due_date: z.string().datetime(),
+        last_date: z.string().datetime().optional(),
+      });
+
       const INapiToken = context.auth.access_token;
       const headers = {
         'X-Api-Token': INapiToken,
@@ -280,4 +284,3 @@ import {
       }  
     },
   });
-  

@@ -40,10 +40,12 @@ export const triggerEventService = {
             projectId,
         })
 
+        const data = Buffer.from(JSON.stringify(payload))
         const file = await fileService.save({
             projectId,
             fileName: `${apId()}.json`,
-            data: Buffer.from(JSON.stringify(payload)),
+            data,
+            size: data.length,
             type: FileType.TRIGGER_EVENT_FILE,
             compression: FileCompression.NONE,
         })

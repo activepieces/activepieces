@@ -99,7 +99,7 @@ export const wordpress = createPiece({
   displayName: 'WordPress',
   description: 'Open-source website creation software',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
   categories: [PieceCategory.MARKETING],
   auth: wordpressAuth,

@@ -1,5 +1,5 @@
-import { Static, Type } from '@sinclair/typebox'
-
+import { Pick, Static, Type } from '@sinclair/typebox'
+import { File } from '../../file'
 
 export const SaveSampleDataRequest = Type.Object({
     flowVersionId: Type.String(),
@@ -59,3 +59,6 @@ export const DEFAULT_SAMPLE_DATA_SETTINGS: SampleDataSettings = {
     sampleDataFileId: undefined,
     customizedInputs: undefined,
 }
+
+export const SaveSampleDataResponse = Pick(File, ['id', 'size', 'type'])
+export type SaveSampleDataResponse = Static<typeof SaveSampleDataResponse>

@@ -1,7 +1,8 @@
-import { apId, PiecesFilterType, PieceType, ProjectMemberRole } from '@activepieces/shared'
+import { apId, DefaultProjectRole, PiecesFilterType, PieceType, ProjectRole } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { setupServer } from '../../../../src/app/server'
@@ -18,8 +19,8 @@ import {
 
 let app: FastifyInstance | null = null
 
-beforeAll(async () => {
-    await databaseConnection().initialize()
+beforeAll(async () => { 
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 
@@ -236,11 +237,14 @@ describe('Managed Authentication API', () => {
                 .save(mockSigningKey)
 
             const mockedEmail = faker.internet.email()
+
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER }) as ProjectRole
+
             const { mockExternalToken } = generateMockExternalToken({
                 platformId: mockPlatform.id,
                 externalEmail: mockedEmail,
                 signingKeyId: mockSigningKey.id,
-                role: ProjectMemberRole.VIEWER,
+                projectRole: projectRole.name,
             })
 
             // act
@@ -260,15 +264,14 @@ describe('Managed Authentication API', () => {
             const generatedProjectMember = await databaseConnection()
                 .getRepository('project_member')
                 .findOneBy({
-                    userId: responseBody?.id,
-                    platformId: mockPlatform.id,
                     projectId: responseBody?.projectId,
+                    userId: responseBody?.id,
                 })
 
             expect(generatedProjectMember?.projectId).toBe(responseBody?.projectId)
             expect(generatedProjectMember?.userId).toBe(responseBody?.id)
             expect(generatedProjectMember?.platformId).toBe(mockPlatform.id)
-            expect(generatedProjectMember?.role).toBe('VIEWER')
+            expect(generatedProjectMember?.projectRoleId).toBe(projectRole.id)
         })
 
         it('Adds new user to existing project', async () => {

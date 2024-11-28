@@ -1,11 +1,12 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { createCampaign } from '../api';
 import { buildListDropdown } from '../props';
 import { sendyAuth, SendyAuthType } from '../auth';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const createCampaignAction = createAction({
   name: 'create_campaign',
@@ -17,7 +18,6 @@ export const createCampaignAction = createAction({
       displayName: 'From Email',
       description: 'The email address the campaign will be sent from',
       required: true,
-      validators: [Validators.email],
     }),
     fromName: Property.ShortText({
       displayName: 'From Name',
@@ -28,7 +28,6 @@ export const createCampaignAction = createAction({
       displayName: 'Reply To',
       description: 'The email address that will be used for replies',
       required: true,
-      validators: [Validators.email],
     }),
     title: Property.ShortText({
       displayName: 'Title',

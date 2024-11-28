@@ -17,12 +17,13 @@ export function BuilderStateProvider({
   ...props
 }: BuilderStateProviderProps) {
   const storeRef = useRef<BuilderStore>();
-  const { checkAccess } = useAuthorization();
+  const { useCheckAccess } = useAuthorization();
+  const readonly = !useCheckAccess(Permission.WRITE_FLOW) || props.readonly;
 
   if (!storeRef.current) {
     storeRef.current = createBuilderStore({
       ...props,
-      readonly: !checkAccess(Permission.WRITE_FLOW) || props.readonly,
+      readonly,
       sampleData,
     });
   }

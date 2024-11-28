@@ -18,7 +18,7 @@ export const asanaAuth = PieceAuth.OAuth2({
 export const asana = createPiece({
   displayName: 'Asana',
   description: "Work management platform designed to help teams organize, track, and manage their work.",
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/asana.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ["ShayPunter","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],

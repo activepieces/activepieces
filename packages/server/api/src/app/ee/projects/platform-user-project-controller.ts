@@ -33,6 +33,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
             platformId: request.principal.platform.id,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? 10,
+            displayName: request.query.displayName,
         })
     })
 

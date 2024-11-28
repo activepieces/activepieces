@@ -5,6 +5,7 @@ import {
     ErrorCode,
     ExecutionType,
     FlowRun,
+    isFlowUserTerminalState,
     isNil,
     PauseType,
     ProgressUpdateType,
@@ -45,10 +46,11 @@ const calculateDelayForPausedRun = (
 }
 
 export const flowRunSideEffects = {
-    async finish({ flowRun }: { flowRun: FlowRun }): Promise<void> {
-        await flowRunHooks
-            .getHooks()
-            .onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks!, flowRun })
+    async finish(flowRun: FlowRun): Promise<void> {
+        if (!isFlowUserTerminalState(flowRun.status)) {
+            return
+        }
+        await flowRunHooks.getHooks().onFinish(flowRun)
         eventsHooks.get().sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_FINISHED,
             data: {

@@ -135,19 +135,11 @@ async function handleWebhook({
     async,
     saveSampleData,
     flowVersionToRun,
-}: {
-    request: FastifyRequest
-    flowId: string
-    async: boolean
-    saveSampleData: boolean
-    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
-}): Promise<EngineHttpResponse> {
+}: HandleWebhookParams): Promise<EngineHttpResponse> {
     const flow = await getFlowOrThrow(flowId)
     const payload = await convertRequest(request, flow.projectId, flow.id)
     const requestId = apId()
-    const synchronousHandlerId = async
-        ? null
-        : webhookResponseWatcher.getServerId()
+    const synchronousHandlerId = async ? null : webhookResponseWatcher.getServerId()
     if (isNil(flow)) {
         return {
             status: StatusCodes.GONE,
@@ -157,8 +149,8 @@ async function handleWebhook({
     }
     if (
         flow.status !== FlowStatus.ENABLED &&
-    !saveSampleData &&
-    flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED
+        !saveSampleData &&
+        flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED
     ) {
         return {
             status: StatusCodes.NOT_FOUND,
@@ -191,6 +183,13 @@ async function handleWebhook({
     return webhookResponseWatcher.oneTimeListener(requestId, true)
 }
 
+type HandleWebhookParams = {
+    request: FastifyRequest
+    flowId: string
+    async: boolean
+    saveSampleData: boolean
+    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
+}
 async function convertRequest(
     request: FastifyRequest,
     projectId: string,
@@ -218,16 +217,15 @@ const convertBody = async (
 
         for (const [key, value] of requestBodyEntries) {
             if (isMultipartFile(value)) {
-                const file = await stepFileService.saveAndEnrich(
-                    {
-                        file: value.data as Buffer,
-                        fileName: value.filename,
-                        stepName: 'trigger',
-                        flowId,
-                    },
-                    request.hostname,
+                const file = await stepFileService.saveAndEnrich({
+                    data: value.data as Buffer,
+                    fileName: value.filename,
+                    stepName: 'trigger',
+                    flowId,
+                    contentLength: value.data.length,
+                    hostname: request.hostname,
                     projectId,
-                )
+                })
                 jsonResult[key] = file.url
             }
             else {

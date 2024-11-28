@@ -13,7 +13,7 @@ export const contiguity = createPiece({
   displayName: 'Contiguity',
   description: 'An SMS service for your needs - quick and simple',
   auth: contigAuth,
-  minimumSupportedRelease: '0.7.1',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/contiguity.png',
   authors: ["Owlcept","Ozak93","kishanprmr","MoShizzle","abuaboud"],
   categories: [PieceCategory.MARKETING],

@@ -63,9 +63,8 @@ function AppConnectionsPage() {
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
-  const { checkAccess } = useAuthorization();
   const { toast } = useToast();
-
+  const { useCheckAccess } = useAuthorization();
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown
@@ -320,7 +319,7 @@ function AppConnectionsPage() {
     },
   });
 
-  const userHasPermissionToWriteAppConnection = checkAccess(
+  const userHasPermissionToWriteAppConnection = useCheckAccess(
     Permission.WRITE_APP_CONNECTION,
   );
 

@@ -108,7 +108,6 @@ export const authenticationService = {
             ...userWithoutPassword,
             token: authnResponse.token,
             projectId: authnResponse.project.id,
-            projectRole: authnResponse.projectRole,
         }
     },
 
@@ -125,7 +124,6 @@ export const authenticationService = {
             ...userWithoutPassword,
             token: authnResponse.token,
             projectId: authnResponse.project.id,
-            projectRole: authnResponse.projectRole,
         }
     },
 }

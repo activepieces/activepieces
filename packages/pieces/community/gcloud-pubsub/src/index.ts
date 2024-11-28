@@ -53,7 +53,7 @@ export const gcloudPubsub = createPiece({
   displayName: 'GCloud Pub/Sub',
   description: "Google Cloud's event streaming service",
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gcloud-pubsub.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: googlePubsubAuth,

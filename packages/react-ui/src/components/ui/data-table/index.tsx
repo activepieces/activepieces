@@ -113,27 +113,30 @@ export function DataTable<
   hidePagination,
   bulkActions = [],
 }: DataTableProps<TData, TValue, Keys, F>) {
-  const columns = columnsInitial.concat([
-    {
-      accessorKey: '__actions',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="" />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="flex items-end justify-end gap-4">
-            {actions.map((action, index) => {
+  const columns =
+    actions.length > 0
+      ? columnsInitial.concat([
+          {
+            accessorKey: '__actions',
+            header: ({ column }) => (
+              <DataTableColumnHeader column={column} title="" />
+            ),
+            cell: ({ row }) => {
               return (
-                <React.Fragment key={index}>
-                  {action(row.original)}
-                </React.Fragment>
+                <div className="flex justify-end gap-4">
+                  {actions.map((action, index) => {
+                    return (
+                      <React.Fragment key={index}>
+                        {action(row.original)}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
               );
-            })}
-          </div>
-        );
-      },
-    },
-  ]);
+            },
+          },
+        ])
+      : columnsInitial;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const startingCursor = searchParams.get('cursor') || undefined;

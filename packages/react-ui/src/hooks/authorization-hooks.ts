@@ -1,29 +1,45 @@
+import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { rolePermissions } from '@activepieces/ee-shared';
-import { ApFlagId, Permission, PlatformRole } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  Permission,
+  PlatformRole,
+} from '@activepieces/shared';
 
 export const useAuthorization = () => {
-  const role = authenticationSession.getUserProjectRole();
+  const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
 
-  const checkAccess = React.useCallback(
-    (permission: Permission) => {
-      if (!role) return true;
-
-      return rolePermissions[role].includes(permission);
+  const { data: projectRole, isLoading } = useQuery({
+    queryKey: ['project-role', authenticationSession.getProjectId()],
+    queryFn: async () => {
+      const projectRole = await authenticationApi.me();
+      return projectRole;
     },
-    [role],
-  );
+    enabled: !isNil(edition) && edition !== ApEdition.COMMUNITY,
+  });
 
-  return { checkAccess, role };
+  const useCheckAccess = (permission: Permission) => {
+    return React.useMemo(() => {
+      if (isLoading || edition === ApEdition.COMMUNITY) {
+        return true;
+      }
+      return projectRole?.permissions?.includes(permission) ?? true;
+    }, [permission, projectRole, edition]);
+  };
+
+  return { useCheckAccess };
 };
 
 export const useShowPlatformAdminDashboard = () => {
   const platformRole = authenticationSession.getUserPlatformRole();
-  const { data: isPlatfromDemo } = flagsHooks.useFlag<boolean>(
+  const { data: isPlatformDemo } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PLATFORM_DEMO,
   );
-  return isPlatfromDemo || platformRole === PlatformRole.ADMIN;
+  return isPlatformDemo || platformRole === PlatformRole.ADMIN;
 };

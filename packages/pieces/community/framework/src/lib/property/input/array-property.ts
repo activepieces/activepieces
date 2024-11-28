@@ -1,7 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyType } from "./property-type";
-import { ValidationInputType } from "../../validators/types";
 import { LongTextProperty, ShortTextProperty } from "./text-property";
 import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
 import { MultiSelectDropdownProperty } from "./dropdown/dropdown-prop";
@@ -43,4 +42,4 @@ export type ArraySubProps<R extends boolean> = Record<
 export type ArrayProperty<R extends boolean> = BasePropertySchema &
 {
     properties?: ArraySubProps<R>;
-} & TPropertyValue<unknown[], PropertyType.ARRAY, ValidationInputType.ARRAY, R>;
+} & TPropertyValue<unknown[], PropertyType.ARRAY, R>;

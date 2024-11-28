@@ -37,7 +37,7 @@ export const elevenlabsAuth = PieceAuth.SecretText({
 export const elevenlabs = createPiece({
   displayName: 'ElevenLabs',
   auth: elevenlabsAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/elevenlabs.png',
   authors: ['pfernandez98'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],

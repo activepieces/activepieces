@@ -47,9 +47,5 @@ export const clearSheetAction = createAction({
     );
 
     return response.body;
-
-    // return {
-    //   deletedRow: rowsToDelete,
-    // };
   },
 });

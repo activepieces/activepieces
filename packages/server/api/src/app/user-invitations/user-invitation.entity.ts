@@ -25,13 +25,13 @@ export const UserInvitationEntity = new EntitySchema<UserInvitation>({
             type: String,
             nullable: true,
         },
-        projectRole: {
-            type: String,
-            nullable: true,
-        },
         status: {
             type: String,
             nullable: false,
+        },
+        projectRoleId: {
+            type: String,
+            nullable: true,
         },
     },
     indices: [
@@ -42,5 +42,15 @@ export const UserInvitationEntity = new EntitySchema<UserInvitation>({
         },
     ],
     relations: {
+        projectRole: {
+            type: 'many-to-one',
+            target: 'project_role',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'projectRoleId',
+                referencedColumnName: 'id',
+            },
+        },
     },
 })

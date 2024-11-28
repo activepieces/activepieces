@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { ShowPoweredBy } from '@/components/show-powered-by';
@@ -129,6 +130,16 @@ const fileToBase64 = (
 };
 
 const ApForm = ({ form, useDraft }: ApFormProps) => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const queryParamsLowerCase = Array.from(queryParams.entries()).reduce(
+    (acc, [key, value]) => {
+      acc[key.toLowerCase()] = value;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
+
   const inputs = useRef<FormInputWithName[]>(
     form.props.inputs.map((input) => {
       return {
@@ -137,14 +148,23 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
       };
     }),
   );
+
   const schema = buildSchema(inputs.current);
+
+  const defaultValues = { ...schema.defaultValues };
+  inputs.current.forEach((input) => {
+    const queryValue = queryParamsLowerCase[input.name.toLowerCase()];
+    if (queryValue !== undefined) {
+      defaultValues[input.name] = queryValue;
+    }
+  });
 
   const [markdownResponse, setMarkdownResponse] = useState<string | null>(null);
   const { data: showPoweredBy } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_POWERED_BY_IN_FORM,
   );
   const reactForm = useForm({
-    defaultValues: schema.defaultValues,
+    defaultValues,
     resolver: typeboxResolver(schema.properties),
   });
 

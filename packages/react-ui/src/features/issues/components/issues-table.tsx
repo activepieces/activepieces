@@ -72,9 +72,9 @@ export default function IssuesTable() {
       duration: 3000,
     });
   };
-  const { checkAccess } = useAuthorization();
+  const { useCheckAccess } = useAuthorization();
   const openNewWindow = useNewWindow();
-  const userHasPermissionToMarkAsResolved = checkAccess(
+  const userHasPermissionToMarkAsResolved = useCheckAccess(
     Permission.WRITE_ISSUES,
   );
 

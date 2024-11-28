@@ -6,12 +6,12 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockOtp,
-    createMockProjectMember,
     createMockUser,
     mockBasicSetup,
     setupMockApiKeyServiceAccount,
@@ -20,7 +20,7 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 
@@ -214,42 +214,7 @@ describe('Enterprise User API', () => {
             expect(otp).toBe(null)
         })
 
-        it('Removes deleted user project memberships', async () => {
-            // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockBasicSetup()
-
-            const mockUser = createMockUser({ platformId: mockPlatform.id })
-            await databaseConnection().getRepository('user').save([mockUser])
-
-            const mockProjectMember = createMockProjectMember({
-                userId: mockUser.id,
-                platformId: mockPlatform.id,
-                projectId: mockProject.id,
-            })
-            await databaseConnection().getRepository('project_member').save(mockProjectMember)
-
-            const mockOwnerToken = await generateMockToken({
-                id: mockOwner.id,
-                type: PrincipalType.USER,
-                platform: {
-                    id: mockPlatform.id,
-                },
-            })
-
-            // act
-            await app?.inject({
-                method: 'DELETE',
-                url: `/v1/users/${mockUser.id}`,
-                headers: {
-                    authorization: `Bearer ${mockOwnerToken}`,
-                },
-            })
-
-            // assert
-            const deletedProjectMember = await databaseConnection().getRepository('project_member').findOneBy({ id: mockProjectMember.id })
-            expect(deletedProjectMember).toBe(null)
-        })
-
+   
 
     })
 })

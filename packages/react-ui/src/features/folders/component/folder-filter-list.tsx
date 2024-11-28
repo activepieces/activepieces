@@ -35,7 +35,7 @@ import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/seperator';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -184,8 +184,10 @@ const FolderItem = ({
 
 const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const location = useLocation();
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FLOW);
+  const { useCheckAccess } = useAuthorization();
+  const userHasPermissionToUpdateFolders = useCheckAccess(
+    Permission.WRITE_FLOW,
+  );
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get(folderIdParamName);
 

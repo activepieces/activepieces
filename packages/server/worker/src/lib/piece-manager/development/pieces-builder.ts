@@ -27,6 +27,7 @@ async function handleFileChange(piecePackageName: string, io: Server): Promise<v
         }
         const cmd = `npx nx run-many -t build --projects=${piecePackageName}`
         await runCommandWithLiveOutput(cmd)
+        await filePiecesUtils.clearPieceCache(piecePackageName)
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }
     catch (error) {

@@ -1,9 +1,10 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { common, getScopeAndKey } from './common';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const storageAppendAction = createAction({
   name: 'append',
@@ -21,7 +22,6 @@ export const storageAppendAction = createAction({
     key: Property.ShortText({
       displayName: 'Key',
       required: true,
-      validators: [Validators.maxLength(128)],
     }),
     value: Property.ShortText({
       displayName: 'Value',
@@ -35,6 +35,10 @@ export const storageAppendAction = createAction({
     store_scope: common.store_scope,
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      key: z.string().max(128),
+    });
+
     const { key, scope } = getScopeAndKey({
       runId: context.run.id,
       key: context.propsValue['key'],

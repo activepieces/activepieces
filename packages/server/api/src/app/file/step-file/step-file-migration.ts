@@ -49,6 +49,7 @@ export const stepFileMigration = {
                             fileName: stepFile.name,
                             compression: FileCompression.NONE,
                             data: stepFile.data,
+                            size: stepFile.data.length,
                             metadata: {
                                 flowId: stepFile.flowId,
                                 stepName: stepFile.stepName,

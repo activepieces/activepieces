@@ -1,5 +1,5 @@
 import { CreateAlertParams, ListAlertsParams } from '@activepieces/ee-shared'
-import { ApId, PrincipalType } from '@activepieces/shared'
+import { ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { alertsService } from './alerts-service'
 
@@ -29,6 +29,7 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAlertsRequest = {
     config: {
+        permission: Permission.READ_ALERT,
         allowedPrincipals: [
             PrincipalType.USER,
         ],
@@ -40,6 +41,7 @@ const ListAlertsRequest = {
 
 const CreateAlertRequest = {
     config: {
+        permission: Permission.WRITE_ALERT,
         allowedPrincipals: [
             PrincipalType.USER,
         ],
@@ -51,6 +53,7 @@ const CreateAlertRequest = {
 
 const DeleteAlertRequest = {
     config: {
+        permission: Permission.WRITE_ALERT,
         allowedPrincipals: [
             PrincipalType.USER,
         ],

@@ -2,7 +2,6 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { googleGeminiAuth } from '../../index';
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
@@ -22,8 +21,7 @@ export const generateContentFromImageAction = createAction({
     image: Property.File({
       displayName: 'Image',
       required: true,
-      description: 'The image to generate content from.',
-      validators: [Validators.image],
+      description: 'The image to generate content from.'
     }),
   },
   async run({ auth, propsValue }) {

@@ -14,7 +14,7 @@ import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { useEmbedding } from '../../components/embed-provider';
-import { Separator } from '../../components/ui/seperator';
+import { Separator } from '../../components/ui/separator';
 import {
   Tooltip,
   TooltipContent,

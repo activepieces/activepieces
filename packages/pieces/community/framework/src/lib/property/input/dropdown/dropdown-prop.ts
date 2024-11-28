@@ -2,7 +2,6 @@ import { BasePropertySchema, TPropertyValue } from "../common";
 import { DropdownState } from "./common";
 import { PropertyContext } from "../../../context";
 import { Type } from "@sinclair/typebox";
-import { ValidationInputType } from "../../../validators/types";
 import { PropertyType } from "../property-type";
 
 type DynamicDropdownOptions<T> = (
@@ -22,7 +21,7 @@ export type DropdownProperty<T, R extends boolean> = BasePropertySchema & {
   refreshers: string[];
   refreshOnSearch?: boolean;
   options: DynamicDropdownOptions<T>;
-} & TPropertyValue<T, PropertyType.DROPDOWN, ValidationInputType.ANY, R>;
+} & TPropertyValue<T, PropertyType.DROPDOWN, R>;
 
 
 export const MultiSelectDropdownProperty = Type.Composite([
@@ -42,6 +41,5 @@ export type MultiSelectDropdownProperty<
 } & TPropertyValue<
   T[],
   PropertyType.MULTI_SELECT_DROPDOWN,
-  ValidationInputType.ANY,
   R
 >;

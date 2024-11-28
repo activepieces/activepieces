@@ -8,7 +8,6 @@ import {
     PlatformRole,
     PrincipalType,
     Project,
-    spreadIfDefined,
     User,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -37,12 +36,11 @@ export const managedAuthnService = {
 
         await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens)
 
-        const projectMember = await projectMemberService.upsert({
+        await projectMemberService.upsert({
             projectId: project.id,
             userId: user.id,
-            role: externalPrincipal.role,
+            projectRoleName: externalPrincipal.projectRole,
         })
-
 
         const token = await accessTokenManager.generateToken({
             id: user.id,
@@ -57,7 +55,6 @@ export const managedAuthnService = {
             ...user,
             token,
             projectId: project.id,
-            projectRole: projectMember.role,
         }
     },
 }
@@ -76,10 +73,14 @@ const updateProjectLimits = async (
         piecesTags,
         piecesFilterType,
     })
+    const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
     await projectLimitsService.upsert({
-        ...DEFAULT_PLATFORM_LIMIT,
-        ...spreadIfDefined('tasks', tasks),
-        ...spreadIfDefined('aiTokens', aiTokens),
+        nickname: projectPlan?.name ?? DEFAULT_PLATFORM_LIMIT.nickname,
+        teamMembers: projectPlan?.teamMembers ?? DEFAULT_PLATFORM_LIMIT.teamMembers,
+        connections: projectPlan?.connections ?? DEFAULT_PLATFORM_LIMIT.connections,
+        minimumPollingInterval: projectPlan?.minimumPollingInterval ?? DEFAULT_PLATFORM_LIMIT.minimumPollingInterval,
+        tasks: tasks ?? projectPlan?.tasks ?? DEFAULT_PLATFORM_LIMIT.tasks,
+        aiTokens: aiTokens ?? projectPlan?.aiTokens ?? DEFAULT_PLATFORM_LIMIT.aiTokens,
         pieces,
         piecesFilterType,
     }, projectId)

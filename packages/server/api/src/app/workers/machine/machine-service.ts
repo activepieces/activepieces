@@ -1,4 +1,10 @@
-import { spreadIfDefined, WorkerMachineStatus, WorkerMachineWithStatus, WorkerPrincipal } from '@activepieces/shared'
+import {
+    MachineInformation,
+    spreadIfDefined,
+    WorkerMachineStatus,
+    WorkerMachineWithStatus,
+    WorkerPrincipal,
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { repoFactory } from '../../core/db/repo-factory'
 import { WorkerMachineEntity } from './machine-entity'
@@ -10,9 +16,11 @@ export const machineService = {
     async upsert(request: UpsertParams): Promise<void> {
         await workerRepo().upsert({
             information: {
+                diskInfo: request.diskInfo,
                 cpuUsagePercentage: request.cpuUsagePercentage,
                 ramUsagePercentage: request.ramUsagePercentage,
                 totalAvailableRamInBytes: request.totalAvailableRamInBytes,
+                workerProps: request.workerProps,
                 ip: request.ip,
             },
             updated: dayjs().toISOString(),
@@ -32,8 +40,10 @@ export const machineService = {
 
 type UpsertParams = {
     cpuUsagePercentage: number
+    diskInfo: MachineInformation['diskInfo']
     ramUsagePercentage: number
     totalAvailableRamInBytes: number
     ip: string
+    workerProps: Record<string, string>
     workerPrincipal: WorkerPrincipal
 }

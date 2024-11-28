@@ -14,10 +14,18 @@ export enum WorkerMachineType {
 
 export const MachineInformation = Type.Object({
     cpuUsagePercentage: Type.Number(),
+    diskInfo: Type.Object({
+        total: Type.Number(),
+        free: Type.Number(),
+        used: Type.Number(),
+        percentage: Type.Number(),
+    }),
+    workerProps: Type.Record(Type.String(), Type.String()),
     ramUsagePercentage: Type.Number(),
     totalAvailableRamInBytes: Type.Number(),
     ip: Type.String(),
 })
+
 export type MachineInformation = Static<typeof MachineInformation>
 
 export const WorkerMachine = Type.Object({

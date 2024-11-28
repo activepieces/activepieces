@@ -3,8 +3,8 @@ import { assertEqual, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, Ev
 import { isValidCron } from 'cron-validator'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { createFilesService } from '../services/files.service'
 import { createFlowsContext } from '../services/flows.service'
+import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
 import { propsProcessor } from '../variables/props-processor'
 import { createPropsResolver } from '../variables/props-resolver'
@@ -248,7 +248,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
     const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth)
 
     if (Object.keys(errors).length > 0) {
-        throw new Error(JSON.stringify(errors))
+        throw new Error(JSON.stringify(errors, null, 2))
     }
 
     return { piece, pieceTrigger, processedInput }

@@ -16,7 +16,7 @@ export const claudeAuth = PieceAuth.SecretText({
 export const claude = createPiece({
   displayName: 'Anthropic Claude',
   auth: claudeAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['dennisrongo'],

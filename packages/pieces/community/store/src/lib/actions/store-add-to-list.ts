@@ -1,8 +1,9 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 import deepEqual from 'deep-equal';
 import { common, getScopeAndKey } from './common';
 
@@ -22,7 +23,6 @@ export const storageAddtoList = createAction({
     key: Property.ShortText({
       displayName: 'Key',
       required: true,
-      validators: [Validators.maxLength(128)]
     }),
     value: Property.ShortText({
       displayName: 'Value',
@@ -35,6 +35,10 @@ export const storageAddtoList = createAction({
     store_scope: common.store_scope
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      key: z.string().max(128),
+    });
+
     const { key, scope } = getScopeAndKey({
       runId: context.run.id,
       key: context.propsValue['key'],
