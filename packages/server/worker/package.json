@@ -12,7 +12,7 @@
     "axios-retry": "4.4.1",
     "write-file-atomic": "5.0.1",
     "nanoid": "3.3.6",
-    "axios": "1.7.7",
+    "axios": "1.7.8",
     "chokidar": "3.6.0",
     "fastify": "4.28.1"
   },
