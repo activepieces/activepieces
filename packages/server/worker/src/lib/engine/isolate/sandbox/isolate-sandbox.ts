@@ -232,7 +232,6 @@ export class IsolateSandbox {
             const basePath = path.resolve(__dirname.split('/dist')[0])
 
             dirsToBind.push(
-                `--dir=${path.join(basePath, '.pnpm')}=/${path.join(basePath, '.pnpm')}:maybe`,
                 `--dir=${path.join(basePath, 'dist')}=/${path.join(basePath, 'dist')}:maybe`,
                 `--dir=${path.join(basePath, 'node_modules')}=/${path.join(basePath, 'node_modules')}:maybe`,
             )

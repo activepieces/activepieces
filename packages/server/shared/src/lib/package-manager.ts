@@ -1,5 +1,5 @@
-import fs from 'fs/promises'
-import fsPath from 'path'
+import fs from 'node:fs/promises'
+import fsPath from 'node:path'
 import { isEmpty } from '@activepieces/shared'
 import { enrichErrorContext } from './exception-handler'
 import { exec } from './exec'
@@ -12,9 +12,9 @@ type PackageManagerOutput = {
     stderr: string
 }
 
-type CoreCommand = 'add' | 'init' | 'link'
-type ExecCommand = 'tsc'
-type Command = CoreCommand | ExecCommand
+type CoreCommand = 'install' | 'init' | 'link'
+type ExecCommand = 'npx tsc'
+type Command = CoreCommand | ExecCommand | string
 
 export type PackageInfo = {
     /**
@@ -36,7 +36,10 @@ const runCommand = async (
     try {
         logger.debug({ path, command, args }, '[PackageManager#execute]')
 
-        const commandLine = `pnpm ${command} ${args.join(' ')}`
+        const commandLine = command.startsWith('npx') 
+            ? `${command} ${args.join(' ')}`
+            : `npm ${command} ${args.join(' ')}`
+            
         return await exec(commandLine, { cwd: path })
     }
     catch (error) {
@@ -65,16 +68,16 @@ export const packageManager = {
         const config = [
             '--prefer-offline',
             '--ignore-scripts',
-            '--config.lockfile=false',
-            '--config.auto-install-peers=true',
+            '--no-package-lock',
+            '--legacy-peer-deps'
         ]
 
         const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
-        return runCommand(path, 'add', ...dependencyArgs, ...config)
+        return runCommand(path, 'install', ...dependencyArgs, ...config)
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        const lock = await memoryLock.acquire(`pnpm-init-${path}`)
+        const lock = await memoryLock.acquire(`npm-init-${path}`)
         try {
             const fExists = await fileExists(fsPath.join(path, 'package.json'))
             if (fExists) {
@@ -84,7 +87,7 @@ export const packageManager = {
                 }
             }
             // It must be awaited so it only releases the lock after the command is done
-            const result = await runCommand(path, 'init')
+            const result = await runCommand(path, 'init', '-y')
             return result
         }
         finally {
@@ -102,8 +105,8 @@ export const packageManager = {
         packageName,
     }: LinkParams): Promise<PackageManagerOutput> {
         const config = [
-            '--config.lockfile=false',
-            '--config.auto-install-peers=true',
+            '--no-package-lock',
+            '--legacy-peer-deps'
         ]
 
         const result = await runCommand(path, 'link', linkPath, ...config)

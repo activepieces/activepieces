@@ -139,7 +139,7 @@ const compileCode = async ({
 
     await packageManager.exec({
         path,
-        command: 'tsc',
+        command: 'npx tsc',
     })
 }
 
