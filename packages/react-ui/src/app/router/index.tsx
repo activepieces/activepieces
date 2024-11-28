@@ -46,6 +46,7 @@ import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
+import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
@@ -495,6 +496,18 @@ const routes = [
         <PlatformSecondSidebarLayout type="infrastructure">
           <PageTitle title="Workers">
             <SettingsWorkersPage />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/health',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="infrastructure">
+          <PageTitle title="System Health">
+            <SettingsHealthPage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>

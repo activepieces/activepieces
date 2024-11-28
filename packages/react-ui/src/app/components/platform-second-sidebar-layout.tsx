@@ -12,6 +12,7 @@ import {
   Link,
   Puzzle,
   ScanFace,
+  HeartPulse,
 } from 'lucide-react';
 
 import SidebarLayout, { SidebarItem } from '@/app/components/sidebar-layout';
@@ -106,6 +107,11 @@ export default function PlatformSecondSidebarLayout({
           title: t('Workers'),
           href: '/platform/infrastructure/workers',
           icon: <Monitor size={iconSize} />,
+        },
+        {
+          title: t('Health'),
+          href: '/platform/infrastructure/health',
+          icon: <HeartPulse size={iconSize} />,
         },
       ],
     },
