@@ -11,7 +11,7 @@ import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ApFlagId, isNil } from '@activepieces/shared';
+import { ApFlagId, PlatformRole, isNil } from '@activepieces/shared';
 import { useEmbedding } from '../../components/embed-provider';
 import { Separator } from '../../components/ui/separator';
 import {
@@ -22,6 +22,7 @@ import {
 import { FlagGuard } from './flag-guard';
 import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks';
 import { PlatformDialog } from '../routes/platform/notifications/paltform-dialog';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const Header = () => {
   const history = useLocation();
@@ -29,6 +30,7 @@ export const Header = () => {
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const { embedState } = useEmbedding();
   const messages = notificationHooks.useNotifications();
+  const platformRole = authenticationSession.getUserPlatformRole();   
 
   return (
     !embedState.isEmbedded && (
@@ -65,7 +67,7 @@ export const Header = () => {
                     )}
                   </span>
 
-                  {messages.length && !isInPlatformAdmin && (
+                  {messages.length && !isInPlatformAdmin && platformRole === PlatformRole.ADMIN && (
                     <span className="bg-destructive absolute right-[3px] top-[3px] size-2 rounded-full"></span>
                   )}
                 </Button>

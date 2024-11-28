@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSocket } from '@/components/socket-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { useQuery } from '@tanstack/react-query';
@@ -25,13 +25,34 @@ export const notificationHooks = {
             queryFn: () => aiProviderApi.list(),
         });
 
-        return useMemo(() => {
-            const messages: Message[] = [];
+        const [messages, setMessages] = useState<Message[]>([]);
 
-            const isVersionUpToDate = semver.gte(currentVersion!, latestVersion!)
+        useEffect(() => {
+            socket.on("connect_error", (err) => {
+                setMessages(prevMessages => [
+                    ...prevMessages,
+                    {
+                        title: 'Websocket Connection Error',
+                        description: `We encountered an error trying to connect to the websocket: ${err.message || 'Unknown error'}. Please check your network or server.`,
+                        actionText: 'Retry Connection',
+                        actionLink: '/platform/infrastructure/health',
+                        type: 'destructive',
+                    }
+                ]);
+            });
 
-            if (isVersionUpToDate) {
-                messages.push({
+            return () => {
+                socket.off("connect_error");
+            };
+        }, [socket]); 
+
+        const notifications = useMemo(() => {
+            const tempMessages: Message[] = [];
+
+            const isVersionUpToDate = semver.gte(currentVersion!, latestVersion!);
+
+            if (!isVersionUpToDate) {
+                tempMessages.push({
                     title: 'Update Available',
                     description: `Version ${latestVersion} is now available. Update to get the latest features and security improvements.`,
                     actionText: 'Update Now',
@@ -40,26 +61,18 @@ export const notificationHooks = {
                 });
             }
 
-            if (!socket.connected) {
-                messages.push({
-                    title: 'Websocket Issues Detected',
-                    description: "We're experiencing connectivity issues with the websocket server. This may affect real-time updates and notifications. Please check your network connection and server status to ensure everything is working properly.",
-                    actionText: 'Troubleshoot',
-                    actionLink: '/platform/infrastructure/health', 
-                    type: 'destructive',
-                });
-            }
-
             if (!(providers && providers.data.length > 0) && !isLoading) {
-                messages.push({
+                tempMessages.push({
                     title: "Your Universal AI needs a quick setup",
                     description: "I noticed you haven't set up any AI providers yet. To unlock Universal AI pieces for your team, you'll need to configure some provider credentials first.",
-                    actionText: 'Configure', 
+                    actionText: 'Configure',
                     actionLink: '/platform/setup/ai',
                 });
             }
 
-            return messages;
-        }, [currentVersion, latestVersion, socket.connected, providers, isLoading]);
+            return [...tempMessages, ...messages];
+        }, [currentVersion, latestVersion, socket.connected, providers, isLoading, messages]);
+
+        return notifications;
     }
-}
+};
