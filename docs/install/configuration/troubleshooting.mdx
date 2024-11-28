@@ -3,10 +3,20 @@ title: "Troubleshooting"
 description: ""
 icon: "wrench"
 ---
+### Websocket Connection Issues
 
-### Test Flow Button is Not Working
+If you're experiencing issues with websocket connections, it's likely due to incorrect proxy configuration. Common symptoms include:
 
-If the Test Flow button is not working, it might be due to an improperly configured websocket in your reverse proxy. Ensure that the websocket is correctly set up to resolve this issue, check our [Setup HTTPS](./setup-ssl) example.
+- Test Flow button not working
+- Test step in flows not working 
+- Copilot features not working
+- Real-time updates not showing
+
+To resolve these issues:
+
+1. Ensure your reverse proxy is properly configured for websocket connections
+2. Check our [Setup HTTPS](./setup-ssl) guide for correct configuration examples
+3. Some browser block http websocket connections, please setup ssl to resolve this issue.
 
 ### Runs with Internal Errors or Scheduling Issues
 
