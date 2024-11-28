@@ -10,8 +10,10 @@ import { ProjectSwitcher } from '@/features/projects/components/project-switcher
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { ApFlagId, PlatformRole, isNil } from '@activepieces/shared';
+
 import { useEmbedding } from '../../components/embed-provider';
 import { Separator } from '../../components/ui/separator';
 import {
@@ -19,10 +21,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../components/ui/tooltip';
-import { FlagGuard } from './flag-guard';
 import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks';
 import { PlatformDialog } from '../routes/platform/notifications/paltform-dialog';
-import { authenticationSession } from '@/lib/authentication-session';
+
+import { FlagGuard } from './flag-guard';
 
 export const Header = () => {
   const history = useLocation();
@@ -30,7 +32,7 @@ export const Header = () => {
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const { embedState } = useEmbedding();
   const messages = notificationHooks.useNotifications();
-  const platformRole = authenticationSession.getUserPlatformRole();   
+  const platformRole = authenticationSession.getUserPlatformRole();
 
   return (
     !embedState.isEmbedded && (
@@ -66,10 +68,11 @@ export const Header = () => {
                         : 'Platform Admin',
                     )}
                   </span>
-
-                  {messages.length && !isInPlatformAdmin && platformRole === PlatformRole.ADMIN && (
-                    <span className="bg-destructive absolute right-[3px] top-[3px] size-2 rounded-full"></span>
-                  )}
+                  {messages.length > 0 &&
+                    !isInPlatformAdmin &&
+                    platformRole === PlatformRole.ADMIN && (
+                      <span className="bg-destructive absolute right-[3px] top-[3px] size-2 rounded-full"></span>
+                    )}
                 </Button>
               </Link>
             )}
