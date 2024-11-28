@@ -1,16 +1,14 @@
 import { exec } from 'child_process'
+import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { networkUtls, system, WorkerSystemProps } from '@activepieces/server-shared'
+import { fileExists, networkUtls, system, WorkerSystemProps } from '@activepieces/server-shared'
 import { MachineInformation, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
 
 async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
-    const totalRamInBytes = os.totalmem()
-    const freeRamInBytes = os.freemem()
-    const ramInBytes = totalRamInBytes - freeRamInBytes
-    const ramUsage = (ramInBytes / totalRamInBytes) * 100
+    const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
 
     const cpus = os.cpus()
     const cpuUsage = cpus.reduce((acc, cpu) => {
@@ -38,6 +36,23 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
 
 export const heartbeat = {
     getSystemInfo,
+}
+
+async function getContainerMemoryUsage() {
+    const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
+    const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
+
+    const memLimitExists = await fileExists(memLimitPath)
+    const memUsageExists = await fileExists(memUsagePath)
+
+
+    const totalRamInBytes = memLimitExists ? parseInt(await fs.promises.readFile(memLimitPath, 'utf8')) : os.totalmem()
+    const usedRamInBytes = memUsageExists ? parseInt(await fs.promises.readFile(memUsagePath, 'utf8')) : os.freemem()
+
+    return {
+        totalRamInBytes,
+        ramUsage: (usedRamInBytes / totalRamInBytes) * 100,
+    }
 }
 
 async function getDiskInfo(): Promise<MachineInformation['diskInfo']> {
