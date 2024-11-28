@@ -26,8 +26,8 @@ export function ProjectMemberCard({
   onUpdate,
 }: ProjectMemberCardProps) {
   const { refetch } = projectMembersHooks.useProjectMembers();
-  const { useCheckAccess } = useAuthorization();
-  const userHasPermissionToRemoveMember = useCheckAccess(
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToRemoveMember = checkAccess(
     Permission.WRITE_PROJECT_MEMBER,
   );
   const { project } = projectHooks.useCurrentProject();

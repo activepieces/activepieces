@@ -75,11 +75,9 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     authenticationSession.getProjectId()!,
     platform.gitSyncEnabled,
   );
-  const { useCheckAccess } = useAuthorization();
-  const userHasPermissionToUpdateFlow = useCheckAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = useCheckAccess(
-    Permission.WRITE_GIT_REPO,
-  );
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
+  const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
   const importFlowProps: ImportFlowDialogProps = {
     insideBuilder: true,
     flowId: flow.id,

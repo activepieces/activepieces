@@ -53,8 +53,8 @@ const RunDetailsBar = React.memo(
     const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
       ApFlagId.FLOW_RUN_TIME_SECONDS,
     );
-    const { useCheckAccess } = useAuthorization();
-    const userHasPermissionToEditFlow = useCheckAccess(Permission.WRITE_FLOW);
+    const { checkAccess } = useAuthorization();
+    const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
 
     if (!run) {
       return <></>;

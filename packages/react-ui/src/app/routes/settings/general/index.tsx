@@ -20,7 +20,7 @@ export default function GeneralPage() {
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
 
-  const { useCheckAccess } = useAuthorization();
+  const { checkAccess } = useAuthorization();
   const { toast } = useToast();
 
   const form = useForm({
@@ -31,7 +31,7 @@ export default function GeneralPage() {
         aiTokens: project?.plan?.aiTokens,
       },
     },
-    disabled: useCheckAccess(Permission.WRITE_PROJECT) === false,
+    disabled: checkAccess(Permission.WRITE_PROJECT) === false,
     resolver: typeboxResolver(ProjectWithLimits),
   });
 
@@ -143,7 +143,7 @@ export default function GeneralPage() {
               )}
             </form>
           </Form>
-          {useCheckAccess(Permission.WRITE_PROJECT) && (
+          {checkAccess(Permission.WRITE_PROJECT) && (
             <div className="flex gap-2 justify-end mt-4">
               <Button
                 onClick={(e) => {

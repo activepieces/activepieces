@@ -27,8 +27,8 @@ const AlertFrequencyCard = React.memo(() => {
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
   const { toast } = useToast();
-  const { useCheckAccess } = useAuthorization();
-  const writeAlertPermission = useCheckAccess(Permission.WRITE_ALERT);
+  const { checkAccess } = useAuthorization();
+  const writeAlertPermission = checkAccess(Permission.WRITE_ALERT);
   const mutation = useMutation<
     ProjectWithLimits,
     Error,
