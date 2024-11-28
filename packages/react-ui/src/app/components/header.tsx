@@ -12,7 +12,6 @@ import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
-
 import { useEmbedding } from '../../components/embed-provider';
 import { Separator } from '../../components/ui/separator';
 import {
@@ -20,17 +19,21 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../components/ui/tooltip';
-
 import { FlagGuard } from './flag-guard';
+import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks';
+import { PlatformDialog } from '../routes/platform/notifications/paltform-dialog';
 
 export const Header = () => {
   const history = useLocation();
   const isInPlatformAdmin = history.pathname.startsWith('/platform');
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const { embedState } = useEmbedding();
+  const messages = notificationHooks.useNotifications();
+
   return (
     !embedState.isEmbedded && (
       <div>
+        <PlatformDialog messages={messages} />
         <div className="flex h-[60px] items-center">
           {isInPlatformAdmin ? (
             <span className="text-3xl font-bold px-4 py-2">
@@ -47,7 +50,7 @@ export const Header = () => {
                 <Button
                   variant={'outline'}
                   size="sm"
-                  className="flex items-center justify-center gap-2"
+                  className="flex items-center justify-center gap-2 relative"
                 >
                   {isInPlatformAdmin ? (
                     <LogOut className="size-4" />
@@ -61,6 +64,10 @@ export const Header = () => {
                         : 'Platform Admin',
                     )}
                   </span>
+
+                  {messages.length && !isInPlatformAdmin && (
+                    <span className="bg-destructive absolute right-[3px] top-[3px] size-2 rounded-full"></span>
+                  )}
                 </Button>
               </Link>
             )}

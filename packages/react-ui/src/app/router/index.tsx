@@ -47,6 +47,7 @@ import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import SettingsHealthPage from '../routes/platform/infra/health';
+import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
@@ -390,7 +391,7 @@ const routes = [
       <PlatformAdminContainer>
         <PageTitle title="Analytics">
           <div className="flex flex-col gap-4 w-full">
-            <AINotification />
+            <PlatformMessages />
             <AnalyticsPage />
           </div>
         </PageTitle>
