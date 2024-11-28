@@ -381,8 +381,8 @@ export const useSwitchToDraft = () => {
     state.setVersion,
     state.exitRun,
   ]);
-  const { useCheckAccess } = useAuthorization();
-  const userHasPermissionToEditFlow = useCheckAccess(Permission.WRITE_FLOW);
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
     useMutation({
       mutationFn: async () => {

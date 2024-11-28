@@ -25,7 +25,7 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, Permission } from '@activepieces/shared';
 import {
   ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
@@ -46,9 +46,10 @@ import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
-import SettingsWorkersPage from '../routes/platform/infra/workers';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
+import SettingsWorkersPage from '../routes/platform/infra/workers';
+import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
@@ -67,7 +68,9 @@ import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
+import { DefaultRoute } from './default-route';
 import { FlagRouteGuard } from './flag-route-guard';
+import { RoutePermissionGuard } from './permission-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
 
 const SettingsRerouter = () => {
@@ -97,9 +100,11 @@ const routes = [
     path: '/flows',
     element: (
       <DashboardContainer>
-        <PageTitle title="Flows">
-          <FlowsPage />
-        </PageTitle>
+        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+          <PageTitle title="Flows">
+            <FlowsPage />
+          </PageTitle>
+        </RoutePermissionGuard>
       </DashboardContainer>
     ),
   }),
@@ -107,9 +112,11 @@ const routes = [
     path: '/flows/:flowId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
-        <PageTitle title="Builder">
-          <FlowBuilderPage />
-        </PageTitle>
+        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+          <PageTitle title="Builder">
+            <FlowBuilderPage />
+          </PageTitle>
+        </RoutePermissionGuard>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   }),
@@ -141,9 +148,11 @@ const routes = [
     path: '/runs/:runId',
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
-        <PageTitle title="Flow Run">
-          <FlowRunPage />
-        </PageTitle>
+        <RoutePermissionGuard permission={Permission.READ_RUN}>
+          <PageTitle title="Flow Run">
+            <FlowRunPage />
+          </PageTitle>
+        </RoutePermissionGuard>
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   }),
@@ -161,9 +170,11 @@ const routes = [
     path: '/runs',
     element: (
       <DashboardContainer>
-        <PageTitle title="Runs">
-          <FlowRunsPage />
-        </PageTitle>
+        <RoutePermissionGuard permission={Permission.READ_RUN}>
+          <PageTitle title="Runs">
+            <FlowRunsPage />
+          </PageTitle>
+        </RoutePermissionGuard>
       </DashboardContainer>
     ),
   }),
@@ -171,9 +182,11 @@ const routes = [
     path: '/issues',
     element: (
       <DashboardContainer>
-        <PageTitle title="Issues">
-          <IssuesPage />
-        </PageTitle>
+        <RoutePermissionGuard permission={Permission.READ_ISSUES}>
+          <PageTitle title="Issues">
+            <IssuesPage />
+          </PageTitle>
+        </RoutePermissionGuard>
       </DashboardContainer>
     ),
   }),
@@ -181,9 +194,11 @@ const routes = [
     path: '/connections',
     element: (
       <DashboardContainer>
-        <PageTitle title="Connections">
-          <AppConnectionsPage />
-        </PageTitle>
+        <RoutePermissionGuard permission={Permission.READ_APP_CONNECTION}>
+          <PageTitle title="Connections">
+            <AppConnectionsPage />
+          </PageTitle>
+        </RoutePermissionGuard>
       </DashboardContainer>
     ),
   }),
@@ -251,11 +266,13 @@ const routes = [
     path: '/settings/alerts',
     element: (
       <DashboardContainer>
-        <ProjectSettingsLayout>
-          <PageTitle title="Alerts">
-            <AlertsPage />
-          </PageTitle>
-        </ProjectSettingsLayout>
+        <RoutePermissionGuard permission={Permission.READ_ALERT}>
+          <ProjectSettingsLayout>
+            <PageTitle title="Alerts">
+              <AlertsPage />
+            </PageTitle>
+          </ProjectSettingsLayout>
+        </RoutePermissionGuard>
       </DashboardContainer>
     ),
   }),
@@ -299,11 +316,13 @@ const routes = [
     path: '/settings/team',
     element: (
       <DashboardContainer>
-        <ProjectSettingsLayout>
-          <PageTitle title="Team">
-            <TeamPage />
-          </PageTitle>
-        </ProjectSettingsLayout>
+        <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
+          <ProjectSettingsLayout>
+            <PageTitle title="Team">
+              <TeamPage />
+            </PageTitle>
+          </ProjectSettingsLayout>
+        </RoutePermissionGuard>
       </DashboardContainer>
     ),
   }),
@@ -316,11 +335,13 @@ const routes = [
     path: '/settings/git-sync',
     element: (
       <DashboardContainer>
-        <ProjectSettingsLayout>
-          <PageTitle title="Git Sync">
-            <GitSyncPage />
-          </PageTitle>
-        </ProjectSettingsLayout>
+        <RoutePermissionGuard permission={Permission.READ_GIT_REPO}>
+          <ProjectSettingsLayout>
+            <PageTitle title="Git Sync">
+              <GitSyncPage />
+            </PageTitle>
+          </ProjectSettingsLayout>
+        </RoutePermissionGuard>
       </DashboardContainer>
     ),
   }),
@@ -579,7 +600,7 @@ const routes = [
     path: '/*',
     element: (
       <PageTitle title="Redirect">
-        <Navigate to="/flows" replace />
+        <DefaultRoute></DefaultRoute>
       </PageTitle>
     ),
   },

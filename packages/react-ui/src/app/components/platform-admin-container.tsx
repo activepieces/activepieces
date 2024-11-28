@@ -72,7 +72,7 @@ export function PlatformAdminContainer({
       {showPlatformAdminDashboard ? (
         <Sidebar links={links}>{children}</Sidebar>
       ) : (
-        <Navigate to="/flows" />
+        <Navigate to="/" />
       )}
     </AllowOnlyLoggedInUserOnlyGuard>
   );

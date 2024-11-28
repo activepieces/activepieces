@@ -12,7 +12,7 @@ import {
   Link,
   Puzzle,
   ScanFace,
-  HeartPulse
+  HeartPulse,
 } from 'lucide-react';
 
 import SidebarLayout, { SidebarItem } from '@/app/components/sidebar-layout';

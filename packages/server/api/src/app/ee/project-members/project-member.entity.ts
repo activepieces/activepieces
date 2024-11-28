@@ -57,6 +57,7 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
             joinColumn: {
                 name: 'projectRoleId',
                 referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_project_member_project_role_id',
             },
         },
     },

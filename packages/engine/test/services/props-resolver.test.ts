@@ -123,6 +123,16 @@ describe('Props resolver', () => {
         ).toEqual('Price is 6.4')
     })
 
+
+    test('Test resolve object steps variables', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{ {"where": "a"} }}', executionState })
+        expect(resolvedInput).toEqual(
+            {
+                where: 'a',
+            },
+        )
+    })
+
     test('Test resolve object steps variables', async () => {
         const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{trigger}}', executionState })
         expect(resolvedInput).toEqual(

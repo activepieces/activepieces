@@ -62,7 +62,7 @@ const GlobalConnectionsTable = () => {
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
-  const { useCheckAccess } = useAuthorization();
+  const { checkAccess } = useAuthorization();
   const { toast } = useToast();
   const location = useLocation();
   const { platform } = platformHooks.useCurrentPlatform();
@@ -271,7 +271,7 @@ const GlobalConnectionsTable = () => {
     },
   });
 
-  const userHasPermissionToWriteAppConnection = useCheckAccess(
+  const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
 

@@ -82,8 +82,8 @@ export function InviteUserDialog() {
   const { refetch } = userInvitationsHooks.useInvitations();
   const { project } = projectHooks.useCurrentProject();
   const currentUser = authenticationSession.getCurrentUser();
-  const { useCheckAccess } = useAuthorization();
-  const userHasPermissionToInviteUser = useCheckAccess(
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
   );
 

@@ -28,9 +28,9 @@ import {
 const BuilderPublishButton = React.memo(() => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { useCheckAccess } = useAuthorization();
-  const userHasPermissionToEditFlow = useCheckAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToUpdateFlowStatus = useCheckAccess(
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
+  const userHasPermissionToUpdateFlowStatus = checkAccess(
     Permission.UPDATE_FLOW_STATUS,
   );
   const [flowVersion, flow, isSaving, setVersion, setFlow, readonly, run] =
