@@ -47,6 +47,7 @@ import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
+import SettingsHealthPage from '../routes/platform/infra/health';
 import { AINotification } from '../routes/platform/notifications/ai-notification';
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
@@ -475,6 +476,18 @@ const routes = [
         <PlatformSecondSidebarLayout type="infrastructure">
           <PageTitle title="Workers">
             <SettingsWorkersPage />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/health',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="infrastructure">
+          <PageTitle title="Workers">
+            <SettingsHealthPage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
