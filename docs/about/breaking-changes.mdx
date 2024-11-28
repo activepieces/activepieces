@@ -4,6 +4,17 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## 0.38.0
+
+### What has changed?
+
+- The cache folder structure has been changed to use npm's cache format from pnpm format. The cache folder needs to be empty when upgrading.
+
+### When is action necessary?
+
+- If you have configured any persistent volumes for the cache folder in your activepieces container deployment, you need to ensure the cache folder is empty when upgrading. By default, no persistent volumes are configured so no action is needed.
+
+
 ## 0.35.1
 
 ### What has changed?
