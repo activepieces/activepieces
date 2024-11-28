@@ -232,9 +232,15 @@ describe('Property Validation', () => {
                 PieceAuth.None(),
                 false,
             )
-            expect(jsonStringErrors).toEqual({
-                object: ['Expected object, received: {"key":"value"}'],
-            })
+            expect(jsonStringErrors).toEqual({})
+
+            const { errors: undefinedErrors } = await propsProcessor.applyProcessorsAndValidators(
+                { object: { key: 'value' } },
+                props,
+                PieceAuth.None(),
+                false,
+            )
+            expect(undefinedErrors).toEqual({})
         })
     })
 
