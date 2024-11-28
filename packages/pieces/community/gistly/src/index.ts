@@ -5,7 +5,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { gistlyConfig } from './lib/config';
 
 const markdownDescription = `
-To obtain your free Gistly API Key, sign up at [Gistly](https://gist.ly/youtube-transcript-api) and copy the key available in the dashboard.
+To obtain your free Gistly API Key, sign up at [Gistly](https://gist.ly/youtube-transcript-api) and then copy the key available in the [dashboard](https://api-portal.gist.ly/).
 `;
 
 export const gistlyAuth = PieceAuth.SecretText({
@@ -39,7 +39,7 @@ export const gistly = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://gist.ly/_next/static/media/icon.d4a90eff.svg',
   authors: ['rafalzawadzki'],
-  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.DEVELOPER_TOOLS, PieceCategory.CONTENT_AND_FILES],
   description: 'Fetches transcripts from YouTube videos.',
   actions: [getTranscriptAction],
   triggers: [],
