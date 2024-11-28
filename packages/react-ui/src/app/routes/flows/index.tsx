@@ -83,10 +83,8 @@ const filters = [
 ];
 
 const FlowsPage = () => {
-  const { useCheckAccess } = useAuthorization();
-  const doesUserHavePermissionToWriteFlow = useCheckAccess(
-    Permission.WRITE_FLOW,
-  );
+  const { checkAccess } = useAuthorization();
+  const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
@@ -99,10 +97,8 @@ const FlowsPage = () => {
     authenticationSession.getProjectId()!,
     platform.gitSyncEnabled,
   );
-  const userHasPermissionToUpdateFlow = useCheckAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = useCheckAccess(
-    Permission.WRITE_GIT_REPO,
-  );
+  const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
+  const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
 
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;

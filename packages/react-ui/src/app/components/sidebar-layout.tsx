@@ -14,7 +14,7 @@ export type SidebarItem = {
   title: string;
   href: string;
   icon: JSX.Element;
-  hasPermission?: boolean
+  hasPermission?: boolean;
 };
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
@@ -37,7 +37,7 @@ function SidebarItem({ className, items, ...props }: SidebarNavProps) {
           key={item.href}
           to={item.href}
           className={cn(
-            buttonVariants({variant: 'ghost'}),
+            buttonVariants({ variant: 'ghost' }),
             location.pathname.toLowerCase() === item.href.toLowerCase()
               ? 'bg-muted hover:bg-muted'
               : 'hover:bg-transparent hover:underline',

@@ -33,8 +33,8 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
   const [isFlowPublished, setIsChecked] = useState(
     flow.status === FlowStatus.ENABLED,
   );
-  const { useCheckAccess } = useAuthorization();
-  const userHasPermissionToToggleFlowStatus = useCheckAccess(
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToToggleFlowStatus = checkAccess(
     Permission.UPDATE_FLOW_STATUS,
   );
 

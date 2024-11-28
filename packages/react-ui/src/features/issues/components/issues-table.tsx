@@ -72,9 +72,9 @@ export default function IssuesTable() {
       duration: 3000,
     });
   };
-  const { useCheckAccess } = useAuthorization();
+  const { checkAccess } = useAuthorization();
   const openNewWindow = useNewWindow();
-  const userHasPermissionToMarkAsResolved = useCheckAccess(
+  const userHasPermissionToMarkAsResolved = checkAccess(
     Permission.WRITE_ISSUES,
   );
 
@@ -149,8 +149,16 @@ export default function IssuesTable() {
     ],
     [userHasPermissionToMarkAsResolved, handleMarkAsResolved, t],
   );
-  const userHasPermisionToSeeRuns = useCheckAccess(Permission.READ_RUN)
-  const handleRowClick = ({newWindow,flowId,created}: {newWindow: boolean,flowId:string,created: string}) =>{
+  const userHasPermisionToSeeRuns = checkAccess(Permission.READ_RUN);
+  const handleRowClick = ({
+    newWindow,
+    flowId,
+    created,
+  }: {
+    newWindow: boolean;
+    flowId: string;
+    created: string;
+  }) => {
     const searchParams = createSearchParams({
       flowId: flowId,
       createdAfter: created,
@@ -168,7 +176,7 @@ export default function IssuesTable() {
         search: searchParams,
       });
     }
-  }
+  };
   return (
     <div className="flex-col w-full">
       <div className=" flex">
@@ -217,7 +225,16 @@ export default function IssuesTable() {
             },
           },
         ]}
-        onRowClick={ userHasPermisionToSeeRuns? (row, newWindow) => handleRowClick({newWindow,flowId:row.flowId,created:row.created}) : undefined }
+        onRowClick={
+          userHasPermisionToSeeRuns
+            ? (row, newWindow) =>
+                handleRowClick({
+                  newWindow,
+                  flowId: row.flowId,
+                  created: row.created,
+                })
+            : undefined
+        }
       />
     </div>
   );

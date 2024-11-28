@@ -5,12 +5,12 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 
+import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
-import { authenticationApi } from '@/lib/authentication-api';
 
 export const projectHooks = {
   prefetchProject: () => {
@@ -21,9 +21,10 @@ export const projectHooks = {
       staleTime: Infinity,
     });
   },
-  prefetchProjectRole: ()=>{
+  prefetchProjectRole: () => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     usePrefetchQuery({
-      queryKey: ['project-role',authenticationSession.getProjectId()],
+      queryKey: ['project-role', authenticationSession.getProjectId()],
       queryFn: async () => authenticationApi.me(),
       staleTime: Infinity,
     });

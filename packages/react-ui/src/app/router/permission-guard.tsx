@@ -1,13 +1,19 @@
-import { ReactNode } from "react";
-import { Permission } from "../../../../shared/src";
-import { useAuthorization } from "@/hooks/authorization-hooks";
-import { Navigate } from "react-router-dom";
+import { ReactNode } from 'react';
+import { Navigate } from 'react-router-dom';
 
-export const RoutePermissionGuard = ({permission,children}:{children: ReactNode, permission:Permission}) =>{
-    const {useCheckAccess}=useAuthorization();
-    if(!useCheckAccess(permission))
-    {
-        return <Navigate replace={true} to="/404"></Navigate>
-    }
-    return children;
-}
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { Permission } from '@activepieces/shared';
+
+export const RoutePermissionGuard = ({
+  permission,
+  children,
+}: {
+  children: ReactNode;
+  permission: Permission;
+}) => {
+  const { checkAccess } = useAuthorization();
+  if (!checkAccess(permission)) {
+    return <Navigate replace={true} to="/404"></Navigate>;
+  }
+  return children;
+};

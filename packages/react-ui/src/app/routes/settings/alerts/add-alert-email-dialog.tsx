@@ -54,8 +54,8 @@ const AddAlertEmailDialog = React.memo(
       resolver: typeboxResolver(FormSchema),
       defaultValues: {},
     });
-    const { useCheckAccess } = useAuthorization();
-    const writeAlertPermission = useCheckAccess(Permission.WRITE_ALERT);
+    const { checkAccess } = useAuthorization();
+    const writeAlertPermission = checkAccess(Permission.WRITE_ALERT);
 
     const { mutate, isPending } = useMutation<Alert, Error, { email: string }>({
       mutationFn: async (params) =>

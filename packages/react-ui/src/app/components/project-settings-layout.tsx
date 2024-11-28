@@ -10,15 +10,13 @@ import {
 import { Navigate } from 'react-router-dom';
 
 import SidebarLayout, { SidebarItem } from '@/app/components/sidebar-layout';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 
 const iconSize = 20;
-
-
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
@@ -29,7 +27,7 @@ export default function ProjectSettingsLayout({
 }: SettingsLayoutProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const currentProjectId = authenticationSession.getProjectId();
-  const {useCheckAccess} = useAuthorization();
+  const { checkAccess } = useAuthorization();
   if (isNil(currentProjectId)) {
     return <Navigate to="/sign-in" replace />;
   }
@@ -48,7 +46,7 @@ export default function ProjectSettingsLayout({
       title: t('Team'),
       href: '/settings/team',
       icon: <Users size={iconSize} />,
-      hasPermission: useCheckAccess(Permission.READ_PROJECT_MEMBER)
+      hasPermission: checkAccess(Permission.READ_PROJECT_MEMBER),
     },
     {
       title: t('Pieces'),
@@ -59,19 +57,20 @@ export default function ProjectSettingsLayout({
       title: t('Alerts'),
       href: '/settings/alerts',
       icon: <Bell size={iconSize} />,
-      hasPermission: useCheckAccess(Permission.READ_ALERT)
+      hasPermission: checkAccess(Permission.READ_ALERT),
     },
     {
       title: t('Git Sync'),
       href: '/settings/git-sync',
       icon: <GitBranch size={iconSize} />,
-      hasPermission: useCheckAccess(Permission.READ_GIT_REPO)
+      hasPermission: checkAccess(Permission.READ_GIT_REPO),
     },
   ];
 
   const filterAlerts = (item: SidebarItem) =>
     platform.alertsEnabled || item.title !== t('Alerts');
-  const filterOnPermission = (item: SidebarItem) => isNil(item.hasPermission) || item.hasPermission;
+  const filterOnPermission = (item: SidebarItem) =>
+    isNil(item.hasPermission) || item.hasPermission;
   const addProjectIdToHref = (item: SidebarItem) => ({
     ...item,
     href: `/projects/${currentProjectId}${item.href}`,

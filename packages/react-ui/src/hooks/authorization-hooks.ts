@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import React from 'react';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationApi } from '@/lib/authentication-api';
@@ -24,15 +23,14 @@ export const useAuthorization = () => {
     enabled: !isNil(edition) && edition !== ApEdition.COMMUNITY,
   });
 
-  const useCheckAccess = (permission: Permission) => {
-     if (isLoading || edition === ApEdition.COMMUNITY) {
-        return true;
-      }
-      console.log(projectRole)
-      return projectRole?.permissions?.includes(permission) ?? true;
+  const checkAccess = (permission: Permission) => {
+    if (isLoading || edition === ApEdition.COMMUNITY) {
+      return true;
     }
+    return projectRole?.permissions?.includes(permission) ?? true;
+  };
 
-  return { useCheckAccess };
+  return { checkAccess };
 };
 
 export const useShowPlatformAdminDashboard = () => {

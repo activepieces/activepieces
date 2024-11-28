@@ -69,7 +69,6 @@ const initialPermissions = [
     read: [Permission.READ_GIT_REPO],
     write: [Permission.READ_GIT_REPO, Permission.WRITE_GIT_REPO],
   },
- 
 ];
 interface ProjectRoleDialogProps {
   mode: 'create' | 'edit';
