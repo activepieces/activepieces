@@ -106,8 +106,8 @@ async function enrichAttachments(item: {
 }[], files: FilesService) {
   return Promise.all(item.map(async (item) => {
     return {
-      ...item,
-      attachments: await convertAttachment(item.data.attachments, files),
+        ...item.data,
+        attachments: await convertAttachment(item.data.attachments, files),
     }
   }));
 }
