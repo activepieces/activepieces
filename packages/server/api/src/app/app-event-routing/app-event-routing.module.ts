@@ -21,6 +21,7 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
 import { flowQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
@@ -126,7 +127,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         synchronousHandlerId: null,
                         payload,
                         flowId: listener.flowId,
-                        saveSampleData: false,
+                        saveSampleData: await webhookSimulationService.exists(listener.flowId),
                         flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
                     },
                     priority: DEFAULT_PRIORITY,
