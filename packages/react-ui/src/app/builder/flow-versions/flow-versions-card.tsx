@@ -56,8 +56,8 @@ const UseAsDraftDropdownMenuOption = ({
   versionNumber,
   onConfirm,
 }: UseAsDraftOptionProps) => {
-  const { useCheckAccess } = useAuthorization();
-  const userHasPermissionToWriteFlow = useCheckAccess(Permission.WRITE_FLOW);
+  const { checkAccess } = useAuthorization();
+  const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
 
   return (
     <Dialog>
@@ -116,8 +116,8 @@ const FlowVersionDetailsCard = React.memo(
     selected,
     published,
   }: FlowVersionDetailsCardProps) => {
-    const { useCheckAccess } = useAuthorization();
-    const userHasPermissionToWriteFlow = useCheckAccess(Permission.WRITE_FLOW);
+    const { checkAccess } = useAuthorization();
+    const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
     const [setBuilderVersion, setLeftSidebar, setReadonly] =
       useBuilderStateContext((state) => [
         state.setVersion,

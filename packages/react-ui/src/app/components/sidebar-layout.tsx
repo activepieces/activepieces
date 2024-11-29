@@ -14,6 +14,7 @@ export type SidebarItem = {
   title: string;
   href: string;
   icon: JSX.Element;
+  hasPermission?: boolean;
 };
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {

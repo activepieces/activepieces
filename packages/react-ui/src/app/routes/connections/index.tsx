@@ -64,7 +64,7 @@ function AppConnectionsPage() {
     Array<AppConnectionWithoutSensitiveData>
   >([]);
   const { toast } = useToast();
-  const { useCheckAccess } = useAuthorization();
+  const { checkAccess } = useAuthorization();
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown
@@ -319,7 +319,7 @@ function AppConnectionsPage() {
     },
   });
 
-  const userHasPermissionToWriteAppConnection = useCheckAccess(
+  const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
 

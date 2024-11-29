@@ -43,8 +43,8 @@ export default function AlertsEmailsCard() {
     queryKey: ['alerts-email-list'],
     queryFn: fetchData,
   });
-  const { useCheckAccess } = useAuthorization();
-  const writeAlertPermission = useCheckAccess(Permission.WRITE_ALERT);
+  const { checkAccess } = useAuthorization();
+  const writeAlertPermission = checkAccess(Permission.WRITE_ALERT);
   const deleteMutation = useMutation<void, Error, Alert>({
     mutationFn: (alert) => alertsApi.delete(alert.id),
     onSuccess: () => {

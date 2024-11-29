@@ -1,3 +1,4 @@
+import { logger } from '@activepieces/server-shared'
 import { RoleType } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
@@ -94,6 +95,9 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
     name = 'CreateProjectRoleTable1731424289830'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        logger.info({
+            name: this.name,
+        }, 'Creating project role table')
         await queryRunner.query(`
             CREATE TABLE "project_role" (
                 "id" character varying(21) NOT NULL,
@@ -201,6 +205,9 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        logger.info({
+            name: this.name,
+        }, 'down')
         // Re-add the "projectRole" column to "user_invitation"
         await queryRunner.query(`
             ALTER TABLE "user_invitation" ADD COLUMN "projectRole" character varying

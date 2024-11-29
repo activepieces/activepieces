@@ -9,7 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
-import { Action, StepRunResponse, isNil } from '@activepieces/shared';
+import {
+  Action,
+  ActionType,
+  StepRunResponse,
+  flowStructureUtil,
+  isNil,
+} from '@activepieces/shared';
 
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
@@ -32,12 +38,15 @@ const TestActionSection = React.memo(
     const form = useFormContext<Pick<Action, 'settings' | 'name'>>();
     const formValues = form.getValues();
     const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
-    const { sampleData, setSampleData } = useBuilderStateContext((state) => {
-      return {
-        sampleData: state.sampleData[formValues.name],
-        setSampleData: state.setSampleData,
-      };
-    });
+    const { sampleData, setSampleData, selectedStep, trigger } =
+      useBuilderStateContext((state) => {
+        return {
+          sampleData: state.sampleData[formValues.name],
+          setSampleData: state.setSampleData,
+          selectedStep: state.selectedStep,
+          trigger: state.flowVersion.trigger,
+        };
+      });
     const [isValid, setIsValid] = useState(false);
 
     useEffect(() => {
@@ -146,7 +155,13 @@ const TestActionSection = React.memo(
             sampleData={sampleData}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
-            consoleLogs={consoleLogs}
+            consoleLogs={
+              selectedStep &&
+              flowStructureUtil.getStep(selectedStep, trigger)?.type ===
+                ActionType.CODE
+                ? consoleLogs
+                : null
+            }
           ></TestSampleDataViewer>
         )}
       </>
