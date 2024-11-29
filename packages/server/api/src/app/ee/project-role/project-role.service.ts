@@ -58,7 +58,7 @@ export const projectRoleService = {
                     ...projectRole,
                     userCount: await projectMemberRepo().countBy({
                         platformId,
-                        projectRoleId: projectRole.id
+                        projectRoleId: projectRole.id,
                     }),
                 }
             })),
