@@ -1,9 +1,11 @@
+
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
+import pako from 'pako';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -44,21 +46,20 @@ import {
 
 import { piecesApi } from '../lib/pieces-api';
 
-const FormSchema = Type.Object({
-  pieceName: Type.String({
-    errorMessage: t('Please enter a piece name'),
-  }),
-  scope: Type.Enum(PieceScope, {
-    errorMessage: t('Please select a scope'),
-  }),
-  pieceVersion: Type.String({
-    errorMessage: t('Please enter a piece version'),
-  }),
-  packageType: Type.Enum(PackageType, {
-    errorMessage: t('Please select a package type'),
-  }),
-  pieceArchive: Type.Optional(Type.Any()),
-});
+const FormSchema = Type.Object(
+  {
+    packageType: Type.Enum(PackageType),
+    pieceName: Type.Optional(Type.String()),
+    scope: Type.Enum(PieceScope),
+    pieceVersion: Type.Optional(Type.String()),
+    pieceArchive: Type.Optional(Type.Any()),
+  },
+  {
+    errorMessage: {
+      required: t('Please select a package type'),
+    },
+  },
+);
 
 type InstallPieceDialogProps = {
   onInstallPiece: () => void;
@@ -82,11 +83,58 @@ const InstallPieceDialog = ({
     },
   });
 
+  const handleArchiveUpload = async (file: File) => {
+    if (file && file.name.endsWith('.tgz')) {
+      try {
+        const fileBuffer = await file.arrayBuffer();
+        const decompressedData = pako.ungzip(new Uint8Array(fileBuffer));
+        const text = new TextDecoder().decode(decompressedData);
+
+        // Look for package.json content in the decompressed data
+        const packageJsonMatch = text.match(
+          /package\.json.*?{[^}]*"name"\s*:\s*"([^"]+)".*?"version"\s*:\s*"([^"]+)"/s,
+        );
+        if (packageJsonMatch) {
+          form.setValue('pieceName', packageJsonMatch[1]);
+          form.setValue('pieceVersion', packageJsonMatch[2]);
+        } else {
+          form.setError('pieceArchive', {
+            message: t('package.json not found in archive'),
+          });
+        }
+      } catch (error) {
+        console.error('Error processing file:', error);
+        form.setError('pieceArchive', {
+          message: t('Error processing archive file'),
+        });
+      }
+    } else {
+      form.setError('pieceArchive', {
+        message: t('Please upload a .tgz file'),
+      });
+    }
+  };
+
   const { mutate, isPending } = useMutation<void, Error, AddPieceRequestBody>({
     mutationFn: async (data) => {
-      form.setError('root.serverError', {
-        message: undefined,
-      });
+      form.clearErrors();
+
+      if (data.packageType === PackageType.REGISTRY) {
+        if (!data.pieceName) {
+          form.setError('pieceName', {
+            message: t('Piece name is required for NPM Registry'),
+          });
+        }
+        if (!data.pieceVersion) {
+          form.setError('pieceVersion', {
+            message: t('Piece version is required for NPM Registry'),
+          });
+        }
+        if (!data.pieceName || !data.pieceVersion) {
+          return;
+        }
+      }
+
       await piecesApi.install(data);
     },
     onSuccess: () => {
@@ -144,44 +192,6 @@ const InstallPieceDialog = ({
             )}
           >
             <FormField
-              name="pieceName"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="pieceName">{t('Piece Name')}</FormLabel>
-                  <Input
-                    {...field}
-                    required
-                    id="pieceName"
-                    type="text"
-                    placeholder="@activepieces/piece-name"
-                    className="rounded-sm"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="pieceVersion"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="pieceVersion">
-                    {t('Piece Version')}
-                  </FormLabel>
-                  <Input
-                    {...field}
-                    required
-                    id="pieceVersion"
-                    type="text"
-                    placeholder="0.0.1"
-                    className="rounded-sm"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
               name="packageType"
               control={form.control}
               render={({ field }) => (
@@ -191,7 +201,14 @@ const InstallPieceDialog = ({
                   </FormLabel>
                   <Select
                     value={field.value}
-                    onValueChange={(value) => field.onChange(value)}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      if (value === PackageType.ARCHIVE) {
+                        form.setValue('pieceName', undefined);
+                        form.setValue('pieceVersion', undefined);
+                      }
+                      form.clearErrors();
+                    }}
                     defaultValue={PackageType.REGISTRY}
                   >
                     <SelectTrigger>
@@ -210,9 +227,56 @@ const InstallPieceDialog = ({
                       </SelectGroup>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
+
+            {form.watch('packageType') === PackageType.REGISTRY && (
+              <>
+                <FormField
+                  name="pieceName"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="pieceName">
+                        {t('Piece Name')}
+                      </FormLabel>
+                      <Input
+                        {...field}
+                        value={field.value || ''}
+                        id="pieceName"
+                        type="text"
+                        placeholder="@activepieces/piece-name"
+                        className="rounded-sm"
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="pieceVersion"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="pieceVersion">
+                        {t('Piece Version')}
+                      </FormLabel>
+                      <Input
+                        {...field}
+                        value={field.value || ''}
+                        id="pieceVersion"
+                        type="text"
+                        placeholder="0.0.1"
+                        className="rounded-sm"
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
             {form.watch('packageType') === PackageType.ARCHIVE && (
               <FormField
                 name="pieceArchive"
@@ -227,15 +291,21 @@ const InstallPieceDialog = ({
                       id="pieceArchive"
                       type="file"
                       onChange={(event) => {
-                        onChange(event.target.files && event.target.files[0]);
+                        const file = event.target.files?.[0];
+                        if (file) {
+                          onChange(file);
+                          handleArchiveUpload(file);
+                        }
                       }}
                       placeholder={t('Package archive')}
                       className="rounded-sm"
                     />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
             )}
+
             {form?.formState?.errors?.root?.serverError && (
               <FormMessage>
                 {form.formState.errors.root.serverError.message}
