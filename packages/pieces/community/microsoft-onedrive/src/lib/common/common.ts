@@ -23,27 +23,20 @@ export const oneDriveCommon = {
       }
 
       const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-      let folders: { id: string; name: string }[] = [];
+      let folders: { id: string; label: string }[] = [];
 
       try {
-        const result = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `${oneDriveCommon.baseUrl}/items/root/children?$filter=folder ne null`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: authProp.access_token,
-          },
-        });
-        folders = result.body['value'];
+        folders= await getFoldersRecursively(authProp,'root','');
+
       } catch (e) {
         throw new Error(`Failed to get folders\nError:${e}`);
       }
 
       return {
         disabled: false,
-        options: folders.map((folder: { id: string; name: string }) => {
+        options: folders.map((folder: { id: string; label: string }) => {
           return {
-            label: folder.name,
+            label: folder.label,
             value: folder.id,
           };
         }),
@@ -96,3 +89,50 @@ export const oneDriveCommon = {
     return files;
   },
 };
+
+
+async function getFoldersRecursively(
+  auth: OAuth2PropertyValue,
+  folderId: string,
+  parentPath = '',
+  result: { label: string; id: string }[] = [])
+  {
+    const url =  `${oneDriveCommon.baseUrl}/items/${folderId}/children?$select=id,name,folder&$filter=folder ne null`;
+
+    try
+    {
+      const response = await httpClient.sendRequest<getFoldersResponse>(
+        {
+          method:HttpMethod.GET,
+          url,
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: auth.access_token,
+          },
+        }
+      );
+
+      const folders = response.body.value;
+
+      for (const folder of folders) 
+        {
+        const path = parentPath ? `${parentPath}/${folder.name}` : folder.name;
+        result.push({ label:path, id: folder.id });
+
+        await getFoldersRecursively(auth,folder.id,path,result);
+        }
+  }
+    catch(e)
+    {
+      throw new Error(`Failed to get folders\nError: ${e}`);
+    }
+
+    return result;
+  }
+
+
+interface getFoldersResponse {
+  "@odata.nextLink"?: string;
+    "@odata.deltaLink"?: string;
+    value:{id: string; name: string}[];
+}
