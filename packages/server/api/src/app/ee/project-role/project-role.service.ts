@@ -40,7 +40,7 @@ export const projectRoleService = {
     async list({ platformId }: ListParams): Promise<SeekPage<ProjectRole>> {
         const projectRoles = await projectRoleRepo().find({
             where: [
-                { 
+                {
                     platformId: Equal(platformId),
                 },
                 {
@@ -56,7 +56,10 @@ export const projectRoleService = {
             data: await Promise.all(projectRoles.map(async (projectRole) => {
                 return {
                     ...projectRole,
-                    userCount: await projectMemberRepo().countBy({ projectRoleId: projectRole.id }),
+                    userCount: await projectMemberRepo().countBy({
+                        platformId,
+                        projectRoleId: projectRole.id
+                    }),
                 }
             })),
             next: null,
