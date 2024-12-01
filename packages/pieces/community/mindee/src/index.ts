@@ -18,7 +18,7 @@ export const mindee = createPiece({
   displayName: 'Mindee',
   description: 'Document automation API',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mindee.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],

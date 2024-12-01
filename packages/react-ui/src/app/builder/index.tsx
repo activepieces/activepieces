@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
 
@@ -27,7 +28,6 @@ import {
   TriggerType,
   WebsocketClientEvent,
   flowStructureUtil,
-  isFlowStateTerminal,
   isNil,
 } from '@activepieces/shared';
 
@@ -133,21 +133,28 @@ const BuilderPage = () => {
         memorizedSelectedStep?.type === ActionType.PIECE ||
         memorizedSelectedStep?.type === TriggerType.PIECE,
     });
+
   const pieceModel = versions
     ? versions[memorizedSelectedStep?.settings.pieceVersion || '']
     : undefined;
   const socket = useSocket();
 
+  const { mutate: fetchAndUpdateRun } = useMutation({
+    mutationFn: flowRunsApi.getPopulated,
+  });
   useEffect(() => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
-    if (run && !isFlowStateTerminal(run.status)) {
-      const currentRunId = run.id;
-      flowRunsApi.addRunListener(socket, currentRunId, (run) => {
-        setRun(run, flowVersion);
-      });
-    }
+    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (runId) => {
+      if (run && run?.id === runId) {
+        fetchAndUpdateRun(runId, {
+          onSuccess: (run) => {
+            setRun(run, flowVersion);
+          },
+        });
+      }
+    });
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
       socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
@@ -156,7 +163,7 @@ const BuilderPage = () => {
       socket.removeAllListeners(WebsocketClientEvent.ASK_COPILOT_FINISHED);
 
     };
-  }, [socket, refetchPiece, run]);
+  }, [socket.id, run?.id]);
 
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =

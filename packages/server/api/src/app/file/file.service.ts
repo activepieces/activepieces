@@ -2,6 +2,7 @@ import { AppSystemProp, fileCompressor, logger, system } from '@activepieces/ser
 import {
     ActivepiecesError,
     apId,
+    assertNotNullOrUndefined,
     ErrorCode,
     File,
     FileCompression,
@@ -12,7 +13,7 @@ import {
     ProjectId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { Equal, In, LessThanOrEqual } from 'typeorm'
+import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
@@ -29,19 +30,26 @@ export const fileService = {
             type: params.type,
             fileName: params.fileName,
             compression: params.compression,
-            size: params.data.length,
+            size: params.size,
             metadata: params.metadata,
+            created: dayjs().toISOString(),
+            updated: dayjs().toISOString(),
         }
         const location = getLocationForFile(params.type)
         switch (location) {
-            case FileLocation.DB:
+            case FileLocation.DB: {
+                assertNotNullOrUndefined(params.data, 'data is required')
                 return fileRepo().save({
                     ...baseFile,
                     location: FileLocation.DB,
                     data: params.data,
                 })
+            }
             case FileLocation.S3: {
-                const s3Key = await s3Helper.uploadFile(params.platformId, params.projectId, params.type, baseFile.id, params.data)
+                const s3Key = s3Helper.constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                if (!isNil(params.data)) {
+                    await s3Helper.uploadFile(s3Key, params.data)
+                }
                 return fileRepo().save({
                     ...baseFile,
                     location: FileLocation.S3,
@@ -58,7 +66,7 @@ export const fileService = {
         })
         if (isNil(file)) {
             throw new ActivepiecesError({
-                code: ErrorCode.FILE_NOT_FOUND, 
+                code: ErrorCode.FILE_NOT_FOUND,
                 params: {
                     id: fileId,
                 },
@@ -89,33 +97,39 @@ export const fileService = {
             fileName: file.fileName,
         }
     },
-    async deleteStaleBulk(type: FileType) {
+    async deleteStaleBulk(types: FileType[]) {
         const retentionDateBoundary = dayjs().subtract(EXECUTION_DATA_RETENTION_DAYS, 'days').toISOString()
         const maximumFilesToDeletePerIteration = 4000
         let affected: undefined | number = undefined
         let totalAffected = 0
         while (isNil(affected) || affected === maximumFilesToDeletePerIteration) {
-            const logsFileIds = await fileRepo().find({
-                select: ['id', 'created'],
+            const staleFiles = await fileRepo().find({
+                select: ['id', 'created', 's3Key'],
                 where: {
-                    type: Equal(type),
+                    type: In(types),
                     created: LessThanOrEqual(retentionDateBoundary),
                 },
                 take: maximumFilesToDeletePerIteration,
             })
+
+            const s3Keys = staleFiles.filter(f => !isNil(f.s3Key)).map(f => f.s3Key!)
+            await s3Helper.deleteFiles(s3Keys)
+
             const result = await fileRepo().delete({
-                type: Equal(type),
+                type: In(types),
                 created: LessThanOrEqual(retentionDateBoundary),
-                id: In(logsFileIds.map(log => log.id)),
+                id: In(staleFiles.map(file => file.id)),
             })
             affected = result.affected || 0
             totalAffected += affected
             logger.info({
                 counts: affected,
+                types,
             }, '[FileService#deleteStaleBulk] iteration completed')
         }
         logger.info({
             totalAffected,
+            types,
         }, '[FileService#deleteStaleBulk] completed')
     },
 }
@@ -149,7 +163,8 @@ function isExecutionDataFileThatExpires(type: FileType) {
 type SaveParams = {
     fileId?: FileId | undefined
     projectId?: ProjectId
-    data: Buffer
+    data: Buffer | null
+    size: number
     type: FileType
     platformId?: string
     fileName?: string

@@ -1,10 +1,11 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 import { invoiceninjaAuth } from '../..';
+
 export const getClient = createAction({
   auth: invoiceninjaAuth,
   name: 'getclient_task',
@@ -13,14 +14,17 @@ export const getClient = createAction({
 
   props: {
     email: Property.LongText({
-      displayName: 'Client e-mail address',
+      displayName: 'Client e-mail address', 
       description: 'A valid e-mail address to get client details for',
       required: true,
-      validators: [Validators.email],
     }),
   },
 
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      email: z.string().email(),
+    });
+
     const INapiToken = context.auth.access_token;
 
     const headers = {

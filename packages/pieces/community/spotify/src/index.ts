@@ -12,7 +12,7 @@ export const spotify = createPiece({
   description: 'Music for everyone',
 
   auth: spotifyCommon.authentication,
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/spotify.png',
   categories: [],
   authors: ["JanHolger","kishanprmr","MoShizzle","abuaboud"],

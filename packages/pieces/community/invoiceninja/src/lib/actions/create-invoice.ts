@@ -1,8 +1,9 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 import { invoiceninjaAuth } from '../..';
 
@@ -19,7 +20,7 @@ export const createInvoice = createAction({
       required: true,
     }),
     purchase_order_no: Property.LongText({
-      displayName: 'Purchase Order Number (alphanumeric)',
+      displayName: 'Purchase Order Number (alphanumeric)', 
       description: 'Descriptive text or arbitrary number (optional)',
       required: false,
     }),
@@ -31,7 +32,7 @@ export const createInvoice = createAction({
     }),
     discount_type: Property.StaticDropdown({
       displayName: 'Type of discount',
-      description: 'Select either amount or percentage for invoice discount. Applies to line items and invoice.', 
+      description: 'Select either amount or percentage for invoice discount. Applies to line items and invoice.',
       defaultValue: true,
       required: true,
       options: {
@@ -78,11 +79,14 @@ export const createInvoice = createAction({
       displayName: 'Invoice due date',
       description: 'e.g., 2024-01-20',
       required: false,
-      validators: [Validators.datetimeIso],
     }),
   },
 
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      due_date: z.string().datetime().optional(),
+    });
+
     const INapiToken = context.auth.access_token;
     const headers = {
       'X-Api-Token': INapiToken,

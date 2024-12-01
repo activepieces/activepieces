@@ -13,7 +13,7 @@ export const schedule = createPiece({
   description: 'Trigger flow with fixed schedule',
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   actions: [],
   triggers: [

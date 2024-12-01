@@ -1,13 +1,15 @@
 import {
     apId,
+    DefaultProjectRole,
     FlowOperationType,
     FlowStatus,
     PlatformRole,
     PrincipalType,
-    ProjectMemberRole,
+    ProjectRole,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
@@ -23,7 +25,7 @@ import {
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 
@@ -36,8 +38,8 @@ describe('Flow API', () => {
     describe('Create Flow endpoint', () => {
 
         it.each([
-            ProjectMemberRole.ADMIN,
-            ProjectMemberRole.EDITOR,
+            DefaultProjectRole.ADMIN,
+            DefaultProjectRole.EDITOR,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
             const mockPlatformId = apId()
@@ -54,11 +56,13 @@ describe('Flow API', () => {
             })
             await databaseConnection().getRepository('project').save([mockProject])
 
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
+
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                role: testRole,
+                projectRoleId: projectRole.id,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -91,8 +95,8 @@ describe('Flow API', () => {
         })
 
         it.each([
-            ProjectMemberRole.VIEWER,
-            ProjectMemberRole.OPERATOR,
+            DefaultProjectRole.VIEWER,
+            DefaultProjectRole.OPERATOR,
         ])('Fails if user role is %s', async (testRole) => {
             // arrange
             const mockPlatformId = apId()
@@ -109,11 +113,13 @@ describe('Flow API', () => {
             })
             await databaseConnection().getRepository('project').save([mockProject])
 
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
+
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                role: testRole,
+                projectRoleId: projectRole.id,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -154,7 +160,7 @@ describe('Flow API', () => {
     describe('Update flow endpoint', () => {
         it.each([
             {
-                role: ProjectMemberRole.ADMIN,
+                role: DefaultProjectRole.ADMIN,
                 request: {
                     type: FlowOperationType.CHANGE_STATUS,
                     request: {
@@ -163,7 +169,7 @@ describe('Flow API', () => {
                 },
             },
             {
-                role: ProjectMemberRole.EDITOR,
+                role: DefaultProjectRole.EDITOR,
                 request: {
                     type: FlowOperationType.CHANGE_STATUS,
                     request: {
@@ -172,7 +178,7 @@ describe('Flow API', () => {
                 },
             },
             {
-                role: ProjectMemberRole.OPERATOR,
+                role: DefaultProjectRole.OPERATOR,
                 request: {
                     type: FlowOperationType.CHANGE_STATUS,
                     request: {
@@ -196,11 +202,13 @@ describe('Flow API', () => {
             })
             await databaseConnection().getRepository('project').save([mockProject])
 
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: role }) as ProjectRole
+
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                role,
+                projectRoleId: projectRole.id,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -249,7 +257,7 @@ describe('Flow API', () => {
 
         it.each([
             {
-                role: ProjectMemberRole.VIEWER,
+                role: DefaultProjectRole.VIEWER,
                 request: {
                     type: FlowOperationType.CHANGE_STATUS,
                     request: {
@@ -258,7 +266,7 @@ describe('Flow API', () => {
                 },
             },
             {
-                role: ProjectMemberRole.OPERATOR,
+                role: DefaultProjectRole.OPERATOR,
                 request: {
                     type: FlowOperationType.CHANGE_NAME,
                     request: {
@@ -282,11 +290,13 @@ describe('Flow API', () => {
             })
             await databaseConnection().getRepository('project').save([mockProject])
 
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: role }) as ProjectRole
+
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                role,
+                projectRoleId: projectRole.id,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 
@@ -340,10 +350,10 @@ describe('Flow API', () => {
 
     describe('List Flows endpoint', () => {
         it.each([
-            ProjectMemberRole.ADMIN,
-            ProjectMemberRole.EDITOR,
-            ProjectMemberRole.OPERATOR,
-            ProjectMemberRole.VIEWER,
+            DefaultProjectRole.ADMIN,
+            DefaultProjectRole.EDITOR,
+            DefaultProjectRole.OPERATOR,
+            DefaultProjectRole.VIEWER,
         ])('Succeeds if user role is %s', async (testRole) => {
             // arrange
             const mockPlatformId = apId()
@@ -360,11 +370,13 @@ describe('Flow API', () => {
             })
             await databaseConnection().getRepository('project').save([mockProject])
 
+            const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: testRole }) as ProjectRole
+
             const mockProjectMember = createMockProjectMember({
                 userId: mockUser.id,
                 platformId: mockPlatform.id,
                 projectId: mockProject.id,
-                role: testRole,
+                projectRoleId: projectRole.id,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
 

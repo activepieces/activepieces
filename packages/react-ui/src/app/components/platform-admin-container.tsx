@@ -2,9 +2,9 @@ import { t } from 'i18next';
 import {
   LayoutGrid,
   LineChart,
-  Link,
-  Puzzle,
-  Workflow,
+  Server,
+  Shield,
+  Users,
   Wrench,
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
@@ -46,27 +46,24 @@ export function PlatformAdminContainer({
       locked: isLocked(!platform.manageProjectsEnabled),
     },
     {
-      to: '/platform/pieces',
-      label: t('Pieces'),
-      locked: isLocked(!platform.managePiecesEnabled),
-      icon: Puzzle,
+      to: '/platform/users',
+      label: t('Users'),
+      icon: Users,
     },
     {
-      to: '/platform/connections',
-      label: t('Connections'),
-      icon: Link,
-      locked: isLocked(!platform.globalConnectionsEnabled),
-    },
-    {
-      to: '/platform/templates',
-      label: t('Templates'),
-      icon: Workflow,
-      locked: isLocked(!platform.manageTemplatesEnabled),
-    },
-    {
-      to: '/platform/settings',
-      label: t('Settings'),
+      to: '/platform/setup',
+      label: t('Setup'),
       icon: Wrench,
+    },
+    {
+      to: '/platform/security',
+      label: t('Security'),
+      icon: Shield,
+    },
+    {
+      to: '/platform/infrastructure',
+      label: t('Infra'),
+      icon: Server,
     },
   ];
 
@@ -75,7 +72,7 @@ export function PlatformAdminContainer({
       {showPlatformAdminDashboard ? (
         <Sidebar links={links}>{children}</Sidebar>
       ) : (
-        <Navigate to="/flows" />
+        <Navigate to="/" />
       )}
     </AllowOnlyLoggedInUserOnlyGuard>
   );

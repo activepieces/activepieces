@@ -70,6 +70,12 @@ export const gmailSendEmailAction = createAction({
       displayName: 'Sender Name',
       required: false,
     }),
+    from: Property.ShortText({
+      displayName: 'Sender Email',
+      description:
+        "The address must be listed in your GMail account's settings",
+      required: false,
+    }),
     attachment: Property.File({
       displayName: 'Attachment',
       description: 'File to attach to the email you want to send',
@@ -145,11 +151,14 @@ export const gmailSendEmailAction = createAction({
       threadId = messages.data.messages?.[0].threadId;
     }
 
-    const senderEmail = (
-      await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get()
-    ).data.email;
-    if (senderEmail && context.propsValue['sender_name']) {
-      mailOptions.from = `${context.propsValue['sender_name']} <${senderEmail}>`;
+    const senderEmail =
+      context.propsValue.from ||
+      (await google.oauth2({ version: 'v2', auth: authClient }).userinfo.get())
+        .data.email;
+    if (senderEmail) {
+      mailOptions.from = context.propsValue.sender_name
+        ? `${context.propsValue['sender_name']} <${senderEmail}>`
+        : senderEmail;
     }
 
     if (attachment) {

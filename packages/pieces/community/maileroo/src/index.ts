@@ -104,7 +104,7 @@ export const mailerooAuth = PieceAuth.CustomAuth({
 export const maileroo = createPiece({
   displayName: 'Maileroo',
   auth: mailerooAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/maileroo.png',
   categories: [
     PieceCategory.MARKETING,

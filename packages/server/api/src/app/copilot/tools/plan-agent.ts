@@ -30,137 +30,172 @@ export async function generatePlan(
     try {
         const model = getModel()
         if (!model) {
-            return {}
+            return getDefaultResponse()
         }
 
         const systemPrompt = `
-        You are an expert planning agent for Node.js backend development.
-        Your role is to analyze requirements and create detailed implementation plans.
+        You are an expert planning agent for Node.js automation flows.
+        Your primary role is to analyze requirements for a SINGLE STEP in an automation flow.
 
-        CRITICAL RESPONSIBILITIES:
-        1. Carefully analyze user requirements - pay attention to every detail
-        2. Determine if research is needed for unfamiliar technologies/APIs
-        3. Create detailed implementation steps
-        4. Provide comprehensive context for code generation
-        5. Suggest appropriate Lucide icon and title
-        6. Consider package requirements based on sandbox mode
+        IMPORTANT CONTEXT:
+        - This is for automation flow steps, NOT backend services
+        - Each step is a single, focused operation
+        - Steps receive inputs from previous steps
+        - Steps provide outputs for next steps
+        - Authentication tokens come from flow connections
+        - No need to handle OAuth flows or token management
 
-        CONTEXT GENERATION RULES:
-        - The context field is CRITICAL - it must contain detailed instructions for code generation
-        - Include all necessary implementation details
-        - Specify exact requirements for inputs and their types
-        - Mention error handling requirements
-        - Include any specific patterns or approaches to use
-        - If research results are provided, incorporate relevant implementation details
+        RESEARCH STRATEGY:
+        1. For API Services (Gmail, Slack, etc.):
+           - ALWAYS check official REST API documentation first
+           - Focus on specific API endpoint needed for this step
+           - Prefer official SDK packages over REST if available
+           - Keep implementation focused on one operation
 
-        Environment Context:
-        - Node.js backend only (no frontend)
-        - Sandbox/serverless environment
-        - ${sandboxMode ? 'Can use external packages' : 'Must use only Node.js native features'}
+        2. For general tasks:
+           - If it's a standard operation, provide example pattern
+           - Keep it simple - one task per step
+           - Focus on input/output contract
+           - Remember this is part of a larger flow
 
-        Planning Guidelines:
-        - Break down complex tasks into clear, actionable steps
-        - Consider error handling and security implications
-        - Plan for proper input validation and type safety
-        - Consider performance and resource constraints
-        - Be explicit about package requirements
-        - Include specific error scenarios to handle
+        CONTEXT GENERATION EXAMPLES:
 
-        For the suggestedIcon, use Lucide icon names (https://lucide.dev/icons/):
-        - For HTTP/API: 'Globe', 'Network', 'Cloud'
-        - For files: 'File', 'FileText', 'Files'
-        - For email: 'Mail', 'SendHorizontal'
-        - For database: 'Database', 'Storage'
-        - For authentication: 'Lock', 'Shield'
-        - For data processing: 'Code2', 'Terminal'
-        - For messaging: 'MessageSquare', 'MessagesSquare'
-        - For scheduling: 'Calendar', 'Clock'
-        - Default: 'Code2'
-
-        Example Response for Email Sending:
+        1. For REST API Calls:
         {
-            "needsResearch": true,
-            "searchQueries": [
-                {
-                    "query": "Node.js native email sending capabilities vs nodemailer implementation",
-                    "reason": "Need to understand best email sending approach"
-                }
-            ],
-            "plan": [
-                {
-                    "step": 1,
-                    "action": "Setup email configuration",
-                    "details": "Define email server settings and authentication"
-                },
-                {
-                    "step": 2,
-                    "action": "Implement email sending function",
-                    "details": "Create function with proper error handling and validation"
-                }
-            ],
-            "readyForCode": false,
-            "context": "Create a TypeScript function that sends emails with the following requirements:
-            - Accept recipient, subject, and body as inputs
-            - Validate email format
-            - Handle connection errors
-            - Include timeout handling
-            - Return success/failure status
-            - Use proper TypeScript types for all inputs
-            - Include retry logic for failed attempts",
+            "readyForCode": true,
+            "context": "Create an async function that makes an API request.
+            Reference implementation pattern:
+
+            export const code = async (inputs: { apiKey: string; endpoint: string; }) => {\\n
+              try {\\n
+                const response = await fetch(inputs.endpoint, {\\n
+                  headers: {\\n
+                    'Authorization': \`Bearer \${inputs.apiKey}\`,\\n
+                    'Content-Type': 'application/json'\\n
+                  }\\n
+                });\\n
+                \\n
+                if (!response.ok) {\\n
+                  throw new Error(\`API request failed with status \${response.status}\`);\\n
+                }\\n
+                \\n
+                const data = await response.json();\\n
+                return { data, statusCode: response.status };\\n
+              } catch (error) {\\n
+                throw new Error(\`API request failed: \${error.message}\`);\\n
+              }\\n
+            };
+
+            Key points:
+            - Use native fetch
+            - Handle API errors properly
+            - Include status code checks
+            - Return response data for next step",
+            "requiresPackages": false,
+            "suggestedIcon": "Globe",
+            "suggestedTitle": "API Request Handler"
+        }
+
+        2. For Gmail API:
+        {
+            "readyForCode": true,
+            "context": "Create an async function that fetches emails using Gmail API.
+            Reference implementation pattern:
+
+            import { google } from 'googleapis';\\n\\n
+            export const code = async (inputs: { accessToken: string; }) => {\\n
+              try {\\n
+                const auth = new google.auth.OAuth2();\\n
+                auth.setCredentials({ access_token: inputs.accessToken });\\n
+                \\n
+                const gmail = google.gmail({ version: 'v1', auth });\\n
+                const response = await gmail.users.messages.list({\\n
+                  userId: 'me',\\n
+                  maxResults: 10\\n
+                });\\n
+                \\n
+                return { messages: response.data.messages || [] };\\n
+              } catch (error) {\\n
+                throw new Error(\`Gmail API error: \${error.message}\`);\\n
+              }\\n
+            };
+
+            Key points:
+            - Use googleapis package when needed
+            - Expect accessToken in inputs
+            - Handle API responses and errors
+            - Return useful data for next step",
             "requiresPackages": true,
             "suggestedIcon": "Mail",
-            "suggestedTitle": "Email Dispatch System"
+            "suggestedTitle": "Gmail Message Fetcher"
         }
 
-        Example Response for Data Processing:
+        3. For Simple HTTP Requests:
         {
-            "needsResearch": false,
-            "searchQueries": [],
-            "plan": [
-                {
-                    "step": 1,
-                    "action": "Implement data transformation",
-                    "details": "Create function to process and validate input data"
-                }
-            ],
             "readyForCode": true,
-            "context": "Create a TypeScript function that processes data with these requirements:
-            - Accept array of strings as input
-            - Validate input array (non-empty, valid strings)
-            - Transform each string to uppercase
-            - Remove duplicates
-            - Handle empty or invalid inputs
-            - Return processed array
-            - Include proper error messages
-            - Use TypeScript array types",
+            "context": "Create an async function that fetches data from an API.
+            Reference implementation pattern:
+
+            export const code = async (inputs: { url: string; }) => {\\n
+              try {\\n
+                const response = await fetch(inputs.url);\\n
+                if (!response.ok) {\\n
+                  throw new Error(\`HTTP error! status: \${response.status}\`);\\n
+                }\\n
+                const data = await response.json();\\n
+                return { data };\\n
+              } catch (error) {\\n
+                throw new Error(\`Request failed: \${error.message}\`);\\n
+              }\\n
+            };
+
+            Key points:
+            - Use native fetch
+            - Simple error handling
+            - Return response data
+            - No external dependencies needed",
             "requiresPackages": false,
-            "suggestedIcon": "Code2",
-            "suggestedTitle": "Data Transformation Pipeline"
+            "suggestedIcon": "Globe",
+            "suggestedTitle": "HTTP Request Handler"
         }
-        `
+
+        Remember:
+        - This is ONE STEP in a flow, not a complete service
+        - Each step should do one thing well
+        - Inputs come from previous steps or flow connections
+        - Outputs will be used by next steps
+        - Keep implementation focused and simple
+        - No need for complex authentication flows
+        - Assume authentication is handled by the flow`
 
         const prompt = searchResults 
             ? `
                 Original requirement: ${requirement}
-
-                Search results: ${searchResults}
-
-                Based on these results, create a detailed plan that:
-                1. Incorporates the research findings
-                2. Provides specific implementation details
-                3. Includes comprehensive context for code generation
-                4. Considers ${sandboxMode ? 'available packages' : 'only Node.js native features'}
-                5. Addresses all aspects of the original requirement
+                API Documentation results: ${searchResults}
+                
+                Based on these API docs, create a detailed implementation plan.
+                IMPORTANT: You MUST now set readyForCode to true and provide comprehensive context for code generation.
+                
+                Include in context:
+                1. Specific endpoints and methods to use
+                2. Authentication requirements
+                3. Request/response formats
+                4. Error handling needs
+                5. Input parameter requirements
+                6. ${sandboxMode ? 'Required packages' : 'Native implementation approach'}
             `
             : `
-                Analyze this requirement in detail: ${requirement}
+                Analyze this requirement: ${requirement}
 
-                Create a comprehensive plan that:
-                1. Addresses every aspect of the requirement
-                2. Provides specific implementation details
-                3. Includes detailed context for code generation
-                4. Considers ${sandboxMode ? 'available packages' : 'only Node.js native features'}
-                5. Accounts for error handling and edge cases
+                If this is a simple task (data processing, string manipulation, etc.):
+                - Set readyForCode to true
+                - Provide detailed context
+                - No research needed
+
+                If this requires API knowledge:
+                - Set needsResearch to true
+                - Request specific API documentation
+                - Focus on endpoints and authentication
             `
 
         const result = await generateObject({
@@ -175,18 +210,24 @@ export async function generatePlan(
             return getDefaultResponse()
         }
 
-    
-        if (result.object.readyForCode && (!result.object.context || result.object.context.trim() === '')) {
-            result.object.context = `Create a TypeScript function that implements the following requirements:
-                ${requirement}
-                
-                Include:
-                - Proper error handling
-                - Input validation
-                - Type safety
-                - Comprehensive error messages
-                ${sandboxMode ? '' : '- Use only Node.js native features'}
-            `
+        // If we have search results, ensure we're ready for code
+        if (searchResults) {
+            result.object.readyForCode = true
+            if (!result.object.context || result.object.context.trim() === '') {
+                result.object.context = `Create a TypeScript function that implements:
+                    ${requirement}
+                    
+                    Using the following API documentation:
+                    ${searchResults}
+                    
+                    Include:
+                    - Proper error handling
+                    - Input validation
+                    - Type safety
+                    - API response handling
+                    ${sandboxMode ? '' : '- Use only Node.js native features'}
+                `
+            }
         }
 
         return result.object
@@ -202,8 +243,22 @@ function getDefaultResponse(): DeepPartial<PlanResponse> {
         needsResearch: false,
         searchQueries: [],
         plan: [],
-        readyForCode: false,
-        context: '',
+        readyForCode: true,
+        context: `Create a TypeScript function following this pattern:
+
+        export const code = async (inputs: Record<string, any>) => {
+          try {
+            // Implementation here
+            return { result: 'success' };
+          } catch (error) {
+            throw new Error(\`Operation failed: \${error.message}\`);
+          }
+        };
+
+        Key points:
+        - Simple input/output contract
+        - Proper error handling
+        - Return useful data for next step`,
         requiresPackages: false,
         suggestedIcon: 'Code2',
         suggestedTitle: 'Code Implementation',

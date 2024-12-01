@@ -1,10 +1,11 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { saveContent } from '../api';
 import { cmsAuth } from '../auth';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const saveVideoAction = createAction({
   name: 'save_video',
@@ -21,10 +22,13 @@ export const saveVideoAction = createAction({
       displayName: 'Video URL',
       description: 'The URL of the video to save',
       required: true,
-      validators: [Validators.url],
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      video: z.string().url(),
+    });
+
     const slug = context.propsValue.slug;
     const video = context.propsValue.video;
     return await saveContent(context.auth, 'video', slug, {

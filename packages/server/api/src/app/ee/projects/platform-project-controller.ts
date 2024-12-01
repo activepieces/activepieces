@@ -117,7 +117,7 @@ const UpdateProjectRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
-        permission: Permission.WRITE_RPOJECT,
+        permission: Permission.WRITE_PROJECT,
     },
     schema: {
         tags: ['projects'],

@@ -60,7 +60,7 @@ export const sperse = createPiece({
   description:
     'Sperse CRM enables secure payment processing and affiliate marketing for online businesses',
   auth: sperseAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/sperse.png',
   categories: [PieceCategory.COMMERCE, PieceCategory.PAYMENT_PROCESSING],
   authors: ['Trayshmhirk'],

@@ -88,12 +88,12 @@ async function executeFlow(jobData: OneTimeJobData, engineToken: string): Promis
 async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: string): Promise<void> {
     await engineApiService(engineToken).updateRunStatus({
         runDetails: {
-            steps: {},
             duration: 0,
             status: FlowRunStatus.QUOTA_EXCEEDED,
             tasks: 0,
             tags: [],
         },
+        executionStateContentLength: null,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
@@ -106,7 +106,7 @@ async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string):
             duration: timeoutFlowInSeconds,
             status: FlowRunStatus.TIMEOUT,
         },
-
+        executionStateContentLength: null,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,
@@ -117,12 +117,12 @@ async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string):
 async function handleInternalError(jobData: OneTimeJobData, engineToken: string, e: Error): Promise<void> {
     await engineApiService(engineToken).updateRunStatus({
         runDetails: {
-            steps: {},
             duration: 0,
             status: FlowRunStatus.INTERNAL_ERROR,
             tasks: 0,
             tags: [],
         },
+        executionStateContentLength: null,
         httpRequestId: jobData.httpRequestId,
         progressUpdateType: jobData.progressUpdateType,
         workerHandlerId: jobData.synchronousHandlerId,

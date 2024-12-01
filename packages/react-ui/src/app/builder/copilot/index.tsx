@@ -40,12 +40,12 @@ interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
 }
 
-const initialMessages: CopilotMessage[] = [
-  {
-    messageType: 'text',
-    content: t("Hi! Give me an idea and I'll write the code for it."),
-    userType: 'bot',
-  },
+const COPILOT_WELCOME_MESSAGES: CopilotMessage[] = [
+    {
+        messageType: 'text',
+        content: 'welcome',
+        userType: 'bot',
+    },
 ];
 
 async function getCodeResponse(
@@ -53,7 +53,7 @@ async function getCodeResponse(
   request: AskCopilotRequest,
 ): Promise<AskCopilotCodeResponse> {
   const id = nanoid();
-  debugger;
+  
   socket.emit(WebsocketServerEvent.ASK_COPILOT, {
     ...request,
     id,
@@ -62,7 +62,6 @@ async function getCodeResponse(
     socket.on(
       WebsocketClientEvent.ASK_COPILOT_FINISHED,
       (response: AskCopilotCodeResponse) => {
-        debugger;
         resolve(response);
       },
     );
@@ -73,7 +72,7 @@ async function getCodeResponse(
 }
 
 export const CopilotSidebar = () => {
-  const [messages, setMessages] = useState<CopilotMessage[]>(initialMessages);
+  const [messages, setMessages] = useState<CopilotMessage[]>(COPILOT_WELCOME_MESSAGES);
   const [inputMessage, setInputMessage] = useState('');
   const [
     flowVersion,
@@ -105,7 +104,7 @@ export const CopilotSidebar = () => {
     mutationFn: (request: AskCopilotRequest) =>
       getCodeResponse(socket, request),
     onSuccess: (response: AskCopilotCodeResponse) => {
-      debugger;
+      console.log(response)
       setMessages((prevMessages) => [
         ...prevMessages,
         {
@@ -134,9 +133,7 @@ export const CopilotSidebar = () => {
       return;
     }
     mutate({
-      prompt: `${inputMessage}. ${t(
-        'Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies, use only ES modules for dependencies, and use axios instead of node-fetch when needed.',
-      )}`,
+      prompt: inputMessage,
       context: messages.map((message) => ({
         role: message.userType === 'user' ? 'user' : 'assistant',
         content: JSON.stringify(message.content),
@@ -259,9 +256,9 @@ export const CopilotSidebar = () => {
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
         {t('AI Copilot')}
       </SidebarHeader>
-      <div className="flex flex-col flex-grow overflow-hidden">
+      <div className="flex flex-col flex-grow overflow-hidden ">
         <ScrollArea className="flex-grow overflow-auto">
-          <CardList>
+          <CardList className='pb-3'>
             {messages.map((message, index) => (
               <ChatMessage
                 key={index}
@@ -277,8 +274,11 @@ export const CopilotSidebar = () => {
         <div className="flex items-center py-4 px-3 gap-2 bg-white dark:bg-gray-900 border-t dark:border-gray-700">
           <Textarea
             value={inputMessage}
-            className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12"
-            rows={1}
+            className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12 resize-none"
+            minRows={1}
+            autoFocus={true}
+            maxRows={4}
+            placeholder={t('i.e Calculate the sum of a list...')}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !isPending) {

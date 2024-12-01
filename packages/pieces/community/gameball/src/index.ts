@@ -11,7 +11,7 @@ export const gameballAuth = PieceAuth.SecretText({
 export const gameball = createPiece({
   displayName: "Gameball",
   auth: gameballAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: "https://cdn.activepieces.com/pieces/gameball.png",
   authors: ["Raamyy"],
   actions: [sendEvent],

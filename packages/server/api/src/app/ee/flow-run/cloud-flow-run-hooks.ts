@@ -1,5 +1,5 @@
 import { system } from '@activepieces/server-shared'
-import { ApEdition, isFailedState, isFlowUserTerminalState, RunEnvironment } from '@activepieces/shared'
+import { ApEdition, isFailedState, isFlowUserTerminalState, isNil, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { projectUsageService } from '../../project/usage/project-usage-service'
@@ -9,7 +9,7 @@ import { issuesService } from '../issues/issues-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 
 export const platformRunHooks: FlowRunHooks = {
-    async onFinish({ projectId, tasks, flowRun }): Promise<void> {
+    async onFinish(flowRun): Promise<void> {
         const edition = system.getEdition()
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
@@ -25,27 +25,20 @@ export const platformRunHooks: FlowRunHooks = {
             })
             await alertsService.sendAlertOnRunFinish({ issue, flowRunId: flowRun.id })
         }
-        const consumedTasks = await projectUsageService.increaseUsage(projectId, tasks, 'tasks')
+        if (isNil(flowRun.tasks)) {
+            return
+        }
+        const consumedTasks = await projectUsageService.increaseUsage(flowRun.projectId, flowRun.tasks, 'tasks')
         await sendQuotaAlertIfNeeded({
-            projectId,
+            projectId: flowRun.projectId,
             consumedTasks,
             createdAt: dayjs().toISOString(),
-            previousConsumedTasks: consumedTasks - tasks,
+            previousConsumedTasks: consumedTasks - flowRun.tasks,
         })
     },
 }
 
-async function sendQuotaAlertIfNeeded({
-    projectId,
-    createdAt,
-    consumedTasks,
-    previousConsumedTasks,
-}: {
-    projectId: string
-    createdAt: string
-    consumedTasks: number
-    previousConsumedTasks: number
-}): Promise<void> {
+async function sendQuotaAlertIfNeeded({ projectId, createdAt, consumedTasks, previousConsumedTasks }: SendQuotaAlertIfNeededParams): Promise<void> {
     const quotaAlerts: { limit: number, templateName: 'quota-50' | 'quota-90' | 'quota-100' }[] = [
         { limit: 1.0, templateName: 'quota-100' },
         { limit: 0.9, templateName: 'quota-90' },
@@ -70,4 +63,11 @@ async function sendQuotaAlertIfNeeded({
             })
         }
     }
+}
+
+type SendQuotaAlertIfNeededParams = {
+    projectId: string
+    createdAt: string
+    consumedTasks: number
+    previousConsumedTasks: number
 }

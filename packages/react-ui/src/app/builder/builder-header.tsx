@@ -23,8 +23,14 @@ import {
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, FlowVersionState, supportUrl } from '@activepieces/shared';
+import {
+  ApFlagId,
+  FlowVersionState,
+  Permission,
+  supportUrl,
+} from '@activepieces/shared';
 
 import FlowActionMenu from '../components/flow-actions-menu';
 
@@ -41,6 +47,9 @@ export const BuilderHeader = () => {
   const isInRunsPage = useMemo(
     () => location.pathname.startsWith('/runs'),
     [location.pathname],
+  );
+  const hasPermissionToReadRuns = useAuthorization().checkAccess(
+    Permission.READ_FLOW,
   );
   const [
     flow,
@@ -155,19 +164,21 @@ export const BuilderHeader = () => {
               <TooltipContent side="bottom">{t('Support')}</TooltipContent>
             </Tooltip>
           )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
-                className="gap-2 px-2"
-              >
-                <Logs className="w-4 h-4" />
-                {t('Runs')}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{t('Run Logs')}</TooltipContent>
-          </Tooltip>
+          {hasPermissionToReadRuns && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
+                  className="gap-2 px-2"
+                >
+                  <Logs className="w-4 h-4" />
+                  {t('Runs')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t('Run Logs')}</TooltipContent>
+            </Tooltip>
+          )}
 
           {!isInRunsPage && (
             <Tooltip>

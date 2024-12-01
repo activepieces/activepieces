@@ -1,7 +1,6 @@
 import {
     Action,
     apId,
-    File,
     FileCompression,
     FileType,
     FlowId,
@@ -11,6 +10,7 @@ import {
     isNil,
     PlatformId,
     ProjectId,
+    SaveSampleDataResponse,
     StepRunResponse,
     Trigger,
 } from '@activepieces/shared'
@@ -52,14 +52,16 @@ export const sampleDataService = {
         flowVersionId,
         stepName,
         payload,
-    }: SaveSampleDataParams): Promise<File> {
+    }: SaveSampleDataParams): Promise<SaveSampleDataResponse> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
         const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step)
+        const data = Buffer.from(JSON.stringify(payload))
         return fileService.save({
             projectId,
             fileId,
-            data: Buffer.from(JSON.stringify(payload)),
+            data,
+            size: data.length,
             type: FileType.SAMPLE_DATA,
             compression: FileCompression.NONE,
             metadata: {

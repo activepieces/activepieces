@@ -1,5 +1,5 @@
 import { ProjectMember } from '@activepieces/ee-shared'
-import { Project, User } from '@activepieces/shared'
+import { Project, ProjectRole, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -9,6 +9,7 @@ import {
 export type ProjectMemberSchema = ProjectMember & {
     user: User
     project: Project
+    projectRole: ProjectRole
 }
 
 export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
@@ -18,9 +19,7 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
         projectId: ApIdSchema,
         platformId: ApIdSchema,
         userId: ApIdSchema,
-        role: {
-            type: String,
-        },
+        projectRoleId: ApIdSchema,
     },
     indices: [
         {
@@ -48,6 +47,17 @@ export const ProjectMemberEntity = new EntitySchema<ProjectMemberSchema>({
             joinColumn: {
                 name: 'userId',
                 foreignKeyConstraintName: 'fk_project_member_user_id',
+            },
+        },
+        projectRole: {
+            type: 'many-to-one',
+            target: 'project_role',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'projectRoleId',
+                referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_project_member_project_role_id',
             },
         },
     },

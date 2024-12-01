@@ -1,11 +1,12 @@
 import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, ProjectMemberRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, SeekPage, spreadIfDefined, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
 import { platformDomainHelper } from '../ee/helper/platform-domain-helper'
 import { projectMemberService } from '../ee/project-members/project-member.service'
+import { projectRoleService } from '../ee/project-role/project-role.service'
 import { jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -54,7 +55,7 @@ export const userInvitationsService = {
         }
         const platform = await platformService.getOneOrThrow(platformId)
         const invitations = await repo().createQueryBuilder('user_invitation')
-            .where('LOWER(user_invitation.email) = :email', { email: email.toLowerCase().trim() })
+            .where('LOWER("user_invitation"."email") = :email', { email: email.toLowerCase().trim() })
             .andWhere({
                 platformId,
                 status: InvitationStatus.ACCEPTED,
@@ -80,14 +81,19 @@ export const userInvitationsService = {
                     break
                 }
                 case InvitationType.PROJECT: {
-                    const { projectId, projectRole } = invitation
+                    const { projectId, projectRoleId } = invitation
                     assertNotNullOrUndefined(projectId, 'projectId')
-                    assertNotNullOrUndefined(projectRole, 'projectRole')
+                    assertNotNullOrUndefined(projectRoleId, 'projectRoleId')
                     assertEqual(platform.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
+
+                    const projectRole = await projectRoleService.getOneOrThrowById({
+                        id: projectRoleId,
+                    })
+                    
                     await projectMemberService.upsert({
                         projectId,
                         userId: user.id,
-                        role: projectRole,
+                        projectRoleName: projectRole.name,
                     })
                     break
                 }
@@ -102,7 +108,7 @@ export const userInvitationsService = {
         platformId,
         projectId,
         type,
-        projectRole,
+        projectRoleId,
         platformRole,
         invitationExpirySeconds,
         status,
@@ -115,7 +121,7 @@ export const userInvitationsService = {
             type,
             email: email.toLowerCase().trim(),
             platformId,
-            projectRole: type === InvitationType.PLATFORM ? undefined : projectRole!,
+            projectRoleId: type === InvitationType.PLATFORM ? undefined : projectRoleId!,
             platformRole: type === InvitationType.PROJECT ? undefined : platformRole!,
             projectId: type === InvitationType.PLATFORM ? undefined : projectId!,
         }, ['email', 'platformId', 'projectId'])
@@ -144,12 +150,13 @@ export const userInvitationsService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = repo().createQueryBuilder('user_invitation').where({
-            platformId: params.platformId,
-            ...spreadIfDefined('projectId', params.projectId),
-            ...spreadIfDefined('status', params.status),
-            ...spreadIfDefined('type', params.type),
-        })
+        const queryBuilder = repo().createQueryBuilder('user_invitation')
+            .where({
+                platformId: params.platformId,
+                ...spreadIfDefined('projectId', params.projectId),
+                ...spreadIfDefined('status', params.status),
+                ...spreadIfDefined('type', params.type),
+            })
         const { data, cursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<UserInvitation>(data, cursor)
     },
@@ -161,9 +168,11 @@ export const userInvitationsService = {
         })
     },
     async getOneOrThrow({ id, platformId }: PlatformAndIdParams): Promise<UserInvitation> {
-        const invitation = await repo().findOneBy({
-            id,
-            platformId,
+        const invitation = await repo().findOne({
+            where: {
+                id,
+                platformId,
+            },
         })
         if (isNil(invitation)) {
             throw new ActivepiecesError({
@@ -280,7 +289,7 @@ type CreateParams = {
     projectId: string | null
     status: InvitationStatus
     type: InvitationType
-    projectRole: ProjectMemberRole | null
+    projectRoleId: ApId | null
     invitationExpirySeconds: number
 }
 

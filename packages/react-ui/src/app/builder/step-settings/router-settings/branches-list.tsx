@@ -12,7 +12,7 @@ import {
 import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
 import { Button } from '../../../../components/ui/button';
 import EditableText from '../../../../components/ui/editable-text';
-import { Separator } from '../../../../components/ui/seperator';
+import { Separator } from '../../../../components/ui/separator';
 import {
   Tooltip,
   TooltipContent,

@@ -1,56 +1,29 @@
-import { system } from '@activepieces/server-shared'
-import { ApEdition, PrincipalType, WorkerMachineHealthcheckRequest, WorkerMachineType, WorkerPrincipal } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { PrincipalType, WorkerMachineHealthcheckRequest, WorkerPrincipal } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser } from '../../ee/authentication/ee-authorization'
-import { platformService } from '../../platform/platform.service'
 import { machineService } from './machine-service'
 
 export const workerMachineController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListWorkersParams, async (req, reply) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, reply)
-        // TODO replace with specific platform id in future
-        if ([ApEdition.CLOUD].includes(system.getEdition())) {
-            return []
-        }
         return machineService.list()
-    })
-
-    app.post('/', GenerateWorkerTokenParams, async (request) => {
-        const platform = await platformService.getOneOrThrow(request.body.platformId)
-        return accessTokenManager.generateWorkerToken({
-            platformId: platform.id,
-            type: WorkerMachineType.DEDICATED,
-        })
     })
 
 
     app.post('/heartbeat', HeartbeatParams, async (request) => {
-        const { cpuUsagePercentage, ramUsagePercentage, totalAvailableRamInBytes, ip } = request.body
+        const { cpuUsagePercentage, ramUsagePercentage, totalAvailableRamInBytes, diskInfo, ip, workerProps } = request.body
         const workerPrincipal = request.principal as unknown as WorkerPrincipal
         await machineService.upsert({
             cpuUsagePercentage,
+            diskInfo,
             ramUsagePercentage,
             totalAvailableRamInBytes,
             ip,
+            workerProps,
             workerPrincipal,
         })
     })
-}
-
-
-
-const GenerateWorkerTokenParams = {
-    config: {
-        // TODO this should be replaced with the user
-        allowedPrincipals: [PrincipalType.SUPER_USER],
-    },
-    schema: {
-        body: Type.Object({
-            platformId: Type.String(),
-        }),
-    },
 }
 
 const HeartbeatParams = {

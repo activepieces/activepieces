@@ -1,10 +1,11 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { saveImage } from '../api';
 import { cmsAuth } from '../auth';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const saveImageAction = createAction({
   name: 'save_image',
@@ -44,21 +45,18 @@ export const saveImageAction = createAction({
       description: 'The quality of the thumbnail',
       required: true,
       defaultValue: 85,
-      validators: [Validators.minValue(1), Validators.maxValue(100)],
     }),
     scaleTh: Property.Number({
       displayName: 'Thumbnail Scale',
       description: 'The scale of the thumbnail',
       required: true,
       defaultValue: 400,
-      validators: [Validators.minValue(1)],
     }),
     scaleSq: Property.Number({
       displayName: 'Thumbnail Square Scale',
       description: 'The scale of the square thumbnail',
       required: true,
       defaultValue: 400,
-      validators: [Validators.minValue(1)],
     }),
     resize: Property.StaticDropdown({
       displayName: 'Thumbnail Resize Method',
@@ -109,6 +107,11 @@ export const saveImageAction = createAction({
     }),
   },
   async run(context) {
+    await propsValidation.validateZod(context.propsValue, {
+      quality: z.number().min(1).max(100),
+      scaleTh: z.number().min(1),
+      scaleSq: z.number().min(1),
+    });
     const slug = context.propsValue.slug;
     const image = {
       filename: context.propsValue.image.filename,

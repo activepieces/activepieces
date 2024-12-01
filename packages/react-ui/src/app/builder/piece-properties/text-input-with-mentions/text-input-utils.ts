@@ -8,6 +8,7 @@ import {
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 const removeIntroplationBrackets = (text: string) => {
   return text.slice(2, text.length - 2);
@@ -24,10 +25,10 @@ const removeQuotes = (text: string) => {
 };
 
 const keysWithinPath = (path: string) => {
-  return path
+ return path
     .split(/\.|\[|\]/)
-    .filter((key) => key && key !== '')
-    .map((key) => removeQuotes(key));
+    .filter((key) => key && key.trim().length>0)
+    .map(removeQuotes)
 };
 
 type ApMentionNodeAttrs = {
@@ -43,7 +44,11 @@ enum TipTapNodeTypes {
   mention = 'mention',
 }
 const isMentionNodeText = (item: string) => /^\{\{.*\}\}$/.test(item);
+const isStepName = (stepName:string)=>{
+  const pattern = /^(step_\d+|trigger)/;
+  return pattern.test(stepName.trim());
 
+}
 type ParseMentionNodeFromText = {
   path: string;
   stepDisplayName: string;
@@ -57,13 +62,11 @@ function getLabelForMention({
   path,
 }: ParseMentionNodeFromText) {
   const keys = keysWithinPath(removeIntroplationBrackets(path));
-  if (keys.length === 0) {
-    return 'Custom Code';
-  }
+  const displayTextPrefix = stepDfsIndex>0 ?`${stepDfsIndex}.`: isStepName(keys[0])?  t('Missing Step'): removeIntroplationBrackets(path);
   const mentionText = [stepDisplayName, ...keys.slice(1)].join(' ');
   return JSON.stringify({
-    logoUrl: stepLogoUrl,
-    displayText: `${stepDfsIndex}. ${mentionText}`,
+    logoUrl: displayTextPrefix === t('Missing Step')? '/src/assets/img/custom/incomplete.png' : stepLogoUrl,
+    displayText: `${displayTextPrefix} ${mentionText}`,
     serverValue: path,
   });
 }
@@ -85,7 +88,7 @@ const getStepMetadataFromPath = (
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) => {
   const stepPath = removeIntroplationBrackets(path);
-  const stepName = textMentionUtils.keysWithinPath(stepPath)[0];
+  const stepName = textMentionUtils.keysWithinPath(stepPath)[0].trim();
   const index = steps.findIndex((step) => step.name === stepName);
   return {
     dfsIndex: index,
@@ -205,6 +208,11 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     imgElement.src = apMentionNodeAttrs.logoUrl;
     imgElement.className = 'object-contain w-4 h-4';
     mentionElement.appendChild(imgElement);
+  }
+  else {
+    const emptyImagePlaceHolder = document.createElement('span');
+    emptyImagePlaceHolder.className = 'h-4 -mr-2';
+    mentionElement.appendChild(emptyImagePlaceHolder);
   }
 
   const mentiontextDiv = document.createTextNode(

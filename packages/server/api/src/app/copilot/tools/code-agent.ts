@@ -1,7 +1,7 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { DeepPartial, generateObject } from 'ai'
 import { z } from 'zod'
-import { system , AppSystemProp } from '@activepieces/server-shared'
+import { system, AppSystemProp } from '@activepieces/server-shared'
 
 export function getModel() {
     try {
@@ -23,18 +23,16 @@ export function getModel() {
 
 const codeGenerationSchema = z.object({
     code: z.string(),
-    packages: z.array(z.string()).default([]),
     inputs: z.array(z.object({
         name: z.string(),
         type: z.string(),
         description: z.string().optional(),
-        suggestedValue: z.string()
+        suggestedValue: z.string().optional(),
     })).default([]),
 })
 
 export async function generateCode(
     requirement: string,
-    sandboxMode: boolean,
 ): Promise<DeepPartial<typeof codeGenerationSchema>> {
     try {
         const model = getModel()
@@ -42,117 +40,81 @@ export async function generateCode(
             return {}
         }
 
+        const systemPrompt = `
+        You are a TypeScript code generation expert for automation flows.
+        You are generating code for a single step in an automation flow, NOT a backend service.
+        
+        FLOW CONTEXT:
+        - This code will run as one step in a larger flow
+        - Previous steps provide inputs
+        - Next steps will use the outputs
+        - Authentication is handled by flow connections
+        - Each step should do ONE thing well
+        - Keep it simple and focused
+
+        CRITICAL REQUIREMENTS:
+        1. Function Requirements:
+           - MUST start with 'export const code ='
+           - MUST be an async function
+           - MUST have proper input parameters
+           - MUST return a value for next steps
+           - Keep it simple - this is one step in a flow!
+           - Focus on a single operation
+
+        2. HTTP Requests:
+           - Use native fetch API
+           - NO external HTTP libraries needed
+           - Simple error handling for responses
+           - Always check response.ok
+
+        3. Input Parameters:
+           - Inputs come from previous steps or flow connections
+           - Expect tokens/credentials from flow connections
+           - NO OAuth flows or token generation
+           - NO client IDs or secrets
+           - NO redirect URLs
+           - NO environment variables
+
+        4. Flow Integration:
+           - Return data that next steps can use
+           - Keep processing focused on one task
+           - Don't try to handle multiple operations
+           - Let the flow orchestrate complex processes
+
+        Perfect Example (Gmail API Usage):
+        {
+            "code": "export const code = async (inputs: { accessToken: string }) => {\\n  try {\\n    const auth = new google.auth.OAuth2();\\n    auth.setCredentials({ access_token: inputs.accessToken });\\n\\n    const gmail = google.gmail({ version: 'v1', auth });\\n    const response = await gmail.users.messages.list({\\n      userId: 'me',\\n      maxResults: 10\\n    });\\n\\n    return { messages: response.data.messages || [] };\\n  } catch (error) {\\n    throw new Error(\`Gmail API error: \${error.message}\`);\\n  }\\n}",
+            "inputs": [
+                {
+                    "name": "accessToken",
+                    "type": "string",
+                    "description": "Gmail API access token",
+                    "suggestedValue": "{{ connections.gmail.accessToken }}"
+                }
+            ]
+        }
+
+        IMPORTANT REMINDERS:
+        - This is ONE STEP in a flow
+        - Previous steps provide inputs
+        - Next steps use outputs
+        - Keep it focused on one operation
+        - Let the flow handle complex workflows
+        - Authentication comes from flow connections
+        - Return useful data for next steps`
+
         const result = await generateObject({
             model,
-            system: `
-            You are a TypeScript code generation expert for Node.js backend development.
-            Your task is to:
-            1. Generate TypeScript code based on the requirement
-            2. List any required npm packages (only if sandbox mode is enabled)
-            3. Define necessary input parameters
-            
-            CRITICAL REQUIREMENT:
-            - You MUST ALWAYS name the exported function variable 'code'
-            - The code MUST ALWAYS start with 'export const code ='
-            - This naming is required for the system to work properly
-            
-            Environment Context:
-            - Node.js backend only (no frontend frameworks)
-            - Running in a sandbox/serverless environment
-            - ${sandboxMode ? 'External packages are allowed' : 'Only Node.js native features are allowed'}
-            
-            Always follow these rules:
-            - ALWAYS use 'export const code = ' as the function declaration
-            - Code should be in TypeScript
-            - Use async/await for asynchronous operations
-            - Include type definitions for inputs
-            - Make code reusable and modular
-            - Follow best practices and clean code principles
-            - Include proper error handling and timeouts
-            - Consider sandbox environment limitations
-            ${sandboxMode ? '' : '- Use only Node.js native modules (no external packages)'}
-            
-            Simple Example:
-            {
-                "code": "export const code = async (inputs: { data: string }) => { return inputs.data.toUpperCase(); }",
-                "packages": [],
-                "inputs": [
-                    {
-                        "name": "data",
-                        "type": "string",
-                        "description": "Input string to process",
-                        "suggestedValue": "suggest a value to put here for the user, if the type of the value is anything other than string put it inside {{}} like {{5}} or {{[1,2,3,4]}} or {{ ['jon','doe'] }}"
-                    }
-                ]
-            }
-
-            HTTP Example:
-            {
-                "code": "export const code = async (inputs: { url: string }) => { const response = await fetch(inputs.url); return response.json(); }",
-                "packages": ["node-fetch"],
-                "inputs": [
-                    {
-                        "name": "url",
-                        "type": "string",
-                        "description": "URL to fetch",
-                        "suggestedValue": "suggest a value to put here for the user"
-                    }
-                ]
-            }
-
-            Email Example:
-            {
-                "code": "export const code = async (inputs: { to: string, subject: string, body: string }) => { const nodemailer = require('nodemailer'); /* rest of implementation */ }",
-                "packages": ["nodemailer"],
-                "inputs": [
-                    {
-                        "name": "to",
-                        "type": "string",
-                        "description": "Recipient email",
-                        "suggestedValue": "jon@doe.com"
-                    },
-                    {
-                        "name": "subject",
-                        "type": "string",
-                        "description": "Email subject",
-                        "suggestedValue": "Introduction Email"
-                    },
-                    {
-                        "name": "body",
-                        "type": "string",
-                        "description": "Email content"
-                    }
-                ]
-            }
-            `,
+            system: systemPrompt,
             schema: codeGenerationSchema,
-            prompt: `
-            Generate TypeScript code for this requirement:
-            ${requirement}
-            
-            IMPORTANT: 
-            - Use 'export const code = ' as the function declaration
-            - Keep the code simple and avoid complex string literals in the response JSON
-            - Ensure proper JSON escaping for any special characters
-            Remember: ${sandboxMode ? 'External packages are allowed' : 'Only Node.js native features are allowed'}
-            `,
+            prompt: `Generate TypeScript code for this automation flow requirement: ${requirement}`,
             temperature: 0,
         })
 
         if (!result?.object) {
             return {
                 code: '',
-                packages: [],
                 inputs: [],
-            }
-        }
-
-        // Verify and fix the code format if needed
-        if (!result.object.code.trim().startsWith('export const code =')) {
-            const fixedCode = `export const code = ${result.object.code.trim()}`
-            return {
-                ...result.object,
-                code: fixedCode,
             }
         }
 
@@ -162,7 +124,6 @@ export async function generateCode(
         console.error('Code generation failed:', error)
         return {
             code: '',
-            packages: [],
             inputs: [],
         }
     }

@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import {
   getAllGoogleSheetRows,
@@ -9,6 +8,8 @@ import {
   labelToColumn,
 } from '../common/common';
 import { googleSheetsAuth } from '../..';
+import { z } from 'zod';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const findRowsAction = createAction({
   auth: googleSheetsAuth,
@@ -38,7 +39,6 @@ export const findRowsAction = createAction({
       displayName: 'Starting Row',
       description: 'The row number to start searching from',
       required: false,
-      validators: [Validators.minValue(1)],
     }),
     numberOfRows: Property.Number({
       displayName: 'Number of Rows',
@@ -46,10 +46,14 @@ export const findRowsAction = createAction({
         'The number of rows to return ( the default is 1 if not specified )',
       required: false,
       defaultValue: 1,
-      validators: [Validators.minValue(1)],
     }),
   },
   async run({ propsValue, auth }) {
+    await propsValidation.validateZod(propsValue, {
+      startingRow: z.number().min(1).optional(),
+      numberOfRows: z.number().min(1).optional(),
+    });
+
     const spreadSheetId = propsValue.spreadsheet_id;
     const sheetId = propsValue.sheet_id;
     const startingRow = propsValue.startingRow ?? 1;

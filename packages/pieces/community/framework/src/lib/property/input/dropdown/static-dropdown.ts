@@ -1,7 +1,6 @@
 import { Type } from "@sinclair/typebox";
 import { BasePropertySchema, TPropertyValue } from "../common";
 import { DropdownState } from "./common";
-import { ValidationInputType } from "../../../validators/types";
 import { PropertyType } from "../property-type";
 
 export const StaticDropdownProperty = Type.Composite([
@@ -17,7 +16,7 @@ export type StaticDropdownProperty<
     R extends boolean
 > = BasePropertySchema & {
     options: DropdownState<T>;
-} & TPropertyValue<T, PropertyType.STATIC_DROPDOWN, ValidationInputType.ANY, R>;
+} & TPropertyValue<T, PropertyType.STATIC_DROPDOWN, R>;
 
 
 export const StaticMultiSelectDropdownProperty = Type.Composite([
@@ -36,6 +35,5 @@ export type StaticMultiSelectDropdownProperty<
 } & TPropertyValue<
     T[],
     PropertyType.STATIC_MULTI_SELECT_DROPDOWN,
-    ValidationInputType.ANY,
     R
 >;

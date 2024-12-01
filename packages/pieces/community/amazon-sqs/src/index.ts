@@ -167,7 +167,7 @@ export const amazonSqsAuth = PieceAuth.CustomAuth({
 export const awsSqs = createPiece({
   displayName: "Amazon SQS",
   auth: amazonSqsAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: "https://cdn.activepieces.com/pieces/aws-sqs.png",
   authors: ["abuaboud"],
   actions: [sendMessage],

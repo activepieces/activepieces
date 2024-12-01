@@ -1,6 +1,5 @@
 import {
   Property,
-  Validators,
   createAction,
 } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../..';
@@ -15,7 +14,6 @@ export const createCustomerAction = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       required: false,
-      validators: [Validators.email],
     }),
     verifiedEmail: Property.Checkbox({
       displayName: 'Verified Email',
@@ -39,7 +37,6 @@ export const createCustomerAction = createAction({
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
       required: false,
-      validators: [Validators.phoneNumber],
     }),
     tags: Property.ShortText({
       displayName: 'Tags',

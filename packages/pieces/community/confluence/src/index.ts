@@ -27,7 +27,7 @@ export const confluenceAuth = PieceAuth.CustomAuth({
 export const confluence = createPiece({
   displayName: "Confluence",
   auth: confluenceAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: "https://cdn.activepieces.com/pieces/confluence.png",
   authors: ["geekyme"],
   actions: [getPageContent],

@@ -23,8 +23,9 @@ type SelectPiecePropertyProps = {
 };
 const DynamicDropdownPieceProperty = React.memo(
   (props: SelectPiecePropertyProps) => {
-    const [flowVersion] = useBuilderStateContext((state) => [
+    const [flowVersion, readonly] = useBuilderStateContext((state) => [
       state.flowVersion,
+      state.readonly,
     ]);
     const form = useFormContext<Action | Trigger>();
     const isFirstRender = useRef(true);
@@ -118,7 +119,7 @@ const DynamicDropdownPieceProperty = React.memo(
           !props.disabled &&
           !dropdownState.disabled
         }
-        showRefresh={!props.disabled && !dropdownState.disabled}
+        showRefresh={!isPending && !readonly}
         onRefresh={refresh}
       />
     ) : (
@@ -133,7 +134,7 @@ const DynamicDropdownPieceProperty = React.memo(
           props.showDeselect && !isNil(props.value) && !props.disabled
         }
         onRefresh={refresh}
-        showRefresh={!props.disabled && !dropdownState.disabled}
+        showRefresh={!isPending && !readonly}
       />
     );
   },

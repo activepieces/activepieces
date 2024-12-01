@@ -9,6 +9,7 @@ import {
     FlowId,
     FlowVersion,
     PopulatedFlow,
+    TriggerType,
 } from '@activepieces/shared'
 import { workerApiService } from '../api/server-api.service'
 import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
@@ -40,6 +41,12 @@ export const webhookUtils = {
         engineToken,
         simulate,
     }: ExtractPayloadParams): Promise<unknown[]> {
+        if (flowVersion.trigger.type === TriggerType.EMPTY) {
+            logger.warn({
+                flowVersionId: flowVersion.id,
+            }, '[WebhookUtils#extractPayload] empty trigger, skipping')
+            return []
+        }
         const payloads: unknown[] = await triggerConsumer.extractPayloads(
             engineToken,
             {

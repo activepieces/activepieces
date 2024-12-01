@@ -5,7 +5,7 @@ import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Metrics } from '@/app/routes/platform/analytics/metrics';
 import { Reports } from '@/app/routes/platform/analytics/reports';
 import { TaskUsage } from '@/app/routes/platform/analytics/task-usage';
-import { Separator } from '@/components/ui/seperator';
+import { Separator } from '@/components/ui/separator';
 import { analyticsApi } from '@/features/platform-admin-panel/lib/analytics-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 

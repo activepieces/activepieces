@@ -7,7 +7,7 @@ import {
     FileLocation,
     FileType,
     PrincipalType,
-    StepFileUpsert,
+    StepFileUpsertRequest,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
@@ -46,13 +46,15 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', UpsertStepFileRequest, async (request) => {
-        const file = await stepFileService.saveAndEnrich({
-            fileName: request.body.file.filename,
+        return stepFileService.saveAndEnrich({
+            fileName: request.body.fileName,
             flowId: request.body.flowId,
             stepName: request.body.stepName,
-            file: request.body.file.data as Buffer,
-        }, request.hostname, request.principal.projectId)
-        return file
+            data: request.body.file?.data as Buffer | undefined,
+            hostname: request.hostname,
+            projectId: request.principal.projectId,
+            contentLength: request.body.contentLength,
+        })
     })
 }
 
@@ -97,7 +99,7 @@ const UpsertStepFileRequest = {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
     schema: {
-        body: StepFileUpsert,
+        body: StepFileUpsertRequest,
     },
 }
 

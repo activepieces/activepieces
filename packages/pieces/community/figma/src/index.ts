@@ -20,7 +20,7 @@ export const figmaAuth = PieceAuth.OAuth2({
 export const figma = createPiece({
   displayName: 'Figma',
   description: 'Collaborative interface design tool',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/figma.png',
   categories: [],
   authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],

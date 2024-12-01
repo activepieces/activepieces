@@ -1,7 +1,7 @@
-export enum ProjectMemberRole {
-    ADMIN = 'ADMIN',
-    EDITOR = 'EDITOR',
-    OPERATOR = 'OPERATOR',
-    VIEWER = 'VIEWER',
+export enum DefaultProjectRole {
+    ADMIN = 'Admin',
+    EDITOR = 'Editor',
+    OPERATOR = 'Operator',
+    VIEWER = 'Viewer',
 }
 

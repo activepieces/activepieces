@@ -1,5 +1,4 @@
 import { Type } from "@sinclair/typebox";
-import { ValidationInputType } from "../../validators/types";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyType } from "./property-type";
 
@@ -19,6 +18,6 @@ export const FileProperty = Type.Composite([
     BasePropertySchema,
     TPropertyValue(Type.Unknown(), PropertyType.FILE)
 ])
-
+    
 export type FileProperty<R extends boolean> = BasePropertySchema &
-    TPropertyValue<ApFile, PropertyType.FILE, ValidationInputType.FILE, R>;
+    TPropertyValue<ApFile, PropertyType.FILE, R>;

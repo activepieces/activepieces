@@ -85,7 +85,7 @@ const FlowRunsPage = () => {
   const openNewWindow = useNewWindow();
   const flows = flowsData?.data;
   const { checkAccess } = useAuthorization();
-  const userHasPermissionToRetryRun = checkAccess(Permission.RETRY_RUN);
+  const userHasPermissionToRetryRun = checkAccess(Permission.WRITE_RUN);
 
   const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = [
     {
@@ -268,7 +268,6 @@ const FlowRunsPage = () => {
       const flowId = searchParams.getAll('flowId');
       const createdAfter = searchParams.get('createdAfter') || undefined;
       const createdBefore = searchParams.get('createdBefore') || undefined;
-
       return flowRunsApi.bulkRetry({
         projectId: authenticationSession.getProjectId()!,
         flowRunIds: retryParams.runIds,
@@ -303,52 +302,29 @@ const FlowRunsPage = () => {
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild disabled={isDisabled}>
-                  <Button disabled={isDisabled} className="h-9 w-full">
-                    <PlayIcon className="mr-2 h-3 w-4" />
-                    {selectedRows.length > 0
-                      ? `${t('Retry')} (${selectedRows.length})`
-                      : t('Retry')}
-                    <ChevronDown className="h-3 w-4 ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToRetryRun}
-                  >
-                    <DropdownMenuItem
-                      disabled={!userHasPermissionToRetryRun}
-                      onClick={() => {
-                        replayRun.mutate({
-                          runIds: selectedRows.map((row) => row.id),
-                          strategy: FlowRetryStrategy.ON_LATEST_VERSION,
-                        });
-                        resetSelection();
-                        setSelectedRows([]);
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <div className="flex flex-row gap-2 items-center">
-                        <RotateCw className="h-4 w-4" />
-                        <span>{t('on latest version')}</span>
-                      </div>
-                    </DropdownMenuItem>
-                  </PermissionNeededTooltip>
-
-                  {selectedRows.some((row) => isFailedState(row.status)) && (
-                    <MessageTooltip
-                      message={t(
-                        'Only failed runs can be retried from failed step',
-                      )}
-                      isDisabled={!allFailed}
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToRetryRun}
+              >
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild disabled={isDisabled}>
+                    <Button disabled={isDisabled} className="h-9 w-full">
+                      <PlayIcon className="mr-2 h-3 w-4" />
+                      {selectedRows.length > 0
+                        ? `${t('Retry')} (${selectedRows.length})`
+                        : t('Retry')}
+                      <ChevronDown className="h-3 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <PermissionNeededTooltip
+                      hasPermission={userHasPermissionToRetryRun}
                     >
                       <DropdownMenuItem
-                        disabled={!userHasPermissionToRetryRun || !allFailed}
+                        disabled={!userHasPermissionToRetryRun}
                         onClick={() => {
                           replayRun.mutate({
                             runIds: selectedRows.map((row) => row.id),
-                            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+                            strategy: FlowRetryStrategy.ON_LATEST_VERSION,
                           });
                           resetSelection();
                           setSelectedRows([]);
@@ -356,14 +332,41 @@ const FlowRunsPage = () => {
                         className="cursor-pointer"
                       >
                         <div className="flex flex-row gap-2 items-center">
-                          <Redo className="h-4 w-4" />
-                          <span>{t('from failed step')}</span>
+                          <RotateCw className="h-4 w-4" />
+                          <span>{t('on latest version')}</span>
                         </div>
                       </DropdownMenuItem>
-                    </MessageTooltip>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    </PermissionNeededTooltip>
+
+                    {selectedRows.some((row) => isFailedState(row.status)) && (
+                      <MessageTooltip
+                        message={t(
+                          'Only failed runs can be retried from failed step',
+                        )}
+                        isDisabled={!allFailed}
+                      >
+                        <DropdownMenuItem
+                          disabled={!userHasPermissionToRetryRun || !allFailed}
+                          onClick={() => {
+                            replayRun.mutate({
+                              runIds: selectedRows.map((row) => row.id),
+                              strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+                            });
+                            resetSelection();
+                            setSelectedRows([]);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <div className="flex flex-row gap-2 items-center">
+                            <Redo className="h-4 w-4" />
+                            <span>{t('from failed step')}</span>
+                          </div>
+                        </DropdownMenuItem>
+                      </MessageTooltip>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </PermissionNeededTooltip>
             </div>
           );
         },

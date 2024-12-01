@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  Validators,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { talkableAuth } from '../../..';
@@ -16,7 +15,6 @@ export const createEvent = createAction({
       displayName: 'Email',
       description: undefined,
       required: true,
-      validators: [Validators.email],
     }),
     event_category: Property.ShortText({
       displayName: 'Event category',

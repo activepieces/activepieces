@@ -26,7 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/seperator';
+import { Separator } from '@/components/ui/separator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { globalConnectionsApi } from '@/features/connections/lib/global-connections-api';
@@ -154,7 +154,7 @@ const CreateOrEditConnectionDialog = React.memo(
       },
       onError: (err) => {
         if (err instanceof ConnectionNameAlreadyExists) {
-          form.setError('request.externalId', {
+          form.setError('request.displayName', {
             message: t('Name is already used'),
           });
         } else if (api.isError(err)) {

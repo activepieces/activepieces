@@ -10,7 +10,7 @@ import {
   CardListItem,
   CardListItemSkeleton,
 } from '@/components/ui/card-list';
-import { Separator } from '@/components/ui/seperator';
+import { Separator } from '@/components/ui/separator';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
   StepMetadata,

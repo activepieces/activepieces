@@ -1,12 +1,11 @@
 import {
   createAction,
   OAuth2PropertyValue,
+  PiecePropValueSchema,
   Property,
 } from '@activepieces/pieces-framework';
 import {
-  createSpreadsheet,
   googleSheetsCommon,
-  moveFile,
 } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import {
@@ -15,6 +14,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { drive_v3, sheets_v4 } from 'googleapis';
 
 export const createSpreadsheetAction = createAction({
   auth: googleSheetsAuth,
@@ -27,7 +27,6 @@ export const createSpreadsheetAction = createAction({
       description: 'The title of the new spreadsheet.',
       required: true,
     }),
-    // spreadsheet_id: googleSheetsCommon.spreadsheet_id(false,'Spreadsheet to Copy'),
     include_team_drives: googleSheetsCommon.include_team_drives,
     folder: Property.Dropdown({
       displayName: 'Parent Folder',
@@ -90,9 +89,7 @@ export const createSpreadsheetAction = createAction({
     }),
   },
   async run(context) {
-    const title = context.propsValue.title;
-    const folder = context.propsValue.folder;
-
+    const { title, folder } = context.propsValue
     const response = await createSpreadsheet(context.auth, title);
     const newSpreadsheetId = response.spreadsheetId;
 
@@ -105,3 +102,45 @@ export const createSpreadsheetAction = createAction({
     };
   },
 });
+
+
+async function createSpreadsheet(
+  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+  title: string
+) {
+  const response = await httpClient.sendRequest<sheets_v4.Schema$Spreadsheet>({
+    method: HttpMethod.POST,
+    url: 'https://sheets.googleapis.com/v4/spreadsheets',
+    body: {
+      properties: {
+        title,
+      },
+    },
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: auth.access_token,
+    },
+  });
+
+  return response.body;
+}
+
+async function moveFile(
+  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+  fileId: string,
+  folderId: string
+) {
+  const response = await httpClient.sendRequest<drive_v3.Schema$File>({
+    method: HttpMethod.PUT,
+    url: `https://www.googleapis.com/drive/v2/files/${fileId}`,
+    queryParams: {
+      addParents: folderId,
+    },
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: auth.access_token,
+    },
+  });
+
+  return response.body;
+}

@@ -60,6 +60,28 @@ export const formatUtils = {
       }).format(date);
     }
   },
+  formatDateToAgo(date: Date) {
+    const now = dayjs();
+    const inputDate = dayjs(date);
+    const diffInSeconds = now.diff(inputDate, 'second');
+    const diffInMinutes = now.diff(inputDate, 'minute');
+    const diffInHours = now.diff(inputDate, 'hour');
+    const diffInDays = now.diff(inputDate, 'day');
+
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds}s ago`;
+    }
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`;
+    }
+    if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    }
+    if (diffInDays < 30) {
+      return `${diffInDays}d ago`;
+    }
+    return inputDate.format('MMM D, YYYY');
+  },
   formatDuration(durationMs: number | undefined, short?: boolean): string {
     if (durationMs === undefined) {
       return '-';
@@ -166,4 +188,35 @@ export const isStepFileUrl = (json: unknown): json is string => {
     typeof json === 'string' &&
     (json.includes('/api/v1/step-files/') || json.includes('file://'))
   );
+};
+
+export const useTimeAgo = (date: Date) => {
+  const [timeAgo, setTimeAgo] = useState(() =>
+    formatUtils.formatDateToAgo(date),
+  );
+
+  useEffect(() => {
+    const updateInterval = () => {
+      const now = dayjs();
+      const inputDate = dayjs(date);
+      const diffInSeconds = now.diff(inputDate, 'second');
+
+      // Update every second if less than a minute
+      // Update every minute if less than an hour
+      // Update every hour if less than a day
+      // Update every day if more than a day
+      if (diffInSeconds < 60) return 1000;
+      if (diffInSeconds < 3600) return 60000;
+      if (diffInSeconds < 86400) return 3600000;
+      return 86400000;
+    };
+
+    const intervalId = setInterval(() => {
+      setTimeAgo(formatUtils.formatDateToAgo(date));
+    }, updateInterval());
+
+    return () => clearInterval(intervalId);
+  }, [date]);
+
+  return timeAgo;
 };
