@@ -8,6 +8,7 @@ import {
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 const removeIntroplationBrackets = (text: string) => {
   return text.slice(2, text.length - 2);
@@ -24,10 +25,10 @@ const removeQuotes = (text: string) => {
 };
 
 const keysWithinPath = (path: string) => {
-  return path
+ return path
     .split(/\.|\[|\]/)
-    .filter((key) => key && key !== '')
-    .map((key) => removeQuotes(key));
+    .filter((key) => key && key.trim().length>0)
+    .map(removeQuotes)
 };
 
 type ApMentionNodeAttrs = {
@@ -42,8 +43,19 @@ enum TipTapNodeTypes {
   hardBreak = 'hardBreak',
   mention = 'mention',
 }
-const isMentionNodeText = (item: string) => /^\{\{.*\}\}$/.test(item);
+const isMentionNodeText = (item: string) => {
+  const match = item.match(/^\{\{(.*)\}\}$/);
+  if (match) {
+    const content = match[1].trim();
+    return /^(step_\d+|trigger)/.test(content);
+  }
+  return false;
+};
+const isStepName = (stepName:string)=>{
+  const pattern = /^(step_\d+|trigger)/;
+  return pattern.test(stepName);
 
+}
 type ParseMentionNodeFromText = {
   path: string;
   stepDisplayName: string;
@@ -57,13 +69,12 @@ function getLabelForMention({
   path,
 }: ParseMentionNodeFromText) {
   const keys = keysWithinPath(removeIntroplationBrackets(path));
-  if (keys.length === 0) {
-    return 'Custom Code';
-  }
+  const isMissingStep = stepDfsIndex<=0  && isStepName(keys[0].trim());
+  const displayTextPrefix = isMissingStep?  `${t('(Missing)')} ${keys[0].trim()}`: `${stepDfsIndex}. `;
   const mentionText = [stepDisplayName, ...keys.slice(1)].join(' ');
   return JSON.stringify({
-    logoUrl: stepLogoUrl,
-    displayText: `${stepDfsIndex}. ${mentionText}`,
+    logoUrl:  stepDfsIndex<=0  && isStepName(keys[0].trim()) ? '/src/assets/img/custom/incomplete.png' : stepLogoUrl,
+    displayText: `${displayTextPrefix} ${mentionText}`,
     serverValue: path,
   });
 }
@@ -85,7 +96,7 @@ const getStepMetadataFromPath = (
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) => {
   const stepPath = removeIntroplationBrackets(path);
-  const stepName = textMentionUtils.keysWithinPath(stepPath)[0];
+  const stepName = textMentionUtils.keysWithinPath(stepPath)[0].trim();
   const index = steps.findIndex((step) => step.name === stepName);
   return {
     dfsIndex: index,
@@ -205,6 +216,11 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     imgElement.src = apMentionNodeAttrs.logoUrl;
     imgElement.className = 'object-contain w-4 h-4';
     mentionElement.appendChild(imgElement);
+  }
+  else {
+    const emptyImagePlaceHolder = document.createElement('span');
+    emptyImagePlaceHolder.className = 'h-4 -mr-2';
+    mentionElement.appendChild(emptyImagePlaceHolder);
   }
 
   const mentiontextDiv = document.createTextNode(
