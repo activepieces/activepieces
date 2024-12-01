@@ -158,7 +158,6 @@ const BuilderPage = () => {
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
       socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
-
     };
   }, [socket.id, run?.id]);
 
