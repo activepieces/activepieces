@@ -98,7 +98,7 @@ const ArrayPieceProperty = React.memo(
       const value = arrayProperty.properties
         ? getDefaultValuesForInputs(arrayProperty.properties)
         : '';
-      const formValues = form.getValues(inputName);
+      const formValues = form.getValues(inputName) || [];
       const newFields = [
         ...formValues.map((value: string | Record<string, unknown>) => ({
           id: nanoid(),
