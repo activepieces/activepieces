@@ -130,6 +130,21 @@ export const flowRunSideEffects = {
                 })
                 break
             case PauseType.WEBHOOK:
+                await flowQueue.add({
+                    id: flowRun.id,
+                    type: JobType.DELAYED,
+                    data: {
+                        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                        runId: flowRun.id,
+                        synchronousHandlerId: flowRun.pauseMetadata?.handlerId ?? null,
+                        progressUpdateType: flowRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
+                        projectId: flowRun.projectId,
+                        environment: flowRun.environment,
+                        jobType: RepeatableJobType.DELAYED_FLOW,
+                        flowVersionId: flowRun.flowVersionId,
+                    },
+                    delay: calculateDelayForPausedRun(pauseMetadata.timeoutDate ?? dayjs().toISOString()),
+                })
                 break
         }
     },

@@ -202,11 +202,18 @@ function createPauseHook(hookResponse: HookResponse, pauseId: string): PauseHook
                 break
             }
             case PauseType.WEBHOOK:
+                if (!isNil(req.pauseMetadata.timeoutDate)) {
+                    const diffInSeconds = dayjs(req.pauseMetadata.timeoutDate).diff(dayjs(), 'seconds')
+                    if (diffInSeconds <= 0) {
+                        throw new PausedFlowTimeoutError(undefined, diffInSeconds)
+                    }
+                }
                 hookResponse.pauseResponse = {
                     pauseMetadata: {
                         ...req.pauseMetadata,
                         requestId: pauseId,
                         response: req.pauseMetadata.response ?? {},
+                        timeoutDate: req.pauseMetadata.timeoutDate,
                     },
                 }
                 break
