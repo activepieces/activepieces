@@ -1,7 +1,6 @@
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
 import { t } from 'i18next';
-
 import { StepMetadata } from '@/features/pieces/lib/types';
 import {
   Action,
@@ -9,7 +8,6 @@ import {
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 
 const removeIntroplationBrackets = (text: string) => {
   return text.slice(2, text.length - 2);
@@ -224,11 +222,6 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     imgElement.className = 'object-contain w-4 h-4';
     mentionElement.appendChild(imgElement);
   } else {
-    const emptyImagePlaceHolder = document.createElement('span');
-    emptyImagePlaceHolder.className = 'h-4 -mr-2';
-    mentionElement.appendChild(emptyImagePlaceHolder);
-  }
-  else {
     const emptyImagePlaceHolder = document.createElement('span');
     emptyImagePlaceHolder.className = 'h-4 -mr-2';
     mentionElement.appendChild(emptyImagePlaceHolder);

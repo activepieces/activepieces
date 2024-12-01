@@ -1,21 +1,17 @@
+import { AppSystemProp, system } from '@activepieces/server-shared'
 import { AskCopilotRequest, isNil } from '@activepieces/shared'
 import OpenAI from 'openai'
 import { processHttpRequest } from './http-agent'
-import { system } from '@activepieces/server-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
 
-
-
-let openai: OpenAI| null = null;
+let openai: OpenAI | null = null
 const getOpenai = ()=>{
-    if(isNil(openai))
-    {
+    if (isNil(openai)) {
         openai = new OpenAI({
             apiKey: system.get(AppSystemProp.PERPLEXITY_API_KEY),
             baseURL: system.get(AppSystemProp.PERPLEXITY_BASE_URL),
-        });
+        })
     }
-    return openai;
+    return openai
 }
 
 export const httpGeneratorTool = {

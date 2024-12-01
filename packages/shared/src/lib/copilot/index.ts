@@ -10,6 +10,9 @@ export const AskCopilotRequest = Type.Object({
         role: Type.Union([Type.Literal('user'), Type.Literal('assistant')]),
         content: Type.String(),
     })),
+    selectedStepName: Type.Optional(Type.String()),
+    flowVersionId: Type.String(),
+    flowId: Type.String(),
     prompt: Type.String(),
     tools: Type.Array(Type.Enum(AskCopilotTool)),
 })
@@ -22,7 +25,7 @@ export const AskCopilotCodeResponse = Type.Object({
         dependencies: Type.Record(Type.String(), Type.String()),
     }),
     inputs: Type.Record(Type.String(), Type.String()),
-    icon: Type.String(),
+    icon: Type.Optional(Type.String()),
     title: Type.String(),
 })
 

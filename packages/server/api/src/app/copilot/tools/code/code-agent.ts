@@ -1,7 +1,8 @@
+import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
+import { isNil } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
-import { DeepPartial, generateObject } from 'ai'
+import { generateObject } from 'ai'
 import { z } from 'zod'
-import { system, AppSystemProp } from '@activepieces/server-shared'
 
 export function getModel() {
     try {
@@ -16,7 +17,6 @@ export function getModel() {
         return openai.chat('gpt-4o')
     }
     catch (error) {
-        console.error('Failed to initialize OpenAI model:', error)
         throw new Error('Failed to initialize OpenAI model')
     }
 }
@@ -25,19 +25,34 @@ const codeGenerationSchema = z.object({
     code: z.string(),
     inputs: z.array(z.object({
         name: z.string(),
-        type: z.string(),
         description: z.string().optional(),
         suggestedValue: z.string().optional(),
     })).default([]),
+    icon: z.string().optional(),
+    title: z.string().optional(),
 })
+
+type CodeAgentResponse = {
+    code: string
+    inputs: Record<string, string>
+    icon: string | undefined
+    title: string
+}
+
+const defaultResponse: CodeAgentResponse = {
+    code: '',
+    inputs: {},
+    icon: undefined,
+    title: 'Custom Code'
+}
 
 export async function generateCode(
     requirement: string,
-): Promise<DeepPartial<typeof codeGenerationSchema>> {
+): Promise<CodeAgentResponse> {
     try {
         const model = getModel()
         if (!model) {
-            return {}
+            return defaultResponse
         }
 
         const systemPrompt = `
@@ -81,17 +96,29 @@ export async function generateCode(
            - Don't try to handle multiple operations
            - Let the flow orchestrate complex processes
 
+        5. Icon Selection:
+           - Choose an icon from Lucide (lucide.dev) that represents the operation
+           - Pick icons that intuitively convey the step's purpose
+           - Use 'Mail' for email tasks
+           - Use 'Database' for data operations  
+           - Use 'FileText' for document processing
+           - Icons help users quickly understand the step's function
+
+        6. Title:
+           - Title should be 2-4 words, action-oriented
+           - Examples: "Send Email", "Query Database", "Transform JSON"
         Perfect Example (Gmail API Usage):
         {
             "code": "export const code = async (inputs: { accessToken: string }) => {\\n  try {\\n    const auth = new google.auth.OAuth2();\\n    auth.setCredentials({ access_token: inputs.accessToken });\\n\\n    const gmail = google.gmail({ version: 'v1', auth });\\n    const response = await gmail.users.messages.list({\\n      userId: 'me',\\n      maxResults: 10\\n    });\\n\\n    return { messages: response.data.messages || [] };\\n  } catch (error) {\\n    throw new Error(\`Gmail API error: \${error.message}\`);\\n  }\\n}",
             "inputs": [
                 {
                     "name": "accessToken",
-                    "type": "string",
                     "description": "Gmail API access token",
                     "suggestedValue": "{{ connections.gmail.accessToken }}"
                 }
-            ]
+            ],
+            "icon": "Mail",
+            "title": "List Gmail Messages"
         }
 
         IMPORTANT REMINDERS:
@@ -103,7 +130,7 @@ export async function generateCode(
         - Authentication comes from flow connections
         - Return useful data for next steps`
 
-        const result = await generateObject({
+        const llmResponse = await generateObject({
             model,
             system: systemPrompt,
             schema: codeGenerationSchema,
@@ -111,20 +138,24 @@ export async function generateCode(
             temperature: 0,
         })
 
-        if (!result?.object) {
-            return {
-                code: '',
-                inputs: [],
-            }
+        const resultInputs = llmResponse?.object?.inputs?.reduce((acc, input) => {
+            acc[input.name] = input.suggestedValue ?? ''
+            return acc
+        }, {} as Record<string, string>) ?? {}
+
+        if (isNil(llmResponse?.object)) {
+            return defaultResponse
         }
 
-        return result.object
+        return {
+            code: llmResponse.object.code,
+            inputs: resultInputs,
+            icon: llmResponse.object.icon,
+            title: llmResponse.object.title ?? defaultResponse.title
+        }
     }
     catch (error) {
-        console.error('Code generation failed:', error)
-        return {
-            code: '',
-            inputs: [],
-        }
+        exceptionHandler.handle(error)
+        return defaultResponse
     }
 }

@@ -82,6 +82,7 @@ export const CopilotSidebar = () => {
     askAiButtonProps,
     selectStepByName,
     setAskAiButtonProps,
+    selectedStep,
   ] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.refreshSettings,
@@ -90,6 +91,7 @@ export const CopilotSidebar = () => {
     state.askAiButtonProps,
     state.selectStepByName,
     state.setAskAiButtonProps,
+    state.selectedStep,
   ]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const socket = useSocket();
@@ -138,7 +140,10 @@ export const CopilotSidebar = () => {
         role: message.userType === 'user' ? 'user' : 'assistant',
         content: JSON.stringify(message.content),
       })),
-      tools:[AskCopilotTool.GENERATE_CODE]
+      tools:[AskCopilotTool.GENERATE_CODE],
+      flowId: flowVersion.flowId,
+      flowVersionId: flowVersion.id,
+      selectedStepName: selectedStep ?? undefined,
     });
     
     setMessages([
@@ -149,26 +154,6 @@ export const CopilotSidebar = () => {
     scrollToLastMessage();
   };
 
-  const mergeInputs = ({
-    currentInput,
-    newInput,
-  }: {
-    currentInput: Record<string, any> | undefined;
-    newInput: Record<string, any> | undefined;
-  }) => {
-    if (!currentInput) {
-      return newInput ?? {};
-    }
-
-    return Object.keys(newInput ?? {}).reduce((acc, key) => {
-      if (!isNil(currentInput[key])) {
-        acc[key] = currentInput[key];
-      } else if (newInput) {
-        acc[key] = newInput[key];
-      }
-      return acc;
-    }, {} as Record<string, string>);
-  };
 
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
     if (!askAiButtonProps) {
@@ -219,11 +204,6 @@ export const CopilotSidebar = () => {
           flowVersion.trigger,
         );
         if (step) {
-          const mergedInputs = mergeInputs({
-            newInput: message.content.inputs,
-            currentInput:
-              step.type === ActionType.CODE ? step.settings.input : undefined,
-          });
           applyOperation(
             {
               type: FlowOperationType.UPDATE_ACTION,
@@ -232,7 +212,7 @@ export const CopilotSidebar = () => {
                 name: step.name,
                 settings: {
                   ...codeAction.settings,
-                  input: mergedInputs,
+                  input:  message.content.inputs,
                   errorHandlingOptions:
                     step.type === ActionType.CODE ||
                     step.type === ActionType.PIECE
