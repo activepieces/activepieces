@@ -1,5 +1,6 @@
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
+import { t } from 'i18next';
 
 import { StepMetadata } from '@/features/pieces/lib/types';
 import {
@@ -27,8 +28,8 @@ const removeQuotes = (text: string) => {
 const keysWithinPath = (path: string) => {
  return path
     .split(/\.|\[|\]/)
-    .filter((key) => key && key.trim().length>0)
-    .map(removeQuotes)
+    .filter((key) => key && key.trim().length > 0)
+    .map(removeQuotes);
 };
 
 type ApMentionNodeAttrs = {
@@ -43,12 +44,21 @@ enum TipTapNodeTypes {
   hardBreak = 'hardBreak',
   mention = 'mention',
 }
-const isMentionNodeText = (item: string) => /^\{\{.*\}\}$/.test(item);
-const isStepName = (stepName:string)=>{
-  const pattern = /^(step_\d+|trigger)/;
-  return pattern.test(stepName.trim());
 
-}
+
+const isMentionNodeText = (item: string) => {
+  const match = item.match(/^\{\{(.*)\}\}$/);
+  if (match) {
+    const content = match[1].trim();
+    return /^(step_\d+|trigger)/.test(content);
+  }
+  return false;
+};
+const isStepName = (stepName: string) => {
+  const pattern = /^(step_\d+|trigger)/;
+  return pattern.test(stepName);
+};
+
 type ParseMentionNodeFromText = {
   path: string;
   stepDisplayName: string;
@@ -62,10 +72,15 @@ function getLabelForMention({
   path,
 }: ParseMentionNodeFromText) {
   const keys = keysWithinPath(removeIntroplationBrackets(path));
-  const displayTextPrefix = stepDfsIndex>0 ?`${stepDfsIndex}.`: isStepName(keys[0])?  t('Missing Step'): removeIntroplationBrackets(path);
+  const isMissingStep = stepDfsIndex <= 0 && isStepName(keys[0].trim());
+  const displayTextPrefix = isMissingStep
+    ? `${t('(Missing)')} ${keys[0].trim()}`
+    : `${stepDfsIndex}. `;
   const mentionText = [stepDisplayName, ...keys.slice(1)].join(' ');
   return JSON.stringify({
-    logoUrl: displayTextPrefix === t('Missing Step')? '/src/assets/img/custom/incomplete.png' : stepLogoUrl,
+    logoUrl: isMissingStep
+      ? '/src/assets/img/custom/incomplete.png'
+      : stepLogoUrl,
     displayText: `${displayTextPrefix} ${mentionText}`,
     serverValue: path,
   });
@@ -208,6 +223,10 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     imgElement.src = apMentionNodeAttrs.logoUrl;
     imgElement.className = 'object-contain w-4 h-4';
     mentionElement.appendChild(imgElement);
+  } else {
+    const emptyImagePlaceHolder = document.createElement('span');
+    emptyImagePlaceHolder.className = 'h-4 -mr-2';
+    mentionElement.appendChild(emptyImagePlaceHolder);
   }
   else {
     const emptyImagePlaceHolder = document.createElement('span');
