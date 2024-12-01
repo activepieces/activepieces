@@ -18,7 +18,7 @@ function constructResultForIndex<T>(props: T, inputsName: (keyof T)[], index: nu
     return result
 }
 
-export const arrayFlatterProcessor: ProcessorFn = (_property, value) => {
+export const arrayZipperProcessor: ProcessorFn = (_property, value) => {
     if (Array.isArray(value)) {
         return value
     }

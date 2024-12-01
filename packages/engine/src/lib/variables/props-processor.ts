@@ -2,7 +2,7 @@ import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, P
 import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject } from '@activepieces/shared'
 import { z } from 'zod'
 import { processors } from './processors'
-import { arrayFlatterProcessor } from './processors/array-flatter'
+import { arrayZipperProcessor } from './processors/array-zipper'
 
 
 
@@ -55,7 +55,7 @@ export const propsProcessor = {
                 }
             }
             if (property.type === PropertyType.ARRAY && property.properties) {
-                const arrayOfObjects = arrayFlatterProcessor(property, value)
+                const arrayOfObjects = arrayZipperProcessor(property, value)
                 const processedArray = []
                 const processedErrors = []
                 for (const item of arrayOfObjects) {
