@@ -103,18 +103,32 @@ export const callFlow = createAction({
       description: '',
       displayName: '',
       required: true,
-      refreshers: ['waitForResponse'],
+      refreshers: ['waitForResponse', 'mode'],
       props: async (propsValue) => {
-        const props: Record<string, DynamicProp> = {};
+        const fields: DynamicPropsValue = {};
         if (!propsValue['waitForResponse']) {
-          return props;
+          return fields;
         }
-        props['data'] = Property.Json({
-          displayName: 'Example Response (For Testing)',
-          required: true,
-          description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow'
-        })
-        return props;
+
+        const mode = propsValue['mode'] as unknown as string;
+
+        if (mode === 'simple') {
+            fields['data'] = Property.Object({
+            displayName: 'Example Response (For Testing)',
+            required: true,
+            description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow',
+            defaultValue: {},
+          });
+        } else {
+          fields['data'] = Property.Json({
+            displayName: 'Example Response (For Testing)',
+            required: true,
+            description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow',
+            defaultValue: {},
+          });
+        }
+
+        return fields;
       }
     })
   },
