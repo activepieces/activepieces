@@ -34,13 +34,13 @@ export const gistlyAuth = PieceAuth.SecretText({
 });
 
 export const gistly = createPiece({
-  displayName: 'Gistly YouTube Transcripts',
+  displayName: 'Gistly',
   auth: gistlyAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://gist.ly/_next/static/media/icon.d4a90eff.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/gistly.svg',
   authors: ['rafalzawadzki'],
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE, PieceCategory.DEVELOPER_TOOLS, PieceCategory.CONTENT_AND_FILES],
-  description: 'Fetches transcripts from YouTube videos.',
+  description: 'YouTube Transcripts',
   actions: [getTranscriptAction],
   triggers: [],
 }); 
