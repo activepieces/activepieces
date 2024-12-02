@@ -159,6 +159,7 @@ export const UpsertGlobalConnectionRequestBody = Type.Composite([
     Type.Object({
         scope: Type.Literal(AppConnectionScope.PLATFORM),
         projectIds: Type.Array(Type.String()),
+        externalId: Type.Optional(Type.String()),
     }),
 ])
 

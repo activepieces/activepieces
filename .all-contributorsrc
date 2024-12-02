@@ -1370,6 +1370,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "rafalzawadzki",
+      "name": "Rafal Zawadzki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10667346?v=4",
+      "profile": "https://rafal.fyi",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "simonc",
+      "name": "Simon Courtois",
+      "avatar_url": "https://avatars.githubusercontent.com/u/119303?v=4",
+      "profile": "https://www.pdfmonkey.io/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
