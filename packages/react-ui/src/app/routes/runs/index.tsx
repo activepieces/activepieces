@@ -66,7 +66,7 @@ const FlowRunsPage = () => {
       const createdBefore = searchParams.get('createdBefore');
 
       return flowRunsApi.list({
-        status: status ? status.map((s) => s as FlowRunStatus) : undefined,
+        status: status ?? undefined,
         projectId: authenticationSession.getProjectId()!,
         flowId,
         cursor: cursor ?? undefined,
