@@ -69,9 +69,8 @@ import { newFile } from './lib/triggers/new-file';
     });
 
     export const ftp = createPiece({
-      displayName: "FTP",
-      description: "Connect to an FTP server",
-
+      displayName: "FTP/FTPs",
+      description: "Connect and transfer files using FTP (File Transfer Protocol) or FTPs (FTP over SSL/TLS)",
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/ftp.png",
       categories: [PieceCategory.CORE, PieceCategory.DEVELOPER_TOOLS],
@@ -80,4 +79,3 @@ import { newFile } from './lib/triggers/new-file';
       actions: [uploadFile, listFiles, renameFile, removeAFile, createFolder],
       triggers: [newFile],
     });
-    
