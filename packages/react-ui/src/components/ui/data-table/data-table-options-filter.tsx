@@ -36,7 +36,7 @@ export function DataTableFacetedFilter<TData, TValue>({
           newParams.delete(column?.id as string);
           newParams.delete(`${column?.id}After`);
           newParams.delete(`${column?.id}Before`);
-
+          newParams.delete('cursor');
           if (!filterValue) {
             return newParams;
           }
