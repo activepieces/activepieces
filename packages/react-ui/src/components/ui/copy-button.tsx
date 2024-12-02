@@ -5,14 +5,18 @@ import { useState } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
+import { Tooltip, TooltipTrigger,TooltipContent } from './tooltip';
+import { TooltipContentProps } from '@radix-ui/react-tooltip';
 
 interface CopyButtonProps extends ButtonProps {
   textToCopy: string;
+  tooltipSide?: TooltipContentProps['side']
 }
 
 export const CopyButton = ({
   textToCopy,
   className,
+  
   ...props
 }: CopyButtonProps) => {
   const [isCopied, setIsCopied] = useState(false);
@@ -32,7 +36,9 @@ export const CopyButton = ({
   });
 
   return (
-    <Button
+    <Tooltip>
+      <TooltipTrigger>
+      <Button
       variant="outline"
       size="icon"
       className={className}
@@ -41,5 +47,11 @@ export const CopyButton = ({
     >
       {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
     </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        {t('Copy')}
+      </TooltipContent>
+    </Tooltip>
+   
   );
 };

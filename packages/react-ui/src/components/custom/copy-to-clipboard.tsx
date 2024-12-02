@@ -1,11 +1,8 @@
-import { t } from 'i18next';
-import { Download } from 'lucide-react';
-
 import { CopyButton } from '../ui/copy-button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 
-import { SelectUtilButton } from './select-util-button';
+import { DownloadButton } from '../ui/download-button';
 
 type CopyToClipboardInputProps = {
   textToCopy: string;
@@ -20,19 +17,7 @@ const CopyToClipboardInput = ({
   fileName,
   useInput,
 }: CopyToClipboardInputProps) => {
-  const downloadFile = () => {
-    const blob = new Blob([textToCopy], {
-      type: 'text/plain',
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${fileName}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
+
 
   return (
     <div className="flex gap-2 items-center bg-background border border-solid text-sm rounded-lg block w-full select-none pr-3">
@@ -47,12 +32,13 @@ const CopyToClipboardInput = ({
         />
       )}
       <div className="flex flex-col gap-1">
-        <CopyButton textToCopy={textToCopy} />
+        <CopyButton textToCopy={textToCopy}   variant='ghost' />
         {fileName && (
-          <SelectUtilButton
-            tooltipText={t('Download')}
-            Icon={Download}
-            onClick={() => downloadFile()}
+          <DownloadButton
+          textToDownload={textToCopy}
+          fileName={fileName}
+          variant='ghost'
+          tooltipSide='bottom'
           />
         )}
       </div>
