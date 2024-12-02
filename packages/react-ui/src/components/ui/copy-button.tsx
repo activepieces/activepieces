@@ -17,7 +17,7 @@ interface CopyButtonProps extends ButtonProps {
 export const CopyButton = ({
   textToCopy,
   className,
-
+  tooltipSide,
   ...props
 }: CopyButtonProps) => {
   const [isCopied, setIsCopied] = useState(false);
@@ -38,7 +38,7 @@ export const CopyButton = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger asChild>
         <Button
           variant="outline"
           size="icon"
@@ -53,7 +53,7 @@ export const CopyButton = ({
           )}
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{t('Copy')}</TooltipContent>
+      <TooltipContent side={tooltipSide}>{t('Copy')}</TooltipContent>
     </Tooltip>
   );
 };

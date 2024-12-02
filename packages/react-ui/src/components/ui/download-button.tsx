@@ -35,7 +35,7 @@ export const DownloadButton = ({
 
   return (
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger asChild>
         <Button
           variant="outline"
           size="icon"
