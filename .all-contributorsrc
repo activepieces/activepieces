@@ -1370,6 +1370,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "rafalzawadzki",
+      "name": "Rafal Zawadzki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10667346?v=4",
+      "profile": "https://rafal.fyi",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
