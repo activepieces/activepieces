@@ -56,6 +56,7 @@ export async function assertUserHasPermissionToFlow(
             await assertRoleHasPermission(principal, Permission.WRITE_FLOW)
             break
         }
+        case FlowOperationType.SKIP_ACTION:
     }
 }
 

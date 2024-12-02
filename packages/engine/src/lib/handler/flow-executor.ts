@@ -50,6 +50,10 @@ export const flowExecutor = {
         let currentAction: Action | null | undefined = action
 
         while (!isNil(currentAction)) {
+            if (currentAction.skip) {
+                currentAction = currentAction.nextAction
+                continue
+            }
             const handler = this.getExecutorForAction(currentAction.type)
 
             const stepStartTime = performance.now()

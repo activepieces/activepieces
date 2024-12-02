@@ -6,6 +6,7 @@ import {
   ArrowRightLeft,
   CopyPlus,
   EllipsisVertical,
+  SkipForward,
   Trash,
 } from 'lucide-react';
 import React, { useMemo, useState, useRef } from 'react';
@@ -29,6 +30,7 @@ import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import {
+  Action,
   FlowOperationType,
   FlowRun,
   FlowRunStatus,
@@ -117,6 +119,18 @@ const ApStepCanvasNode = React.memo(
       );
       removeStepSelection();
     };
+    const skipStep = () => {
+      applyOperation(
+        {
+          type: FlowOperationType.SKIP_ACTION,
+          request: {
+            name: data.step!.name,
+            skip: !(data.step as Action).skip,
+          },
+        },
+        () => toast(UNSAVED_CHANGES_TOAST),
+      );
+    };
 
     const duplicateStep = () => {
       applyOperation(
@@ -144,6 +158,7 @@ const ApStepCanvasNode = React.memo(
     const isAction = flowStructureUtil.isAction(data.step!.type);
     const isEmptyTriggerSelected =
       selectedStep === 'trigger' && data.step?.type === TriggerType.EMPTY;
+    const isSkipped = (data.step as Action).skip;
 
     const { attributes, listeners, setNodeRef } = useDraggable({
       id: data.step!.name,
@@ -176,13 +191,14 @@ const ApStepCanvasNode = React.memo(
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
         className={cn(
-          'transition-all  border-box rounded-sm  border  border-solid  border-border relative hover:border-primary group',
+          'transition-all border-box rounded-sm border border-solid border-border relative hover:border-primary group',
           {
             'shadow-step-container': !isDragging,
             'border-primary': isSelected,
             'bg-background': !isDragging,
             'border-none': isDragging,
             'shadow-none': isDragging,
+            'opacity-50': isSkipped,
           },
         )}
         onClick={(e) => handleStepClick(e)}
@@ -322,6 +338,25 @@ const ApStepCanvasNode = React.memo(
                                   <StepActionWrapper>
                                     <CopyPlus className="h-4 w-4" />
                                     {t('Duplicate')}
+                                  </StepActionWrapper>
+                                </DropdownMenuItem>
+                              )}
+
+                              {isAction && (
+                                <DropdownMenuItem
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                    skipStep();
+                                    setOpenStepActionsMenu(false);
+                                  }}
+                                >
+                                  <StepActionWrapper>
+                                    <SkipForward className="h-4 w-4" />
+                                    {t(
+                                      (data.step as Action).skip
+                                        ? 'Unskip'
+                                        : 'Skip',
+                                    )}
                                   </StepActionWrapper>
                                 </DropdownMenuItem>
                               )}

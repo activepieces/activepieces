@@ -43,6 +43,7 @@ export function buildSimpleLoopAction({
         name,
         displayName: 'Loop',
         type: ActionType.LOOP_ON_ITEMS,
+        skip: false,
         settings: {
             items: loopItems,
             inputUiInfo: {},
@@ -57,6 +58,7 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
         name: 'router',
         displayName: 'Your Router Name',
         type: ActionType.ROUTER,
+        skip: false,
         settings: {
             branches: conditions.map((condition) => {
                 if (condition === null) {
@@ -84,6 +86,7 @@ export function buildCodeAction({ name, input, nextAction, errorHandlingOptions 
         name,
         displayName: 'Your Action Name',
         type: ActionType.CODE,
+        skip: false,
         settings: {
             input,
             sourceCode: {
@@ -102,6 +105,7 @@ export function buildPieceAction({ name, input, pieceName, actionName, nextActio
         name,
         displayName: 'Your Action Name',
         type: ActionType.PIECE,
+        skip: false,
         settings: {
             input,
             pieceName,

@@ -14,6 +14,7 @@ import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
 import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
+import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
 
@@ -34,6 +35,7 @@ export enum FlowOperationType {
     DELETE_BRANCH = 'DELETE_BRANCH',
     ADD_BRANCH = 'ADD_BRANCH',
     DUPLICATE_BRANCH = 'DUPLICATE_BRANCH',
+    SKIP_ACTION = 'SKIP_ACTION',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -46,6 +48,12 @@ export const AddBranchRequest = Type.Object({
     conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
     branchName: Type.String(),
 })
+
+export const SkipActionRequest = Type.Object({
+    name: Type.String(),
+    skip: Type.Boolean(),
+})
+export type SkipActionRequest = Static<typeof SkipActionRequest>
 
 export const DuplicateBranchRequest = Type.Object({
     branchIndex: Type.Number(),
@@ -289,6 +297,15 @@ export const FlowOperationRequest = Type.Union([
             title: 'Duplicate Branch',
         },
     ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.SKIP_ACTION),
+            request: SkipActionRequest,
+        },
+        {
+            title: 'Skip Action',
+        },
+    ),
 ])
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
@@ -366,6 +383,11 @@ export const flowOperations = {
                 operations.forEach((operation) => {
                     clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })
+                break
+            }
+            case FlowOperationType.SKIP_ACTION: {
+                clonedVersion = _skipAction(clonedVersion, operation.request)
+                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             default:

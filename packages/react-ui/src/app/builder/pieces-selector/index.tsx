@@ -261,6 +261,7 @@ const PieceSelector = ({
               type: (stepData as Action).type,
               displayName: stepData.displayName,
               name: operation.stepName,
+              skip: (stepData as Action).skip,
               settings: {
                 ...stepData.settings,
               },
