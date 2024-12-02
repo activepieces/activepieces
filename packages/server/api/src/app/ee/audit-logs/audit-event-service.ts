@@ -11,6 +11,7 @@ import {
 } from '@activepieces/shared'
 import { Value } from '@sinclair/typebox/value'
 import { FastifyRequest } from 'fastify'
+import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventParam } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -19,7 +20,6 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
-import { In } from 'typeorm'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
