@@ -46,7 +46,6 @@ export const flagService = {
                 ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
                 ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
                 ApFlagId.SHOW_COMMUNITY,
-                ApFlagId.SHOW_COPILOTS,
                 ApFlagId.SHOW_DOCS,
                 ApFlagId.SHOW_PLATFORM_DEMO,
                 ApFlagId.SHOW_SIGN_UP_LINK,
@@ -139,12 +138,6 @@ export const flagService = {
             {
                 id: ApFlagId.HTTP_REQUEST_COPILOT_ENABLED,
                 value: !isNil(system.get(AppSystemProp.OPENAI_API_KEY)) && !isNil(system.get(AppSystemProp.RAPID_API_KEY)),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_COPILOTS,
-                value: true,
                 created,
                 updated,
             },

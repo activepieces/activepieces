@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
@@ -61,16 +61,16 @@ export async function generateCode(
             return defaultResponse
         }
 
-        console.debug('Processing code generation request:', {
+        logger.debug({
             requirement,
             contextMessages: conversationHistory.length,
-        })
+        }, '[#CodeAgent] Processing code generation request:')
 
         // Find the last code response in the conversation history
         const lastCodeResponse = conversationHistory
             .reverse()
-            .find(msg => 
-                msg.role === 'assistant' && 
+            .find(msg =>
+                msg.role === 'assistant' &&
                 msg.content.includes('export const code =')
             )
 
@@ -171,12 +171,12 @@ export async function generateCode(
             temperature: 0,
         })
 
-        console.debug('Code generation response:', {
+        logger.debug({
             requirement,
             conversationHistory,
             previousCode: lastCodeResponse?.content,
             generatedCode: llmResponse?.object?.code,
-        })
+        }, '[#CodeAgent] Code generation response:')
 
         const resultInputs = llmResponse?.object?.inputs?.reduce((acc, input) => {
             acc[input.name] = input.suggestedValue ?? ''
@@ -196,7 +196,6 @@ export async function generateCode(
     }
     catch (error) {
         exceptionHandler.handle(error)
-        console.error('Code generation failed:', error)
         return defaultResponse
     }
 }

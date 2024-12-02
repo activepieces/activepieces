@@ -69,7 +69,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
 
   const selectedItemRef = useRef<HTMLDivElement | null>(null);
   const { data: areCopilotsEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COPILOTS,
+    ApFlagId.CODE_COPILOT_ENABLED,
   );
   useEffect(() => {
     if (piecesIsLoaded && selectedItemRef.current) {

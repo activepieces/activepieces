@@ -42,7 +42,6 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const [selectedStep, refreshStepFormSettingsToggle] = useBuilderStateContext(
     (state) => [state.selectedStep || '', state.refreshStepFormSettingsToggle],
   );
-  //TODO: ask Mo which flag to use CODE_COPILOT_ENABLED or SHOW_COPILOTS
   const { data: isCopilotEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.CODE_COPILOT_ENABLED,
   );
