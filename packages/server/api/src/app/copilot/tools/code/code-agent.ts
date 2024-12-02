@@ -119,7 +119,8 @@ export async function generateCode(
            - NO client IDs or secrets
            - NO redirect URLs
            - NO environment variables
-
+           - If the intended input is not a string put it inside {{}} like {{[1,2,3,4]}} or {{500}} or {{ {"key": "value"} }}
+           
         4. Flow Integration:
            - Return data that next steps can use
            - Keep processing focused on one task
