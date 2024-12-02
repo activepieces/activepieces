@@ -4,6 +4,11 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
 
+type Message = {
+    role: 'user' | 'assistant'
+    content: string
+}
+
 export function getModel() {
     try {
         const apiKey = system.get(AppSystemProp.OPENAI_API_KEY)
@@ -48,6 +53,7 @@ const defaultResponse: CodeAgentResponse = {
 
 export async function generateCode(
     requirement: string,
+    conversationHistory: Message[] = [],
 ): Promise<CodeAgentResponse> {
     try {
         const model = getModel()
@@ -55,10 +61,34 @@ export async function generateCode(
             return defaultResponse
         }
 
+        console.debug('Processing code generation request:', {
+            requirement,
+            contextMessages: conversationHistory.length,
+        })
+
+        // Find the last code response in the conversation history
+        const lastCodeResponse = conversationHistory
+            .reverse()
+            .find(msg => 
+                msg.role === 'assistant' && 
+                msg.content.includes('export const code =')
+            )
+
+        const formattedHistory = conversationHistory
+            .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
+            .join('\n')
+
         const systemPrompt = `
         You are a TypeScript code generation expert for automation flows.
         You are generating code for a single step in an automation flow, NOT a backend service.
         
+        CONVERSATION HISTORY:
+        ${formattedHistory}
+        
+        ${lastCodeResponse ? `PREVIOUS CODE TO ENHANCE (unless user requests something completely different):
+        ${lastCodeResponse.content}
+        ` : ''}
+
         FLOW CONTEXT:
         - This code will run as one step in a larger flow
         - Previous steps provide inputs
@@ -89,7 +119,8 @@ export async function generateCode(
            - NO client IDs or secrets
            - NO redirect URLs
            - NO environment variables
-
+           - If the intended input is not a string put it inside {{}} like {{[1,2,3,4]}} or {{500}} or {{ {"key": "value"} }}
+           
         4. Flow Integration:
            - Return data that next steps can use
            - Keep processing focused on one task
@@ -107,6 +138,7 @@ export async function generateCode(
         6. Title:
            - Title should be 2-4 words, action-oriented
            - Examples: "Send Email", "Query Database", "Transform JSON"
+
         Perfect Example (Gmail API Usage):
         {
             "code": "export const code = async (inputs: { accessToken: string }) => {\\n  try {\\n    const auth = new google.auth.OAuth2();\\n    auth.setCredentials({ access_token: inputs.accessToken });\\n\\n    const gmail = google.gmail({ version: 'v1', auth });\\n    const response = await gmail.users.messages.list({\\n      userId: 'me',\\n      maxResults: 10\\n    });\\n\\n    return { messages: response.data.messages || [] };\\n  } catch (error) {\\n    throw new Error(\`Gmail API error: \${error.message}\`);\\n  }\\n}",
@@ -114,7 +146,7 @@ export async function generateCode(
                 {
                     "name": "accessToken",
                     "description": "Gmail API access token",
-                    "suggestedValue": "{{ connections.gmail.accessToken }}"
+                    "suggestedValue": "Your Gmail API access token"
                 }
             ],
             "icon": "Mail",
@@ -128,7 +160,8 @@ export async function generateCode(
         - Keep it focused on one operation
         - Let the flow handle complex workflows
         - Authentication comes from flow connections
-        - Return useful data for next steps`
+        - Return useful data for next steps
+        - If the user requests enhancements, modify the previous code unless they explicitly ask for something different`
 
         const llmResponse = await generateObject({
             model,
@@ -136,6 +169,13 @@ export async function generateCode(
             schema: codeGenerationSchema,
             prompt: `Generate TypeScript code for this automation flow requirement: ${requirement}`,
             temperature: 0,
+        })
+
+        console.debug('Code generation response:', {
+            requirement,
+            conversationHistory,
+            previousCode: lastCodeResponse?.content,
+            generatedCode: llmResponse?.object?.code,
         })
 
         const resultInputs = llmResponse?.object?.inputs?.reduce((acc, input) => {
@@ -156,6 +196,7 @@ export async function generateCode(
     }
     catch (error) {
         exceptionHandler.handle(error)
+        console.error('Code generation failed:', error)
         return defaultResponse
     }
 }
