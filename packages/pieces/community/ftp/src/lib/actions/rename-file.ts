@@ -27,7 +27,6 @@ export const renameFile = createAction({
     }),
   },
   async run(context) {
-    const info = context.propsValue.information;
     const { host, port, user, password, secure } = context.auth;
     const oldPath = context.propsValue.oldPath;
     const newPath = context.propsValue.newPath;
