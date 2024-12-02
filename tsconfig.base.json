@@ -224,6 +224,7 @@
       "@activepieces/piece-freshsales": [
         "packages/pieces/community/freshsales/src/index.ts"
       ],
+      "@activepieces/piece-ftp": ["packages/pieces/community/ftp/src/index.ts"],
       "@activepieces/piece-gameball": [
         "packages/pieces/community/gameball/src/index.ts"
       ],
