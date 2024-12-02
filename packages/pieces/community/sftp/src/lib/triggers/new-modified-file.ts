@@ -1,54 +1,51 @@
-import {
-  PiecePropValueSchema,
-  Property,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { sftpAuth } from '../..';
+import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { sftpAuth, getClient } from '../..';
 import dayjs from 'dayjs';
 import Client from 'ssh2-sftp-client';
+import { Client as FTPClient, FileInfo as FTPFileInfo } from 'basic-ftp';
 
-const polling: Polling<
-  PiecePropValueSchema<typeof sftpAuth>,
-  { path: string; ignoreHiddenFiles?: boolean }
-> = {
+function getModifyTime(file: Client.FileInfo | FTPFileInfo, protocol: string): number {
+  return protocol === 'sftp' ? 
+    (file as Client.FileInfo).modifyTime :
+    dayjs((file as FTPFileInfo).modifiedAt).valueOf();
+}
+
+const polling: Polling<PiecePropValueSchema<typeof sftpAuth>, { path: string; ignoreHiddenFiles?: boolean }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const host = auth.host;
-    const port = auth.port;
-    const username = auth.username;
-    const password = auth.password;
-
-    const sftp = new Client();
-
     try {
-      await sftp.connect({
-        host,
-        port,
-        username,
-        password,
+      const client = await getClient(auth);
+      const files = await client.list(propsValue.path);
+
+      if (auth.protocol === 'sftp') {
+        const sftpClient = client as Client;
+        await sftpClient.end();
+      } else {
+        const ftpClient = client as FTPClient;
+        ftpClient.close();
+      }
+
+      const filteredFiles = files.filter(file => {
+        const modTime = getModifyTime(file, auth.protocol);
+        return dayjs(modTime).valueOf() > lastFetchEpochMS;
       });
 
-      let files = await sftp.list(propsValue.path);
-      await sftp.end();
-      files = files.filter(
-        (file) => dayjs(file.modifyTime).valueOf() > lastFetchEpochMS
-      );
-      if ((propsValue.ignoreHiddenFiles ?? false) === true)
-        files = files.filter((file) => !file.name.startsWith('.'));
+      const finalFiles = propsValue.ignoreHiddenFiles ? 
+        filteredFiles.filter(file => !file.name.startsWith('.')) :
+        filteredFiles;
 
-      return files.map((file) => ({
-        data: {
-          ...file,
-          path: `${propsValue.path}/${file.name}`,
-        },
-        epochMilliSeconds: dayjs(file.modifyTime).valueOf(),
-      }));
+      return finalFiles.map(file => {
+        const modTime = getModifyTime(file, auth.protocol);
+
+        return {
+          data: {
+            ...file,
+            path: `${propsValue.path}/${file.name}`,
+          },
+          epochMilliSeconds: dayjs(modTime).valueOf(),
+        };
+      });
     } catch (err) {
       return [];
     }
@@ -76,32 +73,16 @@ export const newOrModifiedFile = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    return await pollingHelper.poll(polling, context);
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    return await pollingHelper.test(polling, context);
   },
-  sampleData: {},
+  sampleData: null,
 });
