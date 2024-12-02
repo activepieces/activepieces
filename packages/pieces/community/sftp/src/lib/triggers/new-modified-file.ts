@@ -31,7 +31,7 @@ const polling: Polling<PiecePropValueSchema<typeof sftpAuth>, { path: string; ig
         return dayjs(modTime).valueOf() > lastFetchEpochMS;
       });
 
-      const finalFiles = propsValue.ignoreHiddenFiles ? 
+      const finalFiles: (Client.FileInfo | FTPFileInfo)[] = propsValue.ignoreHiddenFiles ? 
         filteredFiles.filter(file => !file.name.startsWith('.')) :
         filteredFiles;
 

@@ -51,7 +51,6 @@ export async function endClient(client: Client | FTPClient) {
 }
 
 export const sftpAuth = PieceAuth.CustomAuth({
-  description: 'Enter the authentication details',
   props: {
     protocol: Property.StaticDropdown({
       displayName: 'Protocol',
@@ -88,15 +87,17 @@ export const sftpAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
+    let client: Client | FTPClient | null = null;
+
     try {
-      switch(auth.protocol) {
-        case 'sftp':{
-          const client = await getClient<Client>(auth);
+      switch (auth.protocol) {
+        case 'sftp': {
+          client = await getClient<Client>(auth);
           await client.end();
           break;
         }
         default: {
-          const client = await getClient<FTPClient>(auth);
+          client = await getClient<FTPClient>(auth);
           client.close();
           break;
         }
@@ -109,6 +110,10 @@ export const sftpAuth = PieceAuth.CustomAuth({
         valid: false,
         error: 'Connection failed. Please check your credentials and try again.',
       };
+    } finally {
+      if (client) {
+        await endClient(client);
+      }
     }
   },
   required: true,
