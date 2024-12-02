@@ -1,18 +1,19 @@
+import { TooltipContentProps } from '@radix-ui/react-tooltip';
 import { t } from 'i18next';
 import { Download } from 'lucide-react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
-import { Tooltip, TooltipTrigger,TooltipContent } from './tooltip';
-import { TooltipContentProps } from '@radix-ui/react-tooltip';
+
+import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
 interface DownloadButtonProps extends ButtonProps {
   fileName: string;
-  textToDownload:string;
-  tooltipSide?: TooltipContentProps['side']
+  textToDownload: string;
+  tooltipSide?: TooltipContentProps['side'];
 }
 
 export const DownloadButton = ({
-    fileName,
+  fileName,
   className,
   textToDownload,
   tooltipSide,
@@ -33,22 +34,19 @@ export const DownloadButton = ({
   };
 
   return (
-    <Tooltip >
-        <TooltipTrigger >
+    <Tooltip>
+      <TooltipTrigger>
         <Button
-      variant="outline"
-      size="icon"
-      className={className}
-      onClick={() => downloadFile()}
-      {...props}
-    >
-      <Download className='h-4 w-4'></Download>
-    </Button>
-        </TooltipTrigger>
-    <TooltipContent side={tooltipSide} >
-    {t('Download')}
-    </TooltipContent>
+          variant="outline"
+          size="icon"
+          className={className}
+          onClick={() => downloadFile()}
+          {...props}
+        >
+          <Download className="h-4 w-4"></Download>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side={tooltipSide}>{t('Download')}</TooltipContent>
     </Tooltip>
-   
   );
 };
