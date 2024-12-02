@@ -1379,6 +1379,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "simonc",
+      "name": "Simon Courtois",
+      "avatar_url": "https://avatars.githubusercontent.com/u/119303?v=4",
+      "profile": "https://www.pdfmonkey.io/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
