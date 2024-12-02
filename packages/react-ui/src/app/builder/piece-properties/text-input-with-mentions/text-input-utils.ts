@@ -43,6 +43,7 @@ enum TipTapNodeTypes {
   hardBreak = 'hardBreak',
   mention = 'mention',
 }
+
 const isMentionNodeText = (item: string) => {
   const match = item.match(/^\{\{(.*)\}\}$/);
   if (match) {
@@ -55,6 +56,7 @@ const isStepName = (stepName: string) => {
   const pattern = /^(step_\d+|trigger)/;
   return pattern.test(stepName);
 };
+
 type ParseMentionNodeFromText = {
   path: string;
   stepDisplayName: string;

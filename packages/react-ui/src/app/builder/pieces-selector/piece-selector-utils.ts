@@ -371,6 +371,9 @@ const useAdjustPieceListHeightToAvailableSpace = (
   };
 };
 
+const useIsMobile = () => {
+  return (window.innerWidth || document.documentElement.clientWidth) < 768;
+};
 export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
@@ -383,4 +386,5 @@ export const pieceSelectorUtils = {
   isFlowController,
   isUniversalAiPiece,
   useAdjustPieceListHeightToAvailableSpace,
+  useIsMobile,
 };

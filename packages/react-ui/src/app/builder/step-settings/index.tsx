@@ -56,7 +56,7 @@ const StepSettingsContainer = () => {
     state.applyOperation,
     state.saving,
     state.flowVersion,
-    state.refreshPieceFormSettings,
+    state.refreshStepFormSettingsToggle,
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
   ]);
