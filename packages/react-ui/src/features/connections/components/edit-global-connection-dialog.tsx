@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -149,9 +150,21 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                 </FormMessage>
               )}
             </div>
-            <div className="mt-8">
-              <Button loading={isPending}>{t('Save Changes')}</Button>
-            </div>
+            <DialogFooter className="mt-8">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsDialogOpen(false);
+                }}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button loading={isPending}>{t('Save')}</Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

@@ -159,23 +159,36 @@ const CreateOrEditConnectionDialog = React.memo(
           });
         } else if (api.isError(err)) {
           const apError = err.response?.data as ApErrorParams;
-          console.log(apError);
-          if (apError.code === ErrorCode.INVALID_CLOUD_CLAIM) {
-            setErrorMessage(
-              t(
-                'Could not claim the authorization code, make sure you have correct settings and try again.',
-              ),
-            );
-          } else if (apError.code === ErrorCode.INVALID_APP_CONNECTION) {
-            setErrorMessage(
-              t('Connection failed with error {msg}', {
-                msg: apError.params.error,
-              }),
-            );
+          switch (apError.code) {
+            case ErrorCode.INVALID_CLOUD_CLAIM: {
+              setErrorMessage(
+                t(
+                  'Could not claim the authorization code, make sure you have correct settings and try again.',
+                ),
+              );
+              break;
+            }
+            case ErrorCode.INVALID_APP_CONNECTION: {
+              setErrorMessage(
+                t('Connection failed with error {msg}', {
+                  msg: apError.params.error,
+                }),
+              );
+              break;
+            }
+            // can happen in embedding sdk connect method
+            case ErrorCode.PERMISSION_DENIED: {
+              setErrorMessage(
+                t(`You don't have the permission to create a connection.`),
+              );
+              break;
+            }
+            default: {
+              setErrorMessage('Unexpected error, please contact support');
+              toast(INTERNAL_ERROR_TOAST);
+              console.error(err);
+            }
           }
-        } else {
-          toast(INTERNAL_ERROR_TOAST);
-          console.error(err);
         }
       },
     });
