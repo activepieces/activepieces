@@ -145,7 +145,7 @@ export async function generateCode(
                 {
                     "name": "accessToken",
                     "description": "Gmail API access token",
-                    "suggestedValue": "{{ connections.gmail.accessToken }}"
+                    "suggestedValue": "Your Gmail API access token"
                 }
             ],
             "icon": "Mail",
