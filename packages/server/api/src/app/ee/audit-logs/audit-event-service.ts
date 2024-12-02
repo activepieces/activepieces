@@ -19,6 +19,7 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
+import { In } from 'typeorm'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
@@ -66,10 +67,11 @@ export const auditLogService = {
         if (!isNil(action)) {
             queryBuilder.andWhere({ action })
         }
+        
         if (!isNil(projectId)) {
-            queryBuilder.andWhere({ projectId })
+            queryBuilder.andWhere({ projectId: In(projectId) })
         }
-
+        logger.debug(`projects: ${Array.isArray(projectId)} ${(projectId?.length)}`)
         const paginationResponse = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<ApplicationEvent>(
             paginationResponse.data,
@@ -131,5 +133,5 @@ type ListParams = {
     limit: number
     userId?: string
     action?: string
-    projectId?: string
+    projectId?: string[]
 }
