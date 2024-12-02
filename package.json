@@ -24,7 +24,7 @@
   "private": true,
   "dependencies": {
     "@activepieces/import-fresh-webpack": "3.3.0",
-    "@actual-app/api": "6.8.1",
+    "@actual-app/api": "24.10.1",
     "@anthropic-ai/sdk": "0.27.3",
     "@authenio/samlify-node-xmllint": "2.0.0",
     "@aws-sdk/client-s3": "3.637.0",
