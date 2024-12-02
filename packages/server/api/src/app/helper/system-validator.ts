@@ -97,7 +97,6 @@ const systemPropValidators: {
     [AppSystemProp.QUEUE_UI_ENABLED]: booleanValidator,
     [AppSystemProp.QUEUE_UI_PASSWORD]: stringValidator,
     [AppSystemProp.QUEUE_UI_USERNAME]: stringValidator,
-    [AppSystemProp.RAPID_API_KEY]: stringValidator,
     [AppSystemProp.REDIS_TYPE]: enumValidator(Object.values(RedisType)),
     [AppSystemProp.REDIS_SSL_CA_FILE]: stringValidator,
     [AppSystemProp.REDIS_DB]: numberValidator,

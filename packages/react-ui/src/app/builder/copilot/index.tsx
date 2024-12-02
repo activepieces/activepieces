@@ -18,7 +18,6 @@ import {
   CodeAction,
   FlowOperationType,
   flowStructureUtil,
-  isNil,
   AskCopilotCodeResponse,
   AskCopilotRequest,
   WebsocketClientEvent,
@@ -41,11 +40,11 @@ interface DefaultEventsMap {
 }
 
 const COPILOT_WELCOME_MESSAGES: CopilotMessage[] = [
-    {
-        messageType: 'text',
-        content: 'welcome',
-        userType: 'bot',
-    },
+  {
+    messageType: 'text',
+    content: 'welcome',
+    userType: 'bot',
+  },
 ];
 
 async function getCodeResponse(
@@ -53,7 +52,7 @@ async function getCodeResponse(
   request: AskCopilotRequest,
 ): Promise<AskCopilotCodeResponse> {
   const id = nanoid();
-  
+
   socket.emit(WebsocketServerEvent.ASK_COPILOT, {
     ...request,
     id,
@@ -72,7 +71,9 @@ async function getCodeResponse(
 }
 
 export const CopilotSidebar = () => {
-  const [messages, setMessages] = useState<CopilotMessage[]>(COPILOT_WELCOME_MESSAGES);
+  const [messages, setMessages] = useState<CopilotMessage[]>(
+    COPILOT_WELCOME_MESSAGES,
+  );
   const [inputMessage, setInputMessage] = useState('');
   const [
     flowVersion,
@@ -106,7 +107,7 @@ export const CopilotSidebar = () => {
     mutationFn: (request: AskCopilotRequest) =>
       getCodeResponse(socket, request),
     onSuccess: (response: AskCopilotCodeResponse) => {
-      console.log(response)
+      console.log(response);
       setMessages((prevMessages) => [
         ...prevMessages,
         {
@@ -140,12 +141,12 @@ export const CopilotSidebar = () => {
         role: message.userType === 'user' ? 'user' : 'assistant',
         content: JSON.stringify(message.content),
       })),
-      tools:[AskCopilotTool.GENERATE_CODE],
+      tools: [AskCopilotTool.GENERATE_CODE],
       flowId: flowVersion.flowId,
       flowVersionId: flowVersion.id,
       selectedStepName: selectedStep ?? undefined,
     });
-    
+
     setMessages([
       ...messages,
       { content: inputMessage, userType: 'user', messageType: 'text' },
@@ -153,7 +154,6 @@ export const CopilotSidebar = () => {
     setInputMessage('');
     scrollToLastMessage();
   };
-
 
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
     if (!askAiButtonProps) {
@@ -212,7 +212,7 @@ export const CopilotSidebar = () => {
                 name: step.name,
                 settings: {
                   ...codeAction.settings,
-                  input:  message.content.inputs,
+                  input: message.content.inputs,
                   errorHandlingOptions:
                     step.type === ActionType.CODE ||
                     step.type === ActionType.PIECE
@@ -238,7 +238,7 @@ export const CopilotSidebar = () => {
       </SidebarHeader>
       <div className="flex flex-col flex-grow overflow-hidden ">
         <ScrollArea className="flex-grow overflow-auto">
-          <CardList className='pb-3'>
+          <CardList className="pb-3">
             {messages.map((message, index) => (
               <ChatMessage
                 key={index}

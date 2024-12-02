@@ -1,9 +1,10 @@
 import { Static, Type } from '@sinclair/typebox';
 import { Bot } from 'lucide-react';
 import React, { forwardRef } from 'react';
-import { WelcomeMessage } from './welcome-message';
 
 import { CodeEditor } from '../step-settings/code-settings/code-editor';
+
+import { WelcomeMessage } from './welcome-message';
 
 export const CopilotMessage = Type.Union([
   Type.Object({
@@ -43,7 +44,8 @@ export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
     const isUser = message.userType === 'user';
     const isBot = message.userType === 'bot';
     const isCode = message.messageType === 'code';
-    const isWelcome = message.messageType === 'text' && message.content === 'welcome';
+    const isWelcome =
+      message.messageType === 'text' && message.content === 'welcome';
 
     return (
       <div

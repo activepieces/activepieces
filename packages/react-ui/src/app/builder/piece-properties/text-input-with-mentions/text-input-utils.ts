@@ -1,6 +1,7 @@
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
 import { t } from 'i18next';
+
 import { StepMetadata } from '@/features/pieces/lib/types';
 import {
   Action,
@@ -24,7 +25,7 @@ const removeQuotes = (text: string) => {
 };
 
 const keysWithinPath = (path: string) => {
- return path
+  return path
     .split(/\.|\[|\]/)
     .filter((key) => key && key.trim().length > 0)
     .map(removeQuotes);
@@ -42,7 +43,6 @@ enum TipTapNodeTypes {
   hardBreak = 'hardBreak',
   mention = 'mention',
 }
-
 
 const isMentionNodeText = (item: string) => {
   const match = item.match(/^\{\{(.*)\}\}$/);

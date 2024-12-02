@@ -58,8 +58,7 @@ const ApBigAddButtonCanvasNode = React.memo(
             }}
             className="flex justify-center items-center"
           >
-            
-            {!readonly  && (
+            {!readonly && (
               <div
                 style={{
                   height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
@@ -109,27 +108,31 @@ const ApBigAddButtonCanvasNode = React.memo(
                       open={pieceSelectorOpen}
                       onOpenChange={setPieceSelectorOpen}
                     >
-                     <span>
-                     {showAiIndicator && (
-                        <AskAiIndicator
-                          height={flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}
-                          width={flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}
-                        ></AskAiIndicator>
-                   )}
-                     {!showAiIndicator && (<Button
-                          variant="transparent"
-                          className="w-full h-full flex items-center hover:bg-accent-foreground rounded"
-                        >
-                          <Plus
-                            className={cn('w-6 h-6 text-accent-foreground ', {
-                              'opacity-0': showDropIndicator || pieceSelectorOpen,
-                            })}
-                          />
-                        </Button>)}
-
-                     </span>
-                 
-                      
+                      <span>
+                        {showAiIndicator && (
+                          <AskAiIndicator
+                            height={
+                              flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height
+                            }
+                            width={
+                              flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width
+                            }
+                          ></AskAiIndicator>
+                        )}
+                        {!showAiIndicator && (
+                          <Button
+                            variant="transparent"
+                            className="w-full h-full flex items-center hover:bg-accent-foreground rounded"
+                          >
+                            <Plus
+                              className={cn('w-6 h-6 text-accent-foreground ', {
+                                'opacity-0':
+                                  showDropIndicator || pieceSelectorOpen,
+                              })}
+                            />
+                          </Button>
+                        )}
+                      </span>
                     </PieceSelector>
                   )}
                 </div>
