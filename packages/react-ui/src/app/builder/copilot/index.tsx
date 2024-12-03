@@ -115,6 +115,8 @@ export const CopilotSidebar = () => {
             code: response.code,
             packages: response.packageJson,
             inputs: response.inputs,
+            icon: response.icon?? '',
+            title:response.title
           },
           messageType: 'code',
           userType: 'bot',
@@ -161,8 +163,7 @@ export const CopilotSidebar = () => {
       toast(INTERNAL_ERROR_TOAST);
       return;
     }
-    const isCodeType = message.messageType !== 'code';
-    if (isCodeType) {
+    if (message.messageType !== 'code') {
       return;
     }
     if (askAiButtonProps) {
@@ -182,6 +183,7 @@ export const CopilotSidebar = () => {
           packageJson: JSON.stringify(message.content.packages, null, 2),
         },
       };
+      codeAction.displayName=message.content.title
       if (askAiButtonProps.type === FlowOperationType.ADD_ACTION) {
         applyOperation(
           {
@@ -208,7 +210,7 @@ export const CopilotSidebar = () => {
             {
               type: FlowOperationType.UPDATE_ACTION,
               request: {
-                displayName: step.displayName,
+                displayName: message.content.title,
                 name: step.name,
                 settings: {
                   ...codeAction.settings,

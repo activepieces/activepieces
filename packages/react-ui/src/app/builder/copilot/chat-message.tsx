@@ -16,6 +16,8 @@ export const CopilotMessage = Type.Union([
       }),
       code: Type.String(),
       inputs: Type.Record(Type.String(), Type.String()),
+      title: Type.String(),
+      icon: Type.String()
     }),
   }),
   Type.Object({
