@@ -38,12 +38,17 @@ async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     return paths
 }
 
+async function getPackageNameFromFolderPath(folderPath: string): Promise<string> {
+    const packageJson = await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
+    return packageJson.name
+}
+
 async function findDirectoryByPackageName(packageName: string): Promise<string | null> {
     const paths = await findAllPiecesFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
     for (const path of paths) {
         try {
-            const packageJson = await readFile(join(path, 'package.json'), 'utf-8').then(JSON.parse)
-            if (packageJson.name === packageName) {
+            const packageJsonName = await getPackageNameFromFolderPath(path)
+            if (packageJsonName === packageName) {
                 return path
             }
         }
@@ -95,13 +100,13 @@ async function loadPieceFromFolder(
 ): Promise<PieceMetadata | null> {
     let lock: ApLock | undefined
     try {
-        if (folderPath in pieceCache) {
+        if (folderPath in pieceCache && pieceCache[folderPath]) {
             return pieceCache[folderPath]
         }
 
         const lockKey = `piece_cache_${folderPath}`
         lock = await memoryLock.acquire(lockKey)
-        if (folderPath in pieceCache) {
+        if (folderPath in pieceCache && pieceCache[folderPath]) {
             return pieceCache[folderPath]
         }
 
@@ -144,8 +149,8 @@ async function loadPieceFromFolder(
     return null
 }
 
-async function clearPieceCache(pieceName: string): Promise<void> {
-    const directoryPath = await findDirectoryByPackageName(pieceName)
+async function clearPieceCache(packageName: string): Promise<void> {
+    const directoryPath = await findDirectoryByPackageName(packageName)
     if (directoryPath && directoryPath in pieceCache) {
         pieceCache[directoryPath] = null
     }
@@ -157,4 +162,5 @@ export const filePiecesUtils = {
     findPieceDirectoryByFolderName,
     findAllPieces,
     clearPieceCache,
+    getPackageNameFromFolderPath,
 }
