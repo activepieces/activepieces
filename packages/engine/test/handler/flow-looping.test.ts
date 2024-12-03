@@ -58,4 +58,12 @@ describe('flow with looping', () => {
         expect(loopOut.output?.item).toBe(4)
     })
 
+    it('should skip loop', async () => {
+        const result = await flowExecutor.execute({
+            action: buildSimpleLoopAction({ name: 'loop', loopItems: '{{ [4,5,6] }}', skip: true }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.steps.loop).toBeUndefined()
+    })
+
 })

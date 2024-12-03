@@ -34,16 +34,18 @@ export function buildSimpleLoopAction({
     name,
     loopItems,
     firstLoopAction,
+    skip,
 }: {
     name: string
     loopItems: string
     firstLoopAction?: Action
+    skip?: boolean
 }): LoopOnItemsAction {
     return {
         name,
         displayName: 'Loop',
         type: ActionType.LOOP_ON_ITEMS,
-        skip: false,
+        skip: skip ?? false,
         settings: {
             items: loopItems,
             inputUiInfo: {},
@@ -53,12 +55,12 @@ export function buildSimpleLoopAction({
     }
 }
 
-export function buildRouterWithOneCondition({ children, conditions, executionType }: { children: Action[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType }): Action {
+export function buildRouterWithOneCondition({ children, conditions, executionType, skip }: { children: Action[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType, skip?: boolean }): Action {
     return {
         name: 'router',
         displayName: 'Your Router Name',
         type: ActionType.ROUTER,
-        skip: false,
+        skip: skip ?? false,
         settings: {
             branches: conditions.map((condition) => {
                 if (condition === null) {
@@ -81,12 +83,12 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
     }
 }
 
-export function buildCodeAction({ name, input, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1', input: Record<string, unknown>, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: Action }): CodeAction {
+export function buildCodeAction({ name, input, skip, nextAction, errorHandlingOptions }: { name: 'echo_step' | 'runtime' | 'echo_step_1', input: Record<string, unknown>, skip?: boolean, errorHandlingOptions?: ActionErrorHandlingOptions, nextAction?: Action }): CodeAction {
     return {
         name,
         displayName: 'Your Action Name',
         type: ActionType.CODE,
-        skip: false,
+        skip: skip ?? false,
         settings: {
             input,
             sourceCode: {
@@ -100,12 +102,12 @@ export function buildCodeAction({ name, input, nextAction, errorHandlingOptions 
     }
 }
 
-export function buildPieceAction({ name, input, pieceName, actionName, nextAction, errorHandlingOptions }: { errorHandlingOptions?: ActionErrorHandlingOptions, name: string, input: Record<string, unknown>, nextAction?: Action, pieceName: string, actionName: string }): PieceAction {
+export function buildPieceAction({ name, input, skip, pieceName, actionName, nextAction, errorHandlingOptions }: { errorHandlingOptions?: ActionErrorHandlingOptions, name: string, input: Record<string, unknown>, skip?: boolean, pieceName: string, actionName: string, nextAction?: Action }): PieceAction {
     return {
         name,
         displayName: 'Your Action Name',
         type: ActionType.PIECE,
-        skip: false,
+        skip: skip ?? false,
         settings: {
             input,
             pieceName,

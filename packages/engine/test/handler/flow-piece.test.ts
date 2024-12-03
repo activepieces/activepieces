@@ -1,4 +1,5 @@
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
+import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { pieceExecutor } from '../../src/lib/handler/piece-executor'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
 
@@ -53,5 +54,18 @@ describe('pieceExecutor', () => {
         expect(result.verdict).toBe(ExecutionVerdict.FAILED)
         expect(result.steps.send_http.status).toBe('FAILED')
         expect(result.steps.send_http.errorMessage).toEqual(JSON.stringify(expectedError))
+    })
+    it('should skip piece action', async () => {
+        const result = await flowExecutor.execute({
+            action: buildPieceAction({
+                name: 'data_mapper',
+                input: {},
+                skip: true,
+                pieceName: '@activepieces/piece-data-mapper',
+                actionName: 'advanced_mapping',
+            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.steps.data_mapper).toBeUndefined()
     })
 })

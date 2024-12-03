@@ -333,7 +333,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
       } in flow "${event.data.flowVersion.displayName}" for the step "${
         event.data.request.request.stepName
       }".`;
-    case FlowOperationType.SKIP_ACTION:
+    case FlowOperationType.SET_SKIP_ACTION:
       return `Updated action "${event.data.request.request.name}" in "${event.data.flowVersion.displayName}" Flow to skip.`;
   }
 }

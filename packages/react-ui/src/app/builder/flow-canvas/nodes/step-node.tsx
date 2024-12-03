@@ -122,7 +122,7 @@ const ApStepCanvasNode = React.memo(
     const skipStep = () => {
       applyOperation(
         {
-          type: FlowOperationType.SKIP_ACTION,
+          type: FlowOperationType.SET_SKIP_ACTION,
           request: {
             name: data.step!.name,
             skip: !(data.step as Action).skip,

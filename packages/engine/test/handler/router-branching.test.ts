@@ -341,4 +341,26 @@ describe('router with branching different conditions', () => {
         expect(result.steps.data_mapper_1.output).toEqual({ 'key': 6 })
         expect(result.steps.fallback_mapper).toBeUndefined()
     })
+    it('should skip router', async () => {
+        const result = await flowExecutor.execute({
+            action: buildRouterWithOneCondition({ children: [
+                buildPieceAction({
+                    name: 'data_mapper',
+                    skip: true,
+                    pieceName: '@activepieces/piece-data-mapper',
+                    actionName: 'advanced_mapping',
+                    input: {},
+                }),
+            ], conditions: [
+                {
+                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                    firstValue: 'test',
+                    secondValue: 'test',
+                    caseSensitive: false,
+                },
+            ], executionType: RouterExecutionType.EXECUTE_FIRST_MATCH, skip: true }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.steps.router).toBeUndefined()
+    })
 })

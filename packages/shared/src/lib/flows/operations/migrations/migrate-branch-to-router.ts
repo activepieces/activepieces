@@ -17,7 +17,6 @@ export const migrateBranchToRouter: Migration = {
                     displayName: step.displayName,
                     name: step.name,
                     valid: step.valid,
-                    skip: false, // TODO WHAT SHOULD I DO HERE?
                     type: ActionType.ROUTER,
                     settings: {
                         branches: [

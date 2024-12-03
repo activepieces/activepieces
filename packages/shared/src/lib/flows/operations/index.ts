@@ -35,7 +35,7 @@ export enum FlowOperationType {
     DELETE_BRANCH = 'DELETE_BRANCH',
     ADD_BRANCH = 'ADD_BRANCH',
     DUPLICATE_BRANCH = 'DUPLICATE_BRANCH',
-    SKIP_ACTION = 'SKIP_ACTION',
+    SET_SKIP_ACTION = 'SET_SKIP_ACTION',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -299,7 +299,7 @@ export const FlowOperationRequest = Type.Union([
     ),
     Type.Object(
         {
-            type: Type.Literal(FlowOperationType.SKIP_ACTION),
+            type: Type.Literal(FlowOperationType.SET_SKIP_ACTION),
             request: SkipActionRequest,
         },
         {
@@ -385,7 +385,7 @@ export const flowOperations = {
                 })
                 break
             }
-            case FlowOperationType.SKIP_ACTION: {
+            case FlowOperationType.SET_SKIP_ACTION: {
                 clonedVersion = _skipAction(clonedVersion, operation.request)
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
