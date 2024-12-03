@@ -138,7 +138,7 @@ const StepSettingsContainer = () => {
     control: form.control,
   });
 
-  const excutionTypeChange = useWatch({
+  const executionTypeChange = useWatch({
     name: 'settings.executionType',
     control: form.control,
   });
@@ -201,7 +201,7 @@ const StepSettingsContainer = () => {
     inputUIInfo,
     displayName,
     branchesChange,
-    excutionTypeChange,
+    executionTypeChange,
   ]);
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
