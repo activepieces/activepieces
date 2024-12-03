@@ -128,7 +128,7 @@ export const gmailSendEmailAction = createAction({
           : undefined,
       html:
         context.propsValue.body_type === 'html'
-          ? context.propsValue['body'].replace(/\n/g, '<br>')
+          ? context.propsValue['body']
           : undefined,
       attachments: [],
     };
