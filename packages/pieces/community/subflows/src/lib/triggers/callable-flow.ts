@@ -70,8 +70,7 @@ export const callableFlow = createTrigger({
     return [request];
   },
   async run(context) {
-    const payload = context.payload as any;
-    return [payload.body.data.sampleData];
+    return [context.payload.body];
   },
   async onStart(context) {
     const request = context.payload as CallableFlowRequest;
