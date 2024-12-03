@@ -122,14 +122,8 @@ export const gmailSendEmailAction = createAction({
       bcc: bcc ? bcc.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
       replyTo: replyTo ? replyTo.join(', ') : '',
-      text:
-        context.propsValue.body_type === 'plain_text'
-          ? context.propsValue['body']
-          : undefined,
-      html:
-        context.propsValue.body_type === 'html'
-          ? context.propsValue['body'] 
-          : undefined,
+      text:context.propsValue.body_type === 'plain_text'? context.propsValue['body']: undefined,
+      html:context.propsValue.body_type === 'html'? context.propsValue['body'] : undefined,
       attachments: [],
     };
     let threadId = undefined;
