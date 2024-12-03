@@ -622,6 +622,9 @@
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
       ],
+      "@activepieces/piece-twin-labs":[
+        "packages/pieces/community/twin-labs/src/index.ts"
+      ],
       "@activepieces/piece-twitter": [
         "packages/pieces/community/twitter/src/index.ts"
       ],

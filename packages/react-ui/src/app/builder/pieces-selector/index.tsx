@@ -34,6 +34,7 @@ import {
 
 import { SearchInput } from '../../../components/ui/search-input';
 
+import { AskAiButton } from './ask-ai';
 import { PiecesCardList } from './pieces-card-list';
 import { StepsCardList } from './steps-card-list';
 
@@ -71,13 +72,19 @@ const PieceSelector = ({
   const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
     PieceTagEnum.ALL,
   );
-  const [applyOperation, selectStepByName, flowVersion, setSampleData] =
-    useBuilderStateContext((state) => [
-      state.applyOperation,
-      state.selectStepByName,
-      state.flowVersion,
-      state.setSampleData,
-    ]);
+  const [
+    applyOperation,
+    selectStepByName,
+    flowVersion,
+    setSampleData,
+    setAskAiButtonProps,
+  ] = useBuilderStateContext((state) => [
+    state.applyOperation,
+    state.selectStepByName,
+    state.flowVersion,
+    state.setSampleData,
+    state.setAskAiButtonProps,
+  ]);
 
   const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
   const { metadata, isLoading: isLoadingPieces } =
@@ -271,8 +278,9 @@ const PieceSelector = ({
         );
       }
     }
+    setAskAiButtonProps(null);
   };
-
+  const isMobile = pieceSelectorUtils.useIsMobile();
   return (
     <Popover
       open={open}
@@ -301,7 +309,7 @@ const PieceSelector = ({
               height: `${aboveListSectionHeight}px`,
             }}
           >
-            <div className="p-2">
+            <div className="p-2 flex gap-1 items-center">
               <SearchInput
                 placeholder="Search"
                 value={searchQuery}
@@ -312,6 +320,15 @@ const PieceSelector = ({
                   setSelectedMetadata(undefined);
                 }}
               />
+              {operation.type !== FlowOperationType.UPDATE_TRIGGER && (
+                <AskAiButton
+                  varitant="ghost"
+                  operation={operation}
+                  onClick={() => {
+                    onOpenChange(false);
+                  }}
+                ></AskAiButton>
+              )}
             </div>
 
             <PieceTagGroup
@@ -329,8 +346,7 @@ const PieceSelector = ({
             <Separator orientation="horizontal" />
           </div>
 
-          {(window.innerWidth || document.documentElement.clientWidth) >=
-            768 && (
+          {!isMobile && (
             <div
               className=" flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
               style={{
@@ -338,6 +354,7 @@ const PieceSelector = ({
               }}
             >
               <PiecesCardList
+                closePieceSelector={() => onOpenChange(false)}
                 debouncedQuery={debouncedQuery}
                 selectedTag={selectedTag}
                 piecesIsLoaded={piecesIsLoaded}
@@ -364,8 +381,7 @@ const PieceSelector = ({
             </div>
           )}
 
-          {(window.innerWidth || document.documentElement.clientWidth) <
-            768 && (
+          {isMobile && (
             <div
               className=" max-h-[300px] h-[300px]"
               style={{
@@ -373,6 +389,7 @@ const PieceSelector = ({
               }}
             >
               <PiecesCardList
+                closePieceSelector={() => onOpenChange(false)}
                 debouncedQuery={debouncedQuery}
                 selectedTag={selectedTag}
                 piecesIsLoaded={piecesIsLoaded}

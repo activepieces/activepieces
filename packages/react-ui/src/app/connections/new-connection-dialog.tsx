@@ -67,6 +67,7 @@ const NewConnectionDialog = React.memo(
                 externalId: res.externalId,
               })
             }
+            key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
             setOpen={setConnectionDialogOpen}
           ></CreateOrEditConnectionDialog>
         )}

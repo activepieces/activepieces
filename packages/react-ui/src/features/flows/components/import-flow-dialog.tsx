@@ -310,6 +310,13 @@ const ImportFlowDialog = (
           </FormError>
         )}
         <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setIsDialogOpen(false)}
+            disabled={isPending}
+          >
+            {t('Cancel')}
+          </Button>
           <Button onClick={handleSubmit} loading={isPending}>
             {t('Import')}
           </Button>

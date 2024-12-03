@@ -15,6 +15,7 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
         '/v1/webhooks/:flowId/sync',
         // This works for both platform and project, we have to check this manually
         '/v1/user-invitations',
+        '/v1/audit-events',
     ]
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {
