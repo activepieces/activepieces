@@ -27,7 +27,7 @@ type CodeEditorProps = {
   readonly: boolean;
   applyCodeToCurrentStep?: () => void;
   animateBorderColorToggle: boolean;
-  minHeight?:string;
+  minHeight?: string;
 };
 
 const CodeEditor = ({
@@ -36,7 +36,7 @@ const CodeEditor = ({
   onChange,
   applyCodeToCurrentStep,
   animateBorderColorToggle,
-  minHeight
+  minHeight,
 }: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
@@ -83,7 +83,13 @@ const CodeEditor = ({
     setLanguage('typescript');
   }
 
-  function handleAddPackages({packageName,packageVersion}:{packageName: string, packageVersion: string}) {
+  function handleAddPackages({
+    packageName,
+    packageVersion,
+  }: {
+    packageName: string;
+    packageVersion: string;
+  }) {
     try {
       const json = deepMergeAndCast(JSON.parse(packageJson), {
         dependencies: {
@@ -157,7 +163,7 @@ const CodeEditor = ({
       <CodeMirror
         value={activeTab === 'code' ? code : packageJson}
         className="border-none"
-        minHeight={minHeight?? '200px'}
+        minHeight={minHeight ?? '200px'}
         width="100%"
         height="100%"
         maxWidth="100%"

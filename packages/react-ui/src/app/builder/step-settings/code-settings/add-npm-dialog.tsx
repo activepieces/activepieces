@@ -37,7 +37,13 @@ const formSchema = Type.Object({
 
 type AddNpmDialogProps = {
   children: React.ReactNode;
-  onAdd: ({packageName,packageVersion}:{packageName: string, packageVersion: string}) => void;
+  onAdd: ({
+    packageName,
+    packageVersion,
+  }: {
+    packageName: string;
+    packageVersion: string;
+  }) => void;
 };
 const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
   const [open, setOpen] = useState(false);

@@ -115,8 +115,8 @@ export const CopilotSidebar = () => {
             code: response.code,
             packages: response.packageJson,
             inputs: response.inputs,
-            icon: response.icon?? '',
-            title:response.title
+            icon: response.icon ?? '',
+            title: response.title,
           },
           messageType: 'code',
           userType: 'bot',
@@ -156,7 +156,7 @@ export const CopilotSidebar = () => {
     setInputMessage('');
     scrollToLastMessage();
   };
-  const textAreaRef = useRef<HTMLTextAreaElement| null> (null);
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
     if (!askAiButtonProps) {
       console.log('no ask ai button props');
@@ -183,7 +183,7 @@ export const CopilotSidebar = () => {
           packageJson: JSON.stringify(message.content.packages, null, 2),
         },
       };
-      codeAction.displayName=message.content.title
+      codeAction.displayName = message.content.title;
       if (askAiButtonProps.type === FlowOperationType.ADD_ACTION) {
         applyOperation(
           {
@@ -232,12 +232,11 @@ export const CopilotSidebar = () => {
     }
     refreshSettings();
   };
-useEffect(()=>{
-  if(textAreaRef.current)
-  {
-    textAreaRef.current.focus();
-  }
-},[])
+  useEffect(() => {
+    if (textAreaRef.current) {
+      textAreaRef.current.focus();
+    }
+  }, []);
 
   return (
     <div className="flex flex-col h-full">

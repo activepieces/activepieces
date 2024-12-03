@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
