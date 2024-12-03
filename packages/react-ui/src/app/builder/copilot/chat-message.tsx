@@ -72,6 +72,7 @@ export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
                     </ChatBox>
                   ) : (
                     <CodeEditor
+                      minHeight='0px'
                       animateBorderColorToggle={false}
                       sourceCode={{
                         code: message.content.code,
