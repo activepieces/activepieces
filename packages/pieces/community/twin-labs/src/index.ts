@@ -12,7 +12,7 @@
       displayName: "Twin Web Agent",
       auth: twinLabsAuth,
       minimumSupportedRelease: '0.20.0',
-      logoUrl: "https://mintlify.s3-us-west-1.amazonaws.com/twinlabs/logo/light.svg",
+      logoUrl: "https://cdn.activepieces.com/pieces/twin-labs.png",
       authors: [],
       actions: [startBrowsingTask],
       triggers: [],
