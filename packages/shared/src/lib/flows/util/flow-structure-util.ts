@@ -17,19 +17,6 @@ function isTrigger(type: ActionType | TriggerType | undefined): boolean {
     return Object.entries(TriggerType).some(([, value]) => value === type)
 }
 
-function hasSkippedParent(stepName:string, trigger:Trigger):boolean {
-    const step = flowStructureUtil.getStep(stepName,trigger)
-    if(!step)
-    {
-        return false;
-    }
-
-    const skippedParents = findPathToStep(trigger,stepName).filter(p=>(p.type === ActionType.LOOP_ON_ITEMS || p.type === ActionType.ROUTER) && isChildOf(p,stepName) && p.skip);
-    console.log(skippedParents)
-    return skippedParents.length > 0;
-    
-}
-
 function getActionOrThrow(name: string, flowRoot: Step): Action {
     const step = getStepOrThrow(name, flowRoot)
     if (!isAction(step.type)) {
@@ -157,7 +144,7 @@ function findPathToStep(trigger: Trigger, targetStepName: string): StepWithIndex
 }
 
 
-function getAllChildSteps(action: LoopOnItemsAction  | RouterAction): Step[] {
+function getAllChildSteps(action: LoopOnItemsAction | RouterAction): Step[] {
     return getAllSteps({
         ...action,
         nextAction: undefined,
@@ -166,7 +153,7 @@ function getAllChildSteps(action: LoopOnItemsAction  | RouterAction): Step[] {
 
 function isChildOf(parent: Step, childStepName: string): boolean {
     switch (parent.type) {
-        case ActionType.ROUTER: 
+        case ActionType.ROUTER:
         case ActionType.LOOP_ON_ITEMS: {
             const children = getAllChildSteps(parent)
             return children.findIndex((c) => c.name === childStepName) > -1
@@ -187,7 +174,7 @@ const findUnusedName = (trigger: Trigger) => {
     }
     return name
 }
-  
+
 
 export const flowStructureUtil = {
     isTrigger,
@@ -203,5 +190,4 @@ export const flowStructureUtil = {
     findPathToStep,
     isChildOf,
     findUnusedName,
-    hasSkippedParent
 }

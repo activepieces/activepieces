@@ -35,10 +35,12 @@ import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import {
   Action,
+  ActionType,
   FlowOperationType,
   FlowRun,
   FlowRunStatus,
   FlowVersion,
+  Trigger,
   TriggerType,
   flowStructureUtil,
   isNil,
@@ -47,6 +49,17 @@ import {
 import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
 import { flowUtilConsts } from '../consts';
 import { ApStepNode } from '../types';
+
+function hasSkippedParent(stepName: string, trigger: Trigger): boolean {
+  const step = flowStructureUtil.getStep(stepName, trigger)
+  if (!step) {
+    return false;
+  }
+
+  const skippedParents = flowStructureUtil.findPathToStep(trigger, stepName).filter(p => (p.type === ActionType.LOOP_ON_ITEMS || p.type === ActionType.ROUTER) && flowStructureUtil.isChildOf(p, stepName) && p.skip);
+  return skippedParents.length > 0;
+
+}
 
 function getStepStatus(
   stepName: string | undefined,
@@ -176,10 +189,8 @@ const ApStepCanvasNode = React.memo(
       return getStepStatus(data.step?.name, run, loopIndexes, flowVersion);
     }, [data.step!.name, run, loopIndexes, flowVersion]);
 
-    const showRunningIcon =
-      isNil(stepOutputStatus) &&
-      run?.status === FlowRunStatus.RUNNING &&
-      !flowStructureUtil.hasSkippedParent(data.step.name, flowVersion.trigger);
+    const showRunningIcon = isNil(stepOutputStatus) && run?.status === FlowRunStatus.RUNNING && !hasSkippedParent(data.step.name, flowVersion.trigger);
+    
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
