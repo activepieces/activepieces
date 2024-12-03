@@ -189,6 +189,7 @@ const getDefaultStep = ({
       ? true
       : false,
     displayName: actionOrTrigger.displayName,
+    skip: false,
     settings: {
       inputUiInfo: {
         customizedInputs: {},
