@@ -45,7 +45,10 @@ export function PieceIconList({
     .filter((data) => !!data) as StepMetadata[];
 
   const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
-    (item, index, self) => self.indexOf(item) === index,
+    (item, index, self) =>
+      self.findIndex(
+        (secondItem) => item.displayName === secondItem.displayName,
+      ) === index,
   );
   const visibleMetadata = uniqueMetadata.slice(0, maxNumberOfIconsToShow);
   const extraPieces = uniqueMetadata.length - visibleMetadata.length;
@@ -54,7 +57,7 @@ export function PieceIconList({
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex gap-2">
-          {visibleMetadata.map((metadata, index) => (
+          {visibleMetadata.map((metadata) => (
             <PieceIcon
               logoUrl={metadata.logoUrl}
               showTooltip={false}
@@ -62,7 +65,7 @@ export function PieceIconList({
               size={size ?? 'md'}
               border={true}
               displayName={metadata.displayName}
-              key={index}
+              key={metadata.logoUrl}
             />
           ))}
           {extraPieces > 0 && (

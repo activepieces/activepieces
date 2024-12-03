@@ -26,7 +26,7 @@ import {
 import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { assertUserHasPermissionToFlow } from '../../ee/authentication/rbac/rbac-middleware'
+import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
 import { gitRepoService } from '../../ee/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { projectService } from '../../project/project-service'

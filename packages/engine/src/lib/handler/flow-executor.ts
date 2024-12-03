@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks'
-import { Action, ActionType, ExecuteFlowOperation, ExecutionType, isNil, ProgressUpdateType } from '@activepieces/shared'
+import { Action, ActionType, ExecuteFlowOperation, ExecutionType, isNil } from '@activepieces/shared'
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
@@ -53,14 +53,12 @@ export const flowExecutor = {
             const handler = this.getExecutorForAction(currentAction.type)
 
             const stepStartTime = performance.now()
-            if (constants.progressUpdateType !== ProgressUpdateType.NONE) {
-                progressService.sendUpdate({
-                    engineConstants: constants,
-                    flowExecutorContext: flowExecutionContext,
-                }).catch(error => {
-                    console.error('Error sending update:', error)
-                })
-            }
+            progressService.sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: flowExecutionContext,
+            }).catch(error => {
+                console.error('Error sending update:', error)
+            })
 
             flowExecutionContext = await handler.handle({
                 action: currentAction,

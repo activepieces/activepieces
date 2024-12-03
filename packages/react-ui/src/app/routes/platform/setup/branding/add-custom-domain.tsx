@@ -52,7 +52,7 @@ const AddCustomDomainDialog = React.memo(
         const response = await customDomainApi.create({
           domain: params.domain,
         });
-        return response.customDomain;
+        return response;
       },
       onSuccess: (data) => {
         onAdd(data);

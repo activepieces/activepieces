@@ -32,6 +32,8 @@ export const fileService = {
             compression: params.compression,
             size: params.size,
             metadata: params.metadata,
+            created: dayjs().toISOString(),
+            updated: dayjs().toISOString(),
         }
         const location = getLocationForFile(params.type)
         switch (location) {

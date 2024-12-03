@@ -30,7 +30,7 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/seperator';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,

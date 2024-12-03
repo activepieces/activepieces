@@ -60,6 +60,9 @@ async function handleRouterExecution({ action, executionState, constants, censor
 
     try {
         for (let i = 0; i < resolvedInput.branches.length; i++) {
+            if (constants.testSingleStepMode) {
+                break
+            }
             if (evaluatedConditions[i]) {
                 executionState = (await flowExecutor.execute({
                     action: action.children[i],

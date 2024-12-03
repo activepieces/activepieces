@@ -3,19 +3,19 @@ import { PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockCustomDomain,
     createMockUser,
-    mockBasicSetup,
-} from '../../../helpers/mocks'
+    mockBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 
@@ -51,8 +51,8 @@ describe('Custom Domain API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
 
-            expect(responseBody.customDomain.domain).toBe(request.domain)
-            expect(responseBody.customDomain.status).toBe(CustomDomainStatus.ACTIVE)
+            expect(responseBody.domain).toBe(request.domain)
+            expect(responseBody.status).toBe(CustomDomainStatus.PENDING)
         })
 
         it('should fail if user is not platform owner', async () => {

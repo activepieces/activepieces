@@ -14,7 +14,7 @@ import { findPieceSourceDirectory } from '../utils/piece-utils';
 
 const validatePieceName = async (pieceName: string) => {
   console.log(chalk.yellow('Validating piece name....'));
-  const pieceNamePattern = /^[A-Za-z0-9-]+$/;
+  const pieceNamePattern = /^(?![._])[a-z0-9-]{1,214}$/;
   if (!pieceNamePattern.test(pieceName)) {
     console.log(
       chalk.red(

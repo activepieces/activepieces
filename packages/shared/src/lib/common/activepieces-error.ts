@@ -2,7 +2,8 @@ import { FileId } from '../file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
-import { ProjectId, ProjectMemberRole } from '../project'
+import { ProjectId } from '../project'
+import { ProjectRole } from '../project-role/project-role'
 import { UserId } from '../user'
 import { ApId } from './id-generator'
 import { Permission } from './security'
@@ -115,7 +116,7 @@ ErrorCode.PERMISSION_DENIED,
 {
     userId: UserId
     projectId: ProjectId
-    role: ProjectMemberRole
+    projectRole: ProjectRole | null
     permission: Permission | undefined
 }
 >

@@ -32,7 +32,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MessageTooltip } from '@/components/ui/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -140,7 +139,7 @@ const FlowsPage = () => {
     staleTime: 0,
     queryFn: () => {
       const name = searchParams.get('name');
-      const status = searchParams.get('status');
+      const status = searchParams.getAll('status') as FlowStatus[];
       const cursor = searchParams.get('cursor');
       const limit = searchParams.get('limit')
         ? parseInt(searchParams.get('limit')!)
@@ -152,9 +151,7 @@ const FlowsPage = () => {
         cursor: cursor ?? undefined,
         limit,
         name: name ?? undefined,
-        status: status
-          ? status.split(',').map((s) => s as FlowStatus)
-          : undefined,
+        status,
         folderId,
       });
     },
@@ -376,7 +373,6 @@ const FlowsPage = () => {
     () => [
       {
         render: (_, resetSelection) => {
-          const isDisabled = selectedRows.length === 0;
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <DropdownMenu
@@ -384,15 +380,11 @@ const FlowsPage = () => {
                 open={isDropdownOpen}
                 onOpenChange={setIsDropdownOpen}
               >
-                <DropdownMenuTrigger asChild disabled={isDisabled}>
-                  <MessageTooltip
-                    message={t('Select at least one flow to perform actions')}
-                    isDisabled={isDisabled}
-                  >
+                {selectedRows.length > 0 ? (
+                  <DropdownMenuTrigger asChild>
                     <Button
-                      disabled={isDisabled}
                       className="h-9 w-full"
-                      variant={'outline'}
+                      variant={'default'}
                       onClick={() => {
                         setIsDropdownOpen(!isDropdownOpen);
                       }}
@@ -402,8 +394,9 @@ const FlowsPage = () => {
                         : t('Actions')}
                       <ChevronDown className="h-3 w-4 ml-2" />
                     </Button>
-                  </MessageTooltip>
-                </DropdownMenuTrigger>
+                  </DropdownMenuTrigger>
+                ) : null}
+
                 <DropdownMenuContent>
                   <PermissionNeededTooltip
                     hasPermission={userHasPermissionToPushToGit}

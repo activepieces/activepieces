@@ -11,6 +11,7 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { signingKeyApi } from '@/features/platform-admin-panel/lib/signing-key-api'; // Update to the correct API endpoint
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -68,37 +69,30 @@ const SigningKeysPage = () => {
       )}
     >
       <div className="flex-col w-full">
-        <div className="mb-4 flex">
-          <div className="flex justify-between flex-row w-full">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold w-full">{t('Signing Keys')}</h1>
-              <div className="text-sm text-muted-foreground  flex-col gap-2 ">
-                <Trans>
-                  Use our embedding{' '}
-                  <Link
-                    rel="noopener noreferrer"
-                    target="_blank"
-                    className="font-medium text-primary underline underline-offset-4"
-                    to="https://www.activepieces.com/docs/embedding/provision-users"
-                  >
-                    JavaScript SDK
-                  </Link>{' '}
-                  to authenticate users with signing keys.
-                </Trans>
-
-                <div></div>
-              </div>
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex flex-col gap-2">
+            <TableTitle>{t('Signing Keys')}</TableTitle>
+            <div className="text-sm text-muted-foreground">
+              <Trans>
+                Use our embedding{' '}
+                <Link
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="font-medium text-primary underline underline-offset-4"
+                  to="https://www.activepieces.com/docs/embedding/provision-users"
+                >
+                  JavaScript SDK
+                </Link>{' '}
+                to authenticate users with signing keys.
+              </Trans>
             </div>
-            <NewSigningKeyDialog onCreate={() => refetch()}>
-              <Button
-                size="sm"
-                className="flex items-center justify-center gap-2"
-              >
-                <Plus className="size-4" />
-                {t('New Signing Key')}
-              </Button>
-            </NewSigningKeyDialog>
           </div>
+          <NewSigningKeyDialog onCreate={() => refetch()}>
+            <Button size="sm" className="flex items-center gap-2">
+              <Plus className="size-4" />
+              {t('New Signing Key')}
+            </Button>
+          </NewSigningKeyDialog>
         </div>
         <DataTable
           columns={columns}

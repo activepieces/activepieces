@@ -1,20 +1,25 @@
 import { t } from 'i18next';
-import { Bot } from 'lucide-react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
-import { Button } from '@/components/ui/button';
 import {
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { CodeAction, MarkdownVariant } from '@activepieces/shared';
+import {
+  ApFlagId,
+  CodeAction,
+  FlowOperationType,
+  MarkdownVariant,
+} from '@activepieces/shared';
 
-import { LeftSideBarType, useBuilderStateContext } from '../../builder-hooks';
+import { flagsHooks } from '../../../../hooks/flags-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
+import { AskAiButton } from '../../pieces-selector/ask-ai';
 
 import { CodeEditor } from './code-editor';
 
@@ -34,10 +39,12 @@ type CodeSettingsProps = {
 
 const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const form = useFormContext<CodeAction>();
-  const [setLeftSidebar] = useBuilderStateContext((state) => [
-    state.setLeftSidebar,
-  ]);
-
+  const [selectedStep, refreshStepFormSettingsToggle] = useBuilderStateContext(
+    (state) => [state.selectedStep || '', state.refreshStepFormSettingsToggle],
+  );
+  const { data: isCopilotEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.CODE_COPILOT_ENABLED,
+  );
   return (
     <div className="flex flex-col gap-4">
       <FormField
@@ -50,14 +57,16 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
             </div>
             <div className="flex items-center justify-between">
               <FormLabel>{t('Inputs')}</FormLabel>
-              <Button
-                variant="ghost"
-                onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
-                className="flex items-right max-w-max"
-              >
-                <Bot />
-                <span className="ml-2">{t('Ask AI')}</span>
-              </Button>
+              {isCopilotEnabled && !readonly && (
+                <AskAiButton
+                  onClick={() => {}}
+                  varitant={'ghost'}
+                  operation={{
+                    type: FlowOperationType.UPDATE_ACTION,
+                    stepName: selectedStep,
+                  }}
+                ></AskAiButton>
+              )}
             </div>
 
             <DictionaryProperty
@@ -83,6 +92,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         render={({ field }) => (
           <FormItem>
             <CodeEditor
+              animateBorderColorToggle={refreshStepFormSettingsToggle}
               sourceCode={field.value}
               onChange={field.onChange}
               readonly={readonly}

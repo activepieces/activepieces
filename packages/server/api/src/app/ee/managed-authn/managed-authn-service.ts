@@ -36,12 +36,11 @@ export const managedAuthnService = {
 
         await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens)
 
-        const projectMember = await projectMemberService.upsert({
+        await projectMemberService.upsert({
             projectId: project.id,
             userId: user.id,
-            role: externalPrincipal.role,
+            projectRoleName: externalPrincipal.projectRole,
         })
-
 
         const token = await accessTokenManager.generateToken({
             id: user.id,
@@ -56,7 +55,6 @@ export const managedAuthnService = {
             ...user,
             token,
             projectId: project.id,
-            projectRole: projectMember.role,
         }
     },
 }

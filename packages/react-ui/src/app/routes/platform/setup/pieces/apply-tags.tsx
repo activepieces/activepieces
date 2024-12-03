@@ -17,7 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Separator } from '@/components/ui/seperator';
+import { Separator } from '@/components/ui/separator';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { piecesTagsApi } from '@/features/platform-admin-panel/lib/pieces-tags';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';

@@ -1,18 +1,19 @@
-import { rolePermissions } from '@activepieces/ee-shared'
 import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
+    ApId,
     ErrorCode,
     FlowOperationType,
     isNil,
     Permission,
     Principal,
     PrincipalType,
-    ProjectMemberRole,
+    ProjectRole,
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { projectMemberService } from '../../project-members/project-member.service'
+import { projectRoleService } from '../../project-role/project-role.service'
 
 const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
 
@@ -63,8 +64,8 @@ export const assertRoleHasPermission = async (principal: Principal, permission: 
         return
     }
     const principalRole = await getPrincipalRoleOrThrow(principal)
-    const access = grantAccess({
-        principalRole,
+    const access = await grantAccess({
+        principalRoleId: principalRole.id,
         routePermission: permission,
     })
     if (!access) {
@@ -90,15 +91,15 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
     return req.routeConfig.permission === undefined
 }
 
-export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<ProjectMemberRole> => {
+export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<ProjectRole> => {
     const { id: userId, projectId } = principal
 
-    const role = await projectMemberService.getRole({
+    const projectRole = await projectMemberService.getRole({
         projectId,
         userId,
     })
 
-    if (isNil(role)) {
+    if (isNil(projectRole)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {
@@ -109,32 +110,39 @@ export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<Pro
         })
     }
 
-    return role
+    return projectRole
 
 }
 
-const grantAccess = ({ principalRole, routePermission }: GrantAccessArgs): boolean => {
+const grantAccess = async ({ principalRoleId, routePermission }: GrantAccessArgs): Promise<boolean> => {
     if (isNil(routePermission)) {
         return true
     }
 
-    const principalPermissions = rolePermissions[principalRole]
-    return principalPermissions.includes(routePermission)
+    const principalRole = await projectRoleService.getOneOrThrowById({
+        id: principalRoleId,
+    })
+    
+    if (isNil(principalRole)) {
+        return false
+    }
+
+    return principalRole.permissions?.includes(routePermission)
 }
 
-const throwPermissionDenied = (role: ProjectMemberRole, principal: Principal, permission: Permission | undefined): never => {
+const throwPermissionDenied = (projectRole: ProjectRole, principal: Principal, permission: Permission | undefined): never => {
     throw new ActivepiecesError({
         code: ErrorCode.PERMISSION_DENIED,
         params: {
             userId: principal.id,
             projectId: principal.projectId,
-            role,
+            projectRole,
             permission,
         },
     })
 }
 
 type GrantAccessArgs = {
-    principalRole: ProjectMemberRole
+    principalRoleId: ApId
     routePermission: Permission | undefined
 }

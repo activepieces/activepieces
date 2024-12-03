@@ -11,7 +11,7 @@ import {
   getAccessTokenOrThrow,
 } from '@activepieces/pieces-common';
 import { isString } from '@activepieces/shared';
-import { google, sheets_v4, drive_v3 } from 'googleapis';
+import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { googleSheetsAuth } from '../../';
 
@@ -236,31 +236,12 @@ export const googleSheetsCommon = {
       };
     },
   }),
-  getValues: getValues,
-  appendGoogleSheetValues: appendGoogleSheetValues,
-  updateGoogleSheetRow: updateGoogleSheetRow,
-  findSheetName: findSheetName,
-  deleteRow: deleteRow,
-  clearSheet: clearSheet,
+  getValues,
+  findSheetName,
+  deleteRow,
+  clearSheet,
 };
 
-type UpdateGoogleSheetRowParams = {
-  values: string[];
-  spreadSheetId: string;
-  valueInputOption: ValueInputOption;
-  rowIndex: number;
-  accessToken: string;
-  sheetName: string;
-};
-
-type AppendGoogleSheetValuesParams = {
-  values: string[];
-  spreadSheetId: string;
-  range: string;
-  valueInputOption: ValueInputOption;
-  majorDimension: Dimension;
-  accessToken: string;
-};
 
 export async function findSheetName(
   access_token: string,
@@ -361,46 +342,7 @@ async function listSheetsName(access_token: string, spreadsheet_id: string) {
   ).body.sheets;
 }
 
-async function updateGoogleSheetRow(params: UpdateGoogleSheetRowParams) {
-  return httpClient.sendRequest({
-    method: HttpMethod.PUT,
-    url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.sheetName}!A${params.rowIndex}:ZZZ${params.rowIndex}`,
-    body: {
-      majorDimension: Dimension.ROWS,
-      range: `${params.sheetName}!A${params.rowIndex}:ZZZ${params.rowIndex}`,
-      values: [params.values],
-    },
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: params.accessToken,
-    },
-    queryParams: {
-      valueInputOption: params.valueInputOption,
-    },
-  });
-}
 
-async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
-  const requestBody = {
-    majorDimension: params.majorDimension,
-    range: params.range + '!A:A',
-    values: params.values.map((val) => ({ values: val })),
-  };
-
-  const request: HttpRequest<typeof requestBody> = {
-    method: HttpMethod.POST,
-    url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.range}!A:A:append`,
-    body: requestBody,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: params.accessToken,
-    },
-    queryParams: {
-      valueInputOption: params.valueInputOption,
-    },
-  };
-  return httpClient.sendRequest(request);
-}
 
 async function getValues(
   spreadsheetId: string,
@@ -558,63 +500,10 @@ export enum Dimension {
   COLUMNS = 'COLUMNS',
 }
 
-export async function copyFile(
-  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
-  title: string,
-  fileId?: string
-) {
+export async function createGoogleSheetClient(auth: PiecePropValueSchema<typeof googleSheetsAuth>) {
   const authClient = new OAuth2Client();
-  authClient.setCredentials(auth);
+	authClient.setCredentials(auth);
 
-  const drive = google.drive({ version: 'v3', auth: authClient });
-
-  return await drive.files.copy({
-    fileId,
-    fields: '*',
-    supportsAllDrives: true,
-    requestBody: {
-      name: title,
-    },
-  });
-}
-
-export async function moveFile(
-  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
-  fileId: string,
-  folderId: string
-) {
-  const response = await httpClient.sendRequest<drive_v3.Schema$File>({
-    method: HttpMethod.PUT,
-    url: `https://www.googleapis.com/drive/v2/files/${fileId}`,
-    queryParams: {
-      addParents: folderId,
-    },
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: auth.access_token,
-    },
-  });
-
-  return response.body;
-}
-
-export async function createSpreadsheet(
-  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
-  title: string
-) {
-  const response = await httpClient.sendRequest<sheets_v4.Schema$Spreadsheet>({
-    method: HttpMethod.POST,
-    url: 'https://sheets.googleapis.com/v4/spreadsheets',
-    body: {
-      properties: {
-        title,
-      },
-    },
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token: auth.access_token,
-    },
-  });
-
-  return response.body;
+	const googleSheetClient = google.sheets({ version: 'v4', auth: authClient });
+  return googleSheetClient;
 }

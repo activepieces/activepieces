@@ -34,7 +34,7 @@ const NotFoundPage: React.FC<NotFoundPageProps> = ({
           {t(description)}
         </p>
         {showHomeButton && (
-          <Link to="/flows">
+          <Link to="/">
             <Button size="lg" variant={'default'}>
               {t(buttonText)}
             </Button>

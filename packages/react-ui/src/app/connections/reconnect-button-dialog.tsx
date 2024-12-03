@@ -55,6 +55,7 @@ const ReconnectButtonDialog = ({
           piece={pieceModel}
           onConnectionCreated={onConnectionCreated}
           open={open}
+          key={`CreateOrEditConnectionDialog-open-${open}`}
           setOpen={setOpen}
         />
       )}

@@ -18,7 +18,7 @@ import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/seperator';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
@@ -155,8 +155,8 @@ const LicenseKeyPage = () => {
         </div>
       ) : (
         <>
-          <div className="bg-white shadow-md rounded-lg p-4">
-            <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3">
+            {licenseKey && (
               <div className="relative">
                 <Input
                   value={licenseKey}
@@ -167,42 +167,40 @@ const LicenseKeyPage = () => {
                   placeholder={t('License Key')}
                   className="pr-20 text-base"
                 />
-                {licenseKey && (
-                  <div className="absolute inset-y-0 right-0 flex items-center">
-                    <TooltipProvider delayDuration={300}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowLicenseKey(!showLicenseKey)}
-                            className="mr-1"
-                          >
-                            {showLicenseKey ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs">
-                          {showLicenseKey ? t('Hide') : t('Show')}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                )}
+                <div className="absolute inset-y-0 right-0 flex items-center">
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowLicenseKey(!showLicenseKey)}
+                          className="mr-1"
+                        >
+                          {showLicenseKey ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        {showLicenseKey ? t('Hide') : t('Show')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               </div>
-              <Button size="sm" className="w-full" onClick={handleOpenDialog}>
-                <Zap className="w-4 h-4 mr-2" />
-                {t('Activate License')}
-              </Button>
-              <ActivateLicenseDialog
-                isOpen={isOpenDialog}
-                onOpenChange={setIsOpenDialog}
-                onActivate={handleActivateLicenseKey}
-              />
-            </div>
+            )}
+            <Button size="sm" className="w-full" onClick={handleOpenDialog}>
+              <Zap className="w-4 h-4 mr-2" />
+              {t('Activate License')}
+            </Button>
+            <ActivateLicenseDialog
+              isOpen={isOpenDialog}
+              onOpenChange={setIsOpenDialog}
+              onActivate={handleActivateLicenseKey}
+            />
           </div>
 
           {keyData && !isNil(keyData?.expiresAt) && (
