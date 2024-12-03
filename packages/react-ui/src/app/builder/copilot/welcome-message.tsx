@@ -1,6 +1,8 @@
 import { t } from 'i18next';
 import { Bot, Code2, FileJson, Calculator, Globe } from 'lucide-react';
 
+import magic from '@/assets/img/custom/magic.png';
+
 import { CopilotMessage } from './chat-message';
 
 interface WelcomeMessageProps {
@@ -40,9 +42,15 @@ export const WelcomeMessage = ({ message }: WelcomeMessageProps) => {
       <div className="min-w-8 min-h-8 max-h-8 max-w-8 border rounded-full border-gray-300 dark:border-gray-600 flex items-center justify-center">
         <Bot className="h-6 w-6 text-gray-500 dark:text-gray-400" />
       </div>
-      <div className="flex-1 space-y-4">
-        <p className="text-sm text-black ">
-          I help you generate code for your automation workflow.
+      <div className="flex-1 space-y-4 mt-2">
+        <div className="text-sm text-black   ">
+          {t(
+            'Hello there! I am here to generate code that helps with your flow',
+          )}{' '}
+          <img src={magic} className="min-w-4 h-4 object-fit inline" />
+        </div>
+        <p className="text-sm text-black   ">
+          {t('Here are examples of what I am best used for: ')}
         </p>
         <div className="space-y-1.5">
           <FeatureItem
@@ -57,7 +65,7 @@ export const WelcomeMessage = ({ message }: WelcomeMessageProps) => {
               <Code2 className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             }
             title={t('Data Operations')}
-            description={t('Transform arrays and objects')}
+            description={t('Change data from one format to another')}
           />
           <FeatureItem
             icon={

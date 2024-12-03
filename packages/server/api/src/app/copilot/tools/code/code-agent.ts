@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
@@ -61,10 +61,6 @@ export async function generateCode(
             return defaultResponse
         }
 
-        logger.debug({
-            requirement,
-            contextMessages: conversationHistory.length,
-        }, '[#CodeAgent] Processing code generation request:')
 
         // Find the last code response in the conversation history
         const lastCodeResponse = conversationHistory
@@ -119,7 +115,7 @@ export async function generateCode(
            - NO client IDs or secrets
            - NO redirect URLs
            - NO environment variables
-           - If the intended input is not a string put it inside {{}} like {{[1,2,3,4]}} or {{500}} or {{ {"key": "value"} }}
+           - If the intended input is not a single string value like "Hello" put it inside {{  }}, like {{ 500 }} or {{ [1,2,3,4] }} or {{ ["apple", "banana", "orange"] }}  or {{ {"key": "value"} }} or {{ [{"key": "value1"}, {"key": "value2"} ] }} 
            
         4. Flow Integration:
            - Return data that next steps can use
@@ -171,12 +167,6 @@ export async function generateCode(
             temperature: 0,
         })
 
-        logger.debug({
-            requirement,
-            conversationHistory,
-            previousCode: lastCodeResponse?.content,
-            generatedCode: llmResponse?.object?.code,
-        }, '[#CodeAgent] Code generation response:')
 
         const resultInputs = llmResponse?.object?.inputs?.reduce((acc, input) => {
             acc[input.name] = input.suggestedValue ?? ''

@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowUp, LoaderCircle } from 'lucide-react';
 import { nanoid } from 'nanoid';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 
 import { useSocket } from '@/components/socket-provider';
@@ -115,6 +115,8 @@ export const CopilotSidebar = () => {
             code: response.code,
             packages: response.packageJson,
             inputs: response.inputs,
+            icon: response.icon ?? '',
+            title: response.title,
           },
           messageType: 'code',
           userType: 'bot',
@@ -154,15 +156,14 @@ export const CopilotSidebar = () => {
     setInputMessage('');
     scrollToLastMessage();
   };
-
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
     if (!askAiButtonProps) {
       console.log('no ask ai button props');
       toast(INTERNAL_ERROR_TOAST);
       return;
     }
-    const isCodeType = message.messageType !== 'code';
-    if (isCodeType) {
+    if (message.messageType !== 'code') {
       return;
     }
     if (askAiButtonProps) {
@@ -182,6 +183,7 @@ export const CopilotSidebar = () => {
           packageJson: JSON.stringify(message.content.packages, null, 2),
         },
       };
+      codeAction.displayName = message.content.title;
       if (askAiButtonProps.type === FlowOperationType.ADD_ACTION) {
         applyOperation(
           {
@@ -208,7 +210,7 @@ export const CopilotSidebar = () => {
             {
               type: FlowOperationType.UPDATE_ACTION,
               request: {
-                displayName: step.displayName,
+                displayName: message.content.title,
                 name: step.name,
                 settings: {
                   ...codeAction.settings,
@@ -230,6 +232,11 @@ export const CopilotSidebar = () => {
     }
     refreshSettings();
   };
+  useEffect(() => {
+    if (textAreaRef.current) {
+      textAreaRef.current.focus();
+    }
+  }, []);
 
   return (
     <div className="flex flex-col h-full">
@@ -253,6 +260,7 @@ export const CopilotSidebar = () => {
         </ScrollArea>
         <div className="flex items-center py-4 px-3 gap-2 bg-white dark:bg-gray-900 border-t dark:border-gray-700">
           <Textarea
+            ref={textAreaRef}
             value={inputMessage}
             className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12 resize-none"
             minRows={1}

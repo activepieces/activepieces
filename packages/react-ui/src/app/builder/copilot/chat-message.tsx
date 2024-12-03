@@ -16,6 +16,8 @@ export const CopilotMessage = Type.Union([
       }),
       code: Type.String(),
       inputs: Type.Record(Type.String(), Type.String()),
+      title: Type.String(),
+      icon: Type.String(),
     }),
   }),
   Type.Object({
@@ -70,6 +72,7 @@ export const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
                     </ChatBox>
                   ) : (
                     <CodeEditor
+                      minHeight="0px"
                       animateBorderColorToggle={false}
                       sourceCode={{
                         code: message.content.code,
