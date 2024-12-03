@@ -23,7 +23,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { Tooltip, TooltipContent,TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
@@ -171,9 +175,11 @@ const ApStepCanvasNode = React.memo(
     const stepOutputStatus = useMemo(() => {
       return getStepStatus(data.step?.name, run, loopIndexes, flowVersion);
     }, [data.step!.name, run, loopIndexes, flowVersion]);
-    
+
     const showRunningIcon =
-      isNil(stepOutputStatus) && run?.status === FlowRunStatus.RUNNING && !flowStructureUtil.hasSkippedParent(data.step.name, flowVersion.trigger);
+      isNil(stepOutputStatus) &&
+      run?.status === FlowRunStatus.RUNNING &&
+      !flowStructureUtil.hasSkippedParent(data.step.name, flowVersion.trigger);
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
@@ -266,13 +272,13 @@ const ApStepCanvasNode = React.memo(
               >
                 <div className="flex h-full items-center justify-between gap-3 w-full">
                   <div className="flex items-center justify-center min-w-[46px] h-full">
-                    <div className={isSkipped? 'opacity-80':''}>
-                    <PieceIcon
-                      logoUrl={stepMetadata?.logoUrl}
-                      displayName={stepMetadata?.displayName}
-                      showTooltip={false}
-                      size={'lg'}
-                    ></PieceIcon>
+                    <div className={isSkipped ? 'opacity-80' : ''}>
+                      <PieceIcon
+                        logoUrl={stepMetadata?.logoUrl}
+                        displayName={stepMetadata?.displayName}
+                        showTooltip={false}
+                        size={'lg'}
+                      ></PieceIcon>
                     </div>
                   </div>
                   <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
@@ -354,11 +360,11 @@ const ApStepCanvasNode = React.memo(
                                   }}
                                 >
                                   <StepActionWrapper>
-                                  {
-                                    (data.step as Action).skip
-                                    ? (<Route className="h-4 w-4"></Route>)
-                                    : (<RouteOff className="h-4 w-4"></RouteOff>)
-                                  }
+                                    {(data.step as Action).skip ? (
+                                      <Route className="h-4 w-4"></Route>
+                                    ) : (
+                                      <RouteOff className="h-4 w-4"></RouteOff>
+                                    )}
                                     {t(
                                       (data.step as Action).skip
                                         ? 'Unskip'
@@ -408,16 +414,16 @@ const ApStepCanvasNode = React.memo(
                         {showRunningIcon && !isSkipped && (
                           <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>
                         )}
-                        {
-                          isSkipped &&  <Tooltip>
-                              <TooltipTrigger asChild>
+                        {isSkipped && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <RouteOff className="w-4 h-4"> </RouteOff>
-                              </TooltipTrigger>
-                              <TooltipContent side="bottom">
-                                {t("Skipped")}
-                                </TooltipContent>
-                              </Tooltip>
-                        }
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              {t('Skipped')}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                         {!data.step?.valid && (
                           <Tooltip>
                             <TooltipTrigger asChild>
