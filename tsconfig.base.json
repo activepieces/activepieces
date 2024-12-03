@@ -511,6 +511,9 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
+      "@activepieces/piece-scenario": [
+        "packages/pieces/community/scenario/src/index.ts"
+      ],
       "@activepieces/piece-schedule": [
         "packages/pieces/community/schedule/src/index.ts"
       ],
@@ -622,7 +625,7 @@
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
       ],
-      "@activepieces/piece-twin-labs":[
+      "@activepieces/piece-twin-labs": [
         "packages/pieces/community/twin-labs/src/index.ts"
       ],
       "@activepieces/piece-twitter": [
