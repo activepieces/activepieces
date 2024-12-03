@@ -75,6 +75,9 @@
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
       ],
+      "@activepieces/piece-bamboohr": [
+        "packages/pieces/community/bamboohr/src/index.ts"
+      ],
       "@activepieces/piece-bannerbear": [
         "packages/pieces/community/bannerbear/src/index.ts"
       ],
@@ -622,7 +625,7 @@
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
       ],
-      "@activepieces/piece-twin-labs":[
+      "@activepieces/piece-twin-labs": [
         "packages/pieces/community/twin-labs/src/index.ts"
       ],
       "@activepieces/piece-twitter": [
