@@ -38,6 +38,7 @@ import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { useStepSettingsContext } from './step-settings-context';
+import EditableStepName from './editable-step-name';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
@@ -218,63 +219,33 @@ const StepSettingsContainer = () => {
       >
         <div ref={sidebarHeaderContainerRef}>
           <SidebarHeader onClose={() => exitStepSettings()}>
-            {isNil(selectedBranchIndex) ? (
-              <EditableText
-                onValueChange={(value) => {
-                  if (value) {
-                    form.setValue('displayName', value);
-                  }
-                }}
-                readonly={readonly}
-                value={modifiedStep.displayName}
-                tooltipContent={readonly ? '' : t('Edit Step Name')}
-                isEditing={isEditingStepOrBranchName}
-                setIsEditing={setIsEditingStepOrBranchName}
-              ></EditableText>
-            ) : (
-              <>
-                <div
-                  className="truncate cursor-pointer hover:underline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedBranchIndex(null);
-                  }}
-                >
-                  {modifiedStep.displayName}
-                </div>
-                /
-                <EditableText
-                  key={
-                    modifiedStep.settings.branches?.[selectedBranchIndex]
-                      ?.branchName
-                  }
-                  onValueChange={(value) => {
-                    if (value) {
-                      form.setValue(
-                        `settings.branches[${selectedBranchIndex}].branchName`,
-                        value,
-                      );
-                    }
-                  }}
-                  readonly={readonly}
-                  value={
-                    modifiedStep.settings.branches?.[selectedBranchIndex]
-                      ?.branchName
-                  }
-                  tooltipContent={readonly ? '' : t('Edit Branch Name')}
-                  isEditing={isEditingStepOrBranchName}
-                  setIsEditing={setIsEditingStepOrBranchName}
-                ></EditableText>
-              </>
-            )}
-            {!isEditingStepOrBranchName && !readonly && (
-              <Pencil
-                className="h-4 w-4 shrink-0"
-                onClick={() => {
-                  setIsEditingStepOrBranchName(true);
-                }}
-              />
-            )}
+            <EditableStepName
+            selectedBranchIndex={selectedBranchIndex}
+            setDisplayName={(value)=>{
+              if(value)
+              {
+                form.setValue('displayName', value);
+              }
+            }}
+            readonly={readonly}
+            displayName={modifiedStep.displayName}
+            branchName={
+              selectedBranchIndex?modifiedStep.settings.branches?.[selectedBranchIndex]
+              ?.branchName: undefined
+            }
+            setBranchName={(value)=>{
+              if (value && selectedBranchIndex) {
+                form.setValue(
+                  `settings.branches[${selectedBranchIndex}].branchName`,
+                  value,
+                );
+              }
+            }}
+            setSelectedBranchIndex={setSelectedBranchIndex}
+            isEditingStepOrBranchName={isEditingStepOrBranchName}
+            setIsEditingStepOrBranchName={setIsEditingStepOrBranchName}
+            >
+            </EditableStepName>
           </SidebarHeader>
         </div>
 
