@@ -11,8 +11,16 @@ export const getBaseUrl = (auth: { projectId: string, datasourceId: string }) =>
     return `${BASE_URL}/project/${auth.projectId}/datasource/${auth.datasourceId}`;
 };
 
+const authDescriptionMarkdown = `
+## Obtain your auth data
+1. Go to https://dashboard.instasent.com
+2. Access to your project
+3. Create an Activepieces data source
+4. Copy the auth parameters and paste them in the fields below
+`;
+
 export const instasentAuth = PieceAuth.CustomAuth({
-    description: 'Authentication for Instasent',
+    description: authDescriptionMarkdown,
     props: {
         projectId: PieceAuth.SecretText({
             displayName: 'Project ID',
