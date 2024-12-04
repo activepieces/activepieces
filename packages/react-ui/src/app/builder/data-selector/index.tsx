@@ -1,89 +1,24 @@
 import { t } from 'i18next';
 import { SearchXIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
-  Action,
-  ActionType,
   flowStructureUtil,
   isNil,
-  Trigger,
 } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
-
 import { DataSelectorNode } from './data-selector-node';
 import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
-import { dataSelectorUtils, MentionTreeNode } from './data-selector-utils';
+import { MentionTreeNode } from './mentions/type';
+import { dataSelectorMentions } from './mentions';
 
-const createTestNode = (
-  step: Action | Trigger,
-  displayName: string,
-): MentionTreeNode => {
-  return {
-    key: step.name,
-    data: {
-      displayName,
-      insertable: false,
-      propertyPath: step.name,
-    },
-    children: [
-      {
-        data: {
-          displayName: displayName,
-          propertyPath: step.name,
-          isTestStepNode: true,
-          insertable: false,
-        },
-        key: `test_${step.name}`,
-      },
-    ],
-  };
-};
-
-function filterBy(arr: MentionTreeNode[], query: string): MentionTreeNode[] {
-  if (!query) {
-    return arr;
-  }
-
-  return arr.reduce((acc, item) => {
-    const isTestNode =
-      !isNil(item.children) && item?.children?.[0]?.data?.isTestStepNode;
-    if (isTestNode) {
-      return acc;
-    }
-
-    if (item.children?.length) {
-      const filteredChildren = filterBy(item.children, query);
-      if (filteredChildren.length) {
-        acc.push({ ...item, children: filteredChildren });
-        return acc; // return acc as we have handled this item
-      }
-    }
-
-    const normalizedValue = item?.data?.value;
-    const value = isNil(normalizedValue)
-      ? ''
-      : JSON.stringify(normalizedValue).toLowerCase();
-    const displayName = item?.data?.displayName?.toLowerCase();
-
-    if (
-      displayName?.includes(query.toLowerCase()) ||
-      value.includes(query.toLowerCase())
-    ) {
-      acc.push({ ...item, children: undefined });
-    }
-
-    return acc; // Always return acc
-  }, [] as MentionTreeNode[]);
-}
 const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
   state,
 ) => {
@@ -95,21 +30,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
     flowVersion.trigger,
     selectedStep,
   );
-
-  return pathToTargetStep.map((step) => {
-    const stepNeedsTesting = isNil(step.settings.inputUiInfo?.lastTestDate);
-    const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
-    if (stepNeedsTesting) {
-      return createTestNode(step, displayName);
-    }
-    return dataSelectorUtils.traverseStepOutputAndReturnMentionTree({
-      insertable: step.type !== ActionType.LOOP_ON_ITEMS,
-      stepOutput: state.sampleData[step.name],
-      propertyPath: step.name,
-      displayName: displayName,
-      combineArray: true
-    });
-  });
+  return pathToTargetStep.map((step) => dataSelectorMentions.traverseStep(step, state.sampleData, true));
 };
 
 type DataSelectorProps = {
@@ -139,7 +60,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
   const mentions = useBuilderStateContext(getAllStepsMentions);
-  const filteredMentions = filterBy(structuredClone(mentions), searchTerm);
+  const filteredMentions = dataSelectorMentions.filterBy(mentions, searchTerm);
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const checkFocus = useCallback(() => {

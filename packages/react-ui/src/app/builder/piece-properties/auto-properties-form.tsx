@@ -19,6 +19,7 @@ import { isNil } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
+import { ArrayPiecePropertyInLoopMode } from './array-loop-mode-property';
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
@@ -26,7 +27,6 @@ import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
-import { ArrayPiecePropertyInLoopMode } from './array-loop-mode-property';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;

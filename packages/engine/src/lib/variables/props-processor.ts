@@ -16,7 +16,7 @@ export const propsProcessor = {
         props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
         requireAuth: boolean,
-        dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined
+        dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: PropsValidationError }> => {
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}
@@ -28,7 +28,7 @@ export const propsProcessor = {
                 auth.props,
                 undefined,
                 requireAuth,
-                undefined
+                undefined,
             )
             processedInput.auth = authProcessedInput
             if (Object.keys(authErrors).length > 0) {
@@ -47,7 +47,7 @@ export const propsProcessor = {
                     dynamaicPropertiesSchema[key],
                     undefined,
                     false,
-                    undefined
+                    undefined,
                 )
                 processedInput[key] = itemProcessedInput
                 if (Object.keys(itemErrors).length > 0) {
@@ -64,7 +64,7 @@ export const propsProcessor = {
                         property.properties,
                         undefined,
                         false,
-                        undefined
+                        undefined,
                     )
                     processedArray.push(itemProcessedInput)
                     processedErrors.push(itemErrors)

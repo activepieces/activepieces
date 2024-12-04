@@ -38,7 +38,7 @@ export const pieceHelper = {
                 projectId: params.projectId,
                 engineToken: params.engineToken,
             }).resolve<
-                StaticPropsValue<PiecePropertyMap>
+            StaticPropsValue<PiecePropertyMap>
             >({
                 unresolvedInput: params.input,
                 executionState,
@@ -68,8 +68,8 @@ export const pieceHelper = {
 
             if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
                 const multiSelectProperty = property as MultiSelectDropdownProperty<
-                    unknown,
-                    boolean
+                unknown,
+                boolean
                 >
                 const options = await multiSelectProperty.options(resolvedInput, ctx)
                 return {

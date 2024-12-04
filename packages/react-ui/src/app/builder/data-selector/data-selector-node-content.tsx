@@ -8,8 +8,8 @@ import { Button } from '../../../components/ui/button';
 import { PieceIcon } from '../../../features/pieces/components/piece-icon';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { useBuilderStateContext } from '../builder-hooks';
+import { MentionTreeNode } from './mentions/type';
 
-import { MentionTreeNode } from './data-selector-utils';
 
 const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
   const toggleIconSize = 15;
@@ -52,14 +52,7 @@ const DataSelectorNodeContent = ({
     ? piecesHooks.useStepMetadata({ step }).stepMetadata
     : undefined;
 
-  const showInsertButton =
-    !node.data.isSlice &&
-    !(
-      node.children &&
-      node.children.length > 0 &&
-      node.children[0].data.isTestStepNode
-    ) &&
-    node.data.insertable;
+  const showInsertButton = 'insertable' in node.data && node.data.insertable;
   const showNodeValue = !node.children && !!node.data.value;
 
   return (

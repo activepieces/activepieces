@@ -129,15 +129,14 @@ const AutoFormFieldWrapper = ({
         )}
       </FormLabel>
 
-      {toggled && (
-        customDynamicComponent ?? (
+      {toggled &&
+        (customDynamicComponent ?? (
           <TextInputWithMentions
             disabled={disabled}
             onChange={field.onChange}
             initialValue={field.value ?? property.defaultValue ?? null}
           />
-        )
-      )}
+        ))}
       {!placeBeforeLabelText && !toggled && <div>{children}</div>}
       {property.description && !hideDescription && (
         <ReadMoreDescription text={t(property.description)} />

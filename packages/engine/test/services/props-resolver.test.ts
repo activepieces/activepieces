@@ -28,7 +28,7 @@ const executionState = FlowExecutorContext.empty()
                     },
                     {
                         name: 'Bob',
-                    }
+                    },
                 ],
             },
         }),

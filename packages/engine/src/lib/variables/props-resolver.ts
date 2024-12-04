@@ -1,4 +1,4 @@
-import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
+import { applyFunctionToValues, isNil, isObject, isString } from '@activepieces/shared'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -155,56 +155,21 @@ async function evalInScope(js: string, contextAsScope: Record<string, unknown>):
     }
 }
 
-function flattenArrayPath<T>(data: T | T[], path: string): any[] {
-    // Split the path into its components
-    const keys = parsePath(path)
-
-    // Helper function to recursively extract values based on the keys
-    function extract(obj: any, keys: string[]): any[] {
-        if (keys.length === 0) return [];
-
-        // Get the current key from the path
-        const key = keys[0];
-
-        // If the current object is an array, iterate through each item
-        if (Array.isArray(obj)) {
-            return obj.flatMap(item => extract(item, keys));
-        }
-
-        // If the key exists in the object, continue the extraction
-        if (obj && obj.hasOwnProperty(key)) {
-            // If we reached the last key, return the value, otherwise go deeper
-            if (keys.length === 1) {
-                return [obj[key]];
-            } else {
-                return extract(obj[key], keys.slice(1));
+function flattenArrayPath(data: unknown, pathToMatch: string[]): unknown[] {
+    if (isObject(data)) {
+        for (const [key, value] of Object.entries(data)) {
+            if (key === pathToMatch[0]) {
+                return flattenArrayPath(value, pathToMatch.slice(1))
             }
         }
-
-        // If key is not found, return an empty array
-        return [];
+    } else if (Array.isArray(data)) {
+        return data.flatMap((d) => flattenArrayPath(d, pathToMatch))
+    } else if (pathToMatch.length === 0) {
+        return [data]
     }
-
-    return extract(data, keys).filter(value => value !== undefined);
+    return []
 }
 
-// Helper function to parse paths with dot and bracket notation
-function parsePath(path: string): string[] {
-    const regex = /(?:[^\.\[\]]+|\[(.*?)\])/g;
-    const keys: string[] = [];
-    let match;
-
-    while ((match = regex.exec(path)) !== null) {
-        // Extract the matched group (ignore empty or dot-only matches)
-        if (match[1]) {
-            keys.push(match[1]);  // For array-style indexing
-        } else {
-            keys.push(match[0]);  // For normal keys
-        }
-    }
-
-    return keys;
-}
 type ResolveSingleTokenParams = {
     variableName: string
     currentState: Record<string, unknown>

@@ -47,7 +47,9 @@ const ArrayPiecePropertyInLoopMode = React.memo(
                     <TextInputWithMentions
                       initialValue={form.getValues(inputName) as string}
                       onChange={(value) => {
-                        form.setValue(inputName, value, { shouldValidate: true });
+                        form.setValue(inputName, value, {
+                          shouldValidate: true,
+                        });
                       }}
                       disabled={disabled}
                     />

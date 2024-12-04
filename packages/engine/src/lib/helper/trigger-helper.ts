@@ -29,7 +29,7 @@ export const triggerHelper = {
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
             piecesSource: constants.piecesSource,
-            inputSchema: inputUiInfo.schema as Record<string, InputPropertyMap>
+            inputSchema: inputUiInfo.schema as Record<string, InputPropertyMap>,
         })
         const isOldVersionOrNotSupported = isNil(pieceTrigger.onStart)
         if (isOldVersionOrNotSupported) {
@@ -70,7 +70,7 @@ export const triggerHelper = {
             apiUrl: constants.internalApiUrl,
             engineToken: params.engineToken,
             piecesSource: constants.piecesSource,
-            inputSchema: inputUiInfo.schema as Record<string, InputPropertyMap>
+            inputSchema: inputUiInfo.schema as Record<string, InputPropertyMap>,
         })
 
         const appListeners: Listener[] = []
