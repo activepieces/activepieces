@@ -12,7 +12,6 @@ export async function runWithExponentialBackoff<T extends CodeAction | PieceActi
 ): Promise<FlowExecutorContext> {
     const resultExecutionState = await requestFunction({ action, executionState, constants })
     const retryEnabled = action.settings.errorHandlingOptions?.retryOnFailure?.value
-
     if (
         executionFailedWithRetryableError(resultExecutionState) &&
         attemptCount < constants.retryConstants.maxAttempts &&
@@ -48,7 +47,7 @@ export async function continueIfFailureHandler(
 }
 
 export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
-    logError(error)
+    console.log(error)
     const isEngineError = (error instanceof ExecutionError) && error.type === ExecutionErrorType.ENGINE
     return {
         message: error instanceof Error ? error.message : JSON.stringify(error),
@@ -56,11 +55,6 @@ export const handleExecutionError = (error: unknown): ErrorHandlingResponse => {
             reason: FlowRunStatus.INTERNAL_ERROR,
         } : undefined,
     }
-}
-
-const logError = (error: unknown): void => {
-    const serializedError = JSON.stringify(error, Object.getOwnPropertyNames(error))
-    console.error(serializedError)
 }
 
 const executionFailedWithRetryableError = (flowExecutorContext: FlowExecutorContext): boolean => {
