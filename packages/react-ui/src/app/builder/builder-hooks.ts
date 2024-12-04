@@ -22,6 +22,8 @@ import {
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { AskAiButtonOperations } from '../../features/pieces/lib/types';
 import { useAuthorization } from '../../hooks/authorization-hooks';
+import { ApNode } from './flow-canvas/types';
+import { set } from 'date-fns';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -110,6 +112,8 @@ export type BuilderState = {
   ) => void;
   askAiButtonProps: AskAiButtonOperations | null;
   setAskAiButtonProps: (props: AskAiButtonOperations | null) => void;
+  selectedNodes: ApNode[];
+  setSelectedNodes: (nodes:ApNode[])=>void;
 };
 
 export type BuilderInitialState = Pick<
@@ -411,6 +415,12 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               : state.selectedStep,
         }));
       },
+      selectedNodes:[],
+      setSelectedNodes:(nodes:ApNode[])=>{
+        return set(()=>({
+          selectedNodes:nodes
+        }))
+      }
     };
   });
 
