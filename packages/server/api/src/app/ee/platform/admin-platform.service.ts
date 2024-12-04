@@ -35,8 +35,8 @@ export const adminPlatformService = {
             id: platform.id,
             customDomainsEnabled: true,
         })
-        
-        await customDomainService.create({
+
+        const customDomain = await customDomainService.create({
             domain,
             platformId: platform.id,
         })
@@ -47,6 +47,11 @@ export const adminPlatformService = {
             companyName: name,
             goal: 'Manual Trial',
             numberOfEmployees: 'TBD',
+        })
+
+        await customDomainService.verifyDomain({
+            id: customDomain.id,
+            platformId: customDomain.platformId,
         })
         return platform
     },
