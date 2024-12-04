@@ -51,9 +51,10 @@ export class StorageLimitError extends ExecutionError {
 
 export class StorageInvalidKeyError extends ExecutionError {
     constructor(key: string, cause?: unknown) {
-        super('StorageInvalidKeyError', formatMessage(`Failed to read/write key "${key}", It's empty or longer than ${STORE_KEY_MAX_LENGTH} characters`), ExecutionErrorType.USER, cause)
+        super('StorageInvalidKeyError', formatMessage(`Failed to read/write key "${key}", the key is empty or longer than ${STORE_KEY_MAX_LENGTH} characters`), ExecutionErrorType.USER, cause)
     }
 }
+
 export class StorageError extends ExecutionError {
     constructor(key: string, cause?: unknown) {
         super('StorageError', formatMessage(`Failed to read/write key "${key}" due to ${JSON.stringify(cause)}`), ExecutionErrorType.ENGINE, cause)
@@ -69,6 +70,14 @@ export class FileStoreError extends ExecutionError {
 export class PausedFlowTimeoutError extends ExecutionError {
     constructor(cause?: unknown, maximumPauseDurationDays?: number) {
         super('PausedFlowTimeoutError', `The flow cannot be paused for more than ${maximumPauseDurationDays} days`, ExecutionErrorType.USER, cause)
+    }
+}
+
+export class ProgressUpdateError extends ExecutionError {
+    constructor(message: string, cause?: unknown) {
+        super('ProgressUpdateError', JSON.stringify({
+            message,
+        }, null, 2), ExecutionErrorType.ENGINE, cause)
     }
 }
 

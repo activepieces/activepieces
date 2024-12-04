@@ -66,7 +66,7 @@ export const instasentAuth = PieceAuth.CustomAuth({
 
 export const instasent = createPiece({
     displayName: "Instasent",
-    minimumSupportedRelease: '0.20.0',
+    minimumSupportedRelease: '0.30.0',
     logoUrl: "https://cdn.activepieces.com/pieces/instasent.jpg",
     categories:[PieceCategory.MARKETING],
     authors: ["dev-instasent", "https://github.com/dev-instasent"],

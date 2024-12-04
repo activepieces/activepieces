@@ -14,17 +14,18 @@ import {
 } from '@/components/ui/select';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { ApFlagId, ProjectMemberRole } from '@activepieces/shared';
+import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared';
+import { ApFlagId, DefaultProjectRole } from '@activepieces/shared';
 
 type ProjectRoleSelectProps = {
   form: UseFormReturn<any>;
 };
 
 const RolesDisplayNames: { [k: string]: string } = {
-  [ProjectMemberRole.ADMIN]: t('Admin'),
-  [ProjectMemberRole.EDITOR]: t('Editor'),
-  [ProjectMemberRole.OPERATOR]: t('Operator'),
-  [ProjectMemberRole.VIEWER]: t('Viewer'),
+  [DefaultProjectRole.ADMIN]: t('Admin'),
+  [DefaultProjectRole.EDITOR]: t('Editor'),
+  [DefaultProjectRole.OPERATOR]: t('Operator'),
+  [DefaultProjectRole.VIEWER]: t('Viewer'),
 };
 
 const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
@@ -34,13 +35,14 @@ const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
     ApFlagId.IS_CLOUD_PLATFORM,
   );
 
-  const invitationRoles = Object.values(ProjectMemberRole)
+  const invitationRoles = Object.values(DefaultProjectRole)
     .filter((f) => {
-      if (f === ProjectMemberRole.ADMIN) {
+      if (f === DefaultProjectRole.ADMIN) {
         return true;
       }
       const showNonAdmin =
-        !isCloudPlatform || project?.plan.teamMembers !== 100;
+        !isCloudPlatform ||
+        project?.plan.teamMembers !== DEFAULT_FREE_PLAN_LIMIT.teamMembers;
       return showNonAdmin;
     })
     .map((role) => {
@@ -60,7 +62,7 @@ const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
   return (
     <FormField
       control={form.control}
-      name="projectRole"
+      name="role"
       render={({ field }) => (
         <FormItem className="grid gap-3">
           <Label>{t('Project Role')}</Label>

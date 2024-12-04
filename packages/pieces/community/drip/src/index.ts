@@ -16,7 +16,7 @@ export const dripAuth = PieceAuth.SecretText({
 export const drip = createPiece({
   displayName: 'Drip',
   description: 'E-commerce CRM for B2B marketers',
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
   authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   categories: [PieceCategory.MARKETING],

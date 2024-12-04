@@ -144,7 +144,7 @@ function findPathToStep(trigger: Trigger, targetStepName: string): StepWithIndex
 }
 
 
-function getAllChildSteps(action: LoopOnItemsAction  | RouterAction): Step[] {
+function getAllChildSteps(action: LoopOnItemsAction | RouterAction): Step[] {
     return getAllSteps({
         ...action,
         nextAction: undefined,
@@ -153,7 +153,7 @@ function getAllChildSteps(action: LoopOnItemsAction  | RouterAction): Step[] {
 
 function isChildOf(parent: Step, childStepName: string): boolean {
     switch (parent.type) {
-        case ActionType.ROUTER: 
+        case ActionType.ROUTER:
         case ActionType.LOOP_ON_ITEMS: {
             const children = getAllChildSteps(parent)
             return children.findIndex((c) => c.name === childStepName) > -1
@@ -174,7 +174,7 @@ const findUnusedName = (trigger: Trigger) => {
     }
     return name
 }
-  
+
 
 export const flowStructureUtil = {
     isTrigger,

@@ -54,17 +54,20 @@ export const zohoBooks = createPiece({
   displayName: "Zoho Books",
   description: 'Comprehensive online accounting software for small businesses.',
   logoUrl: "https://cdn.activepieces.com/pieces/zoho-books.png",
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.ACCOUNTING],
   authors: ["ikus060"],
   auth: zohoBooksAuth,
   actions: [
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `https://${(auth as OAuth2PropertyValue).data['location']}/books/v3`,
+      {
+        const data = (auth as OAuth2PropertyValue).data;
+        return data && data['api_domain']? `${data['api_domain']}/books/v3` : ''
+      },        
       auth: zohoBooksAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Zoho-oauthtoken ${(auth as OAuth2PropertyValue).access_token}`,
       }),
     }),
   ],

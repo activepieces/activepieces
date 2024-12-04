@@ -11,6 +11,7 @@ import {
 } from '@activepieces/shared'
 import { Value } from '@sinclair/typebox/value'
 import { FastifyRequest } from 'fastify'
+import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventParam } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -66,10 +67,11 @@ export const auditLogService = {
         if (!isNil(action)) {
             queryBuilder.andWhere({ action })
         }
+        
         if (!isNil(projectId)) {
-            queryBuilder.andWhere({ projectId })
+            queryBuilder.andWhere({ projectId: In(projectId) })
         }
-
+        logger.debug(`projects: ${Array.isArray(projectId)} ${(projectId?.length)}`)
         const paginationResponse = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<ApplicationEvent>(
             paginationResponse.data,
@@ -131,5 +133,5 @@ type ListParams = {
     limit: number
     userId?: string
     action?: string
-    projectId?: string
+    projectId?: string[]
 }

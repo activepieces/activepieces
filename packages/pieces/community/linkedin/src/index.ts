@@ -28,7 +28,7 @@ export const linkedin = createPiece({
   displayName: 'LinkedIn',
   description: 'Connect and network with professionals',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/linkedin.png',
   categories: [PieceCategory.MARKETING],
   authors: ["aasimsani","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],

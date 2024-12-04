@@ -6,6 +6,7 @@ import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { issuesService } from '../../issues/issues-service'
+import { projectRoleService } from '../../project-role/project-role.service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
@@ -29,7 +30,6 @@ export const emailService = {
         })
         const { email, platformId } = userInvitation
         const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
-
         await emailSender.send({
             emails: [email],
             platformId,
@@ -229,11 +229,14 @@ async function getEntityNameForInvitation(userInvitation: UserInvitation): Promi
         }
         case InvitationType.PROJECT: {
             assertNotNullOrUndefined(userInvitation.projectId, 'projectId')
-            assertNotNullOrUndefined(userInvitation.projectRole, 'projectRole')
+            assertNotNullOrUndefined(userInvitation.projectRoleId, 'projectRoleId')
+            const projectRole = await projectRoleService.getOneOrThrowById({
+                id: userInvitation.projectRoleId,
+            })
             const project = await projectService.getOneOrThrow(userInvitation.projectId)
             return {
                 name: project.displayName,
-                role: capitalizeFirstLetter(userInvitation.projectRole),
+                role: capitalizeFirstLetter(projectRole.name),
             }
         }
     }

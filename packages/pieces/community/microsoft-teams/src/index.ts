@@ -45,7 +45,7 @@ export const microsoftTeamsAuth = PieceAuth.OAuth2({
 export const microsoftTeams = createPiece({
   displayName: 'Microsoft Teams',
   auth: microsoftTeamsAuth,
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-teams.png',
   categories: [
     PieceCategory.BUSINESS_INTELLIGENCE,

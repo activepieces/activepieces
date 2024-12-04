@@ -75,8 +75,7 @@ export const platformService = {
             id: ownerId,
             platformId: savedPlatform.id,
         })
-
-
+        
         return savedPlatform
     },
 

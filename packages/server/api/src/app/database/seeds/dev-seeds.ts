@@ -4,6 +4,7 @@ import { authenticationService } from '../../authentication/authentication-servi
 import { Provider } from '../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { FlagEntity } from '../../flags/flag.entity'
 import { databaseConnection } from '../database-connection'
+import { DataSeed } from './data-seed'
 
 const DEV_DATA_SEEDED_FLAG = 'DEV_DATA_SEEDED'
 
@@ -46,8 +47,7 @@ const seedDevUser = async (): Promise<void> => {
 
     logger.info({ name: 'seedDevUser' }, `email=${DEV_EMAIL} pass=${DEV_PASSWORD}`)
 }
-
-export const seedDevData = async (): Promise<void> => {
+const seedDevData = async (): Promise<void> => {
     if (currentEnvIsNotDev()) {
         logger.info({ name: 'seedDevData' }, 'skip: not in development environment')
         return
@@ -60,4 +60,8 @@ export const seedDevData = async (): Promise<void> => {
 
     await seedDevUser()
     await setDevDataSeededFlag()
+}
+
+export const devDataSeed: DataSeed = {
+    run: seedDevData,
 }

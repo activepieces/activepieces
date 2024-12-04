@@ -3,6 +3,7 @@ import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
+    EndpointScope,
     ErrorCode,
     ListFlowTemplatesRequest,
     Principal,
@@ -82,6 +83,7 @@ async function resolveTemplatesPlatformId(principal: Principal, platformId: stri
 const GetParams = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         tags: ['flow-templates'],
@@ -94,6 +96,7 @@ const GetParams = {
 const ListFlowParams = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         tags: ['flow-templates'],
@@ -106,6 +109,7 @@ const ListFlowParams = {
 const DeleteParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         description: 'Delete a flow template',
@@ -118,6 +122,7 @@ const DeleteParams = {
 const CreateParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
     },
     schema: {
         description: 'Create a flow template',

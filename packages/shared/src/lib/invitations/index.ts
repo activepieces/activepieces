@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable, NullableEnum } from '../common'
-import { ProjectMemberRole } from '../project'
+import { ProjectRole } from '../project-role/project-role'
 import { PlatformRole } from '../user/index'
 
 export enum InvitationType {
@@ -21,7 +21,8 @@ export const UserInvitation = Type.Object({
     platformId: Type.String(),
     platformRole: NullableEnum(Type.Enum(PlatformRole)),
     projectId: Nullable(Type.String()),
-    projectRole: NullableEnum(Type.Enum(ProjectMemberRole)),
+    projectRoleId: Nullable(Type.String()),
+    projectRole: Nullable(ProjectRole),
 })
 
 export type UserInvitation = Static<typeof UserInvitation>
@@ -37,7 +38,7 @@ export const SendUserInvitationRequest = Type.Union([
         type: Type.Literal(InvitationType.PROJECT),
         email: Type.String(),
         projectId: Type.String(),
-        projectRole: Type.Enum(ProjectMemberRole),
+        projectRole: Type.String(),
     }),
     Type.Object({
         type: Type.Literal(InvitationType.PLATFORM),

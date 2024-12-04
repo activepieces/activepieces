@@ -1,5 +1,4 @@
 import { Type, Static } from "@sinclair/typebox";
-import { ProjectMemberRole } from "@activepieces/shared";
 
 export const AcceptInvitationRequest = Type.Object({
     token: Type.String()
@@ -19,3 +18,10 @@ export const AcceptProjectResponse = Type.Object({
 });
 
 export type AcceptProjectResponse = Static<typeof AcceptProjectResponse>;
+
+
+export const UpdateProjectMemberRoleRequestBody = Type.Object({
+    role: Type.String(),
+})
+
+export type UpdateProjectMemberRoleRequestBody = Static<typeof UpdateProjectMemberRoleRequestBody>

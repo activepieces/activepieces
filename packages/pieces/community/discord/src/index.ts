@@ -34,7 +34,7 @@ export const discordAuth = PieceAuth.SecretText({
 export const discord = createPiece({
   displayName: 'Discord',
   description: 'Instant messaging and VoIP social platform',
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discord.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: discordAuth,

@@ -60,7 +60,7 @@ export const apitable = createPiece({
   displayName: 'AITable',
   auth: APITableAuth,
   description: `Interactive spreadsheets with collaboration`,
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: [

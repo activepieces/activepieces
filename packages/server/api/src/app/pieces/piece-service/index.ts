@@ -136,6 +136,7 @@ const saveArchive = async (
         projectId: isNil(platformId) ? projectId : undefined,
         platformId,
         data: archive,
+        size: archive.length,
         type: FileType.PACKAGE_ARCHIVE,
         compression: FileCompression.NONE,
     })

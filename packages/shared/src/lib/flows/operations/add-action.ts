@@ -19,6 +19,7 @@ function createAction(request: UpdateActionRequest, {
         displayName: request.displayName,
         name: request.name,
         valid: false,
+        skip: request.skip,
         nextAction,
     }
     let action: Action

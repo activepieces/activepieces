@@ -7,11 +7,13 @@ import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
 import { exceptionHandler } from '../exception-handler'
 import { logger } from '../logger'
+import { ApLock, memoryLock } from '../memory-lock'
 import { system } from '../system/system'
 import { AppSystemProp } from '../system/system-prop'
 
 const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 
+const pieceCache: Record<string, PieceMetadata | null> = {}
 
 async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     const paths = []
@@ -36,12 +38,17 @@ async function findAllPiecesFolder(folderPath: string): Promise<string[]> {
     return paths
 }
 
+async function getPackageNameFromFolderPath(folderPath: string): Promise<string> {
+    const packageJson = await readFile(join(folderPath, 'package.json'), 'utf-8').then(JSON.parse)
+    return packageJson.name
+}
+
 async function findDirectoryByPackageName(packageName: string): Promise<string | null> {
     const paths = await findAllPiecesFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
     for (const path of paths) {
         try {
-            const packageJson = await readFile(join(path, 'package.json'), 'utf-8').then(JSON.parse)
-            if (packageJson.name === packageName) {
+            const packageJsonName = await getPackageNameFromFolderPath(path)
+            if (packageJsonName === packageName) {
                 return path
             }
         }
@@ -64,7 +71,7 @@ async function findAllPiecesDirectoryInSource(): Promise<string[]> {
 
 async function findPieceDirectoryByFolderName(pieceName: string): Promise<string | null> {
     const piecesPath = await findAllPiecesDirectoryInSource()
-    const piecePath = piecesPath.find((p) => p.includes(pieceName))
+    const piecePath = piecesPath.find((p) => p.endsWith('/' + pieceName))
     return piecePath ?? null
 }
 
@@ -91,7 +98,18 @@ async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]
 async function loadPieceFromFolder(
     folderPath: string,
 ): Promise<PieceMetadata | null> {
+    let lock: ApLock | undefined
     try {
+        if (folderPath in pieceCache && pieceCache[folderPath]) {
+            return pieceCache[folderPath]
+        }
+
+        const lockKey = `piece_cache_${folderPath}`
+        lock = await memoryLock.acquire(lockKey)
+        if (folderPath in pieceCache && pieceCache[folderPath]) {
+            return pieceCache[folderPath]
+        }
+
         const indexPath = join(folderPath, 'src', 'index')
         clearModule(indexPath)
         const packageJson = importFresh<Record<string, string>>(
@@ -107,19 +125,35 @@ async function loadPieceFromFolder(
             pieceName,
             pieceVersion,
         })
-        return {
+        const metadata = {
             ...piece.metadata(),
             name: pieceName,
             version: pieceVersion,
             authors: piece.authors,
             directoryPath: folderPath,
         }
+
+        pieceCache[folderPath] = metadata
+
     }
     catch (ex) {
+        pieceCache[folderPath] = null
         logger.warn({ name: 'FilePieceMetadataService#loadPieceFromFolder', message: ex }, 'Failed to load piece from folder')
         exceptionHandler.handle(ex)
     }
+    finally {
+        if (lock) {
+            await lock.release()
+        }
+    }
     return null
+}
+
+async function clearPieceCache(packageName: string): Promise<void> {
+    const directoryPath = await findDirectoryByPackageName(packageName)
+    if (directoryPath && directoryPath in pieceCache) {
+        pieceCache[directoryPath] = null
+    }
 }
 
 export const filePiecesUtils = {
@@ -127,4 +161,6 @@ export const filePiecesUtils = {
     findDirectoryByPackageName,
     findPieceDirectoryByFolderName,
     findAllPieces,
+    clearPieceCache,
+    getPackageNameFromFolderPath,
 }

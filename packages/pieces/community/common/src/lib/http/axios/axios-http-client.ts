@@ -23,13 +23,14 @@ export class AxiosHttpClient extends BaseHttpClient {
   ): Promise<HttpResponse<ResponseBody>> {
     try {
       process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-      const { urlWithoutQueryParams, queryParams } = this.getUrl(request);
+      const { urlWithoutQueryParams, queryParams: urlQueryParams } = this.getUrl(request);
       const headers = this.getHeaders(request);
       const axiosRequestMethod = this.getAxiosRequestMethod(request.method);
       const timeout = request.timeout ? request.timeout : 0;
+      const queryParams = request.queryParams || {}
 
-      for (const key in request.queryParams) {
-        queryParams.append(key, request.queryParams[key])
+      for (const [key, value] of urlQueryParams) {
+        queryParams[key] = value
       }
 
       const config: AxiosRequestConfig = {

@@ -30,7 +30,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: request.principal.platform.id,
             type: request.body.type,
             projectIds: request.body.projectIds,
-            externalId: apId(),
+            externalId: request.body.externalId ?? apId(),
             value: request.body.value,
             displayName: request.body.displayName,
             pieceName: request.body.pieceName,

@@ -11,10 +11,10 @@ const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 const isFilePieces = system.getOrThrow(SharedSystemProp.PIECES_SOURCE) === 'FILE'
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
-async function handleFileChange(piecePackageName: string, io: Server): Promise<void> {
+async function handleFileChange(pieceProjectName: string, piecePackageName: string, io: Server): Promise<void> {
     logger.info(
         chalk.blueBright.bold(
-            '👀 Detected changes in pieces. Waiting... 👀 ' + piecePackageName,
+            '👀 Detected changes in pieces. Waiting... 👀 ' + pieceProjectName,
         ),
     )
     let lock: ApLock | undefined
@@ -22,11 +22,12 @@ async function handleFileChange(piecePackageName: string, io: Server): Promise<v
         lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
 
         logger.info(chalk.blue.bold('🤌 Building pieces... 🤌'))
-        if (!/^[A-Za-z0-9-]+$/.test(piecePackageName)) {
-            throw new Error(`Piece package name contains invalid character: ${piecePackageName}`)
+        if (!/^[A-Za-z0-9-]+$/.test(pieceProjectName)) {
+            throw new Error(`Piece package name contains invalid character: ${pieceProjectName}`)
         }
-        const cmd = `npx nx run-many -t build --projects=${piecePackageName}`
+        const cmd = `npx nx run-many -t build --projects=${pieceProjectName}`
         await runCommandWithLiveOutput(cmd)
+        await filePiecesUtils.clearPieceCache(piecePackageName)
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }
     catch (error) {
@@ -78,9 +79,10 @@ export async function piecesBuilder(app: FastifyInstance, io: Server): Promise<v
         }
         logger.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
 
-        const piecePackageName = `pieces-${packageName}`
+        const pieceProjectName = `pieces-${packageName}`
+        const packageJsonName = await filePiecesUtils.getPackageNameFromFolderPath(pieceDirectory)
         const debouncedHandleFileChange = debounce(() => {
-            handleFileChange(piecePackageName, io).catch(logger.error)
+            handleFileChange(pieceProjectName, packageJsonName, io).catch(logger.error)
         }, 2000)
 
         const watcher = chokidar.watch(resolve(pieceDirectory), {

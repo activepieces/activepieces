@@ -34,7 +34,7 @@ export const xero = createPiece({
   displayName: 'Xero',
   description: 'Beautiful accounting software',
 
-  minimumSupportedRelease: '0.5.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/xero.png',
   authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   categories: [PieceCategory.ACCOUNTING],

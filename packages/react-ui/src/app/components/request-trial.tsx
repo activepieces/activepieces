@@ -3,7 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircle } from 'lucide-react';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useTelemetry } from '@/components/telemetry-provider';
@@ -66,7 +66,8 @@ export type FeatureKey =
   | 'ALERTS'
   | 'ENTERPRISE_PIECES'
   | 'UNIVERSAL_AI'
-  | 'SIGNING_KEYS';
+  | 'SIGNING_KEYS'
+  | 'CUSTOM_ROLES';
 
 const features = [
   {
@@ -89,6 +90,14 @@ const features = [
   {
     label: t('Alerts on Failed Runs'),
     key: `ISSUES`,
+  },
+  {
+    label: t('Global Connections'),
+    key: `GLOBAL_CONNECTIONS`,
+  },
+  {
+    label: t('Custom Roles'),
+    key: `CUSTOM_ROLES`,
   },
   {
     label: t('Analytics'),
@@ -148,8 +157,12 @@ type FormSchema = Static<typeof formSchema>;
 
 type RequestTrialProps = {
   featureKey: FeatureKey;
+  customButton?: ReactNode;
 };
-export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
+export const RequestTrial = ({
+  featureKey,
+  customButton = t('Request Trial'),
+}: RequestTrialProps) => {
   const { capture } = useTelemetry();
   const currentUser = authenticationSession.getCurrentUser();
   const form = useForm<FormSchema>({
@@ -234,7 +247,7 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
             })
           }
         >
-          {t('Request Trial')}
+          {customButton}
         </Button>
       </DrawerTrigger>
       <DrawerContent className="h-full top-0 right-0 left-auto mt-0 w-[620px] rounded-none py-2 ">

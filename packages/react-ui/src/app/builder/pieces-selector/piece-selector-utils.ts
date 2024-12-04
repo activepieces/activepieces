@@ -182,11 +182,14 @@ const getDefaultStep = ({
     name: stepName,
     valid: isPieceStep
       ? checkPieceInputValidity(input, actionOrTrigger.props) &&
-        (actionOrTrigger.requireAuth ? !isNil(input['auth']) : true)
+        (actionOrTrigger.requireAuth && !isNil(actionOrTrigger.props['auth'])
+          ? !isNil(input['auth'])
+          : true)
       : stepMetadata.type === ActionType.CODE
       ? true
       : false,
     displayName: actionOrTrigger.displayName,
+    skip: false,
     settings: {
       inputUiInfo: {
         customizedInputs: {},
@@ -369,6 +372,9 @@ const useAdjustPieceListHeightToAvailableSpace = (
   };
 };
 
+const useIsMobile = () => {
+  return (window.innerWidth || document.documentElement.clientWidth) < 768;
+};
 export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
@@ -381,4 +387,5 @@ export const pieceSelectorUtils = {
   isFlowController,
   isUniversalAiPiece,
   useAdjustPieceListHeightToAvailableSpace,
+  useIsMobile,
 };

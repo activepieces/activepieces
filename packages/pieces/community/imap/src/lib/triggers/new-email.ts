@@ -105,10 +105,14 @@ async function enrichAttachments(item: {
   epochMilliSeconds: number;
 }[], files: FilesService) {
   return Promise.all(item.map(async (item) => {
+
+    const { attachments, ...rest } = item.data
     return {
-      ...item,
+      data:{...rest},
+      epochMilliSeconds: item.epochMilliSeconds,
       attachments: await convertAttachment(item.data.attachments, files),
     }
+
   }));
 }
 function getFirstFiveOrAll<T>(array: T[]) {

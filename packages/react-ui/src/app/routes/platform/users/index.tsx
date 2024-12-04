@@ -159,8 +159,8 @@ export default function UsersPage() {
                 return (
                   <div className="text-left">
                     {row.original.status === UserStatus.ACTIVE
-                      ? t('Active')
-                      : t('Inactive')}
+                      ? t('Activated')
+                      : t('Deactivated')}
                   </div>
                 );
               },

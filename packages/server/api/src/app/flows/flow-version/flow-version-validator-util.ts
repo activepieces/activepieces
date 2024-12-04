@@ -176,7 +176,7 @@ async function validateTrigger({
         return false
     }
     const props = trigger.props
-    if (!isNil(piece.auth)) {
+    if (!isNil(piece.auth) && trigger.requireAuth) {
         props.auth = piece.auth
     }
     return validateProps(props, settings.input)

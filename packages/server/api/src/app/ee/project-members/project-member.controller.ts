@@ -1,6 +1,7 @@
 import {
     ListProjectMembersRequestQuery,
     ProjectMemberWithUser,
+    UpdateProjectMemberRoleRequestBody,
 } from '@activepieces/ee-shared'
 import {
     Permission,
@@ -19,6 +20,12 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
 
+    app.get('/role', GetCurrentProjectMemberRoleRequest, async (request) => {
+        return  projectMemberService.getRole({
+            projectId: request.principal.projectId,
+            userId: request.principal.id,
+        })
+    })
 
     app.get('/', ListProjectMembersRequestQueryOptions, async (request) => {
         return projectMemberService.list(
@@ -27,6 +34,17 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
             request.query.limit ?? DEFAULT_LIMIT_SIZE,
         )
     })
+
+
+    app.post('/:id', UpdateProjectMemberRoleRequest, async (req) => {
+        return projectMemberService.update({
+            id: req.params.id,
+            role: req.body.role,
+            projectId: req.principal.projectId,
+            platformId: req.principal.platform.id,
+        })
+    })
+
 
     app.delete('/:id', DeleteProjectMemberRequest, async (request, reply) => {
         await projectMemberService.delete(
@@ -37,6 +55,32 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
     })
 }
 
+
+
+const GetCurrentProjectMemberRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+
+    },
+}
+
+const UpdateProjectMemberRoleRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_PROJECT_MEMBER,
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        body: UpdateProjectMemberRoleRequestBody,
+    },
+    response: {
+        [StatusCodes.OK]: ProjectMemberWithUser,
+    },
+}
 
 const ListProjectMembersRequestQueryOptions = {
     config: {

@@ -1361,6 +1361,42 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "beyondlevi",
+      "name": "beyondlevi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/57486338?v=4",
+      "profile": "https://github.com/beyondlevi",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "rafalzawadzki",
+      "name": "Rafal Zawadzki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10667346?v=4",
+      "profile": "https://rafal.fyi",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "simonc",
+      "name": "Simon Courtois",
+      "avatar_url": "https://avatars.githubusercontent.com/u/119303?v=4",
+      "profile": "https://www.pdfmonkey.io/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "alegria-solutions",
+      "name": "alegria-solutions",
+      "avatar_url": "https://avatars.githubusercontent.com/u/124846022?v=4",
+      "profile": "https://github.com/alegria-solutions",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

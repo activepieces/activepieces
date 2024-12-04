@@ -30,10 +30,7 @@ export const AdminAddPlatformRequestBody = Type.Object({
     userId: ApId,
     projectId: ApId,
     name: Type.String(),
-    primaryColor: Type.Optional(Type.String()),
-    logoIconUrl: Type.Optional(Type.String()),
-    fullLogoUrl: Type.Optional(Type.String()),
-    favIconUrl: Type.Optional(Type.String()),
+    domain: Type.String(),
 })
 
 export type AdminAddPlatformRequestBody = Static<typeof AdminAddPlatformRequestBody>

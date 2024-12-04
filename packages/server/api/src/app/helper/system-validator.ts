@@ -97,7 +97,6 @@ const systemPropValidators: {
     [AppSystemProp.QUEUE_UI_ENABLED]: booleanValidator,
     [AppSystemProp.QUEUE_UI_PASSWORD]: stringValidator,
     [AppSystemProp.QUEUE_UI_USERNAME]: stringValidator,
-    [AppSystemProp.RAPID_API_KEY]: stringValidator,
     [AppSystemProp.REDIS_TYPE]: enumValidator(Object.values(RedisType)),
     [AppSystemProp.REDIS_SSL_CA_FILE]: stringValidator,
     [AppSystemProp.REDIS_DB]: numberValidator,
@@ -139,12 +138,18 @@ const systemPropValidators: {
     [AppSystemProp.CLOUDFLARE_API_KEY]: stringValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
 
+    // Copilot
+    [AppSystemProp.PERPLEXITY_API_KEY]: stringValidator,
+    [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
+
     // WorkerSystemProps
     [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: numberValidator,
     [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
     [WorkerSystemProps.SCHEDULED_POLLING_COUNT]: numberValidator,
     [WorkerSystemProps.POLLING_POOL_SIZE]: numberValidator,
     [WorkerSystemProps.WORKER_TOKEN]: stringValidator,
+
+
 }
 
 

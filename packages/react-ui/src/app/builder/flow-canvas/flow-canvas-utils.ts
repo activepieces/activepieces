@@ -316,7 +316,6 @@ const buildRouterChildGraph = (step: RouterAction) => {
     },
     data: {},
   };
-
   const edges: ApEdge[] = childGraphsAfterOffset
     .map((childGraph, branchIndex) => {
       return [
@@ -328,8 +327,8 @@ const buildRouterChildGraph = (step: RouterAction) => {
           data: {
             isBranchEmpty: isNil(step.children[branchIndex]),
             label:
-              step.settings.branches[branchIndex].branchName ??
-              `${t('Path')} ${branchIndex + 1}`,
+              step.settings.branches[branchIndex]?.branchName ??
+              `${t('Branch')} ${branchIndex + 1} (missing branch)`,
             branchIndex,
             stepLocationRelativeToParent:
               StepLocationRelativeToParent.INSIDE_BRANCH as const,

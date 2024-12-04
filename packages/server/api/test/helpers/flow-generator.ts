@@ -63,6 +63,7 @@ function generateAction(): Action {
         type: ActionType.PIECE,
         displayName: faker.hacker.noun(),
         name: apId(),
+        skip: false,
         settings: {
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,

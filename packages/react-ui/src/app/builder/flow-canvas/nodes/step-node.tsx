@@ -1,11 +1,12 @@
 import { useDraggable } from '@dnd-kit/core';
-import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, NodeProps, Position } from '@xyflow/react';
 import { t } from 'i18next';
 import {
   ArrowRightLeft,
   CopyPlus,
   EllipsisVertical,
+  Route,
+  RouteOff,
   Trash,
 } from 'lucide-react';
 import React, { useMemo, useState, useRef } from 'react';
@@ -22,17 +23,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import {
+  Action,
+  ActionType,
   FlowOperationType,
   FlowRun,
   FlowRunStatus,
   FlowVersion,
+  Trigger,
   TriggerType,
   flowStructureUtil,
   isNil,
@@ -41,6 +49,23 @@ import {
 import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
 import { flowUtilConsts } from '../consts';
 import { ApStepNode } from '../types';
+
+function hasSkippedParent(stepName: string, trigger: Trigger): boolean {
+  const step = flowStructureUtil.getStep(stepName, trigger);
+  if (!step) {
+    return false;
+  }
+
+  const skippedParents = flowStructureUtil
+    .findPathToStep(trigger, stepName)
+    .filter(
+      (p) =>
+        (p.type === ActionType.LOOP_ON_ITEMS || p.type === ActionType.ROUTER) &&
+        flowStructureUtil.isChildOf(p, stepName) &&
+        p.skip,
+    );
+  return skippedParents.length > 0;
+}
 
 function getStepStatus(
   stepName: string | undefined,
@@ -117,6 +142,18 @@ const ApStepCanvasNode = React.memo(
       );
       removeStepSelection();
     };
+    const skipStep = () => {
+      applyOperation(
+        {
+          type: FlowOperationType.SET_SKIP_ACTION,
+          request: {
+            name: data.step!.name,
+            skip: !(data.step as Action).skip,
+          },
+        },
+        () => toast(UNSAVED_CHANGES_TOAST),
+      );
+    };
 
     const duplicateStep = () => {
       applyOperation(
@@ -144,6 +181,7 @@ const ApStepCanvasNode = React.memo(
     const isAction = flowStructureUtil.isAction(data.step!.type);
     const isEmptyTriggerSelected =
       selectedStep === 'trigger' && data.step?.type === TriggerType.EMPTY;
+    const isSkipped = (data.step as Action).skip;
 
     const { attributes, listeners, setNodeRef } = useDraggable({
       id: data.step!.name,
@@ -156,8 +194,12 @@ const ApStepCanvasNode = React.memo(
     const stepOutputStatus = useMemo(() => {
       return getStepStatus(data.step?.name, run, loopIndexes, flowVersion);
     }, [data.step!.name, run, loopIndexes, flowVersion]);
+
     const showRunningIcon =
-      isNil(stepOutputStatus) && run?.status === FlowRunStatus.RUNNING;
+      isNil(stepOutputStatus) &&
+      run?.status === FlowRunStatus.RUNNING &&
+      !hasSkippedParent(data.step.name, flowVersion.trigger);
+
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
@@ -176,13 +218,14 @@ const ApStepCanvasNode = React.memo(
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
         className={cn(
-          'transition-all  border-box rounded-sm  border  border-solid  border-border relative hover:border-primary group',
+          'transition-all border-box rounded-sm border border-solid border-border relative hover:border-primary group',
           {
             'shadow-step-container': !isDragging,
             'border-primary': isSelected,
             'bg-background': !isDragging,
             'border-none': isDragging,
             'shadow-none': isDragging,
+            'bg-accent/70': isSkipped,
           },
         )}
         onClick={(e) => handleStepClick(e)}
@@ -249,12 +292,14 @@ const ApStepCanvasNode = React.memo(
               >
                 <div className="flex h-full items-center justify-between gap-3 w-full">
                   <div className="flex items-center justify-center min-w-[46px] h-full">
-                    <PieceIcon
-                      logoUrl={stepMetadata?.logoUrl}
-                      displayName={stepMetadata?.displayName}
-                      showTooltip={false}
-                      size={'lg'}
-                    ></PieceIcon>
+                    <div className={isSkipped ? 'opacity-80' : ''}>
+                      <PieceIcon
+                        logoUrl={stepMetadata?.logoUrl}
+                        displayName={stepMetadata?.displayName}
+                        showTooltip={false}
+                        size={'lg'}
+                      ></PieceIcon>
+                    </div>
                   </div>
                   <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
                     <div className=" flex items-center justify-between min-w-0 w-full">
@@ -327,6 +372,29 @@ const ApStepCanvasNode = React.memo(
                               )}
 
                               {isAction && (
+                                <DropdownMenuItem
+                                  onSelect={(e) => {
+                                    e.preventDefault();
+                                    skipStep();
+                                    setOpenStepActionsMenu(false);
+                                  }}
+                                >
+                                  <StepActionWrapper>
+                                    {(data.step as Action).skip ? (
+                                      <Route className="h-4 w-4"></Route>
+                                    ) : (
+                                      <RouteOff className="h-4 w-4"></RouteOff>
+                                    )}
+                                    {t(
+                                      (data.step as Action).skip
+                                        ? 'Unskip'
+                                        : 'Skip',
+                                    )}
+                                  </StepActionWrapper>
+                                </DropdownMenuItem>
+                              )}
+
+                              {isAction && (
                                 <>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
@@ -363,8 +431,18 @@ const ApStepCanvasNode = React.memo(
                             size="4"
                           ></StepStatusIcon>
                         )}
-                        {showRunningIcon && (
-                          <LoadingSpinner className="w-4 h-4 text-primary"></LoadingSpinner>
+                        {showRunningIcon && !isSkipped && (
+                          <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>
+                        )}
+                        {isSkipped && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <RouteOff className="w-4 h-4"> </RouteOff>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              {t('Skipped')}
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                         {!data.step?.valid && (
                           <Tooltip>

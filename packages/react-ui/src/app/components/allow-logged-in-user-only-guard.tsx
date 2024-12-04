@@ -46,8 +46,10 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
     return <Navigate to="/sign-in" replace />;
   }
   projectHooks.prefetchProject();
+  projectHooks.prefetchProjectRole();
   platformHooks.prefetchPlatform();
   flagsHooks.useFlags();
+
   return (
     <Suspense fallback={<LoadingScreen></LoadingScreen>}>
       <SocketProvider>{children}</SocketProvider>

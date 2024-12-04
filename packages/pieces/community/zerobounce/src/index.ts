@@ -11,7 +11,7 @@ export const zerobounce = createPiece({
   displayName: "ZeroBounce",
   auth: zerobounceAuth,
   description: "ZeroBounce is an email validation service that helps you reduce bounces, improve email deliverability and increase email marketing ROI.",
-  minimumSupportedRelease: '0.20.0',
+  minimumSupportedRelease: '0.30.0',
   logoUrl: "https://cdn.activepieces.com/pieces/zerobounce.png",
   authors: ["abuaboud"],
   actions: [validateEmail],
