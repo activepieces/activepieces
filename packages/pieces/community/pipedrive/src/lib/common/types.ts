@@ -39,3 +39,18 @@ export type GetDealResponse=
 	data: Record<string, unknown>;
 	additional_data: AdditionalData;
 }
+
+
+export type ListActivitiesResponse =
+{
+	success: boolean;
+	data: Record<string, unknown>[];
+	additional_data: AdditionalData;
+}
+
+export type ListPersonsResponse =
+{
+	success: boolean;
+	data: Record<string, unknown>[];
+	additional_data: AdditionalData;
+}
