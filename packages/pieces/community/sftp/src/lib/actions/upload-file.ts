@@ -62,7 +62,7 @@ export const uploadFileAction = createAction({
         status: 'error',
       };
     } finally {
-      await endClient(client);
+      await endClient(client, context.auth.protocol);
     }
   },
 });

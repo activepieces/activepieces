@@ -1,6 +1,6 @@
 import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { sftpAuth, getClient } from '../..';
+import { sftpAuth, getClient, endClient } from '../..';
 import dayjs from 'dayjs';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FileInfo as FTPFileInfo } from 'basic-ftp';
@@ -14,17 +14,10 @@ function getModifyTime(file: Client.FileInfo | FTPFileInfo, protocol: string): n
 const polling: Polling<PiecePropValueSchema<typeof sftpAuth>, { path: string; ignoreHiddenFiles?: boolean }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    let client: Client | FTPClient | null = null;
     try {
-      const client = await getClient(auth);
+      client = await getClient(auth);
       const files = await client.list(propsValue.path);
-
-      if (auth.protocol === 'sftp') {
-        const sftpClient = client as Client;
-        await sftpClient.end();
-      } else {
-        const ftpClient = client as FTPClient;
-        ftpClient.close();
-      }
 
       const filteredFiles = files.filter(file => {
         const modTime = getModifyTime(file, auth.protocol);
@@ -48,6 +41,10 @@ const polling: Polling<PiecePropValueSchema<typeof sftpAuth>, { path: string; ig
       });
     } catch (err) {
       return [];
+    } finally {
+      if (client) {
+        await endClient(client, auth.protocol);
+      }
     }
   },
 };

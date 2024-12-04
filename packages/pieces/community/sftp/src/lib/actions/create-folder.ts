@@ -47,7 +47,7 @@ export const createFolderAction = createAction({
         error: err,
       };
     } finally {
-      await endClient(client);
+      await endClient(client, context.auth.protocol);
     }
   },
 });

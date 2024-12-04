@@ -42,11 +42,11 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
   }
 }
 
-export async function endClient(client: Client | FTPClient) {
-  if (client instanceof Client) {
-    await client.end();
+export async function endClient(client: Client | FTPClient, protocol: string) {
+  if (protocol === 'sftp') {
+    await (client as Client).end();
   } else {
-    client.close();
+    (client as FTPClient).close();
   }
 }
 
@@ -93,12 +93,10 @@ export const sftpAuth = PieceAuth.CustomAuth({
       switch (auth.protocol) {
         case 'sftp': {
           client = await getClient<Client>(auth);
-          await client.end();
           break;
         }
         default: {
           client = await getClient<FTPClient>(auth);
-          client.close();
           break;
         }
       }
@@ -112,7 +110,7 @@ export const sftpAuth = PieceAuth.CustomAuth({
       };
     } finally {
       if (client) {
-        await endClient(client);
+        await endClient(client, auth.protocol);
       }
     }
   },
