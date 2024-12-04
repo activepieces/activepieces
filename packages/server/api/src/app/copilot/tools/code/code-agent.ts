@@ -3,6 +3,7 @@ import { isNil } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
+import { selectIcon } from './icon-agent'
 
 type Message = {
     role: 'user' | 'assistant'
@@ -33,7 +34,6 @@ const codeGenerationSchema = z.object({
         description: z.string().optional(),
         suggestedValue: z.string().optional(),
     })).default([]),
-    icon: z.string().optional(),
     title: z.string().optional(),
 })
 
@@ -48,7 +48,7 @@ const defaultResponse: CodeAgentResponse = {
     code: '',
     inputs: {},
     icon: undefined,
-    title: 'Custom Code',
+    title: 'Custom Code'
 }
 
 export async function generateCode(
@@ -61,14 +61,32 @@ export async function generateCode(
             return defaultResponse
         }
 
+        console.debug('Processing code generation request:', {
+            requirement,
+            contextMessages: conversationHistory.length,
+        })
 
-        // Find the last code response in the conversation history
+        // Find the last code response and icon in the conversation history
         const lastCodeResponse = conversationHistory
             .reverse()
-            .find(msg =>
-                msg.role === 'assistant' &&
-                msg.content.includes('export const code ='),
+            .find(msg => 
+                msg.role === 'assistant' && 
+                msg.content.includes('export const code =')
             )
+
+        // Only select a new icon if this is a new request (no previous code)
+        // or if the user is asking for something completely different
+        const shouldSelectNewIcon = !lastCodeResponse || 
+            requirement.toLowerCase().includes('new') ||
+            requirement.toLowerCase().includes('different') ||
+            requirement.toLowerCase().includes('create') ||
+            requirement.toLowerCase().includes('generate')
+
+        const icon = shouldSelectNewIcon ? 
+            await selectIcon(requirement) : 
+            undefined
+        
+        const iconUrl = icon ? `https://cdn.activepieces.com/pieces/ai/code/${icon}.svg` : undefined;
 
         const formattedHistory = conversationHistory
             .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
@@ -123,15 +141,7 @@ export async function generateCode(
            - Don't try to handle multiple operations
            - Let the flow orchestrate complex processes
 
-        5. Icon Selection:
-           - Choose an icon from Lucide (lucide.dev) that represents the operation
-           - Pick icons that intuitively convey the step's purpose
-           - Use 'Mail' for email tasks
-           - Use 'Database' for data operations  
-           - Use 'FileText' for document processing
-           - Icons help users quickly understand the step's function
-
-        6. Title:
+        5. Title:
            - Title should be 2-4 words, action-oriented
            - Examples: "Send Email", "Query Database", "Transform JSON"
 
@@ -145,7 +155,6 @@ export async function generateCode(
                     "suggestedValue": "Your Gmail API access token"
                 }
             ],
-            "icon": "Mail",
             "title": "List Gmail Messages"
         }
 
@@ -167,6 +176,17 @@ export async function generateCode(
             temperature: 0,
         })
 
+        console.debug('Code generation response:', {
+            requirement,
+            conversationHistory,
+            previousCode: lastCodeResponse?.content,
+            generatedCode: llmResponse?.object?.code,
+            selectedIcon: iconUrl,
+        })
+
+        if (isNil(llmResponse?.object)) {
+            return defaultResponse
+        }
 
         const resultInputs = llmResponse?.object?.inputs?.reduce((acc, input) => {
             acc[input.name] = input.suggestedValue ?? ''
@@ -180,12 +200,13 @@ export async function generateCode(
         return {
             code: llmResponse.object.code,
             inputs: resultInputs,
-            icon: llmResponse.object.icon,
-            title: llmResponse.object.title ?? defaultResponse.title,
+            icon: iconUrl,
+            title: llmResponse.object.title ?? defaultResponse.title
         }
     }
     catch (error) {
         exceptionHandler.handle(error)
+        console.error('Code generation failed:', error)
         return defaultResponse
     }
 }
