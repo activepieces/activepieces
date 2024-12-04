@@ -89,7 +89,7 @@ export const userInvitationsService = {
                     const projectRole = await projectRoleService.getOneOrThrowById({
                         id: projectRoleId,
                     })
-                    
+
                     await projectMemberService.upsert({
                         projectId,
                         userId: user.id,
@@ -158,7 +158,15 @@ export const userInvitationsService = {
                 ...spreadIfDefined('type', params.type),
             })
         const { data, cursor } = await paginator.paginate(queryBuilder)
-        return paginationHelper.createPage<UserInvitation>(data, cursor)
+        const enrichedData = await Promise.all(data.map(async (invitation) => {
+            return {
+                projectRole: !isNil(invitation.projectRoleId) ? await projectRoleService.getOneOrThrowById({
+                    id: invitation.projectRoleId,
+                }) : null,
+                ...invitation,
+            }
+        }))
+        return paginationHelper.createPage<UserInvitation>(await Promise.all(enrichedData), cursor)
     },
     async delete({ id, platformId }: PlatformAndIdParams): Promise<void> {
         const invitation = await this.getOneOrThrow({ id, platformId })
