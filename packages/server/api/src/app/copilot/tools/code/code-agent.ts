@@ -66,7 +66,6 @@ export async function generateCode(
             contextMessages: conversationHistory.length,
         })
 
-        // Find the last code response and icon in the conversation history
         const lastCodeResponse = conversationHistory
             .reverse()
             .find(msg => 
@@ -74,30 +73,12 @@ export async function generateCode(
                 msg.content.includes('export const code =')
             )
 
-        // Only select a new icon if this is a new request (no previous code)
-        // or if the user is asking for something completely different
-        const shouldSelectNewIcon = !lastCodeResponse || 
-            requirement.toLowerCase().includes('new') ||
-            requirement.toLowerCase().includes('different') ||
-            requirement.toLowerCase().includes('create') ||
-            requirement.toLowerCase().includes('generate')
-
-        const icon = shouldSelectNewIcon ? 
-            await selectIcon(requirement) : 
-            undefined
-        
-        const iconUrl = icon ? `https://cdn.activepieces.com/pieces/ai/code/${icon}.svg` : undefined;
-
-        const formattedHistory = conversationHistory
-            .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
-            .join('\n')
-
         const systemPrompt = `
         You are a TypeScript code generation expert for automation flows.
         You are generating code for a single step in an automation flow, NOT a backend service.
         
         CONVERSATION HISTORY:
-        ${formattedHistory}
+        ${conversationHistory.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n')}
         
         ${lastCodeResponse ? `PREVIOUS CODE TO ENHANCE (unless user requests something completely different):
         ${lastCodeResponse.content}
@@ -181,7 +162,6 @@ export async function generateCode(
             conversationHistory,
             previousCode: lastCodeResponse?.content,
             generatedCode: llmResponse?.object?.code,
-            selectedIcon: iconUrl,
         })
 
         if (isNil(llmResponse?.object)) {
@@ -193,14 +173,13 @@ export async function generateCode(
             return acc
         }, {} as Record<string, string>) ?? {}
 
-        if (isNil(llmResponse?.object)) {
-            return defaultResponse
-        }
+
+        const icon = await selectIcon(requirement, conversationHistory)
 
         return {
             code: llmResponse.object.code,
             inputs: resultInputs,
-            icon: iconUrl,
+            icon,
             title: llmResponse.object.title ?? defaultResponse.title
         }
     }
