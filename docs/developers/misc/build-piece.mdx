@@ -1,0 +1,28 @@
+---
+title: 'Build Custom Pieces'
+icon: 'box'
+---
+
+You can use the CLI to build custom pieces for the platform. This process compiles the pieces and exports them as a `.tgz` packed archive.
+
+### How It Works
+
+The CLI scans the `packages/pieces/custom/` directory for the specified piece. It checks the **name** in the `package.json` file. If the piece is found, it builds and packages it into a `.tgz` archive.
+
+### Usage
+
+To build a piece, follow these steps:
+
+1. Ensure you have the CLI installed by cloning the repository.
+2. Run the following command, replacing `PIECE_NAME` with the name of the piece you want to build:
+
+```bash
+npm run build-piece -- --name PIECE_NAME
+```
+
+### Developer Workflow
+
+1. Developers create and modify the pieces offline.
+2. Increment the piece version in their corresponding `package.json`. For more information, refer to the [piece versioning](../../developers/piece-reference/piece-versioning) documentation.
+3. Open a pull request towards the main branch.
+4. Once the pull request is merged to the main branch, manually run the CLI or use a GitHub/GitLab Action to trigger the building process.

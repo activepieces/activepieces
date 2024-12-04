@@ -3,12 +3,16 @@ import { createActionCommand } from './lib/commands/create-action';
 import { createPieceCommand } from './lib/commands/create-piece';
 import { createTriggerCommand } from './lib/commands/create-trigger';
 import { syncPieceCommand } from './lib/commands/sync-pieces';
+import { publishPieceCommand } from './lib/commands/publish-piece';
+import { buildPieceCommand } from './lib/commands/build-piece';
 
 const pieceCommand = new Command('pieces')
   .description('Manage pieces');
 
 pieceCommand.addCommand(createPieceCommand);
-pieceCommand.addCommand(syncPieceCommand)
+pieceCommand.addCommand(syncPieceCommand);
+pieceCommand.addCommand(publishPieceCommand);
+pieceCommand.addCommand(buildPieceCommand);
 
 const actionCommand = new Command('actions')
   .description('Manage actions');

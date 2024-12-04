@@ -16,7 +16,8 @@
     "create-action": "npx ts-node packages/cli/src/index.ts actions create",
     "create-trigger": "npx ts-node packages/cli/src/index.ts triggers create",
     "sync-pieces": "npx ts-node packages/cli/src/index.ts pieces sync",
-    "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts",
+    "publish-piece": "npx ts-node packages/cli/src/index.ts pieces publish",
+    "build-piece": "npx ts-node packages/cli/src/index.ts pieces build",
     "pull-i18n": "crowdin pull --config crowdin.yml",
     "push-i18n": "crowdin upload sources",
     "i18n:extract": "i18next --config packages/react-ui/i18next-parser.config.js && jq 'to_entries | map({(.key): .key}) | add' packages/react-ui/public/locales/en/translation.json > packages/react-ui/public/locales/en/translation.tmp.json && mv packages/react-ui/public/locales/en/translation.tmp.json packages/react-ui/public/locales/en/translation.json"
@@ -194,6 +195,7 @@
     "marked": "4.3.0",
     "mime": "4.0.1",
     "mime-types": "2.1.35",
+    "mintlify": "4.0.288",
     "monaco-editor": "0.44.0",
     "monday-sdk-js": "0.5.2",
     "mustache": "4.2.0",
