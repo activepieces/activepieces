@@ -8,8 +8,8 @@ import { Button } from '../../../components/ui/button';
 import { PieceIcon } from '../../../features/pieces/components/piece-icon';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { useBuilderStateContext } from '../builder-hooks';
-import { MentionTreeNode } from './mentions/type';
 
+import { MentionTreeNode } from './mentions/type';
 
 const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
   const toggleIconSize = 15;

@@ -161,7 +161,7 @@ describe('Props resolver', () => {
     })
 
     test('flatten array path', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenArrayPath(trigger, \'users.name\')}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger, \'users.name\')}}', executionState })
         expect(resolvedInput).toEqual(['Alice', 'Bob'])
     })
 

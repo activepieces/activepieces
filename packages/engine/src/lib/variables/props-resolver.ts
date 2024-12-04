@@ -87,7 +87,7 @@ async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unk
     if (isConnection) {
         return handleConnection(params)
     }
-    return evalInScope(variableName, { ...currentState, flattenArrayPath })
+    return evalInScope(variableName, { ...currentState, flattenNestedKeys })
 }
 
 async function handleConnection(params: ResolveSingleTokenParams): Promise<unknown> {
@@ -104,7 +104,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection
     }
-    return evalInScope(pathAfterConnectionName, { connection, flattenArrayPath })
+    return evalInScope(pathAfterConnectionName, { connection, flattenNestedKeys })
 }
 
 function parsePathAfterConnectionName(variableName: string, connectionName: string): string | null {
@@ -155,16 +155,18 @@ async function evalInScope(js: string, contextAsScope: Record<string, unknown>):
     }
 }
 
-function flattenArrayPath(data: unknown, pathToMatch: string[]): unknown[] {
+function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
     if (isObject(data)) {
         for (const [key, value] of Object.entries(data)) {
             if (key === pathToMatch[0]) {
-                return flattenArrayPath(value, pathToMatch.slice(1))
+                return flattenNestedKeys(value, pathToMatch.slice(1))
             }
         }
-    } else if (Array.isArray(data)) {
-        return data.flatMap((d) => flattenArrayPath(d, pathToMatch))
-    } else if (pathToMatch.length === 0) {
+    }
+    else if (Array.isArray(data)) {
+        return data.flatMap((d) => flattenNestedKeys(d, pathToMatch))
+    }
+    else if (pathToMatch.length === 0) {
         return [data]
     }
     return []

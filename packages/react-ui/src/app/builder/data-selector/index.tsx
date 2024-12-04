@@ -1,23 +1,22 @@
 import { t } from 'i18next';
 import { SearchXIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { textMentionUtils } from '@/app/builder/piece-properties/text-input-with-mentions/text-input-utils';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import {
-  flowStructureUtil,
-  isNil,
-} from '@activepieces/shared';
+import { flowStructureUtil, isNil } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { BuilderState, useBuilderStateContext } from '../builder-hooks';
+
 import { DataSelectorNode } from './data-selector-node';
 import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
-import { MentionTreeNode } from './mentions/type';
 import { dataSelectorMentions } from './mentions';
+import { MentionTreeNode } from './mentions/type';
 
 const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
   state,
@@ -30,7 +29,9 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
     flowVersion.trigger,
     selectedStep,
   );
-  return pathToTargetStep.map((step) => dataSelectorMentions.traverseStep(step, state.sampleData, true));
+  return pathToTargetStep.map((step) =>
+    dataSelectorMentions.traverseStep(step, state.sampleData, true),
+  );
 };
 
 type DataSelectorProps = {

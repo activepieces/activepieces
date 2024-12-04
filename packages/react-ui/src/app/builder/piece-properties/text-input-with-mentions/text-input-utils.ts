@@ -1,6 +1,5 @@
 import { MentionNodeAttrs } from '@tiptap/extension-mention';
 import { JSONContent } from '@tiptap/react';
-import { t } from 'i18next';
 
 import { StepMetadata } from '@/features/pieces/lib/types';
 import {
@@ -9,10 +8,6 @@ import {
   assertNotNullOrUndefined,
   isNil,
 } from '@activepieces/shared';
-
-const removeIntroplationBrackets = (text: string) => {
-  return text.slice(2, text.length - 2).trim();
-};
 
 const removeQuotes = (text: string) => {
   if (
@@ -48,66 +43,13 @@ const isMentionNodeText = (item: string) => {
   const match = item.match(/^\{\{(.*)\}\}$/);
   if (match) {
     const content = match[1].trim();
-    return /^(step_\d+|trigger)/.test(content);
+    const { stepName } = parseStepAndNameFromMention(content);
+    return stepName !== null;
   }
   return false;
 };
-const isStepName = (stepName: string) => {
-  const pattern = /^(step_\d+|trigger)/;
-  return pattern.test(stepName);
-};
-
-type ParseMentionNodeFromText = {
-  path: string;
-  stepDisplayName: string;
-  stepLogoUrl: string;
-  stepDfsIndex: number;
-};
-function getLabelForMention({
-  stepDisplayName,
-  stepLogoUrl,
-  stepDfsIndex,
-  path,
-}: ParseMentionNodeFromText) {
-  const keys = keysWithinPath(removeIntroplationBrackets(path));
-  const isMissingStep = stepDfsIndex <= 0 && isStepName(keys[0].trim());
-  const displayTextPrefix = isMissingStep
-    ? `${t('(Missing)')} ${keys[0].trim()}`
-    : `${stepDfsIndex}. `;
-  const mentionText = [stepDisplayName, ...keys.slice(1)].join(' ');
-  return JSON.stringify({
-    logoUrl: isMissingStep
-      ? '/src/assets/img/custom/incomplete.png'
-      : stepLogoUrl,
-    displayText: `${displayTextPrefix} ${mentionText}`,
-    serverValue: path,
-  });
-}
-
-function parseMentionNodeFromText(request: ParseMentionNodeFromText) {
-  return {
-    type: TipTapNodeTypes.mention,
-    attrs: {
-      id: request.path,
-      label: getLabelForMention(request),
-    },
-  };
-}
 
 type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
-const getStepMetadataFromPath = (
-  path: string,
-  steps: (Action | Trigger)[],
-  stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
-) => {
-  const stepPath = removeIntroplationBrackets(path);
-  const stepName = textMentionUtils.keysWithinPath(stepPath)[0].trim();
-  const index = steps.findIndex((step) => step.name === stepName);
-  return {
-    dfsIndex: index,
-    stepMetadata: stepsMetadata[index],
-  };
-};
 
 function convertTextToTipTapJsonContent(
   userInputText: string,
@@ -153,22 +95,94 @@ function convertTextToTipTapJsonContent(
   );
 }
 
+function parseFlattenArrayPath(input: string): {
+  isValid: boolean;
+  stepName?: string;
+  arrayPath?: string[];
+} {
+  const regex = /^flattenNestedKeys\((\w+),\s*\[(.*?)\]\)$/;
+  const match = input.match(regex);
+
+  if (!match) {
+    return { isValid: false };
+  }
+
+  const stepName = match[1];
+  const arrayPath = match[2]
+    .split(',')
+    .map((item) => item.trim().replace(/['"]/g, ''));
+
+  return {
+    isValid: true,
+    stepName,
+    arrayPath,
+  };
+}
+
+const removeIntroplationBrackets = (text: string) => {
+  return text.slice(2, text.length - 2).trim();
+};
+
+function parseStepAndNameFromMention(mention: string) {
+  const mentionedJS = removeIntroplationBrackets(mention);
+  const { isValid, stepName, arrayPath } = parseFlattenArrayPath(mentionedJS);
+  if (isValid) {
+    return {
+      stepName,
+      path: arrayPath ?? [],
+    };
+  }
+  const keys = keysWithinPath(mentionedJS);
+  if (keys.length === 0) {
+    return {
+      stepName: null,
+      path: [],
+    };
+  }
+  return {
+    stepName: keys[0],
+    path: keys.slice(1),
+  };
+}
+
+function parseLabelFromMention(
+  mention: string,
+  steps: (Action | Trigger)[],
+  stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
+) {
+  const { stepName, path } = parseStepAndNameFromMention(mention);
+  const stepIdx = steps.findIndex((step) => step.name === stepName);
+  if (stepIdx < 0) {
+    return {
+      displayText: `(Missing) ${stepName}`,
+      serverValue: mention,
+      logoUrl: '/src/assets/img/custom/incomplete.png',
+    };
+  }
+  const stepMetadata = stepsMetadata[stepIdx];
+  return {
+    displayText: `${stepIdx + 1}. ${
+      stepMetadata?.stepDisplayName ?? ''
+    } ${path.join(' ')}`,
+    serverValue: mention,
+    logoUrl: stepMetadata?.logoUrl,
+  };
+}
+
 function createMentionNodeFromText(
   mention: string,
   steps: (Action | Trigger)[],
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
 ) {
-  const { stepMetadata, dfsIndex } = getStepMetadataFromPath(
-    mention,
-    steps,
-    stepsMetadata,
-  );
-  return parseMentionNodeFromText({
-    path: mention,
-    stepDisplayName: stepMetadata?.stepDisplayName ?? '',
-    stepLogoUrl: stepMetadata?.logoUrl ?? '',
-    stepDfsIndex: dfsIndex + 1,
-  });
+  return {
+    type: TipTapNodeTypes.mention,
+    attrs: {
+      id: mention,
+      label: JSON.stringify(
+        parseLabelFromMention(mention, steps, stepsMetadata),
+      ),
+    },
+  };
 }
 
 function convertTiptapJsonToText(nodes: JSONContent[]): string {
@@ -248,7 +262,6 @@ export const textMentionUtils = {
     return res;
   },
   generateMentionHtmlElement,
-  keysWithinPath,
   createMentionNodeFromText,
   inputThatUsesMentionClass,
 };
