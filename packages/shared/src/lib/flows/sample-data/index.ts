@@ -43,6 +43,7 @@ export const SampleDataSetting = Type.Object(
         sampleDataFileId: Type.Optional(Type.String()),
         lastTestDate: Type.Optional(Type.String()),
         customizedInputs: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+        schema: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
         /**
          * @deprecated This field is deprecated and will be removed in 2025.
          */

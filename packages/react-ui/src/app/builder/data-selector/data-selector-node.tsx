@@ -7,7 +7,8 @@ import {
 } from '../../../components/ui/collapsible';
 
 import { DataSelectorNodeContent } from './data-selector-node-content';
-import { MentionTreeNode } from './data-selector-utils';
+import { dataSelectorMentions } from './mentions';
+import { MentionTreeNode } from './mentions/type';
 import { TestStepSection } from './test-step-section';
 
 type DataSelectoNodeProps = {
@@ -31,11 +32,11 @@ const DataSelectorNode = ({
     }
   }, [searchTerm, depth]);
 
-  if (node.data.isTestStepNode) {
-    return (
-      <TestStepSection stepName={node.data.propertyPath}></TestStepSection>
-    );
+  const isTestStepNode = dataSelectorMentions.isTestStepNode(node);
+  if (isTestStepNode) {
+    return <TestStepSection stepName={node.data.stepName}></TestStepSection>;
   }
+
   return (
     <Collapsible className="w-full" open={expanded} onOpenChange={setExpanded}>
       <>
