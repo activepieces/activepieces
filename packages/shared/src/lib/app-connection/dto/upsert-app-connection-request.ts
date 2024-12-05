@@ -161,11 +161,11 @@ const GlobalConnectionExtras =  Type.Object({
 })
 export const UpsertGlobalConnectionRequestBody = 
     Type.Union([
-        Type.Composite([Type.Omit(UpsertSecretTextRequest,['projectId', 'externalId']) ,GlobalConnectionExtras]),
-        Type.Composite([Type.Omit(UpsertOAuth2Request,['projectId', 'externalId']) ,GlobalConnectionExtras]),
-        Type.Composite([Type.Omit(UpsertCloudOAuth2Request,['projectId', 'externalId']) ,GlobalConnectionExtras]),
-        Type.Composite([Type.Omit(UpsertPlatformOAuth2Request,['projectId', 'externalId']) ,GlobalConnectionExtras]),
-        Type.Composite([Type.Omit(UpsertBasicAuthRequest,['projectId', 'externalId']) ,GlobalConnectionExtras]),
-        Type.Composite([Type.Omit(UpsertCustomAuthRequest,['projectId', 'externalId']) ,GlobalConnectionExtras]),
+        Type.Composite([Type.Omit(UpsertSecretTextRequest, ['projectId', 'externalId']), GlobalConnectionExtras]),
+        Type.Composite([Type.Omit(UpsertOAuth2Request, ['projectId', 'externalId']), GlobalConnectionExtras]),
+        Type.Composite([Type.Omit(UpsertCloudOAuth2Request, ['projectId', 'externalId']), GlobalConnectionExtras]),
+        Type.Composite([Type.Omit(UpsertPlatformOAuth2Request, ['projectId', 'externalId']), GlobalConnectionExtras]),
+        Type.Composite([Type.Omit(UpsertBasicAuthRequest, ['projectId', 'externalId']), GlobalConnectionExtras]),
+        Type.Composite([Type.Omit(UpsertCustomAuthRequest, ['projectId', 'externalId']), GlobalConnectionExtras]),
     ])
 export type UpsertGlobalConnectionRequestBody = Static<typeof UpsertGlobalConnectionRequestBody>

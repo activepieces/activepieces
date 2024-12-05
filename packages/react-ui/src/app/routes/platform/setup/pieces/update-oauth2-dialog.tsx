@@ -31,7 +31,7 @@ import { isNil } from '@activepieces/shared';
 
 type ConfigurePieceOAuth2DialogProps = {
   pieceName: string;
-  onConfigurationDone: ()=>void;
+  onConfigurationDone: () => void;
 };
 
 const OAuth2FormValues = Type.Object({
@@ -47,7 +47,7 @@ type OAuth2FormValues = Static<typeof OAuth2FormValues>;
 export const ConfigurePieceOAuth2Dialog = forwardRef<
   HTMLButtonElement,
   ConfigurePieceOAuth2DialogProps
->(({ pieceName,onConfigurationDone }, ref) => {
+>(({ pieceName, onConfigurationDone }, ref) => {
   const [open, setOpen] = useState(false);
   const form = useForm<OAuth2FormValues>({
     resolver: typeboxResolver(OAuth2FormValues),
@@ -88,7 +88,6 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
       });
       onConfigurationDone();
       setOpen(false);
-      
     },
     onError: (error) => {
       console.error(error);
