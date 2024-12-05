@@ -20,14 +20,19 @@ import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { PieceScope } from '@activepieces/shared';
+import { ApEdition, ApFlagId, PieceScope } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../../components/ui/table-title';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { oauth2AppsHooks } from '@/features/connections/lib/oauth2-apps-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.managePiecesEnabled;
-
+  const {refetch:refetchPieces} = piecesHooks.usePieces({});
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const {refetch: refetchPiecesClientIdsMap} = oauth2AppsHooks.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
       () => [
@@ -124,7 +129,10 @@ const PlatformPiecesPage = () => {
               <div className="flex justify-end">
                 {row.original.auth &&
                   row.original.auth.type === PropertyType.OAUTH2 && (
-                    <ConfigurePieceOAuth2Dialog pieceName={row.original.name} />
+                    <ConfigurePieceOAuth2Dialog pieceName={row.original.name} onConfigurationDone={()=>{
+                      refetchPieces();
+                      refetchPiecesClientIdsMap();
+                    } } />
                   )}
                 <PieceActions pieceName={row.original.name} />
               </div>

@@ -31,6 +31,7 @@ import { isNil } from '@activepieces/shared';
 
 type ConfigurePieceOAuth2DialogProps = {
   pieceName: string;
+  onConfigurationDone: ()=>void;
 };
 
 const OAuth2FormValues = Type.Object({
@@ -46,7 +47,7 @@ type OAuth2FormValues = Static<typeof OAuth2FormValues>;
 export const ConfigurePieceOAuth2Dialog = forwardRef<
   HTMLButtonElement,
   ConfigurePieceOAuth2DialogProps
->(({ pieceName }, ref) => {
+>(({ pieceName,onConfigurationDone }, ref) => {
   const [open, setOpen] = useState(false);
   const form = useForm<OAuth2FormValues>({
     resolver: typeboxResolver(OAuth2FormValues),
@@ -85,7 +86,9 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
         description: t('OAuth2 Credentials Updated'),
         duration: 3000,
       });
+      onConfigurationDone();
       setOpen(false);
+      
     },
     onError: (error) => {
       console.error(error);
@@ -116,6 +119,7 @@ export const ConfigurePieceOAuth2Dialog = forwardRef<
                   setOpen(true);
                 } else {
                   deleteOAuth2App(oauth2App.id);
+                  onConfigurationDone();
                 }
                 e.preventDefault();
                 e.stopPropagation();

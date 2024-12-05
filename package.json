@@ -82,7 +82,7 @@
     "@segment/analytics-node": "2.1.0",
     "@sendgrid/mail": "8.0.0",
     "@sentry/node": "7.120.0",
-    "@sinclair/typebox": "0.33.18",
+    "@sinclair/typebox": "0.34.11",
     "@slack/web-api": "7.0.4",
     "@socket.io/redis-adapter": "8.2.1",
     "@supabase/supabase-js": "2.45.4",

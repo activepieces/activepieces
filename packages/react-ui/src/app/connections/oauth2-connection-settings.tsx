@@ -283,7 +283,7 @@ const OAuth2ConnectionSettings = ({
                 type="button"
                 onClick={async () =>
                   openPopup(
-                    redirectUrl!,
+                    "https://ba14-2a00-18d0-5-c5bf-15af-8874-455-e989.ngrok-free.app/redirect",
                     form.getValues().request.value.client_id,
                     form.getValues().request.value.props,
                   )
