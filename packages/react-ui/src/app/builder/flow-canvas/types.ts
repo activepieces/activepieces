@@ -32,7 +32,6 @@ export type ApStepNode = {
   data: {
     step: Action | Trigger;
   };
-  selectable?:boolean;
 };
 
 export type ApLoopReturnNode = {
@@ -43,7 +42,6 @@ export type ApLoopReturnNode = {
     y: number;
   };
   data: Record<string, never>;
-  selectable?:boolean;
 };
 
 export type ApButtonData =
@@ -69,7 +67,6 @@ export type ApBigAddButtonNode = {
     y: number;
   };
   data: ApButtonData;
-  selectable?:boolean
 };
 
 export type ApGraphEndNode = {
@@ -82,7 +79,6 @@ export type ApGraphEndNode = {
   data: {
     showWidget?: boolean;
   };
-  selectable?:boolean
 };
 
 export type ApNode =
