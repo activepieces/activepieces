@@ -197,7 +197,7 @@ export const googleSheetsCommon = {
         };
       }
       if (headers.length === 0) {
-        let columnSize = headers.length;
+        const columnSize = headers.length;
 
 
 
