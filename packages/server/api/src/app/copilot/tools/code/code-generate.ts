@@ -48,7 +48,6 @@ export const codeGeneratorTool = {
             })
             const selectedStep = request.selectedStepName ? flowStructureUtil.getStep(request.selectedStepName, flowVersion.version.trigger) : undefined
         
-
             const copilotResponse = await generateCode(request.prompt, request.context)
             
             if (!copilotResponse?.code) {
