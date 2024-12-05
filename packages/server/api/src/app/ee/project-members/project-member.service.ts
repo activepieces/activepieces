@@ -72,6 +72,7 @@ export const projectMemberService = {
         projectId: ProjectId,
         cursorRequest: Cursor | null,
         limit: number,
+        projectRoleId: string | undefined,
     ): Promise<SeekPage<ProjectMemberWithUser>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -86,6 +87,11 @@ export const projectMemberService = {
         const queryBuilder = repo()
             .createQueryBuilder('project_member')
             .where({ projectId })
+
+        if (projectRoleId) {
+            queryBuilder.andWhere({ projectRoleId })
+        }
+
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const enrichedData = await Promise.all(
             data.map(async (member) => {

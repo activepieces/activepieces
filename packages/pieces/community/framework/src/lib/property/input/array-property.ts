@@ -7,6 +7,7 @@ import { MultiSelectDropdownProperty } from "./dropdown/dropdown-prop";
 import { CheckboxProperty } from "./checkbox-property";
 import { NumberProperty } from "./number-property";
 import { FileProperty } from "./file-property";
+import { JsonProperty } from './json-property';
 
 export const ArraySubProps = Type.Record(Type.String(), Type.Union([
     ShortTextProperty,
@@ -37,6 +38,7 @@ export type ArraySubProps<R extends boolean> = Record<
     | CheckboxProperty<R>
     | NumberProperty<R>
     | FileProperty<R>
+    | JsonProperty<R>
 >;
 
 export type ArrayProperty<R extends boolean> = BasePropertySchema &

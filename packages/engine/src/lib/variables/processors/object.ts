@@ -8,7 +8,8 @@ export const objectProcessor: ProcessorFn = (_property, value) => {
     if (typeof value === 'string') {
         try {
             return JSON.parse(value)
-        } catch (e) {
+        }
+        catch (e) {
             return undefined
         }
     }

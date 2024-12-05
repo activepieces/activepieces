@@ -63,7 +63,7 @@ export function ConfirmationDeleteDialog({
               setIsOpen(false);
             }}
           >
-            {t('Close')}
+            {t('Cancel')}
           </Button>
           <Button
             loading={isPending}

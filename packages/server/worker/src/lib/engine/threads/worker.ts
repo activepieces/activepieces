@@ -101,10 +101,17 @@ export class EngineWorker {
         }
         finally {
             if (environment === ApEnvironment.DEVELOPMENT) {
-                logger.trace({
-                    workerIndex,
-                }, 'Removing worker in development mode to avoid caching issues')
-                rejectedPromiseHandler(worker.terminate())
+                try {
+                    logger.trace({
+                        workerIndex,
+                    }, 'Removing worker in development mode to avoid caching issues')
+                    await worker.terminate()
+                }
+                catch (e) {
+                    logger.error({
+                        error: e,
+                    }, 'Error terminating worker')
+                }
                 this.workers[workerIndex] = new Worker(this.enginePath, this.engineOptions)
             }
             logger.debug({

@@ -139,7 +139,7 @@ const FlowsPage = () => {
     staleTime: 0,
     queryFn: () => {
       const name = searchParams.get('name');
-      const status = searchParams.get('status');
+      const status = searchParams.getAll('status') as FlowStatus[];
       const cursor = searchParams.get('cursor');
       const limit = searchParams.get('limit')
         ? parseInt(searchParams.get('limit')!)
@@ -151,9 +151,7 @@ const FlowsPage = () => {
         cursor: cursor ?? undefined,
         limit,
         name: name ?? undefined,
-        status: status
-          ? status.split(',').map((s) => s as FlowStatus)
-          : undefined,
+        status,
         folderId,
       });
     },

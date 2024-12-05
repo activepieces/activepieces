@@ -37,7 +37,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
                 projectId: req.principal.projectId,
                 userId: req.principal.id,
             })
-            if (platformRole?.name === DefaultProjectRole.ADMIN) {
+            if (platformRole?.name !== DefaultProjectRole.ADMIN) {
                 throw new ActivepiecesError({
                     code: ErrorCode.AUTHORIZATION,
                     params: {

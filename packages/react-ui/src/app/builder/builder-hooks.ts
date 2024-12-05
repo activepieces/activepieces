@@ -7,6 +7,7 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
   FlowOperationRequest,
+  FlowOperationType,
   FlowRun,
   FlowVersion,
   FlowVersionState,
@@ -19,6 +20,7 @@ import {
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
+import { AskAiButtonOperations } from '../../features/pieces/lib/types';
 import { useAuthorization } from '../../hooks/authorization-hooks';
 
 const flowUpdatesQueue = new PromiseQueue();
@@ -62,7 +64,8 @@ export type BuilderState = {
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
   saving: boolean;
-  refreshPieceFormSettings: boolean;
+  /** change this value to trigger the step form to set its values from the step */
+  refreshStepFormSettingsToggle: boolean;
   selectedBranchIndex: number | null;
   refreshSettings: () => void;
   setSelectedBranchIndex: (index: number | null) => void;
@@ -105,6 +108,8 @@ export type BuilderState = {
       operation: FlowOperationRequest,
     ) => void,
   ) => void;
+  askAiButtonProps: AskAiButtonOperations | null;
+  setAskAiButtonProps: (props: AskAiButtonOperations | null) => void;
 };
 
 export type BuilderInitialState = Pick<
@@ -167,7 +172,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
-      refreshPieceFormSettings: false,
+      refreshStepFormSettingsToggle: false,
 
       removeStepSelection: () =>
         set({
@@ -200,6 +205,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       },
       selectStepByName: (stepName: string) => {
         set((state) => {
+          if (stepName === state.selectedStep) {
+            return state;
+          }
           return {
             selectedStep: stepName,
             rightSidebar:
@@ -211,6 +219,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               ? LeftSideBarType.RUN_DETAILS
               : LeftSideBarType.NONE,
             selectedBranchIndex: null,
+            askAiButtonProps: null,
           };
         });
       },
@@ -244,11 +253,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           selectedBranchIndex: null,
         }),
       exitStepSettings: () =>
-        set({
+        set((state) => ({
           rightSidebar: RightSideBarType.NONE,
+          leftSidebar:
+            state.leftSidebar === LeftSideBarType.AI_COPILOT
+              ? LeftSideBarType.NONE
+              : state.leftSidebar,
           selectedStep: null,
           selectedBranchIndex: null,
-        }),
+          askAiButtonProps: null,
+        })),
       exitPieceSelector: () =>
         set({
           rightSidebar: RightSideBarType.NONE,
@@ -256,7 +270,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         }),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
-      setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
+      setLeftSidebar: (leftSidebar: LeftSideBarType) =>
+        set({ leftSidebar, askAiButtonProps: null }),
       setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
         set((state) => {
           return {
@@ -348,8 +363,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       },
       refreshSettings: () =>
         set((state) => ({
-          refreshPieceFormSettings: !state.refreshPieceFormSettings,
+          refreshStepFormSettingsToggle: !state.refreshStepFormSettingsToggle,
         })),
+
       selectedBranchIndex: null,
       operationListeners: [],
       addOperationListener: (
@@ -372,6 +388,29 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             (l) => l !== listener,
           ),
         })),
+      askAiButtonProps: null,
+      setAskAiButtonProps: (props) => {
+        return set((state) => ({
+          askAiButtonProps: props,
+          leftSidebar: props
+            ? LeftSideBarType.AI_COPILOT
+            : state.leftSidebar === LeftSideBarType.AI_COPILOT
+            ? LeftSideBarType.NONE
+            : state.leftSidebar,
+          rightSidebar:
+            props && props.type === FlowOperationType.UPDATE_ACTION
+              ? RightSideBarType.PIECE_SETTINGS
+              : props
+              ? RightSideBarType.NONE
+              : state.rightSidebar,
+          selectedStep:
+            props && props.type === FlowOperationType.UPDATE_ACTION
+              ? props.stepName
+              : props
+              ? null
+              : state.selectedStep,
+        }));
+      },
     };
   });
 

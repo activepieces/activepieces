@@ -32,6 +32,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
             request.principal.projectId,
             request.query.cursor ?? null,
             request.query.limit ?? DEFAULT_LIMIT_SIZE,
+            request.query.projectRoleId ?? undefined,
         )
     })
 
@@ -91,7 +92,7 @@ const ListProjectMembersRequestQueryOptions = {
         tags: ['project-members'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListProjectMembersRequestQuery,
-        responnse: {
+        response: {
             [StatusCodes.OK]: SeekPage(ProjectMemberWithUser),
         },
     },

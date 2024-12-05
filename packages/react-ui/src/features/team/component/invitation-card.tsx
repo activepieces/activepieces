@@ -37,7 +37,9 @@ export function InvitationCard({ invitation }: { invitation: UserInvitation }) {
           </AvatarFallback>
         </Avatar>
         <div>
-          <p className="text-sm font-medium leading-none">{invitation.email}</p>
+          <p className="text-sm font-medium leading-none">
+            {invitation.email} ({invitation.projectRole?.name})
+          </p>
         </div>
       </div>
       <div className="flex gap-2">

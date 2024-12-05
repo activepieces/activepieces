@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.37.2",
+  "version": "0.37.3",
   "rcVersion": "0.37.0-rc.1",
   "scripts": {
     "prepare": "husky install",
@@ -25,6 +25,7 @@
   "dependencies": {
     "@activepieces/import-fresh-webpack": "3.3.0",
     "@actual-app/api": "6.8.1",
+    "@ai-sdk/openai": "0.0.70",
     "@anthropic-ai/sdk": "0.27.3",
     "@authenio/samlify-node-xmllint": "2.0.0",
     "@aws-sdk/client-s3": "3.637.0",
@@ -102,6 +103,7 @@
     "@uiw/codemirror-theme-github": "4.23.0",
     "@uiw/react-codemirror": "4.23.0",
     "@xyflow/react": "12.0.3",
+    "ai": "3.4.27",
     "airtable": "0.11.6",
     "ajv": "8.12.0",
     "amqplib": "0.10.4",
@@ -110,6 +112,7 @@
     "aws-sdk": "2.1642.0",
     "axios": "1.7.8",
     "axios-retry": "4.4.1",
+    "basic-ftp": "5.0.5",
     "bcrypt": "5.1.1",
     "buffer": "6.0.3",
     "bullmq": "5.28.1",

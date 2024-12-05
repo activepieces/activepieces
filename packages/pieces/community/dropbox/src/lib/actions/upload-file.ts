@@ -48,7 +48,8 @@ export const dropboxUploadFile = createAction({
 
     const params = {
       autorename: context.propsValue.autorename,
-      path: context.propsValue.path,
+      // For information about Dropbox JSON encoding, see https://www.dropbox.com/developers/reference/json-encoding
+      path: context.propsValue.path.replace(/[\u007f-\uffff]/g, (c) => '\\u'+('000'+c.charCodeAt(0).toString(16)).slice(-4)),
       mode: 'add',
       mute: context.propsValue.mute,
       strict_conflict: context.propsValue.strict_conflict,
