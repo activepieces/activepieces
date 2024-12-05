@@ -135,6 +135,7 @@ export const piecesHooks = {
     return {
       pieces: query.data,
       isLoading: query.isLoading,
+      refetch: query.refetch,
     };
   },
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
