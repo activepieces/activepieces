@@ -1,6 +1,6 @@
 import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { sftpAuth, getClient, endClient } from '../..';
+import { sftpAuth, getClient, getProtocolBackwardCompatibility, endClient } from '../..';
 import dayjs from 'dayjs';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FileInfo as FTPFileInfo } from 'basic-ftp';
@@ -16,11 +16,12 @@ const polling: Polling<PiecePropValueSchema<typeof sftpAuth>, { path: string; ig
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     let client: Client | FTPClient | null = null;
     try {
+      const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(auth.protocol);
       client = await getClient(auth);
       const files = await client.list(propsValue.path);
 
       const filteredFiles = files.filter(file => {
-        const modTime = getModifyTime(file, auth.protocol);
+        const modTime = getModifyTime(file, protocolBackwardCompatibility);
         return dayjs(modTime).valueOf() > lastFetchEpochMS;
       });
 
@@ -29,7 +30,7 @@ const polling: Polling<PiecePropValueSchema<typeof sftpAuth>, { path: string; ig
         filteredFiles;
 
       return finalFiles.map(file => {
-        const modTime = getModifyTime(file, auth.protocol);
+        const modTime = getModifyTime(file, protocolBackwardCompatibility);
 
         return {
           data: {

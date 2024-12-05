@@ -2,7 +2,7 @@ import { endClient, sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient } from 'basic-ftp';
-import { getClient } from '../..';
+import { getClient, getProtocolBackwardCompatibility } from '../..';
 import { MarkdownVariant } from '@activepieces/shared';
 
 async function renameFTP(client: FTPClient, oldPath: string, newPath: string) {
@@ -41,9 +41,9 @@ export const renameFileOrFolderAction = createAction({
     const client = await getClient(context.auth);
     const oldPath = context.propsValue.oldPath;
     const newPath = context.propsValue.newPath;
-
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
     try {
-      switch (context.auth.protocol) {
+      switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
           await renameFTP(client as FTPClient, oldPath, newPath);

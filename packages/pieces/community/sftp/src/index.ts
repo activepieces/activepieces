@@ -3,7 +3,7 @@ import {
   Property,
   createPiece,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { isNil, PieceCategory } from '@activepieces/shared';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient } from 'basic-ftp';
 import { createFile } from './lib/actions/create-file';
@@ -16,10 +16,16 @@ import { listFolderContentsAction } from './lib/actions/list-files';
 import { createFolderAction } from './lib/actions/create-folder';
 import { renameFileOrFolderAction } from './lib/actions/rename-file-or-folder';
 
-export async function getClient<T extends Client | FTPClient>(auth: { protocol: string, host: string, port: number, username: string, password: string }) {
+export async function getProtocolBackwardCompatibility(protocol: string | undefined) {
+  if (isNil(protocol)) {
+    return 'sftp';
+  }
+  return protocol;
+}
+export async function getClient<T extends Client | FTPClient>(auth: { protocol: string | undefined, host: string, port: number, username: string, password: string }) {
   const { protocol, host, port, username, password } = auth;
-
-  if (protocol === 'sftp') {
+  const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(protocol);
+  if (protocolBackwardCompatibility === 'sftp') {
     const sftp = new Client();
     await sftp.connect({
       host,
@@ -36,14 +42,15 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
       port,
       user: username,
       password,
-      secure: protocol === 'ftps',
+      secure: protocolBackwardCompatibility === 'ftps',
     });
     return ftpClient as T;
   }
 }
 
-export async function endClient(client: Client | FTPClient, protocol: string) {
-  if (protocol === 'sftp') {
+export async function endClient(client: Client | FTPClient, protocol: string | undefined) {
+  const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(protocol);
+  if (protocolBackwardCompatibility === 'sftp') {
     await (client as Client).end();
   } else {
     (client as FTPClient).close();
@@ -55,7 +62,7 @@ export const sftpAuth = PieceAuth.CustomAuth({
     protocol: Property.StaticDropdown({
       displayName: 'Protocol',
       description: 'The protocol to use',
-      required: true,
+      required: false,
       options: {
         options: [
           { value: 'sftp', label: 'SFTP' },
@@ -88,9 +95,9 @@ export const sftpAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     let client: Client | FTPClient | null = null;
-
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(auth.protocol);
     try {
-      switch (auth.protocol) {
+      switch (protocolBackwardCompatibility) {
         case 'sftp': {
           client = await getClient<Client>(auth);
           break;

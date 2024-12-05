@@ -1,4 +1,4 @@
-import { endClient, getClient, sftpAuth } from '../../index';
+  import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient } from 'basic-ftp';
@@ -25,9 +25,9 @@ export const createFolderAction = createAction({
     const client = await getClient(context.auth);
     const directoryPath = context.propsValue.folderPath;
     const recursive = context.propsValue.recursive ?? false;
-
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
     try {
-      switch (context.auth.protocol) {
+      switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
           await (client as FTPClient).ensureDir(directoryPath);
