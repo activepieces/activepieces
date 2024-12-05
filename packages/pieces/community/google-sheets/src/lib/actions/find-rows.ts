@@ -3,7 +3,6 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import {
-  getAllGoogleSheetRows,
   googleSheetsCommon,
   labelToColumn,
 } from '../common/common';
@@ -59,16 +58,12 @@ export const findRowsAction = createAction({
     const startingRow = propsValue.startingRow ?? 1;
     const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
 
-    const sheetName = await googleSheetsCommon.findSheetName(
-      auth.access_token,
-      spreadSheetId,
-      sheetId
-    );
-
-    let rows = await getAllGoogleSheetRows({
+    let rows = await googleSheetsCommon.getGoogleSheetRows({
+      spreadsheetId: spreadSheetId,
       accessToken: auth.access_token,
-      sheetName: `${sheetName}!A${startingRow}:ZZZ`,
-      spreadSheetId: spreadSheetId,
+      sheetId: sheetId,
+      rowIndex_s: startingRow,
+      rowIndex_e: undefined,
     });
 
     // modify row number based on starting row number
@@ -85,7 +80,7 @@ export const findRowsAction = createAction({
 
     const matchingRows: any[] = [];
     const columnName = propsValue.columnName ? propsValue.columnName : 'A';
-    const columnNumber = labelToColumn(columnName);
+    const columnNumber: number = labelToColumn(columnName);
     const searchValue = propsValue.searchValue ?? '';
 
     let matchedRowCount = 0;
