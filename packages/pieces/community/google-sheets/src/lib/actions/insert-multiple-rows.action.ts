@@ -101,15 +101,17 @@ export const insertMultipleRowsAction = createAction({
 						});
 						break;
 					case 'column_names': {
-						const headers = await googleSheetsCommon.getHeaderRow({
+						const headers = await googleSheetsCommon.getGoogleSheetRows({
 							spreadsheetId: spreadsheetId,
 							accessToken: getAccessTokenOrThrow(authentication),
 							sheetId: sheetId,
+							rowIndex_s: 1,
+							rowIndex_e: 1,
 						});
-						const firstRow = headers ?? [];
+						const firstRow = headers[0].values ?? {};
 
 						//check for empty headers
-						if (firstRow.length === 0) {
+						if (Object.keys(firstRow).length === 0) {
 							fields['markdown'] = Property.MarkDown({
 								value: `We couldn't find any headers in the selected spreadsheet or worksheet. Please add headers to the sheet and refresh the page to reflect the columns.`,
 								variant: MarkdownVariant.INFO,
@@ -118,6 +120,7 @@ export const insertMultipleRowsAction = createAction({
 							const columns: {
 								[key: string]: any;
 							} = {};
+
 							for (const key in firstRow) {
 								columns[key] = Property.ShortText({
 									displayName: firstRow[key].toString(),
@@ -172,15 +175,17 @@ export const insertMultipleRowsAction = createAction({
 				const fields: DynamicPropsValue = {};
 
 				if (checkForExisting) {
-					const rawHeaders = await googleSheetsCommon.getHeaderRow({
+					const headers = await googleSheetsCommon.getGoogleSheetRows({
 						spreadsheetId: spreadsheetId,
 						accessToken: getAccessTokenOrThrow(authentication),
 						sheetId: sheetId,
+						rowIndex_s: 1,
+						rowIndex_e: 1,
 					});
-					const firstRow = rawHeaders ?? [];
+					const firstRow = headers[0].values ?? {};
 
 					//check for empty headers
-					if (firstRow.length === 0) {
+					if (Object.keys(firstRow).length === 0) {
 						fields['markdown'] = Property.MarkDown({
 							value: `No headers were found in the selected spreadsheet or worksheet. Please ensure that headers are added to the sheet and refresh the page to display the available columns.`,
 							variant: MarkdownVariant.INFO,
@@ -232,24 +237,34 @@ export const insertMultipleRowsAction = createAction({
 		const existingGridRowCount = sheetGridRange.rowCount ?? 0;
 		const existingGridColumnCount = sheetGridRange.columnCount ?? 26;
 
-		const existingSheetValues = await googleSheetsCommon.getGoogleSheetRows({
+		const rowHeaders = await googleSheetsCommon.getGoogleSheetRows({
 			spreadsheetId: spreadSheetId,
 			accessToken: context.auth.access_token,
 			sheetId: sheetId,
 			rowIndex_s: 1,
-			rowIndex_e: undefined,
+			rowIndex_e: 1,
 		});
-		const sheetHeaders = existingSheetValues?.[0]?.values ?? {};
+
+		const sheetHeaders = rowHeaders[0]?.values ?? {};
+
 
 		const formattedValues = formatInputRows(valuesInputType, rowValuesInput, sheetHeaders);
 		const valueInputOption = asString ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED;
+
 
 		const authClient = new OAuth2Client();
 		authClient.setCredentials(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
 		if (overwriteValues) {
-			return handleOverwrite(sheets, spreadSheetId, sheetName, formattedValues, existingGridRowCount, existingGridColumnCount, valueInputOption);
+			const existingSheetValues = await googleSheetsCommon.getGoogleSheetRows({
+				spreadsheetId: spreadSheetId,
+				accessToken: context.auth.access_token,
+				sheetId: sheetId,
+				rowIndex_s: 1,
+				rowIndex_e: undefined,
+			});
+			return handleOverwrite(sheets, spreadSheetId, sheetName, formattedValues,existingSheetValues, existingGridRowCount, existingGridColumnCount, valueInputOption);
 		}
 
 		if (checkForDuplicateValues) {
@@ -281,11 +296,12 @@ async function handleOverwrite(
 	spreadSheetId: string,
 	sheetName: string,
 	formattedValues: any[],
+	existingSheetValues: any[],
 	existingGridRowCount: number,
 	existingGridColumnCount: number,
 	valueInputOption: ValueInputOption
 ) {
-	const existingRowCount = existingGridRowCount;
+	const existingRowCount = existingSheetValues.length;
 	const inputRowCount = formattedValues.length;
 
 	const updateResponse = await sheets.spreadsheets.values.batchUpdate({
@@ -301,8 +317,8 @@ async function handleOverwrite(
 	});
 
 	// Determine if clearing rows is necessary and within grid size
-	const clearStartRow = inputRowCount + 2; // Start clearing after the last input row
-	const clearEndRow = Math.max(clearStartRow, existingRowCount);
+	const clearStartRow = inputRowCount + 2; // Start clearing after the last input row 
+	const clearEndRow = Math.max(clearStartRow, existingRowCount); 
 
 	if (clearStartRow <= existingGridRowCount) {
 		const boundedClearEndRow = Math.min(clearEndRow, existingGridRowCount);

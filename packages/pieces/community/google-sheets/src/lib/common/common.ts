@@ -196,7 +196,7 @@ export const googleSheetsCommon = {
           disabled: false,
         };
       }
-      if (headers.length > 0) {
+      if (headers.length === 0) {
         let columnSize = headers.length;
 
 
@@ -290,7 +290,7 @@ async function getGoogleSheetRows({
   sheetId,
   rowIndex_s,
   rowIndex_e,
-}: GetGoogleSheetRowsProps): Promise<{ row: number; values: { [x: string]: string[] }[] }[]> {
+}: GetGoogleSheetRowsProps): Promise<{ row: number; values: { [x: string]: string } }[]> {
   // Define the API endpoint and headers
   // Send the API request
   const sheetName = await findSheetName(accessToken, spreadsheetId, sheetId);
@@ -299,13 +299,12 @@ async function getGoogleSheetRows({
   }
 
   let range = '';
-  if (rowIndex_s !== undefined && rowIndex_e !== undefined) {
-    range = `!A${rowIndex_s}:ZZZ${rowIndex_e}`;
-  }
   if (rowIndex_s !== undefined) {
     range = `!A${rowIndex_s}:ZZZ`;
   }
-
+  if (rowIndex_s !== undefined && rowIndex_e !== undefined) {
+    range = `!A${rowIndex_s}:ZZZ${rowIndex_e}`;
+  }
   const response = await httpClient.sendRequest<{ values: [string[]][] }>({
       method: HttpMethod.GET,
       url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${sheetName}${range}`,

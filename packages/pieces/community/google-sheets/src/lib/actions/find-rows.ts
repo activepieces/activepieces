@@ -80,13 +80,13 @@ export const findRowsAction = createAction({
 
     const matchingRows: any[] = [];
     const columnName = propsValue.columnName ? propsValue.columnName : 'A';
-    const columnNumber: number = labelToColumn(columnName);
+    const columnNumber:number = labelToColumn(columnName);
     const searchValue = propsValue.searchValue ?? '';
 
     let matchedRowCount = 0;
 
     for (let i = 0; i < values.length; i++) {
-      const row = values[i];
+      const row:Record<string,any> = values[i];
 
       if (matchedRowCount === numberOfRowsToReturn) break;
 
