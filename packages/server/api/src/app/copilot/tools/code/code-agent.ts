@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
@@ -61,10 +61,10 @@ export async function generateCode(
             return defaultResponse
         }
 
-        console.debug('Processing code generation request:', {
+        logger.debug({
             requirement,
             contextMessages: conversationHistory.length,
-        })
+        }, '[generateCode] Processing code generation request')
 
         const lastCodeResponse = conversationHistory
             .reverse()
@@ -157,12 +157,13 @@ export async function generateCode(
             temperature: 0,
         })
 
-        console.debug('Code generation response:', {
+        logger.debug({
             requirement,
             conversationHistory,
             previousCode: lastCodeResponse?.content,
             generatedCode: llmResponse?.object?.code,
-        })
+        }, '[generateCode] Code generation response')
+
 
         if (isNil(llmResponse?.object)) {
             return defaultResponse
@@ -179,13 +180,12 @@ export async function generateCode(
         return {
             code: llmResponse.object.code,
             inputs: resultInputs,
-            icon,
+            icon: icon ?? undefined,
             title: llmResponse.object.title ?? defaultResponse.title
         }
     }
     catch (error) {
         exceptionHandler.handle(error)
-        console.error('Code generation failed:', error)
         return defaultResponse
     }
 }
