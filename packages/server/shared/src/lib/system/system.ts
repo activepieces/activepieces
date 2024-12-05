@@ -79,7 +79,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SharedSystemProp.MAX_FILE_SIZE_MB]: '4',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
-    [SharedSystemProp.SANDBOX_MEMORY_LIMIT]: '2097152',
+    [SharedSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [SharedSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
     [SharedSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
