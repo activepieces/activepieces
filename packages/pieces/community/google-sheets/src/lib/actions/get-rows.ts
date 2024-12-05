@@ -7,8 +7,6 @@ import {
 } from '@activepieces/pieces-framework';
 import { googleSheetsAuth } from '../..';
 import {
-  getAllGoogleSheetRows,
-  getGoogleSheetRows,
   googleSheetsCommon,
 } from '../common/common';
 import { isNil } from '@activepieces/shared';
@@ -68,19 +66,21 @@ async function getRows(
 
   if (testing == false) await store.put(memKey, endRow, StoreScope.FLOW);
 
-  const row = await getGoogleSheetRows({
+  const row = await googleSheetsCommon.getGoogleSheetRows({
     accessToken: auth.access_token,
-    sheetName: sheetName,
-    spreadSheetId: spreadsheetId,
+    sheetId: sheetId,
+    spreadsheetId: spreadsheetId,
     rowIndex_s: startingRow,
     rowIndex_e: endRow - 1,
   });
 
   if (row.length == 0) {
-    const allRows = await getAllGoogleSheetRows({
+    const allRows = await googleSheetsCommon.getGoogleSheetRows({
+      spreadsheetId: spreadsheetId,
       accessToken: auth.access_token,
-      sheetName: sheetName,
-      spreadSheetId: spreadsheetId,
+      sheetId: sheetId,
+      rowIndex_s: undefined,
+      rowIndex_e: undefined,
     });
     const lastRow = allRows.length + 1;
     if (testing == false) await store.put(memKey, lastRow, StoreScope.FLOW);
