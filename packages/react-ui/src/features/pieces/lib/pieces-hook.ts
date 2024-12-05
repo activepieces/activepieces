@@ -233,7 +233,8 @@ function stepMetadataQueryBuilder(step: Step) {
     step.type === ActionType.PIECE || step.type === TriggerType.PIECE;
   const pieceName = isPieceStep ? step.settings.pieceName : undefined;
   const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
-  const customLogoUrl = 'customLogoUrl' in step ? step.customLogoUrl : undefined;
+  const customLogoUrl =
+    'customLogoUrl' in step ? step.customLogoUrl : undefined;
   return {
     queryKey: ['piece', step.type, pieceName, pieceVersion, customLogoUrl],
     queryFn: () => piecesApi.getMetadata(step),

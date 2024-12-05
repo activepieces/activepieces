@@ -219,7 +219,7 @@ export const CopilotSidebar = () => {
                   input: message.content.inputs,
                   errorHandlingOptions:
                     step.type === ActionType.CODE ||
-                      step.type === ActionType.PIECE
+                    step.type === ActionType.PIECE
                       ? step.settings.errorHandlingOptions
                       : codeAction.settings.errorHandlingOptions,
                 },

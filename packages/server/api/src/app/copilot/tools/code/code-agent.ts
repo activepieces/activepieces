@@ -48,7 +48,7 @@ const defaultResponse: CodeAgentResponse = {
     code: '',
     inputs: {},
     icon: undefined,
-    title: 'Custom Code'
+    title: 'Custom Code',
 }
 
 export async function generateCode(
@@ -70,7 +70,7 @@ export async function generateCode(
             .reverse()
             .find(msg => 
                 msg.role === 'assistant' && 
-                msg.content.includes('export const code =')
+                msg.content.includes('export const code ='),
             )
 
         const systemPrompt = `
@@ -181,7 +181,7 @@ export async function generateCode(
             code: llmResponse.object.code,
             inputs: resultInputs,
             icon: icon ?? undefined,
-            title: llmResponse.object.title ?? defaultResponse.title
+            title: llmResponse.object.title ?? defaultResponse.title,
         }
     }
     catch (error) {

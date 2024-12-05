@@ -95,7 +95,8 @@ export const piecesApi = {
     };
   },
   async getMetadata(step: Action | Trigger): Promise<StepMetadata> {
-    const customLogoUrl = 'customLogoUrl' in step ? step.customLogoUrl : undefined;
+    const customLogoUrl =
+      'customLogoUrl' in step ? step.customLogoUrl : undefined;
     switch (step.type) {
       case ActionType.ROUTER:
       case ActionType.LOOP_ON_ITEMS:
@@ -104,7 +105,7 @@ export const piecesApi = {
         return {
           ...CORE_STEP_METADATA[step.type],
           ...spreadIfDefined('logoUrl', customLogoUrl),
-        }
+        };
       case ActionType.PIECE:
       case TriggerType.PIECE: {
         const { pieceName, pieceVersion } = step.settings;
@@ -119,7 +120,7 @@ export const piecesApi = {
         return {
           ...metadata,
           ...spreadIfDefined('logoUrl', customLogoUrl),
-        }
+        };
       }
     }
   },
