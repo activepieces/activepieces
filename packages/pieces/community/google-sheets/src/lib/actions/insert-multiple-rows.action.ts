@@ -233,9 +233,6 @@ export const insertMultipleRowsAction = createAction({
 
 		const duplicateColumn = context.propsValue.check_for_duplicate_column?.['column_name'];
 		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
-		const sheetGridRange = await getWorkSheetGridSize(context.auth, spreadSheetId, sheetId);
-		const existingGridRowCount = sheetGridRange.rowCount ?? 0;
-		const existingGridColumnCount = sheetGridRange.columnCount ?? 26;
 
 		const rowHeaders = await googleSheetsCommon.getGoogleSheetRows({
 			spreadsheetId: spreadSheetId,
@@ -247,28 +244,20 @@ export const insertMultipleRowsAction = createAction({
 
 		const sheetHeaders = rowHeaders[0]?.values ?? {};
 
-
 		const formattedValues = formatInputRows(valuesInputType, rowValuesInput, sheetHeaders);
 		const valueInputOption = asString ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED;
-
 
 		const authClient = new OAuth2Client();
 		authClient.setCredentials(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
 		if (overwriteValues) {
-			const existingSheetValues = await googleSheetsCommon.getGoogleSheetRows({
-				spreadsheetId: spreadSheetId,
-				accessToken: context.auth.access_token,
-				sheetId: sheetId,
-				rowIndex_s: 1,
-				rowIndex_e: undefined,
-			});
-			return handleOverwrite(sheets, spreadSheetId, sheetName, formattedValues,existingSheetValues, existingGridRowCount, existingGridColumnCount, valueInputOption);
+			const sheetGridRange = await getWorkSheetGridSize(context.auth, spreadSheetId, sheetId);
+			const existingGridRowCount = sheetGridRange.rowCount ?? 0;
+			return handleOverwrite(sheets, spreadSheetId, sheetName, formattedValues, existingGridRowCount, valueInputOption);
 		}
 
 		if (checkForDuplicateValues) {
-
 			const existingSheetValues = await googleSheetsCommon.getGoogleSheetRows({
 				spreadsheetId: spreadSheetId,
 				accessToken: context.auth.access_token,
@@ -296,12 +285,10 @@ async function handleOverwrite(
 	spreadSheetId: string,
 	sheetName: string,
 	formattedValues: any[],
-	existingSheetValues: any[],
 	existingGridRowCount: number,
-	existingGridColumnCount: number,
 	valueInputOption: ValueInputOption
 ) {
-	const existingRowCount = existingSheetValues.length;
+	const existingRowCount = existingGridRowCount;
 	const inputRowCount = formattedValues.length;
 
 	const updateResponse = await sheets.spreadsheets.values.batchUpdate({
