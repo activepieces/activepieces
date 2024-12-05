@@ -2,6 +2,8 @@ import { createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { pipedriveCommon } from '../common';
 import { pipedriveAuth } from '../..';
+import { httpClient, HttpMethod,AuthenticationType } from '@activepieces/pieces-common';
+import { GetDealResponse, ListDealsResponse } from '../common/types';
 
 export const newDeal = createTrigger({
   auth: pipedriveAuth,
@@ -34,9 +36,33 @@ export const newDeal = createTrigger({
       );
     }
   },
+  async test(context) {
+    const response = await httpClient.sendRequest<ListDealsResponse>({
+			method: HttpMethod.GET,
+			url: `${context.auth.data['api_domain']}/api/v1/deals`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: context.auth.access_token,
+			},
+			queryParams:{
+				limit:'5'
+			}
+		});
+
+		return response.body.data;
+  },
   async run(context) {
     const payloadBody = context.payload.body as PayloadBody;
-    return [payloadBody.current];
+    const response = await httpClient.sendRequest<GetDealResponse>({
+      method: HttpMethod.GET,
+      url: `${context.auth.data['api_domain']}/api/v1/deals/${payloadBody.current.id}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth.data['access_token'],
+      },
+    });
+
+    return [response.body.data]
   },
   sampleData: {
     id: 1,
@@ -177,5 +203,6 @@ interface WebhookInformation {
 }
 
 type PayloadBody = {
-  current: unknown;
+	current: Record<string,unknown>;
+	previous: Record<string,unknown>;
 };
