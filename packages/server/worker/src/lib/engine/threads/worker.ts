@@ -1,5 +1,5 @@
 import { Worker, WorkerOptions } from 'worker_threads'
-import { ApSemaphore, getEngineTimeout, logger, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApSemaphore, getEngineTimeout, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 export type WorkerResult = {
