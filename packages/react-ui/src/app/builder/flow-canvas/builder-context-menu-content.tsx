@@ -1,6 +1,6 @@
 import { ContextMenuItem } from "@/components/ui/context-menu"
 import { t } from "i18next"
-import { Copy, Trash } from "lucide-react"
+import { Trash } from "lucide-react"
 import { ApNode } from "./types";
 import React from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -28,11 +28,11 @@ export const BuilderContextMenuContent = ({selectedNodes,applyOperation, selecte
     const disabled=selectedNodes.length===0;
 
     return <>
-        <BuilderContextMenuItemWrapper showTooltip={disabled}>
+        {/* <BuilderContextMenuItemWrapper showTooltip={disabled}>
         <ContextMenuItem disabled={disabled} className="flex gap-2 items-center">
             <Copy className="w-4 h-4"></Copy> {t('Copy')}
         </ContextMenuItem>
-        </BuilderContextMenuItemWrapper>
+        </BuilderContextMenuItemWrapper> */}
         <BuilderContextMenuItemWrapper showTooltip={disabled}>
         <ContextMenuItem disabled={disabled} onClick={()=>{
             selectedNodes.forEach(node=>{
