@@ -104,7 +104,7 @@ export const pieceEngineUtil = {
 
 async function getPieceVersionAndArchiveId(engineToken: string, piece: BasicPieceInformation): Promise<{ pieceVersion: string, archiveId?: string }> {
     const isExactVersion = EXACT_VERSION_REGEX.test(piece.pieceVersion)
-    if(isNil(piece.archiveId) || !isExactVersion) {
+    if (isNil(piece.archiveId) || !isExactVersion) {
         const pieceMetadata = await engineApiService(engineToken).getPiece(piece.pieceName, {
             version: piece.pieceVersion,
         })

@@ -50,7 +50,8 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
                 req.principal.projectId,
                 req.body,
             )
-        } else {
+        }
+        else {
             assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
             await platformMustBeOwnedByCurrentUser.call(app, req, reply)
             await pieceService.installPiece(
