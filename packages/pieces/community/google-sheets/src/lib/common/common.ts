@@ -136,10 +136,11 @@ export const googleSheetsCommon = {
       const properties: {
         [key: string]: any;
       } = {};
-      for (const key in firstRow) {
-        properties[key] = Property.ShortText({
-          displayName: firstRow[key].toString(),
-          description: firstRow[key].toString(),
+      for (let i = 0; i < firstRow.length; i++) {
+        const label = columnToLabel(i);
+        properties[label] = Property.ShortText({
+          displayName: firstRow[i].toString(),
+          description: firstRow[i].toString(),
           required: false,
           defaultValue: '',
         });
