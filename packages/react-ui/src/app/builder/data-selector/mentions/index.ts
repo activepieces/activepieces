@@ -1,4 +1,10 @@
-import { Action, ActionType, isNil, Trigger , isObject} from '@activepieces/shared';
+import {
+  Action,
+  ActionType,
+  isNil,
+  Trigger,
+  isObject,
+} from '@activepieces/shared';
 
 import {
   MentionTreeNode,

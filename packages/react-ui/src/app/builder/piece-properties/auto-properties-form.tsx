@@ -19,7 +19,6 @@ import { isNil } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
-import { ArrayPiecePropertyInLoopMode } from './array-loop-mode-property';
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
@@ -107,14 +106,6 @@ const selectFormComponentForProperty = ({
           disabled={disabled}
           inputName={inputName}
           allowDynamicValues={allowDynamicValues}
-          customDynamicComponent={
-            <ArrayPiecePropertyInLoopMode
-              disabled={disabled}
-              arrayProperty={property}
-              inputName={inputName}
-              useMentionTextInput={useMentionTextInput}
-            />
-          }
         >
           <ArrayPieceProperty
             disabled={disabled}
