@@ -90,7 +90,7 @@ import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
-import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
+import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
@@ -333,7 +333,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         logger.info('Shutting down')
         await flowConsumer.close()
         await systemJobsSchedule.close()
-        await webhookResponseWatcher.shutdown()
+        await engineResponseWatcher.shutdown()
     })
 
     return app

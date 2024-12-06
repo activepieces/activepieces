@@ -1,3 +1,4 @@
+import { UserInteractionJobType } from '@activepieces/server-shared'
 import {
     Action,
     apId,
@@ -14,31 +15,26 @@ import {
     StepRunResponse,
     Trigger,
 } from '@activepieces/shared'
-import { engineRunner } from 'server-worker'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { EngineHelperActionResult, EngineHelperResponse } from 'server-worker'
 import { fileRepo, fileService } from '../../file/file.service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { flowVersionService } from '../flow-version/flow-version.service'
-
 export const sampleDataService = {
     async runAction({
         projectId,
         flowVersionId,
         stepName,
-        platformId,
     }: RunActionParams): Promise<Omit<StepRunResponse, 'id'>> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowStructureUtil.getActionOrThrow(stepName, flowVersion.trigger)
-        const engineToken = await accessTokenManager.generateEngineToken({
+
+        const { result, standardError, standardOutput } = await userInteractionWatcher.submitAndWaitForResponse<EngineHelperResponse<EngineHelperActionResult>>({
             projectId,
-            platformId,
+            flowVersion,
+            jobType: UserInteractionJobType.EXECUTE_ACTION,
+            stepName: step.name,
+            sampleData: await sampleDataService.getSampleDataForFlow(projectId, flowVersion),
         })
-        const { result, standardError, standardOutput } =
-            await engineRunner.executeAction(engineToken, {
-                stepName: step.name,
-                flowVersion,
-                projectId,
-                sampleData: await sampleDataService.getSampleDataForFlow(projectId, flowVersion),
-            })
 
         return {
             success: result.success,

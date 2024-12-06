@@ -24,6 +24,7 @@ const jobTypeToQueueName: Record<JobType, QueueName> = {
     [JobType.ONE_TIME]: QueueName.ONE_TIME,
     [JobType.REPEATING]: QueueName.SCHEDULED,
     [JobType.WEBHOOK]: QueueName.WEBHOOK,
+    [JobType.USERS_INTERACTION]: QueueName.USERS_INTERACTION,
 }
 
 export const redisQueue: QueueManager = {
@@ -55,6 +56,11 @@ export const redisQueue: QueueManager = {
             case JobType.ONE_TIME: {
                 const queue = await ensureQueueExists(QueueName.ONE_TIME)
                 await addJobWithPriority(queue, params)
+                break
+            }
+            case JobType.USERS_INTERACTION: {
+                const queue = await ensureQueueExists(QueueName.USERS_INTERACTION)
+                await addUserInteractionJob(queue, params)
                 break
             }
             case JobType.WEBHOOK: {
@@ -132,6 +138,11 @@ async function addDelayedJob(params: AddParams<JobType.DELAYED>): Promise<void> 
         jobId: id,
         delay,
     })
+}
+
+async function addUserInteractionJob(queue: Queue, params: AddParams<JobType.USERS_INTERACTION>): Promise<void> {
+    const { id, data } = params
+    await queue.add(id, data)
 }
 
 async function addRepeatingJob(params: AddParams<JobType.REPEATING>): Promise<void> {

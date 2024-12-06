@@ -8,7 +8,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { telemetry } from '../../helper/telemetry.utils'
-import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
+import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { flowRunController } from './flow-run-controller'
 import { flowRunRepo } from './flow-run-service'
 
@@ -27,7 +27,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
             cron: '*/50 23 * * *',
         },
     })
-    await webhookResponseWatcher.init()
+    await engineResponseWatcher.init()
 }
 
 async function runTelemetryHandler(_job: SystemJobData<SystemJobName.RUN_TELEMETRY>) {

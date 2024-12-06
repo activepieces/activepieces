@@ -6,7 +6,6 @@ import {
     SeekPage,
     TriggerTestStrategy,
     WebhookSimulation } from '@activepieces/shared'
-import { projectService } from '../../project/project-service'
 import { webhookSimulationService } from '../../webhooks/webhook-simulation/webhook-simulation-service'
 import { flowService } from '../flow/flow.service'
 import { triggerEventService } from '../trigger-events/trigger-event.service'
@@ -65,11 +64,9 @@ const executeTestFunction = async ({
         versionId: flowVersionId,
     })
 
-    const platformId = await projectService.getPlatformId(projectId)
     return triggerEventService.test({
         flow,
         projectId,
-        platformId,
     })
 }
 
