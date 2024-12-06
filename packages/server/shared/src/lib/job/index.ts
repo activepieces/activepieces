@@ -1,5 +1,4 @@
 import {
-    EngineHttpResponse,
     EngineOperationType,
     ProgressUpdateType,
     RunEnvironment,
@@ -14,6 +13,7 @@ export enum JobType {
     ONE_TIME = 'ONE_TIME',
     REPEATING = 'REPEATING',
     DELAYED = 'DELAYED',
+    USERS_INTERACTION = 'USERS_INTERACTION',
 }
 
 export enum JobStatus {
@@ -25,6 +25,7 @@ export enum QueueName {
     WEBHOOK = 'webhookJobs',
     ONE_TIME = 'oneTimeJobs',
     SCHEDULED = 'repeatableJobs',
+    USERS_INTERACTION = 'usersInteractionJobs',
 }
 
 export const PollJobRequest = Type.Object({
@@ -58,20 +59,12 @@ export const ApQueueJob = Type.Object({
 
 export type ApQueueJob = Static<typeof ApQueueJob>
 
-export const DeleteWebhookSimulationRequest = Type.Object({
-    flowId: Type.String(),
-    projectId: Type.String(),
-})
-export type DeleteWebhookSimulationRequest = Static<
-  typeof DeleteWebhookSimulationRequest
->
-
-export const SendWebhookUpdateRequest = Type.Object({
+export const SendEngineUpdateRequest = Type.Object({
     workerServerId: Type.String(),
     requestId: Type.String(),
-    response: EngineHttpResponse,
+    response: Type.Unknown(),
 })
-export type SendWebhookUpdateRequest = Static<typeof SendWebhookUpdateRequest>
+export type SendEngineUpdateRequest = Static<typeof SendEngineUpdateRequest>
 
 export const SavePayloadRequest = Type.Object({
     flowId: Type.String(),

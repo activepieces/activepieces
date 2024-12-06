@@ -70,6 +70,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SharedSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
     [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: '10',
     [WorkerSystemProps.POLLING_POOL_SIZE]: '5',
+    [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
     [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: '10',
     [SharedSystemProp.LOG_LEVEL]: 'info',
     [SharedSystemProp.LOG_PRETTY]: 'false',

@@ -1,8 +1,8 @@
 import {
+    AppSystemProp,
     JobType,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    logger,
-} from '@activepieces/server-shared'
+    logger, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -25,10 +25,12 @@ import { tasksLimit } from '../ee/project-plan/tasks-limit'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
-import { webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
-import { flowQueue } from '../workers/queue'
+import { engineResponseWatcher } from '../workers/engine-response-watcher'
+import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
+
+const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
     app.all(
@@ -139,7 +141,7 @@ async function handleWebhook({
     const flow = await getFlowOrThrow(flowId)
     const payload = await convertRequest(request, flow.projectId, flow.id)
     const requestId = apId()
-    const synchronousHandlerId = async ? null : webhookResponseWatcher.getServerId()
+    const synchronousHandlerId = async ? null : engineResponseWatcher.getServerId()
     if (isNil(flow)) {
         return {
             status: StatusCodes.GONE,
@@ -158,7 +160,7 @@ async function handleWebhook({
             headers: {},
         }
     }
-    await flowQueue.add({
+    await jobQueue.add({
         id: requestId,
         type: JobType.WEBHOOK,
         data: {
@@ -180,7 +182,11 @@ async function handleWebhook({
             headers: {},
         }
     }
-    return webhookResponseWatcher.oneTimeListener(requestId, true)
+    return engineResponseWatcher.oneTimeListener<EngineHttpResponse>(requestId, true, WEBHOOK_TIMEOUT_MS, {
+        status: StatusCodes.NO_CONTENT,
+        body: {},
+        headers: {},
+    })
 }
 
 type HandleWebhookParams = {

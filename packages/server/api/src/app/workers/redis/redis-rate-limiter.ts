@@ -78,9 +78,14 @@ export const redisRateLimiter = {
         return queue
     },
 
-    async shouldBeLimited(queueName: QueueName, projectId: string, jobId: string): Promise<{
+    async shouldBeLimited(queueName: QueueName, projectId: string | undefined, jobId: string): Promise<{
         shouldRateLimit: boolean
     }> {
+        if (isNil(projectId)) {
+            return {
+                shouldRateLimit: false,
+            }
+        }
         if (!SUPPORTED_QUEUES.includes(queueName) || !PROJECT_RATE_LIMITER_ENABLED) {
             return {
                 shouldRateLimit: false,

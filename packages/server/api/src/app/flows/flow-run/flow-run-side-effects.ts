@@ -12,7 +12,7 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { eventsHooks } from '../../helper/application-events'
-import { flowQueue } from '../../workers/queue'
+import { jobQueue } from '../../workers/queue'
 import { JOB_PRIORITY } from '../../workers/queue/queue-manager'
 import { flowRunHooks } from './flow-run-hooks'
 
@@ -71,7 +71,7 @@ export const flowRunSideEffects = {
             `[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`,
         )
 
-        await flowQueue.add({
+        await jobQueue.add({
             id: flowRun.id,
             type: JobType.ONE_TIME,
             priority,
@@ -113,7 +113,7 @@ export const flowRunSideEffects = {
 
         switch (pauseMetadata.type) {
             case PauseType.DELAY:
-                await flowQueue.add({
+                await jobQueue.add({
                     id: flowRun.id,
                     type: JobType.DELAYED,
                     data: {

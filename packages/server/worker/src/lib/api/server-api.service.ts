@@ -1,6 +1,6 @@
 
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, DeleteWebhookSimulationRequest, exceptionHandler, GetRunForWorkerRequest, networkUtls, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendWebhookUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, networkUtls, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { heartbeat } from '../utils/heartbeat'
@@ -45,9 +45,6 @@ export const workerApiService = (workerToken: string) => {
         async resumeRun(request: ResumeRunRequest): Promise<void> {
             await client.post<unknown>('/v1/workers/resume-run', request)
         },
-        async deleteWebhookSimulation(request: DeleteWebhookSimulationRequest): Promise<void> {
-            await client.post('/v1/workers/delete-webhook-simulation', request)
-        },
         async savePayloadsAsSampleData(request: SavePayloadRequest): Promise<void> {
             await client.post('/v1/workers/save-payloads', request)
         },
@@ -55,8 +52,8 @@ export const workerApiService = (workerToken: string) => {
             return client.post<FlowRun[]>('/v1/workers/submit-payloads', request)
 
         },
-        async sendWebhookUpdate(request: SendWebhookUpdateRequest): Promise<void> {
-            await client.post('/v1/workers/send-webhook-update', request)
+        async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
+            await client.post('/v1/workers/send-engine-update', request)
         },
     }
 }
