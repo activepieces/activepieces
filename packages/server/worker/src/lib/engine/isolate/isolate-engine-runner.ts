@@ -21,13 +21,15 @@ export const isolateEngineRunner: EngineRunner = {
         return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input)
     },
     async extractPieceMetadata(
+        engineToken: string,
         operation: ExecuteExtractPieceMetadata,
     ): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
         logger.debug({ operation }, '[EngineHelper#extractPieceMetadata]')
 
+        const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, operation)
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.NONE,
-            pieces: [operation],
+            pieces: [lockedPiece],
             customPiecesPathKey: apId(),
         })
 

@@ -1,4 +1,4 @@
-import { Action, ActionType, assertEqual, CodeAction, EXACT_VERSION_REGEX, flowStructureUtil, FlowVersion, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, PieceType, Step, Trigger, TriggerType } from '@activepieces/shared'
+import { Action, ActionType, assertEqual, CodeAction, EXACT_VERSION_REGEX, flowStructureUtil, FlowVersion, isNil, PackageType, PieceActionSettings, PiecePackage, PieceTriggerSettings, PieceType, Step, Trigger, TriggerType } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
 import { CodeArtifact } from './engine-runner'
 
@@ -41,23 +41,21 @@ export const pieceEngineUtil = {
         const { trigger } = flowVersion
         return this.getExactPieceForStep(engineToken, trigger)
     },
-
     async getExactPieceVersion(engineToken: string, piece: BasicPieceInformation): Promise<PiecePackage> {
         const { pieceName, pieceVersion, pieceType, packageType } = piece
 
         switch (packageType) {
             case PackageType.ARCHIVE: {
-                const pieceMetadata = await engineApiService(engineToken).getPiece(pieceName, {
-                    version: pieceVersion,
-                })
-                const archive = await engineApiService(engineToken).getFile(pieceMetadata.archiveId!)
+                const { pieceVersion, archiveId } = await getPieceVersionAndArchiveId(engineToken, piece)
+
+                const archive = await engineApiService(engineToken).getFile(archiveId!)
 
                 return {
                     packageType,
                     pieceType,
                     pieceName,
-                    pieceVersion: pieceMetadata.version,
-                    archiveId: pieceMetadata.archiveId!,
+                    pieceVersion,
+                    archiveId: archiveId!,
                     archive,
                 }
             }
@@ -104,6 +102,23 @@ export const pieceEngineUtil = {
     },
 }
 
+async function getPieceVersionAndArchiveId(engineToken: string, piece: BasicPieceInformation): Promise<{ pieceVersion: string, archiveId?: string }> {
+    const isExactVersion = EXACT_VERSION_REGEX.test(piece.pieceVersion)
+    if(isNil(piece.archiveId) || !isExactVersion) {
+        const pieceMetadata = await engineApiService(engineToken).getPiece(piece.pieceName, {
+            version: piece.pieceVersion,
+        })
+        return {
+            pieceVersion: pieceMetadata.version,
+            archiveId: pieceMetadata.archiveId,
+        }
+    }
+    return {
+        pieceVersion: piece.pieceVersion,
+        archiveId: piece.archiveId,
+    }
+}
+
 const isPieceStep = (step: Step): step is Action | Trigger => {
     return step.type === TriggerType.PIECE || step.type === ActionType.PIECE
 }
@@ -119,4 +134,5 @@ export type BasicPieceInformation = {
     pieceVersion: string
     pieceType: PieceType
     packageType: PackageType
+    archiveId?: string
 }

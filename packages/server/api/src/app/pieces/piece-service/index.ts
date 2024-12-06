@@ -27,7 +27,7 @@ import { pieceMetadataService } from '../piece-metadata-service'
 export const pieceService = {
     async installPiece(
         platformId: string,
-        projectId: string,
+        projectId: string | undefined,
         params: AddPieceRequestBody,
     ): Promise<PieceMetadataModel> {
         assertInstallProjectEnabled(params.scope)

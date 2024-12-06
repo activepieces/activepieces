@@ -7,7 +7,7 @@ async function execute(jobData: UserInteractionJobData, engineToken: string, wor
     let response: unknown
     switch (jobData.jobType) {
         case UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-            response = await engineRunner.extractPieceMetadata(jobData.piece)
+            response = await engineRunner.extractPieceMetadata(engineToken, jobData.piece)
             break
         case UserInteractionJobType.EXECUTE_VALIDATION:
             response = await engineRunner.executeValidateAuth(engineToken, {
