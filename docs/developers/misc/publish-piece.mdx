@@ -7,7 +7,7 @@ You can use the CLI to publish custom pieces to the platform. This process packa
 
 ### How It Works
 
-The CLI scans the `packages/pieces/custom/` directory for the specified piece. It checks the **name** and **version** in the `package.json` file. If the piece is not already published, it builds, packages, and uploads it to the platform using the API.
+The CLI scans the `packages/pieces/` directory for the specified piece. It checks the **name** and **version** in the `package.json` file. If the piece is not already published, it builds, packages, and uploads it to the platform using the API.
 
 ### Usage
 
@@ -18,12 +18,6 @@ To publish a piece, follow these steps:
 3. Run the following command, replacing `API_KEY` with your generated API Key, `INSTANCE_URL` with your instance URL, and `PIECE_NAME` with the name of the piece you want to publish:
 
 ```bash
-AP_API_KEY=your_api_key_here npm run publish-piece -- --apiUrl https://INSTANCE_URL/api --name PIECE_NAME
+AP_API_KEY=your_api_key_here npm run pieces -- publish --apiUrl https://INSTANCE_URL/api --name PIECE_NAME
 ```
 
-### Developer Workflow
-
-1. Developers create and modify the pieces offline.
-2. Increment the piece version in their corresponding `package.json`. For more information, refer to the [piece versioning](../../developers/piece-reference/piece-versioning) documentation.
-3. Open a pull request towards the main branch.
-4. Once the pull request is merged to the main branch, manually run the CLI or use a GitHub/GitLab Action to trigger the publishing process.
