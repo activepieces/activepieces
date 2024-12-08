@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient } from 'basic-ftp';
-import { endClient, getClient, sftpAuth } from '../..';
+import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../..';
 
 async function deleteFolderFTP(client: FTPClient, directoryPath: string, recursive: boolean) {
   if (recursive) {
@@ -38,9 +38,9 @@ export const deleteFolderAction = createAction({
     const client = await getClient(context.auth);
     const directoryPath = context.propsValue.folderPath;
     const recursive = context.propsValue.recursive ?? false;
-
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
     try {
-      switch (context.auth.protocol) {
+      switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
           await deleteFolderFTP(client as FTPClient, directoryPath, recursive);
@@ -61,7 +61,7 @@ export const deleteFolderAction = createAction({
         error: err,
       };
     } finally {
-      await endClient(client);
+      await endClient(client, context.auth.protocol);
     }
   },
 });

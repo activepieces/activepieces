@@ -3,7 +3,7 @@ import {
     TriggerStrategy,
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { exceptionHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     FlowVersion,
     PieceTrigger,
@@ -11,12 +11,10 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
-import { EngineHelperResponse, EngineHelperTriggerResult, engineRunner, webhookUtils } from 'server-worker'
+import { EngineHelperResponse, EngineHelperTriggerResult, webhookUtils } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
-
-import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
-import { projectService } from '../../../project/project-service'
-import { flowQueue } from '../../../workers/queue'
+import { jobQueue } from '../../../workers/queue'
+import { userInteractionWatcher } from '../../../workers/user-interaction-watcher'
 import { triggerUtils } from './trigger-utils'
 
 export const disablePieceTrigger = async (
@@ -39,12 +37,8 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
     }
 
     try {
-        const platformId = await projectService.getPlatformId(projectId)
-        const engineToken = await accessTokenManager.generateEngineToken({
-            projectId,
-            platformId,
-        })
-        const result = await engineRunner.executeTrigger(engineToken, {
+        const result = await userInteractionWatcher.submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>>>({
+            jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
             hookType: TriggerHookType.ON_DISABLE,
             flowVersion,
             webhookUrl: await webhookUtils.getWebhookUrl({
@@ -83,14 +77,14 @@ async function sideeffect(
         case TriggerStrategy.WEBHOOK: {
             const renewConfiguration = pieceTrigger.renewConfiguration
             if (renewConfiguration?.strategy === WebhookRenewStrategy.CRON) {
-                await flowQueue.removeRepeatingJob({
+                await jobQueue.removeRepeatingJob({
                     flowVersionId: flowVersion.id,
                 })
             }
             break
         }
         case TriggerStrategy.POLLING:
-            await flowQueue.removeRepeatingJob({
+            await jobQueue.removeRepeatingJob({
                 flowVersionId: flowVersion.id,
             })
             break

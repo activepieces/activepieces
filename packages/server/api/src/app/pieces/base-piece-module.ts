@@ -1,4 +1,5 @@
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -16,13 +17,13 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
-import { engineRunner } from 'server-worker'
-import { accessTokenManager } from '../authentication/lib/access-token-manager'
+import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
 import { flagService } from '../flags/flag.service'
 import { flowService } from '../flows/flow/flow.service'
 import { sampleDataService } from '../flows/step-run/sample-data.service'
+import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import {
-    getPiecePackage,
+    getPiecePackageWithoutArchive,
     pieceMetadataService,
 } from './piece-metadata-service'
 import { pieceSyncService } from './piece-sync-service'
@@ -117,41 +118,29 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
-    app.post(
-        '/sync',
-        SyncPiecesRequest,
-        async (): Promise<void> => {
-            await pieceSyncService.sync()
-        },
-    )
+    app.post('/sync', SyncPiecesRequest, async () => pieceSyncService.sync())
 
     app.post(
         '/options',
         OptionsPieceRequest,
         async (req) => {
-            const request = req.body
             const { projectId, platform } = req.principal
             const flow = await flowService.getOnePopulatedOrThrow({
                 projectId,
-                id: request.flowId,
-                versionId: request.flowVersionId,
-            })
-            const engineToken = await accessTokenManager.generateEngineToken({
-                projectId,
-                platformId: platform.id,
+                id: req.body.flowId,
+                versionId: req.body.flowVersionId,
             })
             const sampleData = await sampleDataService.getSampleDataForFlow(projectId, flow.version)
-            const { result } = await engineRunner.executeProp(engineToken, {
-                piece: await getPiecePackage(projectId, platform.id, request),
-                flowVersion: flow.version,
-                propertyName: request.propertyName,
-                actionOrTriggerName: request.actionOrTriggerName,
-                input: request.input,
-                sampleData,
+            const { result } = await userInteractionWatcher.submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
+                jobType: UserInteractionJobType.EXECUTE_PROPERTY,
                 projectId,
-                searchValue: request.searchValue,
+                flowVersion: flow.version,
+                propertyName: req.body.propertyName,
+                actionOrTriggerName: req.body.actionOrTriggerName,
+                input: req.body.input,
+                sampleData,
+                piece: await getPiecePackageWithoutArchive(projectId, platform.id, req.body),
             })
-
             return result
         },
     )

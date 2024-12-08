@@ -1,7 +1,7 @@
 import { Action, BranchCondition, BranchOperator, RouterExecutionType } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { buildPieceAction, buildRouterWithOneCondition, generateMockEngineConstants } from './test-helper'
+import { buildCodeAction, buildPieceAction, buildRouterWithOneCondition, generateMockEngineConstants } from './test-helper'
 
 function executeRouterActionWithOneCondition(children: Action[], conditions: (BranchCondition | null)[], executionType: RouterExecutionType): Promise<FlowExecutorContext> {
     return flowExecutor.execute({
@@ -340,5 +340,63 @@ describe('router with branching different conditions', () => {
         expect(result.steps.data_mapper.output).toEqual({ 'key': 3 })
         expect(result.steps.data_mapper_1.output).toEqual({ 'key': 6 })
         expect(result.steps.fallback_mapper).toBeUndefined()
+    })
+    it('should skip router', async () => {
+        const result = await flowExecutor.execute({
+            action: buildRouterWithOneCondition({ children: [
+                buildPieceAction({
+                    name: 'data_mapper',
+                    skip: true,
+                    pieceName: '@activepieces/piece-data-mapper',
+                    actionName: 'advanced_mapping',
+                    input: {},
+                }),
+            ], conditions: [
+                {
+                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                    firstValue: 'test',
+                    secondValue: 'test',
+                    caseSensitive: false,
+                },
+            ], executionType: RouterExecutionType.EXECUTE_FIRST_MATCH, skip: true }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.steps.router).toBeUndefined()
+    })
+    it('should skip router action in flow', async () => {
+        const router: Action = {
+            ...buildRouterWithOneCondition({ children: [
+                buildPieceAction({
+                    name: 'data_mapper',
+                    skip: true,
+                    pieceName: '@activepieces/piece-data-mapper',
+                    actionName: 'advanced_mapping',
+                    input: {},
+                }),
+            ], conditions: [
+                {
+                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                    firstValue: 'test',
+                    secondValue: 'test',
+                    caseSensitive: false,
+                },
+            ], executionType: RouterExecutionType.EXECUTE_FIRST_MATCH, skip: true }),
+            nextAction: {
+                ...buildCodeAction({
+                    name: 'echo_step',
+                    skip: false,
+                    input: {
+                        'key': '{{ 1 + 2 }}',
+                    },
+                }),
+                nextAction: undefined,
+            },
+        }
+        const result = await flowExecutor.execute({
+            action: router, executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.steps.router).toBeUndefined()
+        expect(result.steps.echo_step.output).toEqual({ 'key': 3 })
     })
 })

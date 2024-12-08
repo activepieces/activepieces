@@ -17,6 +17,7 @@ export const projectMembersHooks = {
         }
         const res = await projectMembersApi.list({
           projectId: projectId,
+          projectRoleId: undefined,
           cursor: undefined,
           limit: 100,
         });

@@ -36,7 +36,7 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
-import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
+import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
@@ -262,7 +262,7 @@ export const flowRunService = {
             payload: sampleData,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: webhookResponseWatcher.getServerId(),
+            synchronousHandlerId: engineResponseWatcher.getServerId(),
             httpRequestId: undefined,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
         })
@@ -442,7 +442,7 @@ async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
 }
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): string {
-    const handlerId = webhookResponseWatcher.getServerId()
+    const handlerId = engineResponseWatcher.getServerId()
     if (isNil(pauseMetadata)) {
         return handlerId
     }

@@ -66,6 +66,9 @@
       "@activepieces/piece-asana": [
         "packages/pieces/community/asana/src/index.ts"
       ],
+      "@activepieces/piece-ashby": [
+        "packages/pieces/community/ashby/src/index.ts"
+      ],
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
       ],
@@ -74,6 +77,9 @@
       ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
+      ],
+      "@activepieces/piece-bamboohr": [
+        "packages/pieces/community/bamboohr/src/index.ts"
       ],
       "@activepieces/piece-bannerbear": [
         "packages/pieces/community/bannerbear/src/index.ts"
@@ -511,6 +517,9 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
+      "@activepieces/piece-scenario": [
+        "packages/pieces/community/scenario/src/index.ts"
+      ],
       "@activepieces/piece-schedule": [
         "packages/pieces/community/schedule/src/index.ts"
       ],
@@ -622,7 +631,7 @@
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
       ],
-      "@activepieces/piece-twin-labs":[
+      "@activepieces/piece-twin-labs": [
         "packages/pieces/community/twin-labs/src/index.ts"
       ],
       "@activepieces/piece-twitter": [

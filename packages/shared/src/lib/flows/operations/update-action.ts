@@ -17,6 +17,8 @@ function _updateAction(flowVersion: FlowVersion, request: UpdateActionRequest): 
             displayName: request.displayName,
             name: request.name,
             valid: false,
+            skip: request.skip,
+            customLogoUrl: request.customLogoUrl,
         }
 
         let updatedAction: Action

@@ -163,7 +163,7 @@ const ListUserInvitationsRequestParams = {
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListUserInvitationsRequest,
-        responnse: {
+        response: {
             [StatusCodes.OK]: SeekPage(UserInvitation),
         },
     },

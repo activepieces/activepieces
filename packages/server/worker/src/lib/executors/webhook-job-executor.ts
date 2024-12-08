@@ -175,7 +175,7 @@ async function stopAndReply(
     if (isNil(data.synchronousHandlerId)) {
         return
     }
-    await workerApiService(workerToken).sendWebhookUpdate({
+    await workerApiService(workerToken).sendUpdate({
         workerServerId: data.synchronousHandlerId,
         requestId: data.requestId,
         response,

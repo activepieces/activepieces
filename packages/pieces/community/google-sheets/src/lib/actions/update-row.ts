@@ -33,7 +33,7 @@ export const updateRowAction = createAction({
     const spreadSheetId = context.propsValue.spreadsheet_id;
     const sheetId = context.propsValue.sheet_id;
     const rowId = context.propsValue.row_id;
-    const idFirstRowHeaders = context.propsValue.first_row_headers;
+    const isFirstRowHeaders = context.propsValue.first_row_headers;
     const rowValuesInput = context.propsValue.values;
 
     const authClient = new OAuth2Client();
@@ -49,7 +49,7 @@ export const updateRowAction = createAction({
 
     // replace empty string with null to skip the cell value
     const formattedValues = (
-      idFirstRowHeaders
+      isFirstRowHeaders
         ? objectToArray(rowValuesInput)
         : rowValuesInput['values']
     ).map((value: string | null | undefined) => {
@@ -63,6 +63,10 @@ export const updateRowAction = createAction({
     });
 
 
+    console.log('formattedValues', formattedValues);
+    console.log('sheetName', sheetName);
+    console.log('rowValuesInput', rowValuesInput);
+    console.log('objectToArray', objectToArray(rowValuesInput));
     if (formattedValues.length > 0) {
       const response = await sheets.spreadsheets.values.update({
         range: `${sheetName}!A${rowId}:ZZZ${rowId}`,

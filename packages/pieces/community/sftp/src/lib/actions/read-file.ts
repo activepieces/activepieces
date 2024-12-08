@@ -2,7 +2,7 @@ import { endClient, sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient } from 'basic-ftp';
-import { getClient } from '../..';
+import { getClient, getProtocolBackwardCompatibility } from '../..';
 import { Writable } from 'stream';
 
 async function readFTP(client: FTPClient, filePath: string) {
@@ -38,10 +38,10 @@ export const readFileContent = createAction({
     const client = await getClient(context.auth);
     const filePath = context.propsValue['filePath'];
     const fileName = filePath.split('/').pop() ?? filePath;
-
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
     try {
       let fileContent: Buffer;
-      switch (context.auth.protocol) {
+      switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
           fileContent = await readFTP(client as FTPClient, filePath);
@@ -64,7 +64,7 @@ export const readFileContent = createAction({
         error: err,
       };
     } finally {
-      await endClient(client);
+      await endClient(client, context.auth.protocol);
     }
   },
 });

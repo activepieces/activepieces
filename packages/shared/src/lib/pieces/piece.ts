@@ -30,6 +30,7 @@ export const PublicPiecePackage = Type.Object({
 
 export type PublicPiecePackage = Static<typeof PublicPiecePackage>
 
+export const PiecePackage = Type.Union([PrivatePiecePackage, PublicPiecePackage])
 export type PiecePackage = PrivatePiecePackage | PublicPiecePackage
 
 export enum PieceCategory {

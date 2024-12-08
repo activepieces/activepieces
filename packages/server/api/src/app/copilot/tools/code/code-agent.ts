@@ -1,8 +1,9 @@
-import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
+import { selectIcon } from './icon-agent'
 
 type Message = {
     role: 'user' | 'assistant'
@@ -33,7 +34,6 @@ const codeGenerationSchema = z.object({
         description: z.string().optional(),
         suggestedValue: z.string().optional(),
     })).default([]),
-    icon: z.string().optional(),
     title: z.string().optional(),
 })
 
@@ -61,25 +61,24 @@ export async function generateCode(
             return defaultResponse
         }
 
+        logger.debug({
+            requirement,
+            contextMessages: conversationHistory.length,
+        }, '[generateCode] Processing code generation request')
 
-        // Find the last code response in the conversation history
         const lastCodeResponse = conversationHistory
             .reverse()
-            .find(msg =>
-                msg.role === 'assistant' &&
+            .find(msg => 
+                msg.role === 'assistant' && 
                 msg.content.includes('export const code ='),
             )
-
-        const formattedHistory = conversationHistory
-            .map(msg => `${msg.role.toUpperCase()}: ${msg.content}`)
-            .join('\n')
 
         const systemPrompt = `
         You are a TypeScript code generation expert for automation flows.
         You are generating code for a single step in an automation flow, NOT a backend service.
         
         CONVERSATION HISTORY:
-        ${formattedHistory}
+        ${conversationHistory.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n')}
         
         ${lastCodeResponse ? `PREVIOUS CODE TO ENHANCE (unless user requests something completely different):
         ${lastCodeResponse.content}
@@ -123,15 +122,7 @@ export async function generateCode(
            - Don't try to handle multiple operations
            - Let the flow orchestrate complex processes
 
-        5. Icon Selection:
-           - Choose an icon from Lucide (lucide.dev) that represents the operation
-           - Pick icons that intuitively convey the step's purpose
-           - Use 'Mail' for email tasks
-           - Use 'Database' for data operations  
-           - Use 'FileText' for document processing
-           - Icons help users quickly understand the step's function
-
-        6. Title:
+        5. Title:
            - Title should be 2-4 words, action-oriented
            - Examples: "Send Email", "Query Database", "Transform JSON"
 
@@ -145,7 +136,6 @@ export async function generateCode(
                     "suggestedValue": "Your Gmail API access token"
                 }
             ],
-            "icon": "Mail",
             "title": "List Gmail Messages"
         }
 
@@ -167,20 +157,30 @@ export async function generateCode(
             temperature: 0,
         })
 
+        logger.debug({
+            requirement,
+            conversationHistory,
+            previousCode: lastCodeResponse?.content,
+            generatedCode: llmResponse?.object?.code,
+        }, '[generateCode] Code generation response')
+
+
+        if (isNil(llmResponse?.object)) {
+            return defaultResponse
+        }
 
         const resultInputs = llmResponse?.object?.inputs?.reduce((acc, input) => {
             acc[input.name] = input.suggestedValue ?? ''
             return acc
         }, {} as Record<string, string>) ?? {}
 
-        if (isNil(llmResponse?.object)) {
-            return defaultResponse
-        }
+
+        const icon = await selectIcon(requirement, conversationHistory)
 
         return {
             code: llmResponse.object.code,
             inputs: resultInputs,
-            icon: llmResponse.object.icon,
+            icon: icon ?? undefined,
             title: llmResponse.object.title ?? defaultResponse.title,
         }
     }

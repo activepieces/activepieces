@@ -19,6 +19,8 @@ function createAction(request: UpdateActionRequest, {
         displayName: request.displayName,
         name: request.name,
         valid: false,
+        skip: request.skip,
+        customLogoUrl: request.customLogoUrl,
         nextAction,
     }
     let action: Action

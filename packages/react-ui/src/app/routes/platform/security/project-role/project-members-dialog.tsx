@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { LoaderIcon } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { ProjectMemberCard } from '@/features/team/component/project-member-card';
 import { projectMembersApi } from '@/features/team/lib/project-members-api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -25,18 +25,27 @@ function ProjectMembersDialog({
     isLoading,
     refetch: refetchProjectMembers,
   } = useQuery({
-    queryKey: ['project-members'],
+    queryKey: ['project-members', projectRole?.id],
     gcTime: 0,
     staleTime: 0,
     queryFn: async () => {
+      if (!projectRole) {
+        return [];
+      }
       const page = await projectMembersApi.list({
         projectId: authenticationSession.getProjectId()!,
+        projectRoleId: projectRole.id,
         cursor: undefined,
         limit: 100,
       });
       return page.data;
     },
+    enabled: !!projectRole,
   });
+
+  if (!projectRole) {
+    return null;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -45,11 +54,7 @@ function ProjectMembersDialog({
           {t(projectRole ? `Members: ${projectRole.name}` : 'Members')}
         </DialogTitle>
         <div className="flex flex-col gap-4">
-          {isLoading && (
-            <div className="flex justify-center animate-spin">
-              <LoaderIcon />
-            </div>
-          )}
+          {isLoading && <LoadingSpinner className="mx-auto" size={28} />}
           {!isLoading &&
             selectedProjectMembers &&
             selectedProjectMembers.length === 0 && (

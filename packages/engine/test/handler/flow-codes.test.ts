@@ -1,5 +1,7 @@
+import { Action } from '@activepieces/shared'
 import { codeExecutor } from '../../src/lib/handler/code-executor'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
+import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildCodeAction, generateMockEngineConstants } from './test-helper'
 
 describe('codeExecutor', () => {
@@ -29,4 +31,38 @@ describe('codeExecutor', () => {
         expect(result.steps.runtime.errorMessage).toEqual('Custom Runtime Error')
     })
 
+    it('should skip code action', async () => {
+        const result = await flowExecutor.execute({
+            action: buildCodeAction({
+                name: 'echo_step',
+                input: {},
+                skip: true,
+            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.steps.echo_step).toBeUndefined()
+    })
+    it('should skip flow action', async () => {
+        const flow: Action = {
+            ...buildCodeAction({
+                name: 'echo_step',
+                skip: true,
+                input: {},
+            }),
+            nextAction: {
+                ...buildCodeAction({
+                    name: 'echo_step_1',
+                    input: {
+                        'key': '{{ 1 + 2 }}',
+                    },
+                }),
+            },
+        }
+        const result = await flowExecutor.execute({
+            action: flow, executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.steps.echo_step).toBeUndefined()
+        expect(result.steps.echo_step_1.output).toEqual({ 'key': 3 })
+    })
 })

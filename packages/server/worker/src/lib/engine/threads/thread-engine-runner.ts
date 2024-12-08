@@ -68,11 +68,12 @@ export const threadEngineRunner: EngineRunner = {
         })
         return execute(input, EngineOperationType.EXECUTE_TRIGGER_HOOK)
     },
-    async extractPieceMetadata(operation) {
+    async extractPieceMetadata(engineToken, operation) {
         logger.debug({ operation }, '[threadEngineRunner#extractPieceMetadata]')
 
+        const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, operation)
         await executionFiles.provision({
-            pieces: [operation],
+            pieces: [lockedPiece],
             codeSteps: [],
             globalCachePath: sandboxPath,
             globalCodesPath: codesPath,

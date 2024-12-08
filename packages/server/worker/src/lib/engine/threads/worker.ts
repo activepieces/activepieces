@@ -1,5 +1,5 @@
 import { Worker, WorkerOptions } from 'worker_threads'
-import { ApSemaphore, getEngineTimeout, logger, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApSemaphore, getEngineTimeout, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 export type WorkerResult = {
@@ -101,10 +101,17 @@ export class EngineWorker {
         }
         finally {
             if (environment === ApEnvironment.DEVELOPMENT) {
-                logger.trace({
-                    workerIndex,
-                }, 'Removing worker in development mode to avoid caching issues')
-                rejectedPromiseHandler(worker.terminate())
+                try {
+                    logger.trace({
+                        workerIndex,
+                    }, 'Removing worker in development mode to avoid caching issues')
+                    await worker.terminate()
+                }
+                catch (e) {
+                    logger.error({
+                        error: e,
+                    }, 'Error terminating worker')
+                }
                 this.workers[workerIndex] = new Worker(this.enginePath, this.engineOptions)
             }
             logger.debug({

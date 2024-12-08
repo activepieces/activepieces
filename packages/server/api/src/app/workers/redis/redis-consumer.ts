@@ -88,6 +88,8 @@ function getLockDurationInMs(queueName: QueueName): number {
     switch (queueName) {
         case QueueName.WEBHOOK:
             return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
+        case QueueName.USERS_INTERACTION:
+            return dayjs.duration(flowTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
         case QueueName.ONE_TIME:
             return dayjs.duration(flowTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
         case QueueName.SCHEDULED:
