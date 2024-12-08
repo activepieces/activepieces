@@ -34,18 +34,13 @@ export const generateContentFromImageAction = createAction({
       description: 'The model which will generate the completion',
       refreshers: [],
       defaultValue: defaultLLM,
-      options: async ({auth}) =>
-        getGeminiModelOptions({auth}),
+      options: async ({ auth }) =>
+        getGeminiModelOptions({ auth }),
     }),
   },
 
   async run({ auth, propsValue }) {
-    const tempDir = tmpdir();
-    const uniqueId = nanoid();
-    const tempFilePath = join(
-      tempDir,
-      `gemini-image-${uniqueId}.${propsValue.image.extension}`
-    );
+    const tempFilePath = join(tmpdir(), `gemini-image-${nanoid()}.${propsValue.image.extension}`);
 
     try {
       const imageBuffer = Buffer.from(propsValue.image.base64, 'base64');
