@@ -34,14 +34,13 @@ export async function getWorkSheetGridSize(
 	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
 	spreadSheetId: string,
 	sheetId: number,
-)
-{
+) {
 	const authClient = new OAuth2Client();
 	authClient.setCredentials(auth);
 
 	const sheets = google.sheets({ version: 'v4', auth: authClient });
 
-	const res = await sheets.spreadsheets.get({ spreadsheetId: spreadSheetId,includeGridData: true });
+	const res = await sheets.spreadsheets.get({ spreadsheetId: spreadSheetId, includeGridData: true, fields: 'sheets.properties(sheetId,title,sheetType,gridProperties)' });
 	const sheetRange = res.data.sheets?.find((f) => f.properties?.sheetId == sheetId)?.properties?.gridProperties;
 
 	if (!sheetRange) {
