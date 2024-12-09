@@ -1,12 +1,15 @@
 import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
+import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
+const ONE_MONTH = dayjs.duration(1, 'month').asMilliseconds()
+
 const defaultJobOptions: DefaultJobOptions = {
     attempts: 5,
     backoff: {
@@ -14,6 +17,9 @@ const defaultJobOptions: DefaultJobOptions = {
         delay: EIGHT_MINUTES_IN_MILLISECONDS,
     },
     removeOnComplete: true,
+    removeOnFail: {
+        age: ONE_MONTH,
+    },
 }
 const repeatingJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
@@ -25,6 +31,16 @@ const jobTypeToQueueName: Record<JobType, QueueName> = {
     [JobType.REPEATING]: QueueName.SCHEDULED,
     [JobType.WEBHOOK]: QueueName.WEBHOOK,
     [JobType.USERS_INTERACTION]: QueueName.USERS_INTERACTION,
+}
+
+const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
+    [QueueName.SCHEDULED]: defaultJobOptions,
+    [QueueName.ONE_TIME]: defaultJobOptions,
+    [QueueName.USERS_INTERACTION]: {
+        ...defaultJobOptions,
+        attempts: 1,
+    },
+    [QueueName.WEBHOOK]: defaultJobOptions,
 }
 
 export const redisQueue: QueueManager = {
@@ -116,7 +132,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
         queueName,
         {
             connection: createRedisClient(),
-            defaultJobOptions,
+            defaultJobOptions: jobTypeToDefaultJobOptions[queueName],
         },
     )
     await bullMqGroups[queueName].waitUntilReady()

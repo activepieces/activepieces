@@ -6,7 +6,8 @@ import { createRedisClient } from '../../database/redis-connection'
 import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
 
-const FIFTEEN_MINUTES = 15 * 60 * 1000
+const FIFTEEN_MINUTES = dayjs.duration(15, 'minute').asMilliseconds()
+const ONE_MONTH = dayjs.duration(1, 'month').asMilliseconds()
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
 export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
@@ -23,6 +24,10 @@ export const redisSystemJobSchedulerService: SystemJobSchedule = {
                     backoff: {
                         type: 'exponential',
                         delay: FIFTEEN_MINUTES,
+                    },
+                    removeOnComplete: true,
+                    removeOnFail: {
+                        age: ONE_MONTH,
                     },
                 },
             },
