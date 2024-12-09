@@ -1,4 +1,4 @@
-import deepmerge from 'deepmerge'
+import { deepmerge } from 'deepmerge-ts'
 
 export function isString(str: unknown): str is string {
     return str != null && typeof str === 'string'
