@@ -116,7 +116,7 @@ export const sendEmail = createAction({
 });
 
 async function sendWithRetry(transporter: any, mailOptions: any) {
-  const maxRetries = 5;
+  const maxRetries = 3;
   let retryCount = 0;
   
   while (retryCount < maxRetries) {

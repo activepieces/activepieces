@@ -1,14 +1,14 @@
 import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
-import dayjs from 'dayjs'
 import { createRedisClient } from '../../database/redis-connection'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
+import { apDayjsDuration } from '../../helper/dayjs-helper'
 
-const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
-const ONE_MONTH = dayjs.duration(1, 'month').asMilliseconds()
+const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
+const ONE_MONTH = apDayjsDuration(1, 'month').asMilliseconds()
 
 const defaultJobOptions: DefaultJobOptions = {
     attempts: 5,
