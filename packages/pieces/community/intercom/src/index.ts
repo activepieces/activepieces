@@ -21,6 +21,7 @@ import { conversationClosed } from './lib/triggers/conversation-closed';
 import { conversationSnoozed } from './lib/triggers/conversation-snoozed';
 import { conversationUnsnoozed } from './lib/triggers/conversation-unsnoozed';
 import { conversationRated } from './lib/triggers/conversation-rated';
+import { conversationPartTagged } from './lib/triggers/conversation-part-tagged';
 
 export const intercomAuth = PieceAuth.OAuth2({
   authUrl: 'https://app.{region}.com/oauth',
@@ -59,6 +60,7 @@ export const intercom = createPiece({
     conversationSnoozed,
     conversationUnsnoozed,
     conversationRated,
+    conversationPartTagged,
   ],
   authors: [
     'kishanprmr',
