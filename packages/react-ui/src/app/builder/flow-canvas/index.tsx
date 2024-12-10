@@ -1,6 +1,6 @@
-import { ReactFlow, Background, useReactFlow, SelectionMode, OnSelectionChangeParams, useOnSelectionChange, useStoreApi,  } from '@xyflow/react';
+import { ReactFlow, Background, useReactFlow, SelectionMode, OnSelectionChangeParams  } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React, { useCallback, useEffect, useMemo, useRef, useState,  } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState  } from 'react';
 import { usePrevious } from 'react-use';
 
 import { ActionType, flowStructureUtil, FlowVersion, isFlowStateTerminal, TriggerType } from '@activepieces/shared';
@@ -12,13 +12,15 @@ import { flowUtilConsts } from './consts';
 import { flowCanvasUtils } from './flow-canvas-utils';
 import { FlowDragLayer } from './flow-drag-layer';
 import { AboveFlowWidgets } from './widgets';
-import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { BuilderContextMenuContent } from './builder-context-menu-content';
-import { ApNode, ApNodeType } from './types';
+import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, ApButtonData, ApNode } from './types';
+import { CanvasContextMenu } from './context-menu/canvas-context-menu';
+
 
 const createGraphKey = (flowVersion:FlowVersion)=>{
     return flowStructureUtil.getAllSteps(flowVersion.trigger).reduce((acc,step)=>{
-     return `${acc}-${step.displayName}-${step.type}-${step.type === ActionType.PIECE?step.settings.pieceName: ''}-${step.type !== TriggerType.EMPTY && step.type !== TriggerType.PIECE? step.skip:'unskipable'}`
+      const skipKey = step.type !== TriggerType.EMPTY && step.type !== TriggerType.PIECE? `skipped-${step.skip}`:'unskipable';
+      const branchesLength = step.type === ActionType.ROUTER? step.settings.branches.length: 0;
+     return `${acc}-${step.displayName}-${step.type}-${step.type === ActionType.PIECE?step.settings.pieceName: ''}-${skipKey}-${branchesLength}`
     },'')
 }
 export const FlowCanvas = React.memo(
@@ -32,7 +34,7 @@ export const FlowCanvas = React.memo(
     const [allowCanvasPanning, flowVersion, run,readonly,setSelectedNodes, selectedNodes,applyOperation,selectedStep,setRightSidebar ] = useBuilderStateContext((state) => {
       return [state.allowCanvasPanning, state.flowVersion, state.run,state.readonly,state.setSelectedNodes, state.selectedNodes,state.applyOperation, state.selectedStep,state.setRightSidebar];
     });
-
+    
     const previousRun = usePrevious(run);
     const { fitView, getViewport, setViewport } = useReactFlow();
     if (
@@ -88,21 +90,41 @@ export const FlowCanvas = React.memo(
     const onSelectionChange = useCallback((ev:OnSelectionChangeParams)=>{
       setSelectedNodes(ev.nodes as ApNode[]);
       },[])
+
     const graphKey= createGraphKey(flowVersion)
     const graph = useMemo(()=>{
       return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
     },[graphKey]);
-    
-
+    const [contextMenuContentAddButtonData,setcontextMenuContentAddButtonData] = useState<ApButtonData | null>(null);
+    const onContextMenu = useCallback((ev:React.MouseEvent<HTMLDivElement>)=>{
+      if(ev.target instanceof HTMLElement || ev.target instanceof SVGElement)
+      {
+        const element = ev.target.closest(`[data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}]`);
+        const addButtonData = element?.getAttribute(`data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`);
+        if(addButtonData)
+        {
+          setcontextMenuContentAddButtonData(JSON.parse(addButtonData));
+        }
+          else {
+            setcontextMenuContentAddButtonData(null);
+          }
+        }
+    },[setcontextMenuContentAddButtonData]);
     return (
       <div
         ref={containerRef}
         className="size-full relative overflow-hidden z-50"
       >
         <FlowDragLayer lefSideBarContainerWidth={lefSideBarContainerWidth}>
-         <ContextMenu>
-         <ContextMenuTrigger>
+        <CanvasContextMenu selectedNodes={selectedNodes}
+          applyOperation={applyOperation}
+          selectedStep={selectedStep} 
+          setRightSidebar={setRightSidebar}
+          flowVersion={flowVersion} 
+          contextMenuContentAddButtonData={contextMenuContentAddButtonData}
+          >  
           <ReactFlow
+            onContextMenu={onContextMenu}
             onPaneClick={()=>{
               setSelectedNodes([]);
             }}
@@ -125,22 +147,13 @@ export const FlowCanvas = React.memo(
             nodesFocusable={false}
             selectNodesOnDrag={!readonly}
             selectionMode={SelectionMode.Partial}
-            selectionKeyCode={['Shift','ControlLeft']}
+            selectionKeyCode={['Shift']}
             onSelectionChange={onSelectionChange}
           >
             <AboveFlowWidgets></AboveFlowWidgets>
             <Background />
           </ReactFlow>
-          </ContextMenuTrigger>
- 
-            <ContextMenuContent  >
-            <BuilderContextMenuContent selectedNodes={selectedNodes} applyOperation={applyOperation} selectedStep={selectedStep} setRightSidebar={setRightSidebar}  > 
-            </BuilderContextMenuContent>
-            </ContextMenuContent>
-       
-   
-      </ContextMenu>
-
+         </CanvasContextMenu>
         </FlowDragLayer>
       </div>
     );

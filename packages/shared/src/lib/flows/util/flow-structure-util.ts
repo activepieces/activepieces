@@ -164,8 +164,8 @@ function isChildOf(parent: Step, childStepName: string): boolean {
     return false
 }
 
-const findUnusedName = (trigger: Trigger) => {
-    const names = flowStructureUtil.getAllSteps(trigger).map((f) => f.name)
+const findUnusedName = (source: Trigger | string[]) => {
+    const names = Array.isArray(source) ? source : flowStructureUtil.getAllSteps(source).map((f) => f.name)
     let index = 1
     let name = 'step_1'
     while (names.includes(name)) {

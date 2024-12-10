@@ -18,7 +18,7 @@ import {
   AskAiIndicator,
   shouldShowAskAiIndicator,
 } from '../edges/ask-ai-indicator';
-import { ApBigAddButtonNode } from '../types';
+import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, ApBigAddButtonNode } from '../types';
 
 const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
@@ -71,6 +71,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                     height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
                     width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                   }}
+                  {...{ [`data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`]: JSON.stringify(data) }}
                   id={id}
                   className={cn('  rounded bg-accent', {
                     'bg-primary/80': showDropIndicator || pieceSelectorOpen,

@@ -12,7 +12,7 @@ import {
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../consts';
-import { ApButtonData } from '../types';
+import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, ApButtonData } from '../types';
 
 import { AskAiIndicator, shouldShowAskAiIndicator } from './ask-ai-indicator';
 
@@ -51,6 +51,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
     <>
       {showDropIndicator && !readonly && (
         <div
+         
           style={{
             width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
             height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
@@ -97,7 +98,8 @@ const ApAddButton = React.memo((props: ApButtonData) => {
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}
         >
-          <div>
+          <div
+           {...{ [`data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`]: JSON.stringify(props) }}>
             {showAskAiIndicator && (
               <AskAiIndicator
                 height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
