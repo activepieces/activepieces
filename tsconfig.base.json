@@ -42,6 +42,9 @@
       "@activepieces/piece-airtable": [
         "packages/pieces/community/airtable/src/index.ts"
       ],
+      "@activepieces/piece-akahu": [
+        "packages/pieces/community/akahu/src/index.ts"
+      ],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
