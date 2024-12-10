@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isEmpty, isNil } from '@activepieces/shared';
 import { googleSheetsAuth } from '../../';
 import { columnToLabel, googleSheetsCommon, labelToColumn } from '../common/common';
 import {
@@ -157,11 +157,18 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
 		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
 
-		const oldValuesHashes = (await context.store.get(`${sheetId}`)) as any[];
+		let oldValuesHashes = (await context.store.get(`${sheetId}`)) as any[];
+
+		if (isEmpty(oldValuesHashes)) {
+			oldValuesHashes = [];
+		}
 
 		/* Fetch rows values with all columns as this will be used on returning updated/new row data
 		 */
 		const currentValues = await getWorkSheetValues(context.auth, spreadSheetId, sheetName);
+		if (isEmpty(currentValues)) {
+			return [];
+		}
 
 		// const rowCount = Math.max(oldValuesHashes.length, currentValues.length);
 
