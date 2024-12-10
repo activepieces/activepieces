@@ -44,6 +44,7 @@ const createBigAddButtonGraph: (
         flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS,
     },
     data: {},
+    selectable:false
   };
 
   const straightLineEdge: ApStraightLineEdge = {
@@ -74,6 +75,7 @@ const createStepGraph: (
     data: {
       step,
     },
+   selectable:true
   };
   const graphEndNode: ApGraphEndNode = {
     id: `${step.name}-subgraph-end`,
@@ -83,6 +85,7 @@ const createStepGraph: (
       y: graphHeight,
     },
     data: {},
+    selectable:false
   };
 
   const straightLineEdge: ApStraightLineEdge = {
@@ -225,6 +228,7 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
         childGraphBoundingBox.height / 2,
     },
     data: {},
+    selectable:false
   };
   const childGraphAfterOffset = offsetGraph(childGraph, {
     x:
@@ -275,6 +279,7 @@ const buildLoopChildGraph: (step: LoopOnItemsAction) => ApGraph = (step) => {
         flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS,
     },
     data: {},
+    selectable:false
   };
 
   return {
@@ -315,6 +320,7 @@ const buildRouterChildGraph = (step: RouterAction) => {
         flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS,
     },
     data: {},
+    selectable:false
   };
   const edges: ApEdge[] = childGraphsAfterOffset
     .map((childGraph, branchIndex) => {
