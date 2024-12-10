@@ -33,6 +33,7 @@ export const WebhookPauseMetadata = Type.Object({
     response: Type.Unknown(),
     handlerId: Type.Optional(Type.String({})),
     progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
+    timeoutDate: Type.Optional(Type.String()),
 })
 export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
 
