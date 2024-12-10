@@ -2,10 +2,10 @@ import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/serv
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
 import { createRedisClient } from '../../database/redis-connection'
+import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
-import { apDayjsDuration } from '../../helper/dayjs-helper'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const ONE_MONTH = apDayjsDuration(1, 'month').asMilliseconds()
