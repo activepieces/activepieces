@@ -5,16 +5,12 @@ import { CanvasContextMenuContent } from "./canvas-context-menu-content";
 import AddButtonsContextMenuContent from "./add-buttons-context-menu-content";
 
 
-type CanvasContextMenuProps = {
+type CanvasContextMenuProps = Pick<BuilderState, 'applyOperation' | 'selectedStep' | 'flowVersion' | 'exitStepSettings'> & {
     selectedNodes: ApNode[],
-    applyOperation: BuilderState['applyOperation'],
-    selectedStep: BuilderState['selectedStep'],
-    setRightSidebar: BuilderState['setRightSidebar'],
-    flowVersion: BuilderState['flowVersion'],
     children: React.ReactNode,
     contextMenuContentAddButtonData: ApButtonData | null
 }
-export const CanvasContextMenu = ({ selectedNodes, applyOperation, selectedStep, setRightSidebar,flowVersion,contextMenuContentAddButtonData, children }: CanvasContextMenuProps) => {
+export const CanvasContextMenu = ({ selectedNodes, applyOperation, selectedStep,flowVersion,contextMenuContentAddButtonData, children, exitStepSettings }: CanvasContextMenuProps) => {
 
  return <ContextMenu >
 
@@ -28,15 +24,15 @@ export const CanvasContextMenu = ({ selectedNodes, applyOperation, selectedStep,
          selectedNodes={selectedNodes} 
          applyOperation={applyOperation}
          selectedStep={selectedStep}
-         setRightSidebar={setRightSidebar}
          flowVersion={flowVersion}
+         exitStepSettings={exitStepSettings}
          />
        }
        {
         contextMenuContentAddButtonData &&
         <AddButtonsContextMenuContent
          addButtonData={contextMenuContentAddButtonData} 
-        applyOperation={applyOperation}
+         applyOperation={applyOperation}
          flowVersion={flowVersion}/>
        }
     </ContextMenuContent>

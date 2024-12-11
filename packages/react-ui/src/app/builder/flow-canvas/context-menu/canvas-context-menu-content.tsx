@@ -4,9 +4,14 @@ import { Copy, Trash } from "lucide-react"
 import { ApNode, ApNodeType } from "../types";
 import React from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { BuilderState, RightSideBarType } from "../../builder-hooks";
-import { ActionType, AddActionRequest, FlowOperationType, flowStructureUtil, StepLocationRelativeToParent, TriggerType, removeAnySubsequentAction } from "@activepieces/shared";
+import { BuilderState } from "../../builder-hooks";
+import { ActionType, AddActionRequest, FlowOperationType, flowStructureUtil, StepLocationRelativeToParent, TriggerType, removeAnySubsequentAction, Action } from "@activepieces/shared";
 import { INTERNAL_ERROR_TOAST, toast } from "@/components/ui/use-toast";
+
+type CanvasContextMenuContentProps = Pick<BuilderState, 'applyOperation' | 'selectedStep' | 'flowVersion' | 'exitStepSettings'> & {
+    selectedNodes: ApNode[]
+};
+
 
 const CanvasContextMenuItemWrapper = ({ showTooltip, children }: { showTooltip: boolean, children: React.ReactNode }) => {
     return <Tooltip >
@@ -24,11 +29,13 @@ const CanvasContextMenuItemWrapper = ({ showTooltip, children }: { showTooltip: 
     </Tooltip>
 }
 
-export const CanvasContextMenuContent = ({ selectedNodes, applyOperation, selectedStep, setRightSidebar,flowVersion }: { selectedNodes: ApNode[], applyOperation: BuilderState['applyOperation'], setRightSidebar: BuilderState['setRightSidebar'], selectedStep: BuilderState['selectedStep'], flowVersion: BuilderState['flowVersion'] }) => {
+
+export const CanvasContextMenuContent = ({ selectedNodes, applyOperation, selectedStep, flowVersion, exitStepSettings }: CanvasContextMenuContentProps) => {
     const disabled = selectedNodes.length === 0;
     return <>
      <CanvasContextMenuItemWrapper showTooltip={disabled}>
         <ContextMenuItem disabled={disabled} onClick={() => {
+            console.log(flowVersion.trigger)
          const operationsToCopy = selectedNodes.map(node => {
             if (node.type === ApNodeType.STEP && 
                 node.data.step.type !== TriggerType.EMPTY && 
@@ -45,8 +52,8 @@ export const CanvasContextMenuContent = ({ selectedNodes, applyOperation, select
                             n.data.step.type !== TriggerType.PIECE
                         ) > -1;
                     });
-
-                const stepWithoutChildren = removeAnySubsequentAction(node.data.step);
+                const stepWithRecentChanges = flowStructureUtil.getStepOrThrow(node.data.step.name ,flowVersion.trigger) as Action;
+                const stepWithoutChildren = removeAnySubsequentAction(stepWithRecentChanges);
                 if (firstPreviousAction) {
                     const isPreviousStepTheParent = flowStructureUtil.isChildOf(
                         firstPreviousAction, 
@@ -110,7 +117,7 @@ export const CanvasContextMenuContent = ({ selectedNodes, applyOperation, select
                         toast(INTERNAL_ERROR_TOAST);
                     })
                     if (selectedStep === node.data.step.name) {
-                        setRightSidebar(RightSideBarType.NONE);
+                        exitStepSettings()
                     }
                 }
             })

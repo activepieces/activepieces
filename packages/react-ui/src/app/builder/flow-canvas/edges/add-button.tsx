@@ -11,8 +11,8 @@ import {
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../consts';
-import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, ApButtonData } from '../types';
+import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, flowUtilConsts } from '../consts';
+import { ApButtonData } from '../types';
 
 import { AskAiIndicator, shouldShowAskAiIndicator } from './ask-ai-indicator';
 

@@ -171,5 +171,3 @@ export type ApGraph = {
   edges: ApEdge[];
 };
 
-
-export const ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE = "add-button-context-menu";

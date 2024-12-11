@@ -47,8 +47,8 @@ import {
 } from '@activepieces/shared';
 
 import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
-import { flowUtilConsts } from '../consts';
-import { ApStepNode } from '../types';
+import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../consts';
+import { ApNode, ApNodeType, ApStepNode } from '../types';
 
 function hasSkippedParent(stepName: string, trigger: Trigger): boolean {
   const step = flowStructureUtil.getStep(stepName, trigger);
@@ -208,10 +208,19 @@ const ApStepCanvasNode = React.memo(
       e.preventDefault();
       e.stopPropagation();
     };
-
+    const node: ApNode = {
+      data,
+      id: data.step!.name,
+      position: {
+        x: 0,
+        y: 0
+      },
+      type: ApNodeType.STEP
+    }
     return (
       <div
         id={data.step!.name}
+        {...{[`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: JSON.stringify(node)}}
         style={{
           height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
           width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,

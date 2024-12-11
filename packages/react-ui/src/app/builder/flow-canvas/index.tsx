@@ -8,11 +8,11 @@ import { ActionType, flowStructureUtil, FlowVersion, isFlowStateTerminal, Trigge
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { flowUtilConsts } from './consts';
+import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from './consts';
 import { flowCanvasUtils } from './flow-canvas-utils';
 import { FlowDragLayer } from './flow-drag-layer';
 import { AboveFlowWidgets } from './widgets';
-import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, ApButtonData, ApNode } from './types';
+import { ApButtonData, ApNode } from './types';
 import { CanvasContextMenu } from './context-menu/canvas-context-menu';
 
 
@@ -31,8 +31,8 @@ export const FlowCanvas = React.memo(
     setHasCanvasBeenInitialised: (value: boolean) => void;
     lefSideBarContainerWidth: number;
   }) => {
-    const [allowCanvasPanning, flowVersion, run,readonly,setSelectedNodes, selectedNodes,applyOperation,selectedStep,setRightSidebar ] = useBuilderStateContext((state) => {
-      return [state.allowCanvasPanning, state.flowVersion, state.run,state.readonly,state.setSelectedNodes, state.selectedNodes,state.applyOperation, state.selectedStep,state.setRightSidebar];
+    const [allowCanvasPanning,  flowVersion, run,readonly,setSelectedNodes, selectedNodes,applyOperation,selectedStep,exitStepSettings ] = useBuilderStateContext((state) => {
+      return [state.allowCanvasPanning, state.flowVersion, state.run,state.readonly,state.setSelectedNodes, state.selectedNodes,state.applyOperation, state.selectedStep,state.exitStepSettings];
     });
     
     const previousRun = usePrevious(run);
@@ -99,27 +99,35 @@ export const FlowCanvas = React.memo(
     const onContextMenu = useCallback((ev:React.MouseEvent<HTMLDivElement>)=>{
       if(ev.target instanceof HTMLElement || ev.target instanceof SVGElement)
       {
-        const element = ev.target.closest(`[data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}]`);
-        const addButtonData = element?.getAttribute(`data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`);
+        const addButtonElement = ev.target.closest(`[data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}]`);
+        const addButtonData = addButtonElement?.getAttribute(`data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`);
         if(addButtonData)
-        {
-          setcontextMenuContentAddButtonData(JSON.parse(addButtonData));
-        }
-          else {
-            setcontextMenuContentAddButtonData(null);
+          {
+            setcontextMenuContentAddButtonData(JSON.parse(addButtonData || '{}'));
           }
+        else {
+              setcontextMenuContentAddButtonData(null);
+          }
+          debugger;
+          const stepElement = ev.target.closest(`[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`);
+          const stepNode = stepElement?.getAttribute(`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`);
+          setSelectedNodes(stepNode? [JSON.parse(stepNode)]: selectedNodes);
         }
-    },[setcontextMenuContentAddButtonData]);
+       
+
+    },[setcontextMenuContentAddButtonData, setSelectedNodes,selectedNodes]);
+
     return (
       <div
         ref={containerRef}
         className="size-full relative overflow-hidden z-50"
       >
         <FlowDragLayer lefSideBarContainerWidth={lefSideBarContainerWidth}>
-        <CanvasContextMenu selectedNodes={selectedNodes}
+        <CanvasContextMenu 
+         selectedNodes={selectedNodes}
           applyOperation={applyOperation}
           selectedStep={selectedStep} 
-          setRightSidebar={setRightSidebar}
+          exitStepSettings={exitStepSettings}
           flowVersion={flowVersion} 
           contextMenuContentAddButtonData={contextMenuContentAddButtonData}
           >  

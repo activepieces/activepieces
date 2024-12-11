@@ -13,12 +13,12 @@ import {
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../consts';
+import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, flowUtilConsts } from '../consts';
 import {
   AskAiIndicator,
   shouldShowAskAiIndicator,
 } from '../edges/ask-ai-indicator';
-import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, ApBigAddButtonNode } from '../types';
+import { ApBigAddButtonNode } from '../types';
 
 const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
