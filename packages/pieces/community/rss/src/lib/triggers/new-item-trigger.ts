@@ -138,11 +138,12 @@ export const rssNewItemTrigger = createTrigger({
   props: {
     rss_feed_url: rssFeedUrl,
   },
-  async test({ auth, propsValue, store }): Promise<unknown[]> {
+  async test({ auth, propsValue, store, files }): Promise<unknown[]> {
     return await pollingHelper.test(polling, {
       auth,
       store: store,
       propsValue: propsValue,
+      files: files,
     });
   },
   async onEnable({ auth, propsValue, store }): Promise<void> {
@@ -165,13 +166,14 @@ export const rssNewItemTrigger = createTrigger({
     });
   },
 
-  async run({ auth, propsValue, store }): Promise<unknown[]> {
+  async run({ auth, propsValue, store, files }): Promise<unknown[]> {
     const lastFetchDate = await store.get<number>('_lastRssPublishDate');
     const newItems = (
       await pollingHelper.poll(polling, {
         auth,
         store: store,
-        propsValue: propsValue,
+        propsValue: propsValue, 
+        files: files,
       })
     ).filter((f) => {
       if (isNil(lastFetchDate)) {

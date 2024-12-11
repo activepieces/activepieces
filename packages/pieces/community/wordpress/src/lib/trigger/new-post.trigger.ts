@@ -126,6 +126,7 @@ export const wordpressNewPost = createTrigger({
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
+      files: ctx.files,
     });
   },
   async onEnable(ctx) {
@@ -147,6 +148,7 @@ export const wordpressNewPost = createTrigger({
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
+      files: ctx.files,
     });
   },
 });
