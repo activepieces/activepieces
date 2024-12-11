@@ -11,13 +11,13 @@ import { _addBranch } from './add-branch'
 import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
-import { _importFlow } from './import-flow'
+import { _importFlow,removeAnySubsequentAction } from './import-flow'
 import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
-
+export { removeAnySubsequentAction }
 export enum FlowOperationType {
     LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
     CHANGE_STATUS = 'CHANGE_STATUS',

@@ -34,7 +34,10 @@ export const CanvasContextMenu = ({ selectedNodes, applyOperation, selectedStep,
        }
        {
         contextMenuContentAddButtonData &&
-        <AddButtonsContextMenuContent addButtonData={contextMenuContentAddButtonData} applyOperation={applyOperation} flowVersion={flowVersion}/>
+        <AddButtonsContextMenuContent
+         addButtonData={contextMenuContentAddButtonData} 
+        applyOperation={applyOperation}
+         flowVersion={flowVersion}/>
        }
     </ContextMenuContent>
  </ContextMenu>

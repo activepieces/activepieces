@@ -5,9 +5,8 @@ import { ApNode, ApNodeType } from "../types";
 import React from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BuilderState, RightSideBarType } from "../../builder-hooks";
-import { ActionType, AddActionRequest, FlowOperationType, flowStructureUtil, StepLocationRelativeToParent, TriggerType } from "../../../../../../shared/src";
+import { ActionType, AddActionRequest, FlowOperationType, flowStructureUtil, StepLocationRelativeToParent, TriggerType, removeAnySubsequentAction } from "@activepieces/shared";
 import { INTERNAL_ERROR_TOAST, toast } from "@/components/ui/use-toast";
-import { removeAnySubsequentAction } from "../../../../../../shared/src/lib/flows/operations/import-flow";
 
 const CanvasContextMenuItemWrapper = ({ showTooltip, children }: { showTooltip: boolean, children: React.ReactNode }) => {
     return <Tooltip >
@@ -34,9 +33,10 @@ export const CanvasContextMenuContent = ({ selectedNodes, applyOperation, select
             if (node.type === ApNodeType.STEP && 
                 node.data.step.type !== TriggerType.EMPTY && 
                 node.data.step.type !== TriggerType.PIECE) {
-                const previousStep = flowStructureUtil
-                    .findPathToStep(flowVersion.trigger, node.data.step.name)
-                    .reverse()
+                const pathToStep = flowStructureUtil
+                .findPathToStep(flowVersion.trigger, node.data.step.name);
+                const firstPreviousAction = 
+                pathToStep.reverse() 
                     .find(s => {
                         return selectedNodes.findIndex(n => 
                             n.type === ApNodeType.STEP && 
@@ -47,16 +47,16 @@ export const CanvasContextMenuContent = ({ selectedNodes, applyOperation, select
                     });
 
                 const stepWithoutChildren = removeAnySubsequentAction(node.data.step);
-                if (previousStep) {
+                if (firstPreviousAction) {
                     const isPreviousStepTheParent = flowStructureUtil.isChildOf(
-                        previousStep, 
+                        firstPreviousAction, 
                         node.data.step.name
                     );
                 
                     if (isPreviousStepTheParent) {
-                        const branchIndex = previousStep.type !== ActionType.ROUTER 
+                        const branchIndex = firstPreviousAction.type !== ActionType.ROUTER 
                             ? undefined 
-                            : previousStep.children.findIndex(c => 
+                            : firstPreviousAction.children.findIndex(c => 
                                 c ? flowStructureUtil.isChildOf(c, node.data.step.name) || 
                                     c.name === node.data.step.name 
                                   : false
@@ -64,8 +64,8 @@ export const CanvasContextMenuContent = ({ selectedNodes, applyOperation, select
 
                         const addOperation: AddActionRequest = {
                             action: stepWithoutChildren,
-                            parentStep: previousStep.name,
-                            stepLocationRelativeToParent: previousStep.type === ActionType.LOOP_ON_ITEMS 
+                            parentStep: firstPreviousAction.name,
+                            stepLocationRelativeToParent: firstPreviousAction.type === ActionType.LOOP_ON_ITEMS 
                                 ? StepLocationRelativeToParent.INSIDE_LOOP 
                                 : StepLocationRelativeToParent.INSIDE_BRANCH,
                             branchIndex
@@ -74,7 +74,7 @@ export const CanvasContextMenuContent = ({ selectedNodes, applyOperation, select
                     } else {
                         const addOperation: AddActionRequest = {
                             action:stepWithoutChildren,
-                            parentStep: previousStep.name,
+                            parentStep: firstPreviousAction.name,
                             stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER
                         };
                         return addOperation;

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Value } from '@sinclair/typebox/value';
-import { AddActionRequest, FlowOperationType, flowStructureUtil, StepLocationRelativeToParent } from '../../../../../../shared/src';
+import { AddActionRequest, FlowOperationType, flowStructureUtil, StepLocationRelativeToParent } from '@activepieces/shared';
 import { ContextMenuItem } from '@/components/ui/context-menu';
 import { t } from 'i18next';
 import { ClipboardPaste } from 'lucide-react';
 import { ApButtonData } from '../types';
 import { BuilderState } from '../../builder-hooks';
+import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
 
 const getOperationsInClipboard = async () => {
     try {
@@ -72,7 +73,7 @@ const AddButtonsContextMenuContent = ({addButtonData,applyOperation, flowVersion
                 type: FlowOperationType.ADD_ACTION,
                 request
             },()=>{
-                console.error('error pasting operations');
+                toast(UNSAVED_CHANGES_TOAST)
             })
         },)
     }
