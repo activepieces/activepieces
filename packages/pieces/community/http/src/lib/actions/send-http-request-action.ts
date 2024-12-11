@@ -138,6 +138,10 @@ export const httpSendRequestAction = createAction({
       displayName: 'Timeout(in seconds)',
       required: false,
     }),
+    rejectUnauthorized: Property.Checkbox({
+      displayName: 'Require valid SSL certificate',
+      required: false,
+    }),
     failsafe: Property.Checkbox({
       displayName: 'No Error on Failure',
       required: false,
@@ -156,6 +160,7 @@ export const httpSendRequestAction = createAction({
       body,
       body_type,
       timeout,
+      rejectUnauthorized,
       failsafe,
       use_proxy,
     } = context.propsValue;
@@ -169,6 +174,7 @@ export const httpSendRequestAction = createAction({
       headers: headers as HttpHeaders,
       queryParams: queryParams as QueryParams,
       timeout: timeout ? timeout * 1000 : 0,
+      rejectUnauthorized,
     };
     if (body) {
       const bodyInput = body['data'];
@@ -197,7 +203,7 @@ export const httpSendRequestAction = createAction({
         } else {
           proxyUrl = `http://${proxySettings.proxy_host}:${proxySettings.proxy_port}`;
         }
-  
+
         const httpsAgent = new HttpsProxyAgent(proxyUrl)
         const axiosClient = axios.create({
           httpsAgent,
