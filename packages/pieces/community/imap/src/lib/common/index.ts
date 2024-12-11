@@ -15,13 +15,14 @@ export const imapCommon = {
     password: string;
     port: number;
     tls: boolean;
+    tlsRejectUnauthorized: boolean | undefined;
   }) {
     return {
       host: auth.host,
       port: auth.port,
       secure: auth.tls,
       auth: { user: auth.username, pass: auth.password },
-      tls: { rejectUnauthorized: false },
+      tls: { rejectUnauthorized: !!auth.tlsRejectUnauthorized, },
     };
   },
   mailbox: Property.Dropdown({
@@ -37,6 +38,7 @@ export const imapCommon = {
           password: string;
           port: number;
           tls: boolean;
+          tlsRejectUnauthorized: boolean | undefined;
         }
       );
       let options: { label: string; value: string }[] = [];
@@ -69,7 +71,7 @@ export const imapCommon = {
     mailbox: string;
     files: FilesService;
   }): Promise<{
-    data: ParsedMail; 
+    data: ParsedMail;
     epochMilliSeconds: number;
   }[]> {
     const imapConfig = imapCommon.constructConfig(
@@ -79,6 +81,7 @@ export const imapCommon = {
         password: string;
         port: number;
         tls: boolean;
+        tlsRejectUnauthorized: boolean | undefined;
       }
     );
     const imapClient = new ImapFlow({ ...imapConfig, logger: false });

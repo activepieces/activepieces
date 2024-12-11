@@ -42,6 +42,11 @@ export const imapAuth = PieceAuth.CustomAuth({
       defaultValue: false,
       required: true,
     }),
+    tlsRejectUnauthorized: Property.Checkbox({
+      displayName: 'Require valid SSL certificate',
+      defaultValue: false,
+      required: false,
+    }),
   },
   validate: async ({ auth }) => {
     const imapConfig = imapCommon.constructConfig(
@@ -51,6 +56,7 @@ export const imapAuth = PieceAuth.CustomAuth({
         password: string;
         port: number;
         tls: boolean;
+        tlsRejectUnauthorized: boolean | undefined;
       }
     );
     const imapClient = new ImapFlow({ ...imapConfig, logger: false });
