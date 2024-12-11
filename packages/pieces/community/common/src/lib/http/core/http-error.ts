@@ -36,17 +36,9 @@ export class HttpError extends Error {
 
   public errorMessage() {
     return {
-      response: {
-        status: this.status,
-        body: this.responseBody,
-      },
-      request: {
-        body: this.requestBody,
-      },
-      error: {
-        message: this.errorString,
-        code: this.errorCode,
-      },
+      response: this.response,
+      request: this.request,
+      error: this.error,
     };
   }
 
