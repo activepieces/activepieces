@@ -43,9 +43,6 @@ export const activepieces = createPiece({
     createProject,
     updateProject,
     listProject,
-    createProjectMember,
-    listProjectMember,
-    deleteProjectMember,
     createCustomApiCallAction({
       baseUrl: (auth) => {
         return `${(auth as { baseApiUrl: string }).baseApiUrl}`;
