@@ -215,7 +215,10 @@ export async function convertAttachment(
         }),
       };
     } catch (error) {
-      console.error(`Failed to process attachment: ${attachment.filename}`, error);
+      console.error(
+        `Failed to process attachment: ${attachment.filename}`,
+        error
+      );
       return null;
     }
   });

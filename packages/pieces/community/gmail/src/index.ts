@@ -54,9 +54,6 @@ export const gmail = createPiece({
     'abuaboud',
     'AdamSelene',
   ],
-  triggers: [
-    gmailNewEmailTrigger,
-    gmailNewLabeledEmailTrigger,
-  ],
+  triggers: [gmailNewEmailTrigger, gmailNewLabeledEmailTrigger],
   auth: gmailAuth,
 });

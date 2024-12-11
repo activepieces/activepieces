@@ -1,29 +1,27 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
   FilesService,
 } from '@activepieces/pieces-framework';
-import { GmailLabel } from '../common/models';
 import { GmailProps } from '../common/props';
 import { gmailAuth } from '../../';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { parseStream, convertAttachment } from '../common/data';
 
-async function enrichGmailMessage({ 
-  gmail, 
-  messageId, 
-  files, 
-  labelInfo 
-}: { 
-  gmail: any, 
-  messageId: string, 
-  files: FilesService,
+async function enrichGmailMessage({
+  gmail,
+  messageId,
+  files,
+  labelInfo,
+}: {
+  gmail: any;
+  messageId: string;
+  files: FilesService;
   labelInfo: {
-    labelId: string,
-    labelName: string
-  }
+    labelId: string;
+    labelName: string;
+  };
 }) {
   const rawMailResponse = await gmail.users.messages.get({
     userId: 'me',
@@ -43,7 +41,10 @@ async function enrichGmailMessage({
   return {
     message: {
       ...parsedMailResponse,
-      attachments: await convertAttachment(parsedMailResponse.attachments, files),
+      attachments: await convertAttachment(
+        parsedMailResponse.attachments,
+        files
+      ),
     },
     thread: threadResponse.data,
     labelInfo: {
@@ -72,7 +73,7 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
     const gmail = google.gmail({ version: 'v1', auth: authClient });
 
     const profile = await gmail.users.getProfile({
-      userId: 'me'
+      userId: 'me',
     });
 
     await context.store.put('lastHistoryId', profile.data.historyId);
@@ -101,8 +102,14 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
       for (const history of historyResponse.data.history) {
         if (history.labelsAdded) {
           for (const labelAdded of history.labelsAdded) {
-            if (labelAdded.labelIds?.includes(context.propsValue.label.id) && labelAdded.message?.id) {
-              labeledMessages.set(labelAdded.message.id, history.id?.toString() || '');
+            if (
+              labelAdded.labelIds?.includes(context.propsValue.label.id) &&
+              labelAdded.message?.id
+            ) {
+              labeledMessages.set(
+                labelAdded.message.id,
+                history.id?.toString() || ''
+              );
             }
           }
         }
@@ -117,13 +124,13 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
         labelInfo: {
           labelId: context.propsValue.label.id,
           labelName: context.propsValue.label.name,
-        }
+        },
       });
 
-      if(lastHistoryId !== historyId) {
-      results.push({
-        id: historyId,
-        data: enrichedMessage,
+      if (lastHistoryId !== historyId) {
+        results.push({
+          id: historyId,
+          data: enrichedMessage,
         });
       }
     }
@@ -160,7 +167,7 @@ export const gmailNewLabeledEmailTrigger = createTrigger({
           labelInfo: {
             labelId: context.propsValue.label.id,
             labelName: context.propsValue.label.name,
-          }
+          },
         });
 
         results.push({
