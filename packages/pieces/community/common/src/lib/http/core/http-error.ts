@@ -1,10 +1,14 @@
 import { AxiosError } from 'axios';
 
 export class HttpError extends Error {
+  private readonly errorString: string;
+  private readonly errorCode: string | undefined;
   private readonly status: number;
   private readonly responseBody: unknown;
 
   constructor(private readonly requestBody: unknown, err: AxiosError) {
+    const message = err?.message;
+    const code = err?.code;
     const status = err?.response?.status || 500;
     const responseBody = err?.response?.data;
 
@@ -17,9 +21,15 @@ export class HttpError extends Error {
         request: {
           body: requestBody,
         },
+        error: {
+          message: message,
+          code: code,
+        },
       })
     );
 
+    this.errorString = message;
+    this.errorCode = code;
     this.status = status;
     this.responseBody = responseBody;
   }
@@ -32,6 +42,10 @@ export class HttpError extends Error {
       },
       request: {
         body: this.requestBody,
+      },
+      error: {
+        message: this.errorString,
+        code: this.errorCode,
       },
     };
   }
@@ -46,6 +60,13 @@ export class HttpError extends Error {
   get request() {
     return {
       body: this.requestBody,
+    };
+  }
+
+  get error() {
+    return {
+      message: this.errorString,
+      code: this.errorCode,
     };
   }
 }
