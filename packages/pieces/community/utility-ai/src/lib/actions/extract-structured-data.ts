@@ -172,7 +172,7 @@ export const extractStructuredData = createAction({
       role: AIChatRole.USER,
       content: prompt ?? 'Use optical character recognition (OCR) to extract from provided data.',
     }]
-    if (!isNil(text)) {
+    if (!isNil(text) && text!=='') {
       messages.push({
         role: AIChatRole.USER,
         content: text,
