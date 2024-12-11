@@ -2,8 +2,6 @@ import { Type } from '@sinclair/typebox'
 import { TriggerPayload } from '../../engine'
 import { StepOutput } from './step-output'
 
-export const MAX_LOG_SIZE = 4096 * 1024
-
 export enum ExecutionType {
     BEGIN = 'BEGIN',
     RESUME = 'RESUME',

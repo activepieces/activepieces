@@ -1,4 +1,4 @@
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, logger, SharedSystemProp, system, WorkerSystemProps } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -16,7 +16,6 @@ import {
     FlowRunStatus,
     FlowVersionId,
     isNil,
-    MAX_LOG_SIZE,
     PauseMetadata,
     PauseType,
     ProgressUpdateType,
@@ -44,6 +43,7 @@ import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
+const maxFileSizeInBytes = system.getNumberOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 
 export const flowRunService = {
     async list({
@@ -324,9 +324,9 @@ export const flowRunService = {
     },
     async updateLogsAndReturnUploadUrl({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<string | undefined> {
         const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
-        if (executionStateContentLength > MAX_LOG_SIZE || (!isNil(executionState) && executionState.byteLength > MAX_LOG_SIZE)) {
+        if (executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
             const errors = new Error(
-                'Execution Output is too large, maximum size is ' + MAX_LOG_SIZE,
+                'Execution Output is too large, maximum size is ' + maxFileSizeInBytes,
             )
             exceptionHandler.handle(errors)
             throw errors
