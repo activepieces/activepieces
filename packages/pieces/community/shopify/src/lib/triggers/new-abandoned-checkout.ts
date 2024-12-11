@@ -22,11 +22,11 @@ export const newAbandonedCheckout = createTrigger({
   async onDisable({ auth, propsValue, store }) {
     await pollingHelper.onEnable(polling, { auth, propsValue, store });
   },
-  async run({ auth, propsValue, store }) {
-    return await pollingHelper.poll(polling, { auth, propsValue, store });
+  async run({ auth, propsValue, store, files }) {
+    return await pollingHelper.poll(polling, { auth, propsValue, store, files });
   },
-  async test({ auth, propsValue, store }) {
-    return await pollingHelper.test(polling, { auth, propsValue, store });
+  async test({ auth, propsValue, store, files }) {
+    return await pollingHelper.test(polling, { auth, propsValue, store, files });
   },
 });
 
