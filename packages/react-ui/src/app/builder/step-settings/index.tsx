@@ -21,6 +21,7 @@ import {
   Trigger,
   TriggerType,
   debounce,
+  flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
 
@@ -170,7 +171,6 @@ const StepSettingsContainer = () => {
         JSON.stringify(form.getValues()),
       );
       currentStep.valid = form.formState.isValid;
-
       const routerBranchesNumberChanged =
         currentStep.type === ActionType.ROUTER &&
         previousSavedStep.current?.type === ActionType.ROUTER &&
@@ -184,7 +184,10 @@ const StepSettingsContainer = () => {
         previousSavedStep.current = currentStep;
         return;
       }
-
+      if(currentStep.type !== TriggerType.EMPTY && currentStep.type !== TriggerType.PIECE &&
+         selectedStep.type !== TriggerType.EMPTY && selectedStep.type !== TriggerType.PIECE){
+        currentStep.skip = selectedStep.skip;
+      }
       previousSavedStep.current = currentStep;
       if (currentStep.type === TriggerType.PIECE) {
         debouncedTrigger(currentStep as Trigger);

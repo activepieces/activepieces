@@ -1,9 +1,9 @@
-import { ReactFlow, Background, useReactFlow, SelectionMode, OnSelectionChangeParams  } from '@xyflow/react';
+import { ReactFlow, Background, useReactFlow, SelectionMode, OnSelectionChangeParams, useStoreApi, PanOnScrollMode  } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useEffect, useMemo, useRef, useState  } from 'react';
 import { usePrevious } from 'react-use';
 
-import { ActionType, flowStructureUtil, FlowVersion, isFlowStateTerminal, TriggerType } from '@activepieces/shared';
+import { ActionType, flowStructureUtil, FlowVersion, isFlowStateTerminal, isNil, StepLocationRelativeToParent, TriggerType } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
@@ -14,15 +14,20 @@ import { FlowDragLayer } from './flow-drag-layer';
 import { AboveFlowWidgets } from './widgets';
 import { ApButtonData, ApNode } from './types';
 import { CanvasContextMenu } from './context-menu/canvas-context-menu';
+import { copySelectedNodes } from './context-menu/copy-selected-nodes';
+import { deleteSelectedNodes } from './context-menu/delete-selected-nodes';
+import { getOperationsInClipboard, pasteNodes } from './context-menu/paste-nodes';
 
 
 const createGraphKey = (flowVersion:FlowVersion)=>{
     return flowStructureUtil.getAllSteps(flowVersion.trigger).reduce((acc,step)=>{
-      const skipKey = step.type !== TriggerType.EMPTY && step.type !== TriggerType.PIECE? `skipped-${step.skip}`:'unskipable';
       const branchesLength = step.type === ActionType.ROUTER? step.settings.branches.length: 0;
-     return `${acc}-${step.displayName}-${step.type}-${step.type === ActionType.PIECE?step.settings.pieceName: ''}-${skipKey}-${branchesLength}`
+      return `${acc}-${step.displayName}-${step.type}-${step.type === ActionType.PIECE?step.settings.pieceName: ''}-${branchesLength}`
     },'')
 }
+
+
+
 export const FlowCanvas = React.memo(
   ({
     setHasCanvasBeenInitialised,
@@ -108,14 +113,46 @@ export const FlowCanvas = React.memo(
         else {
               setcontextMenuContentAddButtonData(null);
           }
-          debugger;
+          const nodeSelectionActive = !isNil(document.querySelector('.react-flow__nodesselection-rect'));
           const stepElement = ev.target.closest(`[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`);
           const stepNode = stepElement?.getAttribute(`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`);
-          setSelectedNodes(stepNode? [JSON.parse(stepNode)]: selectedNodes);
+          setSelectedNodes(nodeSelectionActive || addButtonElement ? selectedNodes : stepNode? [JSON.parse(stepNode)]: []);
         }
-       
-
     },[setcontextMenuContentAddButtonData, setSelectedNodes,selectedNodes]);
+
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    
+      if(e.target instanceof HTMLElement && (e.target === document.body || e.target.classList.contains('react-flow__nodesselection-rect')))
+      {
+        if (e.key === "c" && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          copySelectedNodes(selectedNodes, flowVersion);
+        }
+        if (e.key === 'Delete' && (e.shiftKey)) {
+          e.preventDefault();
+          deleteSelectedNodes(selectedNodes, applyOperation, selectedStep, exitStepSettings);
+        }
+        if(e.key === 'v' && (e.metaKey || e.ctrlKey)) {
+          getOperationsInClipboard().then((operations)=>{
+            if(operations.length > 0)
+            {
+              pasteNodes(operations, flowVersion, {
+                parentStepName: flowStructureUtil.getAllSteps(flowVersion.trigger).at(-1)!.name,
+                edgeId:'',
+                stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+              }, applyOperation);
+            }
+          })
+        }
+      }
+     
+
+    }, [selectedNodes, flowVersion, applyOperation, selectedStep, exitStepSettings]);
+ 
+    React.useEffect(() => {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [handleKeyDown]);
 
     return (
       <div
@@ -130,6 +167,7 @@ export const FlowCanvas = React.memo(
           exitStepSettings={exitStepSettings}
           flowVersion={flowVersion} 
           contextMenuContentAddButtonData={contextMenuContentAddButtonData}
+          readonly={readonly}
           >  
           <ReactFlow
             onContextMenu={onContextMenu}
@@ -145,17 +183,20 @@ export const FlowCanvas = React.memo(
             elevateEdgesOnSelect={false}
             maxZoom={1.5}
             minZoom={0.5}
-            panOnDrag={allowCanvasPanning}
+            panOnDrag={[1]}
             zoomOnDoubleClick={false}
             panOnScroll={true}
+            panOnScrollMode={PanOnScrollMode.Free}
             fitView={false}
             nodesConnectable={false}
             elementsSelectable={true}
             nodesDraggable={false}
             nodesFocusable={false}
-            selectNodesOnDrag={!readonly}
+            selectionKeyCode={null}
+            multiSelectionKeyCode={null}
+            selectionOnDrag={true}
+            selectNodesOnDrag={true}
             selectionMode={SelectionMode.Partial}
-            selectionKeyCode={['Shift']}
             onSelectionChange={onSelectionChange}
           >
             <AboveFlowWidgets></AboveFlowWidgets>
