@@ -4,6 +4,7 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import {
+  createKeyForFormInput,
   MarkdownVariant,
   USE_DRAFT_QUERY_PARAM_NAME,
 } from '@activepieces/shared';
@@ -109,16 +110,17 @@ export const onFormSubmission = createTrigger({
 
     const processedPayload: Record<string, unknown> = {};
     for (const input of inputs) {
-      const value = payload[input.displayName];
+      const key = createKeyForFormInput(input.displayName);
+      const value = payload[key];
 
       switch (input.type) {
         case 'toggle':
-          processedPayload[input.displayName] = parseBoolean(value, input.displayName);
+          processedPayload[key] = parseBoolean(value, input.displayName);
           break;
         case 'text':
         case 'text_area':
         case 'file':
-          processedPayload[input.displayName] = value;
+          processedPayload[key] = value;
           break;
       }
     }

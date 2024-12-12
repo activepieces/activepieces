@@ -93,7 +93,6 @@ async function processData(
 
   for (const [key, value] of Object.entries(data)) {
     if (useFormData) {
-      console.log('APPEND FILE ' + (value instanceof File));
       formData.append(key, value instanceof File ? value : String(value));
     } else {
       processedData[key] =
