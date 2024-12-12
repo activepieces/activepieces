@@ -60,9 +60,9 @@ const modifyAddRequestsActionsNames = (
   const allSteps = flowStructureUtil.getAllSteps(flowVersion.trigger);
   const allStepsNames = allSteps.map((step) => step.name);
   const newStepsNamesMap = operations.reduce((acc, operation) => {
-    const unsusedName = flowStructureUtil.findUnusedName(allStepsNames);
-    allStepsNames.push(unsusedName);
-    acc[operation.action.name] = unsusedName;
+    const unusedName = flowStructureUtil.findUnusedName(allStepsNames);
+    allStepsNames.push(unusedName);
+    acc[operation.action.name] = unusedName;
     return acc;
   }, {} as Record<string, string>);
   const allStepsDisplayNames = [...allSteps.map((step) => step.displayName)];
@@ -111,16 +111,16 @@ export const pasteNodes = (
     operations,
     flowVersion,
   );
-  const firstOperationWitoutParentStep = operationsToAddNewSteps.find(
+  const firstOperationWithoutParentStep = operationsToAddNewSteps.find(
     (operation) => operation.parentStep === EMPTY_STEP_PARENT_NAME,
   )!;
-  firstOperationWitoutParentStep.parentStep = pastingDetails.parentStepName;
-  firstOperationWitoutParentStep.branchIndex =
+  firstOperationWithoutParentStep.parentStep = pastingDetails.parentStepName;
+  firstOperationWithoutParentStep.branchIndex =
   pastingDetails.stepLocationRelativeToParent ===
     StepLocationRelativeToParent.INSIDE_BRANCH
       ? pastingDetails.branchIndex
       : undefined;
-  firstOperationWitoutParentStep.stepLocationRelativeToParent =
+  firstOperationWithoutParentStep.stepLocationRelativeToParent =
   pastingDetails.stepLocationRelativeToParent;
   operationsToAddNewSteps
     .map((request) => {
@@ -129,7 +129,7 @@ export const pasteNodes = (
       }
       return {
         ...request,
-        parentStep: firstOperationWitoutParentStep.action.name,
+        parentStep: firstOperationWithoutParentStep.action.name,
         branchIndex: undefined,
         stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
       };
