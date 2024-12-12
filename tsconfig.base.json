@@ -296,6 +296,9 @@
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
+      "@activepieces/piece-harvest": [
+        "packages/pieces/community/harvest/src/index.ts"
+      ],
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
