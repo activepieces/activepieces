@@ -24,6 +24,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import StepDragOverlay from './step-drag-overlay';
 import { ApButtonData } from './utils/types';
 
+
 // https://github.com/clauderic/dnd-kit/pull/334#issuecomment-1965708784
 const fixCursorSnapOffset: CollisionDetection = (args) => {
   // Bail out if keyboard activated

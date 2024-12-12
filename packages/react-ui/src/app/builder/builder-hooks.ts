@@ -23,7 +23,6 @@ import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { AskAiButtonOperations } from '../../features/pieces/lib/types';
 import { useAuthorization } from '../../hooks/authorization-hooks';
 import { ApNode } from './flow-canvas/utils/types';
-import { set } from 'date-fns';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -114,8 +113,10 @@ export type BuilderState = {
   setAskAiButtonProps: (props: AskAiButtonOperations | null) => void;
   selectedNodes: ApNode[];
   setSelectedNodes: (nodes:ApNode[])=>void;
+  panningMode: 'grab' | 'pan',
+  setPanningMode: (mode:'grab' | 'pan')=>void;
 };
-
+const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
   BuilderState,
   'flow' | 'flowVersion' | 'readonly' | 'run' | 'canExitRun' | 'sampleData'
@@ -148,6 +149,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       failedStepInRun,
       initialState.flowVersion,
     );
+
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
@@ -420,6 +422,13 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         return set(()=>({
           selectedNodes:nodes
         }))
+      },
+      panningMode: localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE)==='grab'? 'grab' : 'pan',
+      setPanningMode:(mode:'grab' | 'pan')=>{
+        localStorage.setItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE, mode);
+        return set(()=>({
+          panningMode:mode
+        }))
       }
     };
   });
@@ -451,3 +460,4 @@ export const useSwitchToDraft = () => {
     isSwitchingToDraftPending,
   };
 };
+

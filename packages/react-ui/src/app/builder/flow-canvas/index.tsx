@@ -36,8 +36,8 @@ export const FlowCanvas = React.memo(
     setHasCanvasBeenInitialised: (value: boolean) => void;
     lefSideBarContainerWidth: number;
   }) => {
-    const [allowCanvasPanning,  flowVersion, run,readonly,setSelectedNodes, selectedNodes,applyOperation,selectedStep,exitStepSettings ] = useBuilderStateContext((state) => {
-      return [state.allowCanvasPanning, state.flowVersion, state.run,state.readonly,state.setSelectedNodes, state.selectedNodes,state.applyOperation, state.selectedStep,state.exitStepSettings];
+    const [allowCanvasPanning,  flowVersion, run,readonly,setSelectedNodes, selectedNodes,applyOperation,selectedStep,exitStepSettings,panningMode ] = useBuilderStateContext((state) => {
+      return [state.allowCanvasPanning, state.flowVersion, state.run,state.readonly,state.setSelectedNodes, state.selectedNodes,state.applyOperation, state.selectedStep,state.exitStepSettings, state.panningMode];
     });
     
     const previousRun = usePrevious(run);
@@ -154,6 +154,7 @@ export const FlowCanvas = React.memo(
       return () => document.removeEventListener("keydown", handleKeyDown);
     }, [handleKeyDown]);
 
+    const inGrabPanningMode = panningMode === 'grab';
     return (
       <div
         ref={containerRef}
@@ -183,7 +184,7 @@ export const FlowCanvas = React.memo(
             elevateEdgesOnSelect={false}
             maxZoom={1.5}
             minZoom={0.5}
-            panOnDrag={[1]}
+            panOnDrag={allowCanvasPanning ? inGrabPanningMode ? [0,1]:[1] : false}
             zoomOnDoubleClick={false}
             panOnScroll={true}
             panOnScrollMode={PanOnScrollMode.Free}
@@ -192,9 +193,9 @@ export const FlowCanvas = React.memo(
             elementsSelectable={true}
             nodesDraggable={false}
             nodesFocusable={false}
-            selectionKeyCode={null}
-            multiSelectionKeyCode={null}
-            selectionOnDrag={true}
+            selectionKeyCode={inGrabPanningMode ? 'Shift' : null}
+            multiSelectionKeyCode={inGrabPanningMode ? 'Shift' : null}
+            selectionOnDrag={inGrabPanningMode ? false : true}
             selectNodesOnDrag={true}
             selectionMode={SelectionMode.Partial}
             onSelectionChange={onSelectionChange}
