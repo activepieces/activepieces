@@ -12,8 +12,8 @@ export async function callHarvestApi<T extends HttpMessageBody = any>(
   method: HttpMethod,
   apiUrl: string,
   accessToken: string,
-  body: any | undefined = undefined,
   queryParams: any | undefined = undefined,
+  body: any | undefined = undefined,
   headers: any | undefined = undefined
 ): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({

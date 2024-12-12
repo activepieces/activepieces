@@ -17,7 +17,11 @@ export const getInvoices = createAction({
       const response = await callHarvestApi(
         HttpMethod.GET,
         `invoices`,
-        getAccessTokenOrThrow(context.auth)
+        getAccessTokenOrThrow(context.auth),
+        { 
+          from: '2024-06-06', 
+          per_page: '2000' 
+        }
       );
   
       return response.body;  },
