@@ -12,7 +12,7 @@ import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, flowUtilConsts, STEP_CONTEXT_MENU_AT
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { FlowDragLayer } from './flow-drag-layer';
 import { AboveFlowWidgets } from './widgets';
-import { ApButtonData, ApNode } from './utils/types';
+import { ApButtonData, ApNode, ApStepNode } from './utils/types';
 import { CanvasContextMenu } from './context-menu/canvas-context-menu';
 import { copySelectedNodes } from './bulk-actions/copy-selected-nodes';
 import { deleteSelectedNodes } from './bulk-actions/delete-selected-nodes';
@@ -95,7 +95,6 @@ export const FlowCanvas = React.memo(
     const onSelectionChange = useCallback((ev:OnSelectionChangeParams)=>{
       setSelectedNodes(ev.nodes as ApNode[]);
       },[])
-
     const graphKey= createGraphKey(flowVersion)
     const graph = useMemo(()=>{
       return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
@@ -111,12 +110,19 @@ export const FlowCanvas = React.memo(
             setcontextMenuContentAddButtonData(JSON.parse(addButtonData || '{}'));
           }
         else {
-              setcontextMenuContentAddButtonData(null);
+             setcontextMenuContentAddButtonData(null);
           }
           const nodeSelectionActive = !isNil(document.querySelector('.react-flow__nodesselection-rect'));
           const stepElement = ev.target.closest(`[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`);
-          const stepNode = stepElement?.getAttribute(`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`);
-          setSelectedNodes(nodeSelectionActive || addButtonElement ? selectedNodes : stepNode? [JSON.parse(stepNode)]: []);
+          const stepNodeData = stepElement?.getAttribute(`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`);
+          const stepNode = stepNodeData ? JSON.parse(stepNodeData) as ApStepNode : null;
+          const stepNodeIsNotTrigger = stepNode && !flowStructureUtil.isTriggerType(stepNode.data.step.type);
+          setSelectedNodes(nodeSelectionActive || addButtonElement ? selectedNodes : 
+            stepNodeIsNotTrigger? [stepNode]: []);
+          if(nodeSelectionActive && stepNodeIsNotTrigger)
+          {
+            document.querySelector('.react-flow__nodesselection-rect')?.remove();
+          }
         }
     },[setcontextMenuContentAddButtonData, setSelectedNodes,selectedNodes]);
 
@@ -145,15 +151,13 @@ export const FlowCanvas = React.memo(
           })
         }
       }
-     
-
     }, [selectedNodes, flowVersion, applyOperation, selectedStep, exitStepSettings]);
  
     React.useEffect(() => {
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }, [handleKeyDown]);
-
+    const storeApi = useStoreApi();
     const inGrabPanningMode = panningMode === 'grab';
     return (
       <div
@@ -162,7 +166,7 @@ export const FlowCanvas = React.memo(
       >
         <FlowDragLayer lefSideBarContainerWidth={lefSideBarContainerWidth}>
         <CanvasContextMenu 
-         selectedNodes={selectedNodes}
+          selectedNodes={selectedNodes}
           applyOperation={applyOperation}
           selectedStep={selectedStep} 
           exitStepSettings={exitStepSettings}
@@ -173,7 +177,7 @@ export const FlowCanvas = React.memo(
           <ReactFlow
             onContextMenu={onContextMenu}
             onPaneClick={()=>{
-              setSelectedNodes([]);
+              storeApi.getState().unselectNodesAndEdges();
             }}
             nodeTypes={flowUtilConsts.nodeTypes}
             nodes={graph.nodes}

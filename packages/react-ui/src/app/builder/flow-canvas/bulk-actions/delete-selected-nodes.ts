@@ -1,6 +1,6 @@
-import { FlowOperationType } from "@activepieces/shared";
+import { FlowOperationType, flowStructureUtil } from "@activepieces/shared";
 import { INTERNAL_ERROR_TOAST, toast } from "@/components/ui/use-toast";
-import { ApNode } from "../utils/types";
+import { ApNode, ApNodeType } from "../utils/types";
 import { BuilderState } from "../../builder-hooks";
 
 export const deleteSelectedNodes = (
@@ -10,7 +10,7 @@ export const deleteSelectedNodes = (
     exitStepSettings: BuilderState['exitStepSettings']
 ) => {
     selectedNodes.forEach(node => {
-        if ('step' in node.data) {
+        if (node.type === ApNodeType.STEP && !flowStructureUtil.isTriggerType(node.data.step.type)) {
             applyOperation({
                 type: FlowOperationType.DELETE_ACTION,
                 request: {

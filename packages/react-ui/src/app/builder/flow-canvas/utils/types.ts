@@ -33,6 +33,7 @@ export type ApStepNode = {
     step: Action | Trigger;
   };
   selectable?:boolean;
+  style?: React.CSSProperties;
 };
 
 export type ApLoopReturnNode = {
@@ -69,7 +70,8 @@ export type ApBigAddButtonNode = {
     y: number;
   };
   data: ApButtonData;
-  selectable?:boolean
+  selectable?:boolean;
+  style?: React.CSSProperties;
 };
 
 export type ApGraphEndNode = {

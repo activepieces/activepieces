@@ -5,8 +5,7 @@ import { EMPTY_STEP_PARENT_NAME } from "../utils/consts";
 export const copySelectedNodes = (selectedNodes: ApNode[], flowVersion: FlowVersion) => {
     const operationsToCopy =  selectedNodes.map(node => {
         if (node.type === ApNodeType.STEP && 
-            node.data.step.type !== TriggerType.EMPTY && 
-            node.data.step.type !== TriggerType.PIECE) {
+            !flowStructureUtil.isTriggerType(node.data.step.type)) {
             const pathToStep = flowStructureUtil
                 .findPathToStep(flowVersion.trigger, node.data.step.name);
             const firstPreviousAction = 
@@ -15,8 +14,7 @@ export const copySelectedNodes = (selectedNodes: ApNode[], flowVersion: FlowVers
                         return selectedNodes.findIndex(n => 
                             n.type === ApNodeType.STEP && 
                             n.data.step.name === s.name && 
-                            n.data.step.type !== TriggerType.EMPTY && 
-                            n.data.step.type !== TriggerType.PIECE
+                            !flowStructureUtil.isTriggerType(n.data.step.type)
                         ) > -1;
                     });
             const stepWithRecentChanges = flowStructureUtil.getStepOrThrow(node.data.step.name, flowVersion.trigger) as Action;

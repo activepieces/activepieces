@@ -175,6 +175,9 @@ const findUnusedName = (source: Trigger | string[]) => {
     return name
 }
 
+const isTriggerType = (type: ActionType | TriggerType | undefined): type is TriggerType => {
+    return type !== undefined && (type === TriggerType.EMPTY || type === TriggerType.PIECE)
+}
 
 export const flowStructureUtil = {
     isTrigger,
@@ -190,4 +193,5 @@ export const flowStructureUtil = {
     findPathToStep,
     isChildOf,
     findUnusedName,
+    isTriggerType
 }
