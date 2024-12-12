@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
@@ -15,7 +14,6 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { oauth2AppsHooks } from '@/features/connections/lib/oauth2-apps-hooks';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -26,11 +24,15 @@ import {
 import { ApEdition, ApFlagId, PieceScope } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../../components/ui/table-title';
+import { useSearchParams } from 'react-router-dom';
+import { CheckIcon } from 'lucide-react';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.managePiecesEnabled;
-  const { refetch: refetchPieces } = piecesHooks.usePieces({});
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('name') ?? '';
+  const {  pieces,refetch: refetchPieces, isLoading } = piecesHooks.usePieces({ searchQuery,includeTags:true,includeHidden:true });
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { refetch: refetchPiecesClientIdsMap } =
     oauth2AppsHooks.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
@@ -147,21 +149,6 @@ const PlatformPiecesPage = () => {
       [],
     );
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['pieces'],
-    queryFn: async () => {
-      const pieces = await piecesApi.list({
-        includeHidden: true,
-        includeTags: true,
-      });
-      return {
-        data: pieces,
-        next: null,
-        previous: null,
-      };
-    },
-  });
-
   const [selectedPieces, setSelectedPieces] = useState<
     PieceMetadataModelSummary[]
   >([]);
@@ -185,12 +172,12 @@ const PlatformPiecesPage = () => {
                 <ApplyTags
                   selectedPieces={selectedPieces}
                   onApplyTags={() => {
-                    refetch();
+                    refetchPieces();
                   }}
                 ></ApplyTags>
                 <SyncPiecesButton />
                 <InstallPieceDialog
-                  onInstallPiece={() => refetch()}
+                  onInstallPiece={() => refetchPieces()}
                   scope={PieceScope.PLATFORM}
                 />
               </div>
@@ -198,7 +185,20 @@ const PlatformPiecesPage = () => {
           </div>
           <DataTable
             columns={columns}
-            page={data}
+            filters={[
+              {
+                type: 'input',
+                title: t('Piece Name'),
+                accessorKey: 'name',
+                options: [],
+                icon: CheckIcon,
+              } as const,
+            ]}
+            page={{
+              data:pieces ?? [],
+              next:null,
+              previous:null,
+            }}
             isLoading={isLoading}
             onSelectedRowsChange={setSelectedPieces}
           />
