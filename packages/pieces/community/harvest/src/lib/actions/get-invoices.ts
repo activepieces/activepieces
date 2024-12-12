@@ -3,7 +3,7 @@ import {
   Property,
   PieceAuth,
 } from '@activepieces/pieces-framework';
-import { wootricAuth } from '../..';
+import { harvestAuth } from '../..';
 import {
   getAccessTokenOrThrow,
   HttpMethod,
@@ -25,7 +25,7 @@ export const getInvoicesDefault = createAction({
 });
 
 
-export async function callClickUpApi<T extends HttpMessageBody = any>(
+export async function callHarvestApi<T extends HttpMessageBody = any>(
   method: HttpMethod,
   apiUrl: string,
   accessToken: string,
@@ -49,13 +49,13 @@ export async function callClickUpApi<T extends HttpMessageBody = any>(
 
 export const getInvoices = createAction({
   name: 'get_invoices', // Must be a unique across the piece, this shouldn't be changed.
-  auth: wootricAuth,
+  auth: harvestAuth,
   displayName: 'Get Invoices',
   description: 'Fetches invoices',
   props: {},
   async run(context) {
 //      const { list_id } = context.propsValue;
-      const response = await callClickUpApi(
+      const response = await callHarvestApi(
         HttpMethod.GET,
         `invoices`,
         getAccessTokenOrThrow(context.auth)
