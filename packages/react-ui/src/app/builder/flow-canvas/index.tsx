@@ -55,9 +55,18 @@ const createGraphKey = (flowVersion: FlowVersion) => {
     .reduce((acc, step) => {
       const branchesLength =
         step.type === ActionType.ROUTER ? step.settings.branches.length : 0;
+      const childrenKey =
+        step.type === ActionType.LOOP_ON_ITEMS && step.firstLoopAction
+          ? step.firstLoopAction.name
+          : step.type === ActionType.ROUTER
+          ? step.children.reduce((acc, child) => {
+              const childDescednatsNames = child ?  flowStructureUtil.getAllSteps(child).reduce((childKey,c)=>`${childKey}-${c.name}`,'') : 'null';
+              return `${acc}-${childDescednatsNames}`
+            }, '')
+          : '';
       return `${acc}-${step.displayName}-${step.type}-${
         step.type === ActionType.PIECE ? step.settings.pieceName : ''
-      }-${branchesLength}`;
+      }-${branchesLength}-${childrenKey}`;
     }, '');
 };
 
@@ -186,7 +195,7 @@ export const FlowCanvas = React.memo(
             : null;
           const stepNodeIsNotTrigger =
             stepNode &&
-            !flowStructureUtil.isTriggerType(stepNode.data.step.type);
+            !flowStructureUtil.isTrigger(stepNode.data.step.type);
           if (addButtonData) {
             setContextMenuData({
               addButtonData: JSON.parse(addButtonData || '{}'),

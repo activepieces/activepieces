@@ -9,11 +9,11 @@ type StepWithIndex = Step & {
     dfsIndex: number
 }
 
-function isAction(type: ActionType | TriggerType | undefined): boolean {
+function isAction(type: ActionType | TriggerType | undefined): type is ActionType {
     return Object.entries(ActionType).some(([, value]) => value === type)
 }
 
-function isTrigger(type: ActionType | TriggerType | undefined): boolean {
+function isTrigger(type: ActionType | TriggerType | undefined): type is TriggerType {
     return Object.entries(TriggerType).some(([, value]) => value === type)
 }
 
@@ -184,9 +184,6 @@ const findUnusedName = (source: Trigger | string[]) => {
     return name
 }
 
-const isTriggerType = (type: ActionType | TriggerType | undefined): type is TriggerType => {
-    return type !== undefined && (type === TriggerType.EMPTY || type === TriggerType.PIECE)
-}
 
 export const flowStructureUtil = {
     isTrigger,
@@ -202,6 +199,5 @@ export const flowStructureUtil = {
     findPathToStep,
     isChildOf,
     findUnusedName,
-    isTriggerType,
     getAllStepsAtFirstLevel,
 }

@@ -13,7 +13,7 @@ export const deleteSelectedNodes = (
   selectedNodes.forEach((node) => {
     if (
       node.type === ApNodeType.STEP &&
-      !flowStructureUtil.isTriggerType(node.data.step.type)
+      !flowStructureUtil.isTrigger(node.data.step.type)
     ) {
       applyOperation(
         {

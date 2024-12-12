@@ -18,7 +18,7 @@ export const copySelectedNodes = (
     .map((node) => {
       if (
         node.type === ApNodeType.STEP &&
-        !flowStructureUtil.isTriggerType(node.data.step.type)
+        !flowStructureUtil.isTrigger(node.data.step.type)
       ) {
         const pathToStep = flowStructureUtil.findPathToStep(
           flowVersion.trigger,
@@ -30,7 +30,7 @@ export const copySelectedNodes = (
               (n) =>
                 n.type === ApNodeType.STEP &&
                 n.data.step.name === s.name &&
-                !flowStructureUtil.isTriggerType(n.data.step.type),
+                !flowStructureUtil.isTrigger(n.data.step.type),
             ) > -1
           );
         });

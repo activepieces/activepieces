@@ -185,10 +185,9 @@ const StepSettingsContainer = () => {
         return;
       }
       if (
-        !flowStructureUtil.isTriggerType(currentStep.type) &&
-        !flowStructureUtil.isTriggerType(selectedStep.type)
+        flowStructureUtil.isAction(currentStep.type) && flowStructureUtil.isAction(selectedStep.type)
       ) {
-        currentStep.skip = selectedStep.skip;
+        (currentStep as Action).skip = (selectedStep as Action).skip;
       }
       previousSavedStep.current = currentStep;
       if (currentStep.type === TriggerType.PIECE) {
