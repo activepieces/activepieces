@@ -32,8 +32,8 @@ import {
   FormResponse,
   HumanInputFormResultTypes,
   HumanInputFormResult,
+  createKeyForFormInput,
 } from '@activepieces/shared';
-
 import { Checkbox } from '../../../components/ui/checkbox';
 import { humanInputApi } from '../lib/human-input-api';
 
@@ -44,23 +44,7 @@ type ApFormProps = {
 type FormInputWithName = FormInput & {
   name: string;
 };
-/**We do this because react form inputs must not contain quotes */
-export const removeQuotations = (key: string): string => {
-  return key.replaceAll(/[\\"''\n\r\t]/g, '');
-};
 
-const createKeyForFormInput = (displayName: string, keepQuotes = false) => {
-  const inputKey = displayName
-    .replace(/\s(.)/g, function ($1) {
-      return $1.toUpperCase();
-    })
-    .replace(/\s/g, '')
-    .replace(/^(.)/, function ($1) {
-      return $1.toLowerCase();
-    });
-
-  return keepQuotes ? inputKey : removeQuotations(inputKey);
-};
 
 /**We do this because it was the behaviour in previous versions of Activepieces.*/
 const putBackQuotesForInputNames = (
@@ -68,8 +52,8 @@ const putBackQuotesForInputNames = (
   inputs: FormInputWithName[],
 ) => {
   return inputs.reduce((acc, input) => {
-    acc[createKeyForFormInput(input.displayName, true)] =
-      value[createKeyForFormInput(input.displayName, false)];
+    const key = createKeyForFormInput(input.displayName);
+    acc[key] = value[key];
     return acc;
   }, {} as Record<string, unknown>);
 };
