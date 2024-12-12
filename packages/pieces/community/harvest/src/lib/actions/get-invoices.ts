@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from "@activepieces/pieces-framework";
 import { harvestAuth } from '../..';
 import {
   getAccessTokenOrThrow,
@@ -11,15 +11,21 @@ export const getInvoices = createAction({
   auth: harvestAuth,
   displayName: 'Get Invoices',
   description: 'Fetches invoices',
-  props: {},
+  props: {
+    from_prop: Property.ShortText({
+      description: 'Only return invoices with an issue_date on or after the given date. (YYYY-MM-DD)',
+      displayName: 'From',
+      required: false,
+    }),
+  },
   async run(context) {
-//      const { list_id } = context.propsValue;
-      const response = await callHarvestApi(
+    const { from_prop } = context.propsValue;
+    const response = await callHarvestApi(
         HttpMethod.GET,
         `invoices`,
         getAccessTokenOrThrow(context.auth),
         { 
-          from: '2024-06-06', 
+          from: `${from_prop}`, 
           per_page: '2000' 
         }
       );
