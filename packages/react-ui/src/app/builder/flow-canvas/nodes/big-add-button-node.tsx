@@ -13,11 +13,14 @@ import {
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, flowUtilConsts } from '../utils/consts';
 import {
   AskAiIndicator,
   shouldShowAskAiIndicator,
 } from '../edges/ask-ai-indicator';
+import {
+  ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE,
+  flowUtilConsts,
+} from '../utils/consts';
 import { ApBigAddButtonNode } from '../utils/types';
 
 const ApBigAddButtonCanvasNode = React.memo(
@@ -71,7 +74,10 @@ const ApBigAddButtonCanvasNode = React.memo(
                     height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
                     width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                   }}
-                  {...{ [`data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`]: JSON.stringify(data) }}
+                  {...{
+                    [`data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`]:
+                      JSON.stringify(data),
+                  }}
                   id={id}
                   className={cn('  rounded bg-accent', {
                     'bg-primary/80': showDropIndicator || pieceSelectorOpen,

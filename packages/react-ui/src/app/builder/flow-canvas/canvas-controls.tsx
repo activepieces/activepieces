@@ -1,6 +1,13 @@
-import { Node, useKeyPress, useReactFlow, useStoreApi } from '@xyflow/react';
+import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { Fullscreen, Grab, Hand, Minus, MousePointer, MousePointer2, Plus, RotateCw } from 'lucide-react';
+import {
+  Fullscreen,
+  Hand,
+  Minus,
+  MousePointer2,
+  Plus,
+  RotateCw,
+} from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -10,10 +17,11 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 
+import { useBuilderStateContext } from '../builder-hooks';
+
 import { flowUtilConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
-import { useBuilderStateContext } from '../builder-hooks';
 const verticalPaddingOnFitView = 100;
 const duration = 500;
 // Calculate the node's position in relation to the canvas
@@ -166,12 +174,12 @@ const CanvasControls = ({
       });
     }
   };
-  
-  const [panningMode, setPanningMode] = useBuilderStateContext(state=>{
-    return [state.panningMode, state.setPanningMode]
-  })
-  const spacePressed = useKeyPress('Space')
-  const isInGrabMode = spacePressed || panningMode === 'grab'
+
+  const [panningMode, setPanningMode] = useBuilderStateContext((state) => {
+    return [state.panningMode, state.setPanningMode];
+  });
+  const spacePressed = useKeyPress('Space');
+  const isInGrabMode = spacePressed || panningMode === 'grab';
 
   return (
     <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row">
@@ -216,26 +224,25 @@ const CanvasControls = ({
       </Tooltip>
       <Tooltip>
         <TooltipTrigger asChild>
-        <Button
+          <Button
             variant="secondary"
             size="sm"
             onClick={() => {
-              if(!spacePressed) {
+              if (!spacePressed) {
                 setPanningMode(panningMode === 'grab' ? 'pan' : 'grab');
               }
             }}
           >
-            {
-              isInGrabMode && <Hand className="w-5 h-5"></Hand>
-            }
-            {
-              !isInGrabMode && <MousePointer2 className="w-5 h-5"></MousePointer2>
-            }
+            {isInGrabMode && <Hand className="w-5 h-5"></Hand>}
+            {!isInGrabMode && (
+              <MousePointer2 className="w-5 h-5"></MousePointer2>
+            )}
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="top">{isInGrabMode ? 'Move Mode': 'Select Mode'}</TooltipContent>
+        <TooltipContent side="top">
+          {isInGrabMode ? 'Move Mode' : 'Select Mode'}
+        </TooltipContent>
       </Tooltip>
-         
     </div>
   );
 };

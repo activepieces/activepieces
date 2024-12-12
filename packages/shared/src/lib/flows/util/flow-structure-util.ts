@@ -193,5 +193,5 @@ export const flowStructureUtil = {
     findPathToStep,
     isChildOf,
     findUnusedName,
-    isTriggerType
+    isTriggerType,
 }

@@ -7,6 +7,7 @@ import { ApBigAddButtonCanvasNode } from '../nodes/big-add-button-node';
 import ApGraphEndWidgetNode from '../nodes/flow-end-widget-node';
 import ApLoopReturnCanvasNode from '../nodes/loop-return-node';
 import { ApStepCanvasNode } from '../nodes/step-node';
+
 import { ApEdgeType, ApNodeType } from './types';
 
 const ARC_LENGTH = 15;
@@ -100,6 +101,6 @@ export const flowUtilConsts = {
   LABEL_VERTICAL_PADDING,
 };
 
-export const ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE = "add-button-context-menu";
-export const STEP_CONTEXT_MENU_ATTRIBUTE = "step-context-menu";
+export const ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE = 'add-button-context-menu';
+export const STEP_CONTEXT_MENU_ATTRIBUTE = 'step-context-menu';
 export const EMPTY_STEP_PARENT_NAME = 'empty-step-parent';

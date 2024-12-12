@@ -126,11 +126,13 @@ const ApStepCanvasNode = React.memo(
       state.loopsIndexes,
       state.setSampleData,
     ]);
-    const step = flowStructureUtil.getStep(data.step!.name, flowVersion.trigger) || data.step!;
+    const step =
+      flowStructureUtil.getStep(data.step!.name, flowVersion.trigger) ||
+      data.step!;
     const { stepMetadata } = piecesHooks.useStepMetadata({
-      step
+      step,
     });
-    
+
     const pieceSelectorOperation = useRef<
       FlowOperationType.UPDATE_ACTION | FlowOperationType.UPDATE_TRIGGER
     >(FlowOperationType.UPDATE_ACTION);
@@ -171,7 +173,7 @@ const ApStepCanvasNode = React.memo(
         () => toast(UNSAVED_CHANGES_TOAST),
       );
     };
-    
+
     const stepIndex = useMemo(() => {
       const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
       return steps.findIndex((s) => s.name === step.name) + 1;
@@ -183,9 +185,9 @@ const ApStepCanvasNode = React.memo(
     const isTrigger = flowStructureUtil.isTrigger(step.type);
     const isAction = flowStructureUtil.isAction(step.type);
     const isEmptyTriggerSelected =
-      selectedStep === 'trigger' &&  step.type === TriggerType.EMPTY;
+      selectedStep === 'trigger' && step.type === TriggerType.EMPTY;
     const isSkipped = (step as Action).skip;
-    
+
     const { attributes, listeners, setNodeRef } = useDraggable({
       id: step.name,
       disabled: isTrigger || readonly,
@@ -216,14 +218,14 @@ const ApStepCanvasNode = React.memo(
       id: step.name,
       position: {
         x: 0,
-        y: 0
+        y: 0,
       },
-      type: ApNodeType.STEP
-    }
+      type: ApNodeType.STEP,
+    };
     return (
       <div
         id={step.name}
-        {...{[`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: JSON.stringify(node)}}
+        {...{ [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: JSON.stringify(node) }}
         style={{
           height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
           width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
@@ -398,9 +400,7 @@ const ApStepCanvasNode = React.memo(
                                       <RouteOff className="h-4 w-4"></RouteOff>
                                     )}
                                     {t(
-                                      (step as Action).skip
-                                        ? 'Unskip'
-                                        : 'Skip',
+                                      (step as Action).skip ? 'Unskip' : 'Skip',
                                     )}
                                   </StepActionWrapper>
                                 </DropdownMenuItem>

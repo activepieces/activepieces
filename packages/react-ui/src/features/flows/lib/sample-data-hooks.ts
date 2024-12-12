@@ -4,8 +4,8 @@ import { flowStructureUtil, FlowVersion } from '@activepieces/shared';
 
 import { sampleDataApi } from './sample-data-api';
 
-const getSampleData = async (flowVersion: FlowVersion , stepName: string) => {
-  try{
+const getSampleData = async (flowVersion: FlowVersion, stepName: string) => {
+  try {
     return await sampleDataApi.get({
       flowId: flowVersion!.flowId,
       flowVersionId: flowVersion!.id,

@@ -22,6 +22,7 @@ import {
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { AskAiButtonOperations } from '../../features/pieces/lib/types';
 import { useAuthorization } from '../../hooks/authorization-hooks';
+
 import { ApNode } from './flow-canvas/utils/types';
 
 const flowUpdatesQueue = new PromiseQueue();
@@ -112,9 +113,9 @@ export type BuilderState = {
   askAiButtonProps: AskAiButtonOperations | null;
   setAskAiButtonProps: (props: AskAiButtonOperations | null) => void;
   selectedNodes: ApNode[];
-  setSelectedNodes: (nodes:ApNode[])=>void;
-  panningMode: 'grab' | 'pan',
-  setPanningMode: (mode:'grab' | 'pan')=>void;
+  setSelectedNodes: (nodes: ApNode[]) => void;
+  panningMode: 'grab' | 'pan';
+  setPanningMode: (mode: 'grab' | 'pan') => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -417,19 +418,23 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               : state.selectedStep,
         }));
       },
-      selectedNodes:[],
-      setSelectedNodes:(nodes:ApNode[])=>{
-        return set(()=>({
-          selectedNodes:nodes
-        }))
+      selectedNodes: [],
+      setSelectedNodes: (nodes: ApNode[]) => {
+        return set(() => ({
+          selectedNodes: nodes,
+        }));
       },
-      panningMode: localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE)==='grab'? 'grab' : 'pan',
-      setPanningMode:(mode:'grab' | 'pan')=>{
+      panningMode:
+        localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE) ===
+        'grab'
+          ? 'grab'
+          : 'pan',
+      setPanningMode: (mode: 'grab' | 'pan') => {
         localStorage.setItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE, mode);
-        return set(()=>({
-          panningMode:mode
-        }))
-      }
+        return set(() => ({
+          panningMode: mode,
+        }));
+      },
     };
   });
 
@@ -460,4 +465,3 @@ export const useSwitchToDraft = () => {
     isSwitchingToDraftPending,
   };
 };
-
