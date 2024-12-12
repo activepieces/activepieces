@@ -80,7 +80,7 @@
     "@radix-ui/react-tooltip": "1.1.2",
     "@rollup/wasm-node": "4.21.2",
     "@segment/analytics-next": "1.72.0",
-    "@segment/analytics-node": "2.1.0",
+    "@segment/analytics-node": "2.2.0",
     "@sendgrid/mail": "8.0.0",
     "@sentry/node": "7.120.0",
     "@sinclair/typebox": "0.34.11",
