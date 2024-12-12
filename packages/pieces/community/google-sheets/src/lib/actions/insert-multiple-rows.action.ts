@@ -6,7 +6,7 @@ import {
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
+import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption,columnToLabel } from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
@@ -244,12 +244,14 @@ export const insertMultipleRowsAction = createAction({
 
 		const sheetHeaders = rowHeaders[0]?.values ?? {};
 
-		const formattedValues = formatInputRows(valuesInputType, rowValuesInput, sheetHeaders);
-		const valueInputOption = asString ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED;
-
 		const authClient = new OAuth2Client();
 		authClient.setCredentials(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+		const formattedValues = await formatInputRows(sheets,spreadSheetId, sheetName,valuesInputType, rowValuesInput, sheetHeaders);
+
+		const valueInputOption = asString ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED;
+
 
 		if (overwriteValues) {
 			const sheetGridRange = await getWorkSheetGridSize(context.auth, spreadSheetId, sheetId);
@@ -379,11 +381,14 @@ async function normalInsert(
 	return response.data;
 }
 
-function formatInputRows(
+async function formatInputRows(
+	sheets: sheets_v4.Sheets,
+	spreadSheetId: string,
+	sheetName: string,
 	valuesInputType: string,
 	rowValuesInput: any,
 	sheetHeaders: RowValueType
-): RowValueType[] {
+): Promise<RowValueType[]> {
 	let formattedInputRows: any[] = [];
 
 	switch (valuesInputType) {
@@ -391,7 +396,7 @@ function formatInputRows(
 			formattedInputRows = convertCsvToRawValues(rowValuesInput as string, ',', sheetHeaders);
 			break;
 		case 'json':
-			formattedInputRows = convertJsonToRawValues(rowValuesInput as string, sheetHeaders);
+			formattedInputRows = await convertJsonToRawValues(sheets,spreadSheetId, sheetName, rowValuesInput as string, sheetHeaders);
 			break;
 		case 'column_names':
 			formattedInputRows = rowValuesInput as RowValueType[];
@@ -401,7 +406,13 @@ function formatInputRows(
 	return formattedInputRows;
 }
 
-function convertJsonToRawValues(json: string | Record<string, any>[], labelHeaders: RowValueType): RowValueType[] {
+async function convertJsonToRawValues(
+	sheets: sheets_v4.Sheets,
+	spreadSheetId: string,
+	sheetName: string,
+	json: string | Record<string, any>[],
+	 labelHeaders: RowValueType
+): Promise<RowValueType[]> {
 
 	let data: RowValueType[];
 
@@ -421,6 +432,35 @@ function convertJsonToRawValues(json: string | Record<string, any>[], labelHeade
 	if (!Array.isArray(data) || typeof data[0] !== 'object') {
 		throw new Error('Input must be an array of objects or a valid JSON string representing it.');
 	}
+
+	// Collect all possible headers from the data
+    const allHeaders = new Set<string>();
+    data.forEach((row) => {
+        Object.keys(row).forEach((key) => allHeaders.add(key));
+    });
+
+	// Identify headers not present in labelHeaders
+    const additionalHeaders = Array.from(allHeaders).filter(
+        (header) => !Object.values(labelHeaders).includes(header)
+    );
+
+	//add missing headers to labelHeaders
+	additionalHeaders.forEach((header) => {
+		labelHeaders[columnToLabel(Object.keys(labelHeaders).length)] = header;
+	});
+
+	// update sheets with new headers
+	if (additionalHeaders.length > 0) {
+		await sheets.spreadsheets.values.update({
+		  range: `${sheetName}!A1:ZZZ1`,
+		  spreadsheetId: spreadSheetId,
+		  valueInputOption: ValueInputOption.USER_ENTERED,
+		  requestBody: {
+			majorDimension:Dimension.ROWS,
+			values: [objectToArray(labelHeaders)]
+		  }
+		});
+	  }
 
 	return data.map((row: RowValueType) => {
 		return Object.entries(labelHeaders).reduce((acc, [labelColumn, csvHeader]) => {
