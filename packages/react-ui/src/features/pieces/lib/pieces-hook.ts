@@ -127,10 +127,15 @@ export const piecesHooks = {
       queries: props.map((step) => stepMetadataQueryBuilder(step)),
     });
   },
-  usePieces: ({ searchQuery, includeHidden = false, includeTags=false }: UsePiecesProps) => {
+  usePieces: ({
+    searchQuery,
+    includeHidden = false,
+    includeTags = false,
+  }: UsePiecesProps) => {
     const query = useQuery<PieceMetadataModelSummary[], Error>({
       queryKey: ['pieces', searchQuery, includeHidden],
-      queryFn: () => piecesApi.list({ searchQuery, includeHidden,includeTags }),
+      queryFn: () =>
+        piecesApi.list({ searchQuery, includeHidden, includeTags }),
       staleTime: searchQuery ? 0 : Infinity,
     });
     return {

@@ -1,6 +1,8 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
+import { CheckIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
@@ -24,15 +26,21 @@ import {
 import { ApEdition, ApFlagId, PieceScope } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../../components/ui/table-title';
-import { useSearchParams } from 'react-router-dom';
-import { CheckIcon } from 'lucide-react';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.managePiecesEnabled;
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
-  const {  pieces,refetch: refetchPieces, isLoading } = piecesHooks.usePieces({ searchQuery,includeTags:true,includeHidden:true });
+  const {
+    pieces,
+    refetch: refetchPieces,
+    isLoading,
+  } = piecesHooks.usePieces({
+    searchQuery,
+    includeTags: true,
+    includeHidden: true,
+  });
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { refetch: refetchPiecesClientIdsMap } =
     oauth2AppsHooks.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
@@ -195,9 +203,9 @@ const PlatformPiecesPage = () => {
               } as const,
             ]}
             page={{
-              data:pieces ?? [],
-              next:null,
-              previous:null,
+              data: pieces ?? [],
+              next: null,
+              previous: null,
             }}
             isLoading={isLoading}
             onSelectedRowsChange={setSelectedPieces}

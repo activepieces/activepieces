@@ -1,6 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ApFlagId, isNil, PieceScope, PieceType } from '@activepieces/shared';
@@ -16,8 +18,6 @@ import { ApFlagId, isNil, PieceScope, PieceType } from '@activepieces/shared';
 import { TableTitle } from '../../../../components/ui/table-title';
 
 import { ManagePiecesDialog } from './manage-pieces-dialog';
-import { useSearchParams } from 'react-router-dom';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
@@ -111,9 +111,9 @@ const ProjectPiecesPage = () => {
 
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('name') ?? '';
-  const {pieces, isLoading, refetch } = piecesHooks.usePieces({
+  const { pieces, isLoading, refetch } = piecesHooks.usePieces({
     searchQuery,
-  })
+  });
 
   return (
     <div className="flex w-full flex-col items-center justify-center gap-4">
@@ -146,9 +146,9 @@ const ProjectPiecesPage = () => {
             } as const,
           ]}
           page={{
-            data:pieces ?? [],
-            next:null,
-            previous:null,
+            data: pieces ?? [],
+            next: null,
+            previous: null,
           }}
           isLoading={isLoading}
           hidePagination={true}
