@@ -104,14 +104,17 @@ export const pasteNodes = (
     operations,
     flowVersion,
   );
+  const firstOperationWitoutParentStep = operationsToAddNewSteps.find(operation=>operation.parentStep === EMPTY_STEP_PARENT_NAME)!;
+  firstOperationWitoutParentStep.parentStep = addButtonData.parentStepName;
   operationsToAddNewSteps
     .map((request) => {
       if (request.parentStep !== EMPTY_STEP_PARENT_NAME) {
         return request;
       }
+
       return {
         ...request,
-        parentStep: addButtonData.parentStepName,
+        parentStep: firstOperationWitoutParentStep.action.name,
         branchIndex:
           addButtonData.stepLocationRelativeToParent ===
           StepLocationRelativeToParent.INSIDE_BRANCH
