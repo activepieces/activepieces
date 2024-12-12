@@ -185,7 +185,8 @@ const StepSettingsContainer = () => {
         return;
       }
       if (
-        flowStructureUtil.isAction(currentStep.type) && flowStructureUtil.isAction(selectedStep.type)
+        flowStructureUtil.isAction(currentStep.type) &&
+        flowStructureUtil.isAction(selectedStep.type)
       ) {
         (currentStep as Action).skip = (selectedStep as Action).skip;
       }

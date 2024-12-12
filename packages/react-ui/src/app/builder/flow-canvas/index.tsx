@@ -23,6 +23,7 @@ import {
   FlowVersion,
   isFlowStateTerminal,
   isNil,
+  Step,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
@@ -49,21 +50,37 @@ import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode, ApStepNode } from './utils/types';
 import { AboveFlowWidgets } from './widgets';
 
+const getChildrenKey = (step: Step) => {
+  switch (step.type) {
+    case ActionType.LOOP_ON_ITEMS:
+      return step.firstLoopAction ? step.firstLoopAction.name : '';
+
+    case ActionType.ROUTER:
+      return step.children.reduce((routerKey, child) => {
+        const childrenKey = child
+          ? flowStructureUtil
+              .getAllSteps(child)
+              .reduce(
+                (childKey, grandChild) => `${childKey}-${grandChild.name}`,
+                '',
+              )
+          : 'null';
+        return `${routerKey}-${childrenKey}`;
+      }, '');
+
+    case ActionType.CODE:
+    case ActionType.PIECE:
+      return '';
+  }
+};
+
 const createGraphKey = (flowVersion: FlowVersion) => {
   return flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
       const branchesLength =
         step.type === ActionType.ROUTER ? step.settings.branches.length : 0;
-      const childrenKey =
-        step.type === ActionType.LOOP_ON_ITEMS && step.firstLoopAction
-          ? step.firstLoopAction.name
-          : step.type === ActionType.ROUTER
-          ? step.children.reduce((acc, child) => {
-              const childDescednatsNames = child ?  flowStructureUtil.getAllSteps(child).reduce((childKey,c)=>`${childKey}-${c.name}`,'') : 'null';
-              return `${acc}-${childDescednatsNames}`
-            }, '')
-          : '';
+      const childrenKey = getChildrenKey(step);
       return `${acc}-${step.displayName}-${step.type}-${
         step.type === ActionType.PIECE ? step.settings.pieceName : ''
       }-${branchesLength}-${childrenKey}`;
@@ -194,8 +211,7 @@ export const FlowCanvas = React.memo(
             ? (JSON.parse(stepNodeData) as ApStepNode)
             : null;
           const stepNodeIsNotTrigger =
-            stepNode &&
-            !flowStructureUtil.isTrigger(stepNode.data.step.type);
+            stepNode && !flowStructureUtil.isTrigger(stepNode.data.step.type);
           if (addButtonData) {
             setContextMenuData({
               addButtonData: JSON.parse(addButtonData || '{}'),
