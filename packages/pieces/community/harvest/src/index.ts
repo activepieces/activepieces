@@ -2,6 +2,7 @@
     import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
     import { OAuth2GrantType } from '@activepieces/shared';
     import { getInvoices } from './lib/actions/get-invoices';
+    import { getProjects } from './lib/actions/get-projects';
 
     export const harvestAuth = PieceAuth.OAuth2({
       required: true,
@@ -17,7 +18,7 @@
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/harvest.png",
       authors: ["drowe"],
-      actions: [getInvoices],
+      actions: [getInvoices, getProjects],
       triggers: [],
     });
     
