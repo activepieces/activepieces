@@ -104,24 +104,27 @@ export const pasteNodes = (
     operations,
     flowVersion,
   );
-  const firstOperationWitoutParentStep = operationsToAddNewSteps.find(operation=>operation.parentStep === EMPTY_STEP_PARENT_NAME)!;
+  const firstOperationWitoutParentStep = operationsToAddNewSteps.find(
+    (operation) => operation.parentStep === EMPTY_STEP_PARENT_NAME,
+  )!;
   firstOperationWitoutParentStep.parentStep = addButtonData.parentStepName;
+  firstOperationWitoutParentStep.branchIndex =
+    addButtonData.stepLocationRelativeToParent ===
+    StepLocationRelativeToParent.INSIDE_BRANCH
+      ? addButtonData.branchIndex
+      : undefined;
+  firstOperationWitoutParentStep.stepLocationRelativeToParent =
+    addButtonData.stepLocationRelativeToParent;
   operationsToAddNewSteps
     .map((request) => {
       if (request.parentStep !== EMPTY_STEP_PARENT_NAME) {
         return request;
       }
-
       return {
         ...request,
         parentStep: firstOperationWitoutParentStep.action.name,
-        branchIndex:
-          addButtonData.stepLocationRelativeToParent ===
-          StepLocationRelativeToParent.INSIDE_BRANCH
-            ? addButtonData.branchIndex
-            : undefined,
-        stepLocationRelativeToParent:
-          addButtonData.stepLocationRelativeToParent,
+        branchIndex: undefined,
+        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
       };
     })
     .forEach((request) => {

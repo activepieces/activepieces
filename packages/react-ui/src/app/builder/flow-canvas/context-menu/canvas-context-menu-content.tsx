@@ -98,7 +98,7 @@ export const CanvasContextMenuContent = ({
               disabled={disabledPaste}
               onClick={() => {
                 const lastStep = flowStructureUtil
-                  .getAllSteps(flowVersion.trigger)
+                  .getAllStepsAtFirstLevel(flowVersion.trigger)
                   .at(-1);
                 if (lastStep) {
                   pasteNodes(
