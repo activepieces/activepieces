@@ -42,6 +42,11 @@ There are two queues that you can monitor:
 
 In case you have flows with internal errors, please go to the oneTimeJobs queue and click on the failed run. You can see the error message in the data section and retry the flow by clicking on the retry button.
 
+
+### Truncated logs
+
+If you see `(truncated)` in the flow run logs in your flow runs, it means that the logs have exceeded the maximum allowed file size. You can increase the `AP_MAX_FILE_SIZE_MB` environment variable to a higher value to resolve this issue.
+
 ### Reset Password
 
 If you forgot your password on self hosted instance, you can reset it using the following steps:
