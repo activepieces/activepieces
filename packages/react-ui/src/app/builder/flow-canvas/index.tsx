@@ -243,9 +243,8 @@ export const FlowCanvas = React.memo(
                   flowVersion,
                   {
                     parentStepName: flowStructureUtil
-                      .getAllSteps(flowVersion.trigger)
+                      .getAllStepsAtFirstLevel(flowVersion.trigger)
                       .at(-1)!.name,
-                    edgeId: '',
                     stepLocationRelativeToParent:
                       StepLocationRelativeToParent.AFTER,
                   },

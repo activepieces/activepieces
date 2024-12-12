@@ -121,13 +121,13 @@ function getAllSteps(step: Step): Step[] {
     return steps
 }
 function getAllStepsAtFirstLevel(step: Step): Step[] {
-   const steps = [step];
-   let iterator = steps[0];
-   while(iterator.nextAction){
-    steps.push(iterator.nextAction);
-    iterator = iterator.nextAction;
-   }
-   return steps;
+    const steps = [step]
+    let iterator = steps[0]
+    while (iterator.nextAction) {
+        steps.push(iterator.nextAction)
+        iterator = iterator.nextAction
+    }
+    return steps
 }
 
 
@@ -203,5 +203,5 @@ export const flowStructureUtil = {
     isChildOf,
     findUnusedName,
     isTriggerType,
-    getAllStepsAtFirstLevel
+    getAllStepsAtFirstLevel,
 }

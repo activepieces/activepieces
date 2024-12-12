@@ -8,7 +8,6 @@ import {
 
 import { BuilderState } from '../../builder-hooks';
 import { EMPTY_STEP_PARENT_NAME } from '../utils/consts';
-import { ApButtonData } from '../utils/types';
 
 export const getOperationsInClipboard = async () => {
   try {
@@ -97,14 +96,18 @@ const modifyAddRequestsActionsNames = (
 export const pasteNodes = (
   operations: AddActionRequest[],
   flowVersion: BuilderState['flowVersion'],
-  pastingDetails: {
-    parentStepName: string;
-    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER | StepLocationRelativeToParent.INSIDE_LOOP;
-  } | {
-    branchIndex: number;
-    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
-    parentStepName: string;
-  },
+  pastingDetails:
+    | {
+        parentStepName: string;
+        stepLocationRelativeToParent:
+          | StepLocationRelativeToParent.AFTER
+          | StepLocationRelativeToParent.INSIDE_LOOP;
+      }
+    | {
+        branchIndex: number;
+        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
+        parentStepName: string;
+      },
   applyOperation: BuilderState['applyOperation'],
 ) => {
   const operationsToAddNewSteps = modifyAddRequestsActionsNames(
@@ -116,12 +119,12 @@ export const pasteNodes = (
   )!;
   firstOperationWithoutParentStep.parentStep = pastingDetails.parentStepName;
   firstOperationWithoutParentStep.branchIndex =
-  pastingDetails.stepLocationRelativeToParent ===
+    pastingDetails.stepLocationRelativeToParent ===
     StepLocationRelativeToParent.INSIDE_BRANCH
       ? pastingDetails.branchIndex
       : undefined;
   firstOperationWithoutParentStep.stepLocationRelativeToParent =
-  pastingDetails.stepLocationRelativeToParent;
+    pastingDetails.stepLocationRelativeToParent;
   operationsToAddNewSteps
     .map((request) => {
       if (request.parentStep !== EMPTY_STEP_PARENT_NAME) {
