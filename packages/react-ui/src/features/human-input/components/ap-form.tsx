@@ -46,7 +46,7 @@ type FormInputWithName = FormInput & {
 };
 /**We do this because react form inputs must not contain quotes */
 export const removeQuotations = (key: string): string => {
-  return key.replaceAll(/[\\"'’\n\r\t]/g, '');
+  return key.replaceAll(/[\\"''\n\r\t]/g, '');
 };
 
 const createKeyForFormInput = (displayName: string, keepQuotes = false) => {
@@ -81,9 +81,15 @@ const requiredPropertySettings = {
 
 const createPropertySchema = (input: FormInputWithName) => {
   const schemaSettings = input.required ? requiredPropertySettings : {};
-  return input.type === FormInputType.TOGGLE
-    ? Type.Boolean(schemaSettings)
-    : Type.String(schemaSettings);
+  switch (input.type) {
+    case FormInputType.TOGGLE:
+      return Type.Boolean(schemaSettings);
+    case FormInputType.TEXT:
+    case FormInputType.TEXT_AREA:
+      return Type.String(schemaSettings);
+    case FormInputType.FILE:
+      return Type.Unknown(schemaSettings);
+  }
 };
 
 function buildSchema(inputs: FormInputWithName[]) {
@@ -116,17 +122,6 @@ const handleDownloadFile = (fileBase: FileResponseInterface) => {
   link.rel = 'noreferrer noopener';
 
   link.click();
-};
-
-const fileToBase64 = (
-  file: File,
-  callback: (result: string | ArrayBuffer | null) => void,
-) => {
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onloadend = () => {
-    callback(reader.result);
-  };
 };
 
 const ApForm = ({ form, useDraft }: ApFormProps) => {
@@ -301,9 +296,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                         onChange={(e) => {
                                           const file = e.target.files?.[0];
                                           if (file) {
-                                            fileToBase64(file, (result) => {
-                                              field.onChange(result);
-                                            });
+                                            field.onChange(file);
                                           }
                                         }}
                                         placeholder={input.displayName}
