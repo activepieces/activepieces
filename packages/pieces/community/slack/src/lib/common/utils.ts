@@ -1,5 +1,5 @@
 import { ApFile } from '@activepieces/pieces-framework';
-import { Block,KnownBlock, WebClient } from '@slack/web-api';
+import { Block, WebClient } from '@slack/web-api';
 
 export const slackSendMessage = async ({
   text,
@@ -26,20 +26,12 @@ export const slackSendMessage = async ({
       ],
     });
   } else {
-    let blockList = blocks as (KnownBlock | Block)[]
-
-    // add text to the block list
-    if(blocks!== undefined)
-    {
-      blockList = [{type:'section',text:{type:'mrkdwn',text}},...blockList]
-    }
-
     return await client.chat.postMessage({
       text,
       channel: conversationId,
       username,
       icon_url: profilePicture,
-      blocks: blockList,
+      blocks: blocks as Block[],
       thread_ts: threadTs,
     });
   }
