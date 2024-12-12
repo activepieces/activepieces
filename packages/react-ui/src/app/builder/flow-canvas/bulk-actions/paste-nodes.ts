@@ -97,7 +97,14 @@ const modifyAddRequestsActionsNames = (
 export const pasteNodes = (
   operations: AddActionRequest[],
   flowVersion: BuilderState['flowVersion'],
-  addButtonData: ApButtonData,
+  pastingDetails: {
+    parentStepName: string;
+    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER | StepLocationRelativeToParent.INSIDE_LOOP;
+  } | {
+    branchIndex: number;
+    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
+    parentStepName: string;
+  },
   applyOperation: BuilderState['applyOperation'],
 ) => {
   const operationsToAddNewSteps = modifyAddRequestsActionsNames(
@@ -107,14 +114,14 @@ export const pasteNodes = (
   const firstOperationWitoutParentStep = operationsToAddNewSteps.find(
     (operation) => operation.parentStep === EMPTY_STEP_PARENT_NAME,
   )!;
-  firstOperationWitoutParentStep.parentStep = addButtonData.parentStepName;
+  firstOperationWitoutParentStep.parentStep = pastingDetails.parentStepName;
   firstOperationWitoutParentStep.branchIndex =
-    addButtonData.stepLocationRelativeToParent ===
+  pastingDetails.stepLocationRelativeToParent ===
     StepLocationRelativeToParent.INSIDE_BRANCH
-      ? addButtonData.branchIndex
+      ? pastingDetails.branchIndex
       : undefined;
   firstOperationWitoutParentStep.stepLocationRelativeToParent =
-    addButtonData.stepLocationRelativeToParent;
+  pastingDetails.stepLocationRelativeToParent;
   operationsToAddNewSteps
     .map((request) => {
       if (request.parentStep !== EMPTY_STEP_PARENT_NAME) {

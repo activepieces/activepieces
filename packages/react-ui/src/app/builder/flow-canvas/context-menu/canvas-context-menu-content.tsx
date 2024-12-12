@@ -2,7 +2,6 @@ import { Value } from '@sinclair/typebox/value';
 import { t } from 'i18next';
 import { ClipboardPaste, Copy, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
 import { ContextMenuItem } from '@/components/ui/context-menu';
 import {
   AddActionRequest,
@@ -10,7 +9,6 @@ import {
   isNil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
-
 import { copySelectedNodes } from '../bulk-actions/copy-selected-nodes';
 import { deleteSelectedNodes } from '../bulk-actions/delete-selected-nodes';
 import {
@@ -108,7 +106,6 @@ export const CanvasContextMenuContent = ({
                       parentStepName: lastStep.name,
                       stepLocationRelativeToParent:
                         StepLocationRelativeToParent.AFTER,
-                      edgeId: '',
                     },
                     applyOperation,
                   );
@@ -132,8 +129,7 @@ export const CanvasContextMenuContent = ({
                   {
                     parentStepName: singleSelectedStepName,
                     stepLocationRelativeToParent:
-                      StepLocationRelativeToParent.AFTER,
-                    edgeId: '',
+                      StepLocationRelativeToParent.AFTER
                   },
                   applyOperation,
                 );
