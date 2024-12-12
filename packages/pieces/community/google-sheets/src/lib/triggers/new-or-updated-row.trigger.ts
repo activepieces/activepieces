@@ -157,18 +157,11 @@ export const newOrUpdatedRowTrigger = createTrigger({
 
 		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
 
-		let oldValuesHashes = (await context.store.get(`${sheetId}`)) as any[];
-
-		if (isEmpty(oldValuesHashes)) {
-			oldValuesHashes = [];
-		}
+		const oldValuesHashes = (await context.store.get(`${sheetId}`)) as any[];
 
 		/* Fetch rows values with all columns as this will be used on returning updated/new row data
 		 */
 		const currentValues = await getWorkSheetValues(context.auth, spreadSheetId, sheetName);
-		if (isEmpty(currentValues)) {
-			return [];
-		}
 
 		// const rowCount = Math.max(oldValuesHashes.length, currentValues.length);
 
@@ -206,7 +199,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 				continue;
 			}
 
-			const oldRowHash = oldValuesHashes[row];
+			const oldRowHash = row < oldValuesHashes.length ? oldValuesHashes[row] : undefined;
 
 			if (oldRowHash === undefined || oldRowHash != currentRowHash) {
 				const formattedValues: any = {};
