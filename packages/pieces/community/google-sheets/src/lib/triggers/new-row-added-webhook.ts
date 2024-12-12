@@ -20,7 +20,7 @@ import {
 } from './helpers';
 
 import { googleSheetsAuth } from '../..';
-import { getHeaderRow, googleSheetsCommon } from '../common/common';
+import { googleSheetsCommon } from '../common/common';
 
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
