@@ -25,12 +25,12 @@ export enum HumanInputFormResultTypes {
 
 export function createKeyForFormInput(displayName: string) {
     const inputKey = displayName
-      .toLowerCase()
-      .replace(/\s+(\w)/g, (_, letter) => letter.toUpperCase())
-      .replace(/^(.)/, letter => letter.toLowerCase());
+        .toLowerCase()
+        .replace(/\s+(\w)/g, (_, letter) => letter.toUpperCase())
+        .replace(/^(.)/, letter => letter.toLowerCase())
   
     /**We do this because react form inputs must not contain quotes */
-    return inputKey.replaceAll(/[\\"''\n\r\t]/g, '');
+    return inputKey.replaceAll(/[\\"''\n\r\t]/g, '')
 }
 
   
