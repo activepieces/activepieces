@@ -2,8 +2,8 @@ import { BaseEdge, EdgeProps } from '@xyflow/react';
 
 import { StepLocationRelativeToParent } from '@activepieces/shared';
 
-import { flowUtilConsts } from '../consts';
-import { ApLoopStartEdge } from '../types';
+import { flowUtilConsts } from '../utils/consts';
+import { ApLoopStartEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
 

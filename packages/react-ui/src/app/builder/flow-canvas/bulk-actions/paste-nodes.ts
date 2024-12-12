@@ -1,7 +1,7 @@
 import { AddActionRequest, FlowOperationType, StepLocationRelativeToParent, flowStructureUtil } from '@activepieces/shared';
 import { BuilderState } from '../../builder-hooks';
-import { ApButtonData } from '../types';
-import { EMPTY_STEP_PARENT_NAME } from '../consts';
+import { ApButtonData } from '../utils/types';
+import { EMPTY_STEP_PARENT_NAME } from '../utils/consts';
 import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
 
 

@@ -47,8 +47,8 @@ import {
 } from '@activepieces/shared';
 
 import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
-import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../consts';
-import { ApNode, ApNodeType, ApStepNode } from '../types';
+import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../utils/consts';
+import { ApNode, ApNodeType, ApStepNode } from '../utils/types';
 
 function hasSkippedParent(stepName: string, trigger: Trigger): boolean {
   const step = flowStructureUtil.getStep(stepName, trigger);

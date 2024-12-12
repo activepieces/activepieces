@@ -22,7 +22,7 @@ import {
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { AskAiButtonOperations } from '../../features/pieces/lib/types';
 import { useAuthorization } from '../../hooks/authorization-hooks';
-import { ApNode } from './flow-canvas/types';
+import { ApNode } from './flow-canvas/utils/types';
 import { set } from 'date-fns';
 
 const flowUpdatesQueue = new PromiseQueue();

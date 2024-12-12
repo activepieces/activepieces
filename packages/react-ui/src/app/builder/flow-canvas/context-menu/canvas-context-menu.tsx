@@ -1,6 +1,6 @@
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { BuilderState } from "../../builder-hooks";
-import { ApButtonData, ApNode } from "../types";
+import { ApButtonData, ApNode } from "../utils/types";
 import { CanvasContextMenuContent } from "./canvas-context-menu-content";
 import AddButtonsContextMenuContent from "./add-buttons-context-menu-content";
 

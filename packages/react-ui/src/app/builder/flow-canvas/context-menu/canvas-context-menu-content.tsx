@@ -1,12 +1,12 @@
 import { ContextMenuItem } from "@/components/ui/context-menu"
 import { t } from "i18next"
 import { Copy, Trash } from "lucide-react"
-import { ApNode } from "../types";
+import { ApNode } from "../utils/types";
 import React from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BuilderState } from "../../builder-hooks";
-import { copySelectedNodes } from "./copy-selected-nodes";
-import { deleteSelectedNodes } from "./delete-selected-nodes";
+import { copySelectedNodes } from "../bulk-actions/copy-selected-nodes";
+import { deleteSelectedNodes } from "../bulk-actions/delete-selected-nodes";
 
 type CanvasContextMenuContentProps = Pick<BuilderState, 'applyOperation' | 'selectedStep' | 'flowVersion' | 'exitStepSettings' | 'readonly'> & {
     selectedNodes: ApNode[]

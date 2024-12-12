@@ -4,9 +4,9 @@ import { AddActionRequest } from '@activepieces/shared';
 import { ContextMenuItem } from '@/components/ui/context-menu';
 import { t } from 'i18next';
 import { ClipboardPaste } from 'lucide-react';
-import { ApButtonData } from '../types';
+import { ApButtonData } from '../utils/types';
 import { BuilderState } from '../../builder-hooks';
-import { getOperationsInClipboard, pasteNodes } from './paste-nodes';
+import { getOperationsInClipboard, pasteNodes } from '../bulk-actions/paste-nodes';
 
 
 

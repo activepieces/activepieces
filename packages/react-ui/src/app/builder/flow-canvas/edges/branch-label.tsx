@@ -19,8 +19,8 @@ import {
 } from '../../../../components/ui/dropdown-menu';
 import { cn } from '../../../../lib/utils';
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../consts';
-import { flowCanvasUtils } from '../flow-canvas-utils';
+import { flowUtilConsts } from '../utils/consts';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 
 type BaseBranchLabel = {
   label: string;

@@ -8,15 +8,15 @@ import { ActionType, flowStructureUtil, FlowVersion, isFlowStateTerminal, isNil,
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from './consts';
-import { flowCanvasUtils } from './flow-canvas-utils';
+import { ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE, flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from './utils/consts';
+import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { FlowDragLayer } from './flow-drag-layer';
 import { AboveFlowWidgets } from './widgets';
-import { ApButtonData, ApNode } from './types';
+import { ApButtonData, ApNode } from './utils/types';
 import { CanvasContextMenu } from './context-menu/canvas-context-menu';
-import { copySelectedNodes } from './context-menu/copy-selected-nodes';
-import { deleteSelectedNodes } from './context-menu/delete-selected-nodes';
-import { getOperationsInClipboard, pasteNodes } from './context-menu/paste-nodes';
+import { copySelectedNodes } from './bulk-actions/copy-selected-nodes';
+import { deleteSelectedNodes } from './bulk-actions/delete-selected-nodes';
+import { getOperationsInClipboard, pasteNodes } from './bulk-actions/paste-nodes';
 
 
 const createGraphKey = (flowVersion:FlowVersion)=>{

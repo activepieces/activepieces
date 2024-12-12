@@ -25,7 +25,7 @@ import {
   SelectItem,
 } from '../../../../components/ui/select';
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowCanvasUtils } from '../../flow-canvas/flow-canvas-utils';
+import { flowCanvasUtils } from '../../flow-canvas/utils/flow-canvas-utils';
 import { BranchSettings } from '../branch-settings';
 
 import { BranchesList } from './branches-list';

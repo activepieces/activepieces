@@ -1,6 +1,6 @@
 import { Action, ActionType, FlowVersion, StepLocationRelativeToParent, TriggerType, flowStructureUtil, removeAnySubsequentAction } from "@activepieces/shared";
-import { ApNode, ApNodeType } from "../types";
-import { EMPTY_STEP_PARENT_NAME } from "../consts";
+import { ApNode, ApNodeType } from "../utils/types";
+import { EMPTY_STEP_PARENT_NAME } from "../utils/consts";
 
 export const copySelectedNodes = (selectedNodes: ApNode[], flowVersion: FlowVersion) => {
     const operationsToCopy =  selectedNodes.map(node => {

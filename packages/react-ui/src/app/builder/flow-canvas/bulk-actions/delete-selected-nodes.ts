@@ -1,6 +1,6 @@
 import { FlowOperationType } from "@activepieces/shared";
 import { INTERNAL_ERROR_TOAST, toast } from "@/components/ui/use-toast";
-import { ApNode } from "../types";
+import { ApNode } from "../utils/types";
 import { BuilderState } from "../../builder-hooks";
 
 export const deleteSelectedNodes = (

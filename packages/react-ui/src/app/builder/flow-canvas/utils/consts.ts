@@ -1,12 +1,12 @@
-import { ApLoopReturnLineCanvasEdge as ApLoopReturnCanvasEdge } from './edges/loop-return-edge';
-import { ApLoopStartLineCanvasEdge as ApLoopStartCanvasEdge } from './edges/loop-start-edge';
-import { ApRouterEndCanvasEdge } from './edges/router-end-edge';
-import { ApRouterStartCanvasEdge } from './edges/router-start-edge';
-import { ApStraightLineCanvasEdge } from './edges/straight-line-edge';
-import { ApBigAddButtonCanvasNode } from './nodes/big-add-button-node';
-import ApGraphEndWidgetNode from './nodes/flow-end-widget-node';
-import ApLoopReturnCanvasNode from './nodes/loop-return-node';
-import { ApStepCanvasNode } from './nodes/step-node';
+import { ApLoopReturnLineCanvasEdge as ApLoopReturnCanvasEdge } from '../edges/loop-return-edge';
+import { ApLoopStartLineCanvasEdge as ApLoopStartCanvasEdge } from '../edges/loop-start-edge';
+import { ApRouterEndCanvasEdge } from '../edges/router-end-edge';
+import { ApRouterStartCanvasEdge } from '../edges/router-start-edge';
+import { ApStraightLineCanvasEdge } from '../edges/straight-line-edge';
+import { ApBigAddButtonCanvasNode } from '../nodes/big-add-button-node';
+import ApGraphEndWidgetNode from '../nodes/flow-end-widget-node';
+import ApLoopReturnCanvasNode from '../nodes/loop-return-node';
+import { ApStepCanvasNode } from '../nodes/step-node';
 import { ApEdgeType, ApNodeType } from './types';
 
 const ARC_LENGTH = 15;

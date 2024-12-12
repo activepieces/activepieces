@@ -1,6 +1,6 @@
-import { Node, useReactFlow } from '@xyflow/react';
+import { Node, useKeyPress, useReactFlow, useStoreApi } from '@xyflow/react';
 import { t } from 'i18next';
-import { Fullscreen, Minus, Plus, RotateCw } from 'lucide-react';
+import { Fullscreen, Grab, Hand, Minus, MousePointer, MousePointer2, Plus, RotateCw } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,9 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 
-import { flowUtilConsts } from './consts';
-import { flowCanvasUtils } from './flow-canvas-utils';
-import { ApNode } from './types';
+import { flowUtilConsts } from './utils/consts';
+import { flowCanvasUtils } from './utils/flow-canvas-utils';
+import { ApNode } from './utils/types';
 const verticalPaddingOnFitView = 100;
 const duration = 500;
 // Calculate the node's position in relation to the canvas
@@ -165,6 +165,7 @@ const CanvasControls = ({
       });
     }
   };
+  const isInGrabMode = useKeyPress('Space')
 
   return (
     <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row">
@@ -207,6 +208,18 @@ const CanvasControls = ({
         </TooltipTrigger>
         <TooltipContent side="top">{t('Fit to View')}</TooltipContent>
       </Tooltip>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {}}
+          >
+            {
+              isInGrabMode && <Hand className="w-5 h-5"></Hand>
+            }
+            {
+              !isInGrabMode && <MousePointer2 className="w-5 h-5"></MousePointer2>
+            }
+          </Button>
     </div>
   );
 };

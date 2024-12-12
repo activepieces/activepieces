@@ -2,8 +2,8 @@ import { BaseEdge, EdgeProps } from '@xyflow/react';
 
 import { StepLocationRelativeToParent } from '@activepieces/shared';
 
-import { flowUtilConsts } from '../consts';
-import { ApRouterStartEdge } from '../types';
+import { flowUtilConsts } from '../utils/consts';
+import { ApRouterStartEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
 import { BranchLabel } from './branch-label';
