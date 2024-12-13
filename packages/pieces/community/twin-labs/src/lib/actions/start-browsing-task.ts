@@ -5,26 +5,29 @@ import { twinLabsAuth } from '../..';
 export const startBrowsingTask = createAction({
   name: 'startBrowsingTask',
   auth: twinLabsAuth,
-  displayName: 'Start Browsing Task',
+  displayName: 'Browse',
   description:
     'Browse the internet with an AI web navigation agent that can find information for you',
   props: {
-    goal: Property.ShortText({
-      displayName: 'Goal',
-      required: true,
-      description: 'The goal or objective of the browsing task',
-    }),
+    
 
     startUrl: Property.ShortText({
       displayName: 'startUrl',
       required: true,
       description: 'The URL where the browsing task should begin',
-      defaultValue: 'https://',
+      defaultValue: '',
+    }),
+
+    goal: Property.ShortText({
+      displayName: 'Goal',
+      required: true,
+      description: 'The goal or objective of the browsing task',
     }),
   },
 
   async run(context) {
     interface ApiResponse {
+      output: any;
       status: string;
       taskId: string;
       [key: string]: any;
@@ -49,7 +52,7 @@ export const startBrowsingTask = createAction({
     const taskId = res.body.taskId;
     let taskStatus = res.body.status;
 
-    const maxTime = Date.now() + 5 * 60 * 1000; // 5 minutes timeout
+    const maxTime = Date.now() + 15 * 60 * 1000; // 15 minutes timeout
 
     // Initialize statusResponse to store the last response
     let statusResponse: ApiResponse = res.body;
@@ -71,10 +74,14 @@ export const startBrowsingTask = createAction({
       taskStatus = statusResponse.status;
     }
 
-    // Add a timeout message if the task did not complete within 5 minutes
+    // Add a timeout message if the task did not complete within 15 minutes
+    /*
     if (taskStatus !== 'COMPLETED') {
       statusResponse.status = 'TIMEOUT';
+      statusResponse.output = 'TIMEOUT';
+
     }
+      */
 
     // Return the final statusResponse in all cases
     return statusResponse;
