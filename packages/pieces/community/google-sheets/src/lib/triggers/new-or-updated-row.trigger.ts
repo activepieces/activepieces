@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isEmpty, isNil } from '@activepieces/shared';
 import { googleSheetsAuth } from '../../';
 import { columnToLabel, googleSheetsCommon, labelToColumn } from '../common/common';
 import {
@@ -205,7 +205,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 				continue;
 			}
 
-			const oldRowHash = oldValuesHashes[row];
+			const oldRowHash = row < oldValuesHashes.length ? oldValuesHashes[row] : undefined;
 
 			if (oldRowHash === undefined || oldRowHash != currentRowHash) {
 				const formattedValues: any = {};
