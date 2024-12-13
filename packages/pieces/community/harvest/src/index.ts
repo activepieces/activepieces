@@ -8,6 +8,7 @@
     import { getEstimates } from './lib/actions/get-estimates';
     import { getExpenses } from './lib/actions/get-expenses';
     import { getTime_entries } from './lib/actions/get-time_entries';
+    import { getRoles } from './lib/actions/get-roles';
 
     export const harvestAuth = PieceAuth.OAuth2({
       required: true,
@@ -23,7 +24,7 @@
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/harvest.png",
       authors: ["drowe"],
-      actions: [getClients, getEstimates, getExpenses, getInvoices, getProjects, getTasks, getTime_entries],
+      actions: [getClients, getEstimates, getExpenses, getInvoices, getProjects, getRoles, getTasks, getTime_entries],
       triggers: [],
     });
     
