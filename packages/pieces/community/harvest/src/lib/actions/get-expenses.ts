@@ -26,7 +26,7 @@ export const getExpenses = createAction({
     }),
     user_id: Property.ShortText({
       description: 'Only return expenses belonging to the user with the given ID.',
-      displayName: 'Project Id',
+      displayName: 'User Id',
       required: false,
     }),
     client_id: Property.ShortText({
@@ -41,7 +41,7 @@ export const getExpenses = createAction({
     }),
     is_billed: Property.ShortText({
       description: 'Pass `true` to only return expenses that have been invoiced and `false` to return expenses that have not been invoiced.',
-      displayName: 'Is Active',
+      displayName: 'Is Billed',
       required: false,
     }),
     updated_since: Property.ShortText({
