@@ -9,7 +9,7 @@ export const startBrowsingTask = createAction({
   description:
     'Browse the internet with an AI web navigation agent that can find information for you',
   props: {
-    
+
 
     startUrl: Property.ShortText({
       displayName: 'startUrl',
@@ -54,6 +54,7 @@ export const startBrowsingTask = createAction({
 
     const maxTime = Date.now() + 15 * 60 * 1000; // 15 minutes timeout
 
+
     // Initialize statusResponse to store the last response
     let statusResponse: ApiResponse = res.body;
 
@@ -74,14 +75,6 @@ export const startBrowsingTask = createAction({
       taskStatus = statusResponse.status;
     }
 
-    // Add a timeout message if the task did not complete within 15 minutes
-    /*
-    if (taskStatus !== 'COMPLETED') {
-      statusResponse.status = 'TIMEOUT';
-      statusResponse.output = 'TIMEOUT';
-
-    }
-      */
 
     // Return the final statusResponse in all cases
     return statusResponse;
