@@ -1,5 +1,5 @@
-import { logger } from '@activepieces/server-shared'
 import { ActivepiecesError, ChatUIResponse, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
+import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { flowVersionService } from '../../flow-version/flow-version.service'
@@ -24,12 +24,18 @@ const FORMS_TRIGGER_NAMES = [
     FILE_TRIGGER,
 ]
 
+function isFormTrigger(flow: PopulatedFlow | null): flow is PopulatedFlow {
+    if (isNil(flow)) {
+        return false
+    }
+    const triggerSettings = flow.version.trigger.settings
+    return triggerSettings.pieceName === FORMS_PIECE_NAME && FORMS_TRIGGER_NAMES.includes(triggerSettings.triggerName)
+}
+
 export const humanInputService = {
     getFormByFlowIdOrThrow: async (flowId: string, useDraft: boolean): Promise<FormResponse> => {
         const flow = await getPopulatedFlowById(flowId, useDraft)
-        if (!flow
-            || !FORMS_TRIGGER_NAMES.includes(flow.version.trigger.settings.triggerName)
-            || flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME) {
+        if (!isFormTrigger(flow)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_FORM_NOT_FOUND,
                 params: {
@@ -38,13 +44,19 @@ export const humanInputService = {
                 },
             })
         }
-        logger.info(flow.version.trigger.settings)
-        const triggerName = flow.version.trigger.settings.triggerName
+        const pieceVersion = await pieceMetadataService.getExactPieceVersion({
+            name: FORMS_PIECE_NAME,
+            version: flow.version.trigger.settings.pieceVersion,
+            projectId: flow.projectId,
+            platformId: await projectService.getPlatformId(flow.projectId),
+        })
+        const triggerSettings = flow.version.trigger.settings
         return {
             id: flow.id,
             title: flow.version.displayName,
-            props: triggerName === FILE_TRIGGER ? SIMPLE_FILE_PROPS : flow.version.trigger.settings.input,
+            props: triggerSettings.triggerName === FILE_TRIGGER ? SIMPLE_FILE_PROPS : triggerSettings.input,
             projectId: flow.projectId,
+            version: pieceVersion,
         }
     },
     getChatUIByFlowIdOrThrow: async (flowId: string, useDraft: boolean): Promise<ChatUIResponse> => {

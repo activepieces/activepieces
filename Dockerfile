@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         poppler-data && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
-RUN npm i -g npm@9.9.3 pnpm@9.12.1 cross-env@7.0.3
+RUN npm i -g npm@9.9.3 pnpm@9.15.0
 
 # Set the locale
 ENV LANG en_US.UTF-8

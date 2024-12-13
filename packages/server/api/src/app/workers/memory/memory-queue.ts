@@ -1,5 +1,5 @@
 import { WebhookRenewStrategy } from '@activepieces/pieces-framework'
-import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, WebhookJobData } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, OneTimeJobData, QueueName, RepeatableJobType, ScheduledJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { DelayPauseMetadata, Flow, FlowRun, FlowRunStatus, isNil, PauseType, ProgressUpdateType, RunEnvironment, TriggerType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { flowService } from '../../flows/flow/flow.service'
@@ -14,6 +14,7 @@ export const memoryQueues = {
     [QueueName.ONE_TIME]: new ApMemoryQueue<OneTimeJobData>(),
     [QueueName.SCHEDULED]: new ApMemoryQueue<ScheduledJobData>(),
     [QueueName.WEBHOOK]: new ApMemoryQueue<WebhookJobData>(),
+    [QueueName.USERS_INTERACTION]: new ApMemoryQueue<UserInteractionJobData>(),
 }
 
 export const memoryQueue: QueueManager = {
@@ -50,6 +51,13 @@ export const memoryQueue: QueueManager = {
                     id,
                     data,
                     nextFireAtEpochSeconds: dayjs().add(params.delay, 'ms').unix(),
+                })
+                break
+            }
+            case JobType.USERS_INTERACTION: {
+                memoryQueues[QueueName.USERS_INTERACTION].add({
+                    id,
+                    data,
                 })
                 break
             }

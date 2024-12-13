@@ -11,6 +11,8 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
+import { Attachment, ParsedMail, simpleParser } from 'mailparser';
+import { FilesService } from '@activepieces/pieces-framework';
 
 interface SearchMailProps {
   access_token: string;
@@ -182,4 +184,44 @@ export const GmailRequests = {
 
 function decodeBase64(data: any) {
   return Buffer.from(data, 'base64').toString();
+}
+
+export async function parseStream(stream: any) {
+  return new Promise<ParsedMail>((resolve, reject) => {
+    simpleParser(stream, (err, parsed) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(parsed);
+      }
+    });
+  });
+}
+
+export async function convertAttachment(
+  attachments: Attachment[],
+  files: FilesService
+) {
+  const promises = attachments.map(async (attachment) => {
+    try {
+      const fileName = attachment.filename ?? `attachment-${Date.now()}`;
+      return {
+        fileName,
+        mimeType: attachment.contentType,
+        size: attachment.size,
+        data: await files.write({
+          fileName: fileName,
+          data: attachment.content,
+        }),
+      };
+    } catch (error) {
+      console.error(
+        `Failed to process attachment: ${attachment.filename}`,
+        error
+      );
+      return null;
+    }
+  });
+  const results = await Promise.all(promises);
+  return results.filter((result) => result !== null);
 }

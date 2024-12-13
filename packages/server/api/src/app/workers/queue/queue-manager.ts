@@ -5,6 +5,7 @@ import {
     RenewWebhookJobData,
     RepeatingJobData,
     system,
+    UserInteractionJobData,
     WebhookJobData,
 } from '@activepieces/server-shared'
 import { ApEdition, ApId, isNil, ScheduleOptions } from '@activepieces/shared'
@@ -72,6 +73,7 @@ type OneTimeJobAddParams<JT extends JobType.ONE_TIME> = BaseAddParams<JT, OneTim
     priority: keyof typeof JOB_PRIORITY
 }
 
+type UserInteractionJobAddParams<JT extends JobType.USERS_INTERACTION> = BaseAddParams<JT, UserInteractionJobData>
 
 export type AddParams<JT extends JobType> = JT extends JobType.ONE_TIME
     ? OneTimeJobAddParams<JT>
@@ -81,5 +83,6 @@ export type AddParams<JT extends JobType> = JT extends JobType.ONE_TIME
             ? DelayedJobAddParams<JT>
             : JT extends JobType.WEBHOOK
                 ? WebhookJobAddParams<JT>
-                : never
-
+                : JT extends JobType.USERS_INTERACTION
+                    ? UserInteractionJobAddParams<JT>
+                    : never

@@ -1,10 +1,15 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { googleGeminiAuth } from '../../index';
+import { promises as fs } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleAIFileManager } from '@google/generative-ai/server';
+import { nanoid } from 'nanoid';
 import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import mime from 'mime-types';
+import { googleGeminiAuth } from '../../index';
+import { defaultLLM, getGeminiModelOptions } from '../common/common';
 
 export const generateContentFromImageAction = createAction({
   description:
@@ -23,32 +28,52 @@ export const generateContentFromImageAction = createAction({
       required: true,
       description: 'The image to generate content from.'
     }),
+    model: Property.Dropdown({
+      displayName: 'Model',
+      required: true,
+      description: 'The model which will generate the completion',
+      refreshers: [],
+      defaultValue: defaultLLM,
+      options: async ({ auth }) =>
+        getGeminiModelOptions({ auth }),
+    }),
   },
+
   async run({ auth, propsValue }) {
-    const request = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${auth}`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: {
-        contents: [
-          {
-            parts: [
-              {
-                text: propsValue.prompt,
-              },
-              {
-                inline_data: {
-                  mime_type: mime.lookup(propsValue.image.filename),
-                  data: propsValue.image.base64,
-                },
-              },
-            ],
+    const tempFilePath = join(tmpdir(), `gemini-image-${nanoid()}.${propsValue.image.extension}`);
+
+    try {
+      const imageBuffer = Buffer.from(propsValue.image.base64, 'base64');
+      await fs.writeFile(tempFilePath, imageBuffer);
+
+      const fileManager = new GoogleAIFileManager(auth);
+      const uploadResult = await fileManager.uploadFile(tempFilePath, {
+        mimeType: `image/${propsValue.image.extension}`,
+        displayName: propsValue.image.filename,
+      });
+
+      const genAI = new GoogleGenerativeAI(auth);
+      const model = genAI.getGenerativeModel({ model: propsValue.model });
+      const result = await model.generateContent([
+        propsValue.prompt,
+        {
+          fileData: {
+            fileUri: uploadResult.file.uri,
+            mimeType: uploadResult.file.mimeType,
           },
-        ],
-      },
-    });
-    return request.body;
+        },
+      ]);
+
+      const response = await result.response;
+      return {
+        text: response.text(),
+        raw: response,
+      };
+    } catch (error) {
+      console.error('Error in generate content from image:', error);
+      throw error;
+    } finally {
+      await fs.unlink(tempFilePath).catch(() => void 0);
+    }
   },
 });

@@ -1,5 +1,5 @@
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { logger, SharedSystemProp, system } from '@activepieces/server-shared'
+import { logger, SharedSystemProp, system, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
@@ -19,20 +19,21 @@ import {
     PlatformId,
     ProjectId,
 } from '@activepieces/shared'
-import { engineRunner } from 'server-worker'
+import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
 import { fileService } from '../../file/file.service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceMetadataService } from '../piece-metadata-service'
 
 export const pieceService = {
     async installPiece(
-        platformId: string | undefined,
-        projectId: string,
+        platformId: string,
+        projectId: string | undefined,
         params: AddPieceRequestBody,
     ): Promise<PieceMetadataModel> {
         assertInstallProjectEnabled(params.scope)
         try {
-            const piecePackage = await getPiecePackage(platformId, projectId, params)
-            const pieceInformation = await extractPieceInformation(piecePackage)
+            const piecePackage = await savePiecePackage(platformId, projectId, params)
+            const pieceInformation = await extractPieceInformation(piecePackage, projectId, platformId)
             const archiveId = piecePackage.packageType === PackageType.ARCHIVE ? piecePackage.archiveId : undefined
             const savedPiece = await pieceMetadataService.create({
                 pieceMetadata: {
@@ -88,11 +89,7 @@ const assertInstallProjectEnabled = (scope: PieceScope): void => {
     }
 }
 
-const getPiecePackage = async (
-    platformId: string | undefined,
-    projectId: string | undefined,
-    params: AddPieceRequestBody,
-): Promise<PiecePackage> => {
+async function savePiecePackage(platformId: string | undefined, projectId: string | undefined, params: AddPieceRequestBody): Promise<PiecePackage> {
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
             const archiveId = await saveArchive({
@@ -103,8 +100,8 @@ const getPiecePackage = async (
             return {
                 ...params,
                 pieceType: PieceType.CUSTOM,
-                archive: params.pieceArchive.data as Buffer,
                 archiveId,
+                archive: undefined,
                 packageType: params.packageType,
             }
         }
@@ -118,8 +115,13 @@ const getPiecePackage = async (
     }
 }
 
-const extractPieceInformation = async (request: ExecuteExtractPieceMetadata): Promise<PieceMetadata> => {
-    const engineResponse = await engineRunner.extractPieceMetadata(request)
+const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, projectId: string | undefined, platformId: string): Promise<PieceMetadata> => {
+    const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineHelperResponse<EngineHelperExtractPieceInformation>>({
+        jobType: UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
+        piece: request,
+        projectId,
+        platformId,
+    })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
         throw new Error(engineResponse.standardError)

@@ -30,3 +30,53 @@ AP_API_KEY=your_api_key_here npm run sync-pieces -- --apiUrl https://INSTANCE_UR
 2. Increment the piece version in their corresponding `package.json`. For more information, refer to the [piece versioning](../../developers/piece-reference/piece-versioning) documentation.
 3. Open a pull request towards the main branch.
 4. Once the pull request is merged to the main branch, manually run the CLI or use a GitHub/GitLab Action to trigger the synchronization process.
+
+### GitHub Action
+
+```yaml
+name: Sync Custom Pieces
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync-pieces:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository code with full history
+      - name: Check out repository code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Step 2: Cache Node.js dependencies
+      - name: Cache Node.js dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            npm-
+
+      # Step 3: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20' # Use Node.js version 20
+          cache: 'npm'
+
+      # Step 4: Install dependencies using npm ci
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      # Step 6: Sync Custom Pieces
+      - name: Sync Custom Pieces
+        env:
+          AP_API_KEY: ${{ secrets.AP_API_KEY }}
+        run: npm run sync-pieces -- --apiUrl ${{ secrets.INSTANCE_URL }}/api
+
+```

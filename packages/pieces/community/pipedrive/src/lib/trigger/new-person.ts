@@ -2,6 +2,8 @@ import { createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { pipedriveCommon } from '../common';
 import { pipedriveAuth } from '../..';
+import { ListPersonsResponse } from '../common/types';
+import { httpClient, HttpMethod ,AuthenticationType} from '@activepieces/pieces-common';
 
 export const newPerson = createTrigger({
   auth: pipedriveAuth,
@@ -33,6 +35,21 @@ export const newPerson = createTrigger({
         context.auth.access_token
       );
     }
+  },
+  async test(context) {
+    const response = await httpClient.sendRequest<ListPersonsResponse>({
+			method: HttpMethod.GET,
+			url: `${context.auth.data['api_domain']}/api/v1/persons`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: context.auth.access_token,
+			},
+			queryParams:{
+				limit:'5'
+			}
+		});
+
+		return response.body.data;
   },
   async run(context) {
     // Pipedrive will always return a list of Persons even if we are looking up a specific person

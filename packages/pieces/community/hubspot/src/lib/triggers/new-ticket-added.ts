@@ -51,19 +51,11 @@ export const newTicketAdded = createTrigger({
       propsValue: propsValue,
     });
   },
-  run: async ({ store, propsValue, auth }) => {
-    return await pollingHelper.poll(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
+  run: async (context) => {
+    return await pollingHelper.poll(polling, context);
   },
-  test: async ({ store, propsValue, auth }) => {
-    return await pollingHelper.test(polling, {
-      auth,
-      store: store,
-      propsValue: propsValue,
-    });
+  test: async (context) => {
+    return await pollingHelper.test(polling, context);
   },
 
   sampleData: {},

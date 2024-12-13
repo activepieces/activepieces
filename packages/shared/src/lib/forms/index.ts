@@ -23,6 +23,17 @@ export enum HumanInputFormResultTypes {
     MARKDOWN = 'markdown',
 }
 
+export function createKeyForFormInput(displayName: string) {
+    const inputKey = displayName
+        .toLowerCase()
+        .replace(/\s+(\w)/g, (_, letter) => letter.toUpperCase())
+        .replace(/^(.)/, letter => letter.toLowerCase())
+  
+    /**We do this because react form inputs must not contain quotes */
+    return inputKey.replaceAll(/[\\"''\n\r\t]/g, '')
+}
+
+  
 export const HumanInputFormResult = Type.Union([
     Type.Object({
         type: Type.Literal(HumanInputFormResultTypes.FILE),

@@ -71,6 +71,7 @@ export type EngineRunner = {
         operation: Omit<ExecuteTriggerOperation<T>, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>>
     extractPieceMetadata(
+        engineToken: string,
         operation: ExecuteExtractPieceMetadata,
     ): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>>
     executeValidateAuth(

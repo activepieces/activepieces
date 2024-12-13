@@ -10,8 +10,8 @@ import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerHooks } from '../flows/trigger'
 import { flowConsumer } from './consumer'
-import { webhookResponseWatcher } from './helper/webhook-response-watcher'
-import { flowQueue } from './queue'
+import { engineResponseWatcher } from './engine-response-watcher'
+import { jobQueue } from './queue'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -162,7 +162,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             id: flowId,
         })
         if (isNil(flow)) {
-            await flowQueue.removeRepeatingJob({
+            await jobQueue.removeRepeatingJob({
                 flowVersionId,
             })
             return
@@ -208,7 +208,7 @@ async function disableFlowIfQuotaExceeded(projectId: ProjectId, flowId: FlowId, 
 
 async function handleWebhookResponse(runDetails: FlowRunResponse, progressUpdateType: ProgressUpdateType, workerHandlerId: string | null | undefined, httpRequestId: string | null | undefined): Promise<void> {
     if (runDetails.status !== FlowRunStatus.RUNNING && progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
-        await webhookResponseWatcher.publish(
+        await engineResponseWatcher.publish(
             httpRequestId,
             workerHandlerId,
             await getFlowResponse(runDetails),

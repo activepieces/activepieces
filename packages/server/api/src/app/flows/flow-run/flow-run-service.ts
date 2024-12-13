@@ -1,4 +1,4 @@
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import {  exceptionHandler, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -16,7 +16,6 @@ import {
     FlowRunStatus,
     FlowVersionId,
     isNil,
-    MAX_LOG_SIZE,
     PauseMetadata,
     PauseType,
     ProgressUpdateType,
@@ -36,7 +35,7 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
-import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
+import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
@@ -44,6 +43,7 @@ import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
+const maxFileSizeInBytes = system.getNumberOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 
 export const flowRunService = {
     async list({
@@ -262,7 +262,7 @@ export const flowRunService = {
             payload: sampleData,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: webhookResponseWatcher.getServerId(),
+            synchronousHandlerId: engineResponseWatcher.getServerId(),
             httpRequestId: undefined,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
         })
@@ -324,9 +324,9 @@ export const flowRunService = {
     },
     async updateLogsAndReturnUploadUrl({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<string | undefined> {
         const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
-        if (executionStateContentLength > MAX_LOG_SIZE || (!isNil(executionState) && executionState.byteLength > MAX_LOG_SIZE)) {
+        if (executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
             const errors = new Error(
-                'Execution Output is too large, maximum size is ' + MAX_LOG_SIZE,
+                'Execution Output is too large, maximum size is ' + maxFileSizeInBytes,
             )
             exceptionHandler.handle(errors)
             throw errors
@@ -442,7 +442,7 @@ async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
 }
 
 function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): string {
-    const handlerId = webhookResponseWatcher.getServerId()
+    const handlerId = engineResponseWatcher.getServerId()
     if (isNil(pauseMetadata)) {
         return handlerId
     }

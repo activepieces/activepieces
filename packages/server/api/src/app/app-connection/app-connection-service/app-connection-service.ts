@@ -1,4 +1,4 @@
-import { exceptionHandler, logger, SharedSystemProp, system } from '@activepieces/server-shared'
+import { exceptionHandler, logger, SharedSystemProp, system, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -21,9 +21,8 @@ import {
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { engineRunner } from 'server-worker'
+import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-worker'
 import { Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
 import { encryptUtils } from '../../helper/encryption'
@@ -31,10 +30,11 @@ import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import {
-    getPiecePackage,
+    getPiecePackageWithoutArchive,
     pieceMetadataService,
 } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import {
     AppConnectionEntity,
     AppConnectionSchema,
@@ -396,20 +396,17 @@ const engineValidateAuth = async (
         platformId,
     })
 
-    const engineToken = await accessTokenManager.generateEngineToken({
-        platformId,
-        projectId,
-    })
-
-    const engineResponse = await engineRunner.executeValidateAuth(engineToken, {
-        piece: await getPiecePackage(projectId, platformId, {
+    const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineHelperResponse<EngineHelperValidateAuthResult>>({
+        piece: await getPiecePackageWithoutArchive(projectId, platformId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
             pieceType: pieceMetadata.pieceType,
             packageType: pieceMetadata.packageType,
         }),
+        projectId,
         platformId,
-        auth,
+        connectionValue: auth,
+        jobType: UserInteractionJobType.EXECUTE_VALIDATION,
     })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {

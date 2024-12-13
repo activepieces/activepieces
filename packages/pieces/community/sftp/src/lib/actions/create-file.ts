@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient } from 'basic-ftp';
-import { endClient, getClient, sftpAuth } from '../..';
+import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../..';
 import { Readable } from 'stream';
 
 async function createFileWithSFTP(client: Client, fileName: string, fileContent: string) {
@@ -43,10 +43,11 @@ export const createFile = createAction({
     async run(context) {
         const fileName = context.propsValue['fileName'];
         const fileContent = context.propsValue['fileContent'];
+        const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);    
         const client = await getClient(context.auth);
 
         try {
-            switch (context.auth.protocol) {
+            switch (protocolBackwardCompatibility) {
                 case 'ftps':
                 case 'ftp':
                     await createFileWithFTP(client as FTPClient, fileName, fileContent);
