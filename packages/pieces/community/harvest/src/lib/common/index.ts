@@ -1,4 +1,4 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Property, OAuth2PropertyValue, DynamicPropsValue } from '@activepieces/pieces-framework';
 import {
   getAccessTokenOrThrow,
   HttpMethod,
@@ -27,4 +27,23 @@ export async function callHarvestApi<T extends HttpMessageBody = any>(
     body,
     queryParams,
   });
+}
+
+//Remove null/undefined values and create an array to be used for queryparams
+export function filterDynamicFields(dynamicFields: DynamicPropsValue): { [key: string]: string } {
+  const fields: { [key: string]: string } = {};
+
+  const props = Object.entries(dynamicFields);
+  for (const [propertyKey, propertyValue] of props) {
+    if (
+      propertyValue !== null &&
+      propertyValue !== undefined &&
+      propertyValue !== '' &&
+      !(typeof propertyValue === 'string' && propertyValue.trim() === '')
+    ) {
+      fields[propertyKey] = propertyValue;
+    }
+  }
+
+  return fields;
 }

@@ -4,7 +4,9 @@ import {
   getAccessTokenOrThrow,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { callHarvestApi } from '../common';
+import { callHarvestApi, filterDynamicFields } from '../common';
+import { propsValidation } from '@activepieces/pieces-common';
+import { z } from 'zod';
 
 export const getInvoices = createAction({
   name: 'get_invoices', // Must be a unique across the piece, this shouldn't be changed.
@@ -37,17 +39,17 @@ export const getInvoices = createAction({
       displayName: 'Client Id',
       required: false,
     }),
-    project_id: Property.Number({
+    project_id: Property.ShortText({
       description: 'Only return invoices belonging to the project with the given ID.',
       displayName: 'Project Id',
       required: false,
     }),
-    page: Property.Number({
+    page: Property.ShortText({
       description: 'The page number to use in pagination.',
       displayName: 'Page',
       required: false,
     }),
-    per_page: Property.Number({
+    per_page: Property.ShortText({
       description: 'The number of records to return per page.',
       displayName: 'Records per page',
       required: false,
@@ -55,44 +57,26 @@ export const getInvoices = createAction({
 
   },
   async run(context) {
-//    const { from, to, state, updated_since, client_id, project_id, page, per_page } = context.propsValue;
-    const { propsValue } = context;
-    const params: DynamicPropsValue = {};
+    // Validate the input properties using Zod
+    await propsValidation.validateZod(context.propsValue, {
+      per_page: z
+      .string()
+      .optional()
+      .transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))
+      .refine(
+        (val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000),
+        'Per Page must be a number between 1 and 2000.'
+      ),
+    });
 
-    const dynamicFields: DynamicPropsValue = context.propsValue;
-    const fields: {
-      [n: string]: string;
-    } = {};
 
-    const props = Object.entries(dynamicFields);
-    for (const [propertyKey, propertyValue] of props) {
-  
-      if (propertyValue === null || propertyValue === undefined) {
-        continue;
-      }
-
-  
-      if (propertyValue !== undefined && propertyValue !== '' && !(typeof propertyValue === 'string' && propertyValue.trim() === '')) {
-        fields[propertyKey] = propertyValue;
-      }
-    }
+    const params = filterDynamicFields(context.propsValue);
 
     const response = await callHarvestApi(
         HttpMethod.GET,
         `invoices`,
         getAccessTokenOrThrow(context.auth),
-        fields
-/*        { 
-          from: `${from}`, 
-          to: `${to}`, 
-          state: `${state}`, 
-          updated_since: `${updated_since}`, 
-          client_id: `${client_id}`, 
-          project_id: `${project_id}`, 
-          page: `${page}`, 
-          per_page: `${per_page}` 
-        }
-*/
+        params
       );
   
       return response.body;  },
