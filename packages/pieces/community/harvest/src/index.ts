@@ -4,6 +4,7 @@
     import { getInvoices } from './lib/actions/get-invoices';
     import { getProjects } from './lib/actions/get-projects';
     import { getTasks } from './lib/actions/get-tasks';
+    import { getClients } from './lib/actions/get-clients';
 
     export const harvestAuth = PieceAuth.OAuth2({
       required: true,
@@ -19,7 +20,7 @@
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/harvest.png",
       authors: ["drowe"],
-      actions: [getInvoices, getProjects, getTasks],
+      actions: [getClients, getInvoices, getProjects, getTasks],
       triggers: [],
     });
     
