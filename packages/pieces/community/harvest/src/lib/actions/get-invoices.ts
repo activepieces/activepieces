@@ -1,4 +1,4 @@
-import { Property, createAction, DynamicPropsValue } from "@activepieces/pieces-framework";
+import { Property, createAction } from "@activepieces/pieces-framework";
 import { harvestAuth } from '../..';
 import {
   getAccessTokenOrThrow,
@@ -50,7 +50,7 @@ export const getInvoices = createAction({
       required: false,
     }),
     per_page: Property.ShortText({
-      description: 'The number of records to return per page.',
+      description: 'The number of records to return per page. (1-2000)',
       displayName: 'Records per page',
       required: false,
     }),
@@ -68,7 +68,6 @@ export const getInvoices = createAction({
         'Per Page must be a number between 1 and 2000.'
       ),
     });
-
 
     const params = filterDynamicFields(context.propsValue);
 
