@@ -7,6 +7,7 @@ import {
     StepFileUpsertResponse,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../helper/domain-helper'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { fileService } from '../file.service'
@@ -14,9 +15,9 @@ import { s3Helper } from '../s3-helper'
 
 const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
-export const stepFileService = {
+export const stepFileService = (log: FastifyBaseLogger) => ({
     async saveAndEnrich(params: SaveParams): Promise<StepFileUpsertResponse> {
-        const file = await fileService.save({
+        const file = await fileService(log).save({
             data: params.data ?? null,
             metadata: {
                 stepName: params.stepName,
@@ -29,19 +30,19 @@ export const stepFileService = {
             size: params.contentLength,
         })
         return {
-            uploadUrl: await constructUploadUrl(file.s3Key, params.data, params.contentLength),
+            uploadUrl: await constructUploadUrl(log, file.s3Key, params.data, params.contentLength),
             url: await constructDownloadUrl(params.hostname, file),
         }
     },
-}
+})
 
-async function constructUploadUrl(s3Key: string | undefined, data: Buffer | undefined, contentLength: number): Promise<string | undefined> {
+async function constructUploadUrl(log: FastifyBaseLogger, s3Key: string | undefined, data: Buffer | undefined, contentLength: number): Promise<string | undefined> {
     const dataSent = !isNil(data)
     const isNotS3 = isNil(s3Key)
     if (isNotS3 || dataSent) {
         return undefined
     }
-    return s3Helper.putS3SignedUrl(s3Key, contentLength)
+    return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
 }
 
 async function constructDownloadUrl(hostname: string, file: File): Promise<string> {

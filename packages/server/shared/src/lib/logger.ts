@@ -2,6 +2,7 @@ import pino, { Level, Logger } from 'pino'
 import 'pino-loki'
 import { system } from './system/system'
 import { SharedSystemProp } from './system/system-prop'
+import { FastifyBaseLogger } from 'fastify'
 
 const lokiUrl = system.get(SharedSystemProp.LOKI_URL)
 const lokiUsername = system.get(SharedSystemProp.LOKI_USERNAME)
@@ -42,12 +43,12 @@ const initLogger = (): Logger => {
                 interval: 5,
                 host: lokiUrl,
                 basicAuth:
-          lokiPassword && lokiPassword
-              ? {
-                  username: lokiUsername,
-                  password: lokiPassword,
-              }
-              : undefined,
+                    lokiPassword && lokiPassword
+                        ? {
+                            username: lokiUsername,
+                            password: lokiPassword,
+                        }
+                        : undefined,
             },
         })
     }
@@ -56,3 +57,11 @@ const initLogger = (): Logger => {
 }
 
 export const logger = initLogger()
+
+export const createRunContextLog = ({ log, runId, flowId }: { log: FastifyBaseLogger, runId: string, flowId: string }) => {
+    return log.child({ runId, flowId })
+}
+
+export const createWebhookContextLog = ({ log, webhookId, flowId }: { log: FastifyBaseLogger, webhookId: string, flowId: string }) => {
+    return log.child({ webhookId, flowId })
+}

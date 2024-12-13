@@ -13,6 +13,7 @@ import {
     ProjectId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { FileEntity } from './file.entity'
@@ -21,7 +22,7 @@ import { s3Helper } from './s3-helper'
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
-export const fileService = {
+export const fileService = (log: FastifyBaseLogger) => ({
     async save(params: SaveParams): Promise<File> {
         const baseFile = {
             id: params.fileId ?? apId(),
@@ -46,9 +47,9 @@ export const fileService = {
                 })
             }
             case FileLocation.S3: {
-                const s3Key = s3Helper.constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                const s3Key = s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
                 if (!isNil(params.data)) {
-                    await s3Helper.uploadFile(s3Key, params.data)
+                    await s3Helper(log).uploadFile(s3Key, params.data)
                 }
                 return fileRepo().save({
                     ...baseFile,
@@ -89,7 +90,7 @@ export const fileService = {
             })
         }
         const data = await fileCompressor.decompress({
-            data: file.location === FileLocation.DB ? file.data : await s3Helper.getFile(file.s3Key!),
+            data: file.location === FileLocation.DB ? file.data : await s3Helper(log).getFile(file.s3Key!),
             compression: file.compression,
         })
         return {
@@ -113,7 +114,7 @@ export const fileService = {
             })
 
             const s3Keys = staleFiles.filter(f => !isNil(f.s3Key)).map(f => f.s3Key!)
-            await s3Helper.deleteFiles(s3Keys)
+            await s3Helper(log).deleteFiles(s3Keys)
 
             const result = await fileRepo().delete({
                 type: In(types),
@@ -132,7 +133,7 @@ export const fileService = {
             types,
         }, '[FileService#deleteStaleBulk] completed')
     },
-}
+})
 
 type GetDataResponse = {
     data: Buffer

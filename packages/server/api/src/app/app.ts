@@ -55,7 +55,6 @@ import { projectMemberModule } from './ee/project-members/project-member.module'
 import { projectRoleModule } from './ee/project-role/project-role.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
-import { referralModule } from './ee/referrals/referral.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { fileModule } from './file/file.module'
@@ -177,6 +176,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         rejectedPromiseHandler(websocketService.init(socket))
     })
 
+    app.addHook('onSend', async (request, reply) => {
+        await reply.header('x-request-id', request.id)
+    })
+
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({
             method: request.method as HTTPMethods,
@@ -193,7 +196,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.addHook('preHandler', securityHandlerChain)
     app.addHook('preHandler', rbacMiddleware)
-    await systemJobsSchedule.init()
+    await systemJobsSchedule(app.log).init()
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
@@ -211,7 +214,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
-    await pieceSyncService.setup()
+    await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
     await app.register(issuesModule)
     await app.register(authnSsoSamlModule)
@@ -258,7 +261,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
-            await app.register(referralModule)
             await app.register(adminPieceModule)
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
@@ -278,17 +280,15 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectBillingModule)
             await app.register(projectRoleModule)
             await app.register(globalConnectionModule)
-            setPlatformOAuthService({
-                service: platformOAuth2Service,
-            })
-            projectHooks.setHooks(projectEnterpriseHooks)
+            setPlatformOAuthService(platformOAuth2Service(app.log))
+            projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            flowRunHooks.setHooks(platformRunHooks)
-            pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
+            flowRunHooks.set(platformRunHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             initializeSentry()
             break
         case ApEdition.ENTERPRISE:
@@ -310,13 +310,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(globalConnectionModule)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
-            setPlatformOAuthService({
-                service: platformOAuth2Service,
-            })
-            projectHooks.setHooks(projectEnterpriseHooks)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            setPlatformOAuthService(platformOAuth2Service(app.log))
+            projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            flowRunHooks.setHooks(platformRunHooks)
+            flowRunHooks.set(platformRunHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -331,9 +329,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.addHook('onClose', async () => {
         logger.info('Shutting down')
-        await flowConsumer.close()
-        await systemJobsSchedule.close()
-        await engineResponseWatcher.shutdown()
+        await flowConsumer(app.log).close()
+        await systemJobsSchedule(app.log).close()
+        await engineResponseWatcher(app.log).shutdown()
     })
 
     return app

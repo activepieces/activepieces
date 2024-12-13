@@ -21,7 +21,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
         }
     }
     catch (err) {
-        logger.error(err)
+        app.log.error(err)
         process.exit(1)
     }
 }
@@ -39,8 +39,8 @@ const stop = async (app: FastifyInstance): Promise<void> => {
         process.exit(0)
     }
     catch (err) {
-        logger.error('Error stopping server')
-        logger.error(err)
+        app.log.error('Error stopping server')
+        app.log.error(err)
         process.exit(1)
     }
 }

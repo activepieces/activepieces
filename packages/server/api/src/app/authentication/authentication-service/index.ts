@@ -1,6 +1,5 @@
 import {
     cryptoUtils,
-    logger,
     SharedSystemProp,
     system,
 } from '@activepieces/server-shared'
@@ -15,31 +14,30 @@ import {
     Project,
     TelemetryEventName,
     User,
-    UserId,
     UserStatus,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { QueryFailedError } from 'typeorm'
 import { flagService } from '../../flags/flag.service'
 import { telemetry } from '../../helper/telemetry.utils'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
-import { authenticationServiceHooks as hooks } from './hooks'
+import { authenticationServiceHooks } from './hooks'
 import { Provider } from './hooks/authentication-service-hooks'
 
-export const authenticationService = {
+export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
-        await hooks.get().preSignUp(params)
-        const user = await createUser(params)
+        await authenticationServiceHooks.get(log).preSignUp(params)
+        const user = await createUser(params, log)
 
         return this.signUpResponse({
             user,
-            referringUserId: params.referringUserId,
         })
     },
 
     async signIn(request: SignInParams): Promise<AuthenticationResponse> {
-        await hooks.get().preSignIn(request)
+        await authenticationServiceHooks.get(log).preSignIn(request)
         const user = await userService.getByPlatformAndEmail({
             platformId: request.platformId,
             email: request.email,
@@ -88,11 +86,9 @@ export const authenticationService = {
 
     async signUpResponse({
         user,
-        referringUserId,
     }: SignUpResponseParams): Promise<AuthenticationResponse> {
-        const authnResponse = await hooks.get().postSignUp({
+        const authnResponse = await authenticationServiceHooks.get(log).postSignUp({
             user,
-            referringUserId,
         })
         await flagService.save({ id: ApFlagId.USER_CREATED, value: true })
 
@@ -101,8 +97,9 @@ export const authenticationService = {
         await sendTelemetry({
             user,
             project: authnResponse.project,
+            log,
         })
-        await saveNewsLetterSubscriber(user)
+        await saveNewsLetterSubscriber(user, log)
 
         return {
             ...userWithoutPassword,
@@ -114,7 +111,7 @@ export const authenticationService = {
     async signInResponse({
         user,
     }: SignInResponseParams): Promise<AuthenticationResponse> {
-        const authnResponse = await hooks.get().postSignIn({
+        const authnResponse = await authenticationServiceHooks.get(log).postSignIn({
             user,
         })
 
@@ -126,9 +123,9 @@ export const authenticationService = {
             projectId: authnResponse.project.id,
         }
     },
-}
+})
 
-const createUser = async (params: SignUpParams): Promise<User> => {
+const createUser = async (params: SignUpParams, logger: FastifyBaseLogger): Promise<User> => {
     try {
         const newUser: NewUser = {
             email: params.email,
@@ -214,11 +211,12 @@ const removePasswordPropFromUser = (user: User): Omit<User, 'password'> => {
 const sendTelemetry = async ({
     user,
     project,
+    log,
 }: SendTelemetryParams): Promise<void> => {
     try {
-        await telemetry.identify(user, project.id)
+        await telemetry(log).identify(user, project.id)
 
-        await telemetry.trackProject(project.id, {
+        await telemetry(log).trackProject(project.id, {
             name: TelemetryEventName.SIGNED_UP,
             payload: {
                 userId: user.id,
@@ -230,11 +228,11 @@ const sendTelemetry = async ({
         })
     }
     catch (e) {
-        logger.warn({ name: 'AuthenticationService#sendTelemetry', error: e })
+        log.warn({ name: 'AuthenticationService#sendTelemetry', error: e })
     }
 }
 
-async function saveNewsLetterSubscriber(user: User): Promise<void> {
+async function saveNewsLetterSubscriber(user: User, logger: FastifyBaseLogger): Promise<void> {
     const isPlatformUserOrNotSubscribed =
     (!isNil(user.platformId) &&
       !flagService.isCloudPlatform(user.platformId)) ||
@@ -266,6 +264,7 @@ async function saveNewsLetterSubscriber(user: User): Promise<void> {
 type SendTelemetryParams = {
     user: User
     project: Project
+    log: FastifyBaseLogger
 }
 
 type NewUser = Omit<User, 'id' | 'created' | 'updated'> & {
@@ -281,7 +280,6 @@ type SignUpParams = {
     newsLetter: boolean
     verified: boolean
     platformId: string | null
-    referringUserId?: string
     provider: Provider
 }
 
@@ -307,7 +305,6 @@ type FederatedAuthnParams = {
 
 type SignUpResponseParams = {
     user: User
-    referringUserId?: UserId
 }
 
 type SignInResponseParams = {

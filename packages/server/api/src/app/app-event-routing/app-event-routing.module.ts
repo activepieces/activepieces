@@ -117,7 +117,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
-                return jobQueue.add({
+                return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.WEBHOOK,
                     data: {
@@ -127,7 +127,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         synchronousHandlerId: null,
                         payload,
                         flowId: listener.flowId,
-                        saveSampleData: await webhookSimulationService.exists(listener.flowId),
+                        saveSampleData: await webhookSimulationService(request.log).exists(listener.flowId),
                         flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
                     },
                     priority: DEFAULT_PRIORITY,

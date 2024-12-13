@@ -10,7 +10,7 @@ import { usersProjectController } from './platform-user-project-controller'
 export const platformProjectModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, async (job: SystemJobData<SystemJobName.HARD_DELETE_PROJECT>): Promise<void> => {
         logger.info({ name: 'PlatformProjectSideEffects#hardDeleteProjectJobHandler', projectId: job.projectId })
-        await platformProjectService.hardDelete({ id: job.projectId })
+        await platformProjectService(app.log).hardDelete({ id: job.projectId })
     })
     await app.register(platformProjectController, { prefix: '/v1/projects' })
     await app.register(usersProjectController, { prefix: '/v1/users/projects' })

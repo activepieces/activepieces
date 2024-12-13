@@ -32,9 +32,9 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
 
     app.post('/pull', PullRepoFromProjectRequestSchema, async (request) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
-        const gitRepo = await gitRepoService.getOneByProjectOrThrow({ projectId: request.body.projectId })
+        const gitRepo = await gitRepoService(request.log).getOneByProjectOrThrow({ projectId: request.body.projectId })
         const userId = platform.ownerId
-        await gitRepoService.pull({
+        await gitRepoService(request.log).pull({
             gitRepo,
             userId,
             dryRun: false,
@@ -42,18 +42,18 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     })
 
     app.post('/', ConfigureRepoRequestSchema, async (request, reply) => {
-        const gitSync = await gitRepoService.upsert(request.body)
+        const gitSync = await gitRepoService(request.log).upsert(request.body)
         await reply
             .status(StatusCodes.CREATED)
             .send(gitSync)
     })
 
     app.get('/', ListRepoRequestSchema, async (request) => {
-        return gitRepoService.list(request.query)
+        return gitRepoService(request.log).list(request.query)
     })
 
     app.post('/:id/push', PushRepoRequestSchema, async (request) => {
-        return gitRepoService.push({
+        return gitRepoService(request.log).push({
             id: request.params.id,
             userId: request.principal.id,
             request: request.body,
@@ -61,10 +61,10 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     })
 
     app.post('/:id/pull', PullRepoRequestSchema, async (request) => {
-        const gitRepo = await gitRepoService.getOrThrow({
+        const gitRepo = await gitRepoService(request.log).getOrThrow({
             id: request.params.id,
         })
-        return gitRepoService.pull({
+        return gitRepoService(request.log).pull({
             gitRepo,
             dryRun: request.body.dryRun ?? false,
             userId: request.principal.id,
@@ -72,7 +72,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     })
 
     app.delete('/:id', DeleteRepoRequestSchema, async (request, reply) => {
-        await gitRepoService.delete({
+        await gitRepoService(request.log).delete({
             id: request.params.id,
             projectId: request.principal.projectId,
         })

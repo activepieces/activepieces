@@ -33,7 +33,7 @@ const seedDevUser = async (): Promise<void> => {
     const DEV_PASSWORD = '12345678'
 
 
-    await authenticationService.signUp({
+    await authenticationService(logger).signUp({
         email: DEV_EMAIL,
         password: DEV_PASSWORD,
         firstName: 'Dev',

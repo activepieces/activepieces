@@ -11,6 +11,7 @@ import {
     ProgressUpdateType,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { eventsHooks } from '../../helper/application-events'
 import { jobQueue } from '../../workers/queue'
 import { JOB_PRIORITY } from '../../workers/queue/queue-manager'
@@ -45,12 +46,12 @@ const calculateDelayForPausedRun = (
     return delayInMilliSeconds
 }
 
-export const flowRunSideEffects = {
+export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
     async finish(flowRun: FlowRun): Promise<void> {
         if (!isFlowUserTerminalState(flowRun.status)) {
             return
         }
-        await flowRunHooks.getHooks().onFinish(flowRun)
+        await flowRunHooks.get(log).onFinish(flowRun)
         eventsHooks.get().sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_FINISHED,
             data: {
@@ -71,7 +72,7 @@ export const flowRunSideEffects = {
             `[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`,
         )
 
-        await jobQueue.add({
+        await jobQueue(log).add({
             id: flowRun.id,
             type: JobType.ONE_TIME,
             priority,
@@ -113,7 +114,7 @@ export const flowRunSideEffects = {
 
         switch (pauseMetadata.type) {
             case PauseType.DELAY:
-                await jobQueue.add({
+                await jobQueue(log).add({
                     id: flowRun.id,
                     type: JobType.DELAYED,
                     data: {
@@ -133,4 +134,4 @@ export const flowRunSideEffects = {
                 break
         }
     },
-}
+})

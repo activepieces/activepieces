@@ -16,8 +16,8 @@ export const workerModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(workerMachineController, {
         prefix: '/v1/worker-machines',
     })
-    await jobQueue.init()
-    await flowConsumer.init()
+    await jobQueue(app.log).init()
+    await flowConsumer(app.log).init()
     await setupBullMQBoard(app)
 }
 

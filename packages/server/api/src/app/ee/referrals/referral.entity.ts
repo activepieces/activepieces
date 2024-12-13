@@ -11,6 +11,7 @@ export type ReferralSchema = Referral & {
     referringUser: User
 }
 
+// TODO REMOVE THIS ENTITY
 export const ReferralEntity = new EntitySchema<ReferralSchema>({
     name: 'referal',
     columns: {

@@ -1,6 +1,7 @@
 import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PackageType, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flagService } from '../../flags/flag.service'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -16,7 +17,7 @@ const handleUnexpectedSecretsManagerError = (message: string) => {
     throw new Error(message)
 }
 
-export const licenseKeysService = {
+export const licenseKeysService = (log: FastifyBaseLogger) => ({
     async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<void> {
         const response = await fetch(secretManagerLicenseKeysRoute, {
             method: 'POST',
@@ -55,7 +56,7 @@ export const licenseKeysService = {
                 const errorMessage = JSON.stringify(await response.json())
                 handleUnexpectedSecretsManagerError(errorMessage)
             }
-            rejectedPromiseHandler(telemetry.trackPlatform(request.platformId, {
+            rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
                 name: TelemetryEventName.KEY_ACTIVIATED,
                 payload: {
                     date: dayjs().toISOString(),
@@ -96,7 +97,7 @@ export const licenseKeysService = {
             ...turnedOffFeatures,
         })
         await deactivatePlatformUsersOtherThanAdmin(platformId)
-        await deletePrivatePieces(platformId)
+        await deletePrivatePieces(platformId, log)
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         await platformService.update({
@@ -120,7 +121,7 @@ export const licenseKeysService = {
             analyticsEnabled: key.analyticsEnabled,
         })
     },
-}
+})
 
 const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string) => {
     const { data } = await userService.list({
@@ -139,23 +140,22 @@ const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<voi
 }
 
 
-const deletePrivatePieces: (platformId: string) => Promise<void> = async (platformId: string) => {
+const deletePrivatePieces = async (platformId: string, log: FastifyBaseLogger): Promise<void> => {
     const latestRelease = await flagService.getCurrentRelease()
-    const pieces = await pieceMetadataService.list({
+    const pieces = await pieceMetadataService(log).list({
         edition: ApEdition.ENTERPRISE,
         includeHidden: true,
         release: latestRelease,
         platformId,
     })
     const piecesToDelete = pieces.filter((piece) => piece.packageType === PackageType.ARCHIVE && piece.id).map((piece) =>
-        pieceMetadataService.delete({
+        pieceMetadataService(log).delete({
             id: piece.id!,
             projectId: piece.projectId,
         }),
     )
     await Promise.all(piecesToDelete)
 }
-
 
 
 const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {

@@ -1,7 +1,7 @@
 import fs, { rmdir } from 'node:fs/promises'
 import path from 'node:path'
-import { fileExists, logger, memoryLock, PackageInfo, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
-import { FlowVersionState } from '@activepieces/shared'
+import { fileExists, logger, memoryLock, PackageInfo, packageManager, SharedSystemProp, system, threadSafeMkdir } from '@activepieces/server-shared'
+import { ExecutionMode, FlowVersionState } from '@activepieces/shared'
 import { CodeArtifact } from '../engine/engine-runner'
 import { cacheHandler } from '../utils/cache-handler'
 
@@ -35,6 +35,7 @@ const INVALID_ARTIFACT_TEMPLATE = `
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
+const isPackagesAllowed = system.getOrThrow(SharedSystemProp.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY
 enum CacheState {
     READY = 'READY',
     PENDING = 'PENDING',
@@ -79,7 +80,7 @@ export const codeBuilder = {
 
             await installDependencies({
                 path: codePath,
-                packageJson,
+                packageJson: isPackagesAllowed ? packageJson : '{"dependencies":{}}',
             })
 
             await compileCode({
