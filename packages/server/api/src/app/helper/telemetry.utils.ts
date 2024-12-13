@@ -60,6 +60,7 @@ export const telemetry = {
                 datetime: new Date().toISOString(),
             },
         }
+        logger.info(payloadEvent, '[Telemetry#trackUser] sending event')
         analytics.track(payloadEvent)
     },
 }

@@ -70,6 +70,7 @@ export const newFile = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
 
     return await handleFileContent(newFiles, context)
@@ -79,6 +80,7 @@ export const newFile = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
 
     return await handleFileContent(newFiles, context)

@@ -471,6 +471,9 @@
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
       ],
+      "@activepieces/piece-pylon": [
+        "packages/pieces/community/pylon/src/index.ts"
+      ],
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
       ],

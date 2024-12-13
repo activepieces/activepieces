@@ -157,7 +157,7 @@ export const dealStageUpdatedTrigger = createTrigger({
 	},
 	type: TriggerStrategy.POLLING,
 	async test(context) {
-		const { store, auth, propsValue } = context;
+		const { store, auth, propsValue, files } = context;
 		return await pollingHelper.test(polling, {
 			store,
 			auth,
@@ -165,6 +165,7 @@ export const dealStageUpdatedTrigger = createTrigger({
 				pipelineId: propsValue.pipelineId,
 				dealStageId: propsValue.dealstageId,
 			},
+			files: files,
 		});
 	},
 	async onEnable(context) {
@@ -192,7 +193,7 @@ export const dealStageUpdatedTrigger = createTrigger({
 	},
 
 	async run(context) {
-		const { store, auth, propsValue } = context;
+		const { store, auth, propsValue, files } = context;
 		return await pollingHelper.poll(polling, {
 			store,
 			auth,
@@ -200,6 +201,7 @@ export const dealStageUpdatedTrigger = createTrigger({
 				pipelineId: propsValue.pipelineId,
 				dealStageId: propsValue.dealstageId,
 			},
+			files: files,
 		});
 	},
 	sampleData: {
