@@ -60,7 +60,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         },
         schedule: {
             type: 'repeated',
-            cron: '*/50 23 * * *',
+            cron: '0/50 23 * * *',
         },
     })
     await engineResponseWatcher(app.log).init()
