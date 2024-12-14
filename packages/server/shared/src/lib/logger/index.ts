@@ -1,12 +1,9 @@
 import { FastifyBaseLogger } from 'fastify'
 import pino, { Level, Logger } from 'pino'
 import 'pino-loki'
-import { system } from './system/system'
-import { SharedSystemProp } from './system/system-prop'
-
-const lokiUrl = system.get(SharedSystemProp.LOKI_URL)
-const lokiUsername = system.get(SharedSystemProp.LOKI_USERNAME)
-const lokiPassword = system.get(SharedSystemProp.LOKI_PASSWORD)
+import { system } from '../system/system'
+import { SharedSystemProp } from '../system/system-prop'
+import { createLokiTransport } from './loki-pino'
 
 const initLogger = (): Logger => {
     const level = system.get<Level>(SharedSystemProp.LOG_LEVEL) ?? 'info'
@@ -26,7 +23,7 @@ const initLogger = (): Logger => {
         })
     }
 
-    const targets = [
+    const defaultTargets = [
         {
             target: 'pino/file',
             level,
@@ -34,26 +31,18 @@ const initLogger = (): Logger => {
         },
     ]
 
-    if (lokiUrl) {
-        targets.push({
-            target: 'pino-loki',
-            level,
-            options: {
-                batching: true,
-                interval: 5,
-                host: lokiUrl,
-                basicAuth:
-                    lokiPassword && lokiPassword
-                        ? {
-                            username: lokiUsername,
-                            password: lokiPassword,
-                        }
-                        : undefined,
-            },
-        })
+    const lokiLogger = createLokiTransport(level, defaultTargets)
+    if (lokiLogger) {
+        return lokiLogger
     }
 
-    return pino({ level, transport: { targets } })
+    // Default logger
+    return pino({
+        level,
+        transport: {
+            targets: defaultTargets,
+        },
+    })
 }
 
 export const logger = initLogger()
