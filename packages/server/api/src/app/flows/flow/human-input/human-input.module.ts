@@ -13,10 +13,10 @@ export const humanInputModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const humanInputController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/form/:flowId', GetFormRequest, async (request) => {
-        return humanInputService.getFormByFlowIdOrThrow(request.params.flowId, request.query.useDraft ?? false)
+        return humanInputService(request.log).getFormByFlowIdOrThrow(request.params.flowId, request.query.useDraft ?? false)
     })
     app.get('/chat/:flowId', GetFormRequest, async (request) => {
-        return humanInputService.getChatUIByFlowIdOrThrow(request.params.flowId, request.query.useDraft ?? false)
+        return humanInputService(request.log).getChatUIByFlowIdOrThrow(request.params.flowId, request.query.useDraft ?? false)
     })
 }
 

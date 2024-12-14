@@ -35,7 +35,7 @@ export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
 const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/versions', ListVersionsRequest, async (req): Promise<ListVersionsResponse> => {
-        return pieceMetadataService.getVersions({
+        return pieceMetadataService(req.log).getVersions({
             name: req.query.name,
             projectId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId,
             release: req.query.release,
@@ -62,7 +62,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const edition = req.query.edition ?? ApEdition.COMMUNITY
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
             const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
-            const pieceMetadataSummary = await pieceMetadataService.list({
+            const pieceMetadataSummary = await pieceMetadataService(req.log).list({
                 release,
                 includeHidden: req.query.includeHidden ?? false,
                 projectId,
@@ -90,7 +90,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const decodedName = decodeURIComponent(name)
             const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
-            return pieceMetadataService.getOrThrow({
+            return pieceMetadataService(req.log).getOrThrow({
                 projectId,
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
@@ -109,7 +109,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const decodedName = decodeURIComponent(name)
             const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
-            return pieceMetadataService.getOrThrow({
+            return pieceMetadataService(req.log).getOrThrow({
                 projectId,
                 platformId,
                 name: decodedName,
@@ -118,20 +118,20 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
-    app.post('/sync', SyncPiecesRequest, async () => pieceSyncService.sync())
+    app.post('/sync', SyncPiecesRequest, async (req) => pieceSyncService(req.log).sync())
 
     app.post(
         '/options',
         OptionsPieceRequest,
         async (req) => {
             const { projectId, platform } = req.principal
-            const flow = await flowService.getOnePopulatedOrThrow({
+            const flow = await flowService(req.log).getOnePopulatedOrThrow({
                 projectId,
                 id: req.body.flowId,
                 versionId: req.body.flowVersionId,
             })
-            const sampleData = await sampleDataService.getSampleDataForFlow(projectId, flow.version)
-            const { result } = await userInteractionWatcher.submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
+            const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version)
+            const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
                 jobType: UserInteractionJobType.EXECUTE_PROPERTY,
                 projectId,
                 flowVersion: flow.version,
@@ -139,14 +139,14 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 actionOrTriggerName: req.body.actionOrTriggerName,
                 input: req.body.input,
                 sampleData,
-                piece: await getPiecePackageWithoutArchive(projectId, platform.id, req.body),
+                piece: await getPiecePackageWithoutArchive(req.log, projectId, platform.id, req.body),
             })
             return result
         },
     )
 
     app.delete('/:id', DeletePieceRequest, async (req): Promise<void> => {
-        return pieceMetadataService.delete({
+        return pieceMetadataService(req.log).delete({
             projectId: req.principal.projectId,
             id: req.params.id,
         })

@@ -20,7 +20,6 @@ type PreParams = {
 
 type PostParams = {
     user: User
-    referringUserId?: string
 }
 
 type PostResult = {

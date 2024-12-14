@@ -26,7 +26,7 @@ const DEFAULT_PAGING_LIMIT = 10
 
 export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListRequest, async (request) => {
-        return flowRunService.list({
+        return flowRunService(request.log).list({
             projectId: request.query.projectId,
             flowId: request.query.flowId,
             tags: request.query.tags,
@@ -42,7 +42,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         '/:id',
         GetRequest,
         async (request, reply) => {
-            const flowRun = await flowRunService.getOnePopulatedOrThrow({
+            const flowRun = await flowRunService(request.log).getOnePopulatedOrThrow({
                 projectId: request.principal.projectId,
                 id: request.params.id,
             })
@@ -53,7 +53,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
     app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        await flowRunService.addToQueue({
+        await flowRunService(req.log).addToQueue({
             flowRunId: req.params.id,
             requestId: req.params.requestId,
             payload: {
@@ -71,7 +71,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id/retry', RetryFlowRequest, async (req) => {
-        const flowRun = await flowRunService.retry({
+        const flowRun = await flowRunService(req.log).retry({
             flowRunId: req.params.id,
             strategy: req.body.strategy,
             projectId: req.body.projectId,
@@ -89,7 +89,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/retry', BulkRetryFlowRequest, async (req) => {
-        return flowRunService.bulkRetry({
+        return flowRunService(req.log).bulkRetry({
             projectId: req.principal.projectId,
             flowRunIds: req.body.flowRunIds,
             strategy: req.body.strategy,

@@ -16,9 +16,9 @@ const userRepo = repoFactory(UserEntity)
 const projectRepo = repoFactory(ProjectEntity)
 const platformRepo = repoFactory(PlatformEntity)
 
-export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
+export const usageTrackerModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.USAGE_REPORT, sendUsageReport)
-    await systemJobsSchedule.upsertJob({
+    await systemJobsSchedule(app.log).upsertJob({
         job: {
             name: SystemJobName.USAGE_REPORT,
             data: {},

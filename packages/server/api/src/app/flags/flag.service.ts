@@ -1,4 +1,4 @@
-import { AppSystemProp, flowTimeoutSandbox, SharedSystemProp, system, webhookSecretsUtils } from '@activepieces/server-shared'
+import { AppSystemProp, flowTimeoutSandbox, logger, SharedSystemProp, system, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
 import { webhookUtils } from 'server-worker'
@@ -235,7 +235,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.WEBHOOK_URL_PREFIX,
-                value: await webhookUtils.getWebhookPrefix(),
+                value: await webhookUtils(logger).getWebhookPrefix(),
                 created,
                 updated,
             },

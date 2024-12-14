@@ -1,14 +1,5 @@
+import { hooksFactory } from '../../../helper/hooks-factory'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
 import { communityAuthenticationServiceHooks } from './community-authentication-hooks'
 
-let hooks = communityAuthenticationServiceHooks
-
-export const authenticationServiceHooks = {
-    set(newHooks: AuthenticationServiceHooks): void {
-        hooks = newHooks
-    },
-
-    get(): AuthenticationServiceHooks {
-        return hooks
-    },
-}
+export const authenticationServiceHooks = hooksFactory.create<AuthenticationServiceHooks>(communityAuthenticationServiceHooks)

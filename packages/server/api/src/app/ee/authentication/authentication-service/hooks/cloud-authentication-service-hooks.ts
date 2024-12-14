@@ -1,6 +1,6 @@
 import { OtpType } from '@activepieces/ee-shared'
-import { exceptionHandler, logger } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { flagService } from '../../../../../app/flags/flag.service'
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { projectService } from '../../../../project/project-service'
@@ -8,28 +8,27 @@ import { userService } from '../../../../user/user-service'
 import { userInvitationsService } from '../../../../user-invitations/user-invitation.service'
 import { appsumoService } from '../../../billing/appsumo/appsumo.service'
 import { otpService } from '../../../otp/otp-service'
-import { referralService } from '../../../referrals/referral.service'
 import { authenticationHelper } from './authentication-helper'
 
-export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
+export const cloudAuthenticationServiceHooks = (log: FastifyBaseLogger): AuthenticationServiceHooks => ({
     async preSignIn({ email, platformId, provider }) {
-        await authenticationHelper.assertEmailAuthIsEnabled({
+        await authenticationHelper(log).assertEmailAuthIsEnabled({
             platformId,
             provider,
         })
-        await authenticationHelper.assertDomainIsAllowed({ email, platformId })
+        await authenticationHelper(log).assertDomainIsAllowed({ email, platformId })
     },
     async preSignUp({ email, platformId, provider }) {
-        await authenticationHelper.assertEmailAuthIsEnabled({
+        await authenticationHelper(log).assertEmailAuthIsEnabled({
             platformId,
             provider,
         })
-        await authenticationHelper.assertUserIsInvitedAndDomainIsAllowed({
+        await authenticationHelper(log).assertUserIsInvitedAndDomainIsAllowed({
             email,
             platformId,
         })
     },
-    async postSignUp({ user, referringUserId }) {
+    async postSignUp({ user }) {
         if (
             !isNil(user.platformId) &&
             flagService.isCloudPlatform(user.platformId)
@@ -41,39 +40,27 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
             })
         }
 
-        if (referringUserId) {
-            try {
-                await referralService.add({
-                    referringUserId,
-                    referredUserId: user.id,
-                    referredUserEmail: user.email,
-                })
-            }
-            catch (e) {
-                exceptionHandler.handle(e)
-                logger.error(e, '[CloudAuthenticationServiceHooks#postSignUp] referralService.add')
-            }
-        }
+   
 
-        await authenticationHelper.autoVerifyUserIfEligible(user)
-        await userInvitationsService.provisionUserInvitation({
+        await authenticationHelper(log).autoVerifyUserIfEligible(user)
+        await userInvitationsService(log).provisionUserInvitation({
             email: user.email,
             platformId: user.platformId!,
         })
 
         const updatedUser = await userService.getOneOrFail({ id: user.id })
-        const { project, token } = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const { project, token } = await authenticationHelper(log).getProjectAndTokenOrThrow(user)
 
         if (!updatedUser.verified) {
-            await otpService.createAndSend({
+            await otpService(log).createAndSend({
                 platformId: updatedUser.platformId!,
                 email: updatedUser.email,
                 type: OtpType.EMAIL_VERIFICATION,
             })
         }
-        const appSumo = await appsumoService.getByEmail(updatedUser.email)
+        const appSumo = await appsumoService(log).getByEmail(updatedUser.email)
         if (appSumo) {
-            await appsumoService.handleRequest({
+            await appsumoService(log).handleRequest({
                 plan_id: appSumo.plan_id,
                 action: 'activate',
                 uuid: appSumo.uuid,
@@ -88,11 +75,11 @@ export const cloudAuthenticationServiceHooks: AuthenticationServiceHooks = {
     },
 
     async postSignIn({ user }) {
-        const result = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const result = await authenticationHelper(log).getProjectAndTokenOrThrow(user)
 
         return {
             user,
             ...result,
         }
     },
-}
+})
