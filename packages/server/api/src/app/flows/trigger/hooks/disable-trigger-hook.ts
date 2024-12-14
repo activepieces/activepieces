@@ -43,7 +43,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
             jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
             hookType: TriggerHookType.ON_DISABLE,
             flowVersion,
-            webhookUrl: await webhookUtils.getWebhookUrl({
+            webhookUrl: await webhookUtils(log).getWebhookUrl({
                 flowId: flowVersion.flowId,
                 simulate,
             }),

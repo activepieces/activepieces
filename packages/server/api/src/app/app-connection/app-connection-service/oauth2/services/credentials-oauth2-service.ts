@@ -1,5 +1,4 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AppConnectionType,
@@ -81,7 +80,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             }
         }
         catch (e: unknown) {
-            logger.error(e)
+            log.error(e)
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_CLAIM,
                 params: {

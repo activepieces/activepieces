@@ -1,7 +1,8 @@
-import { exceptionHandler, OneTimeJobData, SharedSystemProp, system } from '@activepieces/server-shared'
+import { createRunContextLog, exceptionHandler, OneTimeJobData, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
+import { FastifyBaseLogger } from 'fastify'
 
 type EngineConstants = 'internalApiUrl' | 'publicUrl' | 'engineToken'
 
@@ -41,49 +42,6 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, e
         }
     }
 }
-async function executeFlow(jobData: OneTimeJobData, engineToken: string): Promise<void> {
-    try {
-        const flow = await engineApiService(engineToken).getFlowWithExactPieces({
-            versionId: jobData.flowVersionId,
-            type: GetFlowVersionForWorkerRequestType.EXACT,
-        })
-        if (isNil(flow)) {
-            return
-        }
-        await engineApiService(engineToken).checkTaskLimit()
-
-        const input = await prepareInput(flow.version, jobData, engineToken)
-        const { result } = await engineRunner.executeFlow(
-            engineToken,
-            input,
-        )
-
-        if (result.status === FlowRunStatus.INTERNAL_ERROR) {
-            await handleInternalError(jobData, engineToken, new ActivepiecesError({
-                code: ErrorCode.ENGINE_OPERATION_FAILURE,
-                params: {
-                    message: result.error?.message ?? 'internal error',
-                },
-            }))
-        }
-
-    }
-    catch (e) {
-        const isQuotaExceededError = e instanceof ActivepiecesError && e.error.code === ErrorCode.QUOTA_EXCEEDED
-        const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
-        if (isQuotaExceededError) {
-            await handleQuotaExceededError(jobData, engineToken)
-        }
-        else if (isTimeoutError) {
-            await handleTimeoutError(jobData, engineToken)
-        }
-        else {
-            await handleInternalError(jobData, engineToken, e as Error)
-        }
-    }
-
-}
-
 
 async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: string): Promise<void> {
     await engineApiService(engineToken).updateRunStatus({
@@ -131,7 +89,54 @@ async function handleInternalError(jobData: OneTimeJobData, engineToken: string,
     exceptionHandler.handle(e)
 }
 
+export const flowJobExecutor = (log: FastifyBaseLogger) => ({
+    async executeFlow(jobData: OneTimeJobData, engineToken: string): Promise<void> {
+        try {
 
-export const flowJobExecutor = {
-    executeFlow,
-}
+            const flow = await engineApiService(engineToken).getFlowWithExactPieces({
+                versionId: jobData.flowVersionId,
+                type: GetFlowVersionForWorkerRequestType.EXACT,
+            })
+            if (isNil(flow)) {
+                return
+            }
+            const runLog = createRunContextLog({
+                log,
+                runId: jobData.runId,
+                webhookId: jobData.httpRequestId,
+                flowId: flow.id,
+                flowVersionId: flow.version.id,
+            })
+            await engineApiService(engineToken).checkTaskLimit()
+
+            const input = await prepareInput(flow.version, jobData, engineToken)
+            const { result } = await engineRunner(runLog).executeFlow(
+                engineToken,
+                input,
+            )
+
+            if (result.status === FlowRunStatus.INTERNAL_ERROR) {
+                await handleInternalError(jobData, engineToken, new ActivepiecesError({
+                    code: ErrorCode.ENGINE_OPERATION_FAILURE,
+                    params: {
+                        message: result.error?.message ?? 'internal error',
+                    },
+                }))
+            }
+
+        }
+        catch (e) {
+            const isQuotaExceededError = e instanceof ActivepiecesError && e.error.code === ErrorCode.QUOTA_EXCEEDED
+            const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
+            if (isQuotaExceededError) {
+                await handleQuotaExceededError(jobData, engineToken)
+            }
+            else if (isTimeoutError) {
+                await handleTimeoutError(jobData, engineToken)
+            }
+            else {
+                await handleInternalError(jobData, engineToken, e as Error)
+            }
+        }
+    }
+})

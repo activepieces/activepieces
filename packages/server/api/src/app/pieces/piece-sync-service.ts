@@ -44,7 +44,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
         }
         try {
             log.info({ time: dayjs().toISOString() }, 'Syncing pieces')
-            const pieces = await listPieces(log)
+            const pieces = await listPieces()
             const promises: Promise<void>[] = []
 
             for (const summary of pieces) {

@@ -1,4 +1,3 @@
-import { logger } from '@activepieces/server-shared'
 import { apId, FlowVersionId } from '@activepieces/shared'
 
 export enum SandBoxCacheType {
@@ -10,7 +9,6 @@ export enum SandBoxCacheType {
 export const extractProvisionCacheKey = (
     params: TypedProvisionCacheInfo,
 ): string => {
-    logger.debug({ type: params.type }, '[SandboxProvisioner#extractCacheKey]')
     switch (params.type) {
         case SandBoxCacheType.CODE:
             return `CODE-sourceCodeHash-${params.sourceCodeHash}-name-${params.name}-flowId-${params.flowId}`

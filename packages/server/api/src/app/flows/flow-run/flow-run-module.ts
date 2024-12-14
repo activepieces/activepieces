@@ -1,4 +1,3 @@
-import { logger } from '@activepieces/server-shared'
 import { TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyPluginAsync } from 'fastify'
@@ -20,7 +19,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         if (!telemetry(app.log).isEnabled()) {
             return
         }
-        logger.info({
+        app.log.info({
             name: SystemJobName.RUN_TELEMETRY,
         }, 'Run telemetry started')
         const startOfDay = dayjs().startOf('day').toISOString()
@@ -33,7 +32,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
             .groupBy('"projectId", "flowId", "environment"')
             .getRawMany()
         for (const { projectId, flowId, environment, count } of projectFlowCounts) {
-            logger.info({
+            app.log.info({
                 projectId,
                 flowId,
                 environment,
@@ -50,7 +49,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
                     },
                 })
                 .catch((e) =>
-                    logger.error(e, '[FlowRunService#Start] telemetry.trackProject'),
+                    app.log.error(e, '[FlowRunService#Start] telemetry.trackProject'),
                 )
         }
     })

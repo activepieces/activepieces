@@ -14,7 +14,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
             port: 3000,
         })
         if (system.isWorker()) {
-            await workerPostBoot()
+            await workerPostBoot(app)
         }
         if (system.isApp()) {
             await appPostBoot()

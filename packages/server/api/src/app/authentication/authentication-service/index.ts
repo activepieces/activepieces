@@ -29,7 +29,7 @@ import { Provider } from './hooks/authentication-service-hooks'
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
         await authenticationServiceHooks.get(log).preSignUp(params)
-        const user = await createUser(params, log)
+        const user = await createUser(params)
 
         return this.signUpResponse({
             user,
@@ -125,7 +125,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
 })
 
-const createUser = async (params: SignUpParams, logger: FastifyBaseLogger): Promise<User> => {
+const createUser = async (params: SignUpParams): Promise<User> => {
     try {
         const newUser: NewUser = {
             email: params.email,
@@ -145,7 +145,6 @@ const createUser = async (params: SignUpParams, logger: FastifyBaseLogger): Prom
     }
     catch (e: unknown) {
         if (e instanceof QueryFailedError) {
-            logger.error(e)
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
                 params: {
@@ -232,7 +231,7 @@ const sendTelemetry = async ({
     }
 }
 
-async function saveNewsLetterSubscriber(user: User, logger: FastifyBaseLogger): Promise<void> {
+async function saveNewsLetterSubscriber(user: User, log: FastifyBaseLogger): Promise<void> {
     const isPlatformUserOrNotSubscribed =
     (!isNil(user.platformId) &&
       !flagService.isCloudPlatform(user.platformId)) ||
@@ -258,7 +257,7 @@ async function saveNewsLetterSubscriber(user: User, logger: FastifyBaseLogger): 
         return await response.json()
     }
     catch (error) {
-        logger.warn(error)
+        log.warn(error)
     }
 }
 type SendTelemetryParams = {

@@ -123,6 +123,7 @@ async function handleWebhook({
     saveSampleData,
     flowVersionToRun,
 }: HandleWebhookParams): Promise<EngineHttpResponse> {
+    const webhookHeader = 'x-webhook-id'
     const webhookRequestId = apId()
     const log = createWebhookContextLog({ log: request.log, webhookId: webhookRequestId, flowId })
     const flow = await flowService(log).getOneById(flowId)
@@ -143,7 +144,9 @@ async function handleWebhook({
         return {
             status: StatusCodes.NOT_FOUND,
             body: {},
-            headers: {},
+            headers: {
+                [webhookHeader]: webhookRequestId,
+            },
         }
     }
 
@@ -171,14 +174,24 @@ async function handleWebhook({
         return {
             status: StatusCodes.OK,
             body: {},
-            headers: {},
+            headers: {
+                [webhookHeader]: webhookRequestId,
+            },
         }
     }
-    return engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
+    const flowHttpResponse = await engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
         status: StatusCodes.NO_CONTENT,
         body: {},
         headers: {},
     })
+    return {
+        status: flowHttpResponse.status,
+        body: flowHttpResponse.body,
+        headers: {
+            ...flowHttpResponse.headers,
+            [webhookHeader]: webhookRequestId,
+        },
+    }
 }
 
 type HandleWebhookParams = {

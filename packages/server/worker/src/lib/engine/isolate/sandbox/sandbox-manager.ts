@@ -1,7 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import { IsolateSandbox } from './isolate-sandbox'
+import { FastifyBaseLogger } from 'fastify'
 
 const SANDBOX_LIMIT = 1000
 
@@ -11,9 +11,9 @@ const sandboxes: IsolateSandbox[] = new Array(SANDBOX_LIMIT)
 
 const lock: Mutex = new Mutex()
 
-export const sandboxManager = {
+export const sandboxManager = (log: FastifyBaseLogger) => ({
     async allocate(cacheKey: string): Promise<IsolateSandbox> {
-        logger.debug({ cacheKey }, '[SandboxManager#allocate]')
+        log.debug({ cacheKey }, '[SandboxManager#allocate]')
 
         const sandbox = await executeWithLock((): IsolateSandbox => {
             const sandbox = findSandbox(cacheKey)
@@ -31,14 +31,14 @@ export const sandboxManager = {
             return sandbox
         }
         catch (e) {
-            logger.error(e, '[SandboxManager#allocate]')
+            log.error(e, '[SandboxManager#allocate]')
             await this.release(sandbox.boxId)
             throw e
         }
     },
 
     async release(sandboxId: number): Promise<void> {
-        logger.debug({ boxId: sandboxId }, '[SandboxManager#release]')
+        log.debug({ boxId: sandboxId }, '[SandboxManager#release]')
 
         await executeWithLock((): void => {
             const sandbox = sandboxes[sandboxId]
@@ -52,7 +52,7 @@ export const sandboxManager = {
             sandbox.inUse = false
         })
     },
-}
+})
 
 const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {
     const releaseLock = await lock.acquire()

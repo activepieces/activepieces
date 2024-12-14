@@ -58,8 +58,8 @@ const initLogger = (): Logger => {
 
 export const logger = initLogger()
 
-export const createRunContextLog = ({ log, runId, flowId }: { log: FastifyBaseLogger, runId: string, flowId: string }) => {
-    return log.child({ runId, flowId })
+export const createRunContextLog = ({ log, runId, webhookId, flowId, flowVersionId }: { log: FastifyBaseLogger, runId: string, webhookId: string | undefined, flowId: string, flowVersionId: string }) => {
+    return log.child({ runId, webhookId, flowId, flowVersionId })
 }
 
 export const createWebhookContextLog = ({ log, webhookId, flowId }: { log: FastifyBaseLogger, webhookId: string, flowId: string }) => {

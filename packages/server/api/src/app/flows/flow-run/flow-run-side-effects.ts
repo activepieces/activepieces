@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, logger, RepeatableJobType } from '@activepieces/server-shared'
+import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -68,7 +68,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         priority,
         progressUpdateType,
     }: StartParams): Promise<void> {
-        logger.info(
+        log.info(
             `[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`,
         )
 
@@ -97,7 +97,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
     },
 
     async pause({ flowRun }: PauseParams): Promise<void> {
-        logger.info(
+        log.info(
             `[FlowRunSideEffects#pause] flowRunId=${flowRun.id} pauseType=${flowRun.pauseMetadata?.type}`,
         )
 

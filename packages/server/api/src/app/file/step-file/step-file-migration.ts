@@ -1,4 +1,4 @@
-import { ApLock, logger } from '@activepieces/server-shared'
+import { ApLock } from '@activepieces/server-shared'
 import { FileCompression, FileType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../../database/database-connection'
@@ -60,11 +60,11 @@ export const stepFileMigration = (log: FastifyBaseLogger) => {
                                 `DELETE FROM step_file WHERE id = '${stepFile.id}'`,
                             )
                         }
-                        logger.info({
+                        log.info({
                             filesMigrated: stepFiles.length,
                         }, 'step files migrated, continuing')
                     }
-                    logger.info('step files migrated, done')
+                    log.info('step files migrated, done')
                 }
                 finally {
                     await queryRunner.release()

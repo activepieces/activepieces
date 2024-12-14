@@ -1,9 +1,10 @@
 import fs, { rmdir } from 'node:fs/promises'
 import path from 'node:path'
-import { fileExists, logger, memoryLock, PackageInfo, packageManager, SharedSystemProp, system, threadSafeMkdir } from '@activepieces/server-shared'
+import { fileExists, memoryLock, PackageInfo, packageManager, SharedSystemProp, system, threadSafeMkdir } from '@activepieces/server-shared'
 import { ExecutionMode, FlowVersionState } from '@activepieces/shared'
 import { CodeArtifact } from '../engine/engine-runner'
 import { cacheHandler } from '../utils/cache-handler'
+import { FastifyBaseLogger } from 'fastify'
 
 const TS_CONFIG_CONTENT = `
 
@@ -41,7 +42,7 @@ enum CacheState {
     PENDING = 'PENDING',
 }
 
-export const codeBuilder = {
+export const codeBuilder = (log: FastifyBaseLogger) => ({
     getCodesFolder({ codesFolderPath, flowVersionId }: { codesFolderPath: string, flowVersionId: string }): string {
         return path.join(codesFolderPath, flowVersionId)
     },
@@ -50,9 +51,9 @@ export const codeBuilder = {
         codesFolderPath,
     }: ProcessCodeStepParams): Promise<void> {
         const { sourceCode, flowVersionId, name } = artifact
-        const flowVersionPath = codeBuilder.getCodesFolder({ codesFolderPath, flowVersionId })
+        const flowVersionPath = this.getCodesFolder({ codesFolderPath, flowVersionId })
         const codePath = path.join(flowVersionPath, name)
-        logger.debug({
+        log.debug({
             message: 'CodeBuilder#processCodeStep',
             sourceCode,
             name,
@@ -91,7 +92,7 @@ export const codeBuilder = {
             await cache.setCache(codePath, CacheState.READY)
         }
         catch (error: unknown) {
-            logger.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
+            log.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
 
             await handleCompilationError({
                 codePath,
@@ -102,7 +103,7 @@ export const codeBuilder = {
             await lock.release()
         }
     },
-}
+})
 
 const installDependencies = async ({
     path,

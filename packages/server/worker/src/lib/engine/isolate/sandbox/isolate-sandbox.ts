@@ -2,9 +2,10 @@ import { exec } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process, { arch, cwd } from 'node:process'
-import { AppSystemProp, fileExists, getEngineTimeout, logger, PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
+import { AppSystemProp, fileExists, getEngineTimeout, PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import { ExecuteSandboxResult } from '../../engine-runner'
+import { FastifyBaseLogger } from 'fastify'
 
 type SandboxCtorParams = {
     boxId: number
@@ -17,6 +18,7 @@ type AssignCacheParams = {
     globalCodesPath: string
     flowVersionId?: string
     customPiecesPath: string | undefined
+    log: FastifyBaseLogger
 }
 
 const getIsolateExecutableName = (): string => {
@@ -38,6 +40,7 @@ export class IsolateSandbox {
 
     public readonly boxId: number
     public inUse = false
+    private _log?: FastifyBaseLogger
     private _cacheKey?: string
     private _globalCachePath?: string
     private _globalCodesPath?: string
@@ -53,7 +56,7 @@ export class IsolateSandbox {
     }
 
     public async cleanUp(): Promise<void> {
-        logger.debug({ boxId: this.boxId }, '[IsolateSandbox#recreate]')
+        this._log?.debug({ boxId: this.boxId }, '[IsolateSandbox#recreate]')
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --cleanup`)
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --init`)
     }
@@ -111,7 +114,7 @@ export class IsolateSandbox {
             standardError: await readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' }),
         }
 
-        logger.debug(result, '[IsolateSandbox#runCommandLine] result')
+        this._log?.debug(result, '[IsolateSandbox#runCommandLine] result')
 
         return result
     }
@@ -127,12 +130,13 @@ export class IsolateSandbox {
 
     public async assignCache({
         cacheKey,
-        globalCachePath,
+        globalCachePath,    
+        log,
         globalCodesPath,
         flowVersionId,
         customPiecesPath,
     }: AssignCacheParams): Promise<void> {
-        logger.debug(
+        this._log?.debug(
             { boxId: this.boxId, cacheKey, globalCachePath, globalCodesPath, flowVersionId },
             '[IsolateSandbox#assignCache]',
         )
@@ -164,14 +168,13 @@ export class IsolateSandbox {
         }
 
         const output = JSON.parse(await readFile(outputFile, { encoding: 'utf-8' }))
-        logger.trace(output, '[Sandbox#parseFunctionOutput] output')
+        this._log?.trace(output, '[Sandbox#parseFunctionOutput] output')
         return output
     }
 
     private static runIsolate(cmd: string): Promise<string> {
         const currentDir = cwd()
         const fullCmd = `${currentDir}/packages/server/api/src/assets/${this.isolateExecutableName} ${cmd}`
-        logger.debug({ fullCmd }, '[IsolateSandbox#runIsolate] fullCmd')
         return new Promise((resolve, reject) => {
             exec(fullCmd, (error, stdout: string | PromiseLike<string>, stderr) => {
                 if (error) {

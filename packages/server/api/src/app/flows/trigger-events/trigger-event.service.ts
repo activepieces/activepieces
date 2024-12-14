@@ -77,7 +77,7 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                 const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
-                    webhookUrl: await webhookUtils.getWebhookUrl({
+                    webhookUrl: await webhookUtils(log).getWebhookUrl({
                         flowId: flow.id,
                         simulate: true,
                     }),

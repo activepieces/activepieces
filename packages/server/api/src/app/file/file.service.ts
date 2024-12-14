@@ -1,4 +1,4 @@
-import { AppSystemProp, fileCompressor, logger, system } from '@activepieces/server-shared'
+import { AppSystemProp, fileCompressor, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -123,12 +123,12 @@ export const fileService = (log: FastifyBaseLogger) => ({
             })
             affected = result.affected || 0
             totalAffected += affected
-            logger.info({
+            log.info({
                 counts: affected,
                 types,
             }, '[FileService#deleteStaleBulk] iteration completed')
         }
-        logger.info({
+        log.info({
             totalAffected,
             types,
         }, '[FileService#deleteStaleBulk] completed')

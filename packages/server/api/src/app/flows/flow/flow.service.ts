@@ -1,4 +1,4 @@
-import { AppSystemProp, logger, rejectedPromiseHandler, system } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -74,7 +74,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
             .catch((e) =>
-                logger.error(e, '[FlowService#create] telemetry.trackProject'),
+                log.error(e, '[FlowService#create] telemetry.trackProject'),
             )
 
         return {

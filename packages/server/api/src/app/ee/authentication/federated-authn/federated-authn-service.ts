@@ -8,7 +8,7 @@ import { resolvePlatformIdFromEmail } from '../../../platform/platform-utils'
 import { platformService } from '../../../platform/platform.service'
 import { providers } from './authn-provider/authn-provider'
 
-export const federatedAuthnService = (logger: FastifyBaseLogger) => ({
+export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     async login({
         providerName,
         platformId,
@@ -33,7 +33,7 @@ export const federatedAuthnService = (logger: FastifyBaseLogger) => ({
         const platform = await platformService.getOneOrThrow(platformId)
         const idToken = await provider.authenticate(hostname, platform, code)
         const platformIdFromEmail = (await resolvePlatformIdFromEmail(idToken.email)) ?? platformId
-        return authenticationService(logger).federatedAuthn({
+        return authenticationService(log).federatedAuthn({
             email: idToken.email,
             verified: true,
             firstName: idToken.firstName ?? 'john',

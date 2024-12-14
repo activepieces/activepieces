@@ -1,4 +1,4 @@
-import { exceptionHandler, logger, SharedSystemProp, system, UserInteractionJobType } from '@activepieces/server-shared'
+import { exceptionHandler, SharedSystemProp, system, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -414,7 +414,7 @@ const engineValidateAuth = async (
     })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
-        logger.error(
+        log.error(
             engineResponse,
             '[AppConnectionService#engineValidateAuth] engineResponse',
         )

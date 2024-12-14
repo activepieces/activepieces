@@ -1,5 +1,4 @@
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT, ProjectBilling } from '@activepieces/ee-shared'
-import { logger } from '@activepieces/server-shared'
 import { apId, isNil, User } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
@@ -46,7 +45,7 @@ export const projectBillingService = (log: FastifyBaseLogger) => ({
     async updateSubscriptionIdByCustomerId(subscription: Stripe.Subscription): Promise<ProjectBilling> {
         const stripeCustomerId = subscription.customer as string
         const projectBilling = await projectBillingRepo().findOneByOrFail({ stripeCustomerId })
-        logger.info(`Updating subscription id for project billing ${projectBilling.id}`)
+        log.info(`Updating subscription id for project billing ${projectBilling.id}`)
         await projectBillingRepo().update(projectBilling.id, {
             stripeSubscriptionId: subscription.id,
             subscriptionStatus: subscription.status as ApSubscriptionStatus,

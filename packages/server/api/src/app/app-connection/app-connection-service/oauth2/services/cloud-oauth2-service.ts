@@ -1,6 +1,6 @@
 
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { logger, system } from '@activepieces/server-shared'
+import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AppConnectionType,
@@ -15,7 +15,7 @@ import {
     RefreshOAuth2Request,
 } from '../oauth2-service'
 
-export const cloudOAuth2Service = (_log: FastifyBaseLogger): OAuth2Service<CloudOAuth2ConnectionValue> => ({
+export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudOAuth2ConnectionValue> => ({
     refresh: async ({
         pieceName,
         connectionValue,
@@ -70,7 +70,7 @@ export const cloudOAuth2Service = (_log: FastifyBaseLogger): OAuth2Service<Cloud
             }
         }
         catch (e: unknown) {
-            logger.error(e)
+            log.error(e)
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_CLOUD_CLAIM,
                 params: {

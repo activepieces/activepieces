@@ -64,7 +64,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         projectId,
     })
 
-    const webhookUrl = await webhookUtils.getWebhookUrl({
+    const webhookUrl = await webhookUtils(log).getWebhookUrl({
         flowId: flowVersion.flowId,
         simulate,
     })

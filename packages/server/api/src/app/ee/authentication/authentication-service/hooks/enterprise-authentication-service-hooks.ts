@@ -1,4 +1,3 @@
-import { logger } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
@@ -31,7 +30,7 @@ export const enterpriseAuthenticationServiceHooks = (log: FastifyBaseLogger): Au
     async postSignUp({ user }) {
         const platformCreated = await platformService.hasAnyPlatforms()
         if (platformCreated) {
-            logger.info({
+            log.info({
                 email: user.email,
                 platformId: user.platformId,
             }, '[postSignUp] provisionUserInvitation')
