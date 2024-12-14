@@ -14,14 +14,14 @@ const start = async (app: FastifyInstance): Promise<void> => {
             port: 3000,
         })
         if (system.isWorker()) {
-            await workerPostBoot()
+            await workerPostBoot(app)
         }
         if (system.isApp()) {
-            await appPostBoot()
+            await appPostBoot(app)
         }
     }
     catch (err) {
-        logger.error(err)
+        app.log.error(err)
         process.exit(1)
     }
 }
@@ -39,8 +39,8 @@ const stop = async (app: FastifyInstance): Promise<void> => {
         process.exit(0)
     }
     catch (err) {
-        logger.error('Error stopping server')
-        logger.error(err)
+        app.log.error('Error stopping server')
+        app.log.error(err)
         process.exit(1)
     }
 }

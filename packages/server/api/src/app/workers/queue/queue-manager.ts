@@ -4,13 +4,10 @@ import {
     OneTimeJobData,
     RenewWebhookJobData,
     RepeatingJobData,
-    system,
     UserInteractionJobData,
     WebhookJobData,
 } from '@activepieces/server-shared'
-import { ApEdition, ApId, isNil, ScheduleOptions } from '@activepieces/shared'
-import { flagService } from '../../flags/flag.service'
-import { projectService } from '../../project/project-service'
+import { ApId, isNil, ScheduleOptions } from '@activepieces/shared'
 
 export const JOB_PRIORITY = {
     high: 2,
@@ -23,14 +20,7 @@ export const TEST_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
 export const SYNC_FLOW_PRIORITY: keyof typeof JOB_PRIORITY = 'medium'
 export const DEFAULT_PRIORITY: keyof typeof JOB_PRIORITY = 'low'
 
-// TODO remove after adding rate limting per user
-export async function getJobPriority(projectId: string, synchronousHandlerId: string | null | undefined): Promise<keyof typeof JOB_PRIORITY> {
-    const platformId = await projectService.getPlatformId(projectId)
-    const isCloudPlatform = flagService.isCloudPlatform(platformId)
-    const edition = system.getEdition()
-    if (!isCloudPlatform && edition === ApEdition.CLOUD) {
-        return ENTERPRISE_FLOW_PRIORITY
-    }
+export async function getJobPriority(synchronousHandlerId: string | null | undefined): Promise<keyof typeof JOB_PRIORITY> {
     if (!isNil(synchronousHandlerId)) {
         return SYNC_FLOW_PRIORITY
     }

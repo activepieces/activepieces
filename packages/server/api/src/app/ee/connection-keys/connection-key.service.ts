@@ -20,6 +20,7 @@ import {
     ProjectId,
     SeekPage,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import jsonwebtoken from 'jsonwebtoken'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -31,7 +32,7 @@ import { ConnectionKeyEntity } from './connection-key.entity'
 
 const connectionKeyRepo = repoFactory(ConnectionKeyEntity)
 
-export const connectionKeyService = {
+export const connectionKeyService = (log: FastifyBaseLogger) => ({
     async getConnection({
         projectId,
         token,
@@ -50,12 +51,12 @@ export const connectionKeyService = {
                 },
             })
         }
-        const connection = await appConnectionService.getOne({
+        const connection = await appConnectionService(log).getOne({
             projectId,
             platformId: project.platformId,
             externalId: `${finalAppName}_${connectionName}`,
         })
-        return isNil(connection) ? null : appConnectionService.removeSensitiveData(connection)
+        return isNil(connection) ? null : appConnectionService(log).removeSensitiveData(connection)
     },
     async createConnection(
         request: UpsertConnectionFromToken,
@@ -84,7 +85,7 @@ export const connectionKeyService = {
         switch (appCredential.settings.type) {
             case AppCredentialType.API_KEY: {
                 const apiRequest = request as UpsertApiKeyConnectionFromToken
-                return appConnectionService.upsert({
+                return appConnectionService(log).upsert({
                     scope: AppConnectionScope.PROJECT,
                     platformId: project.platformId,
                     projectIds: [projectId],
@@ -101,7 +102,7 @@ export const connectionKeyService = {
             }
             case AppCredentialType.OAUTH2: {
                 const apiRequest = request as UpsertOAuth2ConnectionFromToken
-                return appConnectionService.upsert({
+                return appConnectionService(log).upsert({
                     scope: AppConnectionScope.PROJECT,
                     platformId: project.platformId,
                     projectIds: [projectId],
@@ -184,7 +185,7 @@ export const connectionKeyService = {
             id,
         })
     },
-}
+})
 
 async function getConnectioName(request: {
     projectId: string

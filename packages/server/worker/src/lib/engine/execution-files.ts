@@ -1,11 +1,12 @@
-import { logger, threadSafeMkdir } from '@activepieces/server-shared'
+import { threadSafeMkdir } from '@activepieces/server-shared'
 import { PiecePackage, PieceType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
 import { codeBuilder } from '../utils/code-builder'
 import { engineInstaller } from '../utils/engine-installer'
 import { CodeArtifact } from './engine-runner'
 
-export const executionFiles = {
+export const executionFiles = (log: FastifyBaseLogger) => ({
     async provision({
         pieces,
         globalCachePath,
@@ -19,22 +20,22 @@ export const executionFiles = {
 
         const startTimeCode = performance.now()
         const buildJobs = codeSteps.map(async (artifact) => {
-            return codeBuilder.processCodeStep({
+            return codeBuilder(log).processCodeStep({
                 artifact,
                 codesFolderPath: globalCodesPath,
             })
         })
         await Promise.all(buildJobs)
-        logger.info({
+        log.info({
             path: globalCachePath,
             timeTaken: `${Math.floor(performance.now() - startTimeCode)}ms`,
         }, 'Installed code in sandbox')
 
         const startTimeEngine = performance.now()
-        await engineInstaller.install({
+        await engineInstaller(log).install({
             path: globalCachePath,
         })
-        logger.info({
+        log.info({
             path: globalCachePath,
             timeTaken: `${Math.floor(performance.now() - startTimeEngine)}ms`,
         }, 'Installed engine in sandbox')
@@ -46,7 +47,7 @@ export const executionFiles = {
                 projectPath: globalCachePath,
                 pieces: officialPieces,
             })
-            logger.info({
+            log.info({
                 pieces: officialPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
                 globalCachePath,
                 timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
@@ -61,19 +62,19 @@ export const executionFiles = {
                 projectPath: customPiecesPath,
                 pieces: customPieces,
             })
-            logger.info({
+            log.info({
                 customPieces: customPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
                 customPiecesPath,
                 timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
             }, 'Installed custom pieces in sandbox')
         }
 
-        logger.info({
+        log.info({
             timeTaken: `${Math.floor(performance.now() - startTime)}ms`,
         }, 'Sandbox installation complete')
 
     },
-}
+})
 
 type ProvisionParams = {
     pieces: PiecePackage[]

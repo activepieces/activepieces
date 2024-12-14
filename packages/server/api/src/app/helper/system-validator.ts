@@ -1,5 +1,6 @@
-import { AppSystemProp, ContainerType, DatabaseType, logger, PiecesSource, QueueMode, RedisType, SharedSystemProp, system, SystemProp, WorkerSystemProps } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, DatabaseType, PiecesSource, QueueMode, RedisType, SharedSystemProp, system, SystemProp, WorkerSystemProps } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 
@@ -173,11 +174,11 @@ const validateSystemPropTypes = () => {
     return errors
 }
 
-export const validateEnvPropsOnStartup = async (): Promise<void> => {
+export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise<void> => {
 
     const errors = validateSystemPropTypes()
     if (Object.keys(errors).length > 0) {
-        logger.warn({
+        log.warn({
             errors,
         }, '[validateEnvPropsOnStartup]')
     }

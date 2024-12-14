@@ -5,6 +5,7 @@ import {
 } from '@activepieces/ee-shared'
 import { apId, PlatformId, User, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { userService } from '../../user/user-service'
 import { emailService } from '../helper/email/email-service'
@@ -15,7 +16,7 @@ const TEN_MINUTES = 10 * 60 * 1000
 
 const repo = repoFactory(OtpEntity)
 
-export const otpService = {
+export const otpService = (log: FastifyBaseLogger) => ({
     async createAndSend({
         platformId,
         email,
@@ -45,7 +46,7 @@ export const otpService = {
             state: OtpState.PENDING,
         }
         await repo().upsert(newOtp, ['userId', 'type'])
-        await emailService.sendOtp({
+        await emailService(log).sendOtp({
             platformId,
             user,
             otp: newOtp.value,
@@ -70,7 +71,7 @@ export const otpService = {
 
         return verdict
     },
-}
+})
 
 const getUser = async ({
     platformId,

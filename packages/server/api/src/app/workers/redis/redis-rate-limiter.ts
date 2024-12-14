@@ -3,6 +3,7 @@ import { apId, assertNotNullOrUndefined, assertNull, isNil } from '@activepieces
 import { Job, Queue, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 
+import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
 import { AddParams } from '../queue/queue-manager'
@@ -21,7 +22,7 @@ let queue: Queue | null = null
 const projectKey = (projectId: string): string => `active_job_count:${projectId}`
 const projectKeyWithJobId = (projectId: string, jobId: string): string => `${projectKey(projectId)}:${jobId}`
 
-export const redisRateLimiter = {
+export const redisRateLimiter = (log: FastifyBaseLogger) => ({
 
     async init(): Promise<void> {
         assertNull(queue, 'queue is not null')
@@ -43,7 +44,7 @@ export const redisRateLimiter = {
         )
         await queue.waitUntilReady()
         worker = new Worker<AddParams<JobType.ONE_TIME | JobType.WEBHOOK>>(RATE_LIMIT_QUEUE_NAME,
-            async (job) => redisQueue.add(job.data)
+            async (job) => redisQueue(log).add(job.data)
             , {
                 connection: createRedisClient(),
                 maxStalledCount: 5,
@@ -105,4 +106,4 @@ export const redisRateLimiter = {
         }
     },
 
-}
+})

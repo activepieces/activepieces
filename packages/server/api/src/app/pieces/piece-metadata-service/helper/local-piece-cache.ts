@@ -1,7 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../../piece-metadata-entity'
@@ -16,19 +16,19 @@ type State = {
     count: string
 }
 
-export const localPieceCache = {
+export const localPieceCache = (log: FastifyBaseLogger) => ({
     async getSortedbyNameAscThenVersionDesc(): Promise<PieceMetadataSchema[]> {
         const updatedRequired = await requireUpdate()
         if (!updatedRequired) {
             return cache
         }
-        logger.info({ time: dayjs().toISOString(), file: 'localPieceCache' }, 'Syncing pieces')
+        log.info({ time: dayjs().toISOString(), file: 'localPieceCache' }, 'Syncing pieces')
         cache = await executeWithLock(async () => {
             const updatedRequiredSecondCheck = await requireUpdate()
             if (!updatedRequiredSecondCheck) {
                 return cache
             }
-            logger.info('Syncing pieces from database')
+            log.info('Syncing pieces from database')
             const result = await repo().find()
             return result.sort((a, b) => {
                 if (a.name !== b.name) {
@@ -39,7 +39,7 @@ export const localPieceCache = {
         })
         return cache
     },
-}
+})
 
 async function requireUpdate(): Promise<boolean> {
     const newestState: State | undefined = await repo().createQueryBuilder().select('MAX(updated)', 'recentUpdate').addSelect('count(*)', 'count').getRawOne()
