@@ -1,8 +1,8 @@
+import { FastifyBaseLogger } from 'fastify'
 import pino, { Level, Logger } from 'pino'
 import 'pino-loki'
 import { system } from './system/system'
 import { SharedSystemProp } from './system/system-prop'
-import { FastifyBaseLogger } from 'fastify'
 
 const lokiUrl = system.get(SharedSystemProp.LOKI_URL)
 const lokiUsername = system.get(SharedSystemProp.LOKI_USERNAME)
