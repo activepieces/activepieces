@@ -8,7 +8,7 @@ import {
 } from '../common';
 import { pipedriveAuth } from '../..';
 import { GetField, ListPersonsResponse } from '../common/types';
-import {  HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 
 export const newPerson = createTrigger({
