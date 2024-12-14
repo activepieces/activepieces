@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
+import { sep } from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
@@ -10,7 +11,6 @@ import { logger } from '../logger'
 import { ApLock, memoryLock } from '../memory-lock'
 import { system } from '../system/system'
 import { AppSystemProp } from '../system/system-prop'
-import { sep } from 'path';
 
 const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 
