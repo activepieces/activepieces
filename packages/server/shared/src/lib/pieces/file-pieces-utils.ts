@@ -10,6 +10,7 @@ import { logger } from '../logger'
 import { ApLock, memoryLock } from '../memory-lock'
 import { system } from '../system/system'
 import { AppSystemProp } from '../system/system-prop'
+import { sep } from 'path';
 
 const packages = system.get(AppSystemProp.DEV_PIECES)?.split(',') || []
 
@@ -71,10 +72,9 @@ async function findAllPiecesDirectoryInSource(): Promise<string[]> {
 
 async function findPieceDirectoryByFolderName(pieceName: string): Promise<string | null> {
     const piecesPath = await findAllPiecesDirectoryInSource()
-    const piecePath = piecesPath.find((p) => p.endsWith('/' + pieceName))
+    const piecePath = piecesPath.find((p) => p.endsWith(sep + pieceName))
     return piecePath ?? null
 }
-
 
 async function findAllPieces(): Promise<PieceMetadata[]> {
     const pieces = await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
