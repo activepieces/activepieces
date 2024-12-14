@@ -1,6 +1,5 @@
-import { Property, OAuth2PropertyValue, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { DynamicPropsValue } from '@activepieces/pieces-framework';
 import {
-  getAccessTokenOrThrow,
   HttpMethod,
   HttpMessageBody,
   HttpResponse,
