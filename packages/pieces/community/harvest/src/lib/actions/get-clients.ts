@@ -12,7 +12,7 @@ export const getClients = createAction({
   name: 'get_clients',
   auth: harvestAuth,
   displayName: 'Get Clients',
-  description: 'Fetch Clients',
+  description: 'Fetches Clients',
   props: {
     is_active: Property.ShortText({
     description: 'Pass `true` to only return active clients and `false` to return inactive clients.',

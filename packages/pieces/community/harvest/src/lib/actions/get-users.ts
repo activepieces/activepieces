@@ -12,7 +12,7 @@ export const getUsers = createAction({
   name: 'get_users',
   auth: harvestAuth,
   displayName: 'Get Users',
-  description: 'Fetch Users',
+  description: 'Fetches Users',
   props: {
     is_active: Property.ShortText({
     description: 'Pass `true` to only return active users and `false` to return inactive users.',
