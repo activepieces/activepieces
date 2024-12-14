@@ -138,7 +138,7 @@ export function pipedriveTransformCustomFields(
 		const newKey = field.name;
 		const fieldType = field.field_type;
 
-		if (responseData.hasOwnProperty(oldKey)) {
+		if (oldKey in responseData) {
 			if (responseData[oldKey] === null || responseData[oldKey] === undefined) {
 				updatedResponseData[newKey] = null;
 			} else if (fieldType === 'enum') {
