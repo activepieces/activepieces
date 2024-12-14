@@ -25,7 +25,7 @@
       auth: harvestAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/harvest.png",
-      authors: ["drowe"],
+      authors: ["D-Rowe-FS"],
       actions: [getClients, getEstimates, getExpenses, getInvoices, getProjects, getRoles, getTasks, getTime_entries, getUsers,
          reportsUninvoiced],
       triggers: [],
