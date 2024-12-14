@@ -1,8 +1,8 @@
 import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ExecutionMode } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { isolateEngineRunner } from './isolate/isolate-engine-runner'
 import { threadEngineRunner } from './threads/thread-engine-runner'
-import { FastifyBaseLogger } from 'fastify'
 
 const executionMode = system.getOrThrow<ExecutionMode>(SharedSystemProp.EXECUTION_MODE)
 

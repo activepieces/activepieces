@@ -1,12 +1,11 @@
 import path from 'path'
 import { enrichErrorContext } from '@activepieces/server-shared'
 import { PiecePackage, PieceType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../../../engine-runner'
 import { executionFiles } from '../../../execution-files'
 import { IsolateSandbox } from '../isolate-sandbox'
 import { sandboxManager } from '../sandbox-manager'
-import { extractProvisionCacheKey, TypedProvisionCacheInfo } from './sandbox-cache-key'
-import { FastifyBaseLogger } from 'fastify'
 
 const globalCachePath = path.resolve('cache', 'ns')
 const globalCodesPath = path.resolve('cache', 'codes')
@@ -20,7 +19,6 @@ export const sandboxProvisioner = (log: FastifyBaseLogger) => ({
     }: ProvisionParams): Promise<IsolateSandbox> {
         try {
 
-            const cacheKey = extractProvisionCacheKey(cacheInfo)
 
             const customPiecesPath = path.resolve('cache', 'custom', customPiecesPathKey)
             await executionFiles(log).provision({
@@ -31,11 +29,10 @@ export const sandboxProvisioner = (log: FastifyBaseLogger) => ({
                 customPiecesPath,
             })
 
-            const hasAnyCustomPieces = pieces.some(f => f.pieceType === PieceType.CUSTOM)
-            const sandbox = await sandboxManager(log).allocate(cacheKey)
+            const hasAnyCustomPieces = pieces.some((f: PiecePackage) => f.pieceType === PieceType.CUSTOM)
+            const sandbox = await sandboxManager(log).allocate()
             const flowVersionId = codeSteps.length > 0 ? codeSteps[0].flowVersionId : undefined
             await sandbox.assignCache({
-                cacheKey,
                 globalCachePath,
                 globalCodesPath,
                 flowVersionId,
@@ -61,7 +58,7 @@ export const sandboxProvisioner = (log: FastifyBaseLogger) => ({
 
     async release({ sandbox }: ReleaseParams): Promise<void> {
         log.debug(
-            { boxId: sandbox.boxId, cacheKey: sandbox.cacheKey },
+            { boxId: sandbox.boxId },
             '[SandboxProvisioner#release]',
         )
 
@@ -69,7 +66,7 @@ export const sandboxProvisioner = (log: FastifyBaseLogger) => ({
     },
 })
 
-type ProvisionParams = TypedProvisionCacheInfo & {
+type ProvisionParams = {
     pieces?: PiecePackage[]
     codeSteps?: CodeArtifact[]
     customPiecesPathKey: string

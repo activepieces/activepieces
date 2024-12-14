@@ -31,7 +31,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
         const { email, platformId } = userInvitation
         const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
-        await emailSender.send({
+        await emailSender(log).send({
             emails: [email],
             platformId,
             templateData: {
@@ -68,7 +68,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         
-        await emailSender.send({
+        await emailSender(log).send({
             emails,
             platformId,
             templateData: {
@@ -99,7 +99,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
 
-        await emailSender.send({
+        await emailSender(log).send({
             emails,
             platformId: project.platformId,
             templateData: {
@@ -152,7 +152,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             },
         }
 
-        await emailSender.send({
+        await emailSender(log).send({
             emails: [user.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
@@ -183,7 +183,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'), 
         }))
 
-        await emailSender.send({
+        await emailSender(log).send({
             emails,
             platformId: job.platformId,
             templateData: {
@@ -203,7 +203,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         const project = await projectService.getOneOrThrow(projectId)
         
-        await emailSender.send({
+        await emailSender(log).send({
             emails,
             platformId: project.platformId,
             templateData: {

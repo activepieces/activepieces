@@ -1,13 +1,12 @@
 import fs from 'node:fs/promises'
 import { hashUtils, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
 import { Action, ActionType, apId, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { pieceEngineUtil } from '../flow-engine-util'
 import { IsolateSandbox } from './sandbox/isolate-sandbox'
-import { SandBoxCacheType } from './sandbox/provisioner/sandbox-cache-key'
 import { sandboxProvisioner } from './sandbox/provisioner/sandbox-provisioner'
-import { FastifyBaseLogger } from 'fastify'
 
 export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async executeFlow(engineToken, operation) {
@@ -28,7 +27,6 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
         const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, operation)
         const sandbox = await sandboxProvisioner(log).provision({
-            type: SandBoxCacheType.NONE,
             pieces: [lockedPiece],
             customPiecesPathKey: apId(),
         })
@@ -52,9 +50,6 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             flowVersion: operation.flowVersion,
         })
         const sandbox = await sandboxProvisioner(log).provision({
-            type: SandBoxCacheType.PIECE,
-            pieceName: triggerPiece.pieceName,
-            pieceVersion: triggerPiece.pieceVersion,
             pieces: [triggerPiece],
             customPiecesPathKey: operation.projectId,
         })
@@ -79,9 +74,6 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         const { piece } = operation
         const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
         const sandbox = await sandboxProvisioner(log).provision({
-            type: SandBoxCacheType.PIECE,
-            pieceName: lockedPiece.pieceName,
-            pieceVersion: lockedPiece.pieceVersion,
             pieces: [lockedPiece],
             customPiecesPathKey: operation.projectId,
         })
@@ -99,9 +91,6 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         const { piece, platformId } = operation
         const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
         const sandbox = await sandboxProvisioner(log).provision({
-            type: SandBoxCacheType.PIECE,
-            pieceName: lockedPiece.pieceName,
-            pieceVersion: lockedPiece.pieceVersion,
             pieces: [lockedPiece],
             customPiecesPathKey: platformId,
         })
@@ -124,7 +113,6 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             engineToken,
             lockedFlowVersion.id,
             lockedFlowVersion.state,
-            lockedFlowVersion.flowId,
             step,
             operation.projectId,
             log,
@@ -174,15 +162,12 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, r
     switch (runEnvironment) {
         case RunEnvironment.PRODUCTION:
             return sandboxProvisioner(log).provision({
-                type: SandBoxCacheType.FLOW,
-                flowVersionId: flowVersion.id,
                 pieces,
                 codeSteps,
                 customPiecesPathKey: projectId,
             })
         case RunEnvironment.TESTING:
             return sandboxProvisioner(log).provision({
-                type: SandBoxCacheType.NONE,
                 pieces,
                 codeSteps,
                 customPiecesPathKey: projectId,
@@ -194,28 +179,19 @@ async function getSandboxForAction(
     engineToken: string,
     flowVersionId: string,
     flowVersionState: FlowVersionState,
-    flowId: string,
     action: Action,
     projectId: string,
     log: FastifyBaseLogger,
 ): Promise<IsolateSandbox> {
     switch (action.type) {
         case ActionType.PIECE: {
-            const { pieceName, pieceVersion } = action.settings
             return sandboxProvisioner(log).provision({
-                type: SandBoxCacheType.PIECE,
-                pieceName,
-                pieceVersion,
                 pieces: [await pieceEngineUtil.getExactPieceForStep(engineToken, action)],
                 customPiecesPathKey: projectId,
             })
         }
         case ActionType.CODE: {
             return sandboxProvisioner(log).provision({
-                type: SandBoxCacheType.CODE,
-                flowId,
-                name: action.name,
-                sourceCodeHash: hashUtils.hashObject(action.settings.sourceCode),
                 codeSteps: [
                     {
                         name: action.name,
@@ -230,7 +206,6 @@ async function getSandboxForAction(
         case ActionType.ROUTER:
         case ActionType.LOOP_ON_ITEMS:
             return sandboxProvisioner(log).provision({
-                type: SandBoxCacheType.NONE,
                 customPiecesPathKey: projectId,
             })
     }

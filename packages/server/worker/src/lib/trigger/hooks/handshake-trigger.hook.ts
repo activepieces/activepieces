@@ -10,10 +10,10 @@ import {
     TriggerHookType,
     TriggerPayload,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../../api/server-api.service'
 import { engineRunner } from '../../engine'
 import { webhookUtils } from '../../utils/webhook-utils'
-import { FastifyBaseLogger } from 'fastify'
 
 export async function tryHandshake(
     engineToken: string,

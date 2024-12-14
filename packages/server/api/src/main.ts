@@ -17,7 +17,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
             await workerPostBoot(app)
         }
         if (system.isApp()) {
-            await appPostBoot()
+            await appPostBoot(app)
         }
     }
     catch (err) {

@@ -1,8 +1,8 @@
 import { UserInteractionJobData, UserInteractionJobType } from '@activepieces/server-shared'
 import { AppConnectionValue } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
-import { FastifyBaseLogger } from 'fastify'
 
 export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
     async execute(jobData: UserInteractionJobData, engineToken: string, workerToken: string): Promise<void> {
@@ -53,5 +53,5 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
             requestId: jobData.requestId,
             response,
         })
-    }
+    },
 })

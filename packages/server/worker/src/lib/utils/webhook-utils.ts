@@ -10,9 +10,9 @@ import {
     PopulatedFlow,
     TriggerType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
 import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
-import { FastifyBaseLogger } from 'fastify'
 
 export const webhookUtils = (log: FastifyBaseLogger) => ({
     async getWebhookPrefix(): Promise<string> {

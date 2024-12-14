@@ -4,8 +4,8 @@ import path from 'node:path'
 import process, { arch, cwd } from 'node:process'
 import { AppSystemProp, fileExists, getEngineTimeout, PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
-import { ExecuteSandboxResult } from '../../engine-runner'
 import { FastifyBaseLogger } from 'fastify'
+import { ExecuteSandboxResult } from '../../engine-runner'
 
 type SandboxCtorParams = {
     boxId: number
@@ -13,7 +13,6 @@ type SandboxCtorParams = {
 
 
 type AssignCacheParams = {
-    cacheKey: string
     globalCachePath: string
     globalCodesPath: string
     flowVersionId?: string
@@ -41,7 +40,6 @@ export class IsolateSandbox {
     public readonly boxId: number
     public inUse = false
     private _log?: FastifyBaseLogger
-    private _cacheKey?: string
     private _globalCachePath?: string
     private _globalCodesPath?: string
     private _flowVersionId?: string
@@ -50,11 +48,6 @@ export class IsolateSandbox {
     public constructor(params: SandboxCtorParams) {
         this.boxId = params.boxId
     }
-
-    public get cacheKey(): string | undefined {
-        return this._cacheKey
-    }
-
     public async cleanUp(): Promise<void> {
         this._log?.debug({ boxId: this.boxId }, '[IsolateSandbox#recreate]')
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --cleanup`)
@@ -129,22 +122,22 @@ export class IsolateSandbox {
 
 
     public async assignCache({
-        cacheKey,
-        globalCachePath,    
+        globalCachePath,
         log,
         globalCodesPath,
         flowVersionId,
         customPiecesPath,
     }: AssignCacheParams): Promise<void> {
-        this._log?.debug(
-            { boxId: this.boxId, cacheKey, globalCachePath, globalCodesPath, flowVersionId },
-            '[IsolateSandbox#assignCache]',
-        )
-        this._cacheKey = cacheKey
+        this._log = log
         this._globalCachePath = globalCachePath
         this._globalCodesPath = globalCodesPath
         this._customPiecesPath = customPiecesPath
         this._flowVersionId = flowVersionId
+
+        log.debug(
+            { boxId: this.boxId, globalCachePath, globalCodesPath, flowVersionId },
+            '[IsolateSandbox#assignCache]',
+        )
     }
 
     protected async parseMetaFile(): Promise<Record<string, unknown>> {

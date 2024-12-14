@@ -25,7 +25,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
     async externalToken({
         externalAccessToken,
     }: AuthenticateParams): Promise<AuthenticationResponse> {
-        const externalPrincipal = await externalTokenExtractor.extract(
+        const externalPrincipal = await externalTokenExtractor(log).extract(
             externalAccessToken,
         )
         const user = await getOrCreateUser(externalPrincipal)

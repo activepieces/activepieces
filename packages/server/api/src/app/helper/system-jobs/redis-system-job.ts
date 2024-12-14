@@ -1,13 +1,13 @@
 import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
+import { apDayjs, apDayjsDuration } from '../dayjs-helper'
 import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
 
-const FIFTEEN_MINUTES = dayjs.duration(15, 'minute').asMilliseconds()
-const ONE_MONTH = dayjs.duration(1, 'month').asMilliseconds()
+const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
+const ONE_MONTH = apDayjsDuration(1, 'month').asMilliseconds()
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
 export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>
@@ -106,7 +106,7 @@ const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId
 
     switch (schedule.type) {
         case 'one-time': {
-            const now = dayjs()
+            const now = apDayjs()
             config.delay = schedule.date.diff(now, 'milliseconds')
             break
         }

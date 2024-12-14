@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
-import { IsolateSandbox } from './isolate-sandbox'
 import { FastifyBaseLogger } from 'fastify'
+import { IsolateSandbox } from './isolate-sandbox'
 
 const SANDBOX_LIMIT = 1000
 
@@ -12,11 +12,10 @@ const sandboxes: IsolateSandbox[] = new Array(SANDBOX_LIMIT)
 const lock: Mutex = new Mutex()
 
 export const sandboxManager = (log: FastifyBaseLogger) => ({
-    async allocate(cacheKey: string): Promise<IsolateSandbox> {
-        log.debug({ cacheKey }, '[SandboxManager#allocate]')
+    async allocate(): Promise<IsolateSandbox> {
 
         const sandbox = await executeWithLock((): IsolateSandbox => {
-            const sandbox = findSandbox(cacheKey)
+            const sandbox = sandboxes.find(f => !f.inUse)
 
             if (isNil(sandbox)) {
                 throw new Error('[SandboxManager#allocate] all sandboxes are in-use')
@@ -63,18 +62,5 @@ const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {
     finally {
         releaseLock()
     }
-}
-
-
-function findSandbox(cacheKey: string): IsolateSandbox | undefined {
-    const sandboxByKey = sandboxes.find(f => f.cacheKey === cacheKey && !f.inUse)
-    if (!isNil(sandboxByKey)) {
-        return sandboxByKey
-    }
-    const uncachedSandbox = sandboxes.find(f => !f.inUse && isNil(f.cacheKey))
-    if (!isNil(uncachedSandbox)) {
-        return uncachedSandbox
-    }
-    return sandboxes.find(f => !f.inUse)
 }
 

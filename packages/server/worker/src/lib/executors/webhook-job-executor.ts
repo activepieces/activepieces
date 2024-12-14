@@ -8,10 +8,10 @@ import {
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { engineApiService, workerApiService } from '../api/server-api.service'
 import { webhookUtils } from '../utils/webhook-utils'
-import { FastifyBaseLogger } from 'fastify'
 
 export const webhookExecutor = (log: FastifyBaseLogger) => ({
     async consumeWebhook(
@@ -24,6 +24,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             webhookId: data.requestId,
             flowId: data.flowId,
         })
+        webhookLogger.info('Webhook job executor started')
         const { payload, saveSampleData, flowVersionToRun } = data
 
         if (saveSampleData) {
@@ -165,7 +166,7 @@ async function handleSampleData(
         simulate: true,
     })
 
-    await webhookUtils(log).savePayloadsAsSampleData({
+    webhookUtils(log).savePayloadsAsSampleData({
         flowVersion: latestFlowVersion.version,
         projectId: latestFlowVersion.projectId,
         workerToken,

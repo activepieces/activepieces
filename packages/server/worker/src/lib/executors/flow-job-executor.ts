@@ -1,8 +1,8 @@
 import { createRunContextLog, exceptionHandler, OneTimeJobData, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
-import { FastifyBaseLogger } from 'fastify'
 
 type EngineConstants = 'internalApiUrl' | 'publicUrl' | 'engineToken'
 
@@ -138,5 +138,5 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                 await handleInternalError(jobData, engineToken, e as Error)
             }
         }
-    }
+    },
 })

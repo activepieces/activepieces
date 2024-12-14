@@ -1,6 +1,6 @@
 import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AppSystemProp, initializeSentry, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
+import { AppSystemProp, initializeSentry, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -176,10 +176,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         rejectedPromiseHandler(websocketService.init(socket))
     })
 
-    app.addHook('onSend', async (request, reply) => {
-        await reply.header('x-request-id', request.id)
+    app.addHook('onResponse', async (request, reply) => {
+        // eslint-disable-next-line
+        reply.header('x-request-id', request.id)
     })
-
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({
             method: request.method as HTTPMethods,
@@ -248,10 +248,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         },
     )
 
-    await validateEnvPropsOnStartup()
+    await validateEnvPropsOnStartup(app.log)
 
     const edition = system.getEdition()
-    logger.info({
+    app.log.info({
         edition,
     }, 'Activepieces Edition')
     switch (edition) {
@@ -328,7 +328,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     }
 
     app.addHook('onClose', async () => {
-        logger.info('Shutting down')
+        app.log.info('Shutting down')
         await flowConsumer(app.log).close()
         await systemJobsSchedule(app.log).close()
         await engineResponseWatcher(app.log).shutdown()
@@ -354,9 +354,9 @@ async function getAdapter() {
 }
 
 
-export async function appPostBoot(): Promise<void> {
+export async function appPostBoot(app: FastifyInstance): Promise<void> {
 
-    logger.info(`
+    app.log.info(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
    /  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___
@@ -370,14 +370,14 @@ The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as spec
     const piecesSource = system.getOrThrow(SharedSystemProp.PIECES_SOURCE)
     const pieces = process.env.AP_DEV_PIECES
 
-    logger.warn(
+    app.log.warn(
         `[WARNING]: Pieces will be loaded from source type ${piecesSource}`,
     )
     if (environment === ApEnvironment.DEVELOPMENT) {
-        logger.warn(
+        app.log.warn(
             `[WARNING]: The application is running in ${environment} mode.`,
         )
-        logger.warn(
+        app.log.warn(
             `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
         )
     }
