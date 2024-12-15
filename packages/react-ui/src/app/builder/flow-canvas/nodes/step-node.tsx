@@ -48,7 +48,7 @@ import {
 
 import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
 import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../utils/consts';
-import { ApNode, ApNodeType, ApStepNode } from '../utils/types';
+import { ApStepNode } from '../utils/types';
 
 function hasSkippedParent(stepName: string, trigger: Trigger): boolean {
   const step = flowStructureUtil.getStep(stepName, trigger);
@@ -216,19 +216,9 @@ const ApStepCanvasNode = React.memo(
       e.preventDefault();
       e.stopPropagation();
     };
-    const node: ApNode = {
-      data,
-      id: step.name,
-      position: {
-        x: 0,
-        y: 0,
-      },
-      type: ApNodeType.STEP,
-    };
     return (
       <div
-        id={step.name}
-        {...{ [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: JSON.stringify(node) }}
+        {...{ [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name }}
         style={{
           height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
           width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,

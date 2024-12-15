@@ -7,8 +7,15 @@ function _deleteAction(
     flowVersion: FlowVersion,
     request: DeleteActionRequest,
 ): FlowVersion {
+    const requests = Array.isArray(request) ? request : [request]
+    return requests.reduce((flowVersion, request) => {
+        return deleteSingleAction(flowVersion, request.name)
+    }, flowVersion)
+}
+
+const deleteSingleAction = (flowVersion: FlowVersion, name: string) => {
     return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
-        if (parentStep.nextAction && parentStep.nextAction.name === request.name) {
+        if (parentStep.nextAction && parentStep.nextAction.name === name) {
             const stepToUpdate: Action = parentStep.nextAction
             parentStep.nextAction = stepToUpdate.nextAction
         }
@@ -16,7 +23,7 @@ function _deleteAction(
             case ActionType.LOOP_ON_ITEMS: {
                 if (
                     parentStep.firstLoopAction &&
-            parentStep.firstLoopAction.name === request.name
+            parentStep.firstLoopAction.name === name
                 ) {
                     const stepToUpdate: Action = parentStep.firstLoopAction
                     parentStep.firstLoopAction = stepToUpdate.nextAction
@@ -25,7 +32,7 @@ function _deleteAction(
             }
             case ActionType.ROUTER: {
                 parentStep.children = parentStep.children.map((child) => {
-                    if (child && child.name === request.name) {
+                    if (child && child.name === name) {
                         return child.nextAction ?? null
                     }
                     return child

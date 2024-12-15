@@ -32,12 +32,13 @@ import {
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { copySelectedNodes } from './bulk-actions/copy-selected-nodes';
-import { deleteSelectedNodes } from './bulk-actions/delete-selected-nodes';
 import {
+  copySelectedNodes,
+  deleteSelectedNodes,
   getOperationsInClipboard,
   pasteNodes,
-} from './bulk-actions/paste-nodes';
+  toggleSkipSelectedNodes,
+} from './bulk-actions';
 import {
   CanvasContextMenu,
   CanvasContextMenuProps,
@@ -49,14 +50,12 @@ import {
   STEP_CONTEXT_MENU_ATTRIBUTE,
 } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
-import { ApStepNode } from './utils/types';
 import { AboveFlowWidgets } from './widgets';
 
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case ActionType.LOOP_ON_ITEMS:
       return step.firstLoopAction ? step.firstLoopAction.name : '';
-
     case ActionType.ROUTER:
       return step.children.reduce((routerKey, child) => {
         const childrenKey = child
@@ -69,7 +68,6 @@ const getChildrenKey = (step: Step) => {
           : 'null';
         return `${routerKey}-${childrenKey}`;
       }, '');
-
     case ActionType.CODE:
     case ActionType.PIECE:
       return '';
@@ -209,14 +207,11 @@ export const FlowCanvas = React.memo(
           const stepElement = ev.target.closest(
             `[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`,
           );
-          const stepNodeData = stepElement?.getAttribute(
+          const stepName = stepElement?.getAttribute(
             `data-${STEP_CONTEXT_MENU_ATTRIBUTE}`,
           );
-          const stepNode = stepNodeData
-            ? (JSON.parse(stepNodeData) as ApStepNode)
-            : null;
           const stepNodeIsNotTrigger =
-            stepNode && !flowStructureUtil.isTrigger(stepNode.data.step.type);
+            stepName && stepName !== flowVersion.trigger.name;
           if (addButtonData) {
             setContextMenuData({
               addButtonData: JSON.parse(addButtonData || '{}'),
@@ -225,14 +220,14 @@ export const FlowCanvas = React.memo(
           } else {
             setContextMenuData({
               addButtonData: null,
-              singleSelectedStepName: stepNode?.data?.step?.name || null,
+              singleSelectedStepName: stepName || null,
             });
           }
           setSelectedNodes(
             nodeSelectionActive || addButtonElement
               ? selectedNodes
               : stepNodeIsNotTrigger
-              ? [stepNode.id]
+              ? [stepName]
               : [],
           );
           if (nodeSelectionActive && stepNodeIsNotTrigger) {
@@ -263,10 +258,10 @@ export const FlowCanvas = React.memo(
               applyOperation,
               selectedStep,
               exitStepSettings,
-              flowVersion,
             });
           }
           if (e.key === 'v' && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
             getOperationsInClipboard().then((operations) => {
               if (operations.length > 0) {
                 pasteNodes(
@@ -282,6 +277,17 @@ export const FlowCanvas = React.memo(
                   applyOperation,
                 );
               }
+            });
+          }
+        }
+        if (e.key === 'e' && (e.metaKey || e.ctrlKey)) {
+          if (selectedNodes.length > 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleSkipSelectedNodes({
+              selectedNodes,
+              flowVersion,
+              applyOperation,
             });
           }
         }

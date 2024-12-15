@@ -11,6 +11,8 @@ import { _addBranch } from './add-branch'
 import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
+import { _fixAddOperationsFromClipboard } from './fix-add-operations-from-clipboard'
+import { _getAddActionsToCopy } from './get-add-actions-to-copy'
 import { _importFlow, removeAnySubsequentAction } from './import-flow'
 import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
@@ -49,10 +51,16 @@ export const AddBranchRequest = Type.Object({
     branchName: Type.String(),
 })
 
-export const SkipActionRequest = Type.Object({
+const SkipSingleActionRequest = Type.Object({
     name: Type.String(),
     skip: Type.Boolean(),
 })
+
+const SkipMultipleActionsRequest = Type.Array(SkipSingleActionRequest)
+
+export const SkipActionRequest = Type.Union([SkipSingleActionRequest, SkipMultipleActionsRequest])
+
+
 export type SkipActionRequest = Static<typeof SkipActionRequest>
 
 export const DuplicateBranchRequest = Type.Object({
@@ -98,9 +106,13 @@ export const ChangeNameRequest = Type.Object({
 
 export type ChangeNameRequest = Static<typeof ChangeNameRequest>
 
-export const DeleteActionRequest = Type.Object({
+const DeleteSingleActionRequest = Type.Object({
     name: Type.String(),
 })
+
+const DeleteMultipleActionsRequest = Type.Array(DeleteSingleActionRequest)
+
+export const DeleteActionRequest = Type.Union([DeleteSingleActionRequest, DeleteMultipleActionsRequest])
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>
 
@@ -397,3 +409,8 @@ export const flowOperations = {
         return clonedVersion
     },
 }
+
+export const fixAddOperationsFromClipboard = _fixAddOperationsFromClipboard
+export const getAddActionsToCopy = _getAddActionsToCopy
+
+

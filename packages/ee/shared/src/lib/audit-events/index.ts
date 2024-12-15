@@ -292,7 +292,11 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
     case FlowOperationType.UPDATE_ACTION:
       return `Updated action "${event.data.request.request.displayName}" in "${event.data.flowVersion.displayName}" Flow.`;
     case FlowOperationType.DELETE_ACTION:
-      return `Deleted action "${event.data.request.request.name}" from "${event.data.flowVersion.displayName}" Flow.`;
+      {
+        const request = event.data.request.request
+        const names = Array.isArray(request) ? request.map(r=>r.name) : [request.name]
+        return `Deleted actions "${names.join(', ')}" from "${event.data.flowVersion.displayName}" Flow.`;
+      }
     case FlowOperationType.CHANGE_NAME:
       return `Renamed flow "${event.data.flowVersion.displayName}" to "${event.data.request.request.displayName}".`;
     case FlowOperationType.LOCK_AND_PUBLISH:
@@ -334,6 +338,11 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         event.data.request.request.stepName
       }".`;
     case FlowOperationType.SET_SKIP_ACTION:
-      return `Updated action "${event.data.request.request.name}" in "${event.data.flowVersion.displayName}" Flow to skip.`;
+      {
+        const request = event.data.request.request
+        const names = Array.isArray(request) ? request.map(r=>r.name) : [request.name]
+        return `Updated actions "${names.join(', ')}" in "${event.data.flowVersion.displayName}" Flow to skip.`;
+
+      }
   }
 }
