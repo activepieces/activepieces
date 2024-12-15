@@ -42,7 +42,10 @@ describe('Platform Project Service', () => {
             })
 
             // act
-            await platformProjectService.hardDelete({ id: mockProject.id })
+            if (!app) {
+                throw new Error("Fastify instance is not initialized");
+            }
+            await platformProjectService(app.log).hardDelete({ id: mockProject.id })
 
             // assert
             const flowCount = await databaseConnection().getRepository('flow').countBy({ projectId: mockProject.id })
@@ -66,7 +69,10 @@ describe('Platform Project Service', () => {
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
             // act
-            await platformProjectService.hardDelete({ id: mockProject.id })
+            if (!app) {
+                throw new Error("Fastify instance is not initialized");
+            }
+            await platformProjectService(app.log).hardDelete({ id: mockProject.id })
 
             // assert
             const fileCount = await databaseConnection().getRepository('file').countBy({ projectId: mockProject.id })
