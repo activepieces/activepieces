@@ -56,6 +56,7 @@ import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
+import { ProjectVersionsPage } from '../routes/project-version';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import AppearancePage from '../routes/settings/appearance';
@@ -198,6 +199,16 @@ const routes = [
             <AppConnectionsPage />
           </PageTitle>
         </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/versions',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Versions">
+          <ProjectVersionsPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   }),

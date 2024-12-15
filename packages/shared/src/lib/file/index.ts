@@ -11,6 +11,9 @@ export enum FileType {
     FLOW_STEP_FILE = 'FLOW_STEP_FILE',
     SAMPLE_DATA = 'SAMPLE_DATA',
     TRIGGER_EVENT_FILE = 'TRIGGER_EVENT_FILE',
+
+    // TODO: uncomment this once we have a implement import project version
+    // PROJECT_VERSION = 'PROJECT_VERSION',
 }
 export enum FileCompression {
     NONE = 'NONE',

@@ -53,6 +53,7 @@ import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { projectRoleModule } from './ee/project-role/project-role.module'
+import { projectVersionModule } from './ee/project-version/project-version.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { referralModule } from './ee/referrals/referral.module'
@@ -277,6 +278,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
             await app.register(projectRoleModule)
+            await app.register(projectVersionModule)
             await app.register(globalConnectionModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
@@ -309,6 +311,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
+            await app.register(projectVersionModule)
             await app.register(globalConnectionModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
             setPlatformOAuthService({

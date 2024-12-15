@@ -73,6 +73,8 @@ export * from './lib/project-role/project-role'
 export * from './lib/project-role/project-role.request'
 export * from './lib/flows/operations/migrations'
 export * from './lib/flow-run/log-serializer'
+export * from './lib/project-version/project-version'
+export * from './lib/project-version/project-version.request'
 
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 import { TypeSystemPolicy } from '@sinclair/typebox/system'

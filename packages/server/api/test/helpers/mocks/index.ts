@@ -40,6 +40,7 @@ import {
     Project,
     ProjectPlan,
     ProjectRole,
+    ProjectVersion,
     RoleType,
     RunEnvironment,
     TemplateType,
@@ -549,6 +550,19 @@ export const createMockProjectRole = (projectRole?: Partial<ProjectRole>): Proje
         permissions: projectRole?.permissions ?? [],
         platformId: projectRole?.platformId ?? apId(),
         type: projectRole?.type ?? faker.helpers.enumValue(RoleType),
+    }
+}
+
+export const createMockProjectVersion = (projectVersion?: Partial<ProjectVersion>): ProjectVersion => {
+    return {
+        id: projectVersion?.id ?? apId(),
+        created: projectVersion?.created ?? faker.date.recent().toISOString(),
+        updated: projectVersion?.updated ?? faker.date.recent().toISOString(),
+        projectId: projectVersion?.projectId ?? apId(),
+        importedBy: projectVersion?.importedBy ?? apId(),
+        fileId: projectVersion?.fileId ?? apId(),
+        name: projectVersion?.name ?? faker.lorem.word(),
+        description: projectVersion?.description ?? faker.lorem.sentence(),
     }
 }
 
