@@ -18,7 +18,7 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             body: req.body,
             query: req.query,
         })
-        const { token, project } = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const { token, project } = await authenticationHelper(req.log).getProjectAndTokenOrThrow(user)
         const url = new URL('/authenticate', `${req.protocol}://${req.hostname}`)
         const response: AuthenticationResponse = {
             token,  

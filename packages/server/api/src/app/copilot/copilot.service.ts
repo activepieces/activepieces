@@ -1,10 +1,10 @@
 import { AskCopilotRequest, AskCopilotResponse } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { codeGeneratorTool } from './tools/code/code-generate'
 
 
-export const copilotService = {
+export const copilotService = (log: FastifyBaseLogger) => ({
     async ask(projectId: string, request: AskCopilotRequest): Promise<AskCopilotResponse | null> {
-        return codeGeneratorTool.generateCode(projectId, request)
+        return codeGeneratorTool(log).generateCode(projectId, request)
     },
-
-}
+})

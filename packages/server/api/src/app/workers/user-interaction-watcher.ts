@@ -1,20 +1,21 @@
 import { JobType, UserInteractionJobDataWithoutWatchingInformation } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'
 
-export const userInteractionWatcher = {
+export const userInteractionWatcher = (log: FastifyBaseLogger) => ({
     submitAndWaitForResponse: async <T>(request: UserInteractionJobDataWithoutWatchingInformation): Promise<T> => {
         const requestId = apId()
-        await jobQueue.add({
+        await jobQueue(log).add({
             id: apId(),
             type: JobType.USERS_INTERACTION,
             data: {
                 ...request,
                 requestId,
-                webserverId: engineResponseWatcher.getServerId(),
+                webserverId: engineResponseWatcher(log).getServerId(),
             },
         })
-        return engineResponseWatcher.oneTimeListener<T>(requestId, false, undefined, undefined)
+        return engineResponseWatcher(log).oneTimeListener<T>(requestId, false, undefined, undefined)
     },
-}
+})

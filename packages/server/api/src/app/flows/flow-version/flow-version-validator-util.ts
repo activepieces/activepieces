@@ -17,12 +17,13 @@ import {
 } from '@activepieces/shared'
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
+import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettings)
 const routerSettingsValidator = TypeCompiler.Compile(RouterActionSettingsWithValidation)
 
-export const flowVersionValidationUtil = {
+export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
     async prepareRequest(
         projectId: ProjectId,
         platformId: PlatformId,
@@ -44,6 +45,7 @@ export const flowVersionValidationUtil = {
                             settings: clonedRequest.request.action.settings,
                             projectId,
                             platformId,
+                            log,
                         })
                         break
                     case ActionType.ROUTER:
@@ -69,6 +71,7 @@ export const flowVersionValidationUtil = {
                             settings: clonedRequest.request.settings,
                             projectId,
                             platformId,
+                            log,
                         })
                         break
                     }
@@ -92,6 +95,7 @@ export const flowVersionValidationUtil = {
                             settings: clonedRequest.request.settings,
                             projectId,
                             platformId,
+                            log,
                         })
                         break
                 }
@@ -101,16 +105,18 @@ export const flowVersionValidationUtil = {
         }
         return clonedRequest
     },
-}
+})
 
 async function validateAction({
     projectId,
     platformId,
     settings,       
+    log,
 }: {
     projectId: ProjectId
     platformId: PlatformId
     settings: PieceActionSettings
+    log: FastifyBaseLogger
 }): Promise<boolean> {
     if (
         isNil(settings.pieceName) ||
@@ -121,7 +127,7 @@ async function validateAction({
         return false
     }
 
-    const piece = await pieceMetadataService.getOrThrow({
+    const piece = await pieceMetadataService(log).getOrThrow({
         projectId,
         platformId,
         name: settings.pieceName,
@@ -148,10 +154,12 @@ async function validateTrigger({
     platformId,
     settings,
     projectId,
+    log,
 }: {
     settings: PieceTriggerSettings
     projectId: ProjectId
     platformId: PlatformId
+    log: FastifyBaseLogger
 }): Promise<boolean> {
     if (
         isNil(settings.pieceName) ||
@@ -162,7 +170,7 @@ async function validateTrigger({
         return false
     }
 
-    const piece = await pieceMetadataService.getOrThrow({
+    const piece = await pieceMetadataService(log).getOrThrow({
         projectId,
         platformId,
         name: settings.pieceName,

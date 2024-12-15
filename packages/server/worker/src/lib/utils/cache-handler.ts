@@ -1,11 +1,10 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileExists, memoryLock, SharedSystemProp, system, threadSafeMkdir } from '@activepieces/server-shared'
-import {  ApEnvironment, isNil } from '@activepieces/shared'
+import { fileExists, memoryLock, threadSafeMkdir } from '@activepieces/server-shared'
+import {  isNil } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
 
 type CacheMap = Record<string, string>
-const isDev = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
 
 const cachePath = (folderPath: string): string => join(folderPath, 'cache.json')
 
@@ -26,9 +25,7 @@ const getCache = async (folderPath: string): Promise<CacheMap> => {
 export const cacheHandler = (folderPath: string) => {
     return {
         async cacheCheckState(cacheAlias: string): Promise<string | undefined> {
-            if (isDev) {
-                return undefined
-            }
+
             const lock = await memoryLock.acquire('cache_' + cacheAlias)
             try {
                 const cache = await getCache(folderPath)

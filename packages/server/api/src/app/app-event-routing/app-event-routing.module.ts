@@ -6,7 +6,6 @@ import { Piece } from '@activepieces/pieces-framework'
 import {
     JobType,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    logger,
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
 import {
@@ -88,7 +87,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                 payload,
             })
             if (!isNil(reply)) {
-                logger.info(
+                request.log.info(
                     {
                         reply,
                         piece: pieceUrl,
@@ -100,7 +99,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                     .headers(reply?.headers ?? {})
                     .send(reply?.body ?? {})
             }
-            logger.info(
+            request.log.info(
                 {
                     event,
                     identifierValue,
@@ -117,7 +116,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
-                return jobQueue.add({
+                return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.WEBHOOK,
                     data: {
@@ -127,7 +126,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         synchronousHandlerId: null,
                         payload,
                         flowId: listener.flowId,
-                        saveSampleData: await webhookSimulationService.exists(listener.flowId),
+                        saveSampleData: await webhookSimulationService(request.log).exists(listener.flowId),
                         flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
                     },
                     priority: DEFAULT_PRIORITY,

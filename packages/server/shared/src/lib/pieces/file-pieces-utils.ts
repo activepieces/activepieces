@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
+import { sep } from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
@@ -71,10 +72,9 @@ async function findAllPiecesDirectoryInSource(): Promise<string[]> {
 
 async function findPieceDirectoryByFolderName(pieceName: string): Promise<string | null> {
     const piecesPath = await findAllPiecesDirectoryInSource()
-    const piecePath = piecesPath.find((p) => p.endsWith('/' + pieceName))
+    const piecePath = piecesPath.find((p) => p.endsWith(sep + pieceName))
     return piecePath ?? null
 }
-
 
 async function findAllPieces(): Promise<PieceMetadata[]> {
     const pieces = await loadPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
