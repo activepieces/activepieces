@@ -1,4 +1,4 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { logger } from '@activepieces/server-shared'
 import { ActivepiecesError, apId,
     ApId,
     assertNotNullOrUndefined,
@@ -16,7 +16,6 @@ import { IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
-
 export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
@@ -27,7 +26,7 @@ export const projectService = {
             notifyStatus: NotificationStatus.ALWAYS,
         }
         const savedProject = await projectRepo().save(newProject)
-        rejectedPromiseHandler(projectHooks.getHooks().postCreate(savedProject))
+        await projectHooks.get(logger).postCreate(savedProject)
         return savedProject
     },
 

@@ -18,7 +18,7 @@ export const noteAddedToConversation = createTrigger({
       required: false,
     }),
   },
-  sampleData: {},
+  sampleData: undefined,
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {

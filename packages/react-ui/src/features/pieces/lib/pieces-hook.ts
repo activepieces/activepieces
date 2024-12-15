@@ -49,6 +49,7 @@ type UseStepMetadata = {
 type UsePiecesProps = {
   searchQuery?: string;
   includeHidden?: boolean;
+  includeTags?: boolean;
 };
 
 type UseMetadataProps = {
@@ -126,15 +127,21 @@ export const piecesHooks = {
       queries: props.map((step) => stepMetadataQueryBuilder(step)),
     });
   },
-  usePieces: ({ searchQuery, includeHidden = false }: UsePiecesProps) => {
+  usePieces: ({
+    searchQuery,
+    includeHidden = false,
+    includeTags = false,
+  }: UsePiecesProps) => {
     const query = useQuery<PieceMetadataModelSummary[], Error>({
       queryKey: ['pieces', searchQuery, includeHidden],
-      queryFn: () => piecesApi.list({ searchQuery, includeHidden }),
+      queryFn: () =>
+        piecesApi.list({ searchQuery, includeHidden, includeTags }),
       staleTime: searchQuery ? 0 : Infinity,
     });
     return {
       pieces: query.data,
       isLoading: query.isLoading,
+      refetch: query.refetch,
     };
   },
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
@@ -233,8 +240,10 @@ function stepMetadataQueryBuilder(step: Step) {
     step.type === ActionType.PIECE || step.type === TriggerType.PIECE;
   const pieceName = isPieceStep ? step.settings.pieceName : undefined;
   const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
+  const customLogoUrl =
+    'customLogoUrl' in step ? step.customLogoUrl : undefined;
   return {
-    queryKey: ['piece', step.type, pieceName, pieceVersion],
+    queryKey: ['piece', step.type, pieceName, pieceVersion, customLogoUrl],
     queryFn: () => piecesApi.getMetadata(step),
     staleTime: Infinity,
   };

@@ -1,5 +1,6 @@
 import { exceptionHandler } from '@activepieces/server-shared'
 import { Action, ActionType, AskCopilotCodeResponse, AskCopilotRequest, flowStructureUtil, isNil, Trigger } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../../flows/flow/flow.service'
 import { generateCode } from './code-agent'
 
@@ -38,17 +39,16 @@ function mergeInputs(copilotInputs: Record<string, string>, selectedStep: Action
     return mergedInputs
 }
 
-export const codeGeneratorTool = {
+export const codeGeneratorTool = (log: FastifyBaseLogger) => ({
     async generateCode(projectId: string, request: AskCopilotRequest): Promise<AskCopilotCodeResponse> {
         try {
-            const flowVersion = await flowService.getOnePopulatedOrThrow({
+            const flowVersion = await flowService(log).getOnePopulatedOrThrow({
                 id: request.flowId,
                 versionId: request.flowVersionId,
                 projectId,
             })
             const selectedStep = request.selectedStepName ? flowStructureUtil.getStep(request.selectedStepName, flowVersion.version.trigger) : undefined
         
-
             const copilotResponse = await generateCode(request.prompt, request.context)
             
             if (!copilotResponse?.code) {
@@ -72,4 +72,4 @@ export const codeGeneratorTool = {
             return createDefaultResponse(error instanceof Error ? error.message : 'Unknown error occurred')
         }
     },
-}
+})

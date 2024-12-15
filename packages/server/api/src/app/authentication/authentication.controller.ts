@@ -21,7 +21,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
     app.post('/sign-up', SignUpRequestOptions, async (request) => {
         const platformId = await resolvePlatformIdForAuthnRequest(request.body.email, request)
 
-        const signUpResponse = await authenticationService.signUp({
+        const signUpResponse = await authenticationService(request.log).signUp({
             ...request.body,
             verified: edition === ApEdition.COMMUNITY,
             platformId,
@@ -47,7 +47,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
         const platformId = await resolvePlatformIdForAuthnRequest(request.body.email, request)
 
 
-        const response = await authenticationService.signIn({
+        const response = await authenticationService(request.log).signIn({
             email: request.body.email,
             password: request.body.password,
             platformId,

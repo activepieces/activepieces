@@ -60,6 +60,7 @@ export const newBlogPost = createTrigger({
       auth: context.auth as TotalCMSAuthType,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
   test: async (context) => {
@@ -67,6 +68,7 @@ export const newBlogPost = createTrigger({
       auth: context.auth as TotalCMSAuthType,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
 });

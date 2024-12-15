@@ -1,4 +1,4 @@
-import { logger, system, WorkerSystemProps } from '@activepieces/server-shared'
+import { system, WorkerSystemProps } from '@activepieces/server-shared'
 import { isNil, WorkerMachineType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { flowWorker, piecesBuilder } from 'server-worker'
@@ -8,15 +8,15 @@ import { accessTokenManager } from './authentication/lib/access-token-manager'
 export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
     const workerToken = await generateWorkerToken()
-    await flowWorker.init(workerToken)
+    await flowWorker(app.log).init(workerToken)
     app.addHook('onClose', async () => {
-        await flowWorker.close()
+        await flowWorker(app.log).close()
     })
     await piecesBuilder(app, app.io)
 }
-export async function workerPostBoot(): Promise<void> {
-    logger.info('Worker started')
-    await flowWorker.start()
+
+export async function workerPostBoot(app: FastifyInstance): Promise<void> {
+    await flowWorker(app.log).start()
 }
 
 

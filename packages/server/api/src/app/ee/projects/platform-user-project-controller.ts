@@ -23,11 +23,11 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
 ) => {
 
     fastify.get('/:id', async (request) => {
-        return platformProjectService.getWithPlanAndUsageOrThrow(request.principal.projectId)
+        return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.principal.projectId)
     })
 
     fastify.get('/', ListProjectRequestForUser, async (request) => {
-        return platformProjectService.getAll({
+        return platformProjectService(request.log).getAll({
             principalType: request.principal.type,
             principalId: request.principal.id,
             platformId: request.principal.platform.id,
@@ -41,7 +41,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
         '/:projectId/token',
         SwitchTokenRequestForUser,
         async (request) => {
-            const allProjects = await platformProjectService.getAll({
+            const allProjects = await platformProjectService(request.log).getAll({
                 principalType: request.principal.type,
                 principalId: request.principal.id,
                 platformId: request.principal.platform.id,
@@ -63,7 +63,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
             }
             const projectId = request.params.projectId
             const platform = await platformService.getOneOrThrow(project.platformId)
-            const projectRole = await projectMemberService.getRole({ userId: request.principal.id, projectId  })
+            const projectRole = await projectMemberService(request.log).getRole({ userId: request.principal.id, projectId  })
             return {
                 token: await accessTokenManager.generateToken({
                     id: request.principal.id,

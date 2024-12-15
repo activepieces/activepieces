@@ -12,7 +12,7 @@ export const conversationUnsnoozed = createTrigger({
   description:
     'Triggers when a conversation is unsnoozed',
   props: {},
-  sampleData: {},
+  sampleData: undefined,
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {

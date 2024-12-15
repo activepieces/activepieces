@@ -2,6 +2,7 @@ import { exceptionHandler, flowTimeoutSandbox, JobStatus, memoryLock, QueueName,
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { ConsumerManager } from '../consumer/consumer-manager'
 import { redisRateLimiter } from './redis-rate-limiter'
@@ -9,7 +10,7 @@ import { redisRateLimiter } from './redis-rate-limiter'
 const consumer: Record<string, Worker> = {}
 
 
-export const redisConsumer: ConsumerManager = {
+export const redisConsumer = (log: FastifyBaseLogger): ConsumerManager => ({
     async poll(jobType, { token }) {
         let lock
         try {
@@ -45,7 +46,7 @@ export const redisConsumer: ConsumerManager = {
         const job = await Job.fromId(worker, jobId)
         assertNotNullOrUndefined(job, 'Job not found')
         assertNotNullOrUndefined(token, 'Token not found')
-        rejectedPromiseHandler(redisRateLimiter.onCompleteOrFailedJob(queueName, job))
+        rejectedPromiseHandler(redisRateLimiter(log).onCompleteOrFailedJob(queueName, job))
         switch (status) {
             case JobStatus.COMPLETED:
                 await job.moveToCompleted({}, token, false)
@@ -63,7 +64,7 @@ export const redisConsumer: ConsumerManager = {
         const promises = Object.values(consumer).map(consumer => consumer.close())
         await Promise.all(promises)
     },
-}
+})
 
 
 async function ensureWorkerExists(queueName: QueueName): Promise<Worker> {
@@ -88,6 +89,8 @@ function getLockDurationInMs(queueName: QueueName): number {
     switch (queueName) {
         case QueueName.WEBHOOK:
             return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
+        case QueueName.USERS_INTERACTION:
+            return dayjs.duration(flowTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
         case QueueName.ONE_TIME:
             return dayjs.duration(flowTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()
         case QueueName.SCHEDULED:

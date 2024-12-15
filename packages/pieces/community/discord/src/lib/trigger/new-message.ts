@@ -89,6 +89,7 @@ export const newMessage = createTrigger({
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
       },
+      files: context.files,
     });
   },
   test: async (context) => {
@@ -99,6 +100,7 @@ export const newMessage = createTrigger({
         channel: context.propsValue.channel,
         limit: context.propsValue.limit ?? 50,
       },
+      files: context.files,
     });
   },
 });

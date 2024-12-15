@@ -25,7 +25,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
             platformId,
             provider,
         })
-        const limitResponse = await aiTokenLimit.exceededLimit({
+        const limitResponse = await aiTokenLimit(request.log).exceededLimit({
             projectId,
             tokensToConsume: 0,
         })
@@ -58,9 +58,9 @@ export const proxyController: FastifyPluginCallbackTypebox = (
 
             const data = await parseResponseData(response, responseContentType)
 
-            await projectUsageService.increaseUsage(projectId, 1, 'aiTokens')
+            await projectUsageService(request.log).increaseUsage(projectId, 1, 'aiTokens')
 
-            rejectedPromiseHandler(telemetry.trackProject(projectId, {
+            rejectedPromiseHandler(telemetry(request.log).trackProject(projectId, {
                 name: TelemetryEventName.AI_PROVIDER_USED,
                 payload: {
                     projectId,

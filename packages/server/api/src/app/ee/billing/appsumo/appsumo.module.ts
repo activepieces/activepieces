@@ -90,7 +90,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
             }
             else {
                 const { plan_id, action, uuid, activation_email } = request.body
-                await appsumoService.handleRequest({
+                await appsumoService(request.log).handleRequest({
                     plan_id,
                     action,
                     uuid,

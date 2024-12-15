@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common';
-import { googleGeminiAuth } from '../../index';
+import { Content, GoogleGenerativeAI } from '@google/generative-ai';
 import {
   Property,
   StoreScope,
@@ -9,6 +6,9 @@ import {
 } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import { z } from 'zod';
+import { googleGeminiAuth } from '../../index';
+import { defaultLLM, getGeminiModelOptions } from '../common/common';
+import { propsValidation } from '@activepieces/pieces-common';
 
 export const chatGemini = createAction({
   auth: googleGeminiAuth,
@@ -16,20 +16,13 @@ export const chatGemini = createAction({
   displayName: 'Chat Gemini',
   description: 'Chat with Google Gemini',
   props: {
-    model: Property.StaticDropdown({
+    model: Property.Dropdown({
       displayName: 'Model',
       required: true,
-      description:
-        'The model to chat with. (For now limited to Gemini Pro, according to Google: "The gemini-pro-vision model (for text-and-image input) is not yet optimized for multi-turn conversations. Make sure to use gemini-pro and text-only input for chat use cases.")',
-      defaultValue: 'gemini-pro',
-      options: {
-        options: [
-          {
-            label: 'Gemini Pro',
-            value: 'gemini-pro',
-          },
-        ],
-      },
+      description: 'The model which will generate the completion',
+      refreshers: [],
+      defaultValue: defaultLLM,
+      options: async ({ auth }) => getGeminiModelOptions({ auth }),
     }),
     prompt: Property.LongText({
       displayName: 'Prompt',
@@ -49,44 +42,32 @@ export const chatGemini = createAction({
     });
 
     const { model, prompt, memoryKey } = propsValue;
-    let messageHistory: any[] | null = [];
+    const genAI = new GoogleGenerativeAI(auth);
+    const geminiModel = genAI.getGenerativeModel({ model });
+    let history: Content[] = [];
+
     if (memoryKey) {
-      messageHistory = (await store.get(memoryKey, StoreScope.PROJECT)) ?? [];
+      const storedHistory = await store.get(memoryKey, StoreScope.PROJECT);
+      if (Array.isArray(storedHistory)) {
+        history = storedHistory;
+      }
     }
 
-    const thisMessage = {
-      role: 'user',
-      parts: [
-        {
-          text: prompt,
-        },
-      ],
-    };
-
-    messageHistory.push(thisMessage);
-
-    const body = {
-      contents: messageHistory,
-    };
-
-    const request = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${auth}`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: body,
+    const chat = geminiModel.startChat({
+      history: history,
     });
 
-    const response = request.body;
+    const result = await chat.sendMessage(prompt);
+    const responseText = result.response.text();
 
     if (memoryKey) {
-      messageHistory.push(response['candidates'][0]['content']);
-      //This is the text part: response['candidates'][0]['content']['parts'][0]['text']
-      //But we want the whole response, so we can store it.
-      store.put(memoryKey, messageHistory, StoreScope.PROJECT);
+      const updatedHistory = await chat.getHistory();
+      await store.put(memoryKey, updatedHistory, StoreScope.PROJECT);
     }
 
-    return request.body;
+    return {
+      response: responseText,
+      history: history,
+    };
   },
 });

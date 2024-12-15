@@ -49,7 +49,7 @@ export const newTaskTrigger = createTrigger({
     const store = context.store;
     const auth = context.auth as OAuth2PropertyValue<OAuth2Props>;
     const propsValue = context.propsValue;
-    return await pollingHelper.test(polling, { store, auth, propsValue });
+    return await pollingHelper.test(polling, { store, auth, propsValue, files: context.files });
   },
   async onEnable(context) {
     const store = context.store;
@@ -67,6 +67,6 @@ export const newTaskTrigger = createTrigger({
     const store = context.store;
     const auth = context.auth as OAuth2PropertyValue<OAuth2Props>;
     const propsValue = context.propsValue;
-    return await pollingHelper.poll(polling, { store, auth, propsValue });
+    return await pollingHelper.poll(polling, { store, auth, propsValue, files: context.files });
   },
 });

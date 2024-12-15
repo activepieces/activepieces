@@ -1,17 +1,16 @@
 import {
+    AppSystemProp,
+    createWebhookContextLog,
     JobType,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    logger,
+    system,
 } from '@activepieces/server-shared'
 import {
-    ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     apId,
     EngineHttpResponse,
-    ErrorCode,
     EventPayload,
     Flow,
-    FlowId,
     FlowStatus,
     GetFlowVersionForWorkerRequestType,
     isMultipartFile,
@@ -19,18 +18,20 @@ import {
     WebhookUrlParams,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { tasksLimit } from '../ee/project-plan/tasks-limit'
 import { stepFileService } from '../file/step-file/step-file.service'
-import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
-import { webhookResponseWatcher } from '../workers/helper/webhook-response-watcher'
-import { flowQueue } from '../workers/queue'
+import { engineResponseWatcher } from '../workers/engine-response-watcher'
+import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 
+const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
+
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
+
     app.all(
         '/:flowId/sync',
         WEBHOOK_PARAMS,
@@ -40,7 +41,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 flowId: request.params.flowId,
                 async: false,
                 flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
-                saveSampleData: await webhookSimulationService.exists(
+                saveSampleData: await webhookSimulationService(request.log).exists(
                     request.params.flowId,
                 ),
             })
@@ -59,7 +60,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 request,
                 flowId: request.params.flowId,
                 async: true,
-                saveSampleData: await webhookSimulationService.exists(
+                saveSampleData: await webhookSimulationService(request.log).exists(
                     request.params.flowId,
                 ),
                 flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
@@ -113,20 +114,6 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             .send(response.body)
     })
 
-    // @deprecated this format was changed in early 2023 to include flowId in the path
-    app.all('/', WEBHOOK_QUERY_PARAMS, async (request, reply) => {
-        const response = await handleWebhook({
-            request,
-            flowId: request.query.flowId,
-            async: true,
-            saveSampleData: true,
-            flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
-        })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
-    })
 }
 
 async function handleWebhook({
@@ -136,17 +123,19 @@ async function handleWebhook({
     saveSampleData,
     flowVersionToRun,
 }: HandleWebhookParams): Promise<EngineHttpResponse> {
-    const flow = await getFlowOrThrow(flowId)
-    const payload = await convertRequest(request, flow.projectId, flow.id)
-    const requestId = apId()
-    const synchronousHandlerId = async ? null : webhookResponseWatcher.getServerId()
+    const webhookHeader = 'x-webhook-id'
+    const webhookRequestId = apId()
+    const log = createWebhookContextLog({ log: request.log, webhookId: webhookRequestId, flowId })
+    const flow = await flowService(log).getOneById(flowId)
     if (isNil(flow)) {
+        log.info('Flow not found, returning GONE')
         return {
             status: StatusCodes.GONE,
             body: {},
             headers: {},
         }
     }
+    await assertExceedsLimit(flow, log)
     if (
         flow.status !== FlowStatus.ENABLED &&
         !saveSampleData &&
@@ -155,32 +144,54 @@ async function handleWebhook({
         return {
             status: StatusCodes.NOT_FOUND,
             body: {},
-            headers: {},
+            headers: {
+                [webhookHeader]: webhookRequestId,
+            },
         }
     }
-    await flowQueue.add({
-        id: requestId,
+
+    log.info('Adding webhook job to queue')
+
+    const synchronousHandlerId = async ? null : engineResponseWatcher(log).getServerId()
+    await jobQueue(request.log).add({
+        id: webhookRequestId,
         type: JobType.WEBHOOK,
         data: {
             projectId: flow.projectId,
             schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-            requestId,
+            requestId: webhookRequestId,
             synchronousHandlerId,
-            payload,
+            payload: await convertRequest(request, flow.projectId, flow.id),
             flowId: flow.id,
             saveSampleData,
             flowVersionToRun,
         },
-        priority: await getJobPriority(flow.projectId, synchronousHandlerId),
+        priority: await getJobPriority(synchronousHandlerId),
     })
+
     if (async) {
+        log.info('Async webhook request completed')
         return {
             status: StatusCodes.OK,
             body: {},
-            headers: {},
+            headers: {
+                [webhookHeader]: webhookRequestId,
+            },
         }
     }
-    return webhookResponseWatcher.oneTimeListener(requestId, true)
+    const flowHttpResponse = await engineResponseWatcher(log).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
+        status: StatusCodes.NO_CONTENT,
+        body: {},
+        headers: {},
+    })
+    return {
+        status: flowHttpResponse.status,
+        body: flowHttpResponse.body,
+        headers: {
+            ...flowHttpResponse.headers,
+            [webhookHeader]: webhookRequestId,
+        },
+    }
 }
 
 type HandleWebhookParams = {
@@ -217,7 +228,7 @@ const convertBody = async (
 
         for (const [key, value] of requestBodyEntries) {
             if (isMultipartFile(value)) {
-                const file = await stepFileService.saveAndEnrich({
+                const file = await stepFileService(request.log).saveAndEnrich({
                     data: value.data as Buffer,
                     fileName: value.filename,
                     stepName: 'trigger',
@@ -237,49 +248,23 @@ const convertBody = async (
     return request.body
 }
 
-const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
-    if (isNil(flowId)) {
-        logger.error('[WebhookService#getFlowOrThrow] error=flow_id_is_undefined')
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'flowId is undefined',
-            },
-        })
-    }
-
-    const flow = await flowRepo().findOneBy({ id: flowId })
-
-    if (isNil(flow)) {
-        logger.error(
-            `[WebhookService#getFlowOrThrow] error=flow_not_found flowId=${flowId}`,
-        )
-
-        throw new ActivepiecesError({
-            code: ErrorCode.FLOW_NOT_FOUND,
-            params: {
-                id: flowId,
-            },
-        })
-    }
-
-    const exceededLimit = await tasksLimit.exceededLimit({
+async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<void> {
+    const exceededLimit = await tasksLimit(log).exceededLimit({
         projectId: flow.projectId,
     })
     if (exceededLimit) {
-        logger.info({
+        log.info({
             message: 'disable webhook out of flow quota',
             projectId: flow.projectId,
             flowId: flow.id,
         })
-        await flowService.updateStatus({
+        await flowService(log).updateStatus({
             id: flow.id,
             projectId: flow.projectId,
             newStatus: FlowStatus.DISABLED,
         })
     }
 
-    return flow
 }
 
 const WEBHOOK_PARAMS = {
@@ -289,15 +274,5 @@ const WEBHOOK_PARAMS = {
     },
     schema: {
         params: WebhookUrlParams,
-    },
-}
-
-const WEBHOOK_QUERY_PARAMS = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        skipAuth: true,
-    },
-    schema: {
-        querystring: WebhookUrlParams,
     },
 }

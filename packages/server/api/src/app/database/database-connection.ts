@@ -28,6 +28,7 @@ import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
 import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
 import { ProjectVersionEntity } from '../ee/project-version/project-version.entity'
 import { ReferralEntity } from '../ee/referrals/referral.entity'
+
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
@@ -98,7 +99,6 @@ function getEntities(): EntitySchema<unknown>[] {
 
                 // CLOUD
                 AppSumoEntity,
-                ReferralEntity,
                 ConnectionKeyEntity,
                 AppCredentialEntity,
                 ProjectBillingEntity,

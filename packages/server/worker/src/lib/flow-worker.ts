@@ -1,8 +1,10 @@
-import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, system, WebhookJobData, WorkerSystemProps } from '@activepieces/server-shared'
+import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, system, UserInteractionJobData, WebhookJobData, WorkerSystemProps } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
 import { flowJobExecutor } from './executors/flow-job-executor'
 import { repeatingJobExecutor } from './executors/repeating-job-executor'
+import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
 import { jobPoller } from './job-polling'
 
@@ -13,7 +15,7 @@ let closed = true
 let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
 
-export const flowWorker = {
+export const flowWorker = (log: FastifyBaseLogger) => ({
     async init(generatedToken: string): Promise<void> {
         closed = false
         workerToken = generatedToken
@@ -25,7 +27,7 @@ export const flowWorker = {
         for (const queueName of Object.values(QueueName)) {
             const times = queueName === QueueName.SCHEDULED ? SCHEDULED_WORKER_CONCURRENCY : FLOW_WORKER_CONCURRENCY 
             for (let i = 0; i < times; i++) {
-                rejectedPromiseHandler(run(queueName))
+                rejectedPromiseHandler(run(queueName, log))
             }
         }
     },
@@ -33,9 +35,9 @@ export const flowWorker = {
         closed = true
         clearTimeout(heartbeatInterval)
     },
-}
+})
 
-async function run<T extends QueueName>(queueName: T): Promise<void> {
+async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): Promise<void> {
     while (!closed) {
         let engineToken: string | undefined
         try {
@@ -45,7 +47,7 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
             }
             const { data, engineToken: jobEngineToken } = job
             engineToken = jobEngineToken
-            await consumeJob(queueName, data, engineToken)
+            await consumeJob(queueName, data, engineToken, log)
             await markJobAsCompleted(queueName, engineToken)
         }
         catch (e) {
@@ -63,20 +65,23 @@ async function run<T extends QueueName>(queueName: T): Promise<void> {
     }
 }
 
-async function consumeJob(queueName: QueueName, jobData: JobData, engineToken: string): Promise<void> {
+async function consumeJob(queueName: QueueName, jobData: JobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
     switch (queueName) {
+        case QueueName.USERS_INTERACTION:
+            await userInteractionJobExecutor(log).execute(jobData as UserInteractionJobData, engineToken, workerToken)
+            break   
         case QueueName.ONE_TIME:
-            await flowJobExecutor.executeFlow(jobData as OneTimeJobData, engineToken)
+            await flowJobExecutor(log).executeFlow(jobData as OneTimeJobData, engineToken)
             break
         case QueueName.SCHEDULED:
-            await repeatingJobExecutor.executeRepeatingJob({
+            await repeatingJobExecutor(log).executeRepeatingJob({
                 data: jobData as RepeatingJobData,
                 engineToken,
                 workerToken,
             })
             break
         case QueueName.WEBHOOK: {
-            await webhookExecutor.consumeWebhook(jobData as WebhookJobData, engineToken, workerToken)
+            await webhookExecutor(log).consumeWebhook(jobData as WebhookJobData, engineToken, workerToken)
             break
         }
     }
@@ -88,6 +93,7 @@ async function markJobAsCompleted(queueName: QueueName, engineToken: string): Pr
             // This is will be marked as completed in update-run endpoint
             break
         }
+        case QueueName.USERS_INTERACTION:
         case QueueName.SCHEDULED:
         case QueueName.WEBHOOK:{
             await engineApiService(engineToken).updateJobStatus({
