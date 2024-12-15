@@ -111,6 +111,7 @@ const ApStepCanvasNode = React.memo(
       flowVersion,
       loopIndexes,
       setSampleData,
+      setSelectedBranchIndex
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.setAllowCanvasPanning,
@@ -125,6 +126,7 @@ const ApStepCanvasNode = React.memo(
       state.flowVersion,
       state.loopsIndexes,
       state.setSampleData,
+      state.setSelectedBranchIndex
     ]);
     const step =
       flowStructureUtil.getStep(data.step!.name, flowVersion.trigger) ||
@@ -210,6 +212,7 @@ const ApStepCanvasNode = React.memo(
     ) => {
       const { name } = data.step!;
       selectStepByName(name);
+      setSelectedBranchIndex(null);
       e.preventDefault();
       e.stopPropagation();
     };
