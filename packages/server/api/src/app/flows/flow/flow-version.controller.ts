@@ -26,11 +26,11 @@ export const flowVersionController: FastifyPluginAsyncTypebox = async (
             },
         },
         async (request) => {
-            const flow = await flowService.getOneOrThrow({
+            const flow = await flowService(request.log).getOneOrThrow({
                 id: request.params.flowId,
                 projectId: request.principal.projectId,
             })
-            return flowVersionService.list({
+            return flowVersionService(request.log).list({
                 flowId: flow.id,
                 limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
                 cursorRequest: request.query.cursor ?? null,

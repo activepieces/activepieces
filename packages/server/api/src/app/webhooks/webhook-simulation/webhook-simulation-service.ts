@@ -1,4 +1,4 @@
-import { ApLock, logger } from '@activepieces/server-shared'
+import { ApLock } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -9,6 +9,7 @@ import {
     ProjectId,
     WebhookSimulation,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock } from '../../helper/lock'
 import { WebhookSimulationEntity } from './webhook-simulation-entity'
@@ -38,9 +39,9 @@ const createLock = async ({ flowId }: AcquireLockParams): Promise<ApLock> => {
 
 const webhookSimulationRepo = repoFactory(WebhookSimulationEntity)
 
-export const webhookSimulationService = {
+export const webhookSimulationService = (log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<WebhookSimulation> {
-        logger.debug(params, '[WebhookSimulationService#deleteByFlowId] params')
+        log.debug(params, '[WebhookSimulationService#deleteByFlowId] params')
 
         const { flowId, flowVersionId, projectId } = params
 
@@ -68,7 +69,7 @@ export const webhookSimulationService = {
             ...params,
         }
 
-            await webhookSideEffects.preCreate({
+            await webhookSideEffects(log).preCreate({
                 flowId,
                 projectId,
             })
@@ -86,7 +87,7 @@ export const webhookSimulationService = {
         return !isNil(webhookSimulation)
     },
     async get(params: GetParams): Promise<WebhookSimulation | null> {
-        logger.debug(params, '[WebhookSimulationService#getByFlowId] params')
+        log.debug(params, '[WebhookSimulationService#getByFlowId] params')
 
         const { flowId, projectId } = params
 
@@ -100,7 +101,7 @@ export const webhookSimulationService = {
         const { flowId, projectId } = params
 
         if (isNil(webhookSimulation)) {
-            logger.debug('[WebhookSimulationService#getByFlowId] not found')
+            log.debug('[WebhookSimulationService#getByFlowId] not found')
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
@@ -112,7 +113,7 @@ export const webhookSimulationService = {
     },
     
     async delete(params: DeleteParams): Promise<void> {
-        logger.debug(params, '[WebhookSimulationService#deleteByFlowId] params')
+        log.debug(params, '[WebhookSimulationService#deleteByFlowId] params')
 
         const { flowId, flowVersionId, projectId, parentLock } = params
 
@@ -132,7 +133,7 @@ export const webhookSimulationService = {
             if (isNil(webhookSimulation)) {
                 return
             }
-            await webhookSideEffects.preDelete({
+            await webhookSideEffects(log).preDelete({
                 flowId,
                 projectId,
                 flowVersionId,
@@ -146,4 +147,4 @@ export const webhookSimulationService = {
             }
         }
     },
-}
+})

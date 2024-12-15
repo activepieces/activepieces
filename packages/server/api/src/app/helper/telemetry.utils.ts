@@ -1,6 +1,7 @@
-import { AppSystemProp, logger, SharedSystemProp, system } from '@activepieces/server-shared'
+import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
 import { Analytics } from '@segment/analytics-node'
+import { FastifyBaseLogger } from 'fastify'
 import { flagService } from '../flags/flag.service'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
@@ -9,7 +10,7 @@ const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
 const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
 
-export const telemetry = {
+export const telemetry = (log: FastifyBaseLogger) => ({
     async identify(user: User, projectId: ProjectId): Promise<void> {
         if (!telemetryEnabled) {
             return
@@ -43,7 +44,7 @@ export const telemetry = {
         }
         const project = await projectService.getOne(projectId)
         this.trackUser(project!.ownerId, event).catch((e) =>
-            logger.error(e, '[Telemetry#trackProject] this.trackUser'),
+            log.error(e, '[Telemetry#trackProject] this.trackUser'),
         )
     },
     isEnabled: () => telemetryEnabled,
@@ -60,9 +61,10 @@ export const telemetry = {
                 datetime: new Date().toISOString(),
             },
         }
+        log.info(payloadEvent, '[Telemetry#trackUser] sending event')
         analytics.track(payloadEvent)
     },
-}
+})
 
 async function getMetadata() {
     const currentVersion = await flagService.getCurrentRelease()

@@ -24,7 +24,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         
         const token = apId()
         const { queueName } = request.query
-        const job = await flowConsumer.poll(queueName, {
+        const job = await flowConsumer(request.log).poll(queueName, {
             token,
         })
         if (!job) {
@@ -43,7 +43,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const { workerServerId, requestId, response } = request.body
-        await engineResponseWatcher.publish(requestId, workerServerId, response)
+        await engineResponseWatcher(request.log).publish(requestId, workerServerId, response)
         return {}
     })
 
@@ -58,14 +58,14 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
     }, async (request) => {
         const { flowId, projectId, payloads } = request.body
         const savePayloads = payloads.map((payload) =>
-            rejectedPromiseHandler(triggerEventService.saveEvent({
+            rejectedPromiseHandler(triggerEventService(request.log).saveEvent({
                 flowId,
                 payload,
                 projectId,
             })),
         )
         rejectedPromiseHandler(Promise.all(savePayloads))
-        await webhookSimulationService.delete({ flowId, projectId })
+        await webhookSimulationService(request.log).delete({ flowId, projectId })
         return {}
     })
 
@@ -84,7 +84,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             payloads,
         )
         const createFlowRuns = filterPayloads.map((payload) =>
-            flowRunService.start({
+            flowRunService(request.log).start({
                 environment,
                 flowVersionId,
                 payload,
@@ -107,7 +107,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const data = request.body
-        await flowRunService.start({
+        await flowRunService(request.log).start({
             payload: null,
             flowRunId: data.runId,
             synchronousHandlerId: data.synchronousHandlerId ?? undefined,

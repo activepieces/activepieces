@@ -10,6 +10,7 @@ import {
     TriggerHookType,
     TriggerPayload,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../../api/server-api.service'
 import { engineRunner } from '../../engine'
 import { webhookUtils } from '../../utils/webhook-utils'
@@ -17,6 +18,7 @@ import { webhookUtils } from '../../utils/webhook-utils'
 export async function tryHandshake(
     engineToken: string,
     params: ExecuteHandshakeParams,
+    log: FastifyBaseLogger,
 ): Promise<WebhookResponse | null> {
     const { payload, flowVersion, projectId } = params
 
@@ -44,7 +46,7 @@ export async function tryHandshake(
                     flowVersion,
                     projectId,
                     payload,
-                })
+                }, log)
             }
             break
         }
@@ -58,7 +60,7 @@ export async function tryHandshake(
                     flowVersion,
                     projectId,
                     payload,
-                })
+                }, log)
             }
             break
         }
@@ -74,7 +76,7 @@ export async function tryHandshake(
                     flowVersion,
                     projectId,
                     payload,
-                })
+                }, log)
             }
             break
         }
@@ -86,13 +88,14 @@ export async function tryHandshake(
 
 async function executeHandshake(
     params: ExecuteHandshakeParams,
+    log: FastifyBaseLogger,
 ): Promise<WebhookResponse> {
     const { flowVersion, projectId, payload } = params
-    const { result } = await engineRunner.executeTrigger(params.engineToken, {
+    const { result } = await engineRunner(log).executeTrigger(params.engineToken, {
         hookType: TriggerHookType.HANDSHAKE,
         flowVersion,
         triggerPayload: payload,
-        webhookUrl: await webhookUtils.getWebhookUrl({
+        webhookUrl: await webhookUtils(log).getWebhookUrl({
             flowId: flowVersion.flowId,
             simulate: false,
         }),

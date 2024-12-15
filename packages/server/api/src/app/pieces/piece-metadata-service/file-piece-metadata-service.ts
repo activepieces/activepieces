@@ -12,6 +12,7 @@ import {
     PieceType,
     ProjectId,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import {
     PieceMetadataSchema,
@@ -26,7 +27,7 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
         a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()),
     )
 }
-export const FilePieceMetadataService = (): PieceMetadataService => {
+export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadataService => {
     return {
         async list(params): Promise<PieceMetadataModelSummary[]> {
             const { projectId } = params

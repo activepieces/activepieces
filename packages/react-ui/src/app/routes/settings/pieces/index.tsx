@@ -1,8 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { ApFlagId, isNil, PieceScope, PieceType } from '@activepieces/shared';
@@ -109,22 +109,10 @@ const ProjectPiecesPage = () => {
     ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
   );
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['pieces', searchQuery],
-    gcTime: 0,
-    staleTime: 0,
-    queryFn: async () => {
-      const pieces = await piecesApi.list({
-        includeHidden: false,
-        searchQuery: searchQuery,
-      });
-      return {
-        data: pieces,
-        next: null,
-        previous: null,
-      };
-    },
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('name') ?? '';
+  const { pieces, isLoading, refetch } = piecesHooks.usePieces({
+    searchQuery,
   });
 
   return (
@@ -155,12 +143,13 @@ const ProjectPiecesPage = () => {
               accessorKey: 'name',
               options: [],
               icon: CheckIcon,
-              handleFilterChange: (filterValue: string) => {
-                setSearchQuery(filterValue);
-              },
             } as const,
           ]}
-          page={data}
+          page={{
+            data: pieces ?? [],
+            next: null,
+            previous: null,
+          }}
           isLoading={isLoading}
           hidePagination={true}
         />

@@ -1,4 +1,4 @@
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 
 export const errorHandler = async (
     error: FastifyError,
-    _request: FastifyRequest,
+    request: FastifyRequest,
     reply: FastifyReply,
 ): Promise<void> => {
     if (error instanceof ActivepiecesError) {
@@ -48,7 +48,7 @@ export const errorHandler = async (
         })
     }
     else {
-        logger.error('[errorHandler]: ' + JSON.stringify(error))
+        request.log.error('[errorHandler]: ' + JSON.stringify(error))
         if (
             !error.statusCode ||
       error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR.valueOf()

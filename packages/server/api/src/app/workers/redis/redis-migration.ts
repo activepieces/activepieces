@@ -1,11 +1,12 @@
-import { LATEST_JOB_DATA_SCHEMA_VERSION, logger, QueueName, RepeatableJobType, ScheduledJobData } from '@activepieces/server-shared'
+import { LATEST_JOB_DATA_SCHEMA_VERSION, QueueName, RepeatableJobType, ScheduledJobData } from '@activepieces/server-shared'
 import { ExecutionType, isNil, RunEnvironment, ScheduleType } from '@activepieces/shared'
 import { Job } from 'bullmq'
+import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { distributedLock } from '../../helper/lock'
 import { bullMqGroups } from './redis-queue'
 
-export const redisMigrations = {
+export const redisMigrations = (log: FastifyBaseLogger) => ({
     async run(): Promise<void> {
         const migrationLock = await distributedLock.acquireLock({
             key: 'jobs_lock',
@@ -16,27 +17,27 @@ export const redisMigrations = {
             if (scheduledJobs.length === 0) {
                 return
             }
-            logger.info({
+            log.info({
                 count: scheduledJobs.length,
             }, 'migiration of scheduled jobs started')
             for (const job of scheduledJobs) {
                 if (job) {
-                    await migrateJob(job)
+                    await migrateJob(job, log)
                 }
             }
-            logger.info('migration of scheduled jobs completed')
+            log.info('migration of scheduled jobs completed')
         }
         finally {
             await migrationLock.release()
         }
     },
-}
+})
 
 async function getJobsToMigrate(): Promise<(Job<ScheduledJobData> | undefined)[]> {
     return (await bullMqGroups[QueueName.SCHEDULED].getJobs()).filter((job) => !isNil(job?.data) && job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION)
 }
 
-async function migrateJob(job: Job<ScheduledJobData>): Promise<void> {
+async function migrateJob(job: Job<ScheduledJobData>, log: FastifyBaseLogger): Promise<void> {
     let modifiedJobData = JSON.parse(JSON.stringify(job.data))
 
     if (isNil(modifiedJobData.schemaVersion) || modifiedJobData.schemaVersion === 1) {
@@ -54,7 +55,7 @@ async function migrateJob(job: Job<ScheduledJobData>): Promise<void> {
     }
 
     if (modifiedJobData.schemaVersion === 2) {
-        await updateCronExpressionOfRedisToPostgresTable(job)
+        await updateCronExpressionOfRedisToPostgresTable(job, log)
         modifiedJobData.schemaVersion = 3
         await job.updateData(modifiedJobData)
     }
@@ -72,10 +73,10 @@ async function migrateJob(job: Job<ScheduledJobData>): Promise<void> {
     }
 }
 
-async function updateCronExpressionOfRedisToPostgresTable(job: Job): Promise<void> {
+async function updateCronExpressionOfRedisToPostgresTable(job: Job, log: FastifyBaseLogger): Promise<void> {
     const { tz, pattern } = job.opts.repeat || {}
     if (isNil(tz) || isNil(pattern)) {
-        logger.error('Found unrepeatable job in repeatable queue')
+        log.error('Found unrepeatable job in repeatable queue')
         return
     }
     const flow = await flowRepo().findOneBy({

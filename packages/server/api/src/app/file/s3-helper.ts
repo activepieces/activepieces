@@ -1,11 +1,12 @@
 import { Readable } from 'stream'
-import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
 import { FileType, ProjectId } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 
-export const s3Helper = {
+export const s3Helper = (log: FastifyBaseLogger) => ({
     constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): string {
         const now = dayjs()
         const datePath = `${now.format('YYYY/MM/DD/HH')}`
@@ -20,8 +21,7 @@ export const s3Helper = {
         }
     },
     async uploadFile(s3Key: string, data: Buffer): Promise<string> {
-
-        logger.info({
+        log.info({
             s3Key,
         }, 'uploading file to s3')
         try {
@@ -31,12 +31,12 @@ export const s3Helper = {
                 Body: Readable.from(data),
                 ContentLength: data.length,
             })
-            logger.info({
+            log.info({
                 s3Key,
             }, 'file uploaded to s3')
         }
         catch (error) {
-            logger.error({
+            log.error({
                 s3Key,
                 error,
             }, 'failed to upload file to s3')
@@ -89,16 +89,16 @@ export const s3Helper = {
                         Quiet: true,
                     },
                 }))
-                logger.info({ count: chunk.length }, 'files deleted from s3')
+                log.info({ count: chunk.length }, 'files deleted from s3')
             }
         }
         catch (error) {
-            logger.error({ error, count: s3Keys.length }, 'failed to delete files from s3')
+            log.error({ error, count: s3Keys.length }, 'failed to delete files from s3')
             exceptionHandler.handle(error)
             throw error
         }
     },
-}
+})
 
 
 const chunkArray = (array: string[], chunkSize: number) => Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => array.slice(i * chunkSize, (i + 1) * chunkSize))

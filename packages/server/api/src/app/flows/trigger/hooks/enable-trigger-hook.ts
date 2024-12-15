@@ -20,6 +20,7 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import {
     EngineHelperResponse,
     EngineHelperTriggerResult,
@@ -49,6 +50,7 @@ function constructEveryXMinuteCron(minute: number): string {
 
 export const enablePieceTrigger = async (
     params: EnableParams,
+    log: FastifyBaseLogger,
 ): Promise<EngineHelperResponse<
 EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
 > | null> => {
@@ -57,17 +59,17 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         return null
     }
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await triggerUtils.getPieceTriggerOrThrow({
+    const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({
         trigger: flowTrigger,
         projectId,
     })
 
-    const webhookUrl = await webhookUtils.getWebhookUrl({
+    const webhookUrl = await webhookUtils(log).getWebhookUrl({
         flowId: flowVersion.flowId,
         simulate,
     })
 
-    const engineHelperResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
+    const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
         jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion,
@@ -98,7 +100,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
             const renewConfiguration = pieceTrigger.renewConfiguration
             switch (renewConfiguration?.strategy) {
                 case WebhookRenewStrategy.CRON: {
-                    await jobQueue.add({
+                    await jobQueue(log).add({
                         id: flowVersion.id,
                         type: JobType.REPEATING,
                         data: {
@@ -136,7 +138,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                 }
                 // END EE
             }
-            await jobQueue.add({
+            await jobQueue(log).add({
                 id: flowVersion.id,
                 type: JobType.REPEATING,
                 data: {

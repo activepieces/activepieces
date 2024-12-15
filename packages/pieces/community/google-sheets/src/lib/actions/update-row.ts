@@ -63,10 +63,6 @@ export const updateRowAction = createAction({
     });
 
 
-    console.log('formattedValues', formattedValues);
-    console.log('sheetName', sheetName);
-    console.log('rowValuesInput', rowValuesInput);
-    console.log('objectToArray', objectToArray(rowValuesInput));
     if (formattedValues.length > 0) {
       const response = await sheets.spreadsheets.values.update({
         range: `${sheetName}!A${rowId}:ZZZ${rowId}`,
