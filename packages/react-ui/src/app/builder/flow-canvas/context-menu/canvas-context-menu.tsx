@@ -5,7 +5,7 @@ import {
 } from '@/components/ui/context-menu';
 
 import { BuilderState } from '../../builder-hooks';
-import { ApButtonData, ApNode } from '../utils/types';
+import { ApButtonData } from '../utils/types';
 
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
 
@@ -16,8 +16,8 @@ export type CanvasContextMenuProps = Pick<
   | 'flowVersion'
   | 'exitStepSettings'
   | 'readonly'
+  | 'selectedNodes'
 > & {
-  selectedNodes: ApNode[];
   children?: React.ReactNode;
   pasteActionData: {
     addButtonData: ApButtonData | null;

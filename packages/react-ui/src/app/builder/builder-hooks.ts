@@ -23,8 +23,6 @@ import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { AskAiButtonOperations } from '../../features/pieces/lib/types';
 import { useAuthorization } from '../../hooks/authorization-hooks';
 
-import { ApNode } from './flow-canvas/utils/types';
-
 const flowUpdatesQueue = new PromiseQueue();
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
@@ -112,8 +110,8 @@ export type BuilderState = {
   ) => void;
   askAiButtonProps: AskAiButtonOperations | null;
   setAskAiButtonProps: (props: AskAiButtonOperations | null) => void;
-  selectedNodes: ApNode[];
-  setSelectedNodes: (nodes: ApNode[]) => void;
+  selectedNodes: string[];
+  setSelectedNodes: (nodes: string[]) => void;
   panningMode: 'grab' | 'pan';
   setPanningMode: (mode: 'grab' | 'pan') => void;
 };
@@ -419,7 +417,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         }));
       },
       selectedNodes: [],
-      setSelectedNodes: (nodes: ApNode[]) => {
+      setSelectedNodes: (nodes) => {
         return set(() => ({
           selectedNodes: nodes,
         }));

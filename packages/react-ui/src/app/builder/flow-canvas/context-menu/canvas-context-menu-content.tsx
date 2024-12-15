@@ -65,7 +65,7 @@ export const CanvasContextMenuContent = ({
           <ContextMenuItem
             disabled={disabled}
             onClick={() => {
-              copySelectedNodes(selectedNodes, flowVersion);
+              copySelectedNodes({ selectedNodes, flowVersion });
             }}
           >
             <div className="flex gap-2 items-center">
@@ -75,12 +75,13 @@ export const CanvasContextMenuContent = ({
           <ContextMenuItem
             disabled={disabled}
             onClick={() => {
-              deleteSelectedNodes(
+              deleteSelectedNodes({
                 selectedNodes,
+                flowVersion,
                 applyOperation,
                 selectedStep,
                 exitStepSettings,
-              );
+              });
             }}
           >
             <div className="flex gap-2 items-center text-destructive">

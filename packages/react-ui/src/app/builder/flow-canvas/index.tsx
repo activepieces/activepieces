@@ -19,6 +19,7 @@ import React, {
 import { usePrevious } from 'react-use';
 
 import {
+  Action,
   ActionType,
   flowStructureUtil,
   FlowVersion,
@@ -48,7 +49,7 @@ import {
   STEP_CONTEXT_MENU_ATTRIBUTE,
 } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
-import { ApNode, ApNodeType, ApStepNode } from './utils/types';
+import { ApStepNode } from './utils/types';
 import { AboveFlowWidgets } from './widgets';
 
 const getChildrenKey = (step: Step) => {
@@ -174,10 +175,12 @@ export const FlowCanvas = React.memo(
       };
     }, [setViewport, getViewport]);
 
-    const onSelectionChange = useCallback((ev: OnSelectionChangeParams) => {
-      console.log('onSelectionChange',ev)
-      setSelectedNodes(ev.nodes as ApNode[]);
-    }, []);
+    const onSelectionChange = useCallback(
+      (ev: OnSelectionChangeParams) => {
+        setSelectedNodes(ev.nodes.map((n) => n.id));
+      },
+      [setSelectedNodes],
+    );
     const graphKey = createGraphKey(flowVersion);
     const graph = useMemo(() => {
       return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
@@ -229,7 +232,7 @@ export const FlowCanvas = React.memo(
             nodeSelectionActive || addButtonElement
               ? selectedNodes
               : stepNodeIsNotTrigger
-              ? [stepNode]
+              ? [stepNode.id]
               : [],
           );
           if (nodeSelectionActive && stepNodeIsNotTrigger) {
@@ -251,16 +254,17 @@ export const FlowCanvas = React.memo(
         ) {
           if (e.key === 'c' && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
-            copySelectedNodes(selectedNodes, flowVersion);
+            copySelectedNodes({ selectedNodes, flowVersion });
           }
           if (e.key === 'Delete' && e.shiftKey) {
             e.preventDefault();
-            deleteSelectedNodes(
+            deleteSelectedNodes({
               selectedNodes,
               applyOperation,
               selectedStep,
               exitStepSettings,
-            );
+              flowVersion,
+            });
           }
           if (e.key === 'v' && (e.metaKey || e.ctrlKey)) {
             getOperationsInClipboard().then((operations) => {
@@ -300,28 +304,26 @@ export const FlowCanvas = React.memo(
     const inGrabPanningMode = !isShiftKeyPressed && panningMode === 'grab';
 
     const onSelectionEnd = useCallback(() => {
-
-      const modifiedSelectedNodes = selectedNodes.filter(n => n.type === ApNodeType.STEP);
-      modifiedSelectedNodes.forEach(n => {
-        if (n.data.step.type === ActionType.LOOP_ON_ITEMS || n.data.step.type === ActionType.ROUTER) {
-          const childrenNotSelected: ApStepNode[] = flowStructureUtil.getAllChildSteps(n.data.step)
-            .filter(c => isNil(selectedNodes.find(n => n.id === c.name)))
-            .map(c => ({
-              data: {
-                step: c
-              },
-              id: c.name,
-              position: {
-                x: 0,
-                y: 0,
-              },
-              type: ApNodeType.STEP
-            }));
-          modifiedSelectedNodes.push(...childrenNotSelected);
+      const selectedSteps = selectedNodes.map((node) =>
+        flowStructureUtil.getStepOrThrow(node, flowVersion.trigger),
+      ) as Action[];
+      selectedSteps.forEach((step) => {
+        if (
+          step.type === ActionType.LOOP_ON_ITEMS ||
+          step.type === ActionType.ROUTER
+        ) {
+          const childrenNotSelected = flowStructureUtil
+            .getAllChildSteps(step)
+            .filter((c) =>
+              isNil(selectedNodes.find((n) => n === c.name)),
+            ) as Action[];
+          selectedSteps.push(...childrenNotSelected);
         }
       });
-      storeApi.getState().addSelectedNodes(modifiedSelectedNodes.map(n => n.id));
-      setSelectedNodes(modifiedSelectedNodes);
+      storeApi
+        .getState()
+        .addSelectedNodes(selectedSteps.map((step) => step.name));
+      setSelectedNodes(selectedSteps.map((step) => step.name));
     }, [selectedNodes, storeApi, setSelectedNodes]);
 
     return (
@@ -370,7 +372,7 @@ export const FlowCanvas = React.memo(
               selectNodesOnDrag={true}
               selectionMode={SelectionMode.Partial}
               onSelectionChange={onSelectionChange}
-              onSelectionEnd={onSelectionEnd}              
+              onSelectionEnd={onSelectionEnd}
             >
               <AboveFlowWidgets></AboveFlowWidgets>
               <Background />

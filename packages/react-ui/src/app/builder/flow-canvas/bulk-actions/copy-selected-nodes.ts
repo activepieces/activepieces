@@ -1,51 +1,37 @@
 import {
   Action,
   ActionType,
-  FlowVersion,
   StepLocationRelativeToParent,
   flowStructureUtil,
   removeAnySubsequentAction,
 } from '@activepieces/shared';
 
+import { BuilderState } from '../../builder-hooks';
 import { EMPTY_STEP_PARENT_NAME } from '../utils/consts';
-import { ApNode, ApNodeType } from '../utils/types';
 
-export const copySelectedNodes = (
-  selectedNodes: ApNode[],
-  flowVersion: FlowVersion,
-) => {
-  const operationsToCopy = selectedNodes
-    .map((node) => {
-      if (
-        node.type === ApNodeType.STEP &&
-        !flowStructureUtil.isTrigger(node.data.step.type)
-      ) {
+export const copySelectedNodes = ({
+  selectedNodes,
+  flowVersion,
+}: Pick<BuilderState, 'selectedNodes' | 'flowVersion'>) => {
+  const steps = selectedNodes
+    .map((node) => flowStructureUtil.getStepOrThrow(node, flowVersion.trigger))
+    .filter((step) => flowStructureUtil.isAction(step.type)) as Action[];
+  const operationsToCopy = steps
+    .map((step) => {
+      if (!flowStructureUtil.isTrigger(step.type)) {
         const pathToStep = flowStructureUtil.findPathToStep(
           flowVersion.trigger,
-          node.data.step.name,
+          step.name,
         );
         const firstPreviousAction = pathToStep.reverse().find((s) => {
-          return (
-            selectedNodes.findIndex(
-              (n) =>
-                n.type === ApNodeType.STEP &&
-                n.data.step.name === s.name &&
-                !flowStructureUtil.isTrigger(n.data.step.type),
-            ) > -1
-          );
+          return selectedNodes.findIndex((n) => n === s.name) > -1;
         });
-        const stepWithRecentChanges = flowStructureUtil.getStepOrThrow(
-          node.data.step.name,
-          flowVersion.trigger,
-        ) as Action;
-        const stepWithoutChildren = removeAnySubsequentAction(
-          stepWithRecentChanges,
-        );
+        const stepWithoutChildren = removeAnySubsequentAction(step);
 
         if (firstPreviousAction) {
           const isPreviousStepTheParent = flowStructureUtil.isChildOf(
             firstPreviousAction,
-            node.data.step.name,
+            step.name,
           );
 
           if (isPreviousStepTheParent) {
@@ -54,8 +40,8 @@ export const copySelectedNodes = (
                 ? undefined
                 : firstPreviousAction.children.findIndex((c) =>
                     c
-                      ? flowStructureUtil.isChildOf(c, node.data.step.name) ||
-                        c.name === node.data.step.name
+                      ? flowStructureUtil.isChildOf(c, step.name) ||
+                        c.name === step.name
                       : false,
                   );
 
