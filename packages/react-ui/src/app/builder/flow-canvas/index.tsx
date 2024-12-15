@@ -6,6 +6,7 @@ import {
   OnSelectionChangeParams,
   useStoreApi,
   PanOnScrollMode,
+  useKeyPress,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, {
@@ -47,7 +48,7 @@ import {
   STEP_CONTEXT_MENU_ATTRIBUTE,
 } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
-import { ApNode, ApStepNode } from './utils/types';
+import { ApNode, ApNodeType, ApStepNode } from './utils/types';
 import { AboveFlowWidgets } from './widgets';
 
 const getChildrenKey = (step: Step) => {
@@ -174,6 +175,7 @@ export const FlowCanvas = React.memo(
     }, [setViewport, getViewport]);
 
     const onSelectionChange = useCallback((ev: OnSelectionChangeParams) => {
+      console.log('onSelectionChange',ev)
       setSelectedNodes(ev.nodes as ApNode[]);
     }, []);
     const graphKey = createGraphKey(flowVersion);
@@ -294,7 +296,34 @@ export const FlowCanvas = React.memo(
       return () => document.removeEventListener('keydown', handleKeyDown);
     }, [handleKeyDown]);
     const storeApi = useStoreApi();
-    const inGrabPanningMode = panningMode === 'grab';
+    const isShiftKeyPressed = useKeyPress('Shift');
+    const inGrabPanningMode = !isShiftKeyPressed && panningMode === 'grab';
+
+    const onSelectionEnd = useCallback(() => {
+
+      const modifiedSelectedNodes = selectedNodes.filter(n => n.type === ApNodeType.STEP);
+      modifiedSelectedNodes.forEach(n => {
+        if (n.data.step.type === ActionType.LOOP_ON_ITEMS || n.data.step.type === ActionType.ROUTER) {
+          const childrenNotSelected: ApStepNode[] = flowStructureUtil.getAllChildSteps(n.data.step)
+            .filter(c => isNil(selectedNodes.find(n => n.id === c.name)))
+            .map(c => ({
+              data: {
+                step: c
+              },
+              id: c.name,
+              position: {
+                x: 0,
+                y: 0,
+              },
+              type: ApNodeType.STEP
+            }));
+          modifiedSelectedNodes.push(...childrenNotSelected);
+        }
+      });
+      storeApi.getState().addSelectedNodes(modifiedSelectedNodes.map(n => n.id));
+      setSelectedNodes(modifiedSelectedNodes);
+    }, [selectedNodes, storeApi, setSelectedNodes]);
+
     return (
       <div
         ref={containerRef}
@@ -341,6 +370,7 @@ export const FlowCanvas = React.memo(
               selectNodesOnDrag={true}
               selectionMode={SelectionMode.Partial}
               onSelectionChange={onSelectionChange}
+              onSelectionEnd={onSelectionEnd}              
             >
               <AboveFlowWidgets></AboveFlowWidgets>
               <Background />

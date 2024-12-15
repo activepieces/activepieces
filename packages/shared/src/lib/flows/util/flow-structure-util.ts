@@ -200,4 +200,5 @@ export const flowStructureUtil = {
     isChildOf,
     findUnusedName,
     getAllStepsAtFirstLevel,
+    getAllChildSteps
 }
