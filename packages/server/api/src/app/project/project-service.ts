@@ -12,7 +12,7 @@ import { ActivepiecesError, apId,
     User,
     UserId,
 } from '@activepieces/shared'
-import { IsNull } from 'typeorm'
+import { IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
@@ -42,12 +42,15 @@ export const projectService = {
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
+        await assertExternalIdIsUnique(request.externalId, projectId)
+
         await projectRepo().update(
             {
                 id: projectId,
                 deleted: IsNull(),
             },
             {
+                ...spreadIfDefined('externalId', request.externalId),
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
             },
@@ -142,8 +145,28 @@ export const projectService = {
     },
 }
 
+async function assertExternalIdIsUnique(externalId: string | undefined, projectId: ProjectId): Promise<void> {
+    if (!isNil(externalId)) {
+        const externalIdAlreadyExists = await projectRepo().existsBy({
+            id: Not(projectId),
+            externalId,
+            deleted: IsNull(),
+        })
+
+        if (externalIdAlreadyExists) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS,
+                params: {
+                    externalId,
+                },
+            })
+        }
+    }
+}
+
 type UpdateParams = {
     displayName?: string
+    externalId?: string
     notifyStatus?: NotificationStatus
 }
 
