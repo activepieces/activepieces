@@ -10,6 +10,7 @@ import {
     isNil, ProjectId,
     UpdateFolderRequest,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -18,7 +19,7 @@ import { FolderEntity } from './folder.entity'
 
 export const folderRepo = repoFactory(FolderEntity)
 
-export const flowFolderService = {
+export const flowFolderService = (log: FastifyBaseLogger) => ({
     async delete(params: DeleteParams): Promise<void> {
         const { projectId, folderId } = params
         const folder = await this.getOneOrThrow({ projectId, folderId })
@@ -89,7 +90,7 @@ export const flowFolderService = {
         const dtosList: FolderDto[] = []
         paginationResponse.data.forEach((f) => {
             numberOfFlowForEachFolder.push(
-                flowService.count({ projectId, folderId: f.id }),
+                flowService(log).count({ projectId, folderId: f.id }),
             )
         });
         (await Promise.all(numberOfFlowForEachFolder)).forEach((num, idx) => {
@@ -118,13 +119,13 @@ export const flowFolderService = {
                 },
             })
         }
-        const numberOfFlows = await flowService.count({ projectId, folderId })
+        const numberOfFlows = await flowService(log).count({ projectId, folderId })
         return {
             ...folder,
             numberOfFlows,
         }
     },
-}
+})
 
 type DeleteParams = {
     projectId: ProjectId

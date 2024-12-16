@@ -1,6 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
-import { ApLock, filePiecesUtils, logger, memoryLock, packageManager } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, memoryLock, packageManager } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, PackageType, PiecePackage } from '@activepieces/shared'
 import { PIECES_BUILDER_MUTEX_KEY } from './development/pieces-builder'
 import { PieceManager } from './piece-manager'
@@ -10,7 +10,6 @@ export class LocalPieceManager extends PieceManager {
     protected override async installDependencies(
         params: InstallParams,
     ): Promise<void> {
-        logger.debug(params, '[linkDependencies] params')
 
         let lock: ApLock | undefined
         try {

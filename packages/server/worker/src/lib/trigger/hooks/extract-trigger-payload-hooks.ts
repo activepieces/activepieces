@@ -1,4 +1,4 @@
-import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -8,22 +8,24 @@ import {
     TriggerHookType,
     TriggerPayload,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../../api/server-api.service'
 import { engineRunner } from '../../engine'
 import { webhookUtils } from '../../utils/webhook-utils'
 
 export async function extractPayloads(
     engineToken: string,
+    log: FastifyBaseLogger,
     params: ExecuteTrigger,
 ): Promise<unknown[]> {
     const { payload, flowVersion, projectId, simulate } = params
     try {
         const { pieceName, pieceVersion } = flowVersion.trigger.settings
-        const { result } = await engineRunner.executeTrigger(engineToken, {
+        const { result } = await engineRunner(log).executeTrigger(engineToken, {
             hookType: TriggerHookType.RUN,
             flowVersion,
             triggerPayload: payload,
-            webhookUrl: await webhookUtils.getWebhookUrl({
+            webhookUrl: await webhookUtils(log).getWebhookUrl({
                 flowId: flowVersion.flowId,
                 simulate,
             }),
@@ -35,7 +37,7 @@ export async function extractPayloads(
             return result.output as unknown[]
         }
         else {
-            logger.error({
+            log.error({
                 result,
                 pieceName,
                 pieceVersion,
@@ -49,7 +51,7 @@ export async function extractPayloads(
     catch (e) {
         const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
         if (isTimeoutError) {
-            logger.error({
+            log.error({
                 name: 'extractPayloads',
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceVersion: flowVersion.trigger.settings.pieceVersion,

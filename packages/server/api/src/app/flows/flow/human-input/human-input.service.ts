@@ -1,4 +1,5 @@
 import { ActivepiecesError, ChatUIResponse, ErrorCode, FlowId, FormInputType, FormResponse, isNil, PopulatedFlow } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -32,9 +33,9 @@ function isFormTrigger(flow: PopulatedFlow | null): flow is PopulatedFlow {
     return triggerSettings.pieceName === FORMS_PIECE_NAME && FORMS_TRIGGER_NAMES.includes(triggerSettings.triggerName)
 }
 
-export const humanInputService = {
+export const humanInputService = (log: FastifyBaseLogger) => ({
     getFormByFlowIdOrThrow: async (flowId: string, useDraft: boolean): Promise<FormResponse> => {
-        const flow = await getPopulatedFlowById(flowId, useDraft)
+        const flow = await getPopulatedFlowById(log, flowId, useDraft)
         if (!isFormTrigger(flow)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_FORM_NOT_FOUND,
@@ -44,7 +45,7 @@ export const humanInputService = {
                 },
             })
         }
-        const pieceVersion = await pieceMetadataService.getExactPieceVersion({
+        const pieceVersion = await pieceMetadataService(log).getExactPieceVersion({
             name: FORMS_PIECE_NAME,
             version: flow.version.trigger.settings.pieceVersion,
             projectId: flow.projectId,
@@ -60,7 +61,7 @@ export const humanInputService = {
         }
     },
     getChatUIByFlowIdOrThrow: async (flowId: string, useDraft: boolean): Promise<ChatUIResponse> => {
-        const flow = await getPopulatedFlowById(flowId, useDraft)
+        const flow = await getPopulatedFlowById(log, flowId, useDraft)
         if (!flow
             || flow.version.trigger.settings.triggerName !== 'chat_submission'
             || flow.version.trigger.settings.pieceName !== FORMS_PIECE_NAME) {
@@ -83,14 +84,14 @@ export const humanInputService = {
             platformName: platform.name,
         }
     },
-}
+})
 
-async function getPopulatedFlowById(id: FlowId, useDraft: boolean): Promise<PopulatedFlow | null> {
+async function getPopulatedFlowById(log: FastifyBaseLogger, id: FlowId, useDraft: boolean): Promise<PopulatedFlow | null> {
     const flow = await flowRepo().findOneBy({ id })
     if (isNil(flow) || (isNil(flow.publishedVersionId) && !useDraft)) {
         return null
     }
-    const flowVersion = await flowVersionService.getFlowVersionOrThrow({
+    const flowVersion = await flowVersionService(log).getFlowVersionOrThrow({
         flowId: id,
         versionId: useDraft ? undefined : flow.publishedVersionId!,
     })

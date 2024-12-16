@@ -1,4 +1,3 @@
-import { logger } from '@activepieces/server-shared'
 import {
     apId,
     FilteredPieceBehavior,
@@ -458,7 +457,6 @@ describe('Piece Metadata API', () => {
 
             // assert
             const responseBody = response?.json()
-            logger.error(responseBody)
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody).toHaveLength(1)
@@ -502,7 +500,6 @@ describe('Piece Metadata API', () => {
 
             // assert
             const responseBody = response?.json()
-            logger.error(responseBody)
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody).toHaveLength(2)

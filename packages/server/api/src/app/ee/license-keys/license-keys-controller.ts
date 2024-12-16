@@ -11,11 +11,11 @@ const key = system.get<string>(AppSystemProp.LICENSE_KEY)
 export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/', CreateTrialLicenseKeyRequest, async (req) => {
-        return licenseKeysService.requestTrial(req.body)
+        return licenseKeysService(app.log).requestTrial(req.body)
     })
 
     app.get('/status', async (_req, res) => {
-        const licenseKey = await licenseKeysService.getKey(key)
+        const licenseKey = await licenseKeysService(app.log).getKey(key)
         if (isNil(licenseKey)) {
             return res.status(StatusCodes.NOT_FOUND).send({
                 message: 'No license key found',
@@ -25,13 +25,13 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:licenseKey', GetLicenseKeyRequest, async (req) => {
-        const licenseKey = await licenseKeysService.getKey(req.params.licenseKey)
+        const licenseKey = await licenseKeysService(app.log).getKey(req.params.licenseKey)
         return licenseKey
     })
 
     app.post('/verify', VerifyLicenseKeyRequest, async (req) => {
         const { platformId, licenseKey } = req.body
-        const key = await licenseKeysService.verifyKeyOrReturnNull({
+        const key = await licenseKeysService(app.log).verifyKeyOrReturnNull({
             platformId,
             license: licenseKey,
         })
@@ -47,7 +47,7 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
             id: platformId,
             licenseKey: key.key,
         })
-        await licenseKeysService.applyLimits(platformId, key)
+        await licenseKeysService(app.log).applyLimits(platformId, key)
         return key
     })
 
