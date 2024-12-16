@@ -8,18 +8,19 @@ import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
 import { _addBranch } from './add-branch'
+import { _getActionsForCopy } from './copy-action-operations'
 import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
-import { _fixAddOperationsFromClipboard } from './fix-add-operations-from-clipboard'
-import { _getAddActionsToCopy } from './get-add-actions-to-copy'
-import { _importFlow, removeAnySubsequentAction } from './import-flow'
+import { _importFlow } from './import-flow'
 import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
+import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
-export { removeAnySubsequentAction }
+
+
 export enum FlowOperationType {
     LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
     CHANGE_STATUS = 'CHANGE_STATUS',
@@ -51,15 +52,10 @@ export const AddBranchRequest = Type.Object({
     branchName: Type.String(),
 })
 
-const SkipSingleActionRequest = Type.Object({
-    name: Type.String(),
+export const SkipActionRequest = Type.Object({
+    names: Type.Array(Type.String()),
     skip: Type.Boolean(),
 })
-
-const SkipMultipleActionsRequest = Type.Array(SkipSingleActionRequest)
-
-export const SkipActionRequest = Type.Union([SkipSingleActionRequest, SkipMultipleActionsRequest])
-
 
 export type SkipActionRequest = Static<typeof SkipActionRequest>
 
@@ -106,13 +102,10 @@ export const ChangeNameRequest = Type.Object({
 
 export type ChangeNameRequest = Static<typeof ChangeNameRequest>
 
-const DeleteSingleActionRequest = Type.Object({
-    name: Type.String(),
+
+export const DeleteActionRequest = Type.Object({
+    names: Type.Array(Type.String()),
 })
-
-const DeleteMultipleActionsRequest = Type.Array(DeleteSingleActionRequest)
-
-export const DeleteActionRequest = Type.Union([DeleteSingleActionRequest, DeleteMultipleActionsRequest])
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>
 
@@ -323,6 +316,8 @@ export const FlowOperationRequest = Type.Union([
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
 
 export const flowOperations = {
+    getActionsForCopy: _getActionsForCopy,
+    getOperationsForPaste: _getOperationsForPaste,
     apply(flowVersion: FlowVersion, operation: FlowOperationRequest): FlowVersion {
         let clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
         switch (operation.type) {
@@ -409,8 +404,3 @@ export const flowOperations = {
         return clonedVersion
     },
 }
-
-export const fixAddOperationsFromClipboard = _fixAddOperationsFromClipboard
-export const getAddActionsToCopy = _getAddActionsToCopy
-
-

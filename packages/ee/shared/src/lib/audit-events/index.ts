@@ -294,7 +294,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
     case FlowOperationType.DELETE_ACTION:
       {
         const request = event.data.request.request
-        const names = Array.isArray(request) ? request.map(r=>r.name) : [request.name]
+        const names = request.names
         return `Deleted actions "${names.join(', ')}" from "${event.data.flowVersion.displayName}" Flow.`;
       }
     case FlowOperationType.CHANGE_NAME:
@@ -340,7 +340,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
     case FlowOperationType.SET_SKIP_ACTION:
       {
         const request = event.data.request.request
-        const names = Array.isArray(request) ? request.map(r=>r.name) : [request.name]
+        const names = request.names
         return `Updated actions "${names.join(', ')}" in "${event.data.flowVersion.displayName}" Flow to skip.`;
 
       }

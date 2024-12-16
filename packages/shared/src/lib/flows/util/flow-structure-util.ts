@@ -120,15 +120,6 @@ function getAllSteps(step: Step): Step[] {
     })
     return steps
 }
-function getAllStepsAtFirstLevel(step: Step): Step[] {
-    const steps = [step]
-    let iterator = steps[0]
-    while (iterator.nextAction) {
-        steps.push(iterator.nextAction)
-        iterator = iterator.nextAction
-    }
-    return steps
-}
 
 
 const createBranch = (branchName: string, conditions: BranchCondition[][] | undefined) => {
@@ -185,6 +176,18 @@ const findUnusedName = (source: Trigger | string[]) => {
 }
 
 
+function getAllActionsThatDoesNotHaveParent(trigger: Step): Step[] {
+    const actions: Step[] = []
+    let currentAction = trigger.nextAction
+
+    while (!isNil(currentAction)) {
+        actions.push(currentAction)
+        currentAction = currentAction.nextAction
+    }
+
+    return actions
+}
+
 export const flowStructureUtil = {
     isTrigger,
     isAction,
@@ -199,6 +202,6 @@ export const flowStructureUtil = {
     findPathToStep,
     isChildOf,
     findUnusedName,
-    getAllStepsAtFirstLevel,
+    getAllActionsThatDoesNotHaveParent,
     getAllChildSteps,
 }

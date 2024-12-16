@@ -27,7 +27,7 @@ type DeleteWebhookSimulationParams = {
 
 const deleteWebhookSimulation = async (
     params: DeleteWebhookSimulationParams,
-    log: FastifyBaseLogger, 
+    log: FastifyBaseLogger,
 ): Promise<void> => {
     const { projectId, flowId } = params
 
@@ -71,25 +71,24 @@ async function handleSampleDataDeletion(projectId: ProjectId, flowVersion: FlowV
     }
     switch (operation.type) {
         case FlowOperationType.UPDATE_TRIGGER:
-        {
-            const stepToDelete = flowStructureUtil.getStepOrThrow(operation.request.name, flowVersion.trigger)
-            const triggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && (flowVersion.trigger.type !== operation.request.type 
-                || flowVersion.trigger.settings.triggerName !== operation.request.settings.triggerName
-                || flowVersion.trigger.settings.pieceName !== operation.request.settings.pieceName)
-            const sampleDataExists = !isNil(stepToDelete?.settings.inputUiInfo?.sampleDataFileId)
-            if (triggerChanged && sampleDataExists) {
-                await sampleDataService(log).deleteForStep({
-                    projectId,
-                    flowVersionId: flowVersion.id,
-                    flowId: flowVersion.flowId,
-                    sampleDataFileId: stepToDelete.settings.inputUiInfo.sampleDataFileId,
-                })
+            {
+                const stepToDelete = flowStructureUtil.getStepOrThrow(operation.request.name, flowVersion.trigger)
+                const triggerChanged = operation.type === FlowOperationType.UPDATE_TRIGGER && (flowVersion.trigger.type !== operation.request.type
+                    || flowVersion.trigger.settings.triggerName !== operation.request.settings.triggerName
+                    || flowVersion.trigger.settings.pieceName !== operation.request.settings.pieceName)
+                const sampleDataExists = !isNil(stepToDelete?.settings.inputUiInfo?.sampleDataFileId)
+                if (triggerChanged && sampleDataExists) {
+                    await sampleDataService(log).deleteForStep({
+                        projectId,
+                        flowVersionId: flowVersion.id,
+                        flowId: flowVersion.flowId,
+                        sampleDataFileId: stepToDelete.settings.inputUiInfo.sampleDataFileId,
+                    })
+                }
+                break
             }
-            break
-        }
-        case FlowOperationType.DELETE_ACTION:
-        {
-            const stepsToDelete = Array.isArray(operation.request) ? operation.request.map(r=>flowStructureUtil.getStepOrThrow(r.name, flowVersion.trigger)) : [flowStructureUtil.getStepOrThrow(operation.request.name, flowVersion.trigger)]
+        case FlowOperationType.DELETE_ACTION: {
+            const stepsToDelete = operation.request.names.map(name => flowStructureUtil.getStepOrThrow(name, flowVersion.trigger))
             for (const step of stepsToDelete) {
                 const sampleDataExists = !isNil(step.settings.inputUiInfo?.sampleDataFileId)
                 if (sampleDataExists) {

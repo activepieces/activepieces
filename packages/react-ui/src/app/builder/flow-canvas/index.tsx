@@ -35,7 +35,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import {
   copySelectedNodes,
   deleteSelectedNodes,
-  getOperationsInClipboard,
+  getActionsInClipboard,
   pasteNodes,
   toggleSkipSelectedNodes,
 } from './bulk-actions';
@@ -262,14 +262,14 @@ export const FlowCanvas = React.memo(
           }
           if (e.key === 'v' && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
-            getOperationsInClipboard().then((operations) => {
-              if (operations.length > 0) {
+            getActionsInClipboard().then((actions) => {
+              if (actions.length > 0) {
                 pasteNodes(
-                  operations,
+                  actions,
                   flowVersion,
                   {
                     parentStepName: flowStructureUtil
-                      .getAllStepsAtFirstLevel(flowVersion.trigger)
+                      .getAllActionsThatDoesNotHaveParent(flowVersion.trigger)
                       .at(-1)!.name,
                     stepLocationRelativeToParent:
                       StepLocationRelativeToParent.AFTER,

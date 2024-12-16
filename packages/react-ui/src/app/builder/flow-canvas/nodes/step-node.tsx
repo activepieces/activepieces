@@ -144,7 +144,7 @@ const ApStepCanvasNode = React.memo(
         {
           type: FlowOperationType.DELETE_ACTION,
           request: {
-            name: data.step!.name,
+            names: [data.step!.name],
           },
         },
         () => toast(UNSAVED_CHANGES_TOAST),
@@ -156,7 +156,7 @@ const ApStepCanvasNode = React.memo(
         {
           type: FlowOperationType.SET_SKIP_ACTION,
           request: {
-            name: step.name,
+            names: [step.name],
             skip: !(step as Action).skip,
           },
         },

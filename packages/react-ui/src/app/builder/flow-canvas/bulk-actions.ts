@@ -5,28 +5,34 @@ import {
 } from '@/components/ui/use-toast';
 import {
   Action,
-  AddActionRequest,
-  fixAddOperationsFromClipboard,
+  flowOperations,
   FlowOperationType,
   flowStructureUtil,
-  getAddActionsToCopy,
+  FlowVersion,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
+import { PasteLocation } from '../../../../../shared/src/lib/flows/operations/paste-operations';
 
-export const copySelectedNodes = ({
+type CopyActionsRequest = {
+  type: 'COPY_ACTIONS',
+  actions: Action[],
+}
+
+export function copySelectedNodes({
   selectedNodes,
   flowVersion,
-}: Pick<BuilderState, 'selectedNodes' | 'flowVersion'>) => {
-  const operationsToCopy = getAddActionsToCopy({
-    selectedSteps: selectedNodes,
-    flowVersion,
-  });
-  navigator.clipboard.writeText(JSON.stringify(operationsToCopy));
-};
+}: Pick<BuilderState, 'selectedNodes' | 'flowVersion'>) {
+  const actionsToCopy = flowOperations.getActionsForCopy(selectedNodes, flowVersion);
+  const request: CopyActionsRequest = {
+    type: 'COPY_ACTIONS',
+    actions: actionsToCopy,
+  }
+  navigator.clipboard.writeText(JSON.stringify(request));
+}
 
-export const deleteSelectedNodes = ({
+export function deleteSelectedNodes({
   selectedNodes,
   applyOperation,
   selectedStep,
@@ -34,89 +40,81 @@ export const deleteSelectedNodes = ({
 }: Pick<
   BuilderState,
   'selectedNodes' | 'applyOperation' | 'selectedStep' | 'exitStepSettings'
->) => {
-  const steps = selectedNodes.map((name) => {
-    return {
-      name,
-    };
-  });
+>) {
   applyOperation(
     {
       type: FlowOperationType.DELETE_ACTION,
-      request: steps,
+      request: {
+        names: selectedNodes,
+      },
     },
     () => toast(INTERNAL_ERROR_TOAST),
   );
   if (selectedStep && selectedNodes.includes(selectedStep)) {
     exitStepSettings();
   }
-};
+}
 
-export const getOperationsInClipboard = async () => {
+export async function getActionsInClipboard(): Promise<Action[]> {
   try {
-    return JSON.parse(
-      await navigator.clipboard.readText(),
-    ) as AddActionRequest[];
+    const clipboardText = await navigator.clipboard.readText();
+    const request: CopyActionsRequest = JSON.parse(clipboardText);
+    
+    if (request && request.type === 'COPY_ACTIONS') {
+      return request.actions;
+    }
   } catch (error) {
-    return [];
   }
-};
+  
+  return [];
+}
 
-export const pasteNodes = (
-  operations: AddActionRequest[],
+export function pasteNodes(
+  actions: Action[],
   flowVersion: BuilderState['flowVersion'],
-  pastingDetails:
-    | {
-        parentStepName: string;
-        stepLocationRelativeToParent:
-          | StepLocationRelativeToParent.AFTER
-          | StepLocationRelativeToParent.INSIDE_LOOP;
-      }
-    | {
-        branchIndex: number;
-        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
-        parentStepName: string;
-      },
+  pastingDetails: PasteLocation,
   applyOperation: BuilderState['applyOperation'],
-) => {
-  const addOperations = fixAddOperationsFromClipboard(
-    operations,
+) {
+  const addOperations = flowOperations.getOperationsForPaste(
+    actions,
     flowVersion,
     pastingDetails,
   );
   addOperations.forEach((request) => {
     applyOperation(
-      {
-        type: FlowOperationType.ADD_ACTION,
-        request,
-      },
+      request,
       () => {
         toast(UNSAVED_CHANGES_TOAST);
       },
     );
-  });
-};
+  }); 
+}
 
-export const toggleSkipSelectedNodes = ({
+export function getLastLocationAsPasteLocation(flowVersion: FlowVersion): PasteLocation {
+  const lastLocation = flowStructureUtil.getAllSteps(flowVersion.trigger).length - 1
+  return {
+    parentStepName: flowStructureUtil.getAllSteps(flowVersion.trigger)[lastLocation].name,
+    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+  }
+}
+
+export function toggleSkipSelectedNodes({
   selectedNodes,
   flowVersion,
   applyOperation,
-}: Pick<BuilderState, 'selectedNodes' | 'flowVersion' | 'applyOperation'>) => {
+}: Pick<BuilderState, 'selectedNodes' | 'flowVersion' | 'applyOperation'>) {
   const steps = selectedNodes.map((node) =>
     flowStructureUtil.getStepOrThrow(node, flowVersion.trigger),
   ) as Action[];
   const areAllStepsSkipped = steps.every((step) => !!step.skip);
-  const operations = steps.map((step) => {
-    return {
-      name: step.name,
-      skip: !areAllStepsSkipped,
-    };
-  });
   applyOperation(
     {
       type: FlowOperationType.SET_SKIP_ACTION,
-      request: operations,
+      request: {
+        names: steps.map((step) => step.name),
+        skip: !areAllStepsSkipped,
+      },
     },
     () => toast(UNSAVED_CHANGES_TOAST),
   );
-};
+}

@@ -1,4 +1,3 @@
-import { Value } from '@sinclair/typebox/value';
 import { t } from 'i18next';
 import { ClipboardPaste, Copy, Route, RouteOff, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -6,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { ContextMenuItem } from '@/components/ui/context-menu';
 import {
   Action,
-  AddActionRequest,
   flowStructureUtil,
   isNil,
   StepLocationRelativeToParent,
@@ -15,7 +13,8 @@ import {
 import {
   copySelectedNodes,
   deleteSelectedNodes,
-  getOperationsInClipboard,
+  getActionsInClipboard,
+  getLastLocationAsPasteLocation,
   pasteNodes,
   toggleSkipSelectedNodes,
 } from '../bulk-actions';
@@ -36,24 +35,21 @@ export const CanvasContextMenuContent = ({
     (node) =>
       !!(flowStructureUtil.getStep(node, flowVersion.trigger) as Action)?.skip,
   );
-  const [operations, setOperations] = useState<AddActionRequest[]>([]);
+  const [actions, setActions] = useState<Action[]>([]);
   const { addButtonData, singleSelectedStepName } = pasteActionData;
+
   useEffect(() => {
     const fetchClipboardOperations = async () => {
-      const fetchedOperations = await getOperationsInClipboard();
-      if (
-        fetchedOperations.length > 0 &&
-        fetchedOperations.every((operation) =>
-          Value.Check(AddActionRequest, operation),
-        )
-      ) {
-        setOperations(fetchedOperations);
+      const fetchedOperations = await getActionsInClipboard();
+      if (fetchedOperations.length > 0) {
+        setActions(fetchedOperations);
       } else {
-        setOperations([]);
+        setActions([]);
       }
     };
     fetchClipboardOperations();
   }, []);
+
 
   const showPasteAfterLastStep =
     !readonly &&
@@ -63,7 +59,7 @@ export const CanvasContextMenuContent = ({
   const showPasteAfterSingleSelectedStep =
     !readonly && isNil(addButtonData) && singleSelectedStepName;
   const showPasteOnAddButton = !readonly && !isNil(addButtonData);
-  const disabledPaste = operations.length === 0;
+  const disabledPaste = actions.length === 0;
   return (
     <>
       <ContextMenuItem
@@ -123,18 +119,12 @@ export const CanvasContextMenuContent = ({
             <ContextMenuItem
               disabled={disabledPaste}
               onClick={() => {
-                const lastStep = flowStructureUtil
-                  .getAllStepsAtFirstLevel(flowVersion.trigger)
-                  .at(-1);
-                if (lastStep) {
+                const pasteLocation = getLastLocationAsPasteLocation(flowVersion)
+                if (pasteLocation) {
                   pasteNodes(
-                    operations,
+                    actions,
                     flowVersion,
-                    {
-                      parentStepName: lastStep.name,
-                      stepLocationRelativeToParent:
-                        StepLocationRelativeToParent.AFTER,
-                    },
+                    pasteLocation,
                     applyOperation,
                   );
                 }
@@ -151,16 +141,16 @@ export const CanvasContextMenuContent = ({
             <ContextMenuItem
               disabled={disabledPaste}
               onClick={() => {
-                pasteNodes(
-                  operations,
-                  flowVersion,
+                  pasteNodes(
+                  actions,
+                    flowVersion,
                   {
                     parentStepName: singleSelectedStepName,
                     stepLocationRelativeToParent:
                       StepLocationRelativeToParent.AFTER,
                   },
-                  applyOperation,
-                );
+                    applyOperation,
+                  );
               }}
             >
               <div className="flex gap-2 items-center">
@@ -174,12 +164,12 @@ export const CanvasContextMenuContent = ({
             <ContextMenuItem
               disabled={disabledPaste}
               onClick={() => {
-                pasteNodes(
-                  operations,
-                  flowVersion,
+                  pasteNodes(
+                  actions,
+                    flowVersion,
                   addButtonData,
-                  applyOperation,
-                );
+                    applyOperation,
+                  );
               }}
             >
               <div className="flex gap-2 items-center">

@@ -153,10 +153,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
-              initialState.flowVersion,
-              initialState.run,
-              {},
-            )
+            initialState.flowVersion,
+            initialState.run,
+            {},
+          )
           : {},
       sampleData: initialState.sampleData,
       flow: initialState.flow,
@@ -173,8 +173,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       allowCanvasPanning: true,
       rightSidebar:
         initiallySelectedStep &&
-        (initiallySelectedStep !== 'trigger' ||
-          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
+          (initiallySelectedStep !== 'trigger' ||
+            initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshStepFormSettingsToggle: false,
@@ -217,7 +217,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             selectedStep: stepName,
             rightSidebar:
               stepName === 'trigger' &&
-              state.flowVersion.trigger.type === TriggerType.EMPTY
+                state.flowVersion.trigger.type === TriggerType.EMPTY
                 ? RightSideBarType.NONE
                 : RightSideBarType.PIECE_SETTINGS,
             leftSidebar: !isNil(state.run)
@@ -291,8 +291,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             rightSidebar: RightSideBarType.PIECE_SETTINGS,
             selectedStep: run.steps
               ? flowRunUtils.findFailedStepInOutput(run.steps) ??
-                state.selectedStep ??
-                'trigger'
+              state.selectedStep ??
+              'trigger'
               : 'trigger',
             readonly: true,
           };
@@ -395,26 +395,35 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         })),
       askAiButtonProps: null,
       setAskAiButtonProps: (props) => {
-        return set((state) => ({
-          askAiButtonProps: props,
-          leftSidebar: props
-            ? LeftSideBarType.AI_COPILOT
-            : state.leftSidebar === LeftSideBarType.AI_COPILOT
-            ? LeftSideBarType.NONE
-            : state.leftSidebar,
-          rightSidebar:
-            props && props.type === FlowOperationType.UPDATE_ACTION
-              ? RightSideBarType.PIECE_SETTINGS
-              : props
-              ? RightSideBarType.NONE
-              : state.rightSidebar,
-          selectedStep:
-            props && props.type === FlowOperationType.UPDATE_ACTION
-              ? props.stepName
-              : props
-              ? null
-              : state.selectedStep,
-        }));
+        return set((state) => {
+          let leftSidebar = state.leftSidebar;
+          if (props) {
+            leftSidebar = LeftSideBarType.AI_COPILOT;
+          } else if (state.leftSidebar === LeftSideBarType.AI_COPILOT) {
+            leftSidebar = LeftSideBarType.NONE;
+          }
+
+          let rightSidebar = state.rightSidebar;
+          if (props && props.type === FlowOperationType.UPDATE_ACTION) {
+            rightSidebar = RightSideBarType.PIECE_SETTINGS;
+          } else if (props) {
+            rightSidebar = RightSideBarType.NONE;
+          }
+
+          let selectedStep = state.selectedStep;
+          if (props && props.type === FlowOperationType.UPDATE_ACTION) {
+            selectedStep = props.stepName;
+          } else if (props) {
+            selectedStep = null;
+          }
+
+          return {
+            askAiButtonProps: props,
+            leftSidebar,
+            rightSidebar,
+            selectedStep,
+          };
+        });
       },
       selectedNodes: [],
       setSelectedNodes: (nodes) => {
@@ -422,11 +431,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           selectedNodes: nodes,
         }));
       },
-      panningMode:
-        localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE) ===
-        'grab'
-          ? 'grab'
-          : 'pan',
+      panningMode: getPanningModeFromLocalStorage(),
       setPanningMode: (mode: 'grab' | 'pan') => {
         localStorage.setItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE, mode);
         return set(() => ({
@@ -435,6 +440,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       },
     };
   });
+
+
+export function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
+  return localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE) === 'grab' ? 'grab' : 'pan'
+}
 
 export const useSwitchToDraft = () => {
   const [flowVersion, setVersion, exitRun] = useBuilderStateContext((state) => [
