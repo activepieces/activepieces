@@ -71,6 +71,7 @@ import { DefaultRoute } from './default-route';
 import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
+import { SetupCopilotPage } from '../routes/platform/setup/copilot';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -414,6 +415,18 @@ const routes = [
         <PlatformSecondSidebarLayout type="setup">
           <PageTitle title="Connections">
             <GlobalConnectionsTable />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/setup/copilot',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="setup">
+          <PageTitle title="Copilot">
+            <SetupCopilotPage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>

@@ -13,6 +13,9 @@ import {
   Puzzle,
   ScanFace,
   HeartPulse,
+  Brain,
+  GemIcon,
+  WandSparkles,
 } from 'lucide-react';
 
 import SidebarLayout, { SidebarItem } from '@/app/components/sidebar-layout';
@@ -67,6 +70,11 @@ export default function PlatformSecondSidebarLayout({
           title: t('Templates'),
           href: '/platform/setup/templates',
           icon: <Workflow size={iconSize} />,
+        },
+        {
+          title: t('Copilot'),
+          href: '/platform/setup/copilot',
+          icon: <WandSparkles size={iconSize} />,
         },
       ],
     },
