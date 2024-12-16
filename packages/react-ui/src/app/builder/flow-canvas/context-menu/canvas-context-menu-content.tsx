@@ -50,7 +50,6 @@ export const CanvasContextMenuContent = ({
     fetchClipboardOperations();
   }, []);
 
-
   const showPasteAfterLastStep =
     !readonly &&
     isNil(addButtonData) &&
@@ -119,7 +118,8 @@ export const CanvasContextMenuContent = ({
             <ContextMenuItem
               disabled={disabledPaste}
               onClick={() => {
-                const pasteLocation = getLastLocationAsPasteLocation(flowVersion)
+                const pasteLocation =
+                  getLastLocationAsPasteLocation(flowVersion);
                 if (pasteLocation) {
                   pasteNodes(
                     actions,
@@ -141,16 +141,16 @@ export const CanvasContextMenuContent = ({
             <ContextMenuItem
               disabled={disabledPaste}
               onClick={() => {
-                  pasteNodes(
+                pasteNodes(
                   actions,
-                    flowVersion,
+                  flowVersion,
                   {
                     parentStepName: singleSelectedStepName,
                     stepLocationRelativeToParent:
                       StepLocationRelativeToParent.AFTER,
                   },
-                    applyOperation,
-                  );
+                  applyOperation,
+                );
               }}
             >
               <div className="flex gap-2 items-center">
@@ -164,12 +164,7 @@ export const CanvasContextMenuContent = ({
             <ContextMenuItem
               disabled={disabledPaste}
               onClick={() => {
-                  pasteNodes(
-                  actions,
-                    flowVersion,
-                  addButtonData,
-                    applyOperation,
-                  );
+                pasteNodes(actions, flowVersion, addButtonData, applyOperation);
               }}
             >
               <div className="flex gap-2 items-center">

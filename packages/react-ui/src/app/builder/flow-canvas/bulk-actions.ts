@@ -10,25 +10,28 @@ import {
   flowStructureUtil,
   FlowVersion,
   StepLocationRelativeToParent,
+  PasteLocation,
 } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
-import { PasteLocation } from '../../../../../shared/src/lib/flows/operations/paste-operations';
 
 type CopyActionsRequest = {
-  type: 'COPY_ACTIONS',
-  actions: Action[],
-}
+  type: 'COPY_ACTIONS';
+  actions: Action[];
+};
 
 export function copySelectedNodes({
   selectedNodes,
   flowVersion,
 }: Pick<BuilderState, 'selectedNodes' | 'flowVersion'>) {
-  const actionsToCopy = flowOperations.getActionsForCopy(selectedNodes, flowVersion);
+  const actionsToCopy = flowOperations.getActionsForCopy(
+    selectedNodes,
+    flowVersion,
+  );
   const request: CopyActionsRequest = {
     type: 'COPY_ACTIONS',
     actions: actionsToCopy,
-  }
+  };
   navigator.clipboard.writeText(JSON.stringify(request));
 }
 
@@ -59,13 +62,14 @@ export async function getActionsInClipboard(): Promise<Action[]> {
   try {
     const clipboardText = await navigator.clipboard.readText();
     const request: CopyActionsRequest = JSON.parse(clipboardText);
-    
+
     if (request && request.type === 'COPY_ACTIONS') {
       return request.actions;
     }
   } catch (error) {
+    return [];
   }
-  
+
   return [];
 }
 
@@ -81,21 +85,23 @@ export function pasteNodes(
     pastingDetails,
   );
   addOperations.forEach((request) => {
-    applyOperation(
-      request,
-      () => {
-        toast(UNSAVED_CHANGES_TOAST);
-      },
-    );
-  }); 
+    applyOperation(request, () => {
+      toast(UNSAVED_CHANGES_TOAST);
+    });
+  });
 }
 
-export function getLastLocationAsPasteLocation(flowVersion: FlowVersion): PasteLocation {
-  const lastLocation = flowStructureUtil.getAllSteps(flowVersion.trigger).length - 1
+export function getLastLocationAsPasteLocation(
+  flowVersion: FlowVersion,
+): PasteLocation {
+  const lastLocation =
+    flowStructureUtil.getAllSteps(flowVersion.trigger).length - 1;
   return {
-    parentStepName: flowStructureUtil.getAllSteps(flowVersion.trigger)[lastLocation].name,
+    parentStepName: flowStructureUtil.getAllSteps(flowVersion.trigger)[
+      lastLocation
+    ].name,
     stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-  }
+  };
 }
 
 export function toggleSkipSelectedNodes({

@@ -153,10 +153,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
-            initialState.flowVersion,
-            initialState.run,
-            {},
-          )
+              initialState.flowVersion,
+              initialState.run,
+              {},
+            )
           : {},
       sampleData: initialState.sampleData,
       flow: initialState.flow,
@@ -173,8 +173,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       allowCanvasPanning: true,
       rightSidebar:
         initiallySelectedStep &&
-          (initiallySelectedStep !== 'trigger' ||
-            initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
+        (initiallySelectedStep !== 'trigger' ||
+          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
       refreshStepFormSettingsToggle: false,
@@ -217,7 +217,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             selectedStep: stepName,
             rightSidebar:
               stepName === 'trigger' &&
-                state.flowVersion.trigger.type === TriggerType.EMPTY
+              state.flowVersion.trigger.type === TriggerType.EMPTY
                 ? RightSideBarType.NONE
                 : RightSideBarType.PIECE_SETTINGS,
             leftSidebar: !isNil(state.run)
@@ -291,8 +291,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             rightSidebar: RightSideBarType.PIECE_SETTINGS,
             selectedStep: run.steps
               ? flowRunUtils.findFailedStepInOutput(run.steps) ??
-              state.selectedStep ??
-              'trigger'
+                state.selectedStep ??
+                'trigger'
               : 'trigger',
             readonly: true,
           };
@@ -441,9 +441,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     };
   });
 
-
 export function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
-  return localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE) === 'grab' ? 'grab' : 'pan'
+  return localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE) ===
+    'grab'
+    ? 'grab'
+    : 'pan';
 }
 
 export const useSwitchToDraft = () => {

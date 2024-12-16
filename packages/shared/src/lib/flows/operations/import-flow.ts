@@ -111,7 +111,7 @@ function removeAnySubsequentAction(action: Action): Action {
 }
 
 function _importFlow(flowVersion: FlowVersion, request: ImportFlowRequest): FlowOperationRequest[] {
-    const existingActions = flowStructureUtil.getAllActionsThatDoesNotHaveParent(flowVersion.trigger)
+    const existingActions = flowStructureUtil.getAllNextActionsWithoutChildren(flowVersion.trigger)
 
     const deleteOperations = existingActions.map(action =>
         createDeleteActionOperation(action.name),

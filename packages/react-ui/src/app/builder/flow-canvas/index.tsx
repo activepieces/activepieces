@@ -269,7 +269,7 @@ export const FlowCanvas = React.memo(
                   flowVersion,
                   {
                     parentStepName: flowStructureUtil
-                      .getAllActionsThatDoesNotHaveParent(flowVersion.trigger)
+                      .getAllNextActionsWithoutChildren(flowVersion.trigger)
                       .at(-1)!.name,
                     stepLocationRelativeToParent:
                       StepLocationRelativeToParent.AFTER,

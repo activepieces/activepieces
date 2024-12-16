@@ -176,9 +176,9 @@ const findUnusedName = (source: Trigger | string[]) => {
 }
 
 
-function getAllActionsThatDoesNotHaveParent(trigger: Step): Step[] {
+function getAllNextActionsWithoutChildren(start: Step): Step[] {
     const actions: Step[] = []
-    let currentAction = trigger.nextAction
+    let currentAction = start.nextAction
 
     while (!isNil(currentAction)) {
         actions.push(currentAction)
@@ -202,6 +202,6 @@ export const flowStructureUtil = {
     findPathToStep,
     isChildOf,
     findUnusedName,
-    getAllActionsThatDoesNotHaveParent,
+    getAllNextActionsWithoutChildren,
     getAllChildSteps,
 }
