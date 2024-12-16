@@ -22,6 +22,17 @@ export const SMTPInformation = Type.Object({
 
 export type SMTPInformation = Static<typeof SMTPInformation>
 
+
+export const CopilotSettings = Type.Object({
+    provider: Type.String(),
+    baseUrl: Type.String(),
+    apiKey: Type.String(),
+})
+
+export type CopilotSettings = Static<typeof CopilotSettings>
+
+
+
 export const Platform = Type.Object({
     ...BaseModelSchema,
     ownerId: ApId,
@@ -64,6 +75,7 @@ export const Platform = Type.Object({
     emailAuthEnabled: Type.Boolean(),
     licenseKey: Type.Optional(Type.String()),
     pinnedPieces: Type.Array(Type.String()),
+    copilotSettings: Type.Optional(CopilotSettings),
 })
 
 export type Platform = Static<typeof Platform>
