@@ -1,5 +1,5 @@
 
-    import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+    import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/pieces-framework";
     import { OAuth2GrantType } from '@activepieces/shared';
     import { getInvoices } from './lib/actions/get-invoices';
     import { getProjects } from './lib/actions/get-projects';
@@ -11,6 +11,7 @@
     import { getRoles } from './lib/actions/get-roles';
     import { getUsers } from './lib/actions/get-users';
     import { reportsUninvoiced } from './lib/actions/reports-uninvoiced';
+    import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
     export const harvestAuth = PieceAuth.OAuth2({
       required: true,
@@ -27,7 +28,15 @@
       logoUrl: "https://cdn.activepieces.com/pieces/harvest.png",
       authors: ["D-Rowe-FS"],
       actions: [getClients, getEstimates, getExpenses, getInvoices, getProjects, getRoles, getTasks, getTime_entries, getUsers,
-         reportsUninvoiced],
+         reportsUninvoiced,
+         createCustomApiCallAction({
+          baseUrl: () => `https://api.harvestapp.com/v2/`,
+          auth: harvestAuth,
+          authMapping: async (auth) => ({
+            Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+          }),
+            }),
+      ],
       triggers: [],
     });
     
