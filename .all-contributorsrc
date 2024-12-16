@@ -1397,6 +1397,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "D-Rowe-FS",
+      "name": "D-Rowe-FS",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142934784?v=4",
+      "profile": "https://github.com/D-Rowe-FS",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
