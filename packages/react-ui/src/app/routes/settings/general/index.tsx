@@ -1,6 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 
@@ -23,7 +22,14 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import { ApFlagId, Permission, ProjectWithLimits } from '@activepieces/shared';
+import {
+  ApErrorParams,
+  ApFlagId,
+  ErrorCode,
+  Permission,
+  PlatformRole,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();
@@ -32,7 +38,7 @@ export default function GeneralPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const { toast } = useToast();
-  const platformRole = authenticationSession.getPlatformRole();
+  const platformRole = authenticationSession.getUserPlatformRole();
 
   const form = useForm({
     defaultValues: {
@@ -73,8 +79,9 @@ export default function GeneralPage() {
     },
     onError: (error) => {
       if (api.isError(error)) {
-        switch (error.response?.status) {
-          case HttpStatusCode.Conflict: {
+        const apError = error.response?.data as ApErrorParams;
+        switch (apError.code) {
+          case ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS: {
             form.setError('root.serverError', {
               message: t('The external ID is already taken.'),
             });
