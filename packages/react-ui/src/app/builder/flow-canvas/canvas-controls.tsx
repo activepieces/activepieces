@@ -4,7 +4,7 @@ import {
   Fullscreen,
   Hand,
   Minus,
-  MousePointer2,
+  MousePointer,
   Plus,
   RotateCw,
 } from 'lucide-react';
@@ -22,6 +22,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { flowUtilConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
+import { cn } from '@/lib/utils';
 const verticalPaddingOnFitView = 100;
 const duration = 500;
 // Calculate the node's position in relation to the canvas
@@ -67,6 +68,14 @@ const calculateViewportDelta = (
       ? nodePosition.y - canvas.height + flowUtilConsts.AP_NODE_SIZE.STEP.height
       : 0,
 });
+
+const PanningModeIndicator = ({toggled}: {toggled: boolean}) => {
+  return (
+    <div className={cn('absolute transition-all bg-primary/15 w-full h-full top-0 left-0', {
+      'opacity-0': !toggled,
+    })}></div>
+  )
+}
 
 const CanvasControls = ({
   canvasWidth,
@@ -175,15 +184,64 @@ const CanvasControls = ({
     }
   };
 
-  const [panningMode, setPanningMode] = useBuilderStateContext((state) => {
-    return [state.panningMode, state.setPanningMode];
+  const [setPanningMode,panningMode] = useBuilderStateContext((state) => {
+    return [state.setPanningMode,state.panningMode];
   });
   const spacePressed = useKeyPress('Space');
   const isInGrabMode = spacePressed || panningMode === 'grab';
 
   return (
-    <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row">
+    <>
+    <div className='bg-secondary absolute left-[10px] bottom-[60px] z-50 flex flex-col gap-2 shadow-md'>
+    <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              if (!spacePressed) {
+                setPanningMode('pan');
+              }
+            }}
+             className='relative'
+          >
+           <PanningModeIndicator toggled={!isInGrabMode} />            
+           <MousePointer className="w-5 h-5"></MousePointer>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {t('Select Mode')}
+        </TooltipContent>
+      </Tooltip>
+
       <Tooltip>
+        <TooltipTrigger asChild>
+   
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              if (!spacePressed) {
+                setPanningMode('grab');
+              }
+            }}
+            className='relative'
+          >
+          
+          <PanningModeIndicator toggled={isInGrabMode} />
+
+         <Hand className="w-5 h-5"></Hand>
+          </Button>
+     
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          {t('Move Mode')}
+        </TooltipContent>
+      </Tooltip>
+    </div>
+       <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row shadow-md">
+      <Tooltip>
+        
         <TooltipTrigger asChild>
           <Button variant="secondary" size="sm" onClick={handleZoomReset}>
             <RotateCw className="w-5 h-5" />
@@ -222,28 +280,10 @@ const CanvasControls = ({
         </TooltipTrigger>
         <TooltipContent side="top">{t('Fit to View')}</TooltipContent>
       </Tooltip>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              if (!spacePressed) {
-                setPanningMode(panningMode === 'grab' ? 'pan' : 'grab');
-              }
-            }}
-          >
-            {isInGrabMode && <Hand className="w-5 h-5"></Hand>}
-            {!isInGrabMode && (
-              <MousePointer2 className="w-5 h-5"></MousePointer2>
-            )}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          {isInGrabMode ? 'Move Mode' : 'Select Mode'}
-        </TooltipContent>
-      </Tooltip>
+    
     </div>
+    </>
+ 
   );
 };
 
