@@ -26,19 +26,14 @@ import {
   isFlowStateTerminal,
   isNil,
   Step,
-  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
-import { useBuilderStateContext } from '../builder-hooks';
-
 import {
-  copySelectedNodes,
-  deleteSelectedNodes,
-  getActionsInClipboard,
-  pasteNodes,
-  toggleSkipSelectedNodes,
-} from './bulk-actions';
+  useBuilderStateContext,
+  useHandleKeyPressOnCanvas,
+} from '../builder-hooks';
+
 import {
   CanvasContextMenu,
   CanvasContextMenuProps,
@@ -81,7 +76,7 @@ const createGraphKey = (flowVersion: FlowVersion) => {
       const branchesLength =
         step.type === ActionType.ROUTER ? step.settings.branches.length : 0;
       const childrenKey = getChildrenKey(step);
-      return `${acc}-${step.displayName}-${step.type}-${
+      return `${acc}-${step.displayName}-${step.type}-${step.nextAction? step.nextAction.name:''}-${
         step.type === ActionType.PIECE ? step.settings.pieceName : ''
       }-${branchesLength}-${childrenKey}`;
     }, '');
@@ -240,67 +235,7 @@ export const FlowCanvas = React.memo(
       [setContextMenuData, setSelectedNodes, selectedNodes],
     );
 
-    const handleKeyDown = useCallback(
-      (e: KeyboardEvent) => {
-        if (
-          e.target instanceof HTMLElement &&
-          (e.target === document.body ||
-            e.target.classList.contains('react-flow__nodesselection-rect'))
-        ) {
-          if (e.key === 'c' && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            copySelectedNodes({ selectedNodes, flowVersion });
-          }
-          if (e.key === 'Delete' && e.shiftKey) {
-            e.preventDefault();
-            deleteSelectedNodes({
-              selectedNodes,
-              applyOperation,
-              selectedStep,
-              exitStepSettings,
-            });
-          }
-          if (e.key === 'v' && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            getActionsInClipboard().then((actions) => {
-              if (actions.length > 0) {
-                pasteNodes(
-                  actions,
-                  flowVersion,
-                  {
-                    parentStepName: flowStructureUtil
-                      .getAllNextActionsWithoutChildren(flowVersion.trigger)
-                      .at(-1)!.name,
-                    stepLocationRelativeToParent:
-                      StepLocationRelativeToParent.AFTER,
-                  },
-                  applyOperation,
-                );
-              }
-            });
-          }
-        }
-        if (e.key === 'e' && (e.metaKey || e.ctrlKey)) {
-          if (selectedNodes.length > 0) {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleSkipSelectedNodes({
-              selectedNodes,
-              flowVersion,
-              applyOperation,
-            });
-          }
-        }
-      },
-      [
-        selectedNodes,
-        flowVersion,
-        applyOperation,
-        selectedStep,
-        exitStepSettings,
-      ],
-    );
-
+    const handleKeyDown = useHandleKeyPressOnCanvas();
     useEffect(() => {
       document.addEventListener('keydown', handleKeyDown);
       return () => document.removeEventListener('keydown', handleKeyDown);

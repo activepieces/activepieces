@@ -130,6 +130,10 @@
   --xy-selection-background-color-default: hsl(var(--primary-100)/0.25) !important;
 }
 
+.react-flow__pane.selection
+{
+  cursor: default !important;
+}
 .react-flow__edge.selectable > path {
   /* If necessary, add !important to the rule */
   pointer-events: none !important;

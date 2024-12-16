@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useCallback } from 'react';
 import { create, useStore } from 'zustand';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -17,11 +17,24 @@ import {
   flowOperations,
   flowStructureUtil,
   isNil,
+  StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { AskAiButtonOperations } from '../../features/pieces/lib/types';
 import { useAuthorization } from '../../hooks/authorization-hooks';
+
+import {
+  copySelectedNodes,
+  deleteSelectedNodes,
+  getActionsInClipboard,
+  pasteNodes,
+  toggleSkipSelectedNodes,
+} from './flow-canvas/bulk-actions';
+import {
+  CanvasShortcuts,
+  CanvasShortcutsProps,
+} from './flow-canvas/context-menu/canvas-context-menu';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -447,6 +460,100 @@ export function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
     ? 'grab'
     : 'pan';
 }
+
+const shortcutHandler = (
+  event: KeyboardEvent,
+  handlers: Record<keyof CanvasShortcutsProps, () => void>,
+) => {
+  const shortcutActivated = Object.entries(CanvasShortcuts).find(
+    ([_, shortcut]) =>
+      shortcut.shortcutKey?.toLowerCase() === event.key.toLowerCase() &&
+      !!shortcut.withCtrl === event.ctrlKey &&
+      !!shortcut.withShift === event.shiftKey,
+  );
+
+  if (shortcutActivated) {
+    event.preventDefault();
+    event.stopPropagation();
+    handlers[shortcutActivated[0] as keyof CanvasShortcutsProps]();
+  }
+};
+
+export const useHandleKeyPressOnCanvas = () => {
+  const [
+    selectedNodes,
+    flowVersion,
+    selectedStep,
+    exitStepSettings,
+    applyOperation,
+    readonly,
+  ] = useBuilderStateContext((state) => [
+    state.selectedNodes,
+    state.flowVersion,
+    state.selectedStep,
+    state.exitStepSettings,
+    state.applyOperation,
+    state.readonly,
+  ]);
+
+  return useCallback(
+    (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLElement &&
+        (e.target === document.body ||
+          e.target.classList.contains('react-flow__nodesselection-rect')) &&
+        !readonly
+      ) {
+        shortcutHandler(e, {
+          Copy: () => {
+            copySelectedNodes({ selectedNodes, flowVersion });
+          },
+          Delete: () => {
+            deleteSelectedNodes({
+              exitStepSettings,
+              selectedStep,
+              selectedNodes,
+              applyOperation,
+            });
+          },
+          Skip: () => {
+            toggleSkipSelectedNodes({
+              selectedNodes,
+              flowVersion,
+              applyOperation,
+            });
+          },
+          Paste: () => {
+            getActionsInClipboard().then((actions) => {
+              if (actions.length > 0) {
+                pasteNodes(
+                  actions,
+                  flowVersion,
+                  {
+                    parentStepName: flowStructureUtil
+                      .getAllNextActionsWithoutChildren(flowVersion.trigger)
+                      .at(-1)!.name,
+                    stepLocationRelativeToParent:
+                      StepLocationRelativeToParent.AFTER,
+                  },
+                  applyOperation,
+                );
+              }
+            });
+          },
+        });
+      }
+    },
+    [
+      selectedNodes,
+      flowVersion,
+      applyOperation,
+      selectedStep,
+      exitStepSettings,
+      readonly,
+    ],
+  );
+};
 
 export const useSwitchToDraft = () => {
   const [flowVersion, setVersion, exitRun] = useBuilderStateContext((state) => [
