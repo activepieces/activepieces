@@ -1,6 +1,6 @@
 
     import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-    import { OAuth2GrantType } from '@activepieces/shared';
+    import { OAuth2GrantType, PieceCategory } from '@activepieces/shared';
     import { getInvoices } from './lib/actions/get-invoices';
     import { getProjects } from './lib/actions/get-projects';
     import { getTasks } from './lib/actions/get-tasks';
@@ -26,6 +26,8 @@
       auth: harvestAuth,
       minimumSupportedRelease: '0.36.1',
       logoUrl: "https://cdn.activepieces.com/pieces/harvest.png",
+      categories:[PieceCategory.PRODUCTIVITY],
+      description:'Time Tracking Software with Invoicing',
       authors: ["D-Rowe-FS"],
       actions: [getClients, getEstimates, getExpenses, getInvoices, getProjects, getRoles, getTasks, getTime_entries, getUsers,
          reportsUninvoiced,
