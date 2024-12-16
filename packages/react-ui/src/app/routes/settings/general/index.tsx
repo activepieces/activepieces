@@ -32,6 +32,7 @@ export default function GeneralPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const { toast } = useToast();
+  const platformRole = authenticationSession.getPlatformRole();
 
   const form = useForm({
     defaultValues: {
@@ -163,28 +164,29 @@ export default function GeneralPage() {
                   )}
                 />
               </FlagGuard>
-              {platform.embeddingEnabled && (
-                <FormField
-                  name="externalId"
-                  render={({ field }) => (
-                    <FormItem className="grid space-y-2">
-                      <Label htmlFor="externalId">{t('External ID')}</Label>
-                      <FormDescription>
-                        {t(
-                          'Used to identify the project based on your SaaS ID',
-                        )}
-                      </FormDescription>
-                      <Input
-                        {...field}
-                        id="externalId"
-                        placeholder={t('org-3412321')}
-                        className="rounded-sm"
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              {platform.embeddingEnabled &&
+                platformRole === PlatformRole.ADMIN && (
+                  <FormField
+                    name="externalId"
+                    render={({ field }) => (
+                      <FormItem className="grid space-y-2">
+                        <Label htmlFor="externalId">{t('External ID')}</Label>
+                        <FormDescription>
+                          {t(
+                            'Used to identify the project based on your SaaS ID',
+                          )}
+                        </FormDescription>
+                        <Input
+                          {...field}
+                          id="externalId"
+                          placeholder={t('org-3412321')}
+                          className="rounded-sm"
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               {form?.formState?.errors?.root?.serverError && (
                 <FormMessage>
                   {form.formState.errors.root.serverError.message}
