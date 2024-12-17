@@ -1,7 +1,4 @@
-import {
-    ALL_PRINCIPAL_TYPES,
-    CreateFieldRequest,
-} from '@activepieces/shared'
+import { CreateFieldRequest, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 
@@ -30,7 +27,7 @@ export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         body: CreateFieldRequest,
@@ -39,7 +36,7 @@ const CreateRequest = {
 
 const GetFieldByIdRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         params: Type.Object({
@@ -51,7 +48,7 @@ const GetFieldByIdRequest = {
 
 const DeleteFieldRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         params: Type.Object({
@@ -63,7 +60,7 @@ const DeleteFieldRequest = {
 
 const GetFieldsRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         params: Type.Object({

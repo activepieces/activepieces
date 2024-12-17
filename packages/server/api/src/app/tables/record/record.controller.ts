@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, CreateRecordsRequest, UpdateRecordRequest } from '@activepieces/shared'
+import { CreateRecordsRequest, PrincipalType, UpdateRecordRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 
@@ -32,7 +32,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         body: CreateRecordsRequest,
@@ -44,7 +44,7 @@ const CreateRequest = {
 
 const GetRecordByIdRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         params: Type.Object({
@@ -56,7 +56,7 @@ const GetRecordByIdRequest = {
 
 const UpdateRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         params: Type.Object({
@@ -69,7 +69,7 @@ const UpdateRequest = {
 
 const DeleteRecordRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         params: Type.Object({
@@ -81,7 +81,7 @@ const DeleteRecordRequest = {
 
 const GetRecordsRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         params: Type.Object({

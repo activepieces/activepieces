@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, CreateTableRequest, ImportTableRequest } from '@activepieces/shared'
+import { CreateTableRequest, ImportTableRequest, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 
@@ -32,7 +32,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest =  {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         body: CreateTableRequest,
@@ -41,13 +41,13 @@ const CreateRequest =  {
 
 const GetTablesRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
 }
 
 const DeleteRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         params: Type.Object({
@@ -58,7 +58,7 @@ const DeleteRequest = {
 
 const GetTableByIdRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         params: Type.Object({
@@ -69,7 +69,7 @@ const GetTableByIdRequest = {
 
 const ImportRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
         params: Type.Object({
