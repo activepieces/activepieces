@@ -2,8 +2,8 @@ import { BaseEdge, EdgeProps } from '@xyflow/react';
 
 import { StepLocationRelativeToParent } from '@activepieces/shared';
 
-import { flowUtilConsts } from '../consts';
-import { ApStraightLineEdge } from '../types';
+import { flowUtilConsts } from '../utils/consts';
+import { ApStraightLineEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
 
@@ -38,9 +38,10 @@ export const ApStraightLineCanvasEdge = ({
             (targetY - sourceY) / 2 -
             flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height
           }
-          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
+          // add 100 to the width to make the add button group hoverable
+          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 100}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
-          className="overflow-visible"
+          className="overflow-visible cursor-default"
         >
           <ApAddButton
             edgeId={id}
