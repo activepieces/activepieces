@@ -14,7 +14,6 @@ import { cn, useTimeAgo } from '@/lib/utils';
 import {
   ApFlagId,
   WorkerMachineStatus,
-  WorkerMachineType,
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
 
@@ -26,7 +25,6 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
     created: '2024-11-23T18:51:30.000Z',
     updated: dayjs().subtract(10, 'seconds').toISOString(),
     platformId: 'demo-platform',
-    type: WorkerMachineType.DEDICATED,
     information: {
       diskInfo: {
         total: 337374281728,
@@ -51,7 +49,6 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
     created: '2024-11-23T19:12:45.000Z',
     updated: dayjs().subtract(1, 'minute').toISOString(),
     platformId: 'demo-platform',
-    type: WorkerMachineType.DEDICATED,
     information: {
       diskInfo: {
         total: 536870912000,

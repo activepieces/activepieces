@@ -30,7 +30,7 @@ export enum WorkerSystemProp {
 export const environmentVariables = {
     hasAppModules(): boolean {
         const environment = this.getEnvironment(WorkerSystemProp.CONTAINER_TYPE) ?? ContainerType.WORKER_AND_APP
-        return [ContainerType.WORKER, ContainerType.WORKER_AND_APP].includes(environment as ContainerType)
+        return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(environment as ContainerType)
     },
     getEnvironment: (prop: WorkerSystemProp) => {
         return process.env[`AP_${prop}`]

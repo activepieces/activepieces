@@ -1,8 +1,12 @@
 import { Command } from 'commander';
-import * as jwt from 'jsonwebtoken';
 import chalk from 'chalk';
 import { prompt } from 'inquirer';
 import { nanoid } from 'nanoid';
+import jwtLibrary from 'jsonwebtoken';
+
+const KEY_ID = '1'
+const ISSUER = 'activepieces'
+const ALGORITHM = 'HS256'
 
 export const generateWorkerTokenCommand = new Command('token')
     .description('Generate a JWT token for worker authentication')
@@ -30,7 +34,12 @@ export const generateWorkerTokenCommand = new Command('token')
         const expiresIn = 100 * 365 * 24 * 60 * 60;
 
         try {
-            const token = jwt.sign(payload, answers.jwtSecret, { expiresIn });
+            const token = jwtLibrary.sign(payload, answers.jwtSecret, {
+                expiresIn,
+                keyid: KEY_ID,
+                algorithm: ALGORITHM,
+                issuer: ISSUER,
+            });
             console.log(chalk.green('\nGenerated Worker Token, Please use it in AP_WORKER_TOKEN environment variable:'));
             console.log(chalk.yellow(token));
            
