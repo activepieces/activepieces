@@ -60,7 +60,7 @@ export type FeatureKey =
   | 'API'
   | 'SSO'
   | 'AUDIT_LOGS'
-  | 'GIT_SYNC'
+  | 'ENVIRONMENT'
   | 'ISSUES'
   | 'ANALYTICS'
   | 'ALERTS'

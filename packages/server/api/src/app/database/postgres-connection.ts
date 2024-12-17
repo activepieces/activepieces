@@ -166,6 +166,8 @@ import { AddAuditLogIndicies1731711188507 } from './migration/postgres/173171118
 import { AddIndiciesToRunAndTriggerData1732324567513 } from './migration/postgres/1732324567513-AddIndiciesToRunAndTriggerData'
 import { AddProjectRelationInUserInvitation1732790412900 } from './migration/postgres/1732790673766-AddProjectRelationInUserInvitation'
 import { CreateProjectReleaseTable1734418823028 } from './migration/postgres/1734418823028-CreateProjectReleaseTable'
+import { AddReleasesEnablingBoolean1734429537542 } from './migration/postgres/1734429537542-AddReleasesEnablingBoolean'
+import { RenameGitSyncToEnvironment1734431436773 } from './migration/postgres/1734431436773-RenameGitSyncToEnvironment'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -278,6 +280,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndiciesToRunAndTriggerData1732324567513,
         AddProjectRelationInUserInvitation1732790412900,
         CreateProjectReleaseTable1734418823028,
+        AddReleasesEnablingBoolean1734429537542,
+        RenameGitSyncToEnvironment1734431436773,
     ]
 
     const edition = system.getEdition()

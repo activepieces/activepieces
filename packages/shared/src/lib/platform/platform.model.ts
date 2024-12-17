@@ -40,7 +40,7 @@ export const Platform = Type.Object({
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
     smtp: Type.Optional(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
-    gitSyncEnabled: Type.Boolean(),
+    environmentEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),

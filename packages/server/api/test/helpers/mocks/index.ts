@@ -161,6 +161,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
             project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
+        releasesEnabled: project?.releasesEnabled ?? false,
     }
 }
 
@@ -206,7 +207,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
             faker.helpers.enumValue(FilteredPieceBehavior),
         smtp: platform?.smtp,
         flowIssuesEnabled: platform?.flowIssuesEnabled ?? faker.datatype.boolean(),
-        gitSyncEnabled: platform?.gitSyncEnabled ?? faker.datatype.boolean(),
+        environmentEnabled: platform?.environmentEnabled ?? faker.datatype.boolean(),
         embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),

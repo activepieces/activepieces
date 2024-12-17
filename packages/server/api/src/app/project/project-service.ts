@@ -24,6 +24,7 @@ export const projectService = {
             id: apId(),
             ...params,
             notifyStatus: NotificationStatus.ALWAYS,
+            releasesEnabled: false,
         }
         const savedProject = await projectRepo().save(newProject)
         await projectHooks.get(logger).postCreate(savedProject)
@@ -50,6 +51,7 @@ export const projectService = {
             {
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
+                ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -145,6 +147,7 @@ export const projectService = {
 type UpdateParams = {
     displayName?: string
     notifyStatus?: NotificationStatus
+    releasesEnabled?: boolean
 }
 
 type CreateParams = {

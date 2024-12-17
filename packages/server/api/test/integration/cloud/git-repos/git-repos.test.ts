@@ -269,7 +269,7 @@ describe('Git API', () => {
 const mockEnvironment = async () => {
     const { mockPlatform, mockOwner, mockProject } = await mockBasicSetup({
         platform: {
-            gitSyncEnabled: true,
+            environmentEnabled: true,
         },
     })
     

@@ -12,6 +12,7 @@ import { authenticationSession } from '../../lib/authentication-session';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
+import { projectHooks } from '@/hooks/project-hooks';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,
   );
+  const { project } = projectHooks.useCurrentProject()
 
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
@@ -68,6 +70,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       to: '/releases',
       label: t('Releases'),
       icon: Box,
+      hasPermission: project.releasesEnabled,
     },
     {
       to: '/settings',

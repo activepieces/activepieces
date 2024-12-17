@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
@@ -13,13 +14,14 @@ import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { ReleaseCard } from './release-card';
 
-const GitSyncPage = () => {
+const EnvironmentPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { gitSync, isLoading, refetch } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.gitSyncEnabled,
+    platform.environmentEnabled,
   );
 
   const { mutate } = useMutation({
@@ -42,16 +44,16 @@ const GitSyncPage = () => {
 
   return (
     <LockedFeatureGuard
-      featureKey="GIT_SYNC"
-      locked={!platform.gitSyncEnabled}
-      lockTitle={t('Unlock Git Sync')}
+      featureKey="ENVIRONMENT"
+      locked={!platform.environmentEnabled}
+      lockTitle={t('Unlock Environment')}
       lockDescription={t(
         "Streamline your team's workflow for a seamless experience to build and deploy flows across your environments",
       )}
     >
       <div className="flex w-full flex-col items-start justify-center gap-4">
         <div className="flex flex-col justify-start items-start w-full">
-          <h1 className="text-2xl font-bold flex-grow">{t('Git Sync')}</h1>
+          <h1 className="text-2xl font-bold flex-grow">{t('Environment')}</h1>
           <span className="text-muted-foreground text-md">
             {t(
               'This feature allows for the creation of an external backup, environments, and maintaining a version history',
@@ -101,9 +103,10 @@ const GitSyncPage = () => {
             <ReviewChangeDialog gitSync={gitSync}></ReviewChangeDialog>
           )}
         </div>
+        <ReleaseCard />
       </div>
     </LockedFeatureGuard>
   );
 };
 
-export { GitSyncPage };
+export { EnvironmentPage };

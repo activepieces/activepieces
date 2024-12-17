@@ -60,8 +60,8 @@ export default function ProjectSettingsLayout({
       hasPermission: checkAccess(Permission.READ_ALERT),
     },
     {
-      title: t('Git Sync'),
-      href: '/settings/git-sync',
+      title: t('Environment'),
+      href: '/settings/environment',
       icon: <GitBranch size={iconSize} />,
       hasPermission: checkAccess(Permission.READ_GIT_REPO),
     },
