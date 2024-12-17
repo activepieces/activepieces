@@ -68,7 +68,7 @@ export const codeGeneratorTool = (log: FastifyBaseLogger) => ({
             }
         }
         catch (error) {
-            exceptionHandler.handle(error)
+            exceptionHandler.handle(error, log)
             return createDefaultResponse(error instanceof Error ? error.message : 'Unknown error occurred')
         }
     },

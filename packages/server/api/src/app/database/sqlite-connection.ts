@@ -1,8 +1,9 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -88,7 +89,7 @@ const getSqliteDatabaseInMemory = (): string => {
 }
 
 const getSqliteDatabase = (): string => {
-    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return getSqliteDatabaseInMemory()
@@ -179,7 +180,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
 }
 
 const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return {}

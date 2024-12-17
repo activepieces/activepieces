@@ -1,6 +1,5 @@
 import {
     MachineInformation,
-    spreadIfDefined,
     WorkerMachineStatus,
     WorkerMachineWithStatus,
     WorkerPrincipal,

@@ -11,6 +11,7 @@ export const redisMigrations = (log: FastifyBaseLogger) => ({
         const migrationLock = await distributedLock.acquireLock({
             key: 'jobs_lock',
             timeout: 30000,
+            log,
         })
         try {
             const scheduledJobs = await getJobsToMigrate()

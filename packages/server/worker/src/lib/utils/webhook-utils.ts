@@ -1,6 +1,5 @@
 import { WebhookResponse } from '@activepieces/pieces-framework'
 import {
-    networkUtls,
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
 import {
@@ -13,17 +12,18 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
 import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
+import { appNetworkUtils } from './app-network-utils'
 
 export const webhookUtils = (log: FastifyBaseLogger) => ({
     async getWebhookPrefix(): Promise<string> {
-        return `${await networkUtls.getPublicUrl()}v1/webhooks`
+        return `${await appNetworkUtils.getPublicUrl()}v1/webhooks`
     },
     async getAppWebhookUrl({
         appName,
     }: {
         appName: string
     }): Promise<string | undefined> {
-        const frontendUrl = await networkUtls.getPublicUrl()
+        const frontendUrl = await appNetworkUtils.getPublicUrl()
         return `${frontendUrl}v1/app-events/${appName}`
     },
     async getWebhookUrl({
@@ -74,6 +74,7 @@ export const webhookUtils = (log: FastifyBaseLogger) => ({
                 projectId,
                 payloads,
             }),
+            log,
         )
     },
 

@@ -6,9 +6,8 @@ import {
     JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
-type WorkerMachineSchema = WorkerMachine
 
-export const WorkerMachineEntity = new EntitySchema<WorkerMachineSchema>({
+export const WorkerMachineEntity = new EntitySchema<WorkerMachine>({
     name: 'worker_machine',
     columns: {
         ...BaseColumnSchemaPart,
@@ -16,6 +15,5 @@ export const WorkerMachineEntity = new EntitySchema<WorkerMachineSchema>({
             type: JSONB_COLUMN_TYPE,
         },
     },
-    relations: {
-    },
+    relations: {},
 })

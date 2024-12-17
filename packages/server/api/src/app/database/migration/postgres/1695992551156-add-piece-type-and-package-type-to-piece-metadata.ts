@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddPieceTypeAndPackageTypeToPieceMetadata1695992551156
 implements MigrationInterface {
@@ -29,7 +31,7 @@ implements MigrationInterface {
             'ALTER TABLE "piece_metadata" ALTER COLUMN "packageType" SET NOT NULL',
         )
 
-        logger.info('AddPieceTypeAndPackageTypeToPieceMetadata1695992551156 up')
+        log.info('AddPieceTypeAndPackageTypeToPieceMetadata1695992551156 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -40,6 +42,6 @@ implements MigrationInterface {
             'ALTER TABLE "piece_metadata" DROP COLUMN "pieceType"',
         )
 
-        logger.info('AddPieceTypeAndPackageTypeToPieceMetadata1695992551156 down')
+        log.info('AddPieceTypeAndPackageTypeToPieceMetadata1695992551156 down')
     }
 }

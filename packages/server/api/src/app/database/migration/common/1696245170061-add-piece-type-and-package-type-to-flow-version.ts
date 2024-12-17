@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddPieceTypeAndPackageTypeToFlowVersion1696245170061
 implements MigrationInterface {
@@ -8,7 +10,7 @@ implements MigrationInterface {
         const flowVersionIds = await queryRunner.query(
             'SELECT id FROM flow_version',
         )
-        logger.info(
+        log.info(
             'AddPieceTypeAndPackageTypeToFlowVersion1696245170061: found ' +
         flowVersionIds.length +
         ' versions',
@@ -34,7 +36,7 @@ implements MigrationInterface {
             }
             updatedFlows++
             if (updatedFlows % 100 === 0) {
-                logger.info(
+                log.info(
                     'AddPieceTypeAndPackageTypeToFlowVersion1696245170061: ' +
             updatedFlows +
             ' flows updated',
@@ -42,7 +44,7 @@ implements MigrationInterface {
             }
         }
 
-        logger.info('AddPieceTypeAndPackageTypeToFlowVersion1696245170061: up')
+        log.info('AddPieceTypeAndPackageTypeToFlowVersion1696245170061: up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -71,7 +73,7 @@ implements MigrationInterface {
             }
         }
 
-        logger.info('AddPieceTypeAndPackageTypeToFlowVersion1696245170061: down')
+        log.info('AddPieceTypeAndPackageTypeToFlowVersion1696245170061: down')
     }
 }
 

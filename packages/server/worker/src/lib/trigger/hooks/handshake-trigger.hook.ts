@@ -23,7 +23,7 @@ export async function tryHandshake(
     const { payload, flowVersion, projectId } = params
 
     const settings = flowVersion.trigger.settings as PieceTriggerSettings
-    const pieceMetadata = await engineApiService(engineToken).getPiece(settings.pieceName, {
+    const pieceMetadata = await engineApiService(engineToken, log).getPiece(settings.pieceName, {
         version: settings.pieceVersion,
     })
     const tirggerName = settings.triggerName

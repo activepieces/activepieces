@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddTriggerTestStrategy1707087022764 implements MigrationInterface {
     name = 'AddTriggerTestStrategy1707087022764'
@@ -13,7 +15,7 @@ export class AddTriggerTestStrategy1707087022764 implements MigrationInterface {
             await updatePieceMetadata(queryRunner, pieceMetadata)
         }
 
-        logger.info({ name: 'AddTriggerTestStrategy1707087022764' }, 'up')
+        log.info({ name: 'AddTriggerTestStrategy1707087022764' }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -25,7 +27,7 @@ export class AddTriggerTestStrategy1707087022764 implements MigrationInterface {
             await updatePieceMetadata(queryRunner, pieceMetadata)
         }
 
-        logger.info({ name: 'AddTriggerTestStrategy1707087022764' }, 'down')
+        log.info({ name: 'AddTriggerTestStrategy1707087022764' }, 'down')
     }
 }
 

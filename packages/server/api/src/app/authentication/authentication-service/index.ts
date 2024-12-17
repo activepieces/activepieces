@@ -1,7 +1,5 @@
 import {
     cryptoUtils,
-    SharedSystemProp,
-    system,
 } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -20,6 +18,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { QueryFailedError } from 'typeorm'
 import { flagService } from '../../flags/flag.service'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { telemetry } from '../../helper/telemetry.utils'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
@@ -236,7 +236,7 @@ async function saveNewsLetterSubscriber(user: User, log: FastifyBaseLogger): Pro
     (!isNil(user.platformId) &&
       !flagService.isCloudPlatform(user.platformId)) ||
     !user.newsLetter
-    const environment = system.get(SharedSystemProp.ENVIRONMENT)
+    const environment = system.get(AppSystemProp.ENVIRONMENT)
     if (
         isPlatformUserOrNotSubscribed ||
     environment !== ApEnvironment.PRODUCTION

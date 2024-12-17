@@ -1,4 +1,4 @@
-import { exceptionHandler, SharedSystemProp, system } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -36,6 +36,8 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
@@ -44,7 +46,7 @@ import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
-const maxFileSizeInBytes = system.getNumberOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
+const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
     async list({
@@ -329,7 +331,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             const errors = new Error(
                 'Execution Output is too large, maximum size is ' + maxFileSizeInBytes,
             )
-            exceptionHandler.handle(errors)
+            exceptionHandler.handle(errors, log)
             throw errors
         }
         const newLogsFileId = logsFileId ?? apId()
