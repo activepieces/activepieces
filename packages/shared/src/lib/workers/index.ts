@@ -7,10 +7,6 @@ export enum WorkerMachineStatus {
     OFFLINE = 'OFFLINE',
 }
 
-export enum WorkerMachineType {
-    DEDICATED = 'DEDICATED',
-    SHARED = 'SHARED',
-}
 
 export const MachineInformation = Type.Object({
     cpuUsagePercentage: Type.Number(),
@@ -30,8 +26,6 @@ export type MachineInformation = Static<typeof MachineInformation>
 
 export const WorkerMachine = Type.Object({
     ...BaseModelSchema,
-    platformId: ApId,
-    type: Type.Enum(WorkerMachineType),
     information: MachineInformation,
 })
 

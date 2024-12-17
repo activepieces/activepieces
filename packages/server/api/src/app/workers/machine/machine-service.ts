@@ -25,8 +25,6 @@ export const machineService = {
             },
             updated: dayjs().toISOString(),
             id: request.workerPrincipal.id,
-            ...spreadIfDefined('platformId', request.workerPrincipal.platform?.id),
-            type: request.workerPrincipal.worker.type,
         }, ['id'])
     },
     async list(): Promise<WorkerMachineWithStatus[]> {
