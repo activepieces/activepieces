@@ -14,6 +14,7 @@ import { isNil, isString } from '@activepieces/shared';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { googleSheetsAuth } from '../../';
+import { transformWorkSheetValues } from '../triggers/helpers';
 
 export const googleSheetsCommon = {
   baseUrl: 'https://sheets.googleapis.com/v4/spreadsheets',
@@ -306,7 +307,7 @@ async function getGoogleSheetRows({
   if (rowIndex_s !== undefined && rowIndex_e !== undefined) {
     range = `!A${rowIndex_s}:ZZZ${rowIndex_e}`;
   }
-  const response = await httpClient.sendRequest<{ values: [string[]][] }>({
+  const rowsResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
       method: HttpMethod.GET,
       url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${sheetName}${range}`,
       authentication: {
@@ -315,22 +316,23 @@ async function getGoogleSheetRows({
       },
     }
   );
-  if (response.body.values === undefined) return [];
+  if (rowsResponse.body.values === undefined) return [];
 
-  const res = [];
-  for (let i = 0; i < response.body.values.length; i++) {
-    const values: any = {};
-    for (let j = 0; j < response.body.values[i].length; j++) {
-      values[columnToLabel(j)] = response.body.values[i][j];
-    }
+  const headerResponse = await httpClient.sendRequest<{ values: [string[]][] }>({
+    method: HttpMethod.GET,
+    url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${sheetName}!A1:ZZZ1`,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: accessToken,
+    },
+  });
 
-    res.push({
-      row: i + 1,
-      values,
-    });
-  }
+  const headers = headerResponse.body.values[0]??[];
+  const headerCount = headers.length;
 
-  return res;
+  const labeledRowValues = transformWorkSheetValues(rowsResponse.body.values,0,headerCount);
+
+  return labeledRowValues;
 }
 
 type GetHeaderRowProps = {

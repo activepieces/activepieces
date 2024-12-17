@@ -1,10 +1,10 @@
-import { logger } from '@activepieces/server-shared';
 import { CopilotProviderType, ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAzure } from '@ai-sdk/azure';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { platformService } from '../../platform/platform.service';
 import { LanguageModel } from 'ai';
+import { system } from '../../helper/system/system';
 
 // Types
 interface AssistantProvider {
@@ -65,6 +65,7 @@ function validateAzureProvider(provider: AssistantProvider): void {
 
 function createModelInstance(provider: AssistantProvider): LanguageModel {
   const providerType = getProviderType(provider.provider);
+  const logger = system.globalLogger()
   logger.debug('[ModelService] Creating model instance', { providerType });
 
   try {
@@ -107,6 +108,8 @@ function createModelInstance(provider: AssistantProvider): LanguageModel {
 
 export const modelService = {
   async getModel(platformId: string): Promise<LanguageModel> {
+    const logger = system.globalLogger()
+
     try {
       const platform = await platformService.getOneOrThrow(platformId);
       const { copilotSettings } = platform;

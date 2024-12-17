@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class AddOtpEntity1700396157624 implements MigrationInterface {
     name = 'AddOtpEntity1700396157624'
@@ -29,7 +31,7 @@ export class AddOtpEntity1700396157624 implements MigrationInterface {
             ADD CONSTRAINT "fk_otp_user_id" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
 
-        logger.info('AddOtpEntity1700396157624 up')
+        log.info('AddOtpEntity1700396157624 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -46,6 +48,6 @@ export class AddOtpEntity1700396157624 implements MigrationInterface {
             DROP TABLE "otp"
         `)
 
-        logger.info('AddOtpEntity1700396157624 down')
+        log.info('AddOtpEntity1700396157624 down')
     }
 }

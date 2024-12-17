@@ -1,6 +1,6 @@
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT, ProjectBilling } from '@activepieces/ee-shared'
-import { logger } from '@activepieces/server-shared'
 import { apId, isNil, User } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { distributedLock } from '../../../helper/lock'
@@ -11,11 +11,12 @@ import { stripeHelper } from './stripe-helper'
 
 const projectBillingRepo = repoFactory(ProjectBillingEntity)
 
-export const projectBillingService = {
+export const projectBillingService = (log: FastifyBaseLogger) => ({
     async getOrCreateForProject(projectId: string): Promise<ProjectBilling> {
         const projectBilling = await distributedLock.acquireLock({
             key: `project_billing_${projectId}`,
             timeout: 30 * 1000,
+            log,
         })
         try {
             const project = await projectService.getOneOrThrow(projectId)
@@ -24,7 +25,7 @@ export const projectBillingService = {
             })
             const billing = await projectBillingRepo().findOneBy({ projectId })
             if (isNil(billing)) {
-                return await createInitialBilling(user, projectId)
+                return await createInitialBilling(user, projectId, log)
             }
             return billing
         }
@@ -40,22 +41,22 @@ export const projectBillingService = {
         await projectBillingRepo().increment({
             projectId,
         }, 'includedTasks', tasks)
-        return projectBillingService.getOrCreateForProject(projectId)
+        return projectBillingService(log).getOrCreateForProject(projectId)
     },
     async updateSubscriptionIdByCustomerId(subscription: Stripe.Subscription): Promise<ProjectBilling> {
         const stripeCustomerId = subscription.customer as string
         const projectBilling = await projectBillingRepo().findOneByOrFail({ stripeCustomerId })
-        logger.info(`Updating subscription id for project billing ${projectBilling.id}`)
+        log.info(`Updating subscription id for project billing ${projectBilling.id}`)
         await projectBillingRepo().update(projectBilling.id, {
             stripeSubscriptionId: subscription.id,
             subscriptionStatus: subscription.status as ApSubscriptionStatus,
         })
         return projectBillingRepo().findOneByOrFail({ stripeCustomerId })
     },
-}
+})
 
-async function createInitialBilling(user: User, projectId: string): Promise<ProjectBilling> {
-    const stripeCustomerId = await stripeHelper.getOrCreateCustomer(
+async function createInitialBilling(user: User, projectId: string, log: FastifyBaseLogger): Promise<ProjectBilling> {
+    const stripeCustomerId = await stripeHelper(log).getOrCreateCustomer(
         user,
         projectId,
     )

@@ -8,7 +8,6 @@ import {
     ProjectSyncPlan,
     ProjectSyncPlanOperation, PushGitRepoRequest,
 } from '@activepieces/ee-shared'
-import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -18,9 +17,11 @@ import {
     isNil,
     SeekPage,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowService } from '../../flows/flow/flow.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { gitHelper } from './git-helper'
 import { gitSyncHelper } from './git-sync-helper'
@@ -30,7 +31,7 @@ import { ProjectMappingState } from './project-diff/project-mapping-state'
 
 const repo = repoFactory(GitRepoEntity)
 
-export const gitRepoService = {
+export const gitRepoService = (log: FastifyBaseLogger) => ({
     async upsert(request: ConfigureRepoRequest): Promise<GitRepo> {
         await gitHelper.validateConnection(request)
 
@@ -99,20 +100,20 @@ export const gitRepoService = {
         })
     },
     async push({ id, userId, request }: PushParams): Promise<void> {
-        const gitRepo = await gitRepoService.getOrThrow({ id })
+        const gitRepo = await this.getOrThrow({ id })
         const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         const project = await projectService.getOneOrThrow(gitRepo.projectId)
         const mappingState = gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()
         switch (request.type) {
             case GitPushOperationType.PUSH_FLOW: {
-                const flow = await flowService.getOnePopulatedOrThrow({
+                const flow = await flowService(log).getOnePopulatedOrThrow({
                     id: request.flowId,
                     projectId: project.id,
                     removeConnectionsName: false,
                     removeSampleData: true,
                 })
                 const flowName = mappingState.findSourceId(request.flowId) ?? request.flowId
-                await gitSyncHelper.upsertFlowToGit(flowName, flow, flowFolderPath)
+                await gitSyncHelper(log).upsertFlowToGit(flowName, flow, flowFolderPath)
                 await repo().update({ id: gitRepo.id }, {
                     mapping: mappingState.mapFlow({
                         sourceId: flowName,
@@ -132,7 +133,7 @@ export const gitRepoService = {
                 if (isNil(sourceFlowId)) {
                     break
                 }
-                const deleted = await gitSyncHelper.deleteFlowFromGit(sourceFlowId, flowFolderPath)
+                const deleted = await gitSyncHelper(log).deleteFlowFromGit(sourceFlowId, flowFolderPath)
                 if (deleted) {
                     await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowId} from user interface`)
                 }
@@ -143,8 +144,8 @@ export const gitRepoService = {
     async pull({ gitRepo, dryRun, userId }: PullGitRepoRequest): Promise<ProjectSyncPlan> {
         const project = await projectService.getOneOrThrow(gitRepo.projectId)
         const { flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
-        const gitProjectState = await gitSyncHelper.getStateFromGit(flowFolderPath)
-        const dbProjectState = await gitSyncHelper.getStateFromDB(project.id)
+        const gitProjectState = await gitSyncHelper(log).getStateFromGit(flowFolderPath)
+        const dbProjectState = await gitSyncHelper(log).getStateFromDB(project.id)
         const mappingState = (gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()).clean({
             gitFiles: gitProjectState,
             projectFlows: dbProjectState,
@@ -162,9 +163,9 @@ export const gitRepoService = {
         for (const operation of operations) {
             switch (operation.type) {
                 case ProjectOperationType.UPDATE_FLOW: {
-                    const flowUpdated = await gitSyncHelper.updateFlowInProject(operation.projectFlow, operation.gitFile.flow, gitRepo.projectId)
+                    const flowUpdated = await gitSyncHelper(log).updateFlowInProject(operation.projectFlow, operation.gitFile.flow, gitRepo.projectId)
                     if (flowUpdated.status === FlowStatus.ENABLED) {
-                        publishJobs.push(gitSyncHelper.republishFlow(flowUpdated.id, gitRepo.projectId))
+                        publishJobs.push(gitSyncHelper(log).republishFlow(flowUpdated.id, gitRepo.projectId))
                     }
                     newMapState = newMapState.mapFlow({
                         sourceId: operation.gitFile.baseFilename,
@@ -173,7 +174,7 @@ export const gitRepoService = {
                     break
                 }
                 case ProjectOperationType.CREATE_FLOW: {
-                    const flowCreated = await gitSyncHelper.createFlowInProject(operation.gitFile.flow, gitRepo.projectId)
+                    const flowCreated = await gitSyncHelper(log).createFlowInProject(operation.gitFile.flow, gitRepo.projectId)
                     newMapState = newMapState.mapFlow({
                         sourceId: operation.gitFile.baseFilename,
                         targetId: flowCreated.id,
@@ -181,7 +182,7 @@ export const gitRepoService = {
                     break
                 }
                 case ProjectOperationType.DELETE_FLOW:
-                    await gitSyncHelper.deleteFlowFromProject(operation.projectFlow.id, gitRepo.projectId)
+                    await gitSyncHelper(log).deleteFlowFromProject(operation.projectFlow.id, gitRepo.projectId)
                     newMapState = newMapState.deleteFlow(operation.projectFlow.id)
                     break
             }
@@ -203,7 +204,7 @@ export const gitRepoService = {
         }
         await repo().delete({ id, projectId })
     },
-}
+})
 
 function toResponse(operations: ProjectOperation[], errors: ProjectSyncError[] = []): ProjectSyncPlan {
     const responsePlans: ProjectSyncPlanOperation[] = operations.map((operation) => {

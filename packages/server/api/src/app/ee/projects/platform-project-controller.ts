@@ -41,14 +41,14 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         })
         await projectLimitsService.upsert(DEFAULT_PLATFORM_LIMIT, project.id)
         const projectWithUsage =
-            await platformProjectService.getWithPlanAndUsageOrThrow(project.id)
+            await platformProjectService(request.log).getWithPlanAndUsageOrThrow(project.id)
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
 
     app.get('/', ListProjectRequestForApiKey, async (request) => {
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
-        return platformProjectService.getAll({
+        return platformProjectService(request.log).getAll({
             externalId: request.query.externalId,
             principalType: request.principal.type,
             principalId: request.principal.id,
@@ -68,10 +68,13 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
                 params: {},
             })
         }
-        return platformProjectService.update({
+        return platformProjectService(request.log).update({
             platformId: request.principal.platform.id,
             projectId: request.params.id,
-            request: request.body,
+            request: {
+                ...request.body,
+                externalId: ownThePlatform ? request.body.externalId : undefined,
+            },
         })
     })
 
@@ -79,7 +82,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
         assertProjectToDeleteIsNotPrincipalProject(req.principal, req.params.id)
 
-        await platformProjectService.softDelete({
+        await platformProjectService(req.log).softDelete({
             id: req.params.id,
             platformId: req.principal.platform.id,
         })

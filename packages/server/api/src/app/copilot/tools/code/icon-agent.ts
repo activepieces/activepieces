@@ -1,8 +1,10 @@
-import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
 import { Message } from './types'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 
 const iconSelectionSchema = z.object({
     icon: z.string(),
@@ -109,7 +111,7 @@ export async function selectIcon(requirement: string, conversationHistory: Messa
             temperature: 0,
         })
 
-        logger.debug({
+        system.globalLogger().debug({
             requirement,
             selectedIcon: llmResponse?.object?.icon,
             explanation: llmResponse?.object?.explanation,
@@ -129,7 +131,7 @@ export async function selectIcon(requirement: string, conversationHistory: Messa
         return `https://cdn.activepieces.com/pieces/ai/code/${llmResponse.object.icon}.svg`
     }
     catch (error) {
-        exceptionHandler.handle(error)
+        exceptionHandler.handle(error, system.globalLogger())
         return null
     }
 }

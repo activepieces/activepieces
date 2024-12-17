@@ -1,7 +1,9 @@
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
@@ -63,7 +65,7 @@ const appSumoPlans: Record<string, FlowPlanLimits> = {
     },
 }
 
-export const appsumoService = {
+export const appsumoService = (log: FastifyBaseLogger) => ({
     getPlanInformation(plan_id: string): FlowPlanLimits {
         return appSumoPlans[plan_id]
     },
@@ -92,27 +94,27 @@ export const appsumoService = {
         activation_email: string
     }): Promise<void> {
         const { plan_id, action, uuid, activation_email: rawEmail } = request
-        const appSumoLicense = await appsumoService.getById(uuid)
+        const appSumoLicense = await appsumoService(log).getById(uuid)
         const activation_email = appSumoLicense?.activation_email ?? rawEmail
-        const appSumoPlan = appsumoService.getPlanInformation(plan_id)
+        const appSumoPlan = appsumoService(log).getPlanInformation(plan_id)
         const user = await userService.getByPlatformAndEmail({
             platformId: system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID),
             email: activation_email,
         })
         if (!isNil(user)) {
             const project = await projectService.getUserProjectOrThrow(user.id)
-            await projectBillingService.getOrCreateForProject(project.id)
+            await projectBillingService(log).getOrCreateForProject(project.id)
 
             if (action === 'refund') {
                 await projectLimitsService.upsert(DEFAULT_FREE_PLAN_LIMIT, project.id)
-                await projectBillingService.updateByProjectId(project.id, {
+                await projectBillingService(log).updateByProjectId(project.id, {
                     includedTasks: DEFAULT_FREE_PLAN_LIMIT.tasks,
                     includedUsers: DEFAULT_FREE_PLAN_LIMIT.teamMembers,
                 })
             }
             else {
                 await projectLimitsService.upsert(appSumoPlan, project.id)
-                await projectBillingService.updateByProjectId(project.id, {
+                await projectBillingService(log).updateByProjectId(project.id, {
                     includedTasks: appSumoPlan.tasks,
                     includedUsers: appSumoPlan.teamMembers,
                 })
@@ -120,16 +122,16 @@ export const appsumoService = {
         }
 
         if (action === 'refund') {
-            await appsumoService.delete({
+            await appsumoService(log).delete({
                 email: activation_email,
             })
         }
         else {
-            await appsumoService.upsert({
+            await appsumoService(log).upsert({
                 uuid,
                 plan_id,
                 activation_email,
             })
         }
     },
-}
+})

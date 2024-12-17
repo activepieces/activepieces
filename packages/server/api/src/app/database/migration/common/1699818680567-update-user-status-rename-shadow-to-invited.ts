@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class UpdateUserStatusRenameShadowToInvited1699818680567
 implements MigrationInterface {
@@ -12,7 +14,7 @@ implements MigrationInterface {
             WHERE "status" = 'SHADOW'
         `)
 
-        logger.info('UpdateUserStatusRenameShadowToInvited1699818680567 up')
+        log.info('UpdateUserStatusRenameShadowToInvited1699818680567 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -22,6 +24,6 @@ implements MigrationInterface {
             WHERE "status" = 'INVITED'
         `)
 
-        logger.info('UpdateUserStatusRenameShadowToInvited1699818680567 down')
+        log.info('UpdateUserStatusRenameShadowToInvited1699818680567 down')
     }
 }

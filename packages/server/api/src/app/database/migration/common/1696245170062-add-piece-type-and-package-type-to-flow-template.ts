@@ -1,7 +1,10 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
+
 export class AddPieceTypeAndPackageTypeToFlowTemplate1696245170062
 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -22,7 +25,7 @@ implements MigrationInterface {
                 )
             }
         }
-        logger.info('AddPieceTypeAndPackageTypeToFlowTemplate1696245170062: up')
+        log.info('AddPieceTypeAndPackageTypeToFlowTemplate1696245170062: up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -43,7 +46,7 @@ implements MigrationInterface {
                 )
             }
         }
-        logger.info('AddPieceTypeAndPackageTypeToFlowTemplate1696245170062: down')
+        log.info('AddPieceTypeAndPackageTypeToFlowTemplate1696245170062: down')
     }
 }
 

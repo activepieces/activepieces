@@ -1,9 +1,10 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 import { appsumoService } from './appsumo.service'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -90,7 +91,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (
             }
             else {
                 const { plan_id, action, uuid, activation_email } = request.body
-                await appsumoService.handleRequest({
+                await appsumoService(request.log).handleRequest({
                     plan_id,
                     action,
                     uuid,

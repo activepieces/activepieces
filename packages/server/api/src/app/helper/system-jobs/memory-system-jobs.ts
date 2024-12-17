@@ -1,12 +1,12 @@
-import { logger } from '@activepieces/server-shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
 
 const scheduled: Record<string, boolean> = {}
 
-export const memorySystemJobSchedulerService: SystemJobSchedule = {
+export const memorySystemJobSchedulerService = (log: FastifyBaseLogger): SystemJobSchedule => ({
     async init(): Promise<void> {
         //
     },
@@ -20,7 +20,7 @@ export const memorySystemJobSchedulerService: SystemJobSchedule = {
                 const diff = schedule.date.diff(dayjs(), 'milliseconds')
                 if (diff > 0) {
                     setTimeout(() => {
-                        jobHandler(job.data).catch(logger.error)
+                        jobHandler(job.data).catch(log.error)
                     }, diff)
                 }
                 break
@@ -28,7 +28,7 @@ export const memorySystemJobSchedulerService: SystemJobSchedule = {
             case 'repeated': {
                 const cronExpression = schedule.cron
                 cron.schedule(cronExpression, () => {
-                    jobHandler(job.data).catch(logger.error)
+                    jobHandler(job.data).catch(log.error)
                 })
                 break
             }
@@ -38,4 +38,4 @@ export const memorySystemJobSchedulerService: SystemJobSchedule = {
     async close(): Promise<void> {
         //
     },
-}
+})

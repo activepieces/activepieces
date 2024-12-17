@@ -1,24 +1,26 @@
-import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ProjectUsage } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { getRedisConnection } from '../../database/redis-connection'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { apDayjs } from '../../helper/dayjs-helper'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { projectService } from '../project-service'
 
 type UsageType = 'tasks' | 'aiTokens'
 
-const environment = system.get(SharedSystemProp.ENVIRONMENT)
+const environment = system.get(AppSystemProp.ENVIRONMENT)
 
 const redisKeys: Record<UsageType, (projectId: string, startBillingPeriod: string) => string> = {
     'tasks': (projectId: string, startBillingPeriod: string) => `project-usage:${projectId}:${startBillingPeriod}`,
     'aiTokens': (projectId: string, startBillingPeriod: string) => `project-ai-tokens-usage:${projectId}:${startBillingPeriod}`,
 }
 
-export const projectUsageService = {
+export const projectUsageService = (log: FastifyBaseLogger) => ({
     async getUsageForBillingPeriod(projectId: string, startBillingPeriod: string): Promise<ProjectUsage> {
         const flowTasks = await getUsage(projectId, getCurrentingStartPeriod(startBillingPeriod), 'tasks')
-        const teamMembers = await projectMemberService.countTeamMembers(projectId) + await userInvitationsService.countByProjectId(projectId)
+        const teamMembers = await projectMemberService(log).countTeamMembers(projectId) + await userInvitationsService(log).countByProjectId(projectId)
         const aiTokens = await getUsage(projectId, getCurrentingStartPeriod(startBillingPeriod), 'aiTokens')
         return {
             tasks: flowTasks,
@@ -30,7 +32,7 @@ export const projectUsageService = {
     getCurrentingStartPeriod,
     getCurrentingEndPeriod,
     getUsage,
-}
+})
 
 function getCurrentingStartPeriod(datetime: string): string {
     const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000

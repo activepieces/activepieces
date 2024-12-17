@@ -1,12 +1,13 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { analyticsService } from './analytics.service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
 
 export const analyticsModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-    await piecesAnalyticsService.init()
+    await piecesAnalyticsService(app.log).init()
     await app.register(analyticsController, { prefix: '/v1/analytics' })
 }
 
@@ -29,6 +30,6 @@ const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
                 topProjects: [],
             }
         }
-        return analyticsService.generateReport(platform.id)
+        return analyticsService(request.log).generateReport(platform.id)
     })
 }

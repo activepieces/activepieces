@@ -1,8 +1,8 @@
-import {  ApQueueJob, QueueName,  system, WorkerSystemProps } from '@activepieces/server-shared'
+import { ApQueueJob, QueueName, systemConstants } from '@activepieces/server-shared'
 import { Semaphore } from 'async-mutex'
 import { workerApiService } from './api/server-api.service'
 
-const POLLING_POOL_SIZE = system.getNumberOrThrow(WorkerSystemProps.POLLING_POOL_SIZE)
+const POLLING_POOL_SIZE = systemConstants.POLLING_POOL_SIZE
 
 const pollLocks = {
     [QueueName.ONE_TIME]: new Semaphore(POLLING_POOL_SIZE),

@@ -12,6 +12,7 @@ import {
 } from '@activepieces/shared'
 import { flowService } from '../../../flows/flow/flow.service'
 import { generateCode } from './code-agent'
+import { FastifyBaseLogger } from 'fastify'
 
 function createErrorResponse(error: string, isConfigError = false): AskCopilotCodeResponse {
     return {
@@ -50,14 +51,10 @@ function mergeInputs(
     return mergedInputs
 }
 
-export const codeGeneratorTool = {
-    async generateCode(
-        projectId: string,
-        platformId: string,
-        request: AskCopilotRequest,
-    ): Promise<AskCopilotCodeResponse> {
+export const codeGeneratorTool = (log: FastifyBaseLogger) => ({
+    async generateCode(projectId: string, platformId: string, request: AskCopilotRequest): Promise<AskCopilotCodeResponse> {
         try {
-            const flowVersion = await flowService.getOnePopulatedOrThrow({
+            const flowVersion = await flowService(log).getOnePopulatedOrThrow({
                 id: request.flowId,
                 versionId: request.flowVersionId,
                 projectId,
@@ -83,7 +80,7 @@ export const codeGeneratorTool = {
             }
         }
         catch (error) {
-            exceptionHandler.handle(error)
+            exceptionHandler.handle(error, log)
             console.error('[CodeGenerator] Error:', error)
 
             if (error instanceof ActivepiecesError && error.error.code === ErrorCode.COPILOT_FAILED) {
@@ -96,4 +93,4 @@ export const codeGeneratorTool = {
             )
         }
     },
-}
+})

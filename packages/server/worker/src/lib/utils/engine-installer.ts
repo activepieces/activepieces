@@ -1,26 +1,27 @@
 import { PathLike } from 'fs'
 import { copyFile, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { logger, memoryLock, SharedSystemProp, system } from '@activepieces/server-shared'
+import { memoryLock, systemConstants } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { cacheHandler } from './cache-handler'
+import { workerMachine } from './machine'
 
-const engineExecutablePath = system.getOrThrow(
-    SharedSystemProp.ENGINE_EXECUTABLE_PATH,
-)
-const isDev = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
+const engineExecutablePath = systemConstants.ENGINE_EXECUTABLE_PATH
 const ENGINE_CACHE_ID = nanoid()
 const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 
 /**
  * Installs the engine executable to the given path
  */
-export const engineInstaller = {
+export const engineInstaller = (log: FastifyBaseLogger) => ({
     async install({ path }: InstallParams): Promise<void> {
         const lock = await memoryLock.acquire(`engineInstaller#${path}`)
+        const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
+
         try {
-            logger.debug({ path }, '[engineInstaller#install]')
+            log.debug({ path }, '[engineInstaller#install]')
             const cache = cacheHandler(path)
             const isEngineInstalled = await cache.cacheCheckState(ENGINE_INSTALLED) === ENGINE_CACHE_ID
             if (!isEngineInstalled || isDev) {
@@ -35,7 +36,7 @@ export const engineInstaller = {
             await lock.release()
         }
     },
-}
+})
 
 async function atomicCopy(src: PathLike, dest: PathLike): Promise<void> {
     const destDir = dirname(dest.toString())

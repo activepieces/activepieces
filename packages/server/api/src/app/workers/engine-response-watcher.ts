@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/shared'
-import { logger } from '@sentry/utils'
+import { FastifyBaseLogger } from 'fastify'
 import { pubsub } from '../helper/pubsub'
 
 type EngineResponseWithId<T> = { requestId: string, response: T }
@@ -7,13 +7,13 @@ type EngineResponseWithId<T> = { requestId: string, response: T }
 const listeners = new Map<string, (flowResponse: EngineResponseWithId<unknown>) => void>()
 const SERVER_ID = apId()
 
-export const engineResponseWatcher = {
+export const engineResponseWatcher = (log: FastifyBaseLogger) => ({
     getServerId(): string {
         return SERVER_ID
     },
 
     async init(): Promise<void> {
-        logger.info('[engineResponseWatcher#init] Initializing engine run watcher')
+        log.info('[engineResponseWatcher#init] Initializing engine run watcher')
         
         await pubsub().subscribe(
             `engine-run:sync:${SERVER_ID}`,
@@ -25,7 +25,7 @@ export const engineResponseWatcher = {
                     listener(parsedMessage)
                 }
                 
-                logger.info(
+                log.info(
                     { requestId: parsedMessage.requestId }, 
                     '[engineWatcher#init]',
                 )
@@ -34,13 +34,14 @@ export const engineResponseWatcher = {
     },
 
     async oneTimeListener<T>(requestId: string, timeoutRequest: boolean, timeoutMs: number | undefined, defaultResponse: T | undefined): Promise<T> {
-        logger.info({ requestId }, '[engineWatcher#listen]')
+        log.info('[engineWatcher#listen]')
 
         return new Promise<T>((resolve) => {
             let timeout: NodeJS.Timeout
 
             if (timeoutRequest) {
                 timeout = setTimeout(() => {
+                    log.info('[engineWatcher#listen] Timeout reached')
                     listeners.delete(requestId)
                     resolve(defaultResponse as T)
                 }, timeoutMs)
@@ -51,6 +52,7 @@ export const engineResponseWatcher = {
                     clearTimeout(timeout)
                 }
                 listeners.delete(requestId)
+                log.info({ requestId }, '[engineWatcher#listen] Response received')
                 resolve(flowResponse.response as T)
             }
 
@@ -63,7 +65,7 @@ export const engineResponseWatcher = {
         workerServerId: string, 
         response: T,
     ): Promise<void> {
-        logger.info({ requestId }, '[engineWatcher#publish]')
+        log.info({ requestId }, '[engineWatcher#publish]')
         
         const message: EngineResponseWithId<T> = { requestId, response }
         await pubsub().publish(
@@ -75,5 +77,4 @@ export const engineResponseWatcher = {
     async shutdown(): Promise<void> {
         await pubsub().unsubscribe(`engine-run:sync:${SERVER_ID}`)
     },
-}
-
+})

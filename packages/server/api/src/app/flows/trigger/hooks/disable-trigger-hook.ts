@@ -11,7 +11,8 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
-import { EngineHelperResponse, EngineHelperTriggerResult, webhookUtils } from 'server-worker'
+import { FastifyBaseLogger } from 'fastify'
+import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { jobQueue } from '../../../workers/queue'
 import { userInteractionWatcher } from '../../../workers/user-interaction-watcher'
@@ -19,6 +20,7 @@ import { triggerUtils } from './trigger-utils'
 
 export const disablePieceTrigger = async (
     params: DisableParams,
+    log: FastifyBaseLogger,
 ): Promise<EngineHelperResponse<
 EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
 > | null> => {
@@ -27,7 +29,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
         return null
     }
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await triggerUtils.getPieceTrigger({
+    const pieceTrigger = await triggerUtils(log).getPieceTrigger({
         trigger: flowTrigger,
         projectId,
     })
@@ -37,14 +39,10 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
     }
 
     try {
-        const result = await userInteractionWatcher.submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>>>({
+        const result = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>>>({
             jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
             hookType: TriggerHookType.ON_DISABLE,
             flowVersion,
-            webhookUrl: await webhookUtils.getWebhookUrl({
-                flowId: flowVersion.flowId,
-                simulate,
-            }),
             test: simulate,
             projectId,
         })
@@ -52,13 +50,13 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
     }
     catch (error) {
         if (!params.ignoreError) {
-            exceptionHandler.handle(error)
+            exceptionHandler.handle(error, log)
             throw error
         }
         return null
     }
     finally {
-        await sideeffect(pieceTrigger, projectId, flowVersion)
+        await sideeffect(pieceTrigger, projectId, flowVersion, log)
     }
 }
 
@@ -66,6 +64,7 @@ async function sideeffect(
     pieceTrigger: TriggerBase,
     projectId: string,
     flowVersion: FlowVersion,
+    log: FastifyBaseLogger,
 ): Promise<void> {
     switch (pieceTrigger.type) {
         case TriggerStrategy.APP_WEBHOOK:
@@ -77,14 +76,14 @@ async function sideeffect(
         case TriggerStrategy.WEBHOOK: {
             const renewConfiguration = pieceTrigger.renewConfiguration
             if (renewConfiguration?.strategy === WebhookRenewStrategy.CRON) {
-                await jobQueue.removeRepeatingJob({
+                await jobQueue(log).removeRepeatingJob({
                     flowVersionId: flowVersion.id,
                 })
             }
             break
         }
         case TriggerStrategy.POLLING:
-            await jobQueue.removeRepeatingJob({
+            await jobQueue(log).removeRepeatingJob({
                 flowVersionId: flowVersion.id,
             })
             break

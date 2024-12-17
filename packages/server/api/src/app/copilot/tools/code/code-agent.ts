@@ -1,10 +1,12 @@
-import { logger } from '@activepieces/server-shared'
 import { isNil, ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { generateObject } from 'ai'
 import { selectIcon } from './icon-agent'
 import { modelService } from '../../services/model.service'
 import { CodeAgentResponse, Message, codeGenerationSchema, defaultResponse } from './types'
 import { getCodeGenerationPrompt } from './prompts/code-generation.prompt'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export async function generateCode(
     requirement: string,
@@ -28,7 +30,7 @@ export async function generateCode(
         })
 
         if (isNil(llmResponse?.object)) {
-            logger.warn({ platformId, requirement }, '[generateCode] No response from AI model')
+            log.warn({ platformId, requirement }, '[generateCode] No response from AI model')
             throw new Error('Failed to generate code: No response from AI model')
         }
 
@@ -47,7 +49,7 @@ export async function generateCode(
         }
     }
     catch (error) {
-        logger.error({ error, requirement, platformId }, '[generateCode] Failed to generate code')
+        log.error({ error, requirement, platformId }, '[generateCode] Failed to generate code')
         if (error instanceof ActivepiecesError && error.message === ErrorCode.COPILOT_FAILED) {
             throw error
         }

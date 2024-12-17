@@ -4,7 +4,6 @@ import {
     MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -23,6 +22,7 @@ import {
     spreadIfDefined,
     UserStatus,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -31,6 +31,7 @@ import { flagService } from '../../flags/flag.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { projectUsageService } from '../../project/usage/project-usage-service'
@@ -42,7 +43,7 @@ import { platformProjectSideEffects } from './platform-project-side-effects'
 
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
-export const platformProjectService = {
+export const platformProjectService = (log: FastifyBaseLogger) => ({
     async getAll(params: GetAllParams): Promise<SeekPage<ProjectWithLimits>> {
         const { cursorRequest, limit } = params
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -70,7 +71,7 @@ export const platformProjectService = {
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const projects: ProjectWithLimits[] = await Promise.all(
-            data.map(enrichProject),
+            data.map((project) => enrichProject(project, log)),
         )
         return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
     },
@@ -79,9 +80,12 @@ export const platformProjectService = {
         projectId,
         request,
     }: UpdateParams): Promise<ProjectWithLimits> {
-        await projectService.update(projectId, request)
+        await projectService.update(projectId, {
+            displayName: request.displayName,
+            externalId: request.externalId,
+        })
         if (!isNil(request.plan)) {
-            const isSubscribed = await isSubscribedInStripe(projectId)
+            const isSubscribed = await isSubscribedInStripe(projectId, log)
             const project = await projectService.getOneOrThrow(projectId)
             const isCustomerProject = isCustomerPlatform(project.platformId)
             if (isSubscribed || isCustomerProject) {
@@ -107,6 +111,7 @@ export const platformProjectService = {
                 id: projectId,
                 deleted: IsNull(),
             }),
+            log,
         )
     },
 
@@ -115,7 +120,7 @@ export const platformProjectService = {
             await assertAllProjectFlowsAreDisabled({
                 projectId: id,
                 entityManager,
-            })
+            }, log)
 
             await softDeleteOrThrow({
                 id,
@@ -123,7 +128,7 @@ export const platformProjectService = {
                 entityManager,
             })
 
-            await platformProjectSideEffects.onSoftDelete({
+            await platformProjectSideEffects(log).onSoftDelete({
                 id,
             })
         })
@@ -133,9 +138,9 @@ export const platformProjectService = {
         await projectRepo().delete({
             id,
         })
-        await appConnectionService.deleteAllProjectConnections(id)
+        await appConnectionService(log).deleteAllProjectConnections(id)
     },
-}
+})
 
 type GetAllParams = {
     principalType: PrincipalType
@@ -151,12 +156,12 @@ function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
     return isCustomerPlatform ? limit : Math.min(limit ?? MAXIMUM_ALLOWED_TASKS, MAXIMUM_ALLOWED_TASKS)
 }
 
-async function isSubscribedInStripe(projectId: ProjectId): Promise<boolean> {
+async function isSubscribedInStripe(projectId: ProjectId, log: FastifyBaseLogger): Promise<boolean> {
     const isCloud = system.getEdition() === ApEdition.CLOUD
     if (!isCloud) {
         return false
     }
-    const status = await projectBillingService.getOrCreateForProject(projectId)
+    const status = await projectBillingService(log).getOrCreateForProject(projectId)
     return status.subscriptionStatus === ApSubscriptionStatus.ACTIVE
 }
 function isCustomerPlatform(platformId: string | undefined): boolean {
@@ -223,6 +228,7 @@ async function getIdsOfProjects({ platformId, userId }: { platformId: string, us
 
 async function enrichProject(
     project: Project,
+    log: FastifyBaseLogger,
 ): Promise<ProjectWithLimits> {
     const totalUsers = await projectMemberRepo().countBy({
         projectId: project.id,
@@ -234,11 +240,11 @@ async function enrichProject(
         .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
         .getCount()
   
-    const totalFlows = await flowService.count({
+    const totalFlows = await flowService(log).count({
         projectId: project.id,
     })
 
-    const activeFlows = await flowService.count({
+    const activeFlows = await flowService(log).count({
         projectId: project.id,
         status: FlowStatus.ENABLED,
     })
@@ -250,9 +256,9 @@ async function enrichProject(
             project.id,
             DEFAULT_FREE_PLAN_LIMIT,
         ),
-        usage: await projectUsageService.getUsageForBillingPeriod(
+        usage: await projectUsageService(log).getUsageForBillingPeriod(
             project.id,
-            projectUsageService.getCurrentingStartPeriod(project.created),
+            projectUsageService(log).getCurrentingStartPeriod(project.created),
         ),
         analytics: { 
             activeFlows,
@@ -265,10 +271,11 @@ async function enrichProject(
 
 const assertAllProjectFlowsAreDisabled = async (
     params: AssertAllProjectFlowsAreDisabledParams,
+    log: FastifyBaseLogger,
 ): Promise<void> => {
     const { projectId, entityManager } = params
 
-    const projectHasEnabledFlows = await flowService.existsByProjectAndStatus({
+    const projectHasEnabledFlows = await flowService(log).existsByProjectAndStatus({
         projectId,
         status: FlowStatus.ENABLED,
         entityManager,
