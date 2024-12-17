@@ -116,7 +116,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             {keyboardShortcut && (
               <div className="flex justify-center items-center gap-2">
                 {children}
-                <Shortcut shortcut={keyboardShortcut} withCtrl={true} />
+                <Shortcut shortcutKey={keyboardShortcut} withCtrl={true} />
               </div>
             )}
             {!keyboardShortcut && children}
