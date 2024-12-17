@@ -8,7 +8,7 @@ export const copilotModule: FastifyPluginAsyncTypebox = async () => {
     websocketService.addListener(WebsocketServerEvent.ASK_COPILOT, (socket) => {
         return async (request: AskCopilotRequest) => {
             const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
-            const response: AskCopilotResponse | null = await copilotService.ask(principal.projectId, request)
+            const response: AskCopilotResponse | null = await copilotService.ask(principal.projectId, principal.platform.id, request)
             socket.emit(WebsocketClientEvent.ASK_COPILOT_FINISHED, response)
         }
     })

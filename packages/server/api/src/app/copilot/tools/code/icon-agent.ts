@@ -2,17 +2,13 @@ import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/s
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
+import { Message } from './types'
 
 const iconSelectionSchema = z.object({
     icon: z.string(),
     explanation: z.string(),
     isNewRequest: z.boolean().default(true),
 })
-
-type Message = {
-    role: 'user' | 'assistant'
-    content: string
-}
 
 function getModel() {
     try {

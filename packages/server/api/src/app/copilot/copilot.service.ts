@@ -3,8 +3,8 @@ import { codeGeneratorTool } from './tools/code/code-generate'
 
 
 export const copilotService = {
-    async ask(projectId: string, request: AskCopilotRequest): Promise<AskCopilotResponse | null> {
-        return codeGeneratorTool.generateCode(projectId, request)
+    async ask(projectId: string, platformId: string, request: AskCopilotRequest): Promise<AskCopilotResponse | null> {
+        return codeGeneratorTool.generateCode(projectId, platformId, request)
     },
 
 }

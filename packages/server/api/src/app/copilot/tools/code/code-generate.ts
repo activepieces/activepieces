@@ -1,12 +1,12 @@
 import { exceptionHandler } from '@activepieces/server-shared'
-import { Action, ActionType, AskCopilotCodeResponse, AskCopilotRequest, flowStructureUtil, isNil, Trigger } from '@activepieces/shared'
+import { Action, ActionType, AskCopilotCodeResponse, AskCopilotRequest, flowStructureUtil, isNil, Trigger, ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from '../../../flows/flow/flow.service'
 import { generateCode } from './code-agent'
 
-function createDefaultResponse(error?: string): AskCopilotCodeResponse {
+function createErrorResponse(error: string): AskCopilotCodeResponse {
     return {
         code: `export const code = async (inputs: Record<string, never>) => {
-    throw new Error('${error || 'Failed to generate code. Please try again with a different prompt.'}');
+    throw new Error('${error}');
     return { error: true };
 }`,
         packageJson: {
@@ -15,6 +15,19 @@ function createDefaultResponse(error?: string): AskCopilotCodeResponse {
         inputs: {},
         icon: 'AlertTriangle',
         title: 'Error: Code Generation Failed',
+    }
+}
+
+function createConfigurationResponse(): AskCopilotCodeResponse {
+    return {
+        code: '',
+        packageJson: {
+            dependencies: {},
+        },
+        inputs: {},
+        icon: 'Settings',
+        title: 'Configuration Required',
+        textMessage: 'OpenAI service is not configured. Please check your platform settings.'
     }
 }
 
@@ -39,7 +52,7 @@ function mergeInputs(copilotInputs: Record<string, string>, selectedStep: Action
 }
 
 export const codeGeneratorTool = {
-    async generateCode(projectId: string, request: AskCopilotRequest): Promise<AskCopilotCodeResponse> {
+    async generateCode(projectId: string, platformId: string, request: AskCopilotRequest): Promise<AskCopilotCodeResponse> {
         try {
             const flowVersion = await flowService.getOnePopulatedOrThrow({
                 id: request.flowId,
@@ -48,10 +61,10 @@ export const codeGeneratorTool = {
             })
             const selectedStep = request.selectedStepName ? flowStructureUtil.getStep(request.selectedStepName, flowVersion.version.trigger) : undefined
         
-            const copilotResponse = await generateCode(request.prompt, request.context)
+            const copilotResponse = await generateCode(request.prompt, projectId, platformId, request.context)
             
             if (!copilotResponse?.code) {
-                return createDefaultResponse('Code generation failed')
+                return createErrorResponse('Code generation failed')
             }
 
             const mergedInputs = mergeInputs(copilotResponse.inputs, selectedStep)
@@ -68,7 +81,11 @@ export const codeGeneratorTool = {
         }
         catch (error) {
             exceptionHandler.handle(error)
-            return createDefaultResponse(error instanceof Error ? error.message : 'Unknown error occurred')
+            console.log(error)  
+            if (error instanceof ActivepiecesError && error.name === ErrorCode.OPEN_AI_FAILED) {
+                return createConfigurationResponse()
+            }
+            return createErrorResponse(error instanceof Error ? error.message : 'Unknown error occurred')
         }
     },
 }
