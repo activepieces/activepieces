@@ -12,7 +12,7 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EngineHelperResponse, EngineHelperTriggerResult, webhookUtils } from 'server-worker'
+import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { jobQueue } from '../../../workers/queue'
 import { userInteractionWatcher } from '../../../workers/user-interaction-watcher'
@@ -43,10 +43,6 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
             jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
             hookType: TriggerHookType.ON_DISABLE,
             flowVersion,
-            webhookUrl: await webhookUtils(log).getWebhookUrl({
-                flowId: flowVersion.flowId,
-                simulate,
-            }),
             test: simulate,
             projectId,
         })

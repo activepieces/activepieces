@@ -22,7 +22,6 @@ import { FastifyBaseLogger } from 'fastify'
 import {
     EngineHelperResponse,
     EngineHelperTriggerResult,
-    webhookUtils,
 } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
@@ -64,16 +63,10 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         projectId,
     })
 
-    const webhookUrl = await webhookUtils(log).getWebhookUrl({
-        flowId: flowVersion.flowId,
-        simulate,
-    })
-
     const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
         jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion,
-        webhookUrl,
         projectId,
         test: simulate,
     })

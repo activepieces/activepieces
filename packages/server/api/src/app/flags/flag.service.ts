@@ -1,7 +1,6 @@
-import { webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import { networkUtls, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
-import { webhookUtils } from 'server-worker'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { system } from '../helper/system/system'
@@ -236,12 +235,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.WEBHOOK_URL_PREFIX,
-                value: await webhookUtils(system.globalLogger()).getWebhookPrefix(),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.FRONTEND_URL,
                 value: system.get(WorkerSystemProp.FRONTEND_URL),
                 created,
@@ -278,20 +271,29 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                value: webhookSecretsUtils.getSupportedAppWebhooks(),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
                 value: system.get(AppSystemProp.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY,
                 created,
                 updated,
             },
-
         )
 
+        if (system.isApp()) {
+            flags.push(
+                {
+                    id: ApFlagId.WEBHOOK_URL_PREFIX,
+                    value: await getWebhookPrefix(),
+                    created,
+                    updated,
+                },
+                {
+                    id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
+                    value: getSupportedAppWebhooks(),
+                    created,
+                    updated,
+                },
+            )
+        }
         return flags
     },
     getThirdPartyRedirectUrl(
@@ -339,6 +341,22 @@ export const flagService = {
         return platformId === cloudPlatformId
     },
 }
+
+
+async function getWebhookPrefix(): Promise<string> {
+    return `${await networkUtls.getPublicUrl(system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT), system.getOrThrow(WorkerSystemProp.FRONTEND_URL))}v1/webhooks`
+}
+
+function getSupportedAppWebhooks(): string[] {
+    const webhookSecrets = system.get(AppSystemProp.APP_WEBHOOK_SECRETS)
+    if (isNil(webhookSecrets)) {
+        return []
+    }
+    const parsed = webhookSecretsUtils.parseWebhookSecrets(webhookSecrets)
+    return Object.keys(parsed)
+}
+
+
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>

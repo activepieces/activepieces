@@ -5,13 +5,16 @@ let webhookSecrets: Record<string, { webhookSecret: string }> | undefined = unde
 export const webhookSecretsUtils = {
     init,
     getWebhookSecret,
-    getSupportedAppWebhooks,
+    parseWebhookSecrets,
 }
 
 async function init(_webhookSecrets: string) {
-    const parsed = parseToJsonIfPossible(_webhookSecrets) as Record<string, { webhookSecret: string }> | undefined
-    assertNotNullOrUndefined(parsed, 'Failed to parse webhook secrets')
+    const parsed = parseWebhookSecrets(_webhookSecrets)
     webhookSecrets = parsed
+}
+
+function parseWebhookSecrets(webhookSecrets: string): Record<string, { webhookSecret: string }> {
+    return parseToJsonIfPossible(webhookSecrets) as Record<string, { webhookSecret: string }> | undefined ?? {}
 }
 
 async function getWebhookSecret(
@@ -28,9 +31,3 @@ async function getWebhookSecret(
     }
     return appConfig.webhookSecret
 }
-
-function getSupportedAppWebhooks(): string[] {
-    assertNotNullOrUndefined(webhookSecrets, 'Webhook secrets are not initialized')
-    return Object.keys(webhookSecrets)
-}
-
