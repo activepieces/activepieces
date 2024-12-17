@@ -2,7 +2,7 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export const volubileAuth = PieceAuth.CustomAuth({
   description:
-    'You can retrieve your Volubile API key within your Volubile [Account Settings](https://eu.volubile.ai/settings/integrations).',
+    'You can retrieve your Volubile API key within your Volubile [API Settings](https://eu.volubile.ai/integrations/api).',
   required: true,
   props: {
     apiKey: Property.ShortText({
