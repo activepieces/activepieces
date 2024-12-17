@@ -33,6 +33,7 @@ export const CopilotProvider = Type.Object({
     apiKey: Type.String(),
     type: Type.Enum(CopilotProviderType),
     deploymentName: Type.Optional(Type.String()),
+    resourceName: Type.Optional(Type.String()),
 })
 
 export type CopilotProvider = Static<typeof CopilotProvider>

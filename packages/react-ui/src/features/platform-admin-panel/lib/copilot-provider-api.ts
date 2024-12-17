@@ -8,6 +8,8 @@ export type UpsertCopilotProviderRequest = {
   apiKey: string;
   type: CopilotProviderType;
   setAsDefault?: boolean;
+  deploymentName?: string;
+  resourceName?: string;
 };
 
 const createEmptySettings = (): CopilotSettings => ({
@@ -28,10 +30,12 @@ export const copilotProviderApi = {
     
     // Add new provider
     const newProvider: CopilotProvider = {
+      ...(request.provider === 'azure' && request.deploymentName ? { deploymentName: request.deploymentName } : {}),
       provider: request.provider,
       baseUrl: request.baseUrl,
       apiKey: request.apiKey,
       type: request.type,
+      resourceName: request.resourceName,
     };
 
     // Remove existing provider if it exists and add new one

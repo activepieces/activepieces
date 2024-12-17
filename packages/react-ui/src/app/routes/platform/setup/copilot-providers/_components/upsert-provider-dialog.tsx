@@ -36,7 +36,7 @@ interface Props {
 
 interface FormData {
   apiKey: string;
-  baseUrl?: string;
+  resourceName?: string;
   deploymentName?: string;
   setAsDefault: boolean;
 }
@@ -92,26 +92,21 @@ const FormFields = ({
       )}
     />
 
-    {(providerMetadata.requiresBaseUrl || providerMetadata.defaultBaseUrl) && (
+    {providerMetadata.value === 'azure' && (
       <FormField
         control={form.control}
-        name="baseUrl"
-        rules={providerMetadata.requiresBaseUrl ? { required: t('Base URL is required') } : undefined}
+        name="resourceName"
+        rules={{ required: t('Resource Name is required') }}
         render={({ field }) => (
           <FormItem className="space-y-2">
             <Label className="flex items-center gap-2">
               <Globe className="h-4 w-4" />
-              {t('Base URL')}
-              {!providerMetadata.requiresBaseUrl && (
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {t('Optional')}
-                </span>
-              )}
+              {t('Resource Name')}
             </Label>
             <Input
               {...field}
-              placeholder={providerMetadata.defaultBaseUrl}
-              required={providerMetadata.requiresBaseUrl}
+              placeholder={t('Enter your Azure resource name')}
+              required
             />
             <FormMessage />
           </FormItem>
@@ -179,7 +174,7 @@ export const UpsertCopilotProviderDialog = ({
   const form = useForm<FormData>({
     defaultValues: {
       apiKey: provider?.apiKey || '',
-      baseUrl: provider?.baseUrl || '',
+      resourceName: provider?.resourceName || '',
       deploymentName: provider?.deploymentName || '',
       setAsDefault: isDefault || false,
     },
@@ -188,15 +183,26 @@ export const UpsertCopilotProviderDialog = ({
   const handleSubmit = async (data: FormData) => {
     try {
       setIsSaving(true);
-      const payload = {
+      console.debug('Form data:', data);
+
+      const basePayload = {
         provider: providerMetadata.value,
         type: providerMetadata.type,
         apiKey: data.apiKey,
         setAsDefault: data.setAsDefault,
-        baseUrl: data.baseUrl || providerMetadata.defaultBaseUrl || '',
-        ...(providerMetadata.requiresDeploymentName && data.deploymentName ? { deploymentName: data.deploymentName } : {}),
+        baseUrl: provider?.baseUrl || '',
       };
 
+      // Add Azure specific fields
+      const payload = providerMetadata.value === 'azure' 
+        ? { 
+            ...basePayload, 
+            resourceName: data.resourceName,
+            deploymentName: data.deploymentName,
+          }
+        : basePayload;
+
+      console.debug('Sending payload:', payload);
       await copilotProviderApi.upsert(payload);
       onSave();
       setOpen(false);

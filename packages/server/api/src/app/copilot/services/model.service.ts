@@ -21,6 +21,7 @@ interface AssistantProvider {
   apiKey: string;
   baseUrl?: string;
   deploymentName?: string;
+  resourceName?: string;
 }
 
 interface CopilotSettings {
@@ -64,6 +65,7 @@ interface AiProviderConfig {
   baseUrl?: string;
   apiKey: string;
   deploymentName?: string;
+  resourceName?: string;
 }
 
 // Helper Functions
@@ -91,8 +93,8 @@ function validateProviderConfig(config: AiProviderConfig): void {
     if (!config.deploymentName) {
       throw new ModelServiceError('Deployment name is required for Azure provider', 'MISSING_DEPLOYMENT_NAME');
     }
-    if (!config.baseUrl) {
-      throw new ModelServiceError('Base URL is required for Azure provider', 'MISSING_BASE_URL');
+    if (!config.resourceName) {
+      throw new ModelServiceError('Resource name is required for Azure provider', 'MISSING_RESOURCE_NAME');
     }
   }
 }
@@ -113,7 +115,7 @@ function createModelInstance(config: AiProviderConfig): LanguageModel {
       case AI_PROVIDER.AZURE:
         return createAzure({
           apiKey: config.apiKey,
-          baseURL: config.baseUrl,
+          resourceName: config.resourceName,
         }).chat(config.deploymentName!);
 
       case AI_PROVIDER.ANTHROPIC:
@@ -164,6 +166,7 @@ export const modelService = {
         apiKey: assistantProvider.apiKey,
         baseUrl: providerType === AI_PROVIDER.AZURE ? assistantProvider.baseUrl : PROVIDER_CONFIG[providerType].baseUrl,
         deploymentName: providerType === AI_PROVIDER.AZURE ? assistantProvider.deploymentName : undefined,
+        resourceName: providerType === AI_PROVIDER.AZURE ? assistantProvider.resourceName : undefined,
       };
 
       logger.debug('[ModelService] Initializing model', { provider: providerType });
