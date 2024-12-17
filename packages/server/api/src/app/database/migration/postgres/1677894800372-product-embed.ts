@@ -1,10 +1,11 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class productEmbed1677894800372 implements MigrationInterface {
     name = 'productEmbed1677894800372'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const log = system.globalLogger()
         const appCredentialExistsQuery: { exists: boolean }[] =
       await queryRunner.query(
           `SELECT exists (
@@ -20,7 +21,7 @@ export class productEmbed1677894800372 implements MigrationInterface {
       appCredentialExistsQuery[0].exists
 
         if (appCredentialExists) {
-            logger.info('initializeSchema1676238396411: skipped')
+            log.info('initializeSchema1676238396411: skipped')
             return
         }
         await queryRunner.query(

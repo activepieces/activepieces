@@ -1,11 +1,12 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class AddProjectRelationInUserInvitation1732790412900 implements MigrationInterface {
     name = 'AddProjectRelationInUserInvitation1732790412900'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        const log = system.globalLogger()
+        log.info({
             name: this.name,
         }, 'up')
         // Delete user invitations with invalid project IDs
@@ -36,7 +37,8 @@ export class AddProjectRelationInUserInvitation1732790412900 implements Migratio
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        const log = system.globalLogger()
+        log.info({
             name: this.name,
         }, 'down')
         await queryRunner.query(`

@@ -243,6 +243,7 @@
       "pages": [
         "install/configuration/overview",
         "install/configuration/environment-variables",
+        "install/configuration/seperate-workers",
         "install/configuration/setup-app-webhooks",
         "install/configuration/hardware",
         "install/configuration/setup-ssl",

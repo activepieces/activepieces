@@ -117,34 +117,30 @@ const PieceSelector = ({
         ? filterOutPiecesWithNoSuggestions(filteredMetadataOnTag)
         : filteredMetadataOnTag;
 
-    const sortedPiecesMetadata = piecesMetadata.sort((a, b) =>
-      a.displayName.localeCompare(b.displayName),
-    );
-
-    initiallySelectedMetaDataRef.current = sortedPiecesMetadata.find(
+    initiallySelectedMetaDataRef.current = piecesMetadata.find(
       (p) => p.displayName === initialSelectedPiece,
     );
     setSelectedMetadata(initiallySelectedMetaDataRef.current);
 
-    if (debouncedQuery.length > 0 && sortedPiecesMetadata.length > 0) {
-      return [{ title: 'Search Results', pieces: sortedPiecesMetadata }];
+    if (debouncedQuery.length > 0 && piecesMetadata.length > 0) {
+      return [{ title: 'Search Results', pieces: piecesMetadata }];
     }
 
-    const flowControllerPieces = sortedPiecesMetadata.filter(
+    const flowControllerPieces = piecesMetadata.filter(
       (p) => pieceSelectorUtils.isFlowController(p) && !isTrigger,
     );
-    const universalAiPieces = sortedPiecesMetadata.filter(
+    const universalAiPieces = piecesMetadata.filter(
       (p) => pieceSelectorUtils.isUniversalAiPiece(p) && !isTrigger,
     );
-    const utilityCorePieces = sortedPiecesMetadata.filter(
+    const utilityCorePieces = piecesMetadata.filter(
       (p) => pieceSelectorUtils.isUtilityCorePiece(p, platform) && !isTrigger,
     );
-    const popularPieces = sortedPiecesMetadata.filter(
+    const popularPieces = piecesMetadata.filter(
       (p) =>
         pieceSelectorUtils.isPopularPieces(p, platform) &&
         selectedTag !== PieceTagEnum.AI,
     );
-    const other = sortedPiecesMetadata.filter(
+    const other = piecesMetadata.filter(
       (p) =>
         !popularPieces.includes(p) &&
         !utilityCorePieces.includes(p) &&

@@ -92,7 +92,7 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
         const client = await queue.client
         const repeatJob = await findRepeatableJobKey(flowVersionId, log)
         if (isNil(repeatJob)) {
-            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
+            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`), log)
             return
         }
         log.info({

@@ -33,7 +33,7 @@ export async function extractPayloads(
             test: simulate,
         })
         if (!isNil(result) && result.success && Array.isArray(result.output)) {
-            handleFailureFlow(flowVersion, projectId, engineToken, true)
+            handleFailureFlow(flowVersion, projectId, engineToken, true, log)
             return result.output as unknown[]
         }
         else {
@@ -43,7 +43,7 @@ export async function extractPayloads(
                 pieceVersion,
                 flowId: flowVersion.flowId,
             }, 'Failed to execute trigger')
-            handleFailureFlow(flowVersion, projectId, engineToken, false)
+            handleFailureFlow(flowVersion, projectId, engineToken, false, log)
             
             return []
         }
@@ -57,7 +57,7 @@ export async function extractPayloads(
                 pieceVersion: flowVersion.trigger.settings.pieceVersion,
                 flowId: flowVersion.flowId,
             }, 'Failed to execute trigger due to timeout')
-            handleFailureFlow(flowVersion, projectId, engineToken, false)
+            handleFailureFlow(flowVersion, projectId, engineToken, false, log)
             return []
         }
         throw e
@@ -65,14 +65,14 @@ export async function extractPayloads(
 }
 
 
-function handleFailureFlow(flowVersion: FlowVersion, projectId: ProjectId, engineToken: string, success: boolean): void {
-    const engineController = engineApiService(engineToken)
+function handleFailureFlow(flowVersion: FlowVersion, projectId: ProjectId, engineToken: string, success: boolean, log: FastifyBaseLogger): void {
+    const engineController = engineApiService(engineToken, log)
 
     rejectedPromiseHandler(engineController.updateFailureCount({
         flowId: flowVersion.flowId,
         projectId,
         success,
-    }))
+    }), log)
 
 }
 

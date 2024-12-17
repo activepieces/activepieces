@@ -132,7 +132,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                     priority: DEFAULT_PRIORITY,
                 })
             })
-            rejectedPromiseHandler(Promise.all(eventsQueue))
+            rejectedPromiseHandler(Promise.all(eventsQueue), request.log)
             return requestReply.status(StatusCodes.OK).send({})
         },
     )

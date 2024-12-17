@@ -6,10 +6,23 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { pipedriveCommon } from '../common';
+import {
+	pipedriveApiCall,
+	pipedriveCommon,
+	pipedrivePaginatedApiCall,
+	pipedriveTransformCustomFields,
+} from '../common';
 import { pipedriveAuth } from '../..';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { FieldsResponse, ListDealsResponse,GetDealResponse, GetStagesResponse } from '../common/types';
+import {
+	FieldsResponse,
+	ListDealsResponse,
+	GetDealResponse,
+	GetStagesResponse,
+	RequestParams,
+	GetField,
+} from '../common/types';
+import { isNil } from '@activepieces/shared';
 
 export const updatedDeal = createTrigger({
 	auth: pipedriveAuth,
@@ -70,20 +83,19 @@ export const updatedDeal = createTrigger({
 							token: authValue.access_token,
 						},
 					});
-          props['field_value'] = Property.StaticDropdown({
+					props['field_value'] = Property.StaticDropdown({
 						displayName: 'Stage in Pipeline',
 						required: true,
 						options: {
 							disabled: false,
-							options:response.body.data.map((stage)=>{
-                return{
-                  label:stage.name,
-                  value:stage.id
-                }
-              })
+							options: response.body.data.map((stage) => {
+								return {
+									label: stage.name,
+									value: stage.id,
+								};
+							}),
 						},
 					});
-
 				}
 				return props;
 			},
@@ -151,20 +163,45 @@ export const updatedDeal = createTrigger({
 		}
 	},
 	async test(context) {
-		const response = await httpClient.sendRequest<ListDealsResponse>({
+		const filterBy = context.propsValue.filter_by;
+		const filterByValue = context.propsValue.filter_by_field_value!['field_value'];
+
+		const qs: RequestParams = {
+			limit: 10,
+			sort: 'update_time DESC',
+		};
+
+		if (filterBy && filterByValue) {
+			qs[filterBy] = filterByValue;
+		}
+
+		const dealsResponse = await pipedriveApiCall<ListDealsResponse>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
-			url: `${context.auth.data['api_domain']}/api/v1/deals`,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
-			},
-			queryParams:{
-				limit:'5'
-			}
+			resourceUri: '/deals',
+			query: qs,
 		});
 
-		return response.body.data;
+		if (isNil(dealsResponse.data)) {
+			return [];
+		}
 
+		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+			accessToken: context.auth.access_token,
+			apiDomain: context.auth.data['api_domain'],
+			method: HttpMethod.GET,
+			resourceUri: '/dealFields',
+		});
+
+		const result = [];
+
+		for (const deal of dealsResponse.data) {
+			const updatedDealProperties = pipedriveTransformCustomFields(customFieldsResponse, deal);
+			result.push(updatedDealProperties);
+		}
+
+		return result;
 	},
 	async run(context) {
 		const filterBy = context.propsValue.filter_by;
@@ -177,22 +214,35 @@ export const updatedDeal = createTrigger({
 
 		//  No filters and no field to watch specified
 		const noFilterAndNoField = !filterBy && !fieldToWatch;
-		const isFieldChanged = fieldToWatch && currentDealData[fieldToWatch] !== previousDealData[fieldToWatch];
+		const isFieldChanged =
+			fieldToWatch && currentDealData[fieldToWatch] !== previousDealData[fieldToWatch];
 		const isFilterMatched = filterBy && currentDealData[filterBy] === filterByValue;
 
-		if(noFilterAndNoField || (!filterBy && isFieldChanged) || (isFilterMatched && (!fieldToWatch || isFieldChanged)))
-		{
-			const response = await httpClient.sendRequest<GetDealResponse>({
+		if (
+			noFilterAndNoField ||
+			(!filterBy && isFieldChanged) ||
+			(isFilterMatched && (!fieldToWatch || isFieldChanged))
+		) {
+			const dealResponse = await pipedriveApiCall<GetDealResponse>({
+				accessToken: context.auth.access_token,
+				apiDomain: context.auth.data['api_domain'],
 				method: HttpMethod.GET,
-				url: `${context.auth.data['api_domain']}/api/v1/deals/${payloadBody.current.id}`,
-				authentication: {
-					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth.data['access_token'],
-				},
+				resourceUri: `/deals/${payloadBody.current.id}`,
 			});
 
-			return [response.body.data]
+			const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
+				accessToken: context.auth.access_token,
+				apiDomain: context.auth.data['api_domain'],
+				method: HttpMethod.GET,
+				resourceUri: '/dealFields',
+			});
 
+			const updatedDealProperties = pipedriveTransformCustomFields(
+				customFieldsResponse,
+				dealResponse.data,
+			);
+
+			return [updatedDealProperties];
 		}
 		return [];
 	},
@@ -335,7 +385,6 @@ interface WebhookInformation {
 }
 
 type PayloadBody = {
-	current: Record<string,unknown>;
-	previous: Record<string,unknown>;
-
+	current: Record<string, unknown>;
+	previous: Record<string, unknown>;
 };
