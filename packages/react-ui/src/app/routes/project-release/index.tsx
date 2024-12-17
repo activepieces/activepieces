@@ -14,26 +14,26 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { projectVersionApi } from '@/features/project-version/lib/project-version-api';
+import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { formatUtils } from '@/lib/utils';
-import { ProjectVersion } from '@activepieces/shared';
+import { ProjectRelease } from '@activepieces/shared';
 
-const ProjectVersionsPage = () => {
+const ProjectReleasesPage = () => {
   const { toast } = useToast();
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['project-versions'],
-    queryFn: () => projectVersionApi.list(),
+    queryKey: ['project-releases'],
+    queryFn: () => projectReleaseApi.list(),
   });
 
-  const { mutate: deleteProjectVersion, isPending: isDeleting } = useMutation({
-    mutationKey: ['delete-project-version'],
-    mutationFn: (id: string) => projectVersionApi.delete(id),
+  const { mutate: deleteProjectRelease, isPending: isDeleting } = useMutation({
+    mutationKey: ['delete-project-release'],
+    mutationFn: (id: string) => projectReleaseApi.delete(id),
     onSuccess: () => {
       refetch();
       toast({
         title: t('Success'),
-        description: t('Project Version deleted successfully'),
+        description: t('Project Release deleted successfully'),
         duration: 3000,
       });
     },
@@ -42,7 +42,7 @@ const ProjectVersionsPage = () => {
     },
   });
 
-  const columns: ColumnDef<RowDataWithActions<ProjectVersion>>[] = [
+  const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {
       accessorKey: 'name',
       accessorFn: (row) => row.name,
@@ -83,9 +83,9 @@ const ProjectVersionsPage = () => {
     <div className="flex-col w-full">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex flex-col gap-2">
-          <TableTitle>{t('Project Versions')}</TableTitle>
+          <TableTitle>{t('Project Releases')}</TableTitle>
           <div className="text-sm text-muted-foreground">
-            {t('View all history of imported project versions')}
+            {t('View all history of imported project releases')}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -111,12 +111,12 @@ const ProjectVersionsPage = () => {
                   <TooltipTrigger>
                     <ConfirmationDeleteDialog
                       isDanger={true}
-                      title={t('Delete Version')}
+                      title={t('Delete Release')}
                       message={t(
-                        'Deleting this version will remove all associated flows and triggers. Are you sure you want to proceed?',
+                        'Deleting this release will remove all associated flows and triggers. Are you sure you want to proceed?',
                       )}
-                      entityName={`${t('Project Version')} ${row.fileId}`}
-                      mutationFn={async () => deleteProjectVersion(row.id)}
+                      entityName={`${t('Project Release')} ${row.fileId}`}
+                      mutationFn={async () => deleteProjectRelease(row.id)}
                     >
                       <Button
                         loading={isDeleting}
@@ -128,7 +128,7 @@ const ProjectVersionsPage = () => {
                     </ConfirmationDeleteDialog>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
-                    {t('Delete Version')}
+                    {t('Delete Release')}
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -140,5 +140,5 @@ const ProjectVersionsPage = () => {
   );
 };
 
-ProjectVersionsPage.displayName = 'ProjectRolePage';
-export { ProjectVersionsPage };
+ProjectReleasesPage.displayName = 'ProjectReleasesPage';
+export { ProjectReleasesPage };

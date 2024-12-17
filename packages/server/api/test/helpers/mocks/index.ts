@@ -40,7 +40,7 @@ import {
     Project,
     ProjectPlan,
     ProjectRole,
-    ProjectVersion,
+    ProjectRelease,
     RoleType,
     RunEnvironment,
     TemplateType,
@@ -553,16 +553,16 @@ export const createMockProjectRole = (projectRole?: Partial<ProjectRole>): Proje
     }
 }
 
-export const createMockProjectVersion = (projectVersion?: Partial<ProjectVersion>): ProjectVersion => {
+export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease>): ProjectRelease => {
     return {
-        id: projectVersion?.id ?? apId(),
-        created: projectVersion?.created ?? faker.date.recent().toISOString(),
-        updated: projectVersion?.updated ?? faker.date.recent().toISOString(),
-        projectId: projectVersion?.projectId ?? apId(),
-        importedBy: projectVersion?.importedBy ?? apId(),
-        fileId: projectVersion?.fileId ?? apId(),
-        name: projectVersion?.name ?? faker.lorem.word(),
-        description: projectVersion?.description ?? faker.lorem.sentence(),
+        id: projectRelease?.id ?? apId(),
+        created: projectRelease?.created ?? faker.date.recent().toISOString(),
+        updated: projectRelease?.updated ?? faker.date.recent().toISOString(),
+        projectId: projectRelease?.projectId ?? apId(),
+        importedBy: projectRelease?.importedBy ?? apId(),
+        fileId: projectRelease?.fileId ?? apId(),
+        name: projectRelease?.name ?? faker.lorem.word(),
+        description: projectRelease?.description ?? faker.lorem.sentence(),
     }
 }
 

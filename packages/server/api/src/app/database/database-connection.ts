@@ -26,7 +26,7 @@ import { OtpEntity } from '../ee/otp/otp-entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
 import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
-import { ProjectVersionEntity } from '../ee/project-version/project-version.entity'
+import { ProjectReleaseEntity } from '../ee/project-release/project-release.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
@@ -77,7 +77,7 @@ function getEntities(): EntitySchema<unknown>[] {
         WorkerMachineEntity,
         AiProviderEntity,
         ProjectRoleEntity,
-        ProjectVersionEntity,
+        ProjectReleaseEntity,
     ]
 
     switch (edition) {

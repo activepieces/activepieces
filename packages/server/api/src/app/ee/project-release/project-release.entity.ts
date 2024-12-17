@@ -1,15 +1,15 @@
-import { File, Project, ProjectVersion, User } from '@activepieces/shared'
+import { File, Project, ProjectRelease, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
-export type ProjectVersionSchema = ProjectVersion & {
+export type ProjectReleaseSchema = ProjectRelease & {
     user: User
     project: Project
     file: File
 }
 
-export const ProjectVersionEntity = new EntitySchema<ProjectVersionSchema>({
-    name: 'project_version',
+export const ProjectReleaseEntity = new EntitySchema<ProjectReleaseSchema>({
+    name: 'project_release',
     columns: {
         ...BaseColumnSchemaPart,
         projectId: {
@@ -35,7 +35,7 @@ export const ProjectVersionEntity = new EntitySchema<ProjectVersionSchema>({
     },
     indices: [
         {
-            name: 'idx_project_version_project_id',
+            name: 'idx_project_release_project_id',
             columns: ['projectId'],
         },
     ],
@@ -47,7 +47,7 @@ export const ProjectVersionEntity = new EntitySchema<ProjectVersionSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'projectId',
-                foreignKeyConstraintName: 'fk_project_version_project_id',
+                foreignKeyConstraintName: 'fk_project_release_project_id',
             },
         },
         user: {
@@ -57,7 +57,7 @@ export const ProjectVersionEntity = new EntitySchema<ProjectVersionSchema>({
             onDelete: 'SET NULL',
             joinColumn: {
                 name: 'importedBy',
-                foreignKeyConstraintName: 'fk_project_version_imported_by',
+                foreignKeyConstraintName: 'fk_project_release_imported_by',
             },
         },
         file: {
@@ -67,7 +67,7 @@ export const ProjectVersionEntity = new EntitySchema<ProjectVersionSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'fileId',
-                foreignKeyConstraintName: 'fk_project_version_file_id',
+                foreignKeyConstraintName: 'fk_project_release_file_id',
             },
         },
     },

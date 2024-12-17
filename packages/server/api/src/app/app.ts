@@ -53,7 +53,7 @@ import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { projectRoleModule } from './ee/project-role/project-role.module'
-import { projectVersionModule } from './ee/project-version/project-version.module'
+import { projectReleaseModule } from './ee/project-release/project-release.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
@@ -280,7 +280,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(analyticsModule)
             await app.register(projectBillingModule)
             await app.register(projectRoleModule)
-            await app.register(projectVersionModule)
+            await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
@@ -311,7 +311,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(usageTrackerModule)
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
-            await app.register(projectVersionModule)
+            await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             setPlatformOAuthService(platformOAuth2Service(app.log))

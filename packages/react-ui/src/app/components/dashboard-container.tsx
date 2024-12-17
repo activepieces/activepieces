@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import {
   AlertCircle,
-  FileStack,
+  Box,
   Link2,
   Logs,
   Workflow,
@@ -72,9 +72,9 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
     },
     {
-      to: '/versions',
-      label: t('Versions'),
-      icon: FileStack,
+      to: '/releases',
+      label: t('Releases'),
+      icon: Box,
     },
     {
       to: '/settings',
