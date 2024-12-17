@@ -11,6 +11,11 @@ export enum FilteredPieceBehavior {
     BLOCKED = 'BLOCKED',
 }
 
+export enum CopilotProviderType {
+    SEARCH = 'SEARCH',
+    ASSISTANT = 'ASSISTANT',
+}
+
 export const SMTPInformation = Type.Object({
     user: Type.String(),
     senderEmail: Type.String(),
@@ -22,16 +27,22 @@ export const SMTPInformation = Type.Object({
 
 export type SMTPInformation = Static<typeof SMTPInformation>
 
-
-export const CopilotSettings = Type.Object({
+export const CopilotProvider = Type.Object({
     provider: Type.String(),
     baseUrl: Type.String(),
     apiKey: Type.String(),
+    type: Type.Enum(CopilotProviderType),
+})
+
+export type CopilotProvider = Static<typeof CopilotProvider>
+
+export const CopilotSettings = Type.Object({
+    providers: Type.Optional(Type.Array(CopilotProvider)),
+    defaultSearchProvider: Type.Optional(Type.String()),
+    defaultAssistantProvider: Type.Optional(Type.String()),
 })
 
 export type CopilotSettings = Static<typeof CopilotSettings>
-
-
 
 export const Platform = Type.Object({
     ...BaseModelSchema,

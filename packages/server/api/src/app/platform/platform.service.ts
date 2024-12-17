@@ -133,6 +133,7 @@ export const platformService = {
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
             ...spreadIfDefined('licenseKey', params.licenseKey),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
+            ...spreadIfDefined('copilotSettings', params.copilotSettings),
         }
 
         return repo().save(updatedPlatform)
