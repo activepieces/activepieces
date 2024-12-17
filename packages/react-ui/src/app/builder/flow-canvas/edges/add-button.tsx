@@ -100,9 +100,9 @@ const ApAddButton = React.memo((props: ApButtonData) => {
           }
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}
-          asChild
+          asChild={true}
         >
-          <div>
+          <div style={{width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px', height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px'}}>
 
           {showAskAiIndicator && (
               <AskAiIndicator
@@ -138,7 +138,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   )}
                   {
                     !actionMenuOpen && (
-                      <div className='absolute -top-[7px] left-[15px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out'>
+                      <div className='absolute -top-[1px] left-[25px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out'>
                         <PasteButton addButtonData={props} />
                       </div>
                     )

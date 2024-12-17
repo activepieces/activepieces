@@ -8,9 +8,8 @@ import { pasteNodes } from "../bulk-actions";
 export const PasteButton = ({ addButtonData }: { addButtonData: ApButtonData }) => {
     const pasteActionsInClipboard = usePasteActionsInClipboard();
     const [flowVersion, applyOperation] = useBuilderStateContext(state => [state.flowVersion, state.applyOperation])
-    return <Button variant='transparent'
-        size='icon'
-        disabled={pasteActionsInClipboard.length === 0}
+    return pasteActionsInClipboard.length >0 && <button 
+        className="bg-transparent text-primary w-5 h-5 flex items-center justify-center"
         onClick={() => {
             pasteNodes(
                 pasteActionsInClipboard,
@@ -21,5 +20,5 @@ export const PasteButton = ({ addButtonData }: { addButtonData: ApButtonData }) 
         }}
         >
         <ClipboardPaste className="w-4 h-4 -scale-x-100" />
-    </Button>
+    </button>
 }

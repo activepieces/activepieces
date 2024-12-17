@@ -138,7 +138,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                             />
                           </Button>
                         )}
-                        <div className='absolute top-[9.5px] left-[50px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out'>
+                        <div className='absolute top-[15px] left-[55px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out'>
                           <PasteButton addButtonData={data} />
                         </div>
                       </span>
