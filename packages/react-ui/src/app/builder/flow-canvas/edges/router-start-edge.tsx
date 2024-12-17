@@ -77,7 +77,7 @@ export const ApRouterStartCanvasEdge = ({
 
   const path = generatePath();
 
-  const brancLabelProps =
+  const branchLabelProps =
     data.stepLocationRelativeToParent ===
     StepLocationRelativeToParent.INSIDE_BRANCH
       ? {
@@ -146,7 +146,7 @@ export const ApRouterStartCanvasEdge = ({
         className="flex items-center "
       >
         <BranchLabel
-          key={brancLabelProps.label + brancLabelProps.targetNodeName}
+          key={branchLabelProps.label + branchLabelProps.targetNodeName}
           sourceNodeName={source}
           targetNodeName={target}
           stepLocationRelativeToParent={data.stepLocationRelativeToParent}
