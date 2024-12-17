@@ -1,11 +1,13 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 const FLOW_VERSION_TABLE = 'flow_version'
 
+const log = system.globalLogger()
+
 export class ChangeVariableSyntax1683898241599 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('ChangeVariableSyntax1683898241599, started')
+        log.info('ChangeVariableSyntax1683898241599, started')
         const flowVersions = await queryRunner.query(
             `SELECT * FROM ${FLOW_VERSION_TABLE}`,
         )
@@ -21,13 +23,13 @@ export class ChangeVariableSyntax1683898241599 implements MigrationInterface {
                 )
             }
         }
-        logger.info(
+        log.info(
             `ChangeVariableSyntax1683898241599, updated ${count} flow versions`,
         )
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info('ChangeVariableSyntax1683898241599 down, started')
+        log.info('ChangeVariableSyntax1683898241599 down, started')
         const flowVersions = await queryRunner.query(
             `SELECT * FROM ${FLOW_VERSION_TABLE}`,
         )
@@ -43,7 +45,7 @@ export class ChangeVariableSyntax1683898241599 implements MigrationInterface {
                 )
             }
         }
-        logger.info(
+        log.info(
             `ChangeVariableSyntax1683898241599, down ${count} flow versions`,
         )
     }

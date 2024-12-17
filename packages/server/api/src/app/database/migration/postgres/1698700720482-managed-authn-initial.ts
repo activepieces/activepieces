@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class ManagedAuthnInitial1698700720482 implements MigrationInterface {
     name = 'ManagedAuthnInitial1698700720482'
@@ -20,7 +22,7 @@ export class ManagedAuthnInitial1698700720482 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_user_external_id" ON "user" ("externalId")
         `)
 
-        logger.info('ManagedAuthnInitial1698700720482 up')
+        log.info('ManagedAuthnInitial1698700720482 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -37,6 +39,6 @@ export class ManagedAuthnInitial1698700720482 implements MigrationInterface {
             ALTER TABLE "project" DROP COLUMN "externalId"
         `)
 
-        logger.info('ManagedAuthnInitial1698700720482 down')
+        log.info('ManagedAuthnInitial1698700720482 down')
     }
 }

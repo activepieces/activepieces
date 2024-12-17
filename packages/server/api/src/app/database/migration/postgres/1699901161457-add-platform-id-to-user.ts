@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddPlatformIdToUser1699901161457 implements MigrationInterface {
     name = 'AddPlatformIdToUser1699901161457'
@@ -22,7 +24,7 @@ export class AddPlatformIdToUser1699901161457 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
 
-        logger.info('AddPlatformIdToUser1699901161457 up')
+        log.info('AddPlatformIdToUser1699901161457 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -43,6 +45,6 @@ export class AddPlatformIdToUser1699901161457 implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_user_external_id" ON "user" ("externalId")
         `)
 
-        logger.info('AddPlatformIdToUser1699901161457 down')
+        log.info('AddPlatformIdToUser1699901161457 down')
     }
 }

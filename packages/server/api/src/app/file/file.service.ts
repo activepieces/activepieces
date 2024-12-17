@@ -1,4 +1,4 @@
-import { AppSystemProp, fileCompressor, system } from '@activepieces/server-shared'
+import { fileCompressor } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -16,6 +16,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
 

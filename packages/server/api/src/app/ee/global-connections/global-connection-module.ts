@@ -37,7 +37,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PLATFORM,
         })
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -94,7 +94,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             projectId: null,
         })
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,

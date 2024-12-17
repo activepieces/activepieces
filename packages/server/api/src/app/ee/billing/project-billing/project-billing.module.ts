@@ -153,7 +153,7 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
             catch (err) {
                 request.log.error(err)
                 request.log.warn('⚠️  Webhook signature verification failed.')
-                exceptionHandler.handle(err)
+                exceptionHandler.handle(err, request.log)
                 return reply
                     .status(StatusCodes.BAD_REQUEST)
                     .send('Invalid webhook signature')

@@ -1,7 +1,10 @@
-type GetField = {
+export type GetField = {
 	id: string;
 	name: string;
-	key:string
+	key:string,
+	edit_flag:boolean
+	field_type:"varchar"|"text"|"enum"|"set"|"varchar_auto"|"double"|"monetary"|"user"|"org"|"people"|"phone"|"time"|"int"|"timerange"|"date"|"daterange"|"address",
+	options?:Array<{id:number,label:string}>
 };
 
 type AdditionalData = {
@@ -54,3 +57,20 @@ export type ListPersonsResponse =
 	data: Record<string, unknown>[];
 	additional_data: AdditionalData;
 }
+
+export type PaginatedResponse<T> =
+{
+	success: boolean;
+	data: T[];
+	additional_data: {
+		pagination: {
+			start: number;
+			limit: number;
+			more_items_in_collection: boolean;
+			next_start: number;
+		};
+	};
+}
+
+export type RequestParams = Record<string, string | number | string[] | undefined>;
+
