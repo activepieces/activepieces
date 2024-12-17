@@ -1,11 +1,12 @@
 import { t } from 'i18next';
-import { ClipboardPaste, Copy, Route, RouteOff, Trash } from 'lucide-react';
+import { ArrowLeftRight, ClipboardPaste, Copy, CopyPlus, Route, RouteOff, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { ContextMenuItem } from '@/components/ui/context-menu';
+import { ContextMenuItem,ContextMenuSeparator } from '@/components/ui/context-menu';
 import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
 import {
   Action,
+  FlowOperationType,
   flowStructureUtil,
   isNil,
   StepLocationRelativeToParent,
@@ -21,6 +22,7 @@ import {
 } from '../bulk-actions';
 
 import { CanvasContextMenuProps, CanvasShortcuts } from './canvas-context-menu';
+import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
 
 const ShortcutWrapper = ({
   children,
@@ -45,6 +47,7 @@ export const CanvasContextMenuContent = ({
   exitStepSettings,
   readonly,
   pasteActionData,
+  setPieceSelectorStep,
 }: CanvasContextMenuProps) => {
   const disabled = selectedNodes.length === 0;
   const areAllStepsSkipped = selectedNodes.every(
@@ -65,7 +68,8 @@ export const CanvasContextMenuContent = ({
     };
     fetchClipboardOperations();
   }, []);
-
+ const doesNotContainTrigger = !selectedNodes.some((node) => node === flowVersion.trigger.name)
+ console.log(selectedNodes)
   const showPasteAfterLastStep =
     !readonly &&
     isNil(addButtonData) &&
@@ -75,10 +79,22 @@ export const CanvasContextMenuContent = ({
     !readonly && isNil(addButtonData) && singleSelectedStepName;
   const showPasteOnAddButton = !readonly && !isNil(addButtonData);
   const disabledPaste = actions.length === 0;
+  const duplicateStep = () => {
+    applyOperation(
+      {
+        type: FlowOperationType.DUPLICATE_ACTION,
+        request: {
+          stepName: selectedNodes[0],
+        },
+      },
+      () => toast(UNSAVED_CHANGES_TOAST),
+    );
+  };
   return (
     <>
       {isNil(addButtonData) && (
         <>
+        { doesNotContainTrigger &&
           <ContextMenuItem
             disabled={disabled}
             onClick={() => {
@@ -89,10 +105,34 @@ export const CanvasContextMenuContent = ({
               <Copy className="w-4 h-4"></Copy> {t('Copy')}
             </ShortcutWrapper>
           </ContextMenuItem>
+        }
+          
+          {
+           selectedNodes.length === 1 && !readonly && (
+            <ContextMenuItem
+            disabled={disabled}
+            onClick={() => {
+              setPieceSelectorStep(selectedNodes[0]);
+            }}
+            className='flex items-center gap-2'
+          >
+              <ArrowLeftRight className="w-4 h-4"></ArrowLeftRight> {t('Replace')}
+          </ContextMenuItem>
+           )
+          }
+          {selectedNodes.length === 1 && !readonly  && doesNotContainTrigger && (
+            <ContextMenuItem
+              disabled={disabled}
+              onClick={duplicateStep}
+              className="flex items-center gap-2"
+            >
+              <CopyPlus className="w-4 h-4"></CopyPlus> {t('Duplicate')}
+            </ContextMenuItem>
+          )}
 
           {!readonly && (
             <>
-              <ContextMenuItem
+              { doesNotContainTrigger  && <ContextMenuItem
                 disabled={disabled}
                 onClick={() => {
                   toggleSkipSelectedNodes({
@@ -110,7 +150,7 @@ export const CanvasContextMenuContent = ({
                   )}
                   {t(areAllStepsSkipped ? 'Unskip' : 'Skip')}
                 </ShortcutWrapper>
-              </ContextMenuItem>
+              </ContextMenuItem>}
               {showPasteAfterLastStep && (
                 <ContextMenuItem
                   disabled={disabledPaste}
@@ -155,6 +195,9 @@ export const CanvasContextMenuContent = ({
                   {t('Paste After')}
                 </ContextMenuItem>
               )}
+             {doesNotContainTrigger && (
+              <>
+              <ContextMenuSeparator />
               <ContextMenuItem
                 disabled={disabled}
                 onClick={() => {
@@ -171,6 +214,8 @@ export const CanvasContextMenuContent = ({
                   <div className="text-destructive">{t('Delete')}</div>
                 </ShortcutWrapper>
               </ContextMenuItem>
+              </>
+              )}
             </>
           )}
         </>

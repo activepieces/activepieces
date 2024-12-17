@@ -72,7 +72,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
     ApFlagId.CODE_COPILOT_ENABLED,
   );
   useEffect(() => {
-    if (piecesIsLoaded && selectedItemRef.current) {
+    if (piecesIsLoaded && selectedItemRef.current && debouncedQuery.length === 0) {
       selectedItemRef.current?.scrollIntoView({
         behavior: 'auto',
         block: 'nearest',

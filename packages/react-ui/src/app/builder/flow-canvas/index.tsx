@@ -30,6 +30,7 @@ import {
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import {
+  isNodeSelectionActive,
   useBuilderStateContext,
   useHandleKeyPressOnCanvas,
 } from '../builder-hooks';
@@ -101,6 +102,7 @@ export const FlowCanvas = React.memo(
       selectedStep,
       exitStepSettings,
       panningMode,
+      setPieceSelectorStep,
     ] = useBuilderStateContext((state) => {
       return [
         state.allowCanvasPanning,
@@ -113,6 +115,7 @@ export const FlowCanvas = React.memo(
         state.selectedStep,
         state.exitStepSettings,
         state.panningMode,
+        state.setPieceSelectorStep,
       ];
     });
 
@@ -196,17 +199,14 @@ export const FlowCanvas = React.memo(
           const addButtonData = addButtonElement?.getAttribute(
             `data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`,
           );
-          const nodeSelectionActive = !isNil(
-            document.querySelector('.react-flow__nodesselection-rect'),
-          );
+     
           const stepElement = ev.target.closest(
             `[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`,
           );
           const stepName = stepElement?.getAttribute(
             `data-${STEP_CONTEXT_MENU_ATTRIBUTE}`,
           );
-          const stepNodeIsNotTrigger =
-            stepName && stepName !== flowVersion.trigger.name;
+          debugger;
           if (addButtonData) {
             setContextMenuData({
               addButtonData: JSON.parse(addButtonData || '{}'),
@@ -217,15 +217,13 @@ export const FlowCanvas = React.memo(
               addButtonData: null,
               singleSelectedStepName: stepName || null,
             });
-          }
+          } 
           setSelectedNodes(
-            nodeSelectionActive || addButtonElement
+            (isNodeSelectionActive() && !stepElement)
               ? selectedNodes
-              : stepNodeIsNotTrigger
-              ? [stepName]
-              : [],
+              : stepName ? [stepName] : []
           );
-          if (nodeSelectionActive && stepNodeIsNotTrigger) {
+          if (isNodeSelectionActive() && stepElement) {
             document
               .querySelector('.react-flow__nodesselection-rect')
               ?.remove();
@@ -281,6 +279,7 @@ export const FlowCanvas = React.memo(
             flowVersion={flowVersion}
             pasteActionData={contextMenuData}
             readonly={readonly}
+            setPieceSelectorStep={setPieceSelectorStep}
           >
             <ReactFlow
               onContextMenu={onContextMenu}

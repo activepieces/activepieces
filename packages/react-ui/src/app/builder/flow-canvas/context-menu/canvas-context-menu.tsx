@@ -45,6 +45,7 @@ export type CanvasContextMenuProps = Pick<
   | 'exitStepSettings'
   | 'readonly'
   | 'selectedNodes'
+  | 'setPieceSelectorStep'
 > & {
   children?: React.ReactNode;
   pasteActionData: {
@@ -61,6 +62,7 @@ export const CanvasContextMenu = ({
   children,
   exitStepSettings,
   readonly,
+  setPieceSelectorStep,
 }: CanvasContextMenuProps) => {
   return (
     <ContextMenu modal={false}>
@@ -74,6 +76,7 @@ export const CanvasContextMenu = ({
           exitStepSettings={exitStepSettings}
           readonly={readonly}
           pasteActionData={pasteActionData}
+          setPieceSelectorStep={setPieceSelectorStep}
         ></CanvasContextMenuContent>
       </ContextMenuContent>
     </ContextMenu>

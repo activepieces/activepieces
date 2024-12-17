@@ -127,6 +127,8 @@ export type BuilderState = {
   setSelectedNodes: (nodes: string[]) => void;
   panningMode: 'grab' | 'pan';
   setPanningMode: (mode: 'grab' | 'pan') => void;
+  pieceSelectorStep: string | null;
+  setPieceSelectorStep: (step: string | null) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -451,6 +453,15 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           panningMode: mode,
         }));
       },
+      pieceSelectorStep: null,
+      setPieceSelectorStep: (step: string | null) => {
+        return set((state) => {
+          return {
+            pieceSelectorStep: step,
+            selectedStep: step ? step : state.selectedStep,
+          };
+        });
+      },
     };
   });
 
@@ -479,6 +490,9 @@ const shortcutHandler = (
   }
 };
 
+export const isNodeSelectionActive = () => {
+  return document.querySelector('.react-flow__nodesselection-rect') !== null;
+};
 export const useHandleKeyPressOnCanvas = () => {
   const [
     selectedNodes,
@@ -504,24 +518,31 @@ export const useHandleKeyPressOnCanvas = () => {
           e.target.classList.contains('react-flow__nodesselection-rect')) &&
         !readonly
       ) {
+        const doesNotContainTrigger = !selectedNodes.some((node) => node === flowVersion.trigger.name);
         shortcutHandler(e, {
           Copy: () => {
-            copySelectedNodes({ selectedNodes, flowVersion });
+            if (doesNotContainTrigger && selectedNodes.length > 0) {
+              copySelectedNodes({ selectedNodes, flowVersion });
+            }
           },
           Delete: () => {
-            deleteSelectedNodes({
-              exitStepSettings,
-              selectedStep,
-              selectedNodes,
-              applyOperation,
-            });
+            if (isNodeSelectionActive() && doesNotContainTrigger && selectedNodes.length > 0) {
+              deleteSelectedNodes({
+                exitStepSettings,
+                selectedStep,
+                selectedNodes,
+                applyOperation,
+              });
+            }
           },
           Skip: () => {
-            toggleSkipSelectedNodes({
-              selectedNodes,
-              flowVersion,
-              applyOperation,
-            });
+            if (doesNotContainTrigger && selectedNodes.length > 0) {
+              toggleSkipSelectedNodes({
+                selectedNodes,
+                flowVersion,
+                applyOperation,
+              });
+            }
           },
           Paste: () => {
             getActionsInClipboard().then((actions) => {

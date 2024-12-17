@@ -2,26 +2,16 @@ import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
 import { t } from 'i18next';
 import {
-  ArrowRightLeft,
-  CopyPlus,
-  EllipsisVertical,
-  Route,
+  ChevronDown,
   RouteOff,
-  Trash,
 } from 'lucide-react';
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
@@ -112,6 +102,9 @@ const ApStepCanvasNode = React.memo(
       loopIndexes,
       setSampleData,
       setSelectedBranchIndex,
+      setPieceSelectorStep,
+      pieceSelectorStep,
+      
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.setAllowCanvasPanning,
@@ -127,7 +120,10 @@ const ApStepCanvasNode = React.memo(
       state.loopsIndexes,
       state.setSampleData,
       state.setSelectedBranchIndex,
+      state.setPieceSelectorStep,
+      state.pieceSelectorStep,
     ]);
+    const openPieceSelector = pieceSelectorStep === data.step!.name;
     const step =
       flowStructureUtil.getStep(data.step!.name, flowVersion.trigger) ||
       data.step!;
@@ -135,9 +131,7 @@ const ApStepCanvasNode = React.memo(
       step,
     });
 
-    const pieceSelectorOperation = useRef<
-      FlowOperationType.UPDATE_ACTION | FlowOperationType.UPDATE_TRIGGER
-    >(FlowOperationType.UPDATE_ACTION);
+   
     const deleteStep = () => {
       setSampleData(data.step!.name, undefined);
       applyOperation(
@@ -182,10 +176,13 @@ const ApStepCanvasNode = React.memo(
     }, [data, flowVersion]);
 
     const [openStepActionsMenu, setOpenStepActionsMenu] = useState(false);
-    const [openPieceSelector, setOpenPieceSelector] = useState(false);
 
     const isTrigger = flowStructureUtil.isTrigger(step.type);
     const isAction = flowStructureUtil.isAction(step.type);
+
+    const pieceSelectorOperation = isAction
+                                  ? FlowOperationType.UPDATE_ACTION
+                                  : FlowOperationType.UPDATE_TRIGGER;
     const isEmptyTriggerSelected =
       selectedStep === 'trigger' && step.type === TriggerType.EMPTY;
     const isSkipped = (step as Action).skip;
@@ -275,12 +272,12 @@ const ApStepCanvasNode = React.memo(
               operation={{
                 type: isEmptyTriggerSelected
                   ? FlowOperationType.UPDATE_TRIGGER
-                  : pieceSelectorOperation.current,
+                  : pieceSelectorOperation,
                 stepName: step.name,
               }}
               open={openPieceSelector || isEmptyTriggerSelected}
               onOpenChange={(open) => {
-                setOpenPieceSelector(open);
+                setPieceSelectorStep(open ? step.name : null);
                 if (open) {
                   setOpenStepActionsMenu(false);
                 } else if (step.type === TriggerType.EMPTY) {
@@ -314,115 +311,28 @@ const ApStepCanvasNode = React.memo(
                         {stepIndex}. {step.displayName}
                       </div>
 
-                      {!readonly && (
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                          }}
-                        >
-                          <DropdownMenu
-                            open={openStepActionsMenu}
-                            onOpenChange={(open) => {
-                              setOpenStepActionsMenu(open);
-                            }}
-                            modal={true}
-                          >
-                            <DropdownMenuTrigger asChild>
-                              <Button
+                      <Button
                                 variant="ghost"
                                 size="sm"
                                 className="p-1 size-7 "
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   e.preventDefault();
+                                  if (e.target) {
+                                    const rightClickEvent = new MouseEvent("contextmenu", {
+                                      bubbles: true,
+                                      cancelable: true,
+                                      view: window,
+                                      button: 2, 
+                                      clientX: e.clientX,
+                                      clientY: e.clientY,
+                                    });
+                                    e.target.dispatchEvent(rightClickEvent);
+                                  } 
                                 }}
                               >
-                                <EllipsisVertical className="w-4 h-4" />
+                                <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              className="w-44 absolute"
-                              onCloseAutoFocus={(e) => e.preventDefault()}
-                            >
-                              <DropdownMenuItem
-                                onSelect={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  pieceSelectorOperation.current = isAction
-                                    ? FlowOperationType.UPDATE_ACTION
-                                    : FlowOperationType.UPDATE_TRIGGER;
-                                  setOpenStepActionsMenu(false);
-                                  setOpenPieceSelector(true);
-                                  selectStepByName(step.name);
-                                }}
-                              >
-                                <StepActionWrapper>
-                                  <ArrowRightLeft className=" h-4 w-4 " />
-                                  <span>Replace</span>
-                                </StepActionWrapper>
-                              </DropdownMenuItem>
-
-                              {isAction && (
-                                <DropdownMenuItem
-                                  onSelect={(e) => {
-                                    e.preventDefault();
-                                    duplicateStep();
-                                    setOpenStepActionsMenu(false);
-                                  }}
-                                >
-                                  <StepActionWrapper>
-                                    <CopyPlus className="h-4 w-4" />
-                                    {t('Duplicate')}
-                                  </StepActionWrapper>
-                                </DropdownMenuItem>
-                              )}
-
-                              {isAction && (
-                                <DropdownMenuItem
-                                  onSelect={(e) => {
-                                    e.preventDefault();
-                                    skipStep();
-                                    setOpenStepActionsMenu(false);
-                                  }}
-                                >
-                                  <StepActionWrapper>
-                                    {(step as Action).skip ? (
-                                      <Route className="h-4 w-4"></Route>
-                                    ) : (
-                                      <RouteOff className="h-4 w-4"></RouteOff>
-                                    )}
-                                    {t(
-                                      (step as Action).skip ? 'Unskip' : 'Skip',
-                                    )}
-                                  </StepActionWrapper>
-                                </DropdownMenuItem>
-                              )}
-
-                              {isAction && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onSelect={(e) => {
-                                      e.preventDefault();
-                                      deleteStep();
-                                      setOpenStepActionsMenu(false);
-                                      setAllowCanvasPanning(true);
-                                    }}
-                                  >
-                                    <StepActionWrapper>
-                                      <Trash className="mr-2 h-4 w-4 text-destructive" />
-                                      <span className="text-destructive">
-                                        Delete
-                                      </span>
-                                    </StepActionWrapper>
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      )}
                     </div>
 
                     <div className="flex justify-between w-full items-center">
