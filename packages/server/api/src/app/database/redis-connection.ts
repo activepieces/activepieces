@@ -2,8 +2,8 @@ import fs from 'fs'
 
 import { isNil } from '@activepieces/shared'
 import Redis, { RedisOptions } from 'ioredis'
-import { AppSystemProp } from '../helper/system/system-prop'
 import { RedisType, system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 
 const redisConnectionMode = system.getOrThrow(AppSystemProp.REDIS_TYPE)
 const url = system.get(AppSystemProp.REDIS_URL)

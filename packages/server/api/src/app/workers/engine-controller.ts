@@ -10,11 +10,11 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerHooks } from '../flows/trigger'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'
-import { system } from '../helper/system/system'
-import { WorkerSystemProps } from '../helper/system/system-prop'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -54,7 +54,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             body: UpdateJobRequest,
         },
     }, async (request) => {
-        const environment = system.getOrThrow(WorkerSystemProps.ENVIRONMENT)
+        const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
         if (environment === ApEnvironment.TESTING) {
             return {}
         }

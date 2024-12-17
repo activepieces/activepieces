@@ -8,12 +8,12 @@ import {
 } from '@activepieces/shared'
 import axios from 'axios'
 import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../../../helper/system/system'
 import {
     ClaimOAuth2Request,
     OAuth2Service,
     RefreshOAuth2Request,
 } from '../oauth2-service'
-import { system } from '../../../../helper/system/system'
 
 export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudOAuth2ConnectionValue> => ({
     refresh: async ({

@@ -1,5 +1,5 @@
-import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class StoreTriggerEventsInFileSqlite1731247180217 implements MigrationInterface {
     name = 'StoreTriggerEventsInFileSqlite1731247180217'

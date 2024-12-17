@@ -1,5 +1,5 @@
-import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class MigrateSMTPInPlatformSqlite1729601402320 implements MigrationInterface {
     name = 'MigrateSMTPInPlatformSqlite1729601402320'

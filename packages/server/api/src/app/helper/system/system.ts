@@ -1,5 +1,6 @@
 import os from 'os'
 import path from 'path'
+import { ContainerType, PiecesSource, pinoLogging, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -9,10 +10,9 @@ import {
     isNil,
     PieceSyncMode,
 } from '@activepieces/shared'
-import { AppSystemProp, SystemProp, WorkerSystemProps } from './system-prop'
 import { FastifyBaseLogger } from 'fastify'
-import { PiecesSource, pinoLogging } from '@activepieces/server-shared'
 import { Level } from 'pino'
+import { AppSystemProp, SystemProp } from './system-prop'
 
 
 export enum CopilotInstanceTypes {
@@ -25,12 +25,6 @@ export enum RedisType {
     DEFAULT = 'DEFAULT',
 }
 
-
-export enum ContainerType {
-    WORKER = 'WORKER',
-    APP = 'APP',
-    WORKER_AND_APP = 'WORKER_AND_APP',
-}
 
 export enum QueueMode {
     REDIS = 'REDIS',
@@ -52,28 +46,29 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
     [AppSystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
-    [WorkerSystemProps.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
+    [AppSystemProp.APP_WEBHOOK_SECRETS]: '{}',
+    [WorkerSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
-    [WorkerSystemProps.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
+    [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
     [AppSystemProp.AZURE_OPENAI_API_VERSION]: '2023-06-01-preview',
     [AppSystemProp.TRIGGER_FAILURES_THRESHOLD]: '576',
-    [WorkerSystemProps.ENVIRONMENT]: 'prod',
-    [WorkerSystemProps.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
-    [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: '10',
+    [AppSystemProp.ENVIRONMENT]: 'prod',
+    [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
+    [AppSystemProp.FLOW_WORKER_CONCURRENCY]: '10',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
-    [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: '10',
-    [WorkerSystemProps.LOG_LEVEL]: 'info',
-    [WorkerSystemProps.LOG_PRETTY]: 'false',
-    [WorkerSystemProps.PIECES_SOURCE]: PiecesSource.DB,
+    [AppSystemProp.SCHEDULED_WORKER_CONCURRENCY]: '10',
+    [AppSystemProp.LOG_LEVEL]: 'info',
+    [AppSystemProp.LOG_PRETTY]: 'false',
+    [AppSystemProp.PIECES_SOURCE]: PiecesSource.DB,
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
-    [WorkerSystemProps.MAX_FILE_SIZE_MB]: '4',
+    [AppSystemProp.MAX_FILE_SIZE_MB]: '4',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
-    [WorkerSystemProps.SANDBOX_MEMORY_LIMIT]: '1048576',
-    [WorkerSystemProps.FLOW_TIMEOUT_SECONDS]: '600',
-    [WorkerSystemProps.TRIGGER_TIMEOUT_SECONDS]: '60',
+    [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
+    [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
+    [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
@@ -87,11 +82,11 @@ let globalLogger: FastifyBaseLogger
 export const system = {
     globalLogger(): FastifyBaseLogger {
         if (isNil(globalLogger)) {
-            const logLevel: Level = this.get(WorkerSystemProps.LOG_LEVEL) ?? 'info'
-            const logPretty = this.getBoolean(WorkerSystemProps.LOG_PRETTY) ?? false
-            const lokiUrl = this.get(WorkerSystemProps.LOKI_URL)
-            const lokiPassword = this.get(WorkerSystemProps.LOKI_PASSWORD)
-            const lokiUsername = this.get(WorkerSystemProps.LOKI_USERNAME)
+            const logLevel: Level = this.get(AppSystemProp.LOG_LEVEL) ?? 'info'
+            const logPretty = this.getBoolean(AppSystemProp.LOG_PRETTY) ?? false
+            const lokiUrl = this.get(AppSystemProp.LOKI_URL)
+            const lokiPassword = this.get(AppSystemProp.LOKI_PASSWORD)
+            const lokiUsername = this.get(AppSystemProp.LOKI_USERNAME)
             globalLogger = pinoLogging.initLogger(logLevel, logPretty, {
                 url: lokiUrl,
                 password: lokiPassword,
@@ -177,12 +172,12 @@ export const system = {
     },
     isWorker(): boolean {
         return [ContainerType.WORKER, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(WorkerSystemProps.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(WorkerSystemProp.CONTAINER_TYPE),
         )
     },
     isApp(): boolean {
         return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(WorkerSystemProps.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(WorkerSystemProp.CONTAINER_TYPE),
         )
     },
 }

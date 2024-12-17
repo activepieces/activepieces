@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from 'axios'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 
 export const cloudflareHostnameServices = {
     headers: {

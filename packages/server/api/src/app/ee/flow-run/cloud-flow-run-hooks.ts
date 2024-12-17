@@ -2,12 +2,12 @@ import { ApEdition, FlowRun, isFailedState, isFlowUserTerminalState, isNil, RunE
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
+import { system } from '../../helper/system/system'
 import { projectUsageService } from '../../project/usage/project-usage-service'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
 import { issuesService } from '../issues/issues-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
-import { system } from '../../helper/system/system'
 
 export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
     async onFinish(flowRun: FlowRun): Promise<void> {

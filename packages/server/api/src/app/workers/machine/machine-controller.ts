@@ -1,9 +1,9 @@
 import { PrincipalType, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse, WorkerPrincipal } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser } from '../../ee/authentication/ee-authorization'
-import { machineService } from './machine-service'
 import { system } from '../../helper/system/system'
-import { AppSystemProp, WorkerSystemProps } from '../../helper/system/system-prop'
+import { AppSystemProp } from '../../helper/system/system-prop'
+import { machineService } from './machine-service'
 
 export const workerMachineController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -27,31 +27,29 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             workerPrincipal,
         })
         const response: WorkerMachineHealthcheckResponse = {
-            TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(WorkerSystemProps.TRIGGER_TIMEOUT_SECONDS),
-            PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(WorkerSystemProps.PAUSED_FLOW_TIMEOUT_DAYS),
-            EXECUTION_MODE: system.getOrThrow(WorkerSystemProps.EXECUTION_MODE),
-            FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(WorkerSystemProps.FLOW_TIMEOUT_SECONDS),
-            FLOW_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProps.FLOW_WORKER_CONCURRENCY),
-            SCHEDULED_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY),
-            SCHEDULED_POLLING_COUNT: system.getNumberOrThrow(WorkerSystemProps.SCHEDULED_POLLING_COUNT),
-            LOG_LEVEL: system.getOrThrow(WorkerSystemProps.LOG_LEVEL),
-            LOG_PRETTY: system.getOrThrow(WorkerSystemProps.LOG_PRETTY),
-            ENVIRONMENT: system.getOrThrow(WorkerSystemProps.ENVIRONMENT),
-            APP_WEBHOOK_SECRETS: system.getOrThrow(WorkerSystemProps.APP_WEBHOOK_SECRETS),
-            MAX_FILE_SIZE_MB: system.getNumberOrThrow(WorkerSystemProps.MAX_FILE_SIZE_MB),
-            FRONTEND_URL: system.getOrThrow(WorkerSystemProps.FRONTEND_URL),
-            SANDBOX_MEMORY_LIMIT: system.getOrThrow(WorkerSystemProps.SANDBOX_MEMORY_LIMIT),
-            SANDBOX_PROPAGATED_ENV_VARS: system.getOrThrow(WorkerSystemProps.SANDBOX_PROPAGATED_ENV_VARS)?.split(',') ?? [],
-            PIECES_SOURCE: system.getOrThrow(WorkerSystemProps.PIECES_SOURCE),
-            DEV_PIECES: system.getOrThrow(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
-            SENTRY_DSN: system.getOrThrow(WorkerSystemProps.SENTRY_DSN),
-            LOKI_PASSWORD: system.getOrThrow(WorkerSystemProps.LOKI_PASSWORD),
-            LOKI_URL: system.getOrThrow(WorkerSystemProps.LOKI_URL),
-            LOKI_USERNAME: system.getOrThrow(WorkerSystemProps.LOKI_USERNAME),
+            TRIGGER_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS),
+            PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+            EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
+            FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
+            FLOW_WORKER_CONCURRENCY: system.getNumberOrThrow(AppSystemProp.FLOW_WORKER_CONCURRENCY),
+            SCHEDULED_WORKER_CONCURRENCY: system.getNumberOrThrow(AppSystemProp.SCHEDULED_WORKER_CONCURRENCY),
+            LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
+            LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
+            ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
+            APP_WEBHOOK_SECRETS: system.getOrThrow(AppSystemProp.APP_WEBHOOK_SECRETS),
+            MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
+            SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
+            SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',') ?? [],
+            PIECES_SOURCE: system.getOrThrow(AppSystemProp.PIECES_SOURCE),
+            DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
+            SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
+            LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
+            LOKI_URL: system.get(AppSystemProp.LOKI_URL),
+            LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),
             FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
             S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
         }
-        return response;
+        return response
     })
 }
 
@@ -64,12 +62,6 @@ const HeartbeatParams = {
     },
 }
 
-const SettingsParams = {
-    config: {
-        allowedPrincipals: [PrincipalType.WORKER],
-    },
-    schema: {},
-}
 
 const ListWorkersParams = {
     config: {

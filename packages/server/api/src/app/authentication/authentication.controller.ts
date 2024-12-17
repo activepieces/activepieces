@@ -9,11 +9,11 @@ import {
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../helper/application-events'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { resolvePlatformIdForAuthnRequest } from '../platform/platform-utils'
 import { authenticationService } from './authentication-service'
 import { Provider } from './authentication-service/hooks/authentication-service-hooks'
-import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
 
 const edition = system.getEdition()
 

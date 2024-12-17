@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import { enrichErrorContext, PackageInfo, packageManager } from '@activepieces/server-shared'
+import { enrichErrorContext, PackageInfo, packageManager, systemConstants } from '@activepieces/server-shared'
 import {
     getPackageAliasForPiece,
     getPackageArchivePathForPiece,
@@ -7,7 +7,6 @@ import {
     PackageType,
     PiecePackage,
 } from '@activepieces/shared'
-import { systemConstants } from '@activepieces/server-shared'
 import { FastifyBaseLogger } from 'fastify'
 
 export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)

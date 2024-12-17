@@ -1,5 +1,5 @@
-import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class productEmbed1677894800372 implements MigrationInterface {
     name = 'productEmbed1677894800372'

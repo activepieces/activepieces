@@ -4,8 +4,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
 import { codeBuilder } from '../utils/code-builder'
 import { engineInstaller } from '../utils/engine-installer'
+import { workerMachine } from '../utils/machine'
 import { CodeArtifact } from './engine-runner'
-import { machine } from '../utils/machine'
 
 export const executionFiles = (log: FastifyBaseLogger) => ({
     async provision({
@@ -17,7 +17,7 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
     }: ProvisionParams): Promise<void> {
         const startTime = performance.now()
 
-        const source = machine.getSettings().PIECES_SOURCE as PiecesSource
+        const source = workerMachine.getSettings().PIECES_SOURCE as PiecesSource
         await threadSafeMkdir(globalCachePath)
 
         const startTimeCode = performance.now()

@@ -1,9 +1,9 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { analyticsService } from './analytics.service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 
 export const analyticsModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)

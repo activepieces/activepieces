@@ -1,9 +1,9 @@
+import { exceptionHandler } from '@activepieces/server-shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { system } from '../../../helper/system/system'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 
 const iconSelectionSchema = z.object({
     icon: z.string(),

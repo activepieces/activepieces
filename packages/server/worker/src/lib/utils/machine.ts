@@ -2,10 +2,26 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { fileExists, networkUtls} from '@activepieces/server-shared'
+import { fileExists, networkUtls } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, MachineInformation, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
+
+
+let settings: WorkerMachineHealthcheckResponse | undefined
+
+
+export const workerMachine = {
+    getSystemInfo,
+    setSettings: (_settings: WorkerMachineHealthcheckResponse) => {
+        settings = _settings
+    },
+    getSettings: () => {
+        assertNotNullOrUndefined(settings, 'Settings are not set')
+        return settings
+    },
+}
+
 
 async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
@@ -26,30 +42,9 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         ramUsagePercentage: ramUsage,
         totalAvailableRamInBytes: totalRamInBytes,
         ip,
-        workerProps: {
-            FLOW_WORKER_CONCURRENCY: machine.getSettings().FLOW_WORKER_CONCURRENCY.toString(),
-            SCHEDULED_WORKER_CONCURRENCY: machine.getSettings().SCHEDULED_WORKER_CONCURRENCY.toString(),
-        },
+        workerProps: {},
     }
 }
-
-let settings: WorkerMachineHealthcheckResponse | undefined
-
-export const machine = {
-    hasAppModules(): boolean {
-        // TODO URGENT FIX
-        return false;
-    },
-    getSystemInfo,
-    setSettings: (_settings: WorkerMachineHealthcheckResponse) => {
-        settings = _settings
-    },
-    getSettings: () => {
-        assertNotNullOrUndefined(settings, 'Settings are not set')
-        return settings
-    },
-}
-
 async function getContainerMemoryUsage() {
     const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
     const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'

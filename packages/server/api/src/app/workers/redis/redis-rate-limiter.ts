@@ -6,10 +6,10 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { AddParams } from '../queue/queue-manager'
 import { redisQueue } from './redis-queue'
-import { AppSystemProp } from '../../helper/system/system-prop'
-import { system } from '../../helper/system/system'
 
 
 const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'

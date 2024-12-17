@@ -5,8 +5,8 @@ import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3 } from '@a
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { AppSystemProp } from '../helper/system/system-prop'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 
 export const s3Helper = (log: FastifyBaseLogger) => ({
     constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): string {

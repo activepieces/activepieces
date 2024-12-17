@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, FlowVersion, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined, FlowVersion, isNil, parseToJsonIfPossible } from '@activepieces/shared'
 
 let webhookSecrets: Record<string, { webhookSecret: string }> | undefined = undefined
 
@@ -8,8 +8,10 @@ export const webhookSecretsUtils = {
     getSupportedAppWebhooks,
 }
 
-async function init(_webhookSecrets: Record<string, { webhookSecret: string }>) {
-    webhookSecrets = _webhookSecrets
+async function init(_webhookSecrets: string) {
+    const parsed = parseToJsonIfPossible(_webhookSecrets) as Record<string, { webhookSecret: string }> | undefined
+    assertNotNullOrUndefined(parsed, 'Failed to parse webhook secrets')
+    webhookSecrets = parsed
 }
 
 async function getWebhookSecret(

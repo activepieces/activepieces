@@ -22,10 +22,10 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
 import { fileService } from '../../file/file.service'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceMetadataService } from '../piece-metadata-service'
-import { WorkerSystemProps } from '../../helper/system/system-prop'
-import { system } from '../../helper/system/system'
 
 export const pieceService = (log: FastifyBaseLogger) => ({
     async installPiece(
@@ -75,7 +75,7 @@ export const pieceService = (log: FastifyBaseLogger) => ({
 
 const assertInstallProjectEnabled = (scope: PieceScope): void => {
     if (scope === PieceScope.PROJECT) {
-        const sandboxMode = system.getOrThrow(WorkerSystemProps.EXECUTION_MODE)
+        const sandboxMode = system.getOrThrow(AppSystemProp.EXECUTION_MODE)
         const edition = system.getEdition()
         if (
             sandboxMode === ExecutionMode.UNSANDBOXED &&

@@ -1,8 +1,8 @@
 import { ExecutionMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { workerMachine } from '../utils/machine'
 import { isolateEngineRunner } from './isolate/isolate-engine-runner'
 import { threadEngineRunner } from './threads/thread-engine-runner'
-import { machine } from '../utils/machine'
 
 const engineToRunner = {
     [ExecutionMode.UNSANDBOXED]: threadEngineRunner,
@@ -11,7 +11,7 @@ const engineToRunner = {
 }
 
 export const engineRunner = (log: FastifyBaseLogger) => {
-    const executionMode = machine.getSettings().EXECUTION_MODE as ExecutionMode
+    const executionMode = workerMachine.getSettings().EXECUTION_MODE as ExecutionMode
     const runner = engineToRunner[executionMode](log)
     return runner
 }

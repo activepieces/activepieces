@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-case-declarations */
-import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 

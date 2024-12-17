@@ -14,14 +14,14 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
 import { pieceMetadataServiceHooks } from './hooks'
 import { PieceMetadataService } from './piece-metadata-service'
 import { toPieceMetadataModelSummary } from '.'
-import { AppSystemProp } from '../../helper/system/system-prop'
-import { system } from '../../helper/system/system'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const packages = system.getOrThrow(AppSystemProp.DEV_PIECES)?.split(',')

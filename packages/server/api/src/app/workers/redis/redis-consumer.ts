@@ -4,10 +4,10 @@ import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { ConsumerManager } from '../consumer/consumer-manager'
 import { redisRateLimiter } from './redis-rate-limiter'
-import { system } from '../../helper/system/system'
-import { AppSystemProp, WorkerSystemProps } from '../../helper/system/system-prop'
 
 const consumer: Record<string, Worker> = {}
 
@@ -88,8 +88,8 @@ async function ensureWorkerExists(queueName: QueueName): Promise<Worker> {
 }
 
 function getLockDurationInMs(queueName: QueueName): number {
-    const triggerTimeoutSandbox = system.getNumberOrThrow(WorkerSystemProps.TRIGGER_TIMEOUT_SECONDS)
-    const flowTimeoutSandbox = system.getNumberOrThrow(WorkerSystemProps.FLOW_TIMEOUT_SECONDS)
+    const triggerTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.TRIGGER_TIMEOUT_SECONDS)
+    const flowTimeoutSandbox = system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS)
     switch (queueName) {
         case QueueName.WEBHOOK:
             return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()

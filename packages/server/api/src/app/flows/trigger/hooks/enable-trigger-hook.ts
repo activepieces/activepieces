@@ -26,11 +26,11 @@ import {
 } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 import { jobQueue } from '../../../workers/queue'
 import { userInteractionWatcher } from '../../../workers/user-interaction-watcher'
 import { triggerUtils } from './trigger-utils'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
     system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,

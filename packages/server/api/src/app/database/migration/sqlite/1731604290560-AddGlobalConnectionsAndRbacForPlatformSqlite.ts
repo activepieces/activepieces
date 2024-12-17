@@ -1,5 +1,5 @@
-import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 implements MigrationInterface {
     name = 'AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560'

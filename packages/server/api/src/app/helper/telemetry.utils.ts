@@ -4,8 +4,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { flagService } from '../flags/flag.service'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
-import { AppSystemProp, WorkerSystemProps } from './system/system-prop'
 import { system } from './system/system'
+import { AppSystemProp } from './system/system-prop'
 
 const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
@@ -72,7 +72,7 @@ async function getMetadata() {
     const edition = system.getEdition()
     return {
         activepiecesVersion: currentVersion,
-        activepiecesEnvironment: system.get(WorkerSystemProps.ENVIRONMENT),
+        activepiecesEnvironment: system.get(AppSystemProp.ENVIRONMENT),
         activepiecesEdition: edition,
     }
 }

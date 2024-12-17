@@ -30,6 +30,8 @@ import { encryptUtils } from '../../helper/encryption'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import {
     getPiecePackageWithoutArchive,
     pieceMetadataService,
@@ -42,8 +44,6 @@ import {
 } from '../app-connection.entity'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
-import { system } from '../../helper/system/system'
-import { WorkerSystemProps } from '../../helper/system/system-prop'
 
 const repo = repoFactory(AppConnectionEntity)
 
@@ -389,7 +389,7 @@ const engineValidateAuth = async (
     params: EngineValidateAuthParams,
     log: FastifyBaseLogger,
 ): Promise<void> => {
-    const environment = system.getOrThrow(WorkerSystemProps.ENVIRONMENT)
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return
     }

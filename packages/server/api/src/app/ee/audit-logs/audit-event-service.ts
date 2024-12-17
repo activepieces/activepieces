@@ -16,12 +16,12 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventParam } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 

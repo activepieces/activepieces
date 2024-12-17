@@ -2,13 +2,13 @@ import path from 'path'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
 import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { appNetworkUtils } from '../../utils/app-network-utils'
+import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { executionFiles } from '../execution-files'
 import { pieceEngineUtil } from '../flow-engine-util'
 import { EngineWorker } from './worker'
-import { appNetworkUtils } from '../../utils/app-network-utils'
-import { machine } from '../../utils/machine'
 
 const sandboxPath = path.resolve('cache')
 const codesPath = path.resolve('cache', 'codes')
@@ -198,11 +198,11 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
 }
 
 async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger, operation: EngineOperation, operationType: EngineOperationType): Promise<EngineHelperResponse<Result>> {
-    const memoryLimit = Math.floor(Number(machine.getSettings().SANDBOX_MEMORY_LIMIT) / 1024)
+    const memoryLimit = Math.floor(Number(workerMachine.getSettings().SANDBOX_MEMORY_LIMIT) / 1024)
 
     const startTime = Date.now()
     if (isNil(engineWorkers)) {
-        engineWorkers = new EngineWorker(log, machine.getSettings().FLOW_WORKER_CONCURRENCY, enginePath, {
+        engineWorkers = new EngineWorker(log, workerMachine.getSettings().FLOW_WORKER_CONCURRENCY, enginePath, {
             env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,
@@ -222,17 +222,17 @@ async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger
 }
 
 function getEnvironmentVariables(): Record<string, string | undefined> {
-    const allowedEnvVariables = machine.getSettings().SANDBOX_PROPAGATED_ENV_VARS
+    const allowedEnvVariables = workerMachine.getSettings().SANDBOX_PROPAGATED_ENV_VARS
     const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
     return {
         ...propagatedEnvVars,
         NODE_OPTIONS: '--enable-source-maps',
-        AP_PAUSED_FLOW_TIMEOUT_DAYS: machine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
-        AP_EXECUTION_MODE: machine.getSettings().EXECUTION_MODE,
-        AP_PIECES_SOURCE: machine.getSettings().PIECES_SOURCE,
+        AP_PAUSED_FLOW_TIMEOUT_DAYS: workerMachine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
+        AP_EXECUTION_MODE: workerMachine.getSettings().EXECUTION_MODE,
+        AP_PIECES_SOURCE: workerMachine.getSettings().PIECES_SOURCE,
         AP_BASE_CODE_DIRECTORY: `${sandboxPath}/codes`,
-        AP_MAX_FILE_SIZE_MB: machine.getSettings().MAX_FILE_SIZE_MB.toString(),
-        AP_FILE_STORAGE_LOCATION: machine.getSettings().FILE_STORAGE_LOCATION,
-        AP_S3_USE_SIGNED_URLS: machine.getSettings().S3_USE_SIGNED_URLS,
+        AP_MAX_FILE_SIZE_MB: workerMachine.getSettings().MAX_FILE_SIZE_MB.toString(),
+        AP_FILE_STORAGE_LOCATION: workerMachine.getSettings().FILE_STORAGE_LOCATION,
+        AP_S3_USE_SIGNED_URLS: workerMachine.getSettings().S3_USE_SIGNED_URLS,
     }
 }

@@ -1,8 +1,8 @@
 import { ApLock, exceptionHandler, memoryLock } from '@activepieces/server-shared'
+import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import RedLock from 'redlock'
 import { createRedisClient } from '../database/redis-connection'
-import { FastifyBaseLogger } from 'fastify'
 import { QueueMode, system } from './system/system'
 import { AppSystemProp } from './system/system-prop'
 

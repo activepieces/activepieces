@@ -2,6 +2,7 @@ import { AlertChannel, OtpType } from '@activepieces/ee-shared'
 import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
@@ -9,7 +10,6 @@ import { issuesService } from '../../issues/issues-service'
 import { projectRoleService } from '../../project-role/project-role.service'
 import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { system } from '../../../helper/system/system'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)

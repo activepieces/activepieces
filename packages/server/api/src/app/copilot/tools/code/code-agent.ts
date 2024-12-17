@@ -3,9 +3,9 @@ import { isNil } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
-import { selectIcon } from './icon-agent'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-prop'
+import { selectIcon } from './icon-agent'
 
 type Message = {
     role: 'user' | 'assistant'

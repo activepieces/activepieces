@@ -2,10 +2,10 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { ApLock, filePiecesUtils, memoryLock, packageManager } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, PackageType, PiecePackage } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { workerMachine } from '../utils/machine'
 import { PIECES_BUILDER_MUTEX_KEY } from './development/pieces-builder'
 import { PieceManager } from './piece-manager'
-import { FastifyBaseLogger } from 'fastify'
-import { machine } from '../utils/machine'
 
 
 export class LocalPieceManager extends PieceManager {
@@ -25,7 +25,7 @@ export class LocalPieceManager extends PieceManager {
                 'pieces',
                 'community',
             )
-            const packages = machine.getSettings().DEV_PIECES || []
+            const packages = workerMachine.getSettings().DEV_PIECES || []
 
             const frameworkPackages = {
                 '@activepieces/pieces-common': `link:${baseLinkPath}/common`,

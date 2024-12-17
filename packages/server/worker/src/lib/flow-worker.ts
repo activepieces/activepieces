@@ -1,4 +1,4 @@
-import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
+import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData, webhookSecretsUtils } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
@@ -7,7 +7,7 @@ import { repeatingJobExecutor } from './executors/repeating-job-executor'
 import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
 import { jobPoller } from './job-polling'
-import { machine } from './utils/machine'
+import { workerMachine } from './utils/machine'
 
 let closed = true
 let workerToken: string
@@ -17,13 +17,19 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
     async init(generatedToken: string): Promise<void> {
         closed = false
         workerToken = generatedToken
+        const heartbeatResponse = await workerApiService(workerToken).heartbeat()
+        if (isNil(heartbeatResponse)) {
+            throw new Error('Failed to get heartbeat response')
+        }
+        workerMachine.setSettings(heartbeatResponse)
+        await webhookSecretsUtils.init(heartbeatResponse.APP_WEBHOOK_SECRETS)
         heartbeatInterval = setInterval(() => {
             rejectedPromiseHandler(workerApiService(workerToken).heartbeat(), log)
         }, 15000)
     },
     async start(): Promise<void> {
-        const FLOW_WORKER_CONCURRENCY = machine.getSettings().FLOW_WORKER_CONCURRENCY
-        const SCHEDULED_WORKER_CONCURRENCY = machine.getSettings().SCHEDULED_WORKER_CONCURRENCY
+        const FLOW_WORKER_CONCURRENCY = workerMachine.getSettings().FLOW_WORKER_CONCURRENCY
+        const SCHEDULED_WORKER_CONCURRENCY = workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY
 
         for (const queueName of Object.values(QueueName)) {
             const times = queueName === QueueName.SCHEDULED ? SCHEDULED_WORKER_CONCURRENCY : FLOW_WORKER_CONCURRENCY
@@ -60,7 +66,7 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
                         queueName,
                         message: (e as Error)?.message ?? 'Unknown error',
                     }),
-                    log
+                    log,
                 )
             }
         }

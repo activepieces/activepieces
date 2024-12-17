@@ -1,5 +1,5 @@
 import { FastifyBaseLogger } from 'fastify'
-import pino, { Logger, Level } from 'pino'
+import pino, { Level, Logger } from 'pino'
 import 'pino-loki'
 import { createLokiTransport, LokiCredentials } from './loki-pino'
 
@@ -48,5 +48,5 @@ export const pinoLogging = {
     },
     createWebhookContextLog: ({ log, webhookId, flowId }: { log: FastifyBaseLogger, webhookId: string, flowId: string }) => {
         return log.child({ webhookId, flowId })
-    }
+    },
 }

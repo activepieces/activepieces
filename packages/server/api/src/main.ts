@@ -3,9 +3,9 @@ import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
 import { initializeLock } from './app/helper/lock'
+import { system } from './app/helper/system/system'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
-import { system } from './app/helper/system/system'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {

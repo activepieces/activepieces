@@ -2,16 +2,16 @@ import { ApEnvironment } from '@activepieces/shared'
 import { authenticationService } from '../../authentication/authentication-service'
 import { Provider } from '../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { FlagEntity } from '../../flags/flag.entity'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { databaseConnection } from '../database-connection'
 import { DataSeed } from './data-seed'
-import { WorkerSystemProps } from '../../helper/system/system-prop'
-import { system } from '../../helper/system/system'
 
 const DEV_DATA_SEEDED_FLAG = 'DEV_DATA_SEEDED'
 const log = system.globalLogger()
 
 const currentEnvIsNotDev = (): boolean => {
-    const env = system.get(WorkerSystemProps.ENVIRONMENT)
+    const env = system.get(AppSystemProp.ENVIRONMENT)
     return env !== ApEnvironment.DEVELOPMENT
 }
 

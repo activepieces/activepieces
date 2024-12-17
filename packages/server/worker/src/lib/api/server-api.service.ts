@@ -1,35 +1,36 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
-import { StatusCodes } from 'http-status-codes'
-import { ApAxiosClient } from './ap-axios'
-import { LRUCache } from 'lru-cache'
 import { FastifyBaseLogger } from 'fastify'
-import { machine } from '../utils/machine'
+import { StatusCodes } from 'http-status-codes'
+import { LRUCache } from 'lru-cache'
 import { appNetworkUtils } from '../utils/app-network-utils'
+import { workerMachine } from '../utils/machine'
+import { ApAxiosClient } from './ap-axios'
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
-const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
 
 const flowCache = new LRUCache<string, PopulatedFlow>({
-    max: 100, 
-    ttl: 1000 * 60 * 5, 
+    max: 100,
+    ttl: 1000 * 60 * 5,
 })
 
 export const workerApiService = (workerToken: string) => {
+    const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
+
     const client = new ApAxiosClient(apiUrl, workerToken)
 
     return {
-        async heartbeat(): Promise<void> {
-            const request: WorkerMachineHealthcheckRequest = await machine.getSystemInfo()
+        async heartbeat(): Promise<WorkerMachineHealthcheckResponse | null> {
+            const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
             try {
-                await client.post<WorkerMachineHealthcheckResponse>('/v1/worker-machines/heartbeat', request)
+                return await client.post<WorkerMachineHealthcheckResponse>('/v1/worker-machines/heartbeat', request)
             }
             catch (error) {
                 if (ApAxiosClient.isApAxiosError(error) && error.error.code === 'ECONNREFUSED') {
-                    return
+                    return null
                 }
                 throw error
             }
@@ -66,7 +67,7 @@ export const workerApiService = (workerToken: string) => {
 }
 
 export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
-
+    const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
     const client = new ApAxiosClient(apiUrl, engineToken)
 
     return {

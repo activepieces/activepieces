@@ -2,9 +2,9 @@ import { Level, Logger, pino, TransportTargetOptions } from 'pino'
 import 'pino-loki'
 
 export type LokiCredentials = {        
-    url: string | undefined,
-    username: string | undefined,
-    password: string | undefined,
+    url: string | undefined
+    username: string | undefined
+    password: string | undefined
 }
 
 export const createLokiTransport = (level: Level, targets: TransportTargetOptions[], loki: LokiCredentials): Logger | null => {

@@ -14,7 +14,8 @@
     "chokidar": "3.6.0",
     "fastify": "4.28.1",
     "write-file-atomic": "5.0.1",
-    "nanoid": "3.3.8"
+    "nanoid": "3.3.8",
+    "lru-cache": "11.0.2"
   },
   "type": "commonjs",
   "main": "./src/index.js",

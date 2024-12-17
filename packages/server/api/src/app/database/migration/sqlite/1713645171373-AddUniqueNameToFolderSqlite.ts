@@ -1,5 +1,5 @@
-import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class AddUniqueNameToFolderSqlite1713645171373 implements MigrationInterface {
     name = 'AddUniqueNameToFolderSqlite1713645171373'

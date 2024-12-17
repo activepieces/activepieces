@@ -1,6 +1,6 @@
-import { system } from '../../../helper/system/system'
 import { apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
     name = 'AddAlertsEntitySqlite1717239613259'

@@ -7,8 +7,8 @@ import { ActivepiecesError, ApEdition, apId, ErrorCode, isNil, SeekPage } from '
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { CustomDomainEntity } from './custom-domain.entity'
 import { system } from '../../helper/system/system'
+import { CustomDomainEntity } from './custom-domain.entity'
 
 const customDomainRepo = repoFactory<CustomDomain>(CustomDomainEntity)
 

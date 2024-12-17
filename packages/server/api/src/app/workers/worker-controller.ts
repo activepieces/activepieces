@@ -82,7 +82,6 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         const filterPayloads = await dedupeService.filterUniquePayloads(
             flowVersionId,
             payloads,
-            request.log,
         )
         const createFlowRuns = filterPayloads.map((payload) =>
             flowRunService(request.log).start({

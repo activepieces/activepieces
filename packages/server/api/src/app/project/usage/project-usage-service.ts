@@ -3,14 +3,14 @@ import { FastifyBaseLogger } from 'fastify'
 import { getRedisConnection } from '../../database/redis-connection'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { apDayjs } from '../../helper/dayjs-helper'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { projectService } from '../project-service'
-import { WorkerSystemProps } from '../../helper/system/system-prop'
-import { system } from '../../helper/system/system'
 
 type UsageType = 'tasks' | 'aiTokens'
 
-const environment = system.get(WorkerSystemProps.ENVIRONMENT)
+const environment = system.get(AppSystemProp.ENVIRONMENT)
 
 const redisKeys: Record<UsageType, (projectId: string, startBillingPeriod: string) => string> = {
     'tasks': (projectId: string, startBillingPeriod: string) => `project-usage:${projectId}:${startBillingPeriod}`,

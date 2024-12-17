@@ -1,14 +1,14 @@
 import * as Sentry from '@sentry/node'
-import { FastifyBaseLogger } from 'fastify';
+import { FastifyBaseLogger } from 'fastify'
 
 let sentryInitialized = false
 
 export const exceptionHandler = {
     initializeSentry: (sentryDsn: string | undefined) => {
         if (!sentryDsn) {
-            return;
+            return
         }
-        sentryInitialized = true;
+        sentryInitialized = true
         Sentry.init({
             dsn: sentryDsn,
             beforeSend: (event) => {

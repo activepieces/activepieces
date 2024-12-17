@@ -1,6 +1,6 @@
-import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { encryptUtils } from '../../../helper/encryption'
+import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 

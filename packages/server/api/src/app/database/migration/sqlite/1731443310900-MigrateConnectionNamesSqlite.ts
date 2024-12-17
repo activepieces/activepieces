@@ -1,5 +1,5 @@
-import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class MigrateConnectionNamesSqlite1731443310900 implements MigrationInterface {
     name = 'MigrateConnectionNamesSqlite1731443310900'

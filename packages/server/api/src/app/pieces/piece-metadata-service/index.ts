@@ -1,4 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { PiecesSource } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     PackageType,
@@ -9,17 +10,16 @@ import {
     SuggestionType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 import { FastDbPieceMetadataService } from './db-piece-metadata-service'
 import { FilePieceMetadataService } from './file-piece-metadata-service'
 import { PieceMetadataService } from './piece-metadata-service'
-import { WorkerSystemProps } from '../../helper/system/system-prop'
-import { PiecesSource } from '@activepieces/server-shared'
-import { system } from '../../helper/system/system'
 
 
 export const pieceMetadataService = (log: FastifyBaseLogger): PieceMetadataService => {
-    const source = system.getOrThrow<PiecesSource>(WorkerSystemProps.PIECES_SOURCE)
+    const source = system.getOrThrow<PiecesSource>(AppSystemProp.PIECES_SOURCE)
     switch (source) {
         case PiecesSource.DB:
         case PiecesSource.CLOUD_AND_DB:

@@ -33,6 +33,8 @@ import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
+import { DatabaseType, system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -45,8 +47,6 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { AppSystemProp, WorkerSystemProps } from '../helper/system/system-prop'
-import { DatabaseType, system } from '../helper/system/system'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -111,7 +111,7 @@ function getEntities(): EntitySchema<unknown>[] {
 }
 
 const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(WorkerSystemProps.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
     const value: Partial<Record<ApEnvironment, boolean>> = {
         [ApEnvironment.TESTING]: true,

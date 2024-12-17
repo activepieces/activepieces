@@ -1,5 +1,5 @@
-import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 export class AddPlatformToProject1698078715730 implements MigrationInterface {

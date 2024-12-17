@@ -1,9 +1,9 @@
-import { exceptionHandler, pinoLogging, OneTimeJobData } from '@activepieces/server-shared'
+import { exceptionHandler, OneTimeJobData, pinoLogging } from '@activepieces/server-shared'
 import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
-import { machine } from '../utils/machine'
+import { workerMachine } from '../utils/machine'
 
 type EngineConstants = 'internalApiUrl' | 'publicUrl' | 'engineToken'
 
@@ -59,7 +59,7 @@ async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: st
     })
 }
 async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
-const timeoutFlowInSeconds = machine.getSettings().FLOW_TIMEOUT_SECONDS * 1000
+    const timeoutFlowInSeconds = workerMachine.getSettings().FLOW_TIMEOUT_SECONDS * 1000
     await engineApiService(engineToken, log).updateRunStatus({
         runDetails: {
             duration: timeoutFlowInSeconds,

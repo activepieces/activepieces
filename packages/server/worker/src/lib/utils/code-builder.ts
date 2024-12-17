@@ -5,7 +5,7 @@ import { ExecutionMode, FlowVersionState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../engine/engine-runner'
 import { cacheHandler } from '../utils/cache-handler'
-import { machine } from './machine'
+import { workerMachine } from './machine'
 
 const TS_CONFIG_CONTENT = `
 
@@ -37,7 +37,6 @@ const INVALID_ARTIFACT_TEMPLATE = `
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
-const isPackagesAllowed = machine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
 
 enum CacheState {
     READY = 'READY',
@@ -80,6 +79,8 @@ export const codeBuilder = (log: FastifyBaseLogger) => ({
 
 
             await cache.setCache(codePath, CacheState.PENDING)
+
+            const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
 
             await installDependencies({
                 path: codePath,

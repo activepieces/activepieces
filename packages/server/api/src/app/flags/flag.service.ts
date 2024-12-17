@@ -1,13 +1,13 @@
-import { webhookSecretsUtils } from '@activepieces/server-shared'
+import { webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
 import { webhookUtils } from 'server-worker'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
-import { system } from '../helper/system/system'
-import { AppSystemProp, WorkerSystemProps } from '../helper/system/system-prop'
 
 const flagRepo = repoFactory(FlagEntity)
 
@@ -73,7 +73,7 @@ export const flagService = {
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
-                value: system.get(WorkerSystemProps.ENVIRONMENT),
+                value: system.get(AppSystemProp.ENVIRONMENT),
                 created,
                 updated,
             },
@@ -183,7 +183,7 @@ export const flagService = {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
                 value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
                     ? this.getThirdPartyRedirectUrl(undefined, undefined)
-                    : `${system.get(WorkerSystemProps.FRONTEND_URL)}/redirect`,
+                    : `${system.get(WorkerSystemProp.FRONTEND_URL)}/redirect`,
                 created,
                 updated,
             },
@@ -243,19 +243,19 @@ export const flagService = {
             },
             {
                 id: ApFlagId.FRONTEND_URL,
-                value: system.get(WorkerSystemProps.FRONTEND_URL),
+                value: system.get(WorkerSystemProp.FRONTEND_URL),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.FLOW_RUN_TIME_SECONDS,
-                value: system.getNumberOrThrow(WorkerSystemProps.FLOW_TIMEOUT_SECONDS),
+                value: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.PAUSED_FLOW_TIMEOUT_DAYS,
-                value: system.getNumber(WorkerSystemProps.PAUSED_FLOW_TIMEOUT_DAYS),
+                value: system.getNumber(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 created,
                 updated,
             },
@@ -285,7 +285,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
-                value: system.get(WorkerSystemProps.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY,
+                value: system.get(AppSystemProp.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY,
                 created,
                 updated,
             },
@@ -303,7 +303,7 @@ export const flagService = {
         if (isCustomerPlatform && system.getEdition() === ApEdition.CLOUD) {
             return `https://${hostUrl}/redirect`
         }
-        const frontendUrl = system.get(WorkerSystemProps.FRONTEND_URL)
+        const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
         const trimmedFrontendUrl = frontendUrl?.endsWith('/')
             ? frontendUrl.slice(0, -1)
             : frontendUrl

@@ -2,10 +2,10 @@ import { ActivepiecesError, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, 
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { platformService } from '../../platform/platform.service'
 import { licenseKeysService } from './license-keys-service'
-import { AppSystemProp } from '../../helper/system/system-prop'
-import { system } from '../../helper/system/system'
 
 const key = system.get<string>(AppSystemProp.LICENSE_KEY)
 

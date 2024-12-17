@@ -1,11 +1,11 @@
 import fs from 'fs/promises'
 import fsPath from 'path'
 import { isEmpty } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { enrichErrorContext } from './exception-handler'
 import { exec } from './exec'
 import { fileExists } from './file-system'
 import { memoryLock } from './memory-lock'
-import { FastifyBaseLogger } from 'fastify'
 
 type PackageManagerOutput = {
     stdout: string

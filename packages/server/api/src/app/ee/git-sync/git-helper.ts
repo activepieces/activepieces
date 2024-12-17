@@ -4,9 +4,9 @@ import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import simpleGit, { SimpleGit } from 'simple-git'
-import { userService } from '../../user/user-service'
-import { WorkerSystemProps } from '../../helper/system/system-prop'
 import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
+import { userService } from '../../user/user-service'
 
 export const gitHelper = {
     commitAndPush,
@@ -90,7 +90,7 @@ async function initGitRepo(
 }
 
 async function validateConnection(request: ConfigureRepoRequest): Promise<void> {
-    const environment = system.getOrThrow<ApEnvironment>(WorkerSystemProps.ENVIRONMENT)
+    const environment = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return
     }

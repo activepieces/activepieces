@@ -4,11 +4,11 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
 import { FastifyAdapter } from '@bull-board/fastify'
 import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { systemJobsQueue } from '../../helper/system-jobs/redis-system-job'
 import { bullMqGroups } from './redis-queue'
 import { redisRateLimiter } from './redis-rate-limiter'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 
 const QUEUE_BASE_PATH = '/ui'
 

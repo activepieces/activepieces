@@ -6,9 +6,9 @@ import {
     PrincipalType,
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
-import { BaseSecurityHandler } from '../security-handler'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-prop'
+import { BaseSecurityHandler } from '../security-handler'
 
 export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_NAME = 'api-key'

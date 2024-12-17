@@ -1,3 +1,4 @@
+import { exceptionHandler } from '@activepieces/server-shared'
 import { apId, ApMultipartFile } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
@@ -9,12 +10,11 @@ import qs from 'qs'
 import { setupApp } from './app'
 import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
-import { setupWorker } from './worker'
 import { system } from './helper/system/system'
-import { WorkerSystemProps } from './helper/system/system-prop'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp } from './helper/system/system-prop'
+import { setupWorker } from './worker'
 
-const MAX_FILE_SIZE_MB = system.getNumberOrThrow(WorkerSystemProps.MAX_FILE_SIZE_MB)
+const MAX_FILE_SIZE_MB = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
 
 export const setupServer = async (): Promise<FastifyInstance> => {
     const app = await setupBaseApp()
@@ -62,7 +62,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
             (part as any).value = apFile
         },
     })
-    exceptionHandler.initializeSentry(system.get(WorkerSystemProps.SENTRY_DSN))
+    exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
 
 
     await app.register(fastifyRawBody, {

@@ -1,5 +1,5 @@
-import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 const FLOW_VERSION_TABLE = 'flow_version'

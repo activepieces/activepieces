@@ -1,8 +1,8 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { DeepPartial, generateObject } from 'ai'
 import { z } from 'zod'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 
 export function getModel() {
     try {

@@ -7,9 +7,9 @@ import {
     PiecePackage,
     PrivatePiecePackage,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { cacheHandler } from '../utils/cache-handler'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
-import { FastifyBaseLogger } from 'fastify'
 
 enum CacheState {
     READY = 'READY',

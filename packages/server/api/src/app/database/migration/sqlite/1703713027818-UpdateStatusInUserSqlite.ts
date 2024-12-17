@@ -1,5 +1,5 @@
-import { system } from '../../../helper/system/system'  
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'  
 
 export class UpdateStatusInUserSqlite1703713027818
 implements MigrationInterface {

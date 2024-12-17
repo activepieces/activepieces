@@ -6,9 +6,9 @@ import importFresh from '@activepieces/import-fresh-webpack'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
 import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
+import { FastifyBaseLogger } from 'fastify'
 import { exceptionHandler } from '../exception-handler'
 import { ApLock, memoryLock } from '../memory-lock'
-import { FastifyBaseLogger } from 'fastify'
 
 const pieceCache: Record<string, PieceMetadata | null> = {}
 

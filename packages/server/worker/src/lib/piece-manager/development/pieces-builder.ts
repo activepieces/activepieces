@@ -1,12 +1,11 @@
 import { spawn } from 'child_process'
 import { Server } from 'http'
 import { resolve } from 'path'
-import { ApLock, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, memoryLock, PiecesSource } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { machine } from '../../utils/machine'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
@@ -62,10 +61,9 @@ async function runCommandWithLiveOutput(cmd: string): Promise<void> {
     })
 }
 
-export async function piecesBuilder(app: FastifyInstance, io: Server): Promise<void> {
+export async function piecesBuilder(app: FastifyInstance, io: Server, packages: string[], piecesSource: PiecesSource): Promise<void> {
 
-    const packages = machine.getSettings().DEV_PIECES || []
-    const isFilePieces = machine.getSettings().PIECES_SOURCE
+    const isFilePieces = piecesSource === PiecesSource.FILE
     // Only run this script if the pieces source is file
     if (!isFilePieces) return
 

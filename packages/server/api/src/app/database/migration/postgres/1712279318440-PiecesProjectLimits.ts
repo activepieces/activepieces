@@ -1,6 +1,6 @@
-import { system } from '../../../helper/system/system'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
 const log = system.globalLogger()
