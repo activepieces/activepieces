@@ -2,6 +2,7 @@ import { DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { CopyPlus, EllipsisVertical, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 import {
   ActionType,
@@ -22,7 +23,6 @@ import { cn } from '../../../../lib/utils';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../utils/consts';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
-import { useState } from 'react';
 
 type BaseBranchLabel = {
   label: string;
@@ -73,13 +73,15 @@ const BranchLabel = (props: BaseBranchLabel) => {
     return <></>;
   }
 
-  
   return (
-    <div className="h-full flex items-center justify-center " onContextMenu={(e)=>{
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDropdownMenuOpen(true)
-    }}>
+    <div
+      className="h-full flex items-center justify-center "
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDropdownMenuOpen(true);
+      }}
+    >
       <div
         className="bg-background"
         style={{
@@ -121,9 +123,13 @@ const BranchLabel = (props: BaseBranchLabel) => {
           {!isBranchNonInteractive &&
             !readonly &&
             step.type === ActionType.ROUTER && (
-              <DropdownMenu modal={true} open={isDropdownMenuOpen} onOpenChange={setIsDropdownMenuOpen}>
+              <DropdownMenu
+                modal={true}
+                open={isDropdownMenuOpen}
+                onOpenChange={setIsDropdownMenuOpen}
+              >
                 <DropdownMenuTrigger asChild>
-                  <div 
+                  <div
                     className="h-5 shrink-0 border border-transparent hover:border-solid hover:border-primary-300/50 transition-all rounded-full w-5 flex items-center justify-center"
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -136,7 +142,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
                     e.stopPropagation();
                   }}
                 >
-                <DropdownMenuItem
+                  <DropdownMenuItem
                     onSelect={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -185,8 +191,6 @@ const BranchLabel = (props: BaseBranchLabel) => {
                       </span>
                     </div>
                   </DropdownMenuItem>
-
-                  
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

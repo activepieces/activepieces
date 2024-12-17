@@ -72,7 +72,8 @@ const BuilderPublishButton = React.memo(() => {
   const isViewingDraft =
     ((flow.publishedVersionId === flowVersion.id &&
       flow.version.id === flowVersion.id) ||
-    flowVersion.state === FlowVersionState.DRAFT )&& !readonly;
+      flowVersion.state === FlowVersionState.DRAFT) &&
+    !readonly;
 
   return (
     <>

@@ -1,5 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext, useCallback, useEffect, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { create, useStore } from 'zustand';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -460,7 +466,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           return {
             pieceSelectorStep: step,
             selectedStep: step ? step : state.selectedStep,
-            rightSidebar: step ? RightSideBarType.PIECE_SETTINGS : state.rightSidebar,
+            rightSidebar: step
+              ? RightSideBarType.PIECE_SETTINGS
+              : state.rightSidebar,
           };
         });
       },
@@ -521,7 +529,9 @@ export const useHandleKeyPressOnCanvas = () => {
           e.target.classList.contains('react-flow__nodesselection-rect')) &&
         !readonly
       ) {
-        const doesNotContainTrigger = !selectedNodes.some((node) => node === flowVersion.trigger.name);
+        const doesNotContainTrigger = !selectedNodes.some(
+          (node) => node === flowVersion.trigger.name,
+        );
         shortcutHandler(e, {
           Copy: () => {
             if (doesNotContainTrigger && selectedNodes.length > 0) {
@@ -529,7 +539,11 @@ export const useHandleKeyPressOnCanvas = () => {
             }
           },
           Delete: () => {
-            if (isNodeSelectionActive() && doesNotContainTrigger && selectedNodes.length > 0) {
+            if (
+              isNodeSelectionActive() &&
+              doesNotContainTrigger &&
+              selectedNodes.length > 0
+            ) {
               deleteSelectedNodes({
                 exitStepSettings,
                 selectedStep,
@@ -607,9 +621,9 @@ export const useSwitchToDraft = () => {
   };
 };
 
-export const usePasteActionsInClipboard = () =>{ 
+export const usePasteActionsInClipboard = () => {
   const [actionsToPaste, setActionsToPaste] = useState<Action[]>([]);
- 
+
   useEffect(() => {
     const fetchClipboardOperations = async () => {
       const fetchedActionsFromClipboard = await getActionsInClipboard();
@@ -624,4 +638,4 @@ export const usePasteActionsInClipboard = () =>{
     return () => clearInterval(interval);
   }, []);
   return actionsToPaste;
-}
+};

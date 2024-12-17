@@ -17,11 +17,9 @@ import {
   AskAiIndicator,
   shouldShowAskAiIndicator,
 } from '../edges/ask-ai-indicator';
-import {
-  flowUtilConsts,
-} from '../utils/consts';
-import { ApBigAddButtonNode } from '../utils/types';
 import { PasteButton } from '../edges/paste-button';
+import { flowUtilConsts } from '../utils/consts';
+import { ApBigAddButtonNode } from '../utils/types';
 
 const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
@@ -74,7 +72,6 @@ const ApBigAddButtonCanvasNode = React.memo(
                     height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
                     width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                   }}
-                  
                   id={id}
                   className={cn('rounded bg-accent relative', {
                     'bg-primary/80': showDropIndicator || pieceSelectorOpen,
@@ -87,8 +84,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                   })}
                 >
                   {!showDropIndicator && (
-                     
-                      <PieceSelector
+                    <PieceSelector
                       operation={
                         data.stepLocationRelativeToParent ===
                         StepLocationRelativeToParent.INSIDE_BRANCH
@@ -113,8 +109,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                       open={pieceSelectorOpen}
                       onOpenChange={setPieceSelectorOpen}
                     >
-                    
-                      <span className='relative group'> 
+                      <span className="relative group">
                         {showAiIndicator && (
                           <AskAiIndicator
                             height={
@@ -138,12 +133,11 @@ const ApBigAddButtonCanvasNode = React.memo(
                             />
                           </Button>
                         )}
-                        <div className='absolute top-[15px] left-[55px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out'>
+                        <div className="absolute top-[15px] left-[55px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out">
                           <PasteButton addButtonData={data} />
                         </div>
                       </span>
                     </PieceSelector>
-                  
                   )}
                 </div>
                 {showDropIndicator && (

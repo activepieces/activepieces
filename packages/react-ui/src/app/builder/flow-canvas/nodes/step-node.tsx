@@ -1,24 +1,19 @@
 import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
 import { t } from 'i18next';
-import {
-  ChevronDown,
-  RouteOff,
-} from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { ChevronDown, RouteOff } from 'lucide-react';
+import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
-
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -86,7 +81,6 @@ const StepActionWrapper = React.memo(
 StepActionWrapper.displayName = 'StepActionWrapper';
 const ApStepCanvasNode = React.memo(
   ({ data }: NodeProps & Omit<ApStepNode, 'position'>) => {
-    const { toast } = useToast();
     const [
       selectStepByName,
       setAllowCanvasPanning,
@@ -96,15 +90,11 @@ const ApStepCanvasNode = React.memo(
       run,
       readonly,
       exitStepSettings,
-      applyOperation,
-      removeStepSelection,
       flowVersion,
       loopIndexes,
-      setSampleData,
       setSelectedBranchIndex,
       setPieceSelectorStep,
       pieceSelectorStep,
-      
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.setAllowCanvasPanning,
@@ -114,11 +104,8 @@ const ApStepCanvasNode = React.memo(
       state.run,
       state.readonly,
       state.exitStepSettings,
-      state.applyOperation,
-      state.removeStepSelection,
       state.flowVersion,
       state.loopsIndexes,
-      state.setSampleData,
       state.setSelectedBranchIndex,
       state.setPieceSelectorStep,
       state.pieceSelectorStep,
@@ -131,58 +118,17 @@ const ApStepCanvasNode = React.memo(
       step,
     });
 
-   
-    const deleteStep = () => {
-      setSampleData(data.step!.name, undefined);
-      applyOperation(
-        {
-          type: FlowOperationType.DELETE_ACTION,
-          request: {
-            names: [data.step!.name],
-          },
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-      removeStepSelection();
-    };
-    const skipStep = () => {
-      applyOperation(
-        {
-          type: FlowOperationType.SET_SKIP_ACTION,
-          request: {
-            names: [step.name],
-            skip: !(step as Action).skip,
-          },
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-    };
-
-    const duplicateStep = () => {
-      applyOperation(
-        {
-          type: FlowOperationType.DUPLICATE_ACTION,
-          request: {
-            stepName: data.step!.name,
-          },
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-    };
-
     const stepIndex = useMemo(() => {
       const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
       return steps.findIndex((s) => s.name === step.name) + 1;
     }, [data, flowVersion]);
 
-    const [openStepActionsMenu, setOpenStepActionsMenu] = useState(false);
-
     const isTrigger = flowStructureUtil.isTrigger(step.type);
     const isAction = flowStructureUtil.isAction(step.type);
 
     const pieceSelectorOperation = isAction
-                                  ? FlowOperationType.UPDATE_ACTION
-                                  : FlowOperationType.UPDATE_TRIGGER;
+      ? FlowOperationType.UPDATE_ACTION
+      : FlowOperationType.UPDATE_TRIGGER;
     const isEmptyTriggerSelected =
       selectedStep === 'trigger' && step.type === TriggerType.EMPTY;
     const isSkipped = (step as Action).skip;
@@ -278,9 +224,7 @@ const ApStepCanvasNode = React.memo(
               open={openPieceSelector || isEmptyTriggerSelected}
               onOpenChange={(open) => {
                 setPieceSelectorStep(open ? step.name : null);
-                if (open) {
-                  setOpenStepActionsMenu(false);
-                } else if (step.type === TriggerType.EMPTY) {
+                if (!open && step.type === TriggerType.EMPTY) {
                   exitStepSettings();
                 }
               }}
@@ -311,30 +255,33 @@ const ApStepCanvasNode = React.memo(
                         {stepIndex}. {step.displayName}
                       </div>
 
-                     {
-                      (!readonly || !isTrigger) &&  <Button
-                      variant="ghost"
-                      size="sm"
-                      className="p-1 size-7 "
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        if (e.target) {
-                          const rightClickEvent = new MouseEvent("contextmenu", {
-                            bubbles: true,
-                            cancelable: true,
-                            view: window,
-                            button: 2, 
-                            clientX: e.clientX,
-                            clientY: e.clientY,
-                          });
-                          e.target.dispatchEvent(rightClickEvent);
-                        } 
-                      }}
-                    >
-                      <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
-                    </Button>
-                     }
+                      {(!readonly || !isTrigger) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1 size-7 "
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            if (e.target) {
+                              const rightClickEvent = new MouseEvent(
+                                'contextmenu',
+                                {
+                                  bubbles: true,
+                                  cancelable: true,
+                                  view: window,
+                                  button: 2,
+                                  clientX: e.clientX,
+                                  clientY: e.clientY,
+                                },
+                              );
+                              e.target.dispatchEvent(rightClickEvent);
+                            }
+                          }}
+                        >
+                          <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
+                        </Button>
+                      )}
                     </div>
 
                     <div className="flex justify-between w-full items-center">

@@ -11,9 +11,7 @@ import {
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import {
-  flowUtilConsts,
-} from '../utils/consts';
+import { flowUtilConsts } from '../utils/consts';
 import { ApButtonData } from '../utils/types';
 
 import { AskAiIndicator, shouldShowAskAiIndicator } from './ask-ai-indicator';
@@ -75,7 +73,6 @@ const ApAddButton = React.memo((props: ApButtonData) => {
         </div>
       )}
       {!showDropIndicator && !readonly && (
-       
         <PieceSelector
           operation={
             props.stepLocationRelativeToParent ===
@@ -102,9 +99,13 @@ const ApAddButton = React.memo((props: ApButtonData) => {
           onOpenChange={setActionMenuOpen}
           asChild={true}
         >
-          <div style={{width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px', height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px'}}>
-
-          {showAskAiIndicator && (
+          <div
+            style={{
+              width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+              height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+            }}
+          >
+            {showAskAiIndicator && (
               <AskAiIndicator
                 height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
                 width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
@@ -112,13 +113,16 @@ const ApAddButton = React.memo((props: ApButtonData) => {
             )}
             {!showAskAiIndicator && (
               <div
-              style={{
-                width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width  + 'px',
-                height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
-              }}
-                className={cn('rounded-xss cursor-pointer transition-all z-50', {
-                  'shadow-add-button': actionMenuOpen,
-                })}
+                style={{
+                  width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+                  height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+                }}
+                className={cn(
+                  'rounded-xss cursor-pointer transition-all z-50',
+                  {
+                    'shadow-add-button': actionMenuOpen,
+                  },
+                )}
               >
                 <div
                   style={{
@@ -136,26 +140,16 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   {!actionMenuOpen && (
                     <Plus className="w-3 h-3 stroke-[3px] text-white" />
                   )}
-                  {
-                    !actionMenuOpen && (
-                      <div className='absolute -top-[1px] left-[25px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out'>
-                        <PasteButton addButtonData={props} />
-                      </div>
-                    )
-                  }
+                  {!actionMenuOpen && (
+                    <div className="absolute -top-[1px] left-[25px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out">
+                      <PasteButton addButtonData={props} />
+                    </div>
+                  )}
                 </div>
-               
               </div>
-              
             )}
-                 
           </div>
-        
-       
-         
         </PieceSelector>
-   
-
       )}
     </>
   );

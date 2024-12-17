@@ -9,13 +9,7 @@ import {
   useKeyPress,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -36,16 +30,9 @@ import {
   useHandleKeyPressOnCanvas,
 } from '../builder-hooks';
 
-import {
-  CanvasContextMenu,
-  CanvasContextMenuProps,
-} from './context-menu/canvas-context-menu';
+import { CanvasContextMenu } from './context-menu/canvas-context-menu';
 import { FlowDragLayer } from './flow-drag-layer';
-import {
-  ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE,
-  flowUtilConsts,
-  STEP_CONTEXT_MENU_ATTRIBUTE,
-} from './utils/consts';
+import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 
@@ -78,7 +65,9 @@ const createGraphKey = (flowVersion: FlowVersion) => {
       const branchesLength =
         step.type === ActionType.ROUTER ? step.settings.branches.length : 0;
       const childrenKey = getChildrenKey(step);
-      return `${acc}-${step.displayName}-${step.type}-${step.nextAction? step.nextAction.name:''}-${
+      return `${acc}-${step.displayName}-${step.type}-${
+        step.nextAction ? step.nextAction.name : ''
+      }-${
         step.type === ActionType.PIECE ? step.settings.pieceName : ''
       }-${branchesLength}-${childrenKey}`;
     }, '');
@@ -187,7 +176,7 @@ export const FlowCanvas = React.memo(
         if (
           ev.target instanceof HTMLElement ||
           ev.target instanceof SVGElement
-        ) {    
+        ) {
           const stepElement = ev.target.closest(
             `[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`,
           );
@@ -195,9 +184,11 @@ export const FlowCanvas = React.memo(
             `data-${STEP_CONTEXT_MENU_ATTRIBUTE}`,
           );
           setSelectedNodes(
-            (isNodeSelectionActive() && !stepElement)
+            isNodeSelectionActive() && !stepElement
               ? selectedNodes
-              : stepName ? [stepName] : []
+              : stepName
+              ? [stepName]
+              : [],
           );
           if (isNodeSelectionActive() && stepElement) {
             document

@@ -58,22 +58,28 @@ export const CanvasContextMenu = ({
   readonly,
   setPieceSelectorStep,
 }: CanvasContextMenuProps) => {
-  const doesNotContainTrigger = !selectedNodes.some((node) => node === flowVersion.trigger.name)
+  const doesNotContainTrigger = !selectedNodes.some(
+    (node) => node === flowVersion.trigger.name,
+  );
 
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      { !doesNotContainTrigger && readonly? <></>: <ContextMenuContent>
-        <CanvasContextMenuContent
-          selectedNodes={selectedNodes}
-          applyOperation={applyOperation}
-          selectedStep={selectedStep}
-          flowVersion={flowVersion}
-          exitStepSettings={exitStepSettings}
-          readonly={readonly}
-          setPieceSelectorStep={setPieceSelectorStep}
-        ></CanvasContextMenuContent>
-      </ContextMenuContent>}
+      {!doesNotContainTrigger && readonly ? (
+        <></>
+      ) : (
+        <ContextMenuContent>
+          <CanvasContextMenuContent
+            selectedNodes={selectedNodes}
+            applyOperation={applyOperation}
+            selectedStep={selectedStep}
+            flowVersion={flowVersion}
+            exitStepSettings={exitStepSettings}
+            readonly={readonly}
+            setPieceSelectorStep={setPieceSelectorStep}
+          ></CanvasContextMenuContent>
+        </ContextMenuContent>
+      )}
     </ContextMenu>
   );
 };

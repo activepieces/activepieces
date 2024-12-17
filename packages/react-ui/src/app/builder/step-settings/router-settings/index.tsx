@@ -81,10 +81,11 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       flowVersion: FlowVersion,
       operation: FlowOperationRequest,
     ) => {
-
       switch (operation.type) {
-        case FlowOperationType.DELETE_BRANCH:
-         { if (operation.request.stepName !== step.name) {return;}
+        case FlowOperationType.DELETE_BRANCH: {
+          if (operation.request.stepName !== step.name) {
+            return;
+          }
           remove(operation.request.branchIndex);
           break;
         }
@@ -101,7 +102,8 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             );
             return;
           }
-          const branch = updatedStep.settings.branches[operation.request.branchIndex];
+          const branch =
+            updatedStep.settings.branches[operation.request.branchIndex];
           if (operation.type === FlowOperationType.DUPLICATE_BRANCH) {
             insert(operation.request.branchIndex + 1, {
               ...branch,

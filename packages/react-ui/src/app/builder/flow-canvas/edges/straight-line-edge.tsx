@@ -28,7 +28,7 @@ export const ApStraightLineCanvasEdge = ({
     <>
       <BaseEdge
         path={path}
-        style={{ strokeWidth: `${flowUtilConsts.LINE_WIDTH}px`}}
+        style={{ strokeWidth: `${flowUtilConsts.LINE_WIDTH}px` }}
       />
       {!data.hideAddButton && (
         <foreignObject
