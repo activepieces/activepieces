@@ -2,7 +2,7 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { fileExists, networkUtls } from '@activepieces/server-shared'
+import { exceptionHandler, fileExists, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, MachineInformation, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
@@ -13,8 +13,11 @@ let settings: WorkerMachineHealthcheckResponse | undefined
 
 export const workerMachine = {
     getSystemInfo,
-    setSettings: (_settings: WorkerMachineHealthcheckResponse) => {
+    init: async (_settings: WorkerMachineHealthcheckResponse) => {
         settings = _settings
+
+        await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
+        exceptionHandler.initializeSentry(settings.SENTRY_DSN)
     },
     getSettings: () => {
         assertNotNullOrUndefined(settings, 'Settings are not set')

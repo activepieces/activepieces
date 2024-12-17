@@ -1,4 +1,4 @@
-import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData, webhookSecretsUtils } from '@activepieces/server-shared'
+import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineApiService, workerApiService } from './api/server-api.service'
@@ -19,10 +19,9 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
         workerToken = generatedToken
         const heartbeatResponse = await workerApiService(workerToken).heartbeat()
         if (isNil(heartbeatResponse)) {
-            throw new Error('Failed to get heartbeat response')
+            throw new Error('The worker is enable to reach the server')
         }
-        workerMachine.setSettings(heartbeatResponse)
-        await webhookSecretsUtils.init(heartbeatResponse.APP_WEBHOOK_SECRETS)
+        await workerMachine.init(heartbeatResponse)
         heartbeatInterval = setInterval(() => {
             rejectedPromiseHandler(workerApiService(workerToken).heartbeat(), log)
         }, 15000)

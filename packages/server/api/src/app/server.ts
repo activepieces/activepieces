@@ -14,7 +14,6 @@ import { system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-prop'
 import { setupWorker } from './worker'
 
-const MAX_FILE_SIZE_MB = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
 
 export const setupServer = async (): Promise<FastifyInstance> => {
     const app = await setupBaseApp()
@@ -34,7 +33,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         ignoreTrailingSlash: true,
         pluginTimeout: 30000,
         // Default 100MB, also set in nginx.conf
-        bodyLimit: (MAX_FILE_SIZE_MB + 4) * 1024 * 1024,
+        bodyLimit: 25 * 1024 * 1024,
         genReqId: () => {
             return `req_${apId()}`
         },

@@ -1,5 +1,5 @@
 import { PiecesSource, WorkerSystemProp } from '@activepieces/server-shared'
-import { isNil, WorkerMachineType } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { flowWorker, piecesBuilder } from 'server-worker'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
@@ -33,8 +33,5 @@ async function generateWorkerToken(): Promise<string> {
     if (!isNil(workerToken)) {
         return workerToken
     }
-    return accessTokenManager.generateWorkerToken({
-        type: WorkerMachineType.SHARED,
-        platformId: null,
-    })
+    return accessTokenManager.generateWorkerToken()
 }

@@ -1,16 +1,11 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
-import { ApId } from '../common/id-generator'
 
 export enum WorkerMachineStatus {
     ONLINE = 'ONLINE',
     OFFLINE = 'OFFLINE',
 }
 
-export enum WorkerMachineType {
-    DEDICATED = 'DEDICATED',
-    SHARED = 'SHARED',
-}
 
 export const MachineInformation = Type.Object({
     cpuUsagePercentage: Type.Number(),
@@ -30,8 +25,6 @@ export type MachineInformation = Static<typeof MachineInformation>
 
 export const WorkerMachine = Type.Object({
     ...BaseModelSchema,
-    platformId: ApId,
-    type: Type.Enum(WorkerMachineType),
     information: MachineInformation,
 })
 
