@@ -31,6 +31,7 @@ import {
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import {
   isNodeSelectionActive,
+  NODE_SELECTION_RECT_CLASS_NAME,
   useBuilderStateContext,
   useHandleKeyPressOnCanvas,
 } from '../builder-hooks';
@@ -181,43 +182,18 @@ export const FlowCanvas = React.memo(
     const graph = useMemo(() => {
       return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
     }, [graphKey]);
-    const [contextMenuData, setContextMenuData] = useState<
-      CanvasContextMenuProps['pasteActionData']
-    >({
-      addButtonData: null,
-      singleSelectedStepName: null,
-    });
     const onContextMenu = useCallback(
       (ev: React.MouseEvent<HTMLDivElement>) => {
         if (
           ev.target instanceof HTMLElement ||
           ev.target instanceof SVGElement
-        ) {
-          const addButtonElement = ev.target.closest(
-            `[data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}]`,
-          );
-          const addButtonData = addButtonElement?.getAttribute(
-            `data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`,
-          );
-     
+        ) {    
           const stepElement = ev.target.closest(
             `[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`,
           );
           const stepName = stepElement?.getAttribute(
             `data-${STEP_CONTEXT_MENU_ATTRIBUTE}`,
           );
-          debugger;
-          if (addButtonData) {
-            setContextMenuData({
-              addButtonData: JSON.parse(addButtonData || '{}'),
-              singleSelectedStepName: null,
-            });
-          } else {
-            setContextMenuData({
-              addButtonData: null,
-              singleSelectedStepName: stepName || null,
-            });
-          } 
           setSelectedNodes(
             (isNodeSelectionActive() && !stepElement)
               ? selectedNodes
@@ -225,12 +201,12 @@ export const FlowCanvas = React.memo(
           );
           if (isNodeSelectionActive() && stepElement) {
             document
-              .querySelector('.react-flow__nodesselection-rect')
+              .querySelector(`.${NODE_SELECTION_RECT_CLASS_NAME}`)
               ?.remove();
           }
         }
       },
-      [setContextMenuData, setSelectedNodes, selectedNodes],
+      [setSelectedNodes, selectedNodes],
     );
 
     const handleKeyDown = useHandleKeyPressOnCanvas();
@@ -277,7 +253,6 @@ export const FlowCanvas = React.memo(
             selectedStep={selectedStep}
             exitStepSettings={exitStepSettings}
             flowVersion={flowVersion}
-            pasteActionData={contextMenuData}
             readonly={readonly}
             setPieceSelectorStep={setPieceSelectorStep}
           >

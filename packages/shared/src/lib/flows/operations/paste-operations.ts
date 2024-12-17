@@ -39,6 +39,7 @@ export const _getOperationsForPaste = (
                     action: clonedActions[i],
                     parentStep: pastingDetails.parentStepName,
                     stepLocationRelativeToParent: pastingDetails.stepLocationRelativeToParent,
+                    branchIndex: pastingDetails.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH ? pastingDetails.branchIndex : undefined,
                 },
             })
         }

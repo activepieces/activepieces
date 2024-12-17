@@ -6,7 +6,6 @@ import {
 import { ShortcutProps } from '@/components/ui/shortcut';
 
 import { BuilderState } from '../../builder-hooks';
-import { ApButtonData } from '../utils/types';
 
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
 
@@ -48,17 +47,12 @@ export type CanvasContextMenuProps = Pick<
   | 'setPieceSelectorStep'
 > & {
   children?: React.ReactNode;
-  pasteActionData: {
-    addButtonData: ApButtonData | null;
-    singleSelectedStepName: string | null;
-  };
 };
 export const CanvasContextMenu = ({
   selectedNodes,
   applyOperation,
   selectedStep,
   flowVersion,
-  pasteActionData,
   children,
   exitStepSettings,
   readonly,
@@ -75,7 +69,6 @@ export const CanvasContextMenu = ({
           flowVersion={flowVersion}
           exitStepSettings={exitStepSettings}
           readonly={readonly}
-          pasteActionData={pasteActionData}
           setPieceSelectorStep={setPieceSelectorStep}
         ></CanvasContextMenuContent>
       </ContextMenuContent>

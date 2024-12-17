@@ -77,50 +77,52 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   };
 
   useEffect(() => {
-    const deleteBranchListener = (
-      _: FlowVersion,
-      operation: FlowOperationRequest,
-    ) => {
-      if (operation.type === FlowOperationType.DELETE_BRANCH) {
-        if (operation.request.stepName === step.name) {
-          remove(operation.request.branchIndex);
-        }
-      }
-    };
-
-    const duplicateBranchListener = (
+    const operationListener = (
       flowVersion: FlowVersion,
       operation: FlowOperationRequest,
     ) => {
-      if (operation.type === FlowOperationType.DUPLICATE_BRANCH) {
-        const step = flowStructureUtil.getActionOrThrow(
-          operation.request.stepName,
-          flowVersion.trigger,
-        );
-        if (step.type !== ActionType.ROUTER) {
-          console.error(
-            `Trying to duplicate a branch on a none router step! ${operation.request.stepName}`,
-          );
-          return;
-        }
-        const branch = step.settings.branches[operation.request.branchIndex];
 
-        if (operation.request.stepName === step.name) {
-          insert(operation.request.branchIndex + 1, {
-            ...branch,
-            branchName: `${branch.branchName} Copy`,
-          });
+      switch (operation.type) {
+        case FlowOperationType.DELETE_BRANCH:
+         { if (operation.request.stepName !== step.name) {return;}
+          remove(operation.request.branchIndex);
+          break;
+        }
+        case FlowOperationType.DUPLICATE_BRANCH:
+        case FlowOperationType.ADD_BRANCH: {
+          if (operation.request.stepName !== step.name) return;
+          const updatedStep = flowStructureUtil.getActionOrThrow(
+            operation.request.stepName,
+            flowVersion.trigger,
+          );
+          if (updatedStep.type !== ActionType.ROUTER) {
+            console.error(
+              `Trying to duplicate a branch on a none router step! ${operation.request.stepName}`,
+            );
+            return;
+          }
+          const branch = updatedStep.settings.branches[operation.request.branchIndex];
+          if (operation.type === FlowOperationType.DUPLICATE_BRANCH) {
+            insert(operation.request.branchIndex + 1, {
+              ...branch,
+              branchName: `${branch.branchName} Copy`,
+            });
+          } else {
+            insert(
+              updatedStep.settings.branches.length - 1,
+              flowStructureUtil.createBranch(
+                `Branch ${updatedStep.settings.branches.length}`,
+                undefined,
+              ),
+            );
+          }
+          break;
         }
       }
     };
 
-    addOperationListener(deleteBranchListener);
-    addOperationListener(duplicateBranchListener);
-
-    return () => {
-      removeOperationListener(deleteBranchListener);
-      removeOperationListener(duplicateBranchListener);
-    };
+    addOperationListener(operationListener);
+    return () => removeOperationListener(operationListener);
   }, []);
   return (
     <>
@@ -219,13 +221,6 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                     () => {},
                   );
 
-                  insert(
-                    step.settings.branches.length - 1,
-                    flowStructureUtil.createBranch(
-                      `Branch ${step.settings.branches.length}`,
-                      undefined,
-                    ),
-                  );
                   setSelectedBranchIndex(step.settings.branches.length - 1);
                 }}
               ></BranchesToolbar>

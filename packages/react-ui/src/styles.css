@@ -130,7 +130,7 @@
   --xy-selection-background-color-default: hsl(var(--primary-100)/0.25) !important;
 }
 
-.react-flow__pane.selection
+.react-flow__pane.selection,.react-flow__nodesselection-rect
 {
   cursor: default !important;
 }

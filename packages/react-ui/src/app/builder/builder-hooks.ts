@@ -459,6 +459,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           return {
             pieceSelectorStep: step,
             selectedStep: step ? step : state.selectedStep,
+            rightSidebar: step ? RightSideBarType.PIECE_SETTINGS : state.rightSidebar,
           };
         });
       },
@@ -490,8 +491,9 @@ const shortcutHandler = (
   }
 };
 
+export const NODE_SELECTION_RECT_CLASS_NAME = 'react-flow__nodesselection-rect';
 export const isNodeSelectionActive = () => {
-  return document.querySelector('.react-flow__nodesselection-rect') !== null;
+  return document.querySelector(`.${NODE_SELECTION_RECT_CLASS_NAME}`) !== null;
 };
 export const useHandleKeyPressOnCanvas = () => {
   const [
