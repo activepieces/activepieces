@@ -1,27 +1,18 @@
 import { logger } from '@activepieces/server-shared';
 import { CopilotProviderType } from '@activepieces/shared';
-import { createOpenAI, OpenAIProvider } from '@ai-sdk/openai';
-import { AzureOpenAIProvider, createAzure } from '@ai-sdk/azure';
-import { AnthropicProvider, createAnthropic } from '@ai-sdk/anthropic';
+import { createOpenAI } from '@ai-sdk/openai';
+import { createAzure } from '@ai-sdk/azure';
+import { createAnthropic } from '@ai-sdk/anthropic';
 import { platformService } from '../../platform/platform.service';
 import { LanguageModel } from 'ai';
 
-// Custom error types
-class ModelServiceError extends Error {
-  constructor(message: string, public readonly code: string) {
-    super(message);
-    this.name = 'ModelServiceError';
-  }
-}
-
-// Types and Interfaces
+// Types
 interface AssistantProvider {
   type: CopilotProviderType;
   provider: string;
   apiKey: string;
-  baseUrl?: string;
-  deploymentName?: string;
   resourceName?: string;
+  deploymentName?: string;
 }
 
 interface CopilotSettings {
@@ -29,12 +20,6 @@ interface CopilotSettings {
   providers: AssistantProvider[];
 }
 
-interface ProviderConfiguration {
-  model: string;
-  baseUrl?: string;
-}
-
-// Constants
 const AI_PROVIDER = {
   OPENAI: 'openai',
   AZURE: 'azure',
@@ -44,34 +29,15 @@ const AI_PROVIDER = {
 
 type AiProvider = typeof AI_PROVIDER[keyof typeof AI_PROVIDER];
 
-const PROVIDER_CONFIG: Record<AiProvider, ProviderConfiguration> = {
-  [AI_PROVIDER.OPENAI]: {
-    model: 'gpt-4o',
-  },
-  [AI_PROVIDER.AZURE]: {
-    model: 'gpt-4o',
-  },
-  [AI_PROVIDER.ANTHROPIC]: {
-    model: 'claude-3-5-sonnet-20241022',
-  },
-  [AI_PROVIDER.PERPLEXITY]: {
-    model: 'mixtral-8x7b-instruct',
-    baseUrl: 'https://api.perplexity.ai/',
-  },
+const MODEL_NAMES = {
+  [AI_PROVIDER.OPENAI]: 'gpt-4o',
+  [AI_PROVIDER.AZURE]: 'gpt-4o',
+  [AI_PROVIDER.ANTHROPIC]: 'claude-3-5-sonnet-20241022',
+  [AI_PROVIDER.PERPLEXITY]: 'mixtral-8x7b-instruct',
 } as const;
 
-interface AiProviderConfig {
-  type: AiProvider;
-  baseUrl?: string;
-  apiKey: string;
-  deploymentName?: string;
-  resourceName?: string;
-}
-
-// Helper Functions
 function getProviderType(provider: string): AiProvider {
   const normalizedProvider = provider.toLowerCase();
-  
   switch (normalizedProvider) {
     case AI_PROVIDER.AZURE:
       return AI_PROVIDER.AZURE;
@@ -84,65 +50,47 @@ function getProviderType(provider: string): AiProvider {
   }
 }
 
-function validateProviderConfig(config: AiProviderConfig): void {
-  if (!config.apiKey) {
-    throw new ModelServiceError('API key is required', 'MISSING_API_KEY');
-  }
-
-  if (config.type === AI_PROVIDER.AZURE) {
-    if (!config.deploymentName) {
-      throw new ModelServiceError('Deployment name is required for Azure provider', 'MISSING_DEPLOYMENT_NAME');
-    }
-    if (!config.resourceName) {
-      throw new ModelServiceError('Resource name is required for Azure provider', 'MISSING_RESOURCE_NAME');
-    }
-  }
-}
-
-function createModelInstance(config: AiProviderConfig): LanguageModel {
-  logger.debug('[ModelService] Creating model instance', { providerType: config.type });
+function createModelInstance(provider: AssistantProvider): LanguageModel {
+  const providerType = getProviderType(provider.provider);
+  logger.debug('[ModelService] Creating model instance', { providerType });
 
   try {
-    validateProviderConfig(config);
-    const providerConfig = PROVIDER_CONFIG[config.type];
-
-    switch (config.type) {
+    switch (providerType) {
       case AI_PROVIDER.OPENAI:
         return createOpenAI({ 
-          apiKey: config.apiKey,
-        }).chat(providerConfig.model);
+          apiKey: provider.apiKey,
+        }).chat(MODEL_NAMES[providerType]);
 
       case AI_PROVIDER.AZURE:
+        if (!provider.resourceName || !provider.deploymentName) {
+          throw new Error('Azure provider requires resourceName and deploymentName');
+        }
         return createAzure({
-          apiKey: config.apiKey,
-          resourceName: config.resourceName,
-        }).chat(config.deploymentName!);
+          apiKey: provider.apiKey,
+          resourceName: provider.resourceName,
+        }).chat(provider.deploymentName);
 
       case AI_PROVIDER.ANTHROPIC:
         return createAnthropic({ 
-          apiKey: config.apiKey,
-        }).languageModel(providerConfig.model);
+          apiKey: provider.apiKey,
+        }).languageModel(MODEL_NAMES[providerType]);
 
       case AI_PROVIDER.PERPLEXITY:
         return createOpenAI({
           name: AI_PROVIDER.PERPLEXITY,
-          apiKey: config.apiKey,
-          baseUrl: providerConfig.baseUrl,
-        }).chat(providerConfig.model);
+          apiKey: provider.apiKey,
+          baseUrl: 'https://api.perplexity.ai/',
+        }).chat(MODEL_NAMES[providerType]);
 
       default:
-        throw new ModelServiceError(`Unsupported AI provider: ${config.type}`, 'UNSUPPORTED_PROVIDER');
+        throw new Error(`Unsupported AI provider: ${providerType}`);
     }
   } catch (error) {
-    if (error instanceof ModelServiceError) {
-      throw error;
-    }
-    logger.error('[ModelService] Failed to create model instance', { error, providerType: config.type });
-    throw new ModelServiceError('Failed to create model instance', 'MODEL_CREATION_FAILED');
+    logger.error('[ModelService] Failed to create model instance', { error, providerType });
+    throw error;
   }
 }
 
-// Model Service Implementation
 export const modelService = {
   async getModel(platformId: string): Promise<LanguageModel | null> {
     try {
@@ -160,34 +108,15 @@ export const modelService = {
         return null;
       }
 
-      const providerType = getProviderType(assistantProvider.provider);
-      const modelConfig: AiProviderConfig = {
-        type: providerType,
-        apiKey: assistantProvider.apiKey,
-        baseUrl: providerType === AI_PROVIDER.AZURE ? assistantProvider.baseUrl : PROVIDER_CONFIG[providerType].baseUrl,
-        deploymentName: providerType === AI_PROVIDER.AZURE ? assistantProvider.deploymentName : undefined,
-        resourceName: providerType === AI_PROVIDER.AZURE ? assistantProvider.resourceName : undefined,
-      };
-
-      logger.debug('[ModelService] Initializing model', { provider: providerType });
-      return createModelInstance(modelConfig);
+      return createModelInstance(assistantProvider);
     } catch (error) {
-      if (error instanceof ModelServiceError) {
-        logger.error('[ModelService] Model service error', { 
-          code: error.code, 
-          message: error.message, 
-          platformId 
-        });
-      } else {
-        logger.error('[ModelService] Failed to initialize AI model', { error, platformId });
-      }
+      logger.error('[ModelService] Failed to initialize AI model', { error, platformId });
       return null;
     }
   },
 
   getAssistantProvider(copilotSettings: CopilotSettings): AssistantProvider | null {
     const { defaultAssistantProvider, providers } = copilotSettings;
-    
     return providers.find(provider => 
       provider.type === CopilotProviderType.ASSISTANT &&
       (!defaultAssistantProvider || provider.provider === defaultAssistantProvider)
@@ -196,7 +125,6 @@ export const modelService = {
 
   isValidCopilotSettings(settings: unknown): settings is CopilotSettings {
     if (!settings || typeof settings !== 'object') return false;
-    
     const copilotSettings = settings as CopilotSettings;
     return Array.isArray(copilotSettings.providers) && copilotSettings.providers.length > 0;
   },
