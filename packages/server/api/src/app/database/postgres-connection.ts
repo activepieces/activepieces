@@ -277,7 +277,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddGlobalConnectionsAndRbacForPlatform1731532843905,
         AddIndiciesToRunAndTriggerData1732324567513,
         AddProjectRelationInUserInvitation1732790412900,
-        CreateProjectReleaseTable1734418823028
+        CreateProjectReleaseTable1734418823028,
     ]
 
     const edition = system.getEdition()

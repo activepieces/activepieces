@@ -43,7 +43,7 @@ describe('Platform Project Service', () => {
 
             // act
             if (!app) {
-                throw new Error("Fastify instance is not initialized");
+                throw new Error('Fastify instance is not initialized')
             }
             await platformProjectService(app.log).hardDelete({ id: mockProject.id })
 
@@ -70,7 +70,7 @@ describe('Platform Project Service', () => {
 
             // act
             if (!app) {
-                throw new Error("Fastify instance is not initialized");
+                throw new Error('Fastify instance is not initialized')
             }
             await platformProjectService(app.log).hardDelete({ id: mockProject.id })
 

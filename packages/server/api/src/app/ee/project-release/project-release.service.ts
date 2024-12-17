@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApId, apId, ErrorCode, FileId, ProjectId, ProjectRelease, SeekPage } from '@activepieces/shared'
+import { ApId, apId, FileId, ProjectId, ProjectRelease, SeekPage } from '@activepieces/shared'
 import { Equal } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ProjectReleaseEntity } from './project-release.entity'

@@ -41,7 +41,7 @@ afterAll(async () => {
     await app?.close()
 })
 beforeEach(async () => {
-    (stripeHelper as any).getOrCreateCustomer = jest
+    stripeHelper.getOrCreateCustomer = jest
         .fn()
         .mockResolvedValue(faker.string.uuid())
 })

@@ -1,4 +1,4 @@
-import { ApId, CreateProjectReleaseRequestBody, ProjectRelease, SeekPage } from '@activepieces/shared'
+import { ApId, CreateProjectReleaseRequestBody, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { projectReleaseService } from './project-release.service'
@@ -33,6 +33,9 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
 }
 
 const ListProjectReleasesRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
     schema: {
         response: {
             [StatusCodes.OK]: SeekPage(ProjectRelease),
@@ -41,6 +44,9 @@ const ListProjectReleasesRequest = {
 }
 
 const CreateProjectReleaseRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
     schema: {
         body: CreateProjectReleaseRequestBody,
         response: {
@@ -50,6 +56,9 @@ const CreateProjectReleaseRequest = {
 }
 
 const DeleteProjectReleaseRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
     schema: {
         params: Type.Object({
             id: ApId,

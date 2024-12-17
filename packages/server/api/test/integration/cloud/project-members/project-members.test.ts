@@ -29,10 +29,8 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-    (stripeHelper as any).getOrCreateCustomer = jest
-        .fn()
-        .mockResolvedValue(faker.string.uuid())
-    (emailService).sendInvitation = jest.fn()
+    stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
+    emailService.sendInvitation = jest.fn() 
 })
 
 afterAll(async () => {
