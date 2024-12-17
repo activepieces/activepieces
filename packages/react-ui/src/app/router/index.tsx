@@ -60,6 +60,7 @@ import { ProjectReleasesPage } from '../routes/project-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import AppearancePage from '../routes/settings/appearance';
+import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
@@ -71,7 +72,6 @@ import { DefaultRoute } from './default-route';
 import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
-import { EnvironmentPage } from '../routes/settings/environment';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();

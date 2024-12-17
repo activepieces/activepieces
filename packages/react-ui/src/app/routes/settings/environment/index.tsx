@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
+
 import { ReleaseCard } from './release-card';
 
 const EnvironmentPage = () => {

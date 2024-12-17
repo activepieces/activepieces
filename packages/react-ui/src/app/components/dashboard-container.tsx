@@ -6,13 +6,13 @@ import { useEmbedding } from '@/components/embed-provider';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
-import { projectHooks } from '@/hooks/project-hooks';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,
   );
-  const { project } = projectHooks.useCurrentProject()
+  const { project } = projectHooks.useCurrentProject();
 
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
