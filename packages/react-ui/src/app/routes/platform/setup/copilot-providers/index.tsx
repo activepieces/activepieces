@@ -6,8 +6,8 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { copilotProviderApi } from '@/features/platform-admin-panel/lib/copilot-provider-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { CopilotProviderCard } from './_components/copilot-provider-card';
-import { COPILOT_PROVIDERS } from './_components/copilot-providers-config';
+import { CopilotProviderCard } from './copilot-provider-card';
+import { COPILOT_PROVIDERS } from './copilot-providers-config';
 
 export default function CopilotProvidersPage() {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
