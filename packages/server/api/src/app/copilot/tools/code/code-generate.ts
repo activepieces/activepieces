@@ -66,9 +66,9 @@ export const codeGeneratorTool = (log: FastifyBaseLogger) => ({
 
             const copilotResponse = await generateCode(
                 request.prompt,
-                projectId,
                 platformId,
                 request.context,
+                log
             )
 
             return {

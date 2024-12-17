@@ -11,11 +11,6 @@ export enum FilteredPieceBehavior {
     BLOCKED = 'BLOCKED',
 }
 
-export enum CopilotProviderType {
-    SEARCH = 'SEARCH',
-    ASSISTANT = 'ASSISTANT',
-}
-
 export const SMTPInformation = Type.Object({
     user: Type.String(),
     senderEmail: Type.String(),
@@ -27,21 +22,31 @@ export const SMTPInformation = Type.Object({
 
 export type SMTPInformation = Static<typeof SMTPInformation>
 
-export const CopilotProvider = Type.Object({
-    provider: Type.String(),
+export enum CopilotProviderType {
+    OPENAI = 'openai',
+    AZURE_OPENAI = 'azureOpenai',
+}
+  
+export const OpenAiProvider = Type.Object({
     baseUrl: Type.String(),
     apiKey: Type.String(),
-    type: Type.Enum(CopilotProviderType),
-    deploymentName: Type.Optional(Type.String()),
-    resourceName: Type.Optional(Type.String()),
 })
 
-export type CopilotProvider = Static<typeof CopilotProvider>
+export type OpenAiProvider = Static<typeof OpenAiProvider>
+
+export const AzureOpenAiProvider = Type.Object({
+    resourceName: Type.String(),
+    deploymentName: Type.String(),
+    apiKey: Type.String(),
+})
+
+export type AzureOpenAiProvider = Static<typeof AzureOpenAiProvider>
 
 export const CopilotSettings = Type.Object({
-    providers: Type.Optional(Type.Array(CopilotProvider)),
-    defaultSearchProvider: Type.Optional(Type.String()),
-    defaultAssistantProvider: Type.Optional(Type.String()),
+    providers: Type.Object({
+        [CopilotProviderType.OPENAI]: OpenAiProvider,
+        [CopilotProviderType.AZURE_OPENAI]: AzureOpenAiProvider,
+    })
 })
 
 export type CopilotSettings = Static<typeof CopilotSettings>

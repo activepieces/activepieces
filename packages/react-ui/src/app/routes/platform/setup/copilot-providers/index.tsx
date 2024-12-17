@@ -1,58 +1,66 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-
 import { TableTitle } from '@/components/ui/table-title';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { copilotProviderApi } from '@/features/platform-admin-panel/lib/copilot-provider-api';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { Card } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { CheckCircle2, Pencil, Trash } from 'lucide-react';
+import { isNil } from '@activepieces/shared';
+import { Button } from '@/components/ui/button';
 
-import { CopilotProviderCard } from './copilot-provider-card';
-import { COPILOT_PROVIDERS } from './copilot-providers-config';
-
-export default function CopilotProvidersPage() {
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
-  const copilotSettings = platform.copilotSettings;
-
-  const { mutate: deleteProvider, isPending: isDeleting } = useMutation({
-    mutationFn: (provider: string) => copilotProviderApi.delete(provider),
-    onSuccess: () => {
-      refetch();
-      toast({
-        title: t('Success'),
-        description: t('Provider deleted successfully'),
-      });
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
+const CopilotSettingsPage = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const isCopilotconfigured = !isNil(platform?.copilotSettings);
 
   return (
     <div className="flex flex-col w-full">
-      <div className="mb-4 flex">
-        <div className="flex justify-between flex-row w-full">
-          <div className="flex flex-col gap-2">
-            <TableTitle>{t('Copilot Providers')}</TableTitle>
-            <div className="text-md text-muted-foreground">
-              {t(
-                'Set provider credentials that will be used by the Copilot feature when users click the Ask AI button.',
-              )}
-            </div>
-          </div>
+      <div className="mb-4 flex flex-col gap-2">
+        <TableTitle>{t('Copilot')}</TableTitle>
+        <div className="text-md text-muted-foreground">
+          {t('Configure provider credentials for the Copilot feature, enabling users to generate code and more with AI assistance during flow creation.')}
         </div>
       </div>
       <div className="flex flex-col gap-4">
-        {COPILOT_PROVIDERS.map((metadata) => (
-          <CopilotProviderCard
-            key={metadata.value}
-            providerMetadata={metadata}
-            defaultBaseUrl={metadata.defaultBaseUrl}
-            isDeleting={isDeleting}
-            onDelete={() => deleteProvider(metadata.value)}
-            onSave={() => refetch()}
-          />
-        ))}
+        <Card className="w-full px-4 py-4">
+          <div className="flex w-full gap-2 justify-center items-center">
+            <div className="flex flex-col gap-2 text-center mr-2">
+              <img
+                src={'https://cdn.activepieces.com/pieces/openai.png'}
+                alt={'OpenAI'}
+                width={32}
+                height={32}
+              />
+            </div>
+            <div className="flex flex-grow flex-col">
+              <div className="text-lg">{t('OpenAI')}</div>
+            </div>
+            <div className="flex flex-row justify-center items-center gap-1">
+              <Button 
+                variant={isCopilotconfigured ? 'ghost' : 'basic'} 
+                size={'sm'}
+              >
+                {isCopilotconfigured ? (
+                  <Pencil className="size-4" />
+                ) : (
+                  t('Configure')
+                )}
+              </Button>
+              {isCopilotconfigured && (
+                <div className="gap-2 flex">
+                  <Button
+                    variant={'ghost'}
+                    size={'sm'}
+                  >
+                    <Trash className="size-4 text-destructive" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );
-} 
+}
+
+CopilotSettingsPage.displayName = 'CopilotSettingsPage';
+export { CopilotSettingsPage };

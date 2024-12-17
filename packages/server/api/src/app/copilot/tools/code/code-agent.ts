@@ -4,18 +4,17 @@ import { selectIcon } from './icon-agent'
 import { modelService } from '../../services/model.service'
 import { CodeAgentResponse, Message, codeGenerationSchema, defaultResponse } from './types'
 import { getCodeGenerationPrompt } from './prompts/code-generation.prompt'
-import { system } from '../../../helper/system/system'
+import { FastifyBaseLogger } from 'fastify'
 
-const log = system.globalLogger()
 
 export async function generateCode(
     requirement: string,
-    projectId: string,
     platformId: string,
     conversationHistory: Message[] = [],
+    log: FastifyBaseLogger
 ): Promise<CodeAgentResponse> {
     try {
-        const model = await modelService.getModel(platformId)
+        const model = await modelService(log).getModel(platformId)
         const lastCodeResponse = conversationHistory.reverse().find((msg) => 
             msg.role === 'assistant' && msg.content.includes('export const code ='),
         )
@@ -39,7 +38,7 @@ export async function generateCode(
             return acc
         }, {} as Record<string, string>) ?? {}
 
-        const icon = await selectIcon(requirement, conversationHistory)
+        const icon = await selectIcon(model,requirement, conversationHistory)
 
         return {
             code: llmResponse.object.code,

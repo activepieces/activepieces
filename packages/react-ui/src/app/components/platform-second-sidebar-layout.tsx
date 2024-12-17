@@ -13,8 +13,6 @@ import {
   Puzzle,
   ScanFace,
   HeartPulse,
-  Brain,
-  GemIcon,
   WandSparkles,
 } from 'lucide-react';
 
