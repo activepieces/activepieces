@@ -12,8 +12,10 @@ import { UpsertCopilotProviderDialog } from './upsert-provider-dialog';
 export type CopilotProviderMetadata = {
   logoUrl: string;
   label: string;
-  value: 'openai' | 'anthropic' | 'perplexity';
-  defaultBaseUrl: string;
+  value: 'openai' | 'azure' | 'anthropic' | 'perplexity';
+  defaultBaseUrl?: string;
+  requiresBaseUrl?: boolean;
+  requiresDeploymentName?: boolean;
   instructionsMarkdown: string;
   type: CopilotProviderType;
 };
