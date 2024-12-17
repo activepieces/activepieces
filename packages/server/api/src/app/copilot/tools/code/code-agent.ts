@@ -1,5 +1,5 @@
 import { logger } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import { isNil, ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { generateObject } from 'ai'
 import { selectIcon } from './icon-agent'
 import { modelService } from '../../services/model.service'
@@ -11,38 +11,28 @@ export async function generateCode(
     projectId: string,
     platformId: string,
     conversationHistory: Message[] = [],
-): Promise<CodeAgentResponse | null> {
+): Promise<CodeAgentResponse> {
     try {
         const model = await modelService.getModel(platformId)
-        if (!model) {
-            logger.warn({ platformId }, '[generateCode] No model available')
-            return null
-        }
-
-        const lastCodeResponse = conversationHistory
-            .reverse()
-            .find(msg => 
-                msg.role === 'assistant' && 
-                msg.content.includes('export const code ='),
-            )
+        const lastCodeResponse = conversationHistory.reverse().find((msg) => 
+            msg.role === 'assistant' && msg.content.includes('export const code ='),
+        )
 
         const systemPrompt = getCodeGenerationPrompt(conversationHistory, lastCodeResponse)
         const llmResponse = await generateObject({
-            model: model,
+            model,
             system: systemPrompt,
             schema: codeGenerationSchema,
             prompt: `Generate TypeScript code for this automation flow requirement: ${requirement}`,
             temperature: 0,
         })
 
-
-
         if (isNil(llmResponse?.object)) {
             logger.warn({ platformId, requirement }, '[generateCode] No response from AI model')
-            return null
+            throw new Error('Failed to generate code: No response from AI model')
         }
 
-        const resultInputs = llmResponse?.object?.inputs?.reduce((acc, input) => {
+        const resultInputs = llmResponse.object.inputs?.reduce((acc, input) => {
             acc[input.name] = input.suggestedValue ?? ''
             return acc
         }, {} as Record<string, string>) ?? {}
@@ -58,6 +48,9 @@ export async function generateCode(
     }
     catch (error) {
         logger.error({ error, requirement, platformId }, '[generateCode] Failed to generate code')
-        return null
+        if (error instanceof ActivepiecesError && error.message === ErrorCode.COPILOT_FAILED) {
+            throw error
+        }
+        throw new Error(error instanceof Error ? error.message : 'Failed to generate code')
     }
 }

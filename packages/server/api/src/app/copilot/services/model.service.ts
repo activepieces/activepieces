@@ -1,5 +1,5 @@
 import { logger } from '@activepieces/server-shared';
-import { CopilotProviderType } from '@activepieces/shared';
+import { CopilotProviderType, ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAzure } from '@ai-sdk/azure';
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -36,6 +36,13 @@ const MODEL_NAMES = {
   [AI_PROVIDER.PERPLEXITY]: 'mixtral-8x7b-instruct',
 } as const;
 
+function throwConfigError(message: string): never {
+  throw new ActivepiecesError({
+    code: ErrorCode.COPILOT_FAILED,
+    params: { message },
+  });
+}
+
 function getProviderType(provider: string): AiProvider {
   const normalizedProvider = provider.toLowerCase();
   switch (normalizedProvider) {
@@ -47,6 +54,12 @@ function getProviderType(provider: string): AiProvider {
       return AI_PROVIDER.PERPLEXITY;
     default:
       return AI_PROVIDER.OPENAI;
+  }
+}
+
+function validateAzureProvider(provider: AssistantProvider): void {
+  if (!provider.resourceName || !provider.deploymentName) {
+    throwConfigError('Azure provider requires resourceName and deploymentName');
   }
 }
 
@@ -62,13 +75,11 @@ function createModelInstance(provider: AssistantProvider): LanguageModel {
         }).chat(MODEL_NAMES[providerType]);
 
       case AI_PROVIDER.AZURE:
-        if (!provider.resourceName || !provider.deploymentName) {
-          throw new Error('Azure provider requires resourceName and deploymentName');
-        }
+        validateAzureProvider(provider);
         return createAzure({
           apiKey: provider.apiKey,
-          resourceName: provider.resourceName,
-        }).chat(provider.deploymentName);
+          resourceName: provider.resourceName!,
+        }).chat(provider.deploymentName!);
 
       case AI_PROVIDER.ANTHROPIC:
         return createAnthropic({ 
@@ -83,35 +94,41 @@ function createModelInstance(provider: AssistantProvider): LanguageModel {
         }).chat(MODEL_NAMES[providerType]);
 
       default:
-        throw new Error(`Unsupported AI provider: ${providerType}`);
+        throwConfigError(`Unsupported AI provider: ${providerType}`);
     }
   } catch (error) {
     logger.error('[ModelService] Failed to create model instance', { error, providerType });
-    throw error;
+    if (error instanceof ActivepiecesError) {
+      throw error;
+    }
+    throwConfigError(error instanceof Error ? error.message : 'Failed to create model instance');
   }
 }
 
 export const modelService = {
-  async getModel(platformId: string): Promise<LanguageModel | null> {
+  async getModel(platformId: string): Promise<LanguageModel> {
     try {
       const platform = await platformService.getOneOrThrow(platformId);
       const { copilotSettings } = platform;
 
       if (!this.isValidCopilotSettings(copilotSettings)) {
         logger.warn('[ModelService] Invalid or missing copilot settings', { platformId });
-        return null;
+        throwConfigError('Invalid or missing copilot settings. Please check your platform settings.');
       }
 
       const assistantProvider = this.getAssistantProvider(copilotSettings);
       if (!assistantProvider) {
         logger.warn('[ModelService] No assistant provider found', { platformId });
-        return null;
+        throwConfigError('No assistant provider configured');
       }
 
       return createModelInstance(assistantProvider);
     } catch (error) {
       logger.error('[ModelService] Failed to initialize AI model', { error, platformId });
-      return null;
+      if (error instanceof ActivepiecesError) {
+        throw error;
+      }
+      throwConfigError(error instanceof Error ? error.message : 'Failed to initialize AI model');
     }
   },
 

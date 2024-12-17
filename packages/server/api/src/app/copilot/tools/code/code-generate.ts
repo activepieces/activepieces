@@ -1,37 +1,36 @@
 import { exceptionHandler } from '@activepieces/server-shared'
-import { Action, ActionType, AskCopilotCodeResponse, AskCopilotRequest, flowStructureUtil, isNil, Trigger, ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import {
+    Action,
+    ActionType,
+    AskCopilotCodeResponse,
+    AskCopilotRequest,
+    flowStructureUtil,
+    isNil,
+    Trigger,
+    ActivepiecesError,
+    ErrorCode,
+} from '@activepieces/shared'
 import { flowService } from '../../../flows/flow/flow.service'
 import { generateCode } from './code-agent'
 
-function createErrorResponse(error: string): AskCopilotCodeResponse {
+function createErrorResponse(error: string, isConfigError = false): AskCopilotCodeResponse {
     return {
         code: `export const code = async (inputs: Record<string, never>) => {
-    throw new Error('${error}');
-    return { error: true };
+    throw new Error('${error}')
+    return { error: true }
 }`,
-        packageJson: {
-            dependencies: {},
-        },
+        packageJson: { dependencies: {} },
         inputs: {},
-        icon: 'AlertTriangle',
-        title: 'Error: Code Generation Failed',
+        icon: isConfigError ? 'Settings' : 'AlertTriangle',
+        title: isConfigError ? 'Configuration Required' : 'Error: Code Generation Failed',
+        textMessage: isConfigError ? error : undefined,
     }
 }
 
-function createConfigurationResponse(): AskCopilotCodeResponse {
-    return {
-        code: '',
-        packageJson: {
-            dependencies: {},
-        },
-        inputs: {},
-        icon: 'Settings',
-        title: 'Configuration Required',
-        textMessage: 'OpenAI service is not configured. Please check your platform settings.'
-    }
-}
-
-function mergeInputs(copilotInputs: Record<string, string>, selectedStep: Action | Trigger | undefined): Record<string, string> {
+function mergeInputs(
+    copilotInputs: Record<string, string>,
+    selectedStep: Action | Trigger | undefined,
+): Record<string, string> {
     const mergedInputs: Record<string, string> = {}
 
     Object.entries(copilotInputs).forEach(([name, suggestedValue]) => {
@@ -52,40 +51,49 @@ function mergeInputs(copilotInputs: Record<string, string>, selectedStep: Action
 }
 
 export const codeGeneratorTool = {
-    async generateCode(projectId: string, platformId: string, request: AskCopilotRequest): Promise<AskCopilotCodeResponse> {
+    async generateCode(
+        projectId: string,
+        platformId: string,
+        request: AskCopilotRequest,
+    ): Promise<AskCopilotCodeResponse> {
         try {
             const flowVersion = await flowService.getOnePopulatedOrThrow({
                 id: request.flowId,
                 versionId: request.flowVersionId,
                 projectId,
             })
-            const selectedStep = request.selectedStepName ? flowStructureUtil.getStep(request.selectedStepName, flowVersion.version.trigger) : undefined
-        
-            const copilotResponse = await generateCode(request.prompt, projectId, platformId, request.context)
-            
-            if (!copilotResponse?.code) {
-                return createErrorResponse('Code generation failed')
-            }
 
-            const mergedInputs = mergeInputs(copilotResponse.inputs, selectedStep)
+            const selectedStep = request.selectedStepName
+                ? flowStructureUtil.getStep(request.selectedStepName, flowVersion.version.trigger)
+                : undefined
+
+            const copilotResponse = await generateCode(
+                request.prompt,
+                projectId,
+                platformId,
+                request.context,
+            )
 
             return {
                 code: copilotResponse.code,
-                packageJson: {
-                    dependencies: {},
-                },
-                inputs: mergedInputs,
+                packageJson: { dependencies: {} },
+                inputs: mergeInputs(copilotResponse.inputs, selectedStep),
                 icon: copilotResponse.icon ?? 'code',
                 title: copilotResponse.title,
             }
         }
         catch (error) {
             exceptionHandler.handle(error)
-            console.log(error)  
-            if (error instanceof ActivepiecesError && error.name === ErrorCode.OPEN_AI_FAILED) {
-                return createConfigurationResponse()
+            console.error('[CodeGenerator] Error:', error)
+
+            if (error instanceof ActivepiecesError && error.error.code === ErrorCode.COPILOT_FAILED) {
+                const message = error?.error?.params?.message || 'Copilot service is not configured. Please check your platform settings.'
+                return createErrorResponse(message, true)
             }
-            return createErrorResponse(error instanceof Error ? error.message : 'Unknown error occurred')
+
+            return createErrorResponse(
+                error instanceof Error ? error.message : 'Unknown error occurred',
+            )
         }
     },
 }
