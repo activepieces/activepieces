@@ -41,7 +41,6 @@ describe('Project Release API', () => {
                 url: '/v1/project-releases',
                 body: {
                     fileId: file.id,
-                    importedBy: mockUserOne.id,
                     name: projectRelease.name,
                     description: projectRelease.description,
                 },
