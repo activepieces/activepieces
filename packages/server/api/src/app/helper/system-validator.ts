@@ -1,8 +1,10 @@
-import { AppSystemProp, ContainerType, DatabaseType, PiecesSource, QueueMode, RedisType, SharedSystemProp, system, SystemProp, WorkerSystemProps } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
+import { AppSystemProp, SystemProp, WorkerSystemProps } from './system/system-prop'
+import { PiecesSource } from '@activepieces/server-shared'
+import { ContainerType, DatabaseType, QueueMode, RedisType, system } from './system/system'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -40,26 +42,25 @@ function urlValidator(value: string) {
 const systemPropValidators: {
     [key in SystemProp]: (value: string) => true | string
 } = {
-    // SharedSystemProp
-    [SharedSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
-    [SharedSystemProp.LOG_LEVEL]: enumValidator(['error', 'warn', 'info', 'debug', 'trace']),
-    [SharedSystemProp.LOG_PRETTY]: booleanValidator,
-    [SharedSystemProp.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
-    [SharedSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
-    [SharedSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
-    [SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
-    [SharedSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
-    [SharedSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
-    [SharedSystemProp.FRONTEND_URL]: urlValidator,
-    [SharedSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
-    [SharedSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
-    [SharedSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
-    [SharedSystemProp.ENRICH_ERROR_CONTEXT]: booleanValidator,
-    [SharedSystemProp.SENTRY_DSN]: urlValidator,
-    [SharedSystemProp.LOKI_PASSWORD]: stringValidator,
-    [SharedSystemProp.LOKI_URL]: urlValidator,
-    [SharedSystemProp.LOKI_USERNAME]: stringValidator,
-    [SharedSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
+    // WorkerSystemProps
+    [WorkerSystemProps.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
+    [WorkerSystemProps.LOG_LEVEL]: enumValidator(['error', 'warn', 'info', 'debug', 'trace']),
+    [WorkerSystemProps.LOG_PRETTY]: booleanValidator,
+    [WorkerSystemProps.ENVIRONMENT]: enumValidator(Object.values(ApEnvironment)),
+    [WorkerSystemProps.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
+    [WorkerSystemProps.FLOW_TIMEOUT_SECONDS]: numberValidator,
+    [WorkerSystemProps.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
+    [WorkerSystemProps.APP_WEBHOOK_SECRETS]: stringValidator,
+    [WorkerSystemProps.MAX_FILE_SIZE_MB]: numberValidator,
+    [WorkerSystemProps.FRONTEND_URL]: urlValidator,
+    [WorkerSystemProps.SANDBOX_MEMORY_LIMIT]: numberValidator,
+    [WorkerSystemProps.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
+    [WorkerSystemProps.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
+    [WorkerSystemProps.SENTRY_DSN]: urlValidator,
+    [WorkerSystemProps.LOKI_PASSWORD]: stringValidator,
+    [WorkerSystemProps.LOKI_URL]: urlValidator,
+    [WorkerSystemProps.LOKI_USERNAME]: stringValidator,
+    [WorkerSystemProps.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
 
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
@@ -152,7 +153,7 @@ const systemPropValidators: {
 
 
 const validateSystemPropTypes = () => {
-    const systemProperties: SystemProp[] = [...Object.values(SharedSystemProp), ...Object.values(AppSystemProp), ...Object.values(WorkerSystemProps)]
+    const systemProperties: SystemProp[] = [...Object.values(AppSystemProp), ...Object.values(WorkerSystemProps)]
     const errors: {
         [key in SystemProp]?: string
     } = {}
@@ -198,7 +199,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     const isApp = system.isApp()
     if (isApp) {
         const rentionPeriod = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
-        const maximumPausedFlowTimeout = system.getNumberOrThrow(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+        const maximumPausedFlowTimeout = system.getNumberOrThrow(WorkerSystemProps.PAUSED_FLOW_TIMEOUT_DAYS)
         if (maximumPausedFlowTimeout > rentionPeriod) {
             throw new Error(JSON.stringify({
                 message: 'AP_PAUSED_FLOW_TIMEOUT_DAYS can not exceed AP_EXECUTION_DATA_RETENTION_DAYS',
@@ -215,9 +216,9 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     }
 
     const edition = system.getEdition()
-    const test = system.get(SharedSystemProp.ENVIRONMENT)
+    const test = system.get(WorkerSystemProps.ENVIRONMENT)
     if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && test !== ApEnvironment.TESTING) {
-        const executionMode = system.getOrThrow<ExecutionMode>(SharedSystemProp.EXECUTION_MODE)
+        const executionMode = system.getOrThrow<ExecutionMode>(WorkerSystemProps.EXECUTION_MODE)
         if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode)) {
             throw new Error(JSON.stringify({
                 message: 'Execution mode UNSANDBOXED is no longer supported in this edition, check the documentation for recent changes',

@@ -1,4 +1,4 @@
-import { exceptionHandler, SharedSystemProp, system } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -42,9 +42,11 @@ import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
+import { system } from '../../helper/system/system'
+import { WorkerSystemProps } from '../../helper/system/system-prop'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
-const maxFileSizeInBytes = system.getNumberOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
+const maxFileSizeInBytes = system.getNumberOrThrow(WorkerSystemProps.MAX_FILE_SIZE_MB) * 1024 * 1024
 
 export const flowRunService = (log: FastifyBaseLogger) => ({
     async list({
@@ -329,7 +331,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             const errors = new Error(
                 'Execution Output is too large, maximum size is ' + maxFileSizeInBytes,
             )
-            exceptionHandler.handle(errors)
+            exceptionHandler.handle(errors, log)
             throw errors
         }
         const newLogsFileId = logsFileId ?? apId()

@@ -1,6 +1,5 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { commonProperties } from './database-connection'
@@ -75,6 +74,8 @@ import { AddIndiciesToTriggerEventSqlite1732324359348 } from './migration/sqlite
 import { AddIndiciesToRunSqlite1732324481815 } from './migration/sqlite/1732324481815-AddIndiciesToRunSqlite'
 import { CreateProjectRoleTableSqlite1732482844483 } from './migration/sqlite/1732482844483-CreateProjectRoleTableSqlite'
 import { AddProjectRelationInUserInvitationSqlite1732791068873 } from './migration/sqlite/1732791068873-AddProjectRelationInUserInvitationSqlite'
+import { system } from '../helper/system/system'
+import { AppSystemProp, WorkerSystemProps } from '../helper/system/system-prop'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -87,7 +88,7 @@ const getSqliteDatabaseInMemory = (): string => {
 }
 
 const getSqliteDatabase = (): string => {
-    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(WorkerSystemProps.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return getSqliteDatabaseInMemory()
@@ -177,7 +178,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
 }
 
 const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(WorkerSystemProps.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return {}

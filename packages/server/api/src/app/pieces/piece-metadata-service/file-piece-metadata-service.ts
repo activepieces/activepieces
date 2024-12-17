@@ -20,9 +20,12 @@ import {
 import { pieceMetadataServiceHooks } from './hooks'
 import { PieceMetadataService } from './piece-metadata-service'
 import { toPieceMetadataModelSummary } from '.'
+import { AppSystemProp } from '../../helper/system/system-prop'
+import { system } from '../../helper/system/system'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
-    const pieces = await filePiecesUtils.findAllPieces()
+    const packages = system.getOrThrow(AppSystemProp.DEV_PIECES)?.split(',')
+    const pieces = await filePiecesUtils(packages, system.globalLogger()).findAllPieces()
     return pieces.sort((a, b) =>
         a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()),
     )

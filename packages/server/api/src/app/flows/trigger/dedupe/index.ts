@@ -1,15 +1,17 @@
 
 import { DEDUPE_KEY_PROPERTY } from '@activepieces/pieces-framework'
-import { AppSystemProp, QueueMode, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { getRedisConnection } from '../../../database/redis-connection'
+import { FastifyBaseLogger } from 'fastify'
+import { QueueMode, system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 
 const DUPLICATE_RECORD_EXPIRATION_SECONDS = 30
 
 const MEMORY_QUEUE = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
 
 export const dedupeService = {
-    filterUniquePayloads: async (flowVersionId: string, payloads: unknown[]): Promise<unknown[]> => {
+    filterUniquePayloads: async (flowVersionId: string, payloads: unknown[], log: FastifyBaseLogger): Promise<unknown[]> => {
         const filteredPayloads = await Promise.all(payloads.map(async (payload) => isDuplicated(flowVersionId, payload)))
         return payloads.filter((_, index) => !filteredPayloads[index]).map(removeDedupeKey)
     },

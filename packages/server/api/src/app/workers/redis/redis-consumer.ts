@@ -1,4 +1,4 @@
-import { exceptionHandler, flowTimeoutSandbox, JobStatus, memoryLock, QueueName, rejectedPromiseHandler, triggerTimeoutSandbox } from '@activepieces/server-shared'
+import { exceptionHandler, JobStatus, memoryLock, QueueName, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { Job, Worker } from 'bullmq'
 import dayjs from 'dayjs'
@@ -6,6 +6,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { ConsumerManager } from '../consumer/consumer-manager'
 import { redisRateLimiter } from './redis-rate-limiter'
+import { system } from '../../helper/system/system'
+import { AppSystemProp, WorkerSystemProps } from '../../helper/system/system-prop'
 
 const consumer: Record<string, Worker> = {}
 
@@ -32,7 +34,7 @@ export const redisConsumer = (log: FastifyBaseLogger): ConsumerManager => ({
             if (memoryLock.isTimeoutError(e)) {
                 return null
             }
-            exceptionHandler.handle(e)
+            exceptionHandler.handle(e, log)
             throw e
         }
         finally {
@@ -46,7 +48,7 @@ export const redisConsumer = (log: FastifyBaseLogger): ConsumerManager => ({
         const job = await Job.fromId(worker, jobId)
         assertNotNullOrUndefined(job, 'Job not found')
         assertNotNullOrUndefined(token, 'Token not found')
-        rejectedPromiseHandler(redisRateLimiter(log).onCompleteOrFailedJob(queueName, job))
+        rejectedPromiseHandler(redisRateLimiter(log).onCompleteOrFailedJob(queueName, job), log)
         switch (status) {
             case JobStatus.COMPLETED:
                 await job.moveToCompleted({}, token, false)
@@ -86,6 +88,8 @@ async function ensureWorkerExists(queueName: QueueName): Promise<Worker> {
 }
 
 function getLockDurationInMs(queueName: QueueName): number {
+    const triggerTimeoutSandbox = system.getNumberOrThrow(WorkerSystemProps.TRIGGER_TIMEOUT_SECONDS)
+    const flowTimeoutSandbox = system.getNumberOrThrow(WorkerSystemProps.FLOW_TIMEOUT_SECONDS)
     switch (queueName) {
         case QueueName.WEBHOOK:
             return dayjs.duration(triggerTimeoutSandbox, 'seconds').add(3, 'minutes').asMilliseconds()

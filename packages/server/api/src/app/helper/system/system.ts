@@ -10,15 +10,15 @@ import {
     PieceSyncMode,
 } from '@activepieces/shared'
 import { AppSystemProp, SystemProp, WorkerSystemProps } from './system-prop'
+import { FastifyBaseLogger } from 'fastify'
+import { PiecesSource, pinoLogging } from '@activepieces/server-shared'
+import { Level } from 'pino'
 
 
 export enum CopilotInstanceTypes {
     AZURE_OPENAI = 'AZURE_OPENAI',
     OPENAI = 'OPENAI',
 }
-
-
-
 
 export enum RedisType {
     SENTINEL = 'SENTINEL',
@@ -83,7 +83,23 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
 }
 
+let globalLogger: FastifyBaseLogger
 export const system = {
+    globalLogger(): FastifyBaseLogger {
+        if (isNil(globalLogger)) {
+            const logLevel: Level = this.get(WorkerSystemProps.LOG_LEVEL) ?? 'info'
+            const logPretty = this.getBoolean(WorkerSystemProps.LOG_PRETTY) ?? false
+            const lokiUrl = this.get(WorkerSystemProps.LOKI_URL)
+            const lokiPassword = this.get(WorkerSystemProps.LOKI_PASSWORD)
+            const lokiUsername = this.get(WorkerSystemProps.LOKI_USERNAME)
+            globalLogger = pinoLogging.initLogger(logLevel, logPretty, {
+                url: lokiUrl,
+                password: lokiPassword,
+                username: lokiUsername,
+            })
+        }
+        return globalLogger
+    },
     get<T extends string>(prop: SystemProp): T | undefined {
         return getEnvVar(prop) as T | undefined
     },
@@ -161,12 +177,12 @@ export const system = {
     },
     isWorker(): boolean {
         return [ContainerType.WORKER, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(SharedSystemProp.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(WorkerSystemProps.CONTAINER_TYPE),
         )
     },
     isApp(): boolean {
         return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(SharedSystemProp.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(WorkerSystemProps.CONTAINER_TYPE),
         )
     },
 }

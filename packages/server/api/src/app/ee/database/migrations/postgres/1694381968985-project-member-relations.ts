@@ -1,12 +1,13 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../../../database/database-common'
+import { system } from '../../../../helper/system/system'
 
 export class ProjectMemberRelations1694381968985 implements MigrationInterface {
     name = 'ProjectMemberRelations1694381968985'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const logger = system.globalLogger()
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
         }
@@ -21,6 +22,7 @@ export class ProjectMemberRelations1694381968985 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        const logger = system.globalLogger()
         if (isNotOneOfTheseEditions([ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
             return
         }

@@ -1,5 +1,4 @@
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -8,6 +7,8 @@ import { userService } from '../../../user/user-service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { projectBillingService } from '../project-billing/project-billing.service'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
+import { AppSystemProp } from '../../../helper/system/system-prop'
+import { system } from '../../../helper/system/system'
 
 const appsumoRepo = repoFactory(AppSumoEntity)
 

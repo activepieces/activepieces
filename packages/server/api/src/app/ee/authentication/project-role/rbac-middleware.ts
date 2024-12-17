@@ -1,4 +1,3 @@
-import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -14,6 +13,7 @@ import {
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { projectMemberService } from '../../project-members/project-member.service'
 import { projectRoleService } from '../../project-role/project-role.service'
+import { system } from '../../../helper/system/system'
 
 const EDITION_IS_COMMUNITY = system.getEdition() === ApEdition.COMMUNITY
 

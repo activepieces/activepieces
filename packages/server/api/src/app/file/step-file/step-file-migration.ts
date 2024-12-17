@@ -19,7 +19,7 @@ export const stepFileMigration = (log: FastifyBaseLogger) => {
         async migrate() {
             let lock: ApLock | null = null
             try {
-                lock = await distributedLock.acquireLock({ key: LOCK_KEY, timeout: LOCK_TIMEOUT })
+                lock = await distributedLock.acquireLock({ key: LOCK_KEY, timeout: LOCK_TIMEOUT, log })
                 const queryRunner = databaseConnection().createQueryRunner()
 
                 try {

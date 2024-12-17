@@ -1,10 +1,15 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddPlatformForeignKeyToProjectSqlite1709566629593 implements MigrationInterface {
     name = 'AddPlatformForeignKeyToProjectSqlite1709566629593'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        log.info({
+            name: this.name,
+        }, 'up')
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
@@ -60,7 +65,9 @@ export class AddPlatformForeignKeyToProjectSqlite1709566629593 implements Migrat
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
         `)
 
-        logger.info({ name: this.name }, 'up')
+        log.info({
+            name: this.name,
+        }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -118,7 +125,7 @@ export class AddPlatformForeignKeyToProjectSqlite1709566629593 implements Migrat
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
 
-        logger.info({ name: this.name }, 'down')
+        log.info({ name: this.name }, 'down')
     }
 
 }

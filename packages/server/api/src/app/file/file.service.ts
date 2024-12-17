@@ -1,4 +1,4 @@
-import { AppSystemProp, fileCompressor, system } from '@activepieces/server-shared'
+import { fileCompressor } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -18,6 +18,8 @@ import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
+import { AppSystemProp } from '../helper/system/system-prop'
+import { system } from '../helper/system/system'
 
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)

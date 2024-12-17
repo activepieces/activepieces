@@ -4,9 +4,7 @@ import {
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
 import {
-    AppSystemProp,
     JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType,
-    system,
     UserInteractionJobType,
 } from '@activepieces/server-shared'
 import {
@@ -31,6 +29,8 @@ import { projectLimitsService } from '../../../ee/project-plan/project-plan.serv
 import { jobQueue } from '../../../workers/queue'
 import { userInteractionWatcher } from '../../../workers/user-interaction-watcher'
 import { triggerUtils } from './trigger-utils'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
     system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,

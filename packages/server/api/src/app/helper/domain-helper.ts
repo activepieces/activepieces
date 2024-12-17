@@ -1,4 +1,6 @@
-import { networkUtls, SharedSystemProp, system } from '@activepieces/server-shared'
+import { networkUtls } from '@activepieces/server-shared'
+import { WorkerSystemProps } from './system/system-prop'
+import { system } from './system/system'
 
 type DomainHelper = {
     constructFrontendUrlFromRequest({
@@ -24,7 +26,7 @@ let _domainHelper: DomainHelper = {
         domain: string
         path: string
     }): Promise<string> {
-        return `${await networkUtls.getPublicUrl()}${path}`
+        return `${await networkUtls.getPublicUrl(system.getOrThrow(WorkerSystemProps.ENVIRONMENT), system.getOrThrow(WorkerSystemProps.FRONTEND_URL))}${path}`
     },
     async constructFrontendUrlFromRequest({
         path,
@@ -32,7 +34,7 @@ let _domainHelper: DomainHelper = {
         domain: string
         path: string
     }): Promise<string> {
-        const frontendUrl = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
+        const frontendUrl = system.getOrThrow(WorkerSystemProps.FRONTEND_URL)
         return `${frontendUrl}${frontendUrl.endsWith('/') ? '' : '/'}${path}`
     },
 }

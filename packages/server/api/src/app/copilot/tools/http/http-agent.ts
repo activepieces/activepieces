@@ -1,7 +1,8 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { DeepPartial, generateObject } from 'ai'
 import { z } from 'zod'
+import { AppSystemProp } from '../../../helper/system/system-prop'
+import { system } from '../../../helper/system/system'
 
 export function getModel() {
     try {

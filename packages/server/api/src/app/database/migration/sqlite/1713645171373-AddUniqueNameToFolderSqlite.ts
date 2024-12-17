@@ -1,11 +1,14 @@
-import { logger } from '@activepieces/server-shared'
+import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddUniqueNameToFolderSqlite1713645171373 implements MigrationInterface {
     name = 'AddUniqueNameToFolderSqlite1713645171373'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info({ name: this.name }, 'Up')
+        const log = system.globalLogger()
+        log.info({
+            name: this.name,
+        }, 'Up')
         await queryRunner.query(`
             DELETE FROM "folder"
             WHERE ("projectId", LOWER("displayName")) IN (

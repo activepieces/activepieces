@@ -1,9 +1,7 @@
 import {
-    AppSystemProp,
-    createWebhookContextLog,
     JobType,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    system,
+    pinoLogging,
 } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
@@ -27,6 +25,8 @@ import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
+import { AppSystemProp } from '../helper/system/system-prop'
+import { system } from '../helper/system/system'
 
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
@@ -125,7 +125,7 @@ async function handleWebhook({
 }: HandleWebhookParams): Promise<EngineHttpResponse> {
     const webhookHeader = 'x-webhook-id'
     const webhookRequestId = apId()
-    const log = createWebhookContextLog({ log: request.log, webhookId: webhookRequestId, flowId })
+    const log = pinoLogging.createWebhookContextLog({ log: request.log, webhookId: webhookRequestId, flowId })
     const flow = await flowService(log).getOneById(flowId)
     if (isNil(flow)) {
         log.info('Flow not found, returning GONE')

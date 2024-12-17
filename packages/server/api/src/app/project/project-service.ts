@@ -1,4 +1,3 @@
-import { logger } from '@activepieces/server-shared'
 import { ActivepiecesError, apId,
     ApId,
     assertNotNullOrUndefined,
@@ -16,6 +15,7 @@ import { IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
+import { system } from '../helper/system/system'
 export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
@@ -26,7 +26,7 @@ export const projectService = {
             notifyStatus: NotificationStatus.ALWAYS,
         }
         const savedProject = await projectRepo().save(newProject)
-        await projectHooks.get(logger).postCreate(savedProject)
+        await projectHooks.get(system.globalLogger()).postCreate(savedProject)
         return savedProject
     },
 

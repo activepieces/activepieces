@@ -1,4 +1,4 @@
-import { logger } from '@activepieces/server-shared'
+import { system } from '../../../helper/system/system'
 import { apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
@@ -6,7 +6,10 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
     name = 'AddAlertsEntitySqlite1717239613259'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('CreateAlerts1680986182074 Migrated up')
+        const log = system.globalLogger()
+        log.info({
+            name: this.name,
+        }, 'up')
         await queryRunner.query(`
             CREATE TABLE "alert" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -189,7 +192,9 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
         })
         await Promise.all(alertsToInsert)
 
-        logger.info(`CreateAlerts1717239613259 Migrated ${countAlerts} alerts`)
+        log.info({
+            name: this.name,
+        }, `CreateAlerts1717239613259 Migrated ${countAlerts} alerts`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

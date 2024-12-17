@@ -1,4 +1,3 @@
-import { AppSystemProp, rejectedPromiseHandler, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -34,6 +33,9 @@ import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
+import { AppSystemProp } from '../../helper/system/system-prop'
+import { system } from '../../helper/system/system'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
@@ -214,6 +216,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             ? await distributedLock.acquireLock({
                 key: id,
                 timeout: 30000,
+                log,
             })
             : null
 
@@ -353,9 +356,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     pieceName: flow.version.trigger.settings.pieceName,
                     pieceVersion: flow.version.trigger.settings.pieceVersion,
                 },
-            },
-            ),
-            )
+            }), log)
         }
 
         await flowRepo().update(flowId, {
@@ -414,6 +415,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const lock = await distributedLock.acquireLock({
             key: id,
             timeout: 10000,
+            log,
         })
 
         try {
@@ -424,7 +426,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
             rejectedPromiseHandler(flowSideEffects(log).preDelete({
                 flowToDelete,
-            }))
+            }), log)
 
             await flowRepo().delete({ id })
         }

@@ -1,4 +1,3 @@
-import { AppSystemProp, DatabaseType, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import {
     ArrayContains,
@@ -46,6 +45,8 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+import { AppSystemProp, WorkerSystemProps } from '../helper/system/system-prop'
+import { DatabaseType, system } from '../helper/system/system'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -110,7 +111,7 @@ function getEntities(): EntitySchema<unknown>[] {
 }
 
 const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(WorkerSystemProps.ENVIRONMENT)
 
     const value: Partial<Record<ApEnvironment, boolean>> = {
         [ApEnvironment.TESTING]: true,

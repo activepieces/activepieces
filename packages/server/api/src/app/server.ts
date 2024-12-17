@@ -1,4 +1,3 @@
-import { initializeSentry, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { apId, ApMultipartFile } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
@@ -11,7 +10,11 @@ import { setupApp } from './app'
 import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { setupWorker } from './worker'
-const MAX_FILE_SIZE_MB = system.getNumberOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB)
+import { system } from './helper/system/system'
+import { WorkerSystemProps } from './helper/system/system-prop'
+import { exceptionHandler } from '@activepieces/server-shared'
+
+const MAX_FILE_SIZE_MB = system.getNumberOrThrow(WorkerSystemProps.MAX_FILE_SIZE_MB)
 
 export const setupServer = async (): Promise<FastifyInstance> => {
     const app = await setupBaseApp()
@@ -27,7 +30,7 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 
 async function setupBaseApp(): Promise<FastifyInstance> {
     const app = fastify({
-        logger: logger as FastifyBaseLogger,
+        logger: system.globalLogger() as FastifyBaseLogger,
         ignoreTrailingSlash: true,
         pluginTimeout: 30000,
         // Default 100MB, also set in nginx.conf
@@ -59,7 +62,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
             (part as any).value = apFile
         },
     })
-    initializeSentry()
+    exceptionHandler.initializeSentry(system.get(WorkerSystemProps.SENTRY_DSN))
 
 
     await app.register(fastifyRawBody, {

@@ -1,4 +1,4 @@
-import { exceptionHandler, system } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ApEdition,
     ProjectId,
@@ -6,6 +6,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { projectUsageService } from '../../project/usage/project-usage-service'
 import { projectLimitsService } from './project-plan.service'
+import { system } from '../../helper/system/system'
 
 export const tasksLimit = (log: FastifyBaseLogger) => ({
     exceededLimit: async ({ projectId }: { projectId: ProjectId }): Promise<boolean> => {
@@ -24,7 +25,7 @@ export const tasksLimit = (log: FastifyBaseLogger) => ({
             return consumedTasks >= projectPlan.tasks
         }
         catch (e) {
-            exceptionHandler.handle(e)
+            exceptionHandler.handle(e, log)
             return false
         }
     },

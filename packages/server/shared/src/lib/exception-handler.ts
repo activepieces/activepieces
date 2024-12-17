@@ -4,7 +4,7 @@ import { FastifyBaseLogger } from 'fastify';
 let sentryInitialized = false
 
 export const exceptionHandler = {
-    initializeSentry: (sentryDsn: string) => {
+    initializeSentry: (sentryDsn: string | undefined) => {
         if (!sentryDsn) {
             return;
         }

@@ -8,7 +8,6 @@ import {
     ProjectSyncPlan,
     ProjectSyncPlanOperation, PushGitRepoRequest,
 } from '@activepieces/ee-shared'
-import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -28,6 +27,7 @@ import { gitSyncHelper } from './git-sync-helper'
 import { GitRepoEntity } from './git-sync.entity'
 import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
+import { system } from '../../helper/system/system'
 
 const repo = repoFactory(GitRepoEntity)
 

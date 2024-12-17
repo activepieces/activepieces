@@ -1,4 +1,4 @@
-import { AppSystemProp, JobType, OneTimeJobData, QueueName, system, WebhookJobData } from '@activepieces/server-shared'
+import { JobType, OneTimeJobData, QueueName, WebhookJobData } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, assertNull, isNil } from '@activepieces/shared'
 import { Job, Queue, Worker } from 'bullmq'
 import dayjs from 'dayjs'
@@ -8,6 +8,8 @@ import { Redis } from 'ioredis'
 import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
 import { AddParams } from '../queue/queue-manager'
 import { redisQueue } from './redis-queue'
+import { AppSystemProp } from '../../helper/system/system-prop'
+import { system } from '../../helper/system/system'
 
 
 const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'

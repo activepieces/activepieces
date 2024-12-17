@@ -1,7 +1,8 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import { AskCopilotRequest, isNil } from '@activepieces/shared'
 import OpenAI from 'openai'
 import { processHttpRequest } from './http-agent'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 
 let openai: OpenAI | null = null
 const getOpenai = ()=>{

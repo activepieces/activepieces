@@ -60,7 +60,7 @@ export const flowVersionSideEffects = (log: FastifyBaseLogger) => ({
         }
         catch (e) {
             // Ignore error and continue the operation peacefully
-            exceptionHandler.handle(e)
+            exceptionHandler.handle(e, log)
         }
     },
 })

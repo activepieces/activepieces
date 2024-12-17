@@ -1,4 +1,3 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     File,
     FileCompression,
@@ -12,6 +11,8 @@ import { domainHelper } from '../../helper/domain-helper'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 
 const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 

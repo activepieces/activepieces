@@ -1,9 +1,11 @@
-import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
 import { selectIcon } from './icon-agent'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 
 type Message = {
     role: 'user' | 'assistant'
@@ -51,6 +53,8 @@ const defaultResponse: CodeAgentResponse = {
     title: 'Custom Code',
 }
 
+const log = system.globalLogger()
+
 export async function generateCode(
     requirement: string,
     conversationHistory: Message[] = [],
@@ -61,7 +65,7 @@ export async function generateCode(
             return defaultResponse
         }
 
-        logger.debug({
+        log.debug({
             requirement,
             contextMessages: conversationHistory.length,
         }, '[generateCode] Processing code generation request')
@@ -157,7 +161,7 @@ export async function generateCode(
             temperature: 0,
         })
 
-        logger.debug({
+        log.debug({
             requirement,
             conversationHistory,
             previousCode: lastCodeResponse?.content,
@@ -185,7 +189,7 @@ export async function generateCode(
         }
     }
     catch (error) {
-        exceptionHandler.handle(error)
+        exceptionHandler.handle(error, system.globalLogger())
         return defaultResponse
     }
 }

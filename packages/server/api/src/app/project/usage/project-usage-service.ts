@@ -1,4 +1,3 @@
-import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ProjectUsage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { getRedisConnection } from '../../database/redis-connection'
@@ -6,10 +5,12 @@ import { projectMemberService } from '../../ee/project-members/project-member.se
 import { apDayjs } from '../../helper/dayjs-helper'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { projectService } from '../project-service'
+import { WorkerSystemProps } from '../../helper/system/system-prop'
+import { system } from '../../helper/system/system'
 
 type UsageType = 'tasks' | 'aiTokens'
 
-const environment = system.get(SharedSystemProp.ENVIRONMENT)
+const environment = system.get(WorkerSystemProps.ENVIRONMENT)
 
 const redisKeys: Record<UsageType, (projectId: string, startBillingPeriod: string) => string> = {
     'tasks': (projectId: string, startBillingPeriod: string) => `project-usage:${projectId}:${startBillingPeriod}`,

@@ -52,7 +52,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
             return
         }
         await flowRunHooks.get(log).onFinish(flowRun)
-        eventsHooks.get().sendWorkerEvent(flowRun.projectId, {
+        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_FINISHED,
             data: {
                 flowRun,
@@ -88,7 +88,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 progressUpdateType,
             },
         })
-        eventsHooks.get().sendWorkerEvent(flowRun.projectId, {
+        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
             action: ApplicationEventName.FLOW_RUN_STARTED,
             data: {
                 flowRun,

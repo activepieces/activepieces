@@ -30,11 +30,12 @@ type CreateParams = BaseParams
 
 type AcquireLockParams = {
     flowId: FlowId
+    log: FastifyBaseLogger
 }
 
-const createLock = async ({ flowId }: AcquireLockParams): Promise<ApLock> => {
+const createLock = async ({ flowId, log }: AcquireLockParams): Promise<ApLock> => {
     const key = `${flowId}-webhook-simulation`
-    return distributedLock.acquireLock({ key, timeout: 5000 })
+    return distributedLock.acquireLock({ key, timeout: 5000, log })
 }
 
 const webhookSimulationRepo = repoFactory(WebhookSimulationEntity)
@@ -47,6 +48,7 @@ export const webhookSimulationService = (log: FastifyBaseLogger) => ({
 
         const lock = await createLock({
             flowId,
+            log,
         })
 
         try {
@@ -122,6 +124,7 @@ export const webhookSimulationService = (log: FastifyBaseLogger) => ({
         if (isNil(parentLock)) {
             lock = await createLock({
                 flowId,
+                log,
             })
         }
 

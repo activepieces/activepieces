@@ -1,15 +1,16 @@
-import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
+import { WorkerSystemProps } from '../../../../helper/system/system-prop'
+import { system } from '../../../../helper/system/system'
 
 export type EmailSender = {
     send: (args: SendArgs) => Promise<void>
 }
 
 const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
-    const env = system.get(SharedSystemProp.ENVIRONMENT)
+    const env = system.get(WorkerSystemProps.ENVIRONMENT)
 
     if (env === ApEnvironment.PRODUCTION) {
         return smtpEmailSender(log)

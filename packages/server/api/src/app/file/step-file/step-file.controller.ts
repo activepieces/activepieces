@@ -1,4 +1,3 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -17,6 +16,8 @@ import { jwtUtils } from '../../helper/jwt-utils'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'
 import { stepFileService } from './step-file.service'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 
 
 const useS3SignedUrls = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS)

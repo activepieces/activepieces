@@ -62,9 +62,9 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                 flowId,
                 payload,
                 projectId,
-            })),
+            }), request.log),
         )
-        rejectedPromiseHandler(Promise.all(savePayloads))
+        rejectedPromiseHandler(Promise.all(savePayloads), request.log)
         await webhookSimulationService(request.log).delete({ flowId, projectId })
         return {}
     })
@@ -82,6 +82,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         const filterPayloads = await dedupeService.filterUniquePayloads(
             flowVersionId,
             payloads,
+            request.log,
         )
         const createFlowRuns = filterPayloads.map((payload) =>
             flowRunService(request.log).start({

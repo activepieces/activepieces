@@ -1,7 +1,7 @@
 import {
     ApplicationEvent,
 } from '@activepieces/ee-shared'
-import { logger, networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     apId,
     Cursor,
@@ -10,7 +10,7 @@ import {
     SeekPage,
 } from '@activepieces/shared'
 import { Value } from '@sinclair/typebox/value'
-import { FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventParam } from '../../helper/application-events'
@@ -20,12 +20,14 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
-export const auditLogService = {
+export const auditLogService = (log: FastifyBaseLogger) => ({
     sendUserEvent(requestInformation: MetaInformation, params: AuditEventParam): void {
-        rejectedPromiseHandler(saveEvent(requestInformation, params))
+        rejectedPromiseHandler(saveEvent(requestInformation, params, log), log)
     },
     sendUserEventFromRequest(request: FastifyRequest, params: AuditEventParam): void {
         if ([PrincipalType.UNKNOWN, PrincipalType.WORKER].includes(request.principal.type)) {
@@ -35,8 +37,8 @@ export const auditLogService = {
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
             userId: request.principal.id,
-            ip: networkUtls.extractClientRealIp(request),
-        }, params))
+            ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+        }, params, log), log)
     },
     sendWorkerEvent(projectId: string, params: AuditEventParam): void {
         rejectedPromiseHandler(projectService.getOneOrThrow(projectId).then((project) => {
@@ -45,8 +47,8 @@ export const auditLogService = {
                 projectId,
                 userId: undefined,
                 ip: undefined,
-            }, params))
-        }))
+            }, params, log), log)
+        }), log)
     },
     async list({ platformId, cursorRequest, limit, userId, action, projectId }: ListParams): Promise<SeekPage<ApplicationEvent>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -77,9 +79,9 @@ export const auditLogService = {
             paginationResponse.cursor,
         )
     },
-}
+})
 
-async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam): Promise<void> {
+async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: FastifyBaseLogger): Promise<void> {
     const platformId = info.platformId
     const platform = await platformService.getOneOrThrow(platformId)
     if (!platform.auditLogEnabled) {
@@ -112,7 +114,7 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam): Prom
     const cleanedEvent = Value.Clean(ApplicationEvent, clonedAndSerializedDates) as ApplicationEvent
 
     await auditLogRepo().save(cleanedEvent)
-    logger.info({
+    log.info({
         action: cleanedEvent.action,
         message: '[AuditEventService#saveEvent] Audit event saved',
     })

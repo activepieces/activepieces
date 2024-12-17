@@ -1,4 +1,3 @@
-import { AppSystemProp, DatabaseType, system } from '@activepieces/server-shared'
 import {
     Brackets,
     EntitySchema,
@@ -7,6 +6,8 @@ import {
     WhereExpressionBuilder,
 } from 'typeorm'
 import { atob, btoa, decodeByType, encodeByType } from './pagination-utils'
+import { AppSystemProp } from '../system/system-prop'
+import { DatabaseType, system } from '../system/system'
 
 export enum Order {
     ASC = 'ASC',

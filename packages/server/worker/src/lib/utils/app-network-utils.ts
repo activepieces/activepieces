@@ -4,14 +4,9 @@ import { networkUtls } from '@activepieces/server-shared'
 
 export const appNetworkUtils = {
     getPublicUrl: async (): Promise<string> => {
-        const environment = machine.getSettings().ENVIRONMENT
+        const environment = machine.getSettings().ENVIRONMENT as ApEnvironment
         let url = machine.getSettings().FRONTEND_URL
-        
-        if (extractHostname(url) === 'localhost' && environment === ApEnvironment.PRODUCTION) {
-            url = `http://${(await networkUtls.getPublicIp()).ip}`
-        }
-
-        return appendSlashAndApi(url)
+        return networkUtls.getPublicUrl(environment, url)
     },
     getInternalApiUrl: (): string => {
         if (machine.hasAppModules()) {
@@ -27,12 +22,3 @@ const appendSlashAndApi = (url: string): string => {
     return `${url}${slash}api/`
 }
 
-function extractHostname(url: string): string | null {
-    try {
-        const hostname = new URL(url).hostname
-        return hostname
-    }
-    catch (e) {
-        return null
-    }
-}

@@ -1,4 +1,3 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, isNil } from '@activepieces/shared'
 import { createBullBoard } from '@bull-board/api'
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
@@ -8,6 +7,8 @@ import { FastifyInstance } from 'fastify'
 import { systemJobsQueue } from '../../helper/system-jobs/redis-system-job'
 import { bullMqGroups } from './redis-queue'
 import { redisRateLimiter } from './redis-rate-limiter'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 
 const QUEUE_BASE_PATH = '/ui'
 

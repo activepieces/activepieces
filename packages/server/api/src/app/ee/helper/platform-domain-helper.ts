@@ -1,6 +1,7 @@
-import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { customDomainService } from '../custom-domains/custom-domain.service'
+import { WorkerSystemProps } from '../../helper/system/system-prop'
+import { system } from '../../helper/system/system'
 
 export const platformDomainHelper = {
     async constructUrlFrom({
@@ -38,7 +39,7 @@ export const platformDomainHelper = {
 async function getFrontendDomainFromHostname(
     hostname: string,
 ): Promise<string> {
-    let domain = system.get(SharedSystemProp.FRONTEND_URL)
+    let domain = system.get(WorkerSystemProps.FRONTEND_URL)
     const customDomain = await customDomainService.getOneByDomain({
         domain: hostname,
     })
@@ -55,7 +56,7 @@ async function getApiDomainFromHostname(hostname: string): Promise<string> {
 async function getFrontendDomain(
     platformId: string | undefined | null,
 ): Promise<string> {
-    let domain = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
+    let domain = system.getOrThrow(WorkerSystemProps.FRONTEND_URL)
     if (platformId && [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())) {
         const customDomain = await customDomainService.getOneByPlatform({
             platformId,

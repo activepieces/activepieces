@@ -1,4 +1,4 @@
-import { exceptionHandler, SharedSystemProp, system, UserInteractionJobType } from '@activepieces/server-shared'
+import { exceptionHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -42,6 +42,8 @@ import {
 } from '../app-connection.entity'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
+import { system } from '../../helper/system/system'
+import { WorkerSystemProps } from '../../helper/system/system-prop'
 
 const repo = repoFactory(AppConnectionEntity)
 
@@ -387,7 +389,7 @@ const engineValidateAuth = async (
     params: EngineValidateAuthParams,
     log: FastifyBaseLogger,
 ): Promise<void> => {
-    const environment = system.getOrThrow(SharedSystemProp.ENVIRONMENT)
+    const environment = system.getOrThrow(WorkerSystemProps.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return
     }
@@ -455,6 +457,7 @@ async function lockAndRefreshConnection({
     const refreshLock = await distributedLock.acquireLock({
         key: `${projectId}_${externalId}`,
         timeout: 20000,
+        log,
     })
 
     let appConnection: AppConnection | null = null
@@ -480,7 +483,7 @@ async function lockAndRefreshConnection({
         return refreshedAppConnection
     }
     catch (e) {
-        exceptionHandler.handle(e)
+        exceptionHandler.handle(e, log)
         if (!isNil(appConnection) && oauth2Util(log).isUserError(e)) {
             appConnection.status = AppConnectionStatus.ERROR
             await repo().update(appConnection.id, {

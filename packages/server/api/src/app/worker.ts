@@ -1,8 +1,9 @@
-import { system, WorkerSystemProps } from '@activepieces/server-shared'
 import { isNil, WorkerMachineType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { flowWorker, piecesBuilder } from 'server-worker'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
+import { WorkerSystemProps } from './helper/system/system-prop'
+import { system } from './helper/system/system'
 
 
 export const setupWorker = async (app: FastifyInstance): Promise<void> => {

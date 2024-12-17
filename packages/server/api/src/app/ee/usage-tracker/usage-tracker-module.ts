@@ -1,4 +1,3 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import { Platform } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
@@ -11,6 +10,8 @@ import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { PlatformEntity } from '../../platform/platform.entity'
 import { ProjectEntity } from '../../project/project-entity'
 import { UserEntity } from '../../user/user-entity'
+import { AppSystemProp } from '../../helper/system/system-prop'
+import { system } from '../../helper/system/system'
 
 const userRepo = repoFactory(UserEntity)
 const projectRepo = repoFactory(ProjectEntity)

@@ -1,5 +1,6 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import axios, { AxiosResponse } from 'axios'
+import { AppSystemProp } from '../../helper/system/system-prop'
+import { system } from '../../helper/system/system'
 
 export const cloudflareHostnameServices = {
     headers: {

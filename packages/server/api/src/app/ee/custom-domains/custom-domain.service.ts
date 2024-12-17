@@ -3,12 +3,12 @@ import {
     CustomDomainStatus,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { system } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { CustomDomainEntity } from './custom-domain.entity'
+import { system } from '../../helper/system/system'
 
 const customDomainRepo = repoFactory<CustomDomain>(CustomDomainEntity)
 

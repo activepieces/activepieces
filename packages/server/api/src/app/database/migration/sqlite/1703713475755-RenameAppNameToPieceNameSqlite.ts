@@ -1,4 +1,4 @@
-import { logger } from '@activepieces/server-shared'
+import { system } from '../../../helper/system/system'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RenameAppNameToPieceNameSqlite1703713475755
@@ -6,7 +6,10 @@ implements MigrationInterface {
     name = 'RenameAppNameToPieceNameSqlite1703713475755'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('RenameAppNameToPieceNameSqlite1703713475755 up')
+        const log = system.globalLogger()
+        log.info({
+            name: this.name,
+        }, 'up')
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)

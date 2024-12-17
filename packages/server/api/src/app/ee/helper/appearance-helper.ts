@@ -1,7 +1,7 @@
-import { system } from '@activepieces/server-shared'
 import { ApEdition, isNil, Platform } from '@activepieces/shared'
 import { defaultTheme, generateTheme } from '../../flags/theme'
 import { platformService } from '../../platform/platform.service'
+import { system } from '../../helper/system/system'
 
 const getPlatformByIdOrFallback = async (platformId: string | null) => {
     if (isNil(platformId)) {

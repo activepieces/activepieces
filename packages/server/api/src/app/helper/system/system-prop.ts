@@ -1,4 +1,4 @@
-export type SystemProp = AppSystemProp | SharedSystemProp | WorkerSystemProps
+export type SystemProp = AppSystemProp | WorkerSystemProps
 
 export enum AppSystemProp {
     API_KEY = 'API_KEY',

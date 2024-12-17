@@ -1,5 +1,4 @@
 import { readFile } from 'node:fs/promises'
-import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
@@ -7,6 +6,8 @@ import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
+import { system } from '../../../../helper/system/system'
+import { AppSystemProp, WorkerSystemProps } from '../../../../helper/system/system-prop'
 
 const isSmtpConfigured = (platform: Platform | null): boolean => {
     const isConfigured = (host: string | undefined, port: string | undefined, user: string | undefined, password: string | undefined): boolean => {
@@ -28,7 +29,7 @@ type SMTPEmailSender = EmailSender & {
 export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
     return {
         async validateOrThrow(smtp: SMTPInformation) {
-            const disableSmtpValidationInTesting = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.TESTING
+            const disableSmtpValidationInTesting = system.getOrThrow(WorkerSystemProps.ENVIRONMENT) === ApEnvironment.TESTING
             if (disableSmtpValidationInTesting) {
                 return
             }

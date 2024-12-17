@@ -1,4 +1,4 @@
-import { GetRunForWorkerRequest, JobStatus, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowId, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, ProjectId, RemoveStableJobEngineRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
@@ -13,6 +13,8 @@ import { triggerHooks } from '../flows/trigger'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'
+import { system } from '../helper/system/system'
+import { WorkerSystemProps } from '../helper/system/system-prop'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -52,7 +54,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             body: UpdateJobRequest,
         },
     }, async (request) => {
-        const environment = system.getOrThrow(SharedSystemProp.ENVIRONMENT)
+        const environment = system.getOrThrow(WorkerSystemProps.ENVIRONMENT)
         if (environment === ApEnvironment.TESTING) {
             return {}
         }

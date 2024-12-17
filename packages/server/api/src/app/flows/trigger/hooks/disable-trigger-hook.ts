@@ -54,7 +54,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
     }
     catch (error) {
         if (!params.ignoreError) {
-            exceptionHandler.handle(error)
+            exceptionHandler.handle(error, log)
             throw error
         }
         return null

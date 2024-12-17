@@ -1,5 +1,4 @@
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -17,6 +16,8 @@ import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { flowTemplateService } from './flow-template.service'
+import { AppSystemProp } from '../../helper/system/system-prop'
+import { system } from '../../helper/system/system'
 
 export const platformFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })

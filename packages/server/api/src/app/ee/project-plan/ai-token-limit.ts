@@ -1,4 +1,4 @@
-import { exceptionHandler, system } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ApEdition,
     ProjectId,
@@ -6,6 +6,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { projectUsageService } from '../../project/usage/project-usage-service'
 import { projectLimitsService } from './project-plan.service'
+import { system } from '../../helper/system/system'
 
 export const aiTokenLimit = (log: FastifyBaseLogger) => ({
     exceededLimit: async ({ projectId, tokensToConsume }: { projectId: ProjectId, tokensToConsume: number }): Promise<{ exceeded: false } | { exceeded: true, usage: number, limit: number }> => {
@@ -32,7 +33,7 @@ export const aiTokenLimit = (log: FastifyBaseLogger) => ({
             }
         }
         catch (e) {
-            exceptionHandler.handle(e)
+            exceptionHandler.handle(e, log)
             throw e
         }
     },

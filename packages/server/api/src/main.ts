@@ -1,11 +1,11 @@
 
-import { logger, system } from '@activepieces/server-shared'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
 import { initializeLock } from './app/helper/lock'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
+import { system } from './app/helper/system/system'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -62,18 +62,18 @@ const main = async (): Promise<void> => {
     const app = await setupServer()
 
     process.on('SIGINT', () => {
-        stop(app).catch((e) => logger.error(e, '[Main#stop]'))
+        stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
     })
 
     process.on('SIGTERM', () => {
-        stop(app).catch((e) => logger.error(e, '[Main#stop]'))
+        stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
     })
 
     await start(app)
 }
 
 main().catch((e) => {
-    logger.error(e, '[Main#main]')
+    system.globalLogger().error(e, '[Main#main]')
     process.exit(1)
 })
 

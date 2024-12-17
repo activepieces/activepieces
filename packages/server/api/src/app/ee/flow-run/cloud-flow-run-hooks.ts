@@ -1,4 +1,3 @@
-import { system } from '@activepieces/server-shared'
 import { ApEdition, FlowRun, isFailedState, isFlowUserTerminalState, isNil, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,6 +7,7 @@ import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
 import { issuesService } from '../issues/issues-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
+import { system } from '../../helper/system/system'
 
 export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
     async onFinish(flowRun: FlowRun): Promise<void> {

@@ -1,5 +1,5 @@
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { SharedSystemProp, system, UserInteractionJobType } from '@activepieces/server-shared'
+import { UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AddPieceRequestBody,
@@ -24,6 +24,8 @@ import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'serve
 import { fileService } from '../../file/file.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceMetadataService } from '../piece-metadata-service'
+import { WorkerSystemProps } from '../../helper/system/system-prop'
+import { system } from '../../helper/system/system'
 
 export const pieceService = (log: FastifyBaseLogger) => ({
     async installPiece(
@@ -73,7 +75,7 @@ export const pieceService = (log: FastifyBaseLogger) => ({
 
 const assertInstallProjectEnabled = (scope: PieceScope): void => {
     if (scope === PieceScope.PROJECT) {
-        const sandboxMode = system.getOrThrow(SharedSystemProp.EXECUTION_MODE)
+        const sandboxMode = system.getOrThrow(WorkerSystemProps.EXECUTION_MODE)
         const edition = system.getEdition()
         if (
             sandboxMode === ExecutionMode.UNSANDBOXED &&
