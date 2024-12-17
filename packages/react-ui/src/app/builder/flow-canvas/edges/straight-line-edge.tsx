@@ -28,7 +28,7 @@ export const ApStraightLineCanvasEdge = ({
     <>
       <BaseEdge
         path={path}
-        style={{ strokeWidth: `${flowUtilConsts.LINE_WIDTH}px` }}
+        style={{ strokeWidth: `${flowUtilConsts.LINE_WIDTH}px`}}
       />
       {!data.hideAddButton && (
         <foreignObject
@@ -38,7 +38,8 @@ export const ApStraightLineCanvasEdge = ({
             (targetY - sourceY) / 2 -
             flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height
           }
-          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
+          // add 100 to the width to make the add button group hoverable
+          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 100}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
           className="overflow-visible"
         >

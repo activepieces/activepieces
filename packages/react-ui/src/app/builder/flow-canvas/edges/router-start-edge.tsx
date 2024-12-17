@@ -98,7 +98,7 @@ export const ApRouterStartCanvasEdge = ({
     <>
       <BaseEdge
         path={path}
-        style={{ strokeWidth: `${flowUtilConsts.LINE_WIDTH}px` }}
+        style={{ strokeWidth: `${flowUtilConsts.LINE_WIDTH}px`}}
       ></BaseEdge>
       {!data.isBranchEmpty && (
         <foreignObject

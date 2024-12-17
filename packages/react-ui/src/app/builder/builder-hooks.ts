@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext, useCallback } from 'react';
+import { createContext, useContext, useCallback, useEffect, useState } from 'react';
 import { create, useStore } from 'zustand';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -18,6 +18,7 @@ import {
   flowStructureUtil,
   isNil,
   StepLocationRelativeToParent,
+  Action,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -605,3 +606,22 @@ export const useSwitchToDraft = () => {
     isSwitchingToDraftPending,
   };
 };
+
+export const usePasteActionsInClipboard = () =>{ 
+  const [actionsToPaste, setActionsToPaste] = useState<Action[]>([]);
+ 
+  useEffect(() => {
+    const fetchClipboardOperations = async () => {
+      const fetchedActionsFromClipboard = await getActionsInClipboard();
+      if (fetchedActionsFromClipboard.length > 0) {
+        setActionsToPaste(fetchedActionsFromClipboard);
+      } else {
+        setActionsToPaste([]);
+      }
+    };
+    fetchClipboardOperations();
+    const interval = setInterval(fetchClipboardOperations, 500);
+    return () => clearInterval(interval);
+  }, []);
+  return actionsToPaste;
+}

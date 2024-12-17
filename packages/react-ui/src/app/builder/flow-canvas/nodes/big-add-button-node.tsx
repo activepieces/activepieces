@@ -18,10 +18,10 @@ import {
   shouldShowAskAiIndicator,
 } from '../edges/ask-ai-indicator';
 import {
-  ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE,
   flowUtilConsts,
 } from '../utils/consts';
 import { ApBigAddButtonNode } from '../utils/types';
+import { PasteButton } from '../edges/paste-button';
 
 const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
@@ -74,12 +74,9 @@ const ApBigAddButtonCanvasNode = React.memo(
                     height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
                     width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                   }}
-                  {...{
-                    [`data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`]:
-                      JSON.stringify(data),
-                  }}
+                  
                   id={id}
-                  className={cn('  rounded bg-accent', {
+                  className={cn('rounded bg-accent relative', {
                     'bg-primary/80': showDropIndicator || pieceSelectorOpen,
                     'shadow-add-button':
                       isIsStepInsideDropzone || pieceSelectorOpen,
@@ -90,7 +87,8 @@ const ApBigAddButtonCanvasNode = React.memo(
                   })}
                 >
                   {!showDropIndicator && (
-                    <PieceSelector
+                     
+                      <PieceSelector
                       operation={
                         data.stepLocationRelativeToParent ===
                         StepLocationRelativeToParent.INSIDE_BRANCH
@@ -115,7 +113,8 @@ const ApBigAddButtonCanvasNode = React.memo(
                       open={pieceSelectorOpen}
                       onOpenChange={setPieceSelectorOpen}
                     >
-                      <span>
+                    
+                      <span className='relative group'> 
                         {showAiIndicator && (
                           <AskAiIndicator
                             height={
@@ -139,8 +138,12 @@ const ApBigAddButtonCanvasNode = React.memo(
                             />
                           </Button>
                         )}
+                        <div className='absolute top-[9.5px] left-[50px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out'>
+                          <PasteButton addButtonData={data} />
+                        </div>
                       </span>
                     </PieceSelector>
+                  
                   )}
                 </div>
                 {showDropIndicator && (

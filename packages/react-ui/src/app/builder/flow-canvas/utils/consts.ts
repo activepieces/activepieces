@@ -101,6 +101,5 @@ export const flowUtilConsts = {
   LABEL_VERTICAL_PADDING,
 };
 
-export const ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE = 'add-button-context-menu';
 export const STEP_CONTEXT_MENU_ATTRIBUTE = 'step-context-menu';
 export const EMPTY_STEP_PARENT_NAME = 'empty-step-parent';

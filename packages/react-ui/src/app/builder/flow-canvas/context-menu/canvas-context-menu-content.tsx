@@ -23,6 +23,7 @@ import {
 
 import { CanvasContextMenuProps, CanvasShortcuts } from './canvas-context-menu';
 import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
+import { usePasteActionsInClipboard } from '../../builder-hooks';
 
 const ShortcutWrapper = ({
   children,
@@ -53,19 +54,7 @@ export const CanvasContextMenuContent = ({
     (node) =>
       !!(flowStructureUtil.getStep(node, flowVersion.trigger) as Action)?.skip,
   );
-  const [actionsToPaste, setActionsToPaste] = useState<Action[]>([]);
-
-  useEffect(() => {
-    const fetchClipboardOperations = async () => {
-      const fetchedActionsFromClipboard = await getActionsInClipboard();
-      if (fetchedActionsFromClipboard.length > 0) {
-        setActionsToPaste(fetchedActionsFromClipboard);
-      } else {
-        setActionsToPaste([]);
-      }
-    };
-    fetchClipboardOperations();
-  }, []);
+  const actionsToPaste = usePasteActionsInClipboard();
   const doesNotContainTrigger = !selectedNodes.some((node) => node === flowVersion.trigger.name)
   const showPasteAfterLastStep =
     !readonly && selectedNodes.length === 0;

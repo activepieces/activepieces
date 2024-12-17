@@ -12,12 +12,12 @@ import {
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import {
-  ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE,
   flowUtilConsts,
 } from '../utils/consts';
 import { ApButtonData } from '../utils/types';
 
 import { AskAiIndicator, shouldShowAskAiIndicator } from './ask-ai-indicator';
+import { PasteButton } from './paste-button';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
@@ -75,6 +75,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
         </div>
       )}
       {!showDropIndicator && !readonly && (
+       
         <PieceSelector
           operation={
             props.stepLocationRelativeToParent ===
@@ -99,14 +100,11 @@ const ApAddButton = React.memo((props: ApButtonData) => {
           }
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}
+          asChild
         >
-          <div
-            {...{
-              [`data-${ADD_BUTTON_CONTEXT_MENU_ATTRIBUTE}`]:
-                JSON.stringify(props),
-            }}
-          >
-            {showAskAiIndicator && (
+          <div>
+
+          {showAskAiIndicator && (
               <AskAiIndicator
                 height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
                 width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
@@ -114,7 +112,11 @@ const ApAddButton = React.memo((props: ApButtonData) => {
             )}
             {!showAskAiIndicator && (
               <div
-                className={cn('rounded-xss cursor-pointer transition-all', {
+              style={{
+                width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width  + 'px',
+                height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+              }}
+                className={cn('rounded-xss cursor-pointer transition-all z-50', {
                   'shadow-add-button': actionMenuOpen,
                 })}
               >
@@ -125,7 +127,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                       flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                   }}
                   className={cn(
-                    'bg-light-blue  overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+                    'bg-light-blue  relative group overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
                     {
                       'bg-primary ': actionMenuOpen,
                     },
@@ -134,11 +136,26 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   {!actionMenuOpen && (
                     <Plus className="w-3 h-3 stroke-[3px] text-white" />
                   )}
+                  {
+                    !actionMenuOpen && (
+                      <div className='absolute -top-[7px] left-[15px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out'>
+                        <PasteButton addButtonData={props} />
+                      </div>
+                    )
+                  }
                 </div>
+               
               </div>
+              
             )}
+                 
           </div>
+        
+       
+         
         </PieceSelector>
+   
+
       )}
     </>
   );
