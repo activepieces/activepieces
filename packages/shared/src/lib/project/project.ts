@@ -64,6 +64,7 @@ export const Project = Type.Object({
     notifyStatus: Type.Enum(NotificationStatus),
     platformId: ApId,
     externalId: Type.Optional(Type.String()),
+    releasesEnabled: Type.Boolean(),
 })
 
 const projectAnalytics = Type.Object(

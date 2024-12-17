@@ -73,7 +73,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.gitSyncEnabled,
+    platform.environmentEnabled,
   );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);

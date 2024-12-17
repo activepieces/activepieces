@@ -56,7 +56,7 @@ const ConnectGitDialog = () => {
 
   const { refetch } = gitSyncHooks.useGitSync(
     projectId,
-    platform.gitSyncEnabled,
+    platform.environmentEnabled,
   );
 
   const { mutate, isPending } = useMutation({

@@ -20,7 +20,7 @@ import { gitRepoService } from './git-sync.service'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.gitSyncEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.environmentEnabled))
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
 

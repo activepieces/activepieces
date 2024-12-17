@@ -95,7 +95,7 @@ const FlowsPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.gitSyncEnabled,
+    platform.environmentEnabled,
   );
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
   const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);

@@ -40,7 +40,6 @@ afterAll(async () => {
     await databaseConnection().destroy()
     await app?.close()
 })
-
 beforeEach(async () => {
     stripeHelper.getOrCreateCustomer = jest
         .fn()
