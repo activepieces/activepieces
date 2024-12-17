@@ -2,25 +2,13 @@ import { isNil } from '../../common'
 import { Action, ActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { Trigger, TriggerType } from '../triggers/trigger'
-import { Step } from '../util/flow-structure-util'
+import { flowStructureUtil } from '../util/flow-structure-util'
 import { FlowOperationRequest, FlowOperationType, ImportFlowRequest, StepLocationRelativeToParent } from './index'
-
-function getAllActionsThatDoesNotHaveParent(trigger: Step): Step[] {
-    const actions: Step[] = []
-    let currentAction = trigger.nextAction
-
-    while (!isNil(currentAction)) {
-        actions.push(currentAction)
-        currentAction = currentAction.nextAction
-    }
-
-    return actions
-}
 
 function createDeleteActionOperation(actionName: string): FlowOperationRequest {
     return {
         type: FlowOperationType.DELETE_ACTION,
-        request: { name: actionName },
+        request: { names: [actionName] },
     }
 }
 
@@ -123,7 +111,7 @@ function removeAnySubsequentAction(action: Action): Action {
 }
 
 function _importFlow(flowVersion: FlowVersion, request: ImportFlowRequest): FlowOperationRequest[] {
-    const existingActions = getAllActionsThatDoesNotHaveParent(flowVersion.trigger)
+    const existingActions = flowStructureUtil.getAllNextActionsWithoutChildren(flowVersion.trigger)
 
     const deleteOperations = existingActions.map(action =>
         createDeleteActionOperation(action.name),

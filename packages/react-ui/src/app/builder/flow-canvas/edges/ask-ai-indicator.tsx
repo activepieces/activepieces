@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared';
 
 import { BuilderState } from '../../builder-hooks';
-import { ApButtonData } from '../types';
+import { ApButtonData } from '../utils/types';
 
 export const shouldShowAskAiIndicator = (
   state: BuilderState,
