@@ -188,7 +188,8 @@ const CanvasControls = ({
     return [state.setPanningMode,state.panningMode];
   });
   const spacePressed = useKeyPress('Space');
-  const isInGrabMode = spacePressed || panningMode === 'grab';
+  const shiftPressed = useKeyPress('Shift');
+  const isInGrabMode = (spacePressed || panningMode === 'grab') && !shiftPressed;
 
   return (
     <>
@@ -203,7 +204,7 @@ const CanvasControls = ({
                 setPanningMode('pan');
               }
             }}
-             className='relative'
+             className='relative focus:outline-0'
           >
            <PanningModeIndicator toggled={!isInGrabMode} />            
            <MousePointer className="w-5 h-5"></MousePointer>
@@ -225,7 +226,7 @@ const CanvasControls = ({
                 setPanningMode('grab');
               }
             }}
-            className='relative'
+            className='relative focus:outline-0'
           >
           
           <PanningModeIndicator toggled={isInGrabMode} />
