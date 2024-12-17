@@ -1,24 +1,31 @@
-
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, networkUtls, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
-import { heartbeat } from '../utils/heartbeat'
 import { ApAxiosClient } from './ap-axios'
+import { LRUCache } from 'lru-cache'
+import { FastifyBaseLogger } from 'fastify'
+import { machine } from '../utils/machine'
+import { appNetworkUtils } from '../utils/app-network-utils'
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
-const apiUrl = removeTrailingSlash(networkUtls.getInternalApiUrl())
+const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
+
+const flowCache = new LRUCache<string, PopulatedFlow>({
+    max: 100, 
+    ttl: 1000 * 60 * 5, 
+})
 
 export const workerApiService = (workerToken: string) => {
     const client = new ApAxiosClient(apiUrl, workerToken)
 
     return {
         async heartbeat(): Promise<void> {
-            const request: WorkerMachineHealthcheckRequest = await heartbeat.getSystemInfo()
+            const request: WorkerMachineHealthcheckRequest = await machine.getSystemInfo()
             try {
-                await client.post('/v1/worker-machines/heartbeat', request)
+                await client.post<WorkerMachineHealthcheckResponse>('/v1/worker-machines/heartbeat', request)
             }
             catch (error) {
                 if (ApAxiosClient.isApAxiosError(error) && error.error.code === 'ECONNREFUSED') {
@@ -58,7 +65,7 @@ export const workerApiService = (workerToken: string) => {
     }
 }
 
-export const engineApiService = (engineToken: string) => {
+export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
 
     const client = new ApAxiosClient(apiUrl, engineToken)
 
@@ -101,22 +108,38 @@ export const engineApiService = (engineToken: string) => {
                         },
                     })
                 }
-                exceptionHandler.handle(e)
+                exceptionHandler.handle(e, log)
             }
         },
         async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
+            const startTime = performance.now()
+            log.debug({ request }, '[EngineApiService#getFlowWithExactPieces] start')
+            const cacheKey = JSON.stringify(request)
+            const cachedFlow = flowCache.get(cacheKey)
+            if (cachedFlow !== undefined) {
+                log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache hit')
+                return cachedFlow
+            }
+
             try {
-                return await client.get<PopulatedFlow | null>('/v1/engine/flows', {
+                const flow = await client.get<PopulatedFlow | null>('/v1/engine/flows', {
                     params: request,
                 })
+                if (flow !== null) {
+                    flowCache.set(cacheKey, flow)
+                }
+                return flow
             }
             catch (e) {
                 if (ApAxiosClient.isApAxiosError(e) && e.error.response && e.error.response.status === 404) {
+                    flowCache.set(cacheKey, undefined)
                     return null
                 }
                 throw e
             }
+            finally {
+                log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache miss')
+            }
         },
     }
 }
-

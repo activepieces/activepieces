@@ -1,14 +1,15 @@
-import { FlowVersion, isNil } from '@activepieces/shared'
-import { system } from './system/system'
-import { SharedSystemProp } from './system/system-prop'
+import { assertNotNullOrUndefined, FlowVersion, isNil } from '@activepieces/shared'
 
-let webhookSecrets: Record<string, { webhookSecret: string }> | undefined =
-    undefined
+let webhookSecrets: Record<string, { webhookSecret: string }> | undefined = undefined
 
 export const webhookSecretsUtils = {
+    init,
     getWebhookSecret,
     getSupportedAppWebhooks,
-    getWebhookSecrets,
+}
+
+async function init(_webhookSecrets: Record<string, { webhookSecret: string }>) {
+    webhookSecrets = _webhookSecrets
 }
 
 async function getWebhookSecret(
@@ -18,9 +19,7 @@ async function getWebhookSecret(
     if (!appName) {
         return undefined
     }
-    if (webhookSecrets === undefined) {
-        webhookSecrets = getWebhookSecrets()
-    }
+    assertNotNullOrUndefined(webhookSecrets, 'Webhook secrets are not initialized')
     const appConfig = webhookSecrets[appName]
     if (isNil(appConfig)) {
         return undefined
@@ -29,18 +28,7 @@ async function getWebhookSecret(
 }
 
 function getSupportedAppWebhooks(): string[] {
-    return Object.keys(getWebhookSecrets())
+    assertNotNullOrUndefined(webhookSecrets, 'Webhook secrets are not initialized')
+    return Object.keys(webhookSecrets)
 }
 
-function getWebhookSecrets(): Record<
-string,
-{
-    webhookSecret: string
-}
-> {
-    const appSecret = system.get(SharedSystemProp.APP_WEBHOOK_SECRETS)
-    if (isNil(appSecret)) {
-        return {}
-    }
-    return JSON.parse(appSecret)
-}

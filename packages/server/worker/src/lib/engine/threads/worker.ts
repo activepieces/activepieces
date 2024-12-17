@@ -1,7 +1,8 @@
 import { Worker, WorkerOptions } from 'worker_threads'
-import { ApSemaphore, getEngineTimeout, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
 import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { machine } from '../../utils/machine'
 
 export type WorkerResult = {
     engine: EngineResponse<unknown>
@@ -44,8 +45,8 @@ export class EngineWorker {
         }, 'Acquired worker')
         assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
         const worker = this.workers[workerIndex]
-        const environment = system.getOrThrow(SharedSystemProp.ENVIRONMENT)
-        const timeout = getEngineTimeout(operationType)
+        const environment = machine.getSettings().ENVIRONMENT
+        const timeout = getEngineTimeout(operationType, machine.getSettings().FLOW_TIMEOUT_SECONDS, machine.getSettings().TRIGGER_TIMEOUT_SECONDS)
         try {
 
             const result = await new Promise<WorkerResult>((resolve, reject) => {

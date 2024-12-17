@@ -9,7 +9,7 @@ import {
     isNil,
     PieceSyncMode,
 } from '@activepieces/shared'
-import { AppSystemProp, SharedSystemProp, SystemProp, WorkerSystemProps } from './system-prop'
+import { AppSystemProp, SystemProp, WorkerSystemProps } from './system-prop'
 
 
 export enum CopilotInstanceTypes {
@@ -17,14 +17,7 @@ export enum CopilotInstanceTypes {
     OPENAI = 'OPENAI',
 }
 
-export enum PiecesSource {
-    /**
-   * @deprecated Use `DB`, as `CLOUD_AND_DB` is no longer supported.
-   */
-    CLOUD_AND_DB = 'CLOUD_AND_DB',
-    DB = 'DB',
-    FILE = 'FILE',
-}
+
 
 
 export enum RedisType {
@@ -49,6 +42,7 @@ export enum DatabaseType {
     SQLITE3 = 'SQLITE3',
 }
 
+
 const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: '50',
@@ -58,31 +52,28 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
     [AppSystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
-    [SharedSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
+    [WorkerSystemProps.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
-    [SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
+    [WorkerSystemProps.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
     [AppSystemProp.AZURE_OPENAI_API_VERSION]: '2023-06-01-preview',
     [AppSystemProp.TRIGGER_FAILURES_THRESHOLD]: '576',
-    [SharedSystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
-    [SharedSystemProp.ENVIRONMENT]: 'prod',
-    [SharedSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
+    [WorkerSystemProps.ENVIRONMENT]: 'prod',
+    [WorkerSystemProps.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
     [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: '10',
-    [WorkerSystemProps.POLLING_POOL_SIZE]: '5',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
     [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: '10',
-    [SharedSystemProp.LOG_LEVEL]: 'info',
-    [SharedSystemProp.LOG_PRETTY]: 'false',
-    [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: 'cache/archives',
-    [SharedSystemProp.PIECES_SOURCE]: PiecesSource.DB,
+    [WorkerSystemProps.LOG_LEVEL]: 'info',
+    [WorkerSystemProps.LOG_PRETTY]: 'false',
+    [WorkerSystemProps.PIECES_SOURCE]: PiecesSource.DB,
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
-    [SharedSystemProp.MAX_FILE_SIZE_MB]: '4',
+    [WorkerSystemProps.MAX_FILE_SIZE_MB]: '4',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
-    [SharedSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
-    [SharedSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
-    [SharedSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
+    [WorkerSystemProps.SANDBOX_MEMORY_LIMIT]: '1048576',
+    [WorkerSystemProps.FLOW_TIMEOUT_SECONDS]: '600',
+    [WorkerSystemProps.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:

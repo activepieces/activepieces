@@ -51,12 +51,9 @@ const systemPropValidators: {
     [SharedSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [SharedSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
     [SharedSystemProp.FRONTEND_URL]: urlValidator,
-    [SharedSystemProp.CACHE_PATH]: stringValidator,
-    [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: stringValidator,
     [SharedSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [SharedSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [SharedSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
-    [SharedSystemProp.ENGINE_EXECUTABLE_PATH]: stringValidator,
     [SharedSystemProp.ENRICH_ERROR_CONTEXT]: booleanValidator,
     [SharedSystemProp.SENTRY_DSN]: urlValidator,
     [SharedSystemProp.LOKI_PASSWORD]: stringValidator,
@@ -147,7 +144,6 @@ const systemPropValidators: {
     [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: numberValidator,
     [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
     [WorkerSystemProps.SCHEDULED_POLLING_COUNT]: numberValidator,
-    [WorkerSystemProps.POLLING_POOL_SIZE]: numberValidator,
     [WorkerSystemProps.WORKER_TOKEN]: stringValidator,
 
 

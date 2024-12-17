@@ -71,7 +71,6 @@ export const auditLogService = {
         if (!isNil(projectId)) {
             queryBuilder.andWhere({ projectId: In(projectId) })
         }
-        logger.debug(`projects: ${Array.isArray(projectId)} ${(projectId?.length)}`)
         const paginationResponse = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<ApplicationEvent>(
             paginationResponse.data,
@@ -112,10 +111,10 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam): Prom
     const clonedAndSerializedDates = JSON.parse(JSON.stringify(eventToSave))
     const cleanedEvent = Value.Clean(ApplicationEvent, clonedAndSerializedDates) as ApplicationEvent
 
-    const savedEvent = await auditLogRepo().save(cleanedEvent)
+    await auditLogRepo().save(cleanedEvent)
     logger.info({
+        action: cleanedEvent.action,
         message: '[AuditEventService#saveEvent] Audit event saved',
-        appEvent: savedEvent,
     })
 }
 

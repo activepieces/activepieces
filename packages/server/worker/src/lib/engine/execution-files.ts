@@ -1,10 +1,11 @@
-import { threadSafeMkdir } from '@activepieces/server-shared'
+import { PiecesSource, threadSafeMkdir } from '@activepieces/server-shared'
 import { PiecePackage, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceManager } from '../piece-manager'
 import { codeBuilder } from '../utils/code-builder'
 import { engineInstaller } from '../utils/engine-installer'
 import { CodeArtifact } from './engine-runner'
+import { machine } from '../utils/machine'
 
 export const executionFiles = (log: FastifyBaseLogger) => ({
     async provision({
@@ -16,6 +17,7 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
     }: ProvisionParams): Promise<void> {
         const startTime = performance.now()
 
+        const source = machine.getSettings().PIECES_SOURCE as PiecesSource
         await threadSafeMkdir(globalCachePath)
 
         const startTimeCode = performance.now()
@@ -23,6 +25,7 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
             return codeBuilder(log).processCodeStep({
                 artifact,
                 codesFolderPath: globalCodesPath,
+                log,
             })
         })
         await Promise.all(buildJobs)
@@ -43,9 +46,10 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         const officialPieces = pieces.filter(f => f.pieceType === PieceType.OFFICIAL)
         if (officialPieces.length > 0) {
             const startTime = performance.now()
-            await pieceManager.install({
+            await pieceManager(source).install({
                 projectPath: globalCachePath,
                 pieces: officialPieces,
+                log,
             })
             log.info({
                 pieces: officialPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),
@@ -58,9 +62,10 @@ export const executionFiles = (log: FastifyBaseLogger) => ({
         if (customPieces.length > 0) {
             const startTime = performance.now()
             await threadSafeMkdir(customPiecesPath)
-            await pieceManager.install({
+            await pieceManager(source).install({
                 projectPath: customPiecesPath,
                 pieces: customPieces,
+                log,
             })
             log.info({
                 customPieces: customPieces.map(p => `${p.pieceName}@${p.pieceVersion}`),

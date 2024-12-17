@@ -46,3 +46,30 @@ export type WorkerMachineWithStatus = Static<typeof WorkerMachineWithStatus>
 export const WorkerMachineHealthcheckRequest = MachineInformation
 
 export type WorkerMachineHealthcheckRequest = Static<typeof WorkerMachineHealthcheckRequest>
+export const WorkerMachineHealthcheckResponse = Type.Object({
+    TRIGGER_TIMEOUT_SECONDS: Type.Number(),
+    PAUSED_FLOW_TIMEOUT_DAYS: Type.Number(),
+    EXECUTION_MODE: Type.String(),
+    FLOW_TIMEOUT_SECONDS: Type.Number(),
+    FLOW_WORKER_CONCURRENCY: Type.Number(),
+    SCHEDULED_WORKER_CONCURRENCY: Type.Number(),
+    SCHEDULED_POLLING_COUNT: Type.Number(),
+    LOG_LEVEL: Type.String(),
+    LOG_PRETTY: Type.String(),
+    ENVIRONMENT: Type.String(),
+    APP_WEBHOOK_SECRETS: Type.String(),
+    MAX_FILE_SIZE_MB: Type.Number(),
+    FRONTEND_URL: Type.String(),
+    SANDBOX_MEMORY_LIMIT: Type.String(),
+    SANDBOX_PROPAGATED_ENV_VARS: Type.Array(Type.String()),
+    PIECES_SOURCE: Type.String(),
+    DEV_PIECES: Type.Array(Type.String()),
+    SENTRY_DSN: Type.String(),
+    LOKI_PASSWORD: Type.String(),
+    LOKI_URL: Type.String(),
+    LOKI_USERNAME: Type.String(),
+    FILE_STORAGE_LOCATION: Type.String(),
+    S3_USE_SIGNED_URLS: Type.String(),
+})
+
+export type WorkerMachineHealthcheckResponse = Static<typeof WorkerMachineHealthcheckResponse>

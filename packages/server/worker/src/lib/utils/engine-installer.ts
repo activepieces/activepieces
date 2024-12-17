@@ -1,16 +1,14 @@
 import { PathLike } from 'fs'
 import { copyFile, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { memoryLock, SharedSystemProp, system } from '@activepieces/server-shared'
+import { memoryLock, systemConstants } from '@activepieces/server-shared'
 import { ApEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { cacheHandler } from './cache-handler'
+import { machine } from './machine'
 
-const engineExecutablePath = system.getOrThrow(
-    SharedSystemProp.ENGINE_EXECUTABLE_PATH,
-)
-const isDev = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
+const engineExecutablePath = systemConstants.ENGINE_EXECUTABLE_PATH
 const ENGINE_CACHE_ID = nanoid()
 const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 
@@ -20,6 +18,8 @@ const ENGINE_INSTALLED = 'ENGINE_INSTALLED'
 export const engineInstaller = (log: FastifyBaseLogger) => ({
     async install({ path }: InstallParams): Promise<void> {
         const lock = await memoryLock.acquire(`engineInstaller#${path}`)
+        const isDev = machine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
+
         try {
             log.debug({ path }, '[engineInstaller#install]')
             const cache = cacheHandler(path)

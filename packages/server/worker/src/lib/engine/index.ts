@@ -1,10 +1,8 @@
-import { SharedSystemProp, system } from '@activepieces/server-shared'
 import { ExecutionMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { isolateEngineRunner } from './isolate/isolate-engine-runner'
 import { threadEngineRunner } from './threads/thread-engine-runner'
-
-const executionMode = system.getOrThrow<ExecutionMode>(SharedSystemProp.EXECUTION_MODE)
+import { machine } from '../utils/machine'
 
 const engineToRunner = {
     [ExecutionMode.UNSANDBOXED]: threadEngineRunner,
@@ -12,4 +10,8 @@ const engineToRunner = {
     [ExecutionMode.SANDBOX_CODE_ONLY]: threadEngineRunner,
 }
 
-export const engineRunner = (log: FastifyBaseLogger) => engineToRunner[executionMode](log)
+export const engineRunner = (log: FastifyBaseLogger) => {
+    const executionMode = machine.getSettings().EXECUTION_MODE as ExecutionMode
+    const runner = engineToRunner[executionMode](log)
+    return runner
+}

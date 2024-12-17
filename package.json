@@ -190,6 +190,7 @@
     "jwt-decode": "4.0.0",
     "langchain": "0.3.3",
     "lottie-web": "5.12.2",
+    "lru-cache": "11.0.2",
     "lucide-react": "0.407.0",
     "mailparser": "3.6.7",
     "marked": "4.3.0",

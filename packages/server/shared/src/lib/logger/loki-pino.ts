@@ -1,13 +1,16 @@
 import { Level, Logger, pino, TransportTargetOptions } from 'pino'
 import 'pino-loki'
-import { system } from '../system/system'
-import { SharedSystemProp } from '../system/system-prop'
 
-export const createLokiTransport = (level: Level, targets: TransportTargetOptions[]): Logger | null => {
-    const lokiUrl = system.get(SharedSystemProp.LOKI_URL)
-    const lokiUsername = system.get(SharedSystemProp.LOKI_USERNAME)
-    const lokiPassword = system.get(SharedSystemProp.LOKI_PASSWORD)
+export type LokiCredentials = {        
+    url: string | undefined,
+    username: string | undefined,
+    password: string | undefined,
+}
 
+export const createLokiTransport = (level: Level, targets: TransportTargetOptions[], loki: LokiCredentials): Logger | null => {
+    const lokiUrl = loki.url
+    const lokiUsername = loki.username
+    const lokiPassword = loki.password
     if (!lokiUrl) {
         return null
     }

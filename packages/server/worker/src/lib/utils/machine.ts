@@ -2,8 +2,8 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { fileExists, networkUtls, system, WorkerSystemProps } from '@activepieces/server-shared'
-import { MachineInformation, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { fileExists, networkUtls} from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, MachineInformation, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
 
@@ -27,15 +27,27 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalAvailableRamInBytes: totalRamInBytes,
         ip,
         workerProps: {
-            FLOW_WORKER_CONCURRENCY: system.getOrThrow<string>(WorkerSystemProps.FLOW_WORKER_CONCURRENCY),
-            POLLING_POOL_SIZE: system.getOrThrow<string>(WorkerSystemProps.POLLING_POOL_SIZE),
-            SCHEDULED_WORKER_CONCURRENCY: system.getOrThrow<string>(WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY),
+            FLOW_WORKER_CONCURRENCY: machine.getSettings().FLOW_WORKER_CONCURRENCY.toString(),
+            SCHEDULED_WORKER_CONCURRENCY: machine.getSettings().SCHEDULED_WORKER_CONCURRENCY.toString(),
         },
     }
 }
 
-export const heartbeat = {
+let settings: WorkerMachineHealthcheckResponse | undefined
+
+export const machine = {
+    hasAppModules(): boolean {
+        // TODO URGENT FIX
+        return false;
+    },
     getSystemInfo,
+    setSettings: (_settings: WorkerMachineHealthcheckResponse) => {
+        settings = _settings
+    },
+    getSettings: () => {
+        assertNotNullOrUndefined(settings, 'Settings are not set')
+        return settings
+    },
 }
 
 async function getContainerMemoryUsage() {

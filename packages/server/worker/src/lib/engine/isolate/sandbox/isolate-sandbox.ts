@@ -2,10 +2,11 @@ import { exec } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process, { arch, cwd } from 'node:process'
-import { AppSystemProp, fileExists, getEngineTimeout, PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
+import { fileExists, getEngineTimeout, PiecesSource } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { ExecuteSandboxResult } from '../../engine-runner'
+import { machine } from '../../../utils/machine'
 
 type SandboxCtorParams = {
     boxId: number
@@ -66,7 +67,7 @@ export class IsolateSandbox {
 
         try {
 
-            const timeout = getEngineTimeout(operationType)
+            const timeout = getEngineTimeout(operationType, machine.getSettings().FLOW_TIMEOUT_SECONDS, machine.getSettings().TRIGGER_TIMEOUT_SECONDS)
             const dirsToBindArgs = this.getDirsToBindArgs()
             const propagatedEnvVars = Object.entries(this.getEnvironmentVariables()).map(([key, value]) => `--env=${key}='${value}'`)
             const fullCommand = [
@@ -184,19 +185,19 @@ export class IsolateSandbox {
     }
 
     private getEnvironmentVariables(): Record<string, string> {
-        const allowedEnvVariables = system.getList(SharedSystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+        const allowedEnvVariables = machine.getSettings().SANDBOX_PROPAGATED_ENV_VARS
         const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
         return {
             ...propagatedEnvVars,
             HOME: '/tmp/',
             NODE_OPTIONS: '--enable-source-maps',
-            AP_EXECUTION_MODE: system.getOrThrow(SharedSystemProp.EXECUTION_MODE),
-            AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
-            AP_PAUSED_FLOW_TIMEOUT_DAYS: system.getOrThrow(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+            AP_EXECUTION_MODE: machine.getSettings().EXECUTION_MODE,
+            AP_PIECES_SOURCE: machine.getSettings().PIECES_SOURCE,
+            AP_PAUSED_FLOW_TIMEOUT_DAYS: machine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
             AP_BASE_CODE_DIRECTORY: IsolateSandbox.sandboxCodesCachePath,
-            AP_MAX_FILE_SIZE_MB: system.getOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB),
-            AP_FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
-            AP_S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
+            AP_MAX_FILE_SIZE_MB: machine.getSettings().MAX_FILE_SIZE_MB.toString(),
+            AP_FILE_STORAGE_LOCATION: machine.getSettings().FILE_STORAGE_LOCATION,
+            AP_S3_USE_SIGNED_URLS: machine.getSettings().S3_USE_SIGNED_URLS,
         }
     }
 
@@ -222,7 +223,7 @@ export class IsolateSandbox {
             dirsToBind.push(`--dir=${path.join(IsolateSandbox.sandboxCodesCachePath, this._flowVersionId)}=${path.resolve(globalCodesCachePath, this._flowVersionId)}`)
         }
 
-        const piecesSource = system.getOrThrow<PiecesSource>(SharedSystemProp.PIECES_SOURCE)
+        const piecesSource = machine.getSettings().PIECES_SOURCE
 
         if (piecesSource === PiecesSource.FILE) {
             const basePath = path.resolve(__dirname.split('/dist')[0])
