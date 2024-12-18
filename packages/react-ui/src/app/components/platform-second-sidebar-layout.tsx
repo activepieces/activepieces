@@ -67,7 +67,7 @@ export default function PlatformSecondSidebarLayout({
           title: t('Templates'),
           href: '/platform/setup/templates',
           icon: <Workflow size={iconSize} />,
-        }
+        },
       ],
     },
     security: {

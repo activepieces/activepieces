@@ -46,10 +46,18 @@ export const CopilotSettings = Type.Object({
     providers: Type.Object({
         [CopilotProviderType.OPENAI]: Type.Optional(OpenAiProvider),
         [CopilotProviderType.AZURE_OPENAI]: Type.Optional(AzureOpenAiProvider),
-    })
+    }),
 })
 
 export type CopilotSettings = Static<typeof CopilotSettings>
+
+export const CopilotSettingsWithoutSensitiveData = Type.Object({
+    providers: Type.Object({
+        [CopilotProviderType.OPENAI]: Type.Optional(Type.Object({})),
+        [CopilotProviderType.AZURE_OPENAI]: Type.Optional(Type.Object({})),
+    }),
+})
+export type CopilotSettingsWithoutSensitiveData = Static<typeof CopilotSettingsWithoutSensitiveData>
 
 export const Platform = Type.Object({
     ...BaseModelSchema,
@@ -102,7 +110,7 @@ export type Platform = Static<typeof Platform>
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: FederatedAuthnProviderConfigWithoutSensitiveData,
     defaultLocale: Nullable(Type.String()),
-    copilotSettings: Type.Optional(CopilotSettings),
+    copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
     smtp: Type.Optional(Type.Object({})),
 }), Type.Pick(Platform, [
     'id',

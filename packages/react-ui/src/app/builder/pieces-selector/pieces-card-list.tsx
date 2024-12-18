@@ -19,6 +19,7 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ApFlagId,
   FlowOperationType,
@@ -68,9 +69,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   );
 
   const selectedItemRef = useRef<HTMLDivElement | null>(null);
-  const { data: areCopilotsEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.CODE_COPILOT_ENABLED,
-  );
+  const isCopilotEnabled = platformHooks.isCopilotEnabled();
   useEffect(() => {
     if (
       piecesIsLoaded &&
@@ -131,7 +130,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         ))}
 
       {noResultsFound &&
-        areCopilotsEnabled &&
+        isCopilotEnabled &&
         operation.type !== FlowOperationType.UPDATE_TRIGGER && (
           <div className="flex flex-col gap-2 items-center justify-center h-full ">
             <WandSparkles className="w-14 h-14" />
@@ -161,7 +160,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         )}
 
       {noResultsFound &&
-        (!areCopilotsEnabled ||
+        (!isCopilotEnabled ||
           operation.type === FlowOperationType.UPDATE_TRIGGER) && (
           <div className="flex flex-col gap-2 items-center justify-center h-full ">
             <SearchX className="w-14 h-14" />

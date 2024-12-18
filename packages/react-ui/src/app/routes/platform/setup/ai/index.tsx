@@ -11,8 +11,8 @@ import { PlatformRole } from '@activepieces/shared';
 import { authenticationSession } from '../../../../../lib/authentication-session';
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
-import { AIProviderCard } from './universal-pieces/ai-provider-card';
 import { CopilotSetup } from './copilot';
+import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 export default function AIProvidersPage() {
   const {

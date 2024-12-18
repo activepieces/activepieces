@@ -1,6 +1,7 @@
 import {
     ApplicationEventName,
 } from '@activepieces/ee-shared'
+import { networkUtls } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
@@ -12,11 +13,10 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../../../helper/application-events'
-import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
-import { federatedAuthnService } from './federated-authn-service'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-prop'
-import { networkUtls } from '@activepieces/server-shared'
+import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
+import { federatedAuthnService } from './federated-authn-service'
 
 export const federatedAuthModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(federatedAuthnController, {
