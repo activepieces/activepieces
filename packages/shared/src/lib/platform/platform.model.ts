@@ -22,6 +22,35 @@ export const SMTPInformation = Type.Object({
 
 export type SMTPInformation = Static<typeof SMTPInformation>
 
+export enum CopilotProviderType {
+    OPENAI = 'openai',
+    AZURE_OPENAI = 'azureOpenai',
+}
+  
+export const OpenAiProvider = Type.Object({
+    baseUrl: Type.String(),
+    apiKey: Type.String(),
+})
+
+export type OpenAiProvider = Static<typeof OpenAiProvider>
+
+export const AzureOpenAiProvider = Type.Object({
+    resourceName: Type.String(),
+    deploymentName: Type.String(),
+    apiKey: Type.String(),
+})
+
+export type AzureOpenAiProvider = Static<typeof AzureOpenAiProvider>
+
+export const CopilotSettings = Type.Object({
+    providers: Type.Object({
+        [CopilotProviderType.OPENAI]: Type.Optional(OpenAiProvider),
+        [CopilotProviderType.AZURE_OPENAI]: Type.Optional(AzureOpenAiProvider),
+    })
+})
+
+export type CopilotSettings = Static<typeof CopilotSettings>
+
 export const Platform = Type.Object({
     ...BaseModelSchema,
     ownerId: ApId,
@@ -64,13 +93,16 @@ export const Platform = Type.Object({
     emailAuthEnabled: Type.Boolean(),
     licenseKey: Type.Optional(Type.String()),
     pinnedPieces: Type.Array(Type.String()),
+    copilotSettings: Type.Optional(CopilotSettings),
 })
 
 export type Platform = Static<typeof Platform>
 
+
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: FederatedAuthnProviderConfigWithoutSensitiveData,
     defaultLocale: Nullable(Type.String()),
+    copilotSettings: Type.Optional(CopilotSettings),
     smtp: Type.Optional(Type.Object({})),
 }), Type.Pick(Platform, [
     'id',

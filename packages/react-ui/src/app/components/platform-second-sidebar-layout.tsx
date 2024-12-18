@@ -44,7 +44,7 @@ export default function PlatformSecondSidebarLayout({
       title: t('Setup'),
       items: [
         {
-          title: t('Universal AI'),
+          title: t('AI'),
           href: '/platform/setup/ai',
           icon: <Sparkles size={iconSize} />,
         },
@@ -67,7 +67,7 @@ export default function PlatformSecondSidebarLayout({
           title: t('Templates'),
           href: '/platform/setup/templates',
           icon: <Workflow size={iconSize} />,
-        },
+        }
       ],
     },
     security: {
