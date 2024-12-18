@@ -11,7 +11,7 @@ import {
     RunEnvironment,
     TriggerType,
 } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { flowJobExecutor } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { initializeDatabase } from '../../../../../src/app/database'
@@ -27,15 +27,17 @@ import {
 } from '../../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
-
     await app.listen({
         host: '0.0.0.0',
         port: 3000,
     })
+    mockLog = app.log
+
 
 })
 
@@ -138,7 +140,7 @@ describe('flow execution', () => {
             platformId: mockPlatform.id,
             projectId: mockProject.id,
         })
-        await flowJobExecutor.executeFlow({
+        await flowJobExecutor(mockLog).executeFlow({
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
             environment: RunEnvironment.PRODUCTION,
