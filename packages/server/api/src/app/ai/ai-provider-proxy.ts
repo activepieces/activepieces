@@ -67,7 +67,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                     platformId,
                     provider,
                 },
-            }))
+            }), request.log)
             await reply.code(response.status).type(responseContentType ?? 'text/plain').send(data)
         }
         catch (error) {
@@ -76,7 +76,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                 await reply.code(error.status).send(errorData)
             }
             else {
-                exceptionHandler.handle(error)
+                exceptionHandler.handle(error, request.log)
                 await reply
                     .code(500)
                     .send({ message: 'An unexpected error occurred in the proxy' })

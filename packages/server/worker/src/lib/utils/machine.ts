@@ -2,10 +2,29 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { fileExists, networkUtls, system, WorkerSystemProps } from '@activepieces/server-shared'
-import { MachineInformation, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
+import { exceptionHandler, fileExists, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, MachineInformation, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
+
+
+let settings: WorkerMachineHealthcheckResponse | undefined
+
+
+export const workerMachine = {
+    getSystemInfo,
+    init: async (_settings: WorkerMachineHealthcheckResponse) => {
+        settings = _settings
+
+        await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
+        exceptionHandler.initializeSentry(settings.SENTRY_DSN)
+    },
+    getSettings: () => {
+        assertNotNullOrUndefined(settings, 'Settings are not set')
+        return settings
+    },
+}
+
 
 async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
@@ -26,18 +45,9 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         ramUsagePercentage: ramUsage,
         totalAvailableRamInBytes: totalRamInBytes,
         ip,
-        workerProps: {
-            FLOW_WORKER_CONCURRENCY: system.getOrThrow<string>(WorkerSystemProps.FLOW_WORKER_CONCURRENCY),
-            POLLING_POOL_SIZE: system.getOrThrow<string>(WorkerSystemProps.POLLING_POOL_SIZE),
-            SCHEDULED_WORKER_CONCURRENCY: system.getOrThrow<string>(WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY),
-        },
+        workerProps: {},
     }
 }
-
-export const heartbeat = {
-    getSystemInfo,
-}
-
 async function getContainerMemoryUsage() {
     const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
     const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'

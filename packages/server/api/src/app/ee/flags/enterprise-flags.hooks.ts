@@ -1,7 +1,8 @@
-import { SharedSystemProp, system } from '@activepieces/server-shared'
+import { WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
+import { system } from '../../helper/system/system'
 import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
 import { appearanceHelper } from '../helper/appearance-helper'
@@ -61,7 +62,7 @@ function resolveHostUrl(hostname: string): string {
     if (edition === ApEdition.CLOUD) {
         return `https://${hostname}`
     }
-    const frontendUrl = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
+    const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL)
     return removeTrailingSlash(frontendUrl)
 }
 

@@ -19,7 +19,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
         await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
         const projectRole = await projectRoleService.create(req.principal.platform.id, req.body)
 
-        eventsHooks.get().sendUserEventFromRequest(req, {
+        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
             action: ApplicationEventName.PROJECT_ROLE_CREATED,
             data: {
                 projectRole,
@@ -37,7 +37,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
             name: req.body.name,
             permissions: req.body.permissions,
         })
-        eventsHooks.get().sendUserEventFromRequest(req, {
+        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
             action: ApplicationEventName.PROJECT_ROLE_UPDATED,
             data: {
                 projectRole,
@@ -53,7 +53,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
             name: req.params.name,
             platformId: req.principal.platform.id,
         })
-        eventsHooks.get().sendUserEventFromRequest(req, {
+        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
             action: ApplicationEventName.PROJECT_ROLE_DELETED,
             data: {
                 projectRole,

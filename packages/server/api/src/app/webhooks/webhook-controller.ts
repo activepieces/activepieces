@@ -1,9 +1,7 @@
 import {
-    AppSystemProp,
-    createWebhookContextLog,
     JobType,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    system,
+    pinoLogging,
 } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
@@ -23,6 +21,8 @@ import { StatusCodes } from 'http-status-codes'
 import { tasksLimit } from '../ee/project-plan/tasks-limit'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { flowService } from '../flows/flow/flow.service'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
@@ -125,7 +125,7 @@ async function handleWebhook({
 }: HandleWebhookParams): Promise<EngineHttpResponse> {
     const webhookHeader = 'x-webhook-id'
     const webhookRequestId = apId()
-    const log = createWebhookContextLog({ log: request.log, webhookId: webhookRequestId, flowId })
+    const log = pinoLogging.createWebhookContextLog({ log: request.log, webhookId: webhookRequestId, flowId })
     const flow = await flowService(log).getOneById(flowId)
     if (isNil(flow)) {
         log.info('Flow not found, returning GONE')

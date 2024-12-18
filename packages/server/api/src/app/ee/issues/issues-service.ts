@@ -92,7 +92,7 @@ export const issuesService = (log: FastifyBaseLogger) => ({
             payload: {
                 flowId: flowIssue.flowId,
             },
-        }))
+        }), log)
         await repo().update({
             id,
         }, {

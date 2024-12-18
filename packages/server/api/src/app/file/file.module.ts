@@ -10,7 +10,7 @@ import { stepFileMigration } from './step-file/step-file-migration'
 import { stepFileController } from './step-file/step-file.controller'
 
 export const fileModule: FastifyPluginAsyncTypebox = async (app) => {
-    rejectedPromiseHandler(stepFileMigration(app.log).migrate())
+    rejectedPromiseHandler(stepFileMigration(app.log).migrate(), app.log)
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     systemJobHandlers.registerJobHandler(SystemJobName.FILE_CLEANUP_TRIGGER, async () => fileService(app.log).deleteStaleBulk([FileType.FLOW_RUN_LOG, FileType.TRIGGER_EVENT_FILE]))
     await systemJobsSchedule(app.log).upsertJob({

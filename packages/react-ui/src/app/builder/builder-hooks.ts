@@ -1,5 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext } from 'react';
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { create, useStore } from 'zustand';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -17,11 +23,25 @@ import {
   flowOperations,
   flowStructureUtil,
   isNil,
+  StepLocationRelativeToParent,
+  Action,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { AskAiButtonOperations } from '../../features/pieces/lib/types';
 import { useAuthorization } from '../../hooks/authorization-hooks';
+
+import {
+  copySelectedNodes,
+  deleteSelectedNodes,
+  getActionsInClipboard,
+  pasteNodes,
+  toggleSkipSelectedNodes,
+} from './flow-canvas/bulk-actions';
+import {
+  CanvasShortcuts,
+  CanvasShortcutsProps,
+} from './flow-canvas/context-menu/canvas-context-menu';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -110,8 +130,14 @@ export type BuilderState = {
   ) => void;
   askAiButtonProps: AskAiButtonOperations | null;
   setAskAiButtonProps: (props: AskAiButtonOperations | null) => void;
+  selectedNodes: string[];
+  setSelectedNodes: (nodes: string[]) => void;
+  panningMode: 'grab' | 'pan';
+  setPanningMode: (mode: 'grab' | 'pan') => void;
+  pieceSelectorStep: string | null;
+  setPieceSelectorStep: (step: string | null) => void;
 };
-
+const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
   BuilderState,
   'flow' | 'flowVersion' | 'readonly' | 'run' | 'canExitRun' | 'sampleData'
@@ -144,6 +170,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       failedStepInRun,
       initialState.flowVersion,
     );
+
     return {
       loopsIndexes:
         initialState.run && initialState.run.steps
@@ -390,29 +417,181 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         })),
       askAiButtonProps: null,
       setAskAiButtonProps: (props) => {
-        return set((state) => ({
-          askAiButtonProps: props,
-          leftSidebar: props
-            ? LeftSideBarType.AI_COPILOT
-            : state.leftSidebar === LeftSideBarType.AI_COPILOT
-            ? LeftSideBarType.NONE
-            : state.leftSidebar,
-          rightSidebar:
-            props && props.type === FlowOperationType.UPDATE_ACTION
-              ? RightSideBarType.PIECE_SETTINGS
-              : props
-              ? RightSideBarType.NONE
-              : state.rightSidebar,
-          selectedStep:
-            props && props.type === FlowOperationType.UPDATE_ACTION
-              ? props.stepName
-              : props
-              ? null
-              : state.selectedStep,
+        return set((state) => {
+          let leftSidebar = state.leftSidebar;
+          if (props) {
+            leftSidebar = LeftSideBarType.AI_COPILOT;
+          } else if (state.leftSidebar === LeftSideBarType.AI_COPILOT) {
+            leftSidebar = LeftSideBarType.NONE;
+          }
+
+          let rightSidebar = state.rightSidebar;
+          if (props && props.type === FlowOperationType.UPDATE_ACTION) {
+            rightSidebar = RightSideBarType.PIECE_SETTINGS;
+          } else if (props) {
+            rightSidebar = RightSideBarType.NONE;
+          }
+
+          let selectedStep = state.selectedStep;
+          if (props && props.type === FlowOperationType.UPDATE_ACTION) {
+            selectedStep = props.stepName;
+          } else if (props) {
+            selectedStep = null;
+          }
+
+          return {
+            askAiButtonProps: props,
+            leftSidebar,
+            rightSidebar,
+            selectedStep,
+          };
+        });
+      },
+      selectedNodes: [],
+      setSelectedNodes: (nodes) => {
+        return set(() => ({
+          selectedNodes: nodes,
         }));
+      },
+      panningMode: getPanningModeFromLocalStorage(),
+      setPanningMode: (mode: 'grab' | 'pan') => {
+        localStorage.setItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE, mode);
+        return set(() => ({
+          panningMode: mode,
+        }));
+      },
+      pieceSelectorStep: null,
+      setPieceSelectorStep: (step: string | null) => {
+        return set((state) => {
+          return {
+            pieceSelectorStep: step,
+            selectedStep: step ? step : state.selectedStep,
+            rightSidebar: step
+              ? RightSideBarType.PIECE_SETTINGS
+              : state.rightSidebar,
+          };
+        });
       },
     };
   });
+
+export function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
+  return localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE) ===
+    'grab'
+    ? 'grab'
+    : 'pan';
+}
+
+const shortcutHandler = (
+  event: KeyboardEvent,
+  handlers: Record<keyof CanvasShortcutsProps, () => void>,
+) => {
+  const shortcutActivated = Object.entries(CanvasShortcuts).find(
+    ([_, shortcut]) =>
+      shortcut.shortcutKey?.toLowerCase() === event.key.toLowerCase() &&
+      !!shortcut.withCtrl === event.ctrlKey &&
+      !!shortcut.withShift === event.shiftKey,
+  );
+
+  if (shortcutActivated) {
+    event.preventDefault();
+    event.stopPropagation();
+    handlers[shortcutActivated[0] as keyof CanvasShortcutsProps]();
+  }
+};
+
+export const NODE_SELECTION_RECT_CLASS_NAME = 'react-flow__nodesselection-rect';
+export const isNodeSelectionActive = () => {
+  return document.querySelector(`.${NODE_SELECTION_RECT_CLASS_NAME}`) !== null;
+};
+export const useHandleKeyPressOnCanvas = () => {
+  const [
+    selectedNodes,
+    flowVersion,
+    selectedStep,
+    exitStepSettings,
+    applyOperation,
+    readonly,
+  ] = useBuilderStateContext((state) => [
+    state.selectedNodes,
+    state.flowVersion,
+    state.selectedStep,
+    state.exitStepSettings,
+    state.applyOperation,
+    state.readonly,
+  ]);
+
+  return useCallback(
+    (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLElement &&
+        (e.target === document.body ||
+          e.target.classList.contains('react-flow__nodesselection-rect')) &&
+        !readonly
+      ) {
+        const doesNotContainTrigger = !selectedNodes.some(
+          (node) => node === flowVersion.trigger.name,
+        );
+        shortcutHandler(e, {
+          Copy: () => {
+            if (doesNotContainTrigger && selectedNodes.length > 0) {
+              copySelectedNodes({ selectedNodes, flowVersion });
+            }
+          },
+          Delete: () => {
+            if (
+              isNodeSelectionActive() &&
+              doesNotContainTrigger &&
+              selectedNodes.length > 0
+            ) {
+              deleteSelectedNodes({
+                exitStepSettings,
+                selectedStep,
+                selectedNodes,
+                applyOperation,
+              });
+            }
+          },
+          Skip: () => {
+            if (doesNotContainTrigger && selectedNodes.length > 0) {
+              toggleSkipSelectedNodes({
+                selectedNodes,
+                flowVersion,
+                applyOperation,
+              });
+            }
+          },
+          Paste: () => {
+            getActionsInClipboard().then((actions) => {
+              if (actions.length > 0) {
+                pasteNodes(
+                  actions,
+                  flowVersion,
+                  {
+                    parentStepName: flowStructureUtil
+                      .getAllNextActionsWithoutChildren(flowVersion.trigger)
+                      .at(-1)!.name,
+                    stepLocationRelativeToParent:
+                      StepLocationRelativeToParent.AFTER,
+                  },
+                  applyOperation,
+                );
+              }
+            });
+          },
+        });
+      }
+    },
+    [
+      selectedNodes,
+      flowVersion,
+      applyOperation,
+      selectedStep,
+      exitStepSettings,
+      readonly,
+    ],
+  );
+};
 
 export const useSwitchToDraft = () => {
   const [flowVersion, setVersion, exitRun] = useBuilderStateContext((state) => [
@@ -440,4 +619,23 @@ export const useSwitchToDraft = () => {
     switchToDraft,
     isSwitchingToDraftPending,
   };
+};
+
+export const usePasteActionsInClipboard = () => {
+  const [actionsToPaste, setActionsToPaste] = useState<Action[]>([]);
+
+  useEffect(() => {
+    const fetchClipboardOperations = async () => {
+      const fetchedActionsFromClipboard = await getActionsInClipboard();
+      if (fetchedActionsFromClipboard.length > 0) {
+        setActionsToPaste(fetchedActionsFromClipboard);
+      } else {
+        setActionsToPaste([]);
+      }
+    };
+    fetchClipboardOperations();
+    const interval = setInterval(fetchClipboardOperations, 500);
+    return () => clearInterval(interval);
+  }, []);
+  return actionsToPaste;
 };
