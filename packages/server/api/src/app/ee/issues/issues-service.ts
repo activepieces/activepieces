@@ -2,6 +2,7 @@ import { Issue, IssueStatus, ListIssuesParams, PopulatedIssue } from '@activepie
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, apId, ErrorCode, isNil, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -10,7 +11,7 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { IssueEntity } from './issues-entity'
 const repo = repoFactory(IssueEntity)
 
-export const issuesService = {
+export const issuesService = (log: FastifyBaseLogger) => ({
     async add({ projectId, flowId, flowRunCreatedAt }: { flowId: string, projectId: string, flowRunCreatedAt: string }): Promise<Issue> {
         const issueId = apId()
         const date = dayjs(flowRunCreatedAt).toISOString()
@@ -64,7 +65,7 @@ export const issuesService = {
         const { data, cursor: newCursor } = await paginator.paginate(query)
 
         const populatedIssues = await Promise.all(data.map(async issue => {
-            const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(issue.flowId)
+            const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
             return {
                 ...issue,
                 flowDisplayName: flowVersion.displayName,
@@ -86,12 +87,12 @@ export const issuesService = {
                 },
             })
         }
-        rejectedPromiseHandler(telemetry.trackProject(flowIssue.projectId, {
+        rejectedPromiseHandler(telemetry(log).trackProject(flowIssue.projectId, {
             name: TelemetryEventName.FLOW_ISSUE_RESOLVED,
             payload: {
                 flowId: flowIssue.flowId,
             },
-        }))
+        }), log)
         await repo().update({
             id,
         }, {
@@ -130,7 +131,7 @@ export const issuesService = {
             },
         })
     },
-}
+})
 
 type UpdateParams = {
     projectId: string

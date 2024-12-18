@@ -1,6 +1,7 @@
-import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
+import { exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
+import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
@@ -43,20 +44,20 @@ const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
     [QueueName.WEBHOOK]: defaultJobOptions,
 }
 
-export const redisQueue: QueueManager = {
+export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
     async init(): Promise<void> {
-        await redisRateLimiter.init()
+        await redisRateLimiter(log).init()
         const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
         await Promise.all(queues)
-        await redisMigrations.run()
-        logger.info('[redisQueueManager#init] Redis queues initialized')
+        await redisMigrations(log).run()
+        log.info('[redisQueueManager#init] Redis queues initialized')
     },
-    async add(params): Promise<void> {
+    async add(params: AddParams<JobType>): Promise<void> {
         const { type, data } = params
-        const { shouldRateLimit } = await redisRateLimiter.shouldBeLimited(jobTypeToQueueName[type], data.projectId, params.id)
+        const { shouldRateLimit } = await redisRateLimiter(log).shouldBeLimited(jobTypeToQueueName[type], data.projectId, params.id)
 
         if (shouldRateLimit) {
-            await redisRateLimiter.rateLimitJob(params)
+            await redisRateLimiter(log).rateLimitJob(params)
             return
         }
 
@@ -86,15 +87,15 @@ export const redisQueue: QueueManager = {
             }
         }
     },
-    async removeRepeatingJob({ flowVersionId }): Promise<void> {
+    async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
         const queue = await ensureQueueExists(QueueName.SCHEDULED)
         const client = await queue.client
-        const repeatJob = await findRepeatableJobKey(flowVersionId)
+        const repeatJob = await findRepeatableJobKey(flowVersionId, log)
         if (isNil(repeatJob)) {
-            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
+            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`), log)
             return
         }
-        logger.info({
+        log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
         const result = await queue.removeRepeatableByKey(repeatJob)
@@ -108,9 +109,9 @@ export const redisQueue: QueueManager = {
         }
         await client.del(repeatingJobKey(flowVersionId))
     },
-}
+})
 
-async function findRepeatableJobKey(flowVersionId: ApId): Promise<string | undefined> {
+async function findRepeatableJobKey(flowVersionId: ApId, log: FastifyBaseLogger): Promise<string | undefined> {
     const queue = await ensureQueueExists(QueueName.SCHEDULED)
     const client = await queue.client
     const jobKey = await client.get(repeatingJobKey(flowVersionId))
@@ -118,7 +119,7 @@ async function findRepeatableJobKey(flowVersionId: ApId): Promise<string | undef
     if (isNil(jobKey)) {
         const jobs = await queue.getJobs()
         const jobKeyInRedis = jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === flowVersionId)
-        logger.warn({ flowVersionId, repeatJobKey: jobKeyInRedis?.repeatJobKey }, 'Job key not found in redis, trying to find it in the queue')
+        log.warn({ flowVersionId, repeatJobKey: jobKeyInRedis?.repeatJobKey }, 'Job key not found in redis, trying to find it in the queue')
         return jobKeyInRedis?.repeatJobKey
     }
     return jobKey

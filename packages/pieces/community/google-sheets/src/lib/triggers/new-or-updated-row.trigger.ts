@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { isEmpty, isNil } from '@activepieces/shared';
 import { googleSheetsAuth } from '../../';
 import { columnToLabel, googleSheetsCommon, labelToColumn } from '../common/common';
 import {
@@ -65,7 +65,10 @@ export const newOrUpdatedRowTrigger = createTrigger({
 					spreadSheetId,
 					`${sheetName}!1:1`,
 				);
-				const labeledRowValues = transformWorkSheetValues(firstRowValues, 0);
+
+				const headers = firstRowValues[0] ?? [];
+				const headerCount = headers.length;
+				const labeledRowValues = transformWorkSheetValues(firstRowValues, 0,headerCount);
 
 				const options: DropdownOption<string>[] = [{ label: 'All Columns', value: ALL_COLUMNS }];
 
@@ -163,6 +166,9 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		 */
 		const currentValues = await getWorkSheetValues(context.auth, spreadSheetId, sheetName);
 
+		const headers = currentValues[0] ?? [];
+		const headerCount = headers.length;
+
 		// const rowCount = Math.max(oldValuesHashes.length, currentValues.length);
 
 		const changedValues = [];
@@ -199,13 +205,15 @@ export const newOrUpdatedRowTrigger = createTrigger({
 				continue;
 			}
 
-			const oldRowHash = oldValuesHashes[row];
+			const oldRowHash = !isNil(oldValuesHashes) && row < oldValuesHashes.length
+				? oldValuesHashes[row]
+				: undefined;
 
 			if (oldRowHash === undefined || oldRowHash != currentRowHash) {
 				const formattedValues: any = {};
 
-				for (let column = 0; column < currentValues[row].length; column++) {
-					formattedValues[columnToLabel(column)] = currentValues[row][column];
+				for (let column = 0; column < headerCount; column++) {
+					formattedValues[columnToLabel(column)] = currentValues[row][column] ?? "";
 				}
 
 				changedValues.push({
@@ -233,8 +241,11 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
 		const currentSheetValues = await getWorkSheetValues(context.auth, spreadSheetId, sheetName);
 
+		const headers =  currentSheetValues[0] ?? [];
+		const headerCount = headers.length;
+
 		// transform row values
-		const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0)
+		const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0,headerCount)
 			.slice(-5)
 			.reverse();
 

@@ -1,11 +1,15 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class InitialSql3Migration1690195839899 implements MigrationInterface {
     name = 'InitialSql3Migration1690195839899'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info(`Running migration ${this.name}`)
+        log.info({
+            name: this.name,
+        }, 'up')
         await queryRunner.query(
             'CREATE TABLE "trigger_event" ("id" varchar(21) PRIMARY KEY NOT NULL, "created" datetime NOT NULL DEFAULT (datetime(\'now\')), "updated" datetime NOT NULL DEFAULT (datetime(\'now\')), "flowId" varchar(21) NOT NULL, "projectId" varchar(21) NOT NULL, "sourceName" varchar NOT NULL, "payload" text)',
         )

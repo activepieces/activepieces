@@ -1,4 +1,3 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, apId,
     ApId,
     assertNotNullOrUndefined,
@@ -12,11 +11,11 @@ import { ActivepiecesError, apId,
     User,
     UserId,
 } from '@activepieces/shared'
-import { IsNull } from 'typeorm'
+import { IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { system } from '../helper/system/system'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
-
 export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
@@ -27,7 +26,7 @@ export const projectService = {
             notifyStatus: NotificationStatus.ALWAYS,
         }
         const savedProject = await projectRepo().save(newProject)
-        rejectedPromiseHandler(projectHooks.getHooks().postCreate(savedProject))
+        await projectHooks.get(system.globalLogger()).postCreate(savedProject)
         return savedProject
     },
 
@@ -43,12 +42,15 @@ export const projectService = {
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
+        await assertExternalIdIsUnique(request.externalId, projectId)
+
         await projectRepo().update(
             {
                 id: projectId,
                 deleted: IsNull(),
             },
             {
+                ...spreadIfDefined('externalId', request.externalId),
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
             },
@@ -143,8 +145,28 @@ export const projectService = {
     },
 }
 
+async function assertExternalIdIsUnique(externalId: string | undefined, projectId: ProjectId): Promise<void> {
+    if (!isNil(externalId)) {
+        const externalIdAlreadyExists = await projectRepo().existsBy({
+            id: Not(projectId),
+            externalId,
+            deleted: IsNull(),
+        })
+
+        if (externalIdAlreadyExists) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS,
+                params: {
+                    externalId,
+                },
+            })
+        }
+    }
+}
+
 type UpdateParams = {
     displayName?: string
+    externalId?: string
     notifyStatus?: NotificationStatus
 }
 

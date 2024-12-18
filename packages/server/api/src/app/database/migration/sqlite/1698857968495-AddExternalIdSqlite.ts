@@ -1,13 +1,18 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'  
 
 export class AddExternalIdSqlite1698857968495 implements MigrationInterface {
     name = 'AddExternalIdSqlite1698857968495'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('AddExternalIdSqlite1698857968495 up')
+        const log = system.globalLogger()
+        log.info({
+            name: this.name,
+        }, 'up')
         if (await migrationRan('AddExternalIdSqlite31698857968495', queryRunner)) {
-            logger.info('AddExternalIdSqlite1698857968495 already ran')
+            log.info({
+                name: this.name,
+            }, 'already ran')
             return
         }
         await queryRunner.query(`

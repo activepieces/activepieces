@@ -25,7 +25,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
             platformId,
             provider,
         })
-        const limitResponse = await aiTokenLimit.exceededLimit({
+        const limitResponse = await aiTokenLimit(request.log).exceededLimit({
             projectId,
             tokensToConsume: 0,
         })
@@ -58,16 +58,16 @@ export const proxyController: FastifyPluginCallbackTypebox = (
 
             const data = await parseResponseData(response, responseContentType)
 
-            await projectUsageService.increaseUsage(projectId, 1, 'aiTokens')
+            await projectUsageService(request.log).increaseUsage(projectId, 1, 'aiTokens')
 
-            rejectedPromiseHandler(telemetry.trackProject(projectId, {
+            rejectedPromiseHandler(telemetry(request.log).trackProject(projectId, {
                 name: TelemetryEventName.AI_PROVIDER_USED,
                 payload: {
                     projectId,
                     platformId,
                     provider,
                 },
-            }))
+            }), request.log)
             await reply.code(response.status).type(responseContentType ?? 'text/plain').send(data)
         }
         catch (error) {
@@ -76,7 +76,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                 await reply.code(error.status).send(errorData)
             }
             else {
-                exceptionHandler.handle(error)
+                exceptionHandler.handle(error, request.log)
                 await reply
                     .code(500)
                     .send({ message: 'An unexpected error occurred in the proxy' })

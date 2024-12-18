@@ -1,11 +1,13 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class billing1677286751592 implements MigrationInterface {
     name = 'billing1677286751592'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('Running migration billing1677286751592')
+        log.info('Running migration billing1677286751592')
         await queryRunner.query(
             'DROP INDEX "idx_app_connection_project_id_and_app_name_and_name"',
         )
@@ -30,11 +32,11 @@ export class billing1677286751592 implements MigrationInterface {
         await queryRunner.query(
             'ALTER TABLE "project_usage" ADD CONSTRAINT "fk_project_usage_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION',
         )
-        logger.info('Finished migration billing1677286751592')
+        log.info('Finished migration billing1677286751592')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info('rolling back migration billing1677286751592')
+        log.info('rolling back migration billing1677286751592')
         await queryRunner.query(
             'ALTER TABLE "project_usage" DROP CONSTRAINT "fk_project_usage_project_id"',
         )
@@ -53,6 +55,6 @@ export class billing1677286751592 implements MigrationInterface {
         await queryRunner.query(
             'CREATE UNIQUE INDEX "idx_app_connection_project_id_and_app_name_and_name" ON "app_connection" ("name", "appName", "projectId") ',
         )
-        logger.info('Finished rolling back billing1677286751592')
+        log.info('Finished rolling back billing1677286751592')
     }
 }

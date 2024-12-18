@@ -16,6 +16,7 @@ import {
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -25,10 +26,9 @@ import { projectRoleService } from '../project-role/project-role.service'
 import {
     ProjectMemberEntity,
 } from './project-member.entity'
-
 const repo = repoFactory(ProjectMemberEntity)
 
-export const projectMemberService = {
+export const projectMemberService = (_log: FastifyBaseLogger) => ({
     async upsert({
         userId,
         projectId,
@@ -164,7 +164,7 @@ export const projectMemberService = {
     async countTeamMembers(projectId: ProjectId): Promise<number> {
         return repo().countBy({ projectId })
     },
-}
+})
 
 type UpsertParams = {
     userId: string

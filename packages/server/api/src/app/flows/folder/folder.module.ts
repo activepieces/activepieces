@@ -23,11 +23,11 @@ export const folderModule: FastifyPluginAsyncTypebox = async (app) => {
 const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     fastify.post('/', CreateFolderParams, async (request) => {
-        const createdFolder = await folderService.upsert({
+        const createdFolder = await folderService(request.log).upsert({
             projectId: request.principal.projectId,
             request: request.body,
         })
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.FOLDER_CREATED,
             data: {
                 folder: createdFolder,
@@ -41,13 +41,13 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/:id',
         UpdateFolderParams,
         async (request) => {
-            const updatedFlow = await folderService.update({
+            const updatedFlow = await folderService(request.log).update({
                 projectId: request.principal.projectId,
                 folderId: request.params.id,
                 request: request.body,
             })
 
-            eventsHooks.get().sendUserEventFromRequest(request, {
+            eventsHooks.get(request.log).sendUserEventFromRequest(request, {
                 action: ApplicationEventName.FOLDER_UPDATED,
                 data: {
                     folder: updatedFlow,
@@ -64,7 +64,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
         async (
             request,
         ) => {
-            return folderService.getOneOrThrow({
+            return folderService(request.log).getOneOrThrow({
                 projectId: request.principal.projectId,
                 folderId: request.params.id,
             })
@@ -75,7 +75,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/',
         ListFoldersParams,
         async (request) => {
-            return folderService.list({
+            return folderService(request.log).list({
                 projectId: request.principal.projectId,
                 cursorRequest: request.query.cursor ?? null,
                 limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
@@ -87,17 +87,17 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/:id',
         DeleteFolderParams,
         async (request, reply) => {
-            const folder = await folderService.getOneOrThrow({
+            const folder = await folderService(request.log).getOneOrThrow({
                 projectId: request.principal.projectId,
                 folderId: request.params.id,
             })
-            eventsHooks.get().sendUserEventFromRequest(request, {
+            eventsHooks.get(request.log).sendUserEventFromRequest(request, {
                 action: ApplicationEventName.FOLDER_DELETED,
                 data: {
                     folder,
                 },
             })
-            await folderService.delete({
+            await folderService(request.log).delete({
                 projectId: request.principal.projectId,
                 folderId: request.params.id,
             })

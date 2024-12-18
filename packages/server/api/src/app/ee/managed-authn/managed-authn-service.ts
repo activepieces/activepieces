@@ -11,6 +11,7 @@ import {
     User,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
@@ -20,11 +21,11 @@ import { projectMemberService } from '../project-members/project-member.service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
-export const managedAuthnService = {
+export const managedAuthnService = (log: FastifyBaseLogger) => ({
     async externalToken({
         externalAccessToken,
     }: AuthenticateParams): Promise<AuthenticationResponse> {
-        const externalPrincipal = await externalTokenExtractor.extract(
+        const externalPrincipal = await externalTokenExtractor(log).extract(
             externalAccessToken,
         )
         const user = await getOrCreateUser(externalPrincipal)
@@ -36,7 +37,7 @@ export const managedAuthnService = {
 
         await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens)
 
-        await projectMemberService.upsert({
+        await projectMemberService(log).upsert({
             projectId: project.id,
             userId: user.id,
             projectRoleName: externalPrincipal.projectRole,
@@ -57,7 +58,7 @@ export const managedAuthnService = {
             projectId: project.id,
         }
     },
-}
+})
 
 const updateProjectLimits = async (
     platformId: string,

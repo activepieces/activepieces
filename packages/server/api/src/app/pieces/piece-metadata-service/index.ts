@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
+import { PiecesSource } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     PackageType,
@@ -9,30 +9,33 @@ import {
     PublicPiecePackage,
     SuggestionType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { PieceMetadataSchema } from '../piece-metadata-entity'
 import { FastDbPieceMetadataService } from './db-piece-metadata-service'
 import { FilePieceMetadataService } from './file-piece-metadata-service'
 import { PieceMetadataService } from './piece-metadata-service'
 
-const initPieceMetadataService = (): PieceMetadataService => {
-    const source = system.getOrThrow<PiecesSource>(SharedSystemProp.PIECES_SOURCE)
+
+export const pieceMetadataService = (log: FastifyBaseLogger): PieceMetadataService => {
+    const source = system.getOrThrow<PiecesSource>(AppSystemProp.PIECES_SOURCE)
     switch (source) {
         case PiecesSource.DB:
         case PiecesSource.CLOUD_AND_DB:
-            return FastDbPieceMetadataService()
+            return FastDbPieceMetadataService(log)
         case PiecesSource.FILE:
-            return FilePieceMetadataService()
+            return FilePieceMetadataService(log)
     }
 }
 
-export const pieceMetadataService = initPieceMetadataService()
-
 export const getPiecePackageWithoutArchive = async (
+    log: FastifyBaseLogger,
     projectId: string | undefined,
     platformId: PlatformId | undefined,
     pkg: Omit<PublicPiecePackage, 'directoryPath'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive'>,
 ): Promise<PiecePackage> => {
-    const pieceMetadata = await pieceMetadataService.getOrThrow({
+    const pieceMetadata = await pieceMetadataService(log).getOrThrow({
         name: pkg.pieceName,
         version: pkg.pieceVersion,
         projectId,

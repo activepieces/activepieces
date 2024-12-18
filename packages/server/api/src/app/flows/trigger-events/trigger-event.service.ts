@@ -17,7 +17,8 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
-import { EngineHelperResponse, EngineHelperTriggerResult, webhookUtils } from 'server-worker'
+import { FastifyBaseLogger } from 'fastify'
+import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -29,19 +30,19 @@ import { TriggerEventEntity } from './trigger-event.entity'
 
 export const triggerEventRepo = repoFactory(TriggerEventEntity)
 
-export const triggerEventService = {
+export const triggerEventService = (log: FastifyBaseLogger) => ({
     async saveEvent({
         projectId,
         flowId,
         payload,
     }: SaveEventParams): Promise<TriggerEventWithPayload> {
-        const flow = await flowService.getOnePopulatedOrThrow({
+        const flow = await flowService(log).getOnePopulatedOrThrow({
             id: flowId,
             projectId,
         })
 
         const data = Buffer.from(JSON.stringify(payload))
-        const file = await fileService.save({
+        const file = await fileService(log).save({
             projectId,
             fileName: `${apId()}.json`,
             data,
@@ -73,13 +74,9 @@ export const triggerEventService = {
         switch (trigger.type) {
             case TriggerType.PIECE: {
 
-                const engineResponse = await userInteractionWatcher.submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
+                const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
-                    webhookUrl: await webhookUtils.getWebhookUrl({
-                        flowId: flow.id,
-                        simulate: true,
-                    }),
                     test: true,
                     projectId,
                     jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
@@ -98,14 +95,14 @@ export const triggerEventService = {
                 }
 
                 for (const output of engineResponse.result.output) {
-                    await triggerEventService.saveEvent({
+                    await this.saveEvent({
                         projectId,
                         flowId: flow.id,
                         payload: output,
                     })
                 }
 
-                return triggerEventService.list({
+                return this.list({
                     projectId,
                     flow,
                     cursor: null,
@@ -142,7 +139,7 @@ export const triggerEventService = {
         })
         const { data, cursor: newCursor } = await paginator.paginate(query)
         const dataWithPayload = await Promise.all(data.map(async (triggerEvent) => {
-            const fileData = await fileService.getDataOrThrow({
+            const fileData = await fileService(log).getDataOrThrow({
                 fileId: triggerEvent.fileId,
             })
             const decodedPayload = JSON.parse(fileData.data.toString())
@@ -153,7 +150,7 @@ export const triggerEventService = {
         }))
         return paginationHelper.createPage<TriggerEventWithPayload>(dataWithPayload, newCursor)
     },
-}
+})
 
 function getSourceName(trigger: Trigger): string {
     switch (trigger.type) {

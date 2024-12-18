@@ -5,27 +5,45 @@ import { useForm } from 'react-hook-form';
 
 import { FlagGuard } from '@/app/components/flag-guard';
 import { Button } from '@/components/ui/button';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
-import { ApFlagId, Permission, ProjectWithLimits } from '@activepieces/shared';
+import {
+  ApErrorParams,
+  ApFlagId,
+  ErrorCode,
+  Permission,
+  PlatformRole,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();
   const { project, updateProject } = projectHooks.useCurrentProject();
 
+  const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const { toast } = useToast();
+  const platformRole = authenticationSession.getUserPlatformRole();
 
   const form = useForm({
     defaultValues: {
       displayName: project?.displayName,
+      externalId: project?.externalId,
       plan: {
         tasks: project?.plan?.tasks,
         aiTokens: project?.plan?.aiTokens,
@@ -40,12 +58,17 @@ export default function GeneralPage() {
     Error,
     {
       displayName: string;
+      externalId?: string;
       plan: { tasks: number; aiTokens?: number };
     }
   >({
     mutationFn: (request) => {
       updateProject(queryClient, request);
-      return projectApi.update(authenticationSession.getProjectId()!, request);
+      return projectApi.update(authenticationSession.getProjectId()!, {
+        ...request,
+        externalId:
+          request.externalId?.trim() !== '' ? request.externalId : undefined,
+      });
     },
     onSuccess: () => {
       toast({
@@ -55,8 +78,22 @@ export default function GeneralPage() {
       });
     },
     onError: (error) => {
-      toast(INTERNAL_ERROR_TOAST);
-      console.log(error);
+      if (api.isError(error)) {
+        const apError = error.response?.data as ApErrorParams;
+        switch (apError.code) {
+          case ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS: {
+            form.setError('root.serverError', {
+              message: t('The external ID is already taken.'),
+            });
+            break;
+          }
+          default: {
+            console.log(error);
+            toast(INTERNAL_ERROR_TOAST);
+            break;
+          }
+        }
+      }
     },
   });
 
@@ -110,8 +147,6 @@ export default function GeneralPage() {
                     </FormItem>
                   )}
                 />
-              </FlagGuard>
-              <FlagGuard flag={ApFlagId.PROJECT_LIMITS_ENABLED}>
                 <FormField
                   name="plan.aiTokens"
                   render={({ field }) => (
@@ -136,6 +171,29 @@ export default function GeneralPage() {
                   )}
                 />
               </FlagGuard>
+              {platform.embeddingEnabled &&
+                platformRole === PlatformRole.ADMIN && (
+                  <FormField
+                    name="externalId"
+                    render={({ field }) => (
+                      <FormItem className="grid space-y-2">
+                        <Label htmlFor="externalId">{t('External ID')}</Label>
+                        <FormDescription>
+                          {t(
+                            'Used to identify the project based on your SaaS ID',
+                          )}
+                        </FormDescription>
+                        <Input
+                          {...field}
+                          id="externalId"
+                          placeholder={t('org-3412321')}
+                          className="rounded-sm"
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               {form?.formState?.errors?.root?.serverError && (
                 <FormMessage>
                   {form.formState.errors.root.serverError.message}

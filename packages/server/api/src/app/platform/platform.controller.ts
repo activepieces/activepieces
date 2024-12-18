@@ -22,7 +22,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 
         const { smtp } = req.body
         if (smtp) {
-            await smtpEmailSender.validateOrThrow(smtp)
+            await smtpEmailSender(req.log).validateOrThrow(smtp)
         }
 
         return platformService.update({

@@ -69,7 +69,7 @@ it will produce these values. </Tip>
 | `AP_S3_ENDPOINT`                   | The endpoint URL for your S3-compatible storage service.                                                                                                                                                             | `None`                                                                         | `https://s3.amazonaws.com`                                             |
 | `AP_S3_REGION`                     | The region where your S3 bucket is located.                                                                                                                                                                          | `None`                                                                         | `us-east-1`                                                            |
 | `AP_S3_USE_SIGNED_URLS`           | It is used to route traffic to S3 directly. It should be enabled if the S3 bucket is public.                                                                                                                                                                                  | `false`                                                                         |                                                                        |
-| `AP_MAX_FILE_SIZE_MB`              | The maximum allowed file size in megabytes for uploads.                                                                                                                                                              | `None`                                                                         | `10`                                                                   |
+| `AP_MAX_FILE_SIZE_MB`              | The maximum allowed file size in megabytes for uploads including logs of flow runs. If logs exceed this size, they will be truncated which may cause flow execution issues.                                                                                                                                                              | `10`                                                                         | `10`                                                                   |
 | `AP_FILE_STORAGE_LOCATION`         | The location to store files. Possible values are `DB` for storing files in the database or `S3` for storing files in an S3-compatible storage service.                                                               | `DB`                                                                           |                                                                        |
 | `AP_PAUSED_FLOW_TIMEOUT_DAYS`      | The maximum allowed pause duration in days for a paused flow, please note it can not exceed `AP_EXECUTION_DATA_RETENTION_DAYS`                                                                                                                                                            | `30`                                                                           |                                                                        
 
@@ -77,10 +77,6 @@ it will produce these values. </Tip>
   The frontend URL is essential for webhooks and app triggers to work. It must
   be accessible to third parties to send data.
 </Warning>
-
-### Separate Workers from api
-
-To separate workers from API servers, you can achieve this by setting `AP_FLOW_WORKER_CONCURRENCY` to zero on API servers, while keeping it on worker servers.
 
 
 ### Setting Webhook (Frontend URL):

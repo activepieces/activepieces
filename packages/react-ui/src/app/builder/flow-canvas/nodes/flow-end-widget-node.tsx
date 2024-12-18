@@ -2,8 +2,8 @@ import { Handle, Position } from '@xyflow/react';
 import { t } from 'i18next';
 import { useRef } from 'react';
 
-import { flowUtilConsts } from '../consts';
-import { ApGraphEndNode } from '../types';
+import { flowUtilConsts } from '../utils/consts';
+import { ApGraphEndNode } from '../utils/types';
 
 const ApGraphEndWidgetNode = ({ data }: Omit<ApGraphEndNode, 'position'>) => {
   const elementRef = useRef<HTMLDivElement>(null);

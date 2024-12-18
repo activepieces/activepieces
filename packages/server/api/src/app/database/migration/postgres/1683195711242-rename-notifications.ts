@@ -1,15 +1,17 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class RenameNotifications1683195711242 implements MigrationInterface {
     name = 'RenameNotifications1683195711242'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('Running migration: RenameNotifications1683195711242')
+        log.info('Running migration: RenameNotifications1683195711242')
         await queryRunner.query(
             'ALTER TABLE "project" RENAME COLUMN "notifications" TO "notifyStatus"',
         )
-        logger.info('Migration complete: RenameNotifications1683195711242')
+        log.info('Migration complete: RenameNotifications1683195711242')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

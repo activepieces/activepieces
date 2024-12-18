@@ -1,9 +1,11 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('FlowAndFileProjectId1674788714498: started')
+        log.info('FlowAndFileProjectId1674788714498: started')
 
         const flowTableExistsQueryResponse: { exists: boolean }[] =
       await queryRunner.query(
@@ -20,7 +22,7 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
       !flowTableExistsQueryResponse[0].exists
 
         if (flowTableNotExist) {
-            logger.info('FlowAndFileProjectId1674788714498: skipped')
+            log.info('FlowAndFileProjectId1674788714498: skipped')
             return
         }
 
@@ -55,7 +57,7 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
                             [packagedFileId],
                         )
                         if (packagedFileToUpdate.length === 0) {
-                            logger.error(
+                            log.error(
                                 'Found an old packaged artifact file id without file ' +
                   packagedFileId +
                   ' and for flow ' +
@@ -77,7 +79,7 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
                             [sourceFileId],
                         )
                         if (sourceFileToUpdate.length === 0) {
-                            logger.error(
+                            log.error(
                                 'Found an old source artifact file id without file ' +
                   sourceFileId +
                   ' and for flow ' +

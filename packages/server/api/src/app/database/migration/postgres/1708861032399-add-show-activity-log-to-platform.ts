@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class AddShowActivityLogToPlatform1708861032399 implements MigrationInterface {
     name = 'AddShowActivityLogToPlatform1708861032399'
@@ -25,7 +27,7 @@ export class AddShowActivityLogToPlatform1708861032399 implements MigrationInter
             ALTER COLUMN "showActivityLog" SET NOT NULL
         `)
 
-        logger.info({ name: this.name }, 'up')
+        log.info({ name: this.name }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -36,7 +38,7 @@ export class AddShowActivityLogToPlatform1708861032399 implements MigrationInter
             ALTER TABLE "platform" DROP COLUMN "showActivityLog"
         `)
 
-        logger.info({ name: this.name }, 'down')
+        log.info({ name: this.name }, 'down')
     }
 
 }
