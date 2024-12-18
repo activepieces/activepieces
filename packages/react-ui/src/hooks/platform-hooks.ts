@@ -1,6 +1,7 @@
 import { usePrefetchQuery, useSuspenseQuery } from '@tanstack/react-query';
 
 import { platformApi } from '../lib/platforms-api';
+import { isNil } from '../../../shared/src';
 
 export const platformHooks = {
   prefetchPlatform: () => {
@@ -10,6 +11,10 @@ export const platformHooks = {
       queryFn: platformApi.getCurrentPlatform,
       staleTime: Infinity,
     });
+  },
+  isCopilotEnabled: () => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    return Object.keys(platform?.copilotSettings?.providers ?? {}).length > 0;
   },
   useCurrentPlatform: () => {
     const query = useSuspenseQuery({

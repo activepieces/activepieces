@@ -10,18 +10,17 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {
-  ApFlagId,
   CodeAction,
   FlowOperationType,
   MarkdownVariant,
 } from '@activepieces/shared';
 
-import { flagsHooks } from '../../../../hooks/flags-hooks';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 import { AskAiButton } from '../../pieces-selector/ask-ai';
 
 import { CodeEditor } from './code-editor';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below. 
@@ -42,9 +41,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const [selectedStep, refreshStepFormSettingsToggle] = useBuilderStateContext(
     (state) => [state.selectedStep || '', state.refreshStepFormSettingsToggle],
   );
-  const { data: isCopilotEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.CODE_COPILOT_ENABLED,
-  );
+  const isCopilotEnabled = platformHooks.isCopilotEnabled();
   return (
     <div className="flex flex-col gap-4">
       <FormField

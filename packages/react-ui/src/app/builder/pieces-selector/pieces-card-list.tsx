@@ -31,6 +31,7 @@ import { cn } from '../../../lib/utils';
 import { AskAiButton } from './ask-ai';
 import { PieceSearchSuggestions } from './piece-search-suggestions';
 import { PieceTagEnum } from './piece-tag-group';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 type PieceGroup = {
   title: string;
@@ -68,9 +69,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   );
 
   const selectedItemRef = useRef<HTMLDivElement | null>(null);
-  const { data: areCopilotsEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.CODE_COPILOT_ENABLED,
-  );
+  const isCopilotEnabled = platformHooks.isCopilotEnabled();
   useEffect(() => {
     if (
       piecesIsLoaded &&

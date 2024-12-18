@@ -35,7 +35,7 @@ const CopilotSetup = () => {
     if (!platform?.copilotSettings?.providers) return null;
     const { providers } = platform.copilotSettings;
 
-    if (!isNil(providers[CopilotProviderType.OPENAI]?.apiKey)) {
+    if (!isNil(providers[CopilotProviderType.OPENAI])) {
       return {
         type: CopilotProviderType.OPENAI,
         name: 'OpenAI',
@@ -43,7 +43,7 @@ const CopilotSetup = () => {
       };
     }
 
-    if (!isNil(providers[CopilotProviderType.AZURE_OPENAI]?.apiKey)) {
+    if (!isNil(providers[CopilotProviderType.AZURE_OPENAI])) {
       return {
         type: CopilotProviderType.AZURE_OPENAI,
         name: 'Azure OpenAI',
