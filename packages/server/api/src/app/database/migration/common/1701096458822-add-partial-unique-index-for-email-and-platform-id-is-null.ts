@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822
 implements MigrationInterface {
@@ -11,7 +13,7 @@ implements MigrationInterface {
             ON "user"("email") WHERE "platformId" IS NULL
         `)
 
-        logger.info(
+        log.info(
             'AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 up',
         )
     }
@@ -21,7 +23,7 @@ implements MigrationInterface {
             DROP INDEX "user_partial_unique_email_platform_id_is_null"
         `)
 
-        logger.info(
+        log.info(
             'AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 down',
         )
     }

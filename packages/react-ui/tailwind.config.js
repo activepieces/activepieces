@@ -89,6 +89,7 @@ module.exports = {
         sans: ['var(--font-sans)', ...fontFamily.sans],
       },
       fontSize: {
+        'xss': '0.65rem',
         '3xl': '1.75rem',
         '4xl': '2rem',
       },

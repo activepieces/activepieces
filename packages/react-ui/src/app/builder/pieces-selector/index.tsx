@@ -294,6 +294,9 @@ const PieceSelector = ({
         {children}
       </PopoverTrigger>
       <PopoverContent
+        onContextMenu={(e) => {
+          e.stopPropagation();
+        }}
         className="w-[340px] md:w-[600px] p-0 shadow-lg"
         onClick={(e) => {
           e.stopPropagation();

@@ -1,11 +1,13 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddUniqueNameToFolder1713643694049 implements MigrationInterface {
     name = 'AddUniqueNameToFolder1713643694049'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info({ name: this.name }, 'Up')
+        log.info({ name: this.name }, 'Up')
         await queryRunner.query(`
             DELETE FROM "folder"
             WHERE ("projectId", LOWER("displayName")) IN (

@@ -126,7 +126,6 @@ export const ExecuteTriggerHookJobData = Type.Object({
     jobType: Type.Literal(UserInteractionJobType.EXECUTE_TRIGGER_HOOK),
     projectId: Type.String(),
     flowVersion: FlowVersion,
-    webhookUrl: Type.String(),
     test: Type.Boolean(),
     webserverId: Type.String(),
     hookType: Type.Enum(TriggerHookType),

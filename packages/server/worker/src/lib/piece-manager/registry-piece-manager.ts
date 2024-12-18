@@ -7,6 +7,7 @@ import {
     PiecePackage,
     PrivatePiecePackage,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { cacheHandler } from '../utils/cache-handler'
 import { PACKAGE_ARCHIVE_PATH, PieceManager } from './piece-manager'
 
@@ -19,6 +20,7 @@ export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({
         projectPath,
         pieces,
+        log,
     }: InstallParams): Promise<void> {
         await this.savePackageArchivesToDiskIfNotCached(pieces)
 
@@ -35,7 +37,7 @@ export class RegistryPieceManager extends PieceManager {
             if (dependencies.length === 0) {
                 return
             }
-            await packageManager.add({ path: projectPath, dependencies })
+            await packageManager(log).add({ path: projectPath, dependencies })
 
             await Promise.all(
                 dependencies.map(pkg => cache.setCache(pkg.alias, CacheState.READY)),
@@ -112,4 +114,5 @@ export class RegistryPieceManager extends PieceManager {
 type InstallParams = {
     projectPath: string
     pieces: PiecePackage[]
+    log: FastifyBaseLogger
 }
