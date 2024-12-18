@@ -15,7 +15,7 @@ export const generateWorkerTokenCommand = new Command('token')
             {
                 type: 'input',
                 name: 'jwtSecret',
-                message: 'Enter your JWT secret:',
+                message: 'Enter your JWT secret (should be the same as AP_JWT_SECRET used for the app server):',
                 validate: (input) => {
                     if (!input) {
                         return 'JWT secret is required';
