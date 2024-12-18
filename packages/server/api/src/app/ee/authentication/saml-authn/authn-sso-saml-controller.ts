@@ -5,6 +5,8 @@ import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
 import { platformService } from '../../../platform/platform.service'
 import { authenticationHelper } from '../authentication-service/hooks/authentication-helper'
 import { authnSsoSamlService } from './authn-sso-saml-service'
+import { eventsHooks } from '../../../helper/application-events'
+import { ApplicationEventName } from '@activepieces/ee-shared'
 
 export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/login', LoginRequest, async (req, res) => {
@@ -26,6 +28,12 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             projectId: project.id,
         }
         url.searchParams.append('response', JSON.stringify(response))
+        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+            action: ApplicationEventName.USER_SIGNED_UP,
+            data: {
+                source: 'sso',
+            },
+        })
         return res.redirect(url.toString())
     })
 }
