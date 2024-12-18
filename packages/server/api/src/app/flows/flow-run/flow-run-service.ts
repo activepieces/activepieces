@@ -277,7 +277,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         log.info({
             flowRunId: params.flowRunId,
             pauseType: params.pauseMetadata.type,
-        }, `[FlowRunService] pausing flow run`)
+        }, '[FlowRunService] pausing flow run')
 
         const { flowRunId, pauseMetadata } = params
         await flowRunRepo().update(flowRunId, {
