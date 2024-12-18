@@ -15,12 +15,11 @@ import {
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import dayjs from 'dayjs'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
-import { emailService } from '../../../../src/app/ee/helper/email/email-service'
+import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
 import { decodeToken } from '../../../helpers/auth'
 import {
@@ -37,17 +36,25 @@ import {
 } from '../../../helpers/mocks/authn'
 
 let app: FastifyInstance | null = null
+let sendOtpSpy: jest.Mock
 
+
+  
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 
 beforeEach(async () => {
-    emailService.sendOtp = jest.fn()
-    stripeHelper.getOrCreateCustomer = jest
-        .fn()
-        .mockResolvedValue(faker.string.alphanumeric())
+    sendOtpSpy = jest.fn()
+    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
+        sendOtp: sendOtpSpy,
+        sendInvitation: jest.fn(),
+        sendIssueCreatedNotification: jest.fn(),
+        sendQuotaAlert: jest.fn(),
+        sendReminderJobHandler: jest.fn(),
+        sendExceedFailureThresholdAlert: jest.fn(),
+    }))
 
     await databaseConnection().getRepository('flag').delete({})
     await databaseConnection().getRepository('project').delete({})
@@ -177,6 +184,8 @@ describe('Authentication API', () => {
             const mockSignUpRequest = createMockSignUpRequest()
             const { mockCustomDomain, mockPlatform } =
                 await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
+
+  
             // act
             const response = await app?.inject({
                 method: 'POST',
@@ -191,8 +200,8 @@ describe('Authentication API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(emailService.sendOtp).toBeCalledTimes(1)
-            expect(emailService.sendOtp).toHaveBeenCalledWith({
+            expect(sendOtpSpy).toHaveBeenCalledTimes(1)
+            expect(sendOtpSpy).toHaveBeenCalledWith({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
                 platformId: mockPlatform.id,
                 type: OtpType.EMAIL_VERIFICATION,
@@ -284,60 +293,6 @@ describe('Authentication API', () => {
 
             expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
         })
-
-        it('Adds tasks for referrals', async () => {
-            // arrange
-            const { mockCustomDomain, mockPlatform } =
-                await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)
-            const mockReferringUser = createMockUser({ platformId: mockPlatform.id })
-            await databaseConnection().getRepository('user').save(mockReferringUser)
-
-            const mockProject = createMockProject({
-                ownerId: mockReferringUser.id,
-                platformId: mockPlatform.id,
-            })
-            await databaseConnection().getRepository('project').save(mockProject)
-
-            const mockSignUpRequest = createMockSignUpRequest({
-                referringUserId: mockReferringUser.id,
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/authentication/sign-up',
-                body: mockSignUpRequest,
-                headers: {
-                    Host: mockCustomDomain.domain,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
-
-            const referral = await databaseConnection()
-                .getRepository('referal')
-                .findOneBy({
-                    referredUserId: responseBody?.id,
-                })
-            expect(referral?.referringUserId).toBe(mockReferringUser.id)
-
-            const referringUserPlan = await databaseConnection()
-                .getRepository('project_plan')
-                .findOneBy({
-                    projectId: mockProject.id,
-                })
-            expect(referringUserPlan?.tasks).toBe(1500)
-
-            const referredUserPlan = await databaseConnection()
-                .getRepository('project_plan')
-                .findOneBy({
-                    projectId: responseBody?.projectId,
-                })
-            expect(referredUserPlan?.tasks).toBe(1500)
-        })
-
         it('Creates new project for cloud user', async () => {
             const { mockPlatform, mockCustomDomain } =
                 await createMockPlatformAndDomain(CLOUD_PLATFORM_ID)

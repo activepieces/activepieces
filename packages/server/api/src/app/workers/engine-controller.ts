@@ -94,7 +94,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             tags: runDetails.tags ?? [],
         })
         let uploadUrl: string | undefined
-        const updateLogs = !isNil(executionStateContentLength)
+        const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
         if (updateLogs) {
             uploadUrl = await flowRunService(request.log).updateLogsAndReturnUploadUrl({
                 flowRunId: runId,

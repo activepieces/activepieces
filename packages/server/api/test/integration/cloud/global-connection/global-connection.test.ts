@@ -4,7 +4,7 @@ import {
     PlatformRole,
     PrincipalType,
 } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceMetadataService } from '../../../../src/app/pieces/piece-metadata-service'
@@ -18,10 +18,12 @@ import {
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await databaseConnection().initialize()
     app = await setupServer()
+    mockLog = app!.log!
 })
 
 afterAll(async () => {
@@ -53,7 +55,7 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -112,7 +114,7 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -172,7 +174,7 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -309,7 +311,7 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -379,7 +381,7 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
@@ -459,7 +461,7 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -535,7 +537,7 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
@@ -618,7 +620,7 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
