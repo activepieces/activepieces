@@ -22,15 +22,15 @@ export const modelService = (log: FastifyBaseLogger) => ({
         case CopilotProviderType.OPENAI: {
           const provider = copilotSettings.providers[CopilotProviderType.OPENAI];
           return createOpenAI({
-            apiKey: provider.apiKey,
+            apiKey: provider?.apiKey,
           }).chat('gpt-4o');
         }
         case CopilotProviderType.AZURE_OPENAI: {
           const provider = copilotSettings.providers[CopilotProviderType.AZURE_OPENAI];
           return createAzure({
-            apiKey: provider.apiKey,
-            resourceName: provider.resourceName,
-          }).chat(provider.deploymentName);
+            apiKey: provider?.apiKey,
+            resourceName: provider?.resourceName,
+          }).chat(provider?.deploymentName || 'gpt-4o');
         }
       }
     } catch (error) {
@@ -47,10 +47,10 @@ export const modelService = (log: FastifyBaseLogger) => ({
 });
 
 function getDefaultProvider(copilotSettings: CopilotSettings): CopilotProviderType {
-  if (copilotSettings.providers[CopilotProviderType.OPENAI].apiKey) {
+  if (copilotSettings.providers[CopilotProviderType.OPENAI]?.apiKey) {
     return CopilotProviderType.OPENAI;
   }
-  if (copilotSettings.providers[CopilotProviderType.AZURE_OPENAI].apiKey) {
+  if (copilotSettings.providers[CopilotProviderType.AZURE_OPENAI]?.apiKey) {
     return CopilotProviderType.AZURE_OPENAI;
   }
   throw new ActivepiecesError({

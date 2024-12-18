@@ -44,8 +44,8 @@ export type AzureOpenAiProvider = Static<typeof AzureOpenAiProvider>
 
 export const CopilotSettings = Type.Object({
     providers: Type.Object({
-        [CopilotProviderType.OPENAI]: OpenAiProvider,
-        [CopilotProviderType.AZURE_OPENAI]: AzureOpenAiProvider,
+        [CopilotProviderType.OPENAI]: Type.Optional(OpenAiProvider),
+        [CopilotProviderType.AZURE_OPENAI]: Type.Optional(AzureOpenAiProvider),
     })
 })
 
