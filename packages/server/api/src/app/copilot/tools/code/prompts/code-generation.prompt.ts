@@ -1,4 +1,4 @@
-import { Message } from "../types";
+import { Message } from '../types'
 
 
 export function getCodeGenerationPrompt(conversationHistory: Message[], lastCodeResponse: Message | undefined) {

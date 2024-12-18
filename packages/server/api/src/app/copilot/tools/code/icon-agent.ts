@@ -1,8 +1,8 @@
+import { exceptionHandler } from '@activepieces/server-shared'
 import { generateObject, LanguageModel } from 'ai'
 import { z } from 'zod'
-import { Message } from './types'
 import { system } from '../../../helper/system/system'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { Message } from './types'
 
 const iconSelectionSchema = z.object({
     icon: z.string(),

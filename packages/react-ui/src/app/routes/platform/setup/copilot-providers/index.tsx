@@ -75,7 +75,7 @@ const CopilotSettingsPage = () => {
       />
     </div>
   );
-}
+};
 
 CopilotSettingsPage.displayName = 'CopilotSettingsPage';
 export { CopilotSettingsPage };

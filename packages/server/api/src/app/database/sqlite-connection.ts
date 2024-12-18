@@ -77,6 +77,7 @@ import { AddIndiciesToRunSqlite1732324481815 } from './migration/sqlite/17323244
 import { CreateProjectRoleTableSqlite1732482844483 } from './migration/sqlite/1732482844483-CreateProjectRoleTableSqlite'
 import { AddProjectRelationInUserInvitationSqlite1732791068873 } from './migration/sqlite/1732791068873-AddProjectRelationInUserInvitationSqlite'
 import { RemoveWorkerTypeSqlite1734439194575 } from './migration/sqlite/1734439194575-RemoveWorkerTypeSqlite'
+import { AddCopilotSettingsSqlite1734479435668 } from './migration/sqlite/1734479435668-AddCopilotSettingsSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -171,6 +172,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndiciesToRunSqlite1732324481815,
         AddProjectRelationInUserInvitationSqlite1732791068873,
         RemoveWorkerTypeSqlite1734439194575,
+        AddCopilotSettingsSqlite1734479435668,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

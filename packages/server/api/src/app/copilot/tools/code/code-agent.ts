@@ -1,17 +1,17 @@
-import { isNil, ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
 import { generateObject } from 'ai'
-import { selectIcon } from './icon-agent'
-import { modelService } from '../../services/model.service'
-import { CodeAgentResponse, Message, codeGenerationSchema, defaultResponse } from './types'
-import { getCodeGenerationPrompt } from './prompts/code-generation.prompt'
 import { FastifyBaseLogger } from 'fastify'
+import { modelService } from '../../services/model.service'
+import { selectIcon } from './icon-agent'
+import { getCodeGenerationPrompt } from './prompts/code-generation.prompt'
+import { CodeAgentResponse, codeGenerationSchema, defaultResponse, Message } from './types'
 
 
 export async function generateCode(
     requirement: string,
     platformId: string,
     conversationHistory: Message[] = [],
-    log: FastifyBaseLogger
+    log: FastifyBaseLogger,
 ): Promise<CodeAgentResponse> {
     try {
         const model = await modelService(log).getModel(platformId)
@@ -38,7 +38,7 @@ export async function generateCode(
             return acc
         }, {} as Record<string, string>) ?? {}
 
-        const icon = await selectIcon(model,requirement, conversationHistory)
+        const icon = await selectIcon(model, requirement, conversationHistory)
 
         return {
             code: llmResponse.object.code,

@@ -1,12 +1,12 @@
-import { ActivepiecesError, CopilotProviderType, CopilotSettings, ErrorCode, isNil } from '@activepieces/shared';
-import { createOpenAI } from '@ai-sdk/openai';
-import { createAzure } from '@ai-sdk/azure';
-import { platformService } from '../../platform/platform.service';
-import { LanguageModel } from 'ai';
-import { FastifyBaseLogger } from 'fastify';
+import { ActivepiecesError, CopilotProviderType, CopilotSettings, ErrorCode, isNil } from '@activepieces/shared'
+import { createAzure } from '@ai-sdk/azure'
+import { createOpenAI } from '@ai-sdk/openai'
+import { LanguageModel } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
+import { platformService } from '../../platform/platform.service'
 
 export const modelService = (log: FastifyBaseLogger) => ({
-  async getModel(platformId: string): Promise<LanguageModel> {
+    async getModel(platformId: string): Promise<LanguageModel> {
 
     try {
       const platform = await platformService.getOneOrThrow(platformId);
@@ -34,17 +34,14 @@ export const modelService = (log: FastifyBaseLogger) => ({
         }
       }
     } catch (error) {
-      log.error('[ModelService] Failed to initialize AI model', { error, platformId });
-      if (error instanceof ActivepiecesError) {
-        throw error;
-      }
+      log.error(error);
       throw new ActivepiecesError({
         code: ErrorCode.COPILOT_FAILED,
-        params: { message: error instanceof Error ? error.message : 'Failed to initialize AI model' },
+        params: { message: 'Failed to get model' },
       });
     }
-  },
-});
+  }
+})
 
 function getDefaultProvider(copilotSettings: CopilotSettings): CopilotProviderType {
   if (copilotSettings.providers[CopilotProviderType.OPENAI]?.apiKey) {

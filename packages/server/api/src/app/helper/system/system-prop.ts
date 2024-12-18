@@ -29,11 +29,11 @@ export enum AppSystemProp {
      * @deprecated this now can be done from the platform admin page.
      */
     OPENAI_API_KEY = 'OPENAI_API_KEY',
-        /**
+    /**
      * @deprecated this now can be done from the platform admin page.
      */
     PERPLEXITY_API_KEY = 'PERPLEXITY_API_KEY',
-        /**
+    /**
      * @deprecated this now can be done from the platform admin page.
      */
     PERPLEXITY_BASE_URL = 'PERPLEXITY_BASE_URL',
