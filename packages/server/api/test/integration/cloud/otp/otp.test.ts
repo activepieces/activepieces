@@ -1,13 +1,14 @@
 import { OtpType } from '@activepieces/ee-shared'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { emailService } from '../../../../src/app/ee/helper/email/email-service'
+import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
 import { CLOUD_PLATFORM_ID, createMockPlatform, createMockUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let sendOtpSpy: jest.Mock
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
@@ -15,7 +16,16 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
-    emailService.sendOtp = jest.fn()
+    sendOtpSpy = jest.fn()
+    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
+        sendOtp: sendOtpSpy,
+        sendInvitation: jest.fn(),
+        sendIssueCreatedNotification: jest.fn(),
+        sendQuotaAlert: jest.fn(),
+        sendReminderJobHandler: jest.fn(),
+        sendExceedFailureThresholdAlert: jest.fn(),
+    }))
+
 })
 
 afterAll(async () => {
@@ -71,8 +81,8 @@ describe('OTP API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
-            expect(emailService.sendOtp).toBeCalledTimes(1)
-            expect(emailService.sendOtp).toHaveBeenCalledWith({
+            expect(sendOtpSpy).toHaveBeenCalledTimes(1)
+            expect(sendOtpSpy).toHaveBeenCalledWith({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
                 platformId: CLOUD_PLATFORM_ID,
                 type: OtpType.EMAIL_VERIFICATION,

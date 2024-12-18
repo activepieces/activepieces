@@ -73,6 +73,9 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     defaultLocale: Nullable(Type.String()),
     smtp: Type.Optional(Type.Object({})),
 }), Type.Pick(Platform, [
+    'id',
+    'created',
+    'updated',
     'ownerId',
     'name',
     'primaryColor',
