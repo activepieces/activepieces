@@ -1,21 +1,39 @@
-import { CreateFieldRequest, PrincipalType } from '@activepieces/shared'
+import { CreateFieldRequest, Field, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { fieldService } from './field.service'
 
 export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.post('/:id/fields', CreateRequest, async (request, reply) => {
-        await reply.status(StatusCodes.OK).send({})
+        const response = await fieldService.create({
+            tableId: request.params.id,
+            request: request.body,
+        })
+        await reply.status(StatusCodes.OK).send(response)
     },
     )
 
     fastify.get('/:id/fields/:fieldId', GetFieldByIdRequest, async (request, reply) => {
-        await reply.status(StatusCodes.OK).send({})
+        const response = await fieldService.getById({
+            tableId: request.params.id,
+            id: request.params.fieldId,
+        })
+
+        if (!response) {
+            await reply.status(StatusCodes.NOT_FOUND).send('Field not found')
+            return
+        }
+
+        await reply.status(StatusCodes.OK).send(response)
     },
     )
 
-    fastify.delete('/:id/fields/:fieldId', DeleteFieldRequest, async (request, reply) => {
-        await reply.status(StatusCodes.OK).send({})
+    fastify.delete('/:id/fields/:fieldId', DeleteFieldRequest, async (request) => {
+        return fieldService.delete({
+            tableId: request.params.id,
+            id: request.params.fieldId,
+        })
     },
     )
 
@@ -31,6 +49,9 @@ const CreateRequest = {
     },
     schema: {
         body: CreateFieldRequest,
+        params: Type.Object({
+            id: Type.String(),
+        }),
     },
 }
 
@@ -43,6 +64,10 @@ const GetFieldByIdRequest = {
             id: Type.String(),
             fieldId: Type.String(),
         }),
+        response: {
+            [StatusCodes.OK]: Field,
+            [StatusCodes.NOT_FOUND]: Type.String(),
+        },
     },
 }
 

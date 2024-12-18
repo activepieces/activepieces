@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { Cursor } from '../../common/seek-page'
 
 export const CreateRecordsRequest = Type.Object({
     records: Type.Array(Type.Array(Type.Object({
@@ -17,3 +18,10 @@ export const UpdateRecordRequest = Type.Object({
 })
 
 export type UpdateRecordRequest = Static<typeof UpdateRecordRequest>
+
+export const ListRecordsRequest = Type.Object({
+    limit: Type.Optional(Type.Number({})),
+    cursor: Type.Optional(Type.String({})),
+})
+
+export type ListRecordsRequest = Omit<Static<typeof ListRecordsRequest>, 'cursor'> & { cursor: Cursor | undefined }
