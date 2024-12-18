@@ -2,17 +2,17 @@ import { exceptionHandler } from '@activepieces/server-shared'
 import {
     Action,
     ActionType,
+    ActivepiecesError,
     AskCopilotCodeResponse,
     AskCopilotRequest,
+    ErrorCode,
     flowStructureUtil,
     isNil,
     Trigger,
-    ActivepiecesError,
-    ErrorCode,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../../flows/flow/flow.service'
 import { generateCode } from './code-agent'
-import { FastifyBaseLogger } from 'fastify'
 
 function createErrorResponse(error: string, isConfigError = false): AskCopilotCodeResponse {
     return {
@@ -68,7 +68,7 @@ export const codeGeneratorTool = (log: FastifyBaseLogger) => ({
                 request.prompt,
                 platformId,
                 request.context,
-                log
+                log,
             )
 
             return {
@@ -81,8 +81,6 @@ export const codeGeneratorTool = (log: FastifyBaseLogger) => ({
         }
         catch (error) {
             exceptionHandler.handle(error, log)
-            console.error('[CodeGenerator] Error:', error)
-
             if (error instanceof ActivepiecesError && error.error.code === ErrorCode.COPILOT_FAILED) {
                 const message = error?.error?.params?.message || 'Copilot service is not configured. Please check your platform settings.'
                 return createErrorResponse(message, true)
