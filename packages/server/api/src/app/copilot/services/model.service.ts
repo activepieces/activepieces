@@ -37,7 +37,7 @@ export const modelService = (log: FastifyBaseLogger) => ({
       log.error(error);
       throw new ActivepiecesError({
         code: ErrorCode.COPILOT_FAILED,
-        params: { message: 'Failed to get model' },
+        params: { message: 'Your Copilot is not configured. Please configure your Copilot settings.' },
       });
     }
   }

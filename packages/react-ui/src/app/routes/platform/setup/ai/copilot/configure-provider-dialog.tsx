@@ -18,19 +18,23 @@ type ConfigureProviderDialogProps = {
 export const ConfigureProviderDialog = ({ open, onOpenChange }: ConfigureProviderDialogProps) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const openaiProvider = platform?.copilotSettings?.providers?.[CopilotProviderType.OPENAI] as OpenAiProvider | undefined;
+  
   const [selectedProvider, setSelectedProvider] = useState<CopilotProviderType>(CopilotProviderType.OPENAI);
   const [formData, setFormData] = useState({
-    baseUrl: 'https://api.openai.com',
-    apiKey: '',
+    baseUrl: openaiProvider?.baseUrl || 'https://api.openai.com',
+    apiKey: openaiProvider?.apiKey || '',
     resourceName: '',
     deploymentName: '',
   });
 
   const handleProviderChange = (value: CopilotProviderType) => {
+  
+    
     setSelectedProvider(value);
     const azureProvider = platform?.copilotSettings?.providers?.[CopilotProviderType.AZURE_OPENAI] as AzureOpenAiProvider | undefined;
     const openaiProvider = platform?.copilotSettings?.providers?.[CopilotProviderType.OPENAI] as OpenAiProvider | undefined;
-
 
     if (value === CopilotProviderType.OPENAI) {
       setFormData({
@@ -87,10 +91,11 @@ export const ConfigureProviderDialog = ({ open, onOpenChange }: ConfigureProvide
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{t('Configure AI Provider')}</DialogTitle>
+      <DialogContent className="sm:max-w-[425px] p-4">
+        <DialogHeader className="mb-4">
+          <DialogTitle className="text-lg font-medium">{t('Configure AI Provider')}</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4">
           <RadioGroup
             value={selectedProvider}
@@ -98,8 +103,14 @@ export const ConfigureProviderDialog = ({ open, onOpenChange }: ConfigureProvide
             className="flex gap-4"
           >
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value={CopilotProviderType.OPENAI} id="openai" />
-              <label htmlFor="openai" className="flex items-center gap-2 cursor-pointer">
+              <RadioGroupItem 
+                value={CopilotProviderType.OPENAI} 
+                id="openai"
+              />
+              <label 
+                htmlFor="openai" 
+                className="flex items-center gap-2 cursor-pointer text-sm"
+              >
                 <img
                   src="https://cdn.activepieces.com/pieces/openai.png"
                   alt="OpenAI"
@@ -109,8 +120,14 @@ export const ConfigureProviderDialog = ({ open, onOpenChange }: ConfigureProvide
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value={CopilotProviderType.AZURE_OPENAI} id="azure" />
-              <label htmlFor="azure" className="flex items-center gap-2 cursor-pointer">
+              <RadioGroupItem 
+                value={CopilotProviderType.AZURE_OPENAI} 
+                id="azure"
+              />
+              <label 
+                htmlFor="azure" 
+                className="flex items-center gap-2 cursor-pointer text-sm"
+              >
                 <img
                   src="https://cdn.activepieces.com/pieces/azure-openai.png"
                   alt="Azure OpenAI"
@@ -121,19 +138,20 @@ export const ConfigureProviderDialog = ({ open, onOpenChange }: ConfigureProvide
             </div>
           </RadioGroup>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {selectedProvider === CopilotProviderType.OPENAI ? (
               <>
-                <div>
+                <div className="space-y-1.5">
                   <label className="text-sm font-medium">{t('Base URL')}</label>
                   <Input
                     value={formData.baseUrl}
                     onChange={(e) => setFormData({ ...formData, baseUrl: e.target.value })}
                     placeholder="https://api.openai.com"
                     disabled={isSubmitting}
+                    className="h-9"
                   />
                 </div>
-                <div>
+                <div className="space-y-1.5">
                   <label className="text-sm font-medium">{t('API Key')}</label>
                   <Input
                     type="password"
@@ -141,30 +159,33 @@ export const ConfigureProviderDialog = ({ open, onOpenChange }: ConfigureProvide
                     onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
                     placeholder="sk-..."
                     disabled={isSubmitting}
+                    className="h-9"
                   />
                 </div>
               </>
             ) : (
               <>
-                <div>
+                <div className="space-y-1.5">
                   <label className="text-sm font-medium">{t('Resource Name')}</label>
                   <Input
                     value={formData.resourceName}
                     onChange={(e) => setFormData({ ...formData, resourceName: e.target.value })}
                     placeholder="my-resource"
                     disabled={isSubmitting}
+                    className="h-9"
                   />
                 </div>
-                <div>
+                <div className="space-y-1.5">
                   <label className="text-sm font-medium">{t('Deployment Name')}</label>
                   <Input
                     value={formData.deploymentName}
                     onChange={(e) => setFormData({ ...formData, deploymentName: e.target.value })}
                     placeholder="gpt-4"
                     disabled={isSubmitting}
+                    className="h-9"
                   />
                 </div>
-                <div>
+                <div className="space-y-1.5">
                   <label className="text-sm font-medium">{t('API Key')}</label>
                   <Input
                     type="password"
@@ -172,17 +193,22 @@ export const ConfigureProviderDialog = ({ open, onOpenChange }: ConfigureProvide
                     onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
                     placeholder="Enter API key"
                     disabled={isSubmitting}
+                    className="h-9"
                   />
                 </div>
               </>
             )}
           </div>
 
-          <div className="flex justify-end">
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <div className="flex justify-end pt-2">
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting}
+              className="h-9 px-4 text-sm"
+            >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="size-4 animate-spin mr-2" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />
                   {t('Saving')}
                 </>
               ) : (

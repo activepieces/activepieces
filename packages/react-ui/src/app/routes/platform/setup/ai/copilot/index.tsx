@@ -76,7 +76,7 @@ const CopilotSetup = () => {
               }
             </div>
           </div>
-          <div className="flex flex-row justify-center items-center gap-1">
+          <div className="flex flex-row justify-center items-center gap-2">
             <Button
               variant={configuredProvider ? 'ghost' : 'basic'}
               size={'sm'}
@@ -86,11 +86,13 @@ const CopilotSetup = () => {
             </Button>
             {configuredProvider && (
               <Button
-                variant="destructive"
+                variant="ghost"
                 size={'sm'}
                 onClick={() => deleteMutation.mutate()}
+                className="text-destructive hover:text-destructive/90 hover:bg-destructive/10 flex items-center gap-2"
               >
                 <Trash2 className="size-4" />
+                {t('Remove')}
               </Button>
             )}
           </div>

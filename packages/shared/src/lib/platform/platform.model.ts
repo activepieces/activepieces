@@ -98,9 +98,11 @@ export const Platform = Type.Object({
 
 export type Platform = Static<typeof Platform>
 
+
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: FederatedAuthnProviderConfigWithoutSensitiveData,
     defaultLocale: Nullable(Type.String()),
+    copilotSettings: Type.Optional(CopilotSettings),
     smtp: Type.Optional(Type.Object({})),
 }), Type.Pick(Platform, [
     'id',
