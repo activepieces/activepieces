@@ -5,6 +5,11 @@ import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
 import { platformService } from '../../../platform/platform.service'
 import { authenticationHelper } from '../authentication-service/hooks/authentication-helper'
 import { authnSsoSamlService } from './authn-sso-saml-service'
+import { eventsHooks } from '../../../helper/application-events'
+import { ApplicationEventName } from '@activepieces/ee-shared'
+import { networkUtls } from 'packages/server/shared/src/lib/network-utils'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 
 export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/login', LoginRequest, async (req, res) => {
@@ -26,6 +31,17 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             projectId: project.id,
         }
         url.searchParams.append('response', JSON.stringify(response))
+        eventsHooks.get(req.log).sendUserEvent({
+            platformId,
+            userId: response.id,
+            projectId: response.projectId,
+            ip: networkUtls.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+        }, {
+            action: ApplicationEventName.USER_SIGNED_UP,
+            data: {
+                source: 'sso',
+            },
+        })
         return res.redirect(url.toString())
     })
 }
