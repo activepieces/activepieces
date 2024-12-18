@@ -13,7 +13,7 @@ import {
     User,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -40,9 +40,6 @@ afterAll(async () => {
     await app?.close()
 })
 
-beforeEach(async () => {
-
-})
 
 describe('Project API', () => {
     describe('Create Project', () => {

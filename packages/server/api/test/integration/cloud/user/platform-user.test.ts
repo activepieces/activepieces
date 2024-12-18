@@ -4,7 +4,7 @@ import {
     PrincipalType,
     UserStatus,
 } from '@activepieces/shared'
-import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -19,13 +19,11 @@ import {
 
 let app: FastifyInstance | null = null
 
-let mockLog: FastifyBaseLogger
 
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
-    mockLog = app?.log!
 })
 
 afterAll(async () => {

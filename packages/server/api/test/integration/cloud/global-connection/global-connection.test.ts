@@ -23,7 +23,7 @@ let mockLog: FastifyBaseLogger
 beforeAll(async () => {
     await databaseConnection().initialize()
     app = await setupServer()
-    mockLog = app?.log!
+    mockLog = app!.log!
 })
 
 afterAll(async () => {

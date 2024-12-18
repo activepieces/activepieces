@@ -23,7 +23,7 @@ let mockLog: FastifyBaseLogger
 beforeAll(async () => { 
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
-    mockLog = app?.log!
+    mockLog = app!.log!
 })
 
 beforeEach(async () => {

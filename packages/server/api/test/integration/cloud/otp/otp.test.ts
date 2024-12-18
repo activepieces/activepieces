@@ -8,18 +8,16 @@ import { setupServer } from '../../../../src/app/server'
 import { CLOUD_PLATFORM_ID, createMockPlatform, createMockUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-let mockLog: FastifyBaseLogger
 let sendOtpSpy: jest.Mock
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
-    mockLog = app?.log!
 })
 
 beforeEach(() => {
     sendOtpSpy = jest.fn()
-    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((log: FastifyBaseLogger) => ({
+    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
         sendOtp: sendOtpSpy,
         sendInvitation: jest.fn(),
         sendIssueCreatedNotification: jest.fn(),

@@ -19,9 +19,9 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
 import { decodeToken } from '../../../helpers/auth'
-import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import {
     CLOUD_PLATFORM_ID,
     createMockCustomDomain,
@@ -47,7 +47,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
     sendOtpSpy = jest.fn()
-    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((log: FastifyBaseLogger) => ({
+    jest.spyOn(emailServiceFile, 'emailService').mockImplementation((_log: FastifyBaseLogger) => ({
         sendOtp: sendOtpSpy,
         sendInvitation: jest.fn(),
         sendIssueCreatedNotification: jest.fn(),
