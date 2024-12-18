@@ -20,7 +20,7 @@ import {
   ListPipelineStagesResponse,
   ListPropertiesResponse,
   PropertyResponse,
-} from '../common/models';
+} from '../common/types';
 
 export const createDealAction = createAction({
   auth: hubspotAuth,
