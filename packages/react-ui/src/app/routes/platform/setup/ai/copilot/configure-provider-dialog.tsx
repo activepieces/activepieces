@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { platformApi } from '@/lib/platforms-api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { useToast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { Loader2 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -18,7 +17,6 @@ type ConfigureProviderDialogProps = {
 
 export const ConfigureProviderDialog = ({ open, onOpenChange }: ConfigureProviderDialogProps) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<CopilotProviderType>(CopilotProviderType.OPENAI);
   const [formData, setFormData] = useState({

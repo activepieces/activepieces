@@ -6,8 +6,8 @@ import { Card } from '@/components/ui/card';
 import { platformHooks } from '@/hooks/platform-hooks';
 import type { AiProviderMetadata } from '@activepieces/pieces-common';
 import { AiProviderConfig } from '@activepieces/shared';
-
 import { UpsertAIProviderDialog } from './upsert-provider-dialog';
+
 
 type AIProviderCardProps = {
   provider?: AiProviderConfig;
