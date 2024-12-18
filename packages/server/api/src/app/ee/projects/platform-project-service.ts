@@ -80,10 +80,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         projectId,
         request,
     }: UpdateParams): Promise<ProjectWithLimits> {
-        await projectService.update(projectId, {
-            displayName: request.displayName,
-            externalId: request.externalId,
-        })
+        await projectService.update(projectId, request)
         if (!isNil(request.plan)) {
             const isSubscribed = await isSubscribedInStripe(projectId, log)
             const project = await projectService.getOneOrThrow(projectId)

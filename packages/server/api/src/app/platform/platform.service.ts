@@ -155,9 +155,7 @@ export const platformService = {
             })
         }
         
-        return {
-            ...platform,
-        }
+        return platform
     },
 
     async getOne(id: PlatformId): Promise<Platform | null> {

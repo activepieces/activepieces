@@ -19,6 +19,8 @@ import {
 
 let app: FastifyInstance | null = null
 
+
+
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()

@@ -4,9 +4,11 @@ import {
     pinoLogging,
 } from '@activepieces/server-shared'
 import {
+    ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     apId,
     EngineHttpResponse,
+    ErrorCode,
     EventPayload,
     Flow,
     FlowStatus,
@@ -252,7 +254,10 @@ async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<v
     const exceededLimit = await tasksLimit(log).exceededLimit({
         projectId: flow.projectId,
     })
-    if (exceededLimit) {
+    if (!exceededLimit) {
+        return
+    }
+    if (flow.status === FlowStatus.ENABLED) {
         log.info({
             message: 'disable webhook out of flow quota',
             projectId: flow.projectId,
@@ -264,7 +269,12 @@ async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<v
             newStatus: FlowStatus.DISABLED,
         })
     }
-
+    throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: {
+            metric: 'tasks',
+        },
+    })
 }
 
 const WEBHOOK_PARAMS = {
