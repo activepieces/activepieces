@@ -72,7 +72,11 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
     ApFlagId.CODE_COPILOT_ENABLED,
   );
   useEffect(() => {
-    if (piecesIsLoaded && selectedItemRef.current) {
+    if (
+      piecesIsLoaded &&
+      selectedItemRef.current &&
+      debouncedQuery.length === 0
+    ) {
       selectedItemRef.current?.scrollIntoView({
         behavior: 'auto',
         block: 'nearest',
@@ -132,7 +136,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
           <div className="flex flex-col gap-2 items-center justify-center h-full ">
             <WandSparkles className="w-14 h-14" />
             <div className="text-sm mb-3">
-              {t('Let our AI assitant help you out')}
+              {t('Let our AI assistant help you out')}
             </div>
             <AskAiButton
               varitant={'default'}

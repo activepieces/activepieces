@@ -18,7 +18,7 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EngineHelperResponse, EngineHelperTriggerResult, webhookUtils } from 'server-worker'
+import { EngineHelperResponse, EngineHelperTriggerResult } from 'server-worker'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -77,10 +77,6 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                 const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.TEST>>>({
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
-                    webhookUrl: await webhookUtils(log).getWebhookUrl({
-                        flowId: flow.id,
-                        simulate: true,
-                    }),
                     test: true,
                     projectId,
                     jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,

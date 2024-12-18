@@ -4,9 +4,7 @@ import {
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
 import {
-    AppSystemProp,
     JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType,
-    system,
     UserInteractionJobType,
 } from '@activepieces/server-shared'
 import {
@@ -24,10 +22,11 @@ import { FastifyBaseLogger } from 'fastify'
 import {
     EngineHelperResponse,
     EngineHelperTriggerResult,
-    webhookUtils,
 } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 import { jobQueue } from '../../../workers/queue'
 import { userInteractionWatcher } from '../../../workers/user-interaction-watcher'
 import { triggerUtils } from './trigger-utils'
@@ -64,16 +63,10 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         projectId,
     })
 
-    const webhookUrl = await webhookUtils(log).getWebhookUrl({
-        flowId: flowVersion.flowId,
-        simulate,
-    })
-
     const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
         jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion,
-        webhookUrl,
         projectId,
         test: simulate,
     })

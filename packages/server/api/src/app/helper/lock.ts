@@ -1,7 +1,10 @@
-import { ApLock, AppSystemProp, exceptionHandler, memoryLock, QueueMode, system } from '@activepieces/server-shared'
+import { ApLock, exceptionHandler, memoryLock } from '@activepieces/server-shared'
+import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import RedLock from 'redlock'
 import { createRedisClient } from '../database/redis-connection'
+import { QueueMode, system } from './system/system'
+import { AppSystemProp } from './system/system-prop'
 
 let redLock: RedLock
 let redisConnection: Redis
@@ -30,6 +33,7 @@ export const initializeLock = () => {
 const acquireRedisLock = async (
     key: string,
     timeout: number,
+    log: FastifyBaseLogger,
 ): Promise<ApLock> => {
     try {
         return await redLock.acquire([key], timeout, {
@@ -38,7 +42,7 @@ const acquireRedisLock = async (
         })
     }
     catch (e) {
-        exceptionHandler.handle(e)
+        exceptionHandler.handle(e, log)
         throw e
     }
 }
@@ -46,15 +50,17 @@ const acquireRedisLock = async (
 type AcquireLockParams = {
     key: string
     timeout?: number
+    log: FastifyBaseLogger
 }
 
 const acquireLock = async ({
     key,
     timeout = 3000,
+    log,
 }: AcquireLockParams): Promise<ApLock> => {
     switch (queueMode) {
         case QueueMode.REDIS:
-            return acquireRedisLock(key, timeout)
+            return acquireRedisLock(key, timeout, log)
         case QueueMode.MEMORY:
             return memoryLock.acquire(key, timeout)
         default:

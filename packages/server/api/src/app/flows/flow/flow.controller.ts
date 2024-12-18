@@ -43,7 +43,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             request: request.body,
         })
 
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.FLOW_CREATED,
             data: {
                 flow: newFlow,
@@ -62,7 +62,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
         })
         await assertThatFlowIsNotBeingUsed(flow, userId)
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.FLOW_UPDATED,
             data: {
                 request: request.body,
@@ -118,7 +118,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.FLOW_DELETED,
             data: {
                 flow,

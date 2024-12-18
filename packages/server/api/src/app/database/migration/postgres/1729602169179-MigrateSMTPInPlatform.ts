@@ -1,11 +1,13 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class MigrateSMTPInPlatform1729602169179 implements MigrationInterface {
     name = 'MigrateSMTPInPlatform1729602169179'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        log.info({
             name: this.name,
         }, 'up')
         await queryRunner.query(`
@@ -52,7 +54,7 @@ export class MigrateSMTPInPlatform1729602169179 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        log.info({
             name: this.name,
         }, 'down')
         await queryRunner.query(`

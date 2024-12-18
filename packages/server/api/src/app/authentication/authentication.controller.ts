@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtls, system } from '@activepieces/server-shared'
+import { networkUtls } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -9,6 +9,8 @@ import {
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../helper/application-events'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { resolvePlatformIdForAuthnRequest } from '../platform/platform-utils'
 import { authenticationService } from './authentication-service'
 import { Provider } from './authentication-service/hooks/authentication-service-hooks'
@@ -28,11 +30,11 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             provider: Provider.EMAIL,
         })
 
-        eventsHooks.get().sendUserEvent({
+        eventsHooks.get(request.log).sendUserEvent({
             platformId: platformId!,
             userId: signUpResponse.id,
             projectId: signUpResponse.projectId,
-            ip: networkUtls.extractClientRealIp(request),
+            ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }, {
             action: ApplicationEventName.USER_SIGNED_UP,
             data: {
@@ -54,11 +56,11 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             provider: Provider.EMAIL,
         })
 
-        eventsHooks.get().sendUserEvent({
+        eventsHooks.get(request.log).sendUserEvent({
             platformId: platformId!,
             userId: response.id,
             projectId: response.projectId,
-            ip: networkUtls.extractClientRealIp(request),
+            ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }, {
             action: ApplicationEventName.USER_SIGNED_IN,
             data: {},

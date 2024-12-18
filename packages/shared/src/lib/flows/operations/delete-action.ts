@@ -7,36 +7,40 @@ function _deleteAction(
     flowVersion: FlowVersion,
     request: DeleteActionRequest,
 ): FlowVersion {
-    return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
-        if (parentStep.nextAction && parentStep.nextAction.name === request.name) {
-            const stepToUpdate: Action = parentStep.nextAction
-            parentStep.nextAction = stepToUpdate.nextAction
-        }
-        switch (parentStep.type) {
-            case ActionType.LOOP_ON_ITEMS: {
-                if (
-                    parentStep.firstLoopAction &&
-            parentStep.firstLoopAction.name === request.name
-                ) {
-                    const stepToUpdate: Action = parentStep.firstLoopAction
-                    parentStep.firstLoopAction = stepToUpdate.nextAction
-                }
-                break
+    let clonedVersion: FlowVersion = flowVersion
+    for (const name of request.names) {
+        clonedVersion = flowStructureUtil.transferFlow(clonedVersion, (parentStep) => {
+            if (parentStep.nextAction && parentStep.nextAction.name === name) {
+                const stepToUpdate: Action = parentStep.nextAction
+                parentStep.nextAction = stepToUpdate.nextAction
             }
-            case ActionType.ROUTER: {
-                parentStep.children = parentStep.children.map((child) => {
-                    if (child && child.name === request.name) {
-                        return child.nextAction ?? null
+            switch (parentStep.type) {
+                case ActionType.LOOP_ON_ITEMS: {
+                    if (
+                        parentStep.firstLoopAction &&
+                        parentStep.firstLoopAction.name === name
+                    ) {
+                        const stepToUpdate: Action = parentStep.firstLoopAction
+                        parentStep.firstLoopAction = stepToUpdate.nextAction
                     }
-                    return child
-                })
-                break
+                    break
+                }
+                case ActionType.ROUTER: {
+                    parentStep.children = parentStep.children.map((child) => {
+                        if (child && child.name === name) {
+                            return child.nextAction ?? null
+                        }
+                        return child
+                    })
+                    break
+                }
+                default:
+                    break
             }
-            default:
-                break
-        }
-        return parentStep
-    })
+            return parentStep
+        })
+    }
+    return clonedVersion
 }
 
 export { _deleteAction }

@@ -1,10 +1,11 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
+const log = system.globalLogger()
 const FLOW_VERSION_TABLE = 'flow_version'
 export class migrateSchedule1679014156667 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('migrateSchedule1679014156667, started')
+        log.info('migrateSchedule1679014156667, started')
 
         let count = 0
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
@@ -28,11 +29,11 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                 )
             }
         }
-        logger.info('migrateSchedule1679014156667, finished flows ' + count)
+        log.info('migrateSchedule1679014156667, finished flows ' + count)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info('rolling back migrateSchedule1679014156667, started')
+        log.info('rolling back migrateSchedule1679014156667, started')
 
         let count = 0
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
@@ -53,7 +54,7 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
                 }
             }
         }
-        logger.info(
+        log.info(
             'rolling back  migrateSchedule1679014156667, finished flows ' + count,
         )
     }

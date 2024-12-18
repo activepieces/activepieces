@@ -4,10 +4,9 @@ import { SkipActionRequest } from '.'
 
 export function _skipAction(flowVersion: FlowVersion, request: SkipActionRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
-        if (stepToUpdate.name !== request.name) {
+        if (!request.names.includes(stepToUpdate.name)) {
             return stepToUpdate
         }
-
         return {
             ...stepToUpdate,
             skip: request.skip,

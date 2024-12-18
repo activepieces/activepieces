@@ -12,6 +12,8 @@ services:
       - postgres
       - redis
     env_file: .env
+    volumes:
+      - ./cache:/usr/src/app/cache
     networks:
       - activepieces
   postgres:

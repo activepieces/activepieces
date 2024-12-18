@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 const FLOW_VERSION_TABLE = 'flow_version'
 const APP_CONNECTION_TABLE = 'app_connection'
@@ -20,7 +22,7 @@ type Step = {
 
 export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('bumpFixPieceVersions1678928503715, started')
+        log.info('bumpFixPieceVersions1678928503715, started')
 
         let count = 0
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
@@ -83,7 +85,7 @@ export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
                 )
             }
         }
-        logger.info(
+        log.info(
             'bumpFixPieceVersions1678928503715, finished bumping ' +
         count +
         ' flows ' +

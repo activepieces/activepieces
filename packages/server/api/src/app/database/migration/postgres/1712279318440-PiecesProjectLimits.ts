@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class PiecesProjectLimits1712279318440 implements MigrationInterface {
     name = 'PiecesProjectLimits1712279318440'
@@ -10,7 +12,7 @@ export class PiecesProjectLimits1712279318440 implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
-        logger.info({
+        log.info({
             name: 'PiecesProjectLimits1712279318440' },
         'up')
         await queryRunner.query(`

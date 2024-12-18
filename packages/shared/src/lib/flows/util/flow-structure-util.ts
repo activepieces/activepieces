@@ -9,11 +9,11 @@ type StepWithIndex = Step & {
     dfsIndex: number
 }
 
-function isAction(type: ActionType | TriggerType | undefined): boolean {
+function isAction(type: ActionType | TriggerType | undefined): type is ActionType {
     return Object.entries(ActionType).some(([, value]) => value === type)
 }
 
-function isTrigger(type: ActionType | TriggerType | undefined): boolean {
+function isTrigger(type: ActionType | TriggerType | undefined): type is TriggerType {
     return Object.entries(TriggerType).some(([, value]) => value === type)
 }
 
@@ -164,8 +164,8 @@ function isChildOf(parent: Step, childStepName: string): boolean {
     return false
 }
 
-const findUnusedName = (trigger: Trigger) => {
-    const names = flowStructureUtil.getAllSteps(trigger).map((f) => f.name)
+const findUnusedName = (source: Trigger | string[]) => {
+    const names = Array.isArray(source) ? source : flowStructureUtil.getAllSteps(source).map((f) => f.name)
     let index = 1
     let name = 'step_1'
     while (names.includes(name)) {
@@ -175,6 +175,18 @@ const findUnusedName = (trigger: Trigger) => {
     return name
 }
 
+
+function getAllNextActionsWithoutChildren(start: Step): Step[] {
+    const actions: Step[] = []
+    let currentAction = start.nextAction
+
+    while (!isNil(currentAction)) {
+        actions.push(currentAction)
+        currentAction = currentAction.nextAction
+    }
+
+    return actions
+}
 
 export const flowStructureUtil = {
     isTrigger,
@@ -190,4 +202,6 @@ export const flowStructureUtil = {
     findPathToStep,
     isChildOf,
     findUnusedName,
+    getAllNextActionsWithoutChildren,
+    getAllChildSteps,
 }

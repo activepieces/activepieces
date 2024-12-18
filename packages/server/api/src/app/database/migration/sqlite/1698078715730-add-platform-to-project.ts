@@ -1,10 +1,14 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
+const log = system.globalLogger()
 export class AddPlatformToProject1698078715730 implements MigrationInterface {
     name = 'AddPlatformToProject1698078715730'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        log.info({
+            name: this.name,
+        }, 'up')
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
@@ -49,7 +53,9 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
 
-        logger.info('AddPlatformToProject1698078715730 up')
+        log.info({
+            name: this.name,
+        }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -95,6 +101,8 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
 
-        logger.info('AddPlatformToProject1698078715730 down')
+        log.info({
+            name: this.name,
+        }, 'down')
     }
 }

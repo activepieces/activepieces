@@ -76,7 +76,7 @@ export const BuilderHeader = () => {
   const folderName = folderData?.displayName ?? t('Uncategorized');
 
   return (
-    <div className="bg-background ">
+    <div className="bg-background select-none">
       <div className="relative items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
         <div className="flex h-full items-center justify-center gap-2">
           {!embedState.disableNavigationInBuilder && (

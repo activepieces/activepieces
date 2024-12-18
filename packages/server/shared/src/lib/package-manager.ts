@@ -1,10 +1,10 @@
 import fs from 'fs/promises'
 import fsPath from 'path'
 import { isEmpty } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { enrichErrorContext } from './exception-handler'
 import { exec } from './exec'
 import { fileExists } from './file-system'
-import { logger } from './logger'
 import { memoryLock } from './memory-lock'
 
 type PackageManagerOutput = {
@@ -31,10 +31,11 @@ export type PackageInfo = {
 const runCommand = async (
     path: string,
     command: Command,
+    log: FastifyBaseLogger,
     ...args: string[]
 ): Promise<PackageManagerOutput> => {
     try {
-        logger.debug({ path, command, args }, '[PackageManager#execute]')
+        log.debug({ path, command, args }, '[PackageManager#execute]')
 
         const commandLine = `pnpm ${command} ${args.join(' ')}`
         return await exec(commandLine, { cwd: path })
@@ -53,7 +54,7 @@ const runCommand = async (
     }
 }
 
-export const packageManager = {
+export const packageManager = (log: FastifyBaseLogger) => ({
     async add({ path, dependencies }: AddParams): Promise<PackageManagerOutput> {
         if (isEmpty(dependencies)) {
             return {
@@ -70,7 +71,7 @@ export const packageManager = {
         ]
 
         const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
-        return runCommand(path, 'add', ...dependencyArgs, ...config)
+        return runCommand(path, 'add', log, ...dependencyArgs, ...config)
     },
 
     async init({ path }: InitParams): Promise<PackageManagerOutput> {
@@ -84,7 +85,7 @@ export const packageManager = {
                 }
             }
             // It must be awaited so it only releases the lock after the command is done
-            const result = await runCommand(path, 'init')
+            const result = await runCommand(path, 'init', log)
             return result
         }
         finally {
@@ -93,7 +94,7 @@ export const packageManager = {
     },
 
     async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
-        return runCommand(path, command)
+        return runCommand(path, command, log)
     },
 
     async link({
@@ -106,15 +107,15 @@ export const packageManager = {
             '--config.auto-install-peers=true',
         ]
 
-        const result = await runCommand(path, 'link', linkPath, ...config)
+        const result = await runCommand(path, 'link', log, linkPath, ...config)
 
         const nodeModules = fsPath.join(path, 'node_modules', packageName)
-        await replaceRelativeSystemLinkWithAbsolute(nodeModules)
+        await replaceRelativeSystemLinkWithAbsolute(nodeModules, log)
         return result
     },
-}
+})
 
-const replaceRelativeSystemLinkWithAbsolute = async (filePath: string) => {
+const replaceRelativeSystemLinkWithAbsolute = async (filePath: string, log: FastifyBaseLogger) => {
     try {
         // Inside the isolate sandbox, the relative path is not valid
 
@@ -122,13 +123,13 @@ const replaceRelativeSystemLinkWithAbsolute = async (filePath: string) => {
 
         if (stats.isDirectory()) {
             const realPath = await fs.realpath(filePath)
-            logger.info({ realPath, filePath }, '[link]')
+            log.info({ realPath, filePath }, '[link]')
             await fs.unlink(filePath)
             await fs.symlink(realPath, filePath, 'junction')
         }
     }
     catch (error) {
-        logger.error([error], '[link]')
+        log.error([error], '[link]')
     }
 }
 
