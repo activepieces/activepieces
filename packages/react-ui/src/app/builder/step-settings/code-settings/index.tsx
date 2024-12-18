@@ -9,6 +9,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { platformHooks } from '@/hooks/platform-hooks';
 import {
   CodeAction,
   FlowOperationType,
@@ -20,7 +21,6 @@ import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 import { AskAiButton } from '../../pieces-selector/ask-ai';
 
 import { CodeEditor } from './code-editor';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below. 

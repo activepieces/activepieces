@@ -1,16 +1,16 @@
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Bot, Pencil, Trash2 } from 'lucide-react';
-import { ConfigureProviderDialog } from './configure-provider-dialog';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { CopilotProviderType } from '../../../../../../../../shared/src/lib/platform/platform.model';
-import { isNil } from '../../../../../../../../shared/src';
-import { platformApi } from '@/lib/platforms-api';
-import { useMutation } from '@tanstack/react-query';
 import { authenticationSession } from '@/lib/authentication-session';
+import { platformApi } from '@/lib/platforms-api';
+import { isNil, CopilotProviderType } from '@activepieces/shared';
+
+import { ConfigureProviderDialog } from './configure-provider-dialog';
 
 const CopilotSetup = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -20,15 +20,18 @@ const CopilotSetup = () => {
     mutationFn: async () => {
       const platformId = authenticationSession.getPlatformId();
       if (!platformId) return;
-      await platformApi.update({
-        copilotSettings: {
-          providers: {}
-        }
-      }, platformId);
+      await platformApi.update(
+        {
+          copilotSettings: {
+            providers: {},
+          },
+        },
+        platformId,
+      );
     },
     onSuccess: () => {
       refetch();
-    }
+    },
   });
 
   const getConfiguredProvider = () => {
@@ -70,10 +73,13 @@ const CopilotSetup = () => {
           <div className="flex flex-grow flex-col">
             <div className="text-lg">{t('Activepieces Copilot')}</div>
             <div className="text-sm text-muted-foreground">
-              {configuredProvider ? 
-                t('Copilot is configured and ready to help your users build flows faster using AI.') :
-                t('Configure Activepieces Copilot to help your users build flows faster using AI.')
-              }
+              {configuredProvider
+                ? t(
+                    'Copilot is configured and ready to help your users build flows faster using AI.',
+                  )
+                : t(
+                    'Configure Activepieces Copilot to help your users build flows faster using AI.',
+                  )}
             </div>
           </div>
           <div className="flex flex-row justify-center items-center gap-2">
@@ -98,11 +104,8 @@ const CopilotSetup = () => {
           </div>
         </div>
       </Card>
-      
-      <ConfigureProviderDialog 
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-      />
+
+      <ConfigureProviderDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 };

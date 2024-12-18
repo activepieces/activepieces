@@ -53,7 +53,6 @@ import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
-import { CopilotSettingsPage } from '../routes/platform/setup/copilot-providers/index';
 import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';

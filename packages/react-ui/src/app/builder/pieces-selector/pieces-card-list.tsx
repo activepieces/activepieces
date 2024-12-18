@@ -19,6 +19,7 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import {
   ApFlagId,
   FlowOperationType,
@@ -31,7 +32,6 @@ import { cn } from '../../../lib/utils';
 import { AskAiButton } from './ask-ai';
 import { PieceSearchSuggestions } from './piece-search-suggestions';
 import { PieceTagEnum } from './piece-tag-group';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 type PieceGroup = {
   title: string;
@@ -130,7 +130,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         ))}
 
       {noResultsFound &&
-        areCopilotsEnabled &&
+        isCopilotEnabled &&
         operation.type !== FlowOperationType.UPDATE_TRIGGER && (
           <div className="flex flex-col gap-2 items-center justify-center h-full ">
             <WandSparkles className="w-14 h-14" />
@@ -160,7 +160,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
         )}
 
       {noResultsFound &&
-        (!areCopilotsEnabled ||
+        (!isCopilotEnabled ||
           operation.type === FlowOperationType.UPDATE_TRIGGER) && (
           <div className="flex flex-col gap-2 items-center justify-center h-full ">
             <SearchX className="w-14 h-14" />

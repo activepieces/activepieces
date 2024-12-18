@@ -1,4 +1,5 @@
 import { usePrefetchQuery, useSuspenseQuery } from '@tanstack/react-query';
+
 import { platformApi } from '../lib/platforms-api';
 
 export const platformHooks = {
