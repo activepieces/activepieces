@@ -12,7 +12,7 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
-import { flowJobExecutor } from 'server-worker'
+import { flowJobExecutor, flowWorker } from 'server-worker'
 import { accessTokenManager } from '../../../../../src/app/authentication/lib/access-token-manager'
 import { initializeDatabase } from '../../../../../src/app/database'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
@@ -37,13 +37,13 @@ beforeAll(async () => {
         port: 3000,
     })
     mockLog = app.log
-
-
 })
 
 afterAll(async () => {
+    if (app) {
+        await app.close()
+    }
     await databaseConnection().destroy()
-    await app?.close()
 })
 
 describe('flow execution', () => {
@@ -140,6 +140,8 @@ describe('flow execution', () => {
             platformId: mockPlatform.id,
             projectId: mockProject.id,
         })
+        await flowWorker(mockLog).init(await accessTokenManager.generateWorkerToken());
+
         await flowJobExecutor(mockLog).executeFlow({
             flowVersionId: mockFlowVersion.id,
             projectId: mockProject.id,
@@ -167,9 +169,8 @@ describe('flow execution', () => {
             data: file.data,
             compression: file.compression,
         })
-        expect(
-            JSON.parse(decompressedData.toString('utf-8')).executionState,
-        ).toEqual({
+        const executionState = JSON.parse(decompressedData.toString('utf-8')).executionState
+        expect(executionState).toEqual({
             steps: {
                 webhook: {
                     type: 'PIECE_TRIGGER',
