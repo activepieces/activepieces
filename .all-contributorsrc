@@ -1406,6 +1406,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "ChineseHamberger",
+      "name": "张晟杰",
+      "avatar_url": "https://avatars.githubusercontent.com/u/101547635?v=4",
+      "profile": "https://github.com/ChineseHamberger",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
