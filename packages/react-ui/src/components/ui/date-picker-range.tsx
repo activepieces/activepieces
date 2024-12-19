@@ -1,6 +1,7 @@
 'use client';
 
 import { format, subDays, addDays } from 'date-fns';
+import { t } from 'i18next';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
@@ -21,8 +22,12 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
+import { ClockPicker } from './clock-picker';
+import { Label } from './label';
+import { Separator } from './separator';
+
 type DatePickerWithRangeProps = {
-  onChange: (date: DateRange) => void;
+  onChange: (date: DateRange | undefined) => void;
   className?: string;
   from?: string;
   to?: string;
@@ -31,6 +36,49 @@ type DatePickerWithRangeProps = {
   presetType: 'past' | 'future';
 };
 
+const applyTimeToDate = ({
+  sourceDate,
+  targetDate,
+}: {
+  sourceDate: Date;
+  targetDate: Date;
+}): Date => {
+  // Extract time components from sourceDate
+  const hours = sourceDate.getHours();
+  const minutes = sourceDate.getMinutes();
+  const seconds = sourceDate.getSeconds();
+  const milliseconds = sourceDate.getMilliseconds();
+
+  // Apply the time components to targetDate
+  targetDate.setHours(hours, minutes, seconds, milliseconds);
+
+  return targetDate; // Return the updated targetDate
+};
+const getInitialTimeDate = () => {
+  const now = new Date();
+  const startDate = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0,
+    0,
+    0,
+    0,
+  );
+  const endDate = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23,
+    59,
+    59,
+    999,
+  );
+  return {
+    from: startDate,
+    to: endDate,
+  };
+};
 export function DatePickerWithRange({
   className,
   onChange,
@@ -41,17 +89,43 @@ export function DatePickerWithRange({
   presetType = 'past',
 }: DatePickerWithRangeProps) {
   const [date, setDate] = React.useState<DateRange | undefined>();
-
+  const [timeDate, setTimeDate] = React.useState<DateRange>(
+    getInitialTimeDate(),
+  );
   React.useEffect(() => {
     setDate({
       from: from ? new Date(from) : undefined,
       to: to ? new Date(to) : undefined,
     });
+    const initialTimeDate = getInitialTimeDate();
+    setTimeDate({
+      from: from ? new Date(from) : initialTimeDate.from,
+      to: to ? new Date(to) : initialTimeDate.to,
+    });
   }, [from, to]);
 
   const handleSelect = (selectedDate: DateRange | undefined) => {
-    setDate(selectedDate);
     if (selectedDate) {
+      const newDate = {
+        from:
+          selectedDate.from && timeDate.from
+            ? applyTimeToDate({
+                sourceDate: timeDate.from,
+                targetDate: selectedDate.from,
+              })
+            : undefined,
+        to:
+          selectedDate.to && timeDate.to
+            ? applyTimeToDate({
+                sourceDate: timeDate.to,
+                targetDate: selectedDate.to,
+              })
+            : undefined,
+      };
+      setDate(newDate);
+      onChange(newDate);
+    } else {
+      setDate(selectedDate);
       onChange(selectedDate);
     }
   };
@@ -76,8 +150,10 @@ export function DatePickerWithRange({
       default:
         newDate = { from: today, to: addDays(today, parseInt(value)) };
     }
-
+    newDate.from!.setHours(0, 0, 0, 0);
+    newDate.to!.setHours(23, 59, 59, 999);
     setDate(newDate);
+    setTimeDate(newDate);
     onChange(newDate);
   };
 
@@ -97,7 +173,7 @@ export function DatePickerWithRange({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, 'LLL dd, y')} -{' '}
+                  {format(date.from, 'LLL dd, y')}-{' '}
                   {format(date.to, 'LLL dd, y')}
                 </>
               ) : (
@@ -145,6 +221,56 @@ export function DatePickerWithRange({
             toDate={maxDate}
             fromDate={minDate}
           />
+          <Separator className="my-2"></Separator>
+          <div className="flex gap-2 justify-center items-center flex-col mb-2">
+            <div className="flex gap-2 justify-center items-center mt-2">
+              <Label className="mr-1">{t('Starting Time')}</Label>
+              <ClockPicker
+                date={timeDate.from}
+                setDate={(fromTime) => {
+                  if (date?.from) {
+                    const fromWithCorrectedTime = applyTimeToDate({
+                      sourceDate: fromTime,
+                      targetDate: date.from,
+                    });
+                    setDate({
+                      from: fromWithCorrectedTime,
+                      to: date.to,
+                    });
+                    onChange({
+                      from: fromWithCorrectedTime,
+                      to: date.to,
+                    });
+                  }
+                  setTimeDate({ ...timeDate, from: fromTime });
+                }}
+              ></ClockPicker>
+            </div>
+            <div className="flex gap-2 justify-center items-center mt-2">
+              <Label>{t('Finshing Time')}</Label>
+              <ClockPicker
+                date={timeDate.to}
+                setDate={(toTime) => {
+                  const toDate = date?.to ?? date?.from;
+                  if (toDate) {
+                    const toWithCorrectedTime = applyTimeToDate({
+                      sourceDate: toTime,
+                      targetDate: toDate,
+                    });
+                    setDate({
+                      from: date?.from,
+                      to: toWithCorrectedTime,
+                    });
+                    onChange({
+                      from: date?.from,
+                      to: toWithCorrectedTime,
+                    });
+                  }
+                  setTimeDate({ ...timeDate, to: toTime });
+                }}
+              ></ClockPicker>
+            </div>
+          </div>
         </PopoverContent>
       </Popover>
     </div>
