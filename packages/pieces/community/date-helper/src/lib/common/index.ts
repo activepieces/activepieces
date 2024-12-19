@@ -49,6 +49,8 @@ export enum timeFormatLabel {
   format14 = 'X (1694949838)',
 }
 
+
+
 export enum timeParts {
   year = 'year',
   month = 'month',
@@ -61,11 +63,14 @@ export enum timeParts {
   monthName = 'monthName',
 }
 
-
+export const getCorrectedFormat = (format:string) =>{
+  return format.replaceAll('DDDD','dddd').replaceAll('DDD','ddd');
+}
 export function parseDate(date: string, format: string): dayjs.Dayjs {
-  const djs = dayjs(date, format);
+  const correctedFormat = getCorrectedFormat(format);
+  const djs = dayjs(date, correctedFormat);
   if (!djs.isValid()) {
-    throw new Error(`Failed to parse the date: ${date} with format: ${format}`);
+    throw new Error(`Failed to parse the date: ${date} with format: ${correctedFormat}`);
   }
   return djs;
 }
