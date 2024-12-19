@@ -149,7 +149,7 @@ export default function IssuesTable() {
     ],
     [userHasPermissionToMarkAsResolved, handleMarkAsResolved, t],
   );
-  const userHasPermisionToSeeRuns = checkAccess(Permission.READ_RUN);
+  const userHasPermissionToSeeRuns = checkAccess(Permission.READ_RUN);
   const handleRowClick = ({
     newWindow,
     flowId,
@@ -227,7 +227,7 @@ export default function IssuesTable() {
           },
         ]}
         onRowClick={
-          userHasPermisionToSeeRuns
+          userHasPermissionToSeeRuns
             ? (row, newWindow) =>
                 handleRowClick({
                   newWindow,
