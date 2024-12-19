@@ -141,7 +141,7 @@ export const gitRepoService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async pull({ gitRepo, dryRun, userId }: PullGitRepoRequest): Promise<ProjectSyncPlan> {
+    async pull({ gitRepo, dryRun, userId, selectedOperations }: PullGitRepoRequest): Promise<ProjectSyncPlan> {
         const project = await projectService.getOneOrThrow(gitRepo.projectId)
         const { flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         const gitProjectState = await gitSyncHelper(log).getStateFromGit(flowFolderPath)
@@ -163,6 +163,9 @@ export const gitRepoService = (log: FastifyBaseLogger) => ({
         for (const operation of operations) {
             switch (operation.type) {
                 case ProjectOperationType.UPDATE_FLOW: {
+                    if (!selectedOperations?.includes(operation.projectFlow.id)) {
+                        continue
+                    }
                     const flowUpdated = await gitSyncHelper(log).updateFlowInProject(operation.projectFlow, operation.gitFile.flow, gitRepo.projectId)
                     if (flowUpdated.status === FlowStatus.ENABLED) {
                         publishJobs.push(gitSyncHelper(log).republishFlow(flowUpdated.id, gitRepo.projectId))
@@ -174,6 +177,9 @@ export const gitRepoService = (log: FastifyBaseLogger) => ({
                     break
                 }
                 case ProjectOperationType.CREATE_FLOW: {
+                    if (!selectedOperations?.includes(operation.gitFile.flow.id)) {
+                        continue
+                    }
                     const flowCreated = await gitSyncHelper(log).createFlowInProject(operation.gitFile.flow, gitRepo.projectId)
                     newMapState = newMapState.mapFlow({
                         sourceId: operation.gitFile.baseFilename,
@@ -181,10 +187,14 @@ export const gitRepoService = (log: FastifyBaseLogger) => ({
                     })
                     break
                 }
-                case ProjectOperationType.DELETE_FLOW:
+                case ProjectOperationType.DELETE_FLOW: {
+                    if (!selectedOperations?.includes(operation.projectFlow.id)) {
+                        continue
+                    }
                     await gitSyncHelper(log).deleteFlowFromProject(operation.projectFlow.id, gitRepo.projectId)
                     newMapState = newMapState.deleteFlow(operation.projectFlow.id)
                     break
+                }
             }
         }
         await repo().update({ id: gitRepo.id }, { mapping: newMapState })
@@ -258,4 +268,5 @@ type PullGitRepoRequest = {
     gitRepo: GitRepo
     userId: string
     dryRun: boolean
+    selectedOperations?: string[]
 }

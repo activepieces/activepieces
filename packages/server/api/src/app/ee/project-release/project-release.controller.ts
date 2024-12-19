@@ -10,26 +10,26 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
         })
     })
 
-    app.post('/', CreateProjectReleaseRequest, async (req, res) => {
-        const projectRelease = await projectReleaseService.create({
+    app.post('/', CreateProjectReleaseRequest, async (req) => {
+        return projectReleaseService.create({
             projectId: req.principal.projectId,
-            fileId: req.body.fileId,
             importedBy: req.principal.id,
             name: req.body.name,
             description: req.body.description,
+            log: req.log,
+            type: req.body.type,
+            repoId: req.body.repoId,
+            selectedOperations: req.body.selectedOperations,
         })
-        return res.status(StatusCodes.CREATED).send(projectRelease)
-        // TODO: we should audit log this event
     })
 
-    app.delete('/:id', DeleteProjectReleaseRequest, async (req, res) => {
-        await projectReleaseService.delete({
+    app.post('/:id/download', DownloadProjectReleaseRequest, async (req) => {
+        return projectReleaseService.download({
             id: req.params.id,
             projectId: req.principal.projectId,
+            log: req.log,
         })
-        return res.status(StatusCodes.NO_CONTENT).send()
     })
-
 }
 
 const ListProjectReleasesRequest = {
@@ -55,7 +55,7 @@ const CreateProjectReleaseRequest = {
     },
 }
 
-const DeleteProjectReleaseRequest = {
+const DownloadProjectReleaseRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
     },
@@ -63,8 +63,5 @@ const DeleteProjectReleaseRequest = {
         params: Type.Object({
             id: ApId,
         }),
-        response: {
-            [StatusCodes.NO_CONTENT]: Type.Null(),
-        },
     },
 }

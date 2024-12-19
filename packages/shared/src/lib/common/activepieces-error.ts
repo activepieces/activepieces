@@ -69,6 +69,7 @@ export type ApErrorParams =
     | NoChatResponseParams
     | InvalidSmtpCredentialsErrorParams
     | InvalidGitCredentialsParams
+    | InvalidReleaseTypeParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -402,6 +403,10 @@ export type InvalidGitCredentialsParams = BaseErrorParams<ErrorCode.INVALID_GIT_
     message: string
 }>
 
+export type InvalidReleaseTypeParams = BaseErrorParams<ErrorCode.INVALID_RELEASE_TYPE, {
+    message: string
+}>
+
 export enum ErrorCode {
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
     AUTHENTICATION = 'AUTHENTICATION',
@@ -457,4 +462,5 @@ export enum ErrorCode {
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
+    INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
 }

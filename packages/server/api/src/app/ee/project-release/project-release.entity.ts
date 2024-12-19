@@ -1,4 +1,4 @@
-import { File, Project, ProjectRelease, User } from '@activepieces/shared'
+import { File, Project, ProjectRelease, ProjectReleaseType, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
@@ -30,6 +30,11 @@ export const ProjectReleaseEntity = new EntitySchema<ProjectReleaseSchema>({
         },
         fileId: {
             type: String,
+            nullable: false,
+        },
+        type: {
+            type: String,
+            enum: ProjectReleaseType,
             nullable: false,
         },
     },

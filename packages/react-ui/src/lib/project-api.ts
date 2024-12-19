@@ -38,4 +38,9 @@ export const projectApi = {
   delete: async (projectId: string) => {
     return api.delete<void>(`/v1/projects/${projectId}`);
   },
+  rollback: async (projectId: string, releaseId: string) => {
+    return api.post<void>(`/v1/projects/${projectId}/rollback`, {
+      releaseId,
+    });
+  },
 };

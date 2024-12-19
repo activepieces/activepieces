@@ -38,6 +38,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
             gitRepo,
             userId,
             dryRun: false,
+            selectedOperations: [],
         })
     })
 
@@ -68,6 +69,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
             gitRepo,
             dryRun: request.body.dryRun ?? false,
             userId: request.principal.id,
+            selectedOperations: request.body.selectedOperations,
         })
     })
 

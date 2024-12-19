@@ -14,6 +14,7 @@ export class CreateProjectReleaseTable1734418823028 implements MigrationInterfac
                 "description" character varying,
                 "importedBy" character varying(21),
                 "fileId" character varying NOT NULL,
+                "type" character varying NOT NULL,
                 CONSTRAINT "PK_11aa4566a8a7a623e5c3f9809fe" PRIMARY KEY ("id")
             )
         `)

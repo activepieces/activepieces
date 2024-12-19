@@ -40,6 +40,7 @@ import {
     Project,
     ProjectPlan,
     ProjectRelease,
+    ProjectReleaseType,
     ProjectRole,
     RoleType,
     RunEnvironment,
@@ -564,6 +565,7 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
         fileId: projectRelease?.fileId ?? apId(),
         name: projectRelease?.name ?? faker.lorem.word(),
         description: projectRelease?.description ?? faker.lorem.sentence(),
+        type: projectRelease?.type ?? faker.helpers.enumValue(ProjectReleaseType),
     }
 }
 

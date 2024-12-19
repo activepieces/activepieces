@@ -23,6 +23,7 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { projectLimitsService } from '../project-plan/project-plan.service'
+import { projectReleaseService } from '../project-release/project-release.service'
 import { platformProjectService } from './platform-project-service'
 
 const DEFAULT_LIMIT_SIZE = 50
@@ -73,6 +74,15 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             projectId: request.params.id,
             request: request.body,
         })
+    })
+
+    app.post('/:id/rollback', RollbackProjectRequest, async (req, res) => {
+        await projectReleaseService.rollback({
+            projectId: req.params.id,
+            id: req.body.releaseId,
+            log: req.log,
+        })
+        return res.status(StatusCodes.OK).send()
     })
 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
@@ -160,6 +170,23 @@ const ListProjectRequestForApiKey = {
             externalId: Type.Optional(Type.String()),
             limit: Type.Optional(Type.Number({})),
             cursor: Type.Optional(Type.String({})),
+        }),
+        tags: ['projects'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
+
+const RollbackProjectRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        body: Type.Object({
+            releaseId: Type.String(),
         }),
         tags: ['projects'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
