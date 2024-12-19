@@ -3,7 +3,6 @@ import {
   createContext,
   useContext,
   useCallback,
-  useEffect,
   useState,
 } from 'react';
 import { create, useStore } from 'zustand';
@@ -623,19 +622,15 @@ export const useSwitchToDraft = () => {
 
 export const usePasteActionsInClipboard = () => {
   const [actionsToPaste, setActionsToPaste] = useState<Action[]>([]);
-
-  useEffect(() => {
-    const fetchClipboardOperations = async () => {
+  const fetchClipboardOperations = async () => {
+    if (document.hasFocus()) {
       const fetchedActionsFromClipboard = await getActionsInClipboard();
       if (fetchedActionsFromClipboard.length > 0) {
         setActionsToPaste(fetchedActionsFromClipboard);
       } else {
         setActionsToPaste([]);
       }
-    };
-    fetchClipboardOperations();
-    const interval = setInterval(fetchClipboardOperations, 500);
-    return () => clearInterval(interval);
-  }, []);
-  return actionsToPaste;
+    }
+  };
+  return {actionsToPaste, fetchClipboardOperations};
 };

@@ -28,6 +28,7 @@ import {
   NODE_SELECTION_RECT_CLASS_NAME,
   useBuilderStateContext,
   useHandleKeyPressOnCanvas,
+  usePasteActionsInClipboard,
 } from '../builder-hooks';
 
 import { CanvasContextMenu } from './context-menu/canvas-context-menu';
@@ -108,7 +109,7 @@ export const FlowCanvas = React.memo(
         state.setPieceSelectorStep,
       ];
     });
-
+    const {actionsToPaste,fetchClipboardOperations} = usePasteActionsInClipboard();
     const previousRun = usePrevious(run);
     const { fitView, getViewport, setViewport } = useReactFlow();
     if (
@@ -173,6 +174,7 @@ export const FlowCanvas = React.memo(
     }, [graphKey]);
     const onContextMenu = useCallback(
       (ev: React.MouseEvent<HTMLDivElement>) => {
+        fetchClipboardOperations();
         if (
           ev.target instanceof HTMLElement ||
           ev.target instanceof SVGElement
@@ -246,6 +248,7 @@ export const FlowCanvas = React.memo(
             flowVersion={flowVersion}
             readonly={readonly}
             setPieceSelectorStep={setPieceSelectorStep}
+            actionsToPaste={actionsToPaste}
           >
             <ReactFlow
               onContextMenu={onContextMenu}

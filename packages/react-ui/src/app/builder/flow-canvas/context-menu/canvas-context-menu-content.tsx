@@ -37,6 +37,7 @@ import {
 } from '../bulk-actions';
 
 import { CanvasContextMenuProps, CanvasShortcuts } from './canvas-context-menu';
+import { useEffect } from 'react';
 
 const ShortcutWrapper = ({
   children,
@@ -60,6 +61,7 @@ export const CanvasContextMenuContent = ({
   flowVersion,
   exitStepSettings,
   readonly,
+  actionsToPaste,
   setPieceSelectorStep,
 }: CanvasContextMenuProps) => {
   const disabled = selectedNodes.length === 0;
@@ -67,7 +69,6 @@ export const CanvasContextMenuContent = ({
     (node) =>
       !!(flowStructureUtil.getStep(node, flowVersion.trigger) as Action)?.skip,
   );
-  const actionsToPaste = usePasteActionsInClipboard();
   const doesNotContainTrigger = !selectedNodes.some(
     (node) => node === flowVersion.trigger.name,
   );
@@ -77,6 +78,7 @@ export const CanvasContextMenuContent = ({
     selectedNodes[0],
     flowVersion.trigger,
   );
+
   const showPasteAsFirstLoopAction =
     selectedNodes.length === 1 &&
     firstSelectedStep?.type === ActionType.LOOP_ON_ITEMS;
