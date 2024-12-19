@@ -4,11 +4,11 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { ShortcutProps } from '@/components/ui/shortcut';
+import { Action } from '@activepieces/shared';
 
 import { BuilderState } from '../../builder-hooks';
 
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
-import { Action } from '@activepieces/shared';
 
 export type CanvasShortcutsProps = Record<
   'Paste' | 'Delete' | 'Copy' | 'Skip',

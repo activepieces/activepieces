@@ -1,10 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import {
-  createContext,
-  useContext,
-  useCallback,
-  useState,
-} from 'react';
+import { createContext, useContext, useCallback, useState } from 'react';
 import { create, useStore } from 'zustand';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -632,5 +627,5 @@ export const usePasteActionsInClipboard = () => {
       }
     }
   };
-  return {actionsToPaste, fetchClipboardOperations};
+  return { actionsToPaste, fetchClipboardOperations };
 };

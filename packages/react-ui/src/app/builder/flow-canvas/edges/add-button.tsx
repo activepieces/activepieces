@@ -138,7 +138,6 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   {!actionMenuOpen && (
                     <Plus className="w-3 h-3 stroke-[3px] text-white" />
                   )}
-               
                 </div>
               </div>
             )}

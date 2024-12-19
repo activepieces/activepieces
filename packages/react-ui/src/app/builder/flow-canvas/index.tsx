@@ -109,7 +109,8 @@ export const FlowCanvas = React.memo(
         state.setPieceSelectorStep,
       ];
     });
-    const {actionsToPaste,fetchClipboardOperations} = usePasteActionsInClipboard();
+    const { actionsToPaste, fetchClipboardOperations } =
+      usePasteActionsInClipboard();
     const previousRun = usePrevious(run);
     const { fitView, getViewport, setViewport } = useReactFlow();
     if (

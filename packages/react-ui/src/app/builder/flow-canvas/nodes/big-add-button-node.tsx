@@ -109,7 +109,6 @@ const ApBigAddButtonCanvasNode = React.memo(
                       onOpenChange={setPieceSelectorOpen}
                     >
                       <span>
-
                         {showAiIndicator && (
                           <AskAiIndicator
                             height={
@@ -133,7 +132,6 @@ const ApBigAddButtonCanvasNode = React.memo(
                             />
                           </Button>
                         )}
-                      
                       </span>
                     </PieceSelector>
                   )}

@@ -27,7 +27,6 @@ import {
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
-import { usePasteActionsInClipboard } from '../../builder-hooks';
 import {
   copySelectedNodes,
   deleteSelectedNodes,
@@ -37,7 +36,6 @@ import {
 } from '../bulk-actions';
 
 import { CanvasContextMenuProps, CanvasShortcuts } from './canvas-context-menu';
-import { useEffect } from 'react';
 
 const ShortcutWrapper = ({
   children,
