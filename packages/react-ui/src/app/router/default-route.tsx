@@ -8,15 +8,15 @@ export const determineDefaultRoute = (
   checkAccess: (permission: Permission) => boolean,
 ) => {
   if (checkAccess(Permission.READ_FLOW)) {
-    return '/flows';
+    return authenticationSession.appendProjectRoutePrefix('/flows');
   }
   if (checkAccess(Permission.READ_RUN)) {
-    return '/runs';
+    return authenticationSession.appendProjectRoutePrefix('/runs');
   }
   if (checkAccess(Permission.READ_ISSUES)) {
-    return '/issues';
+    return authenticationSession.appendProjectRoutePrefix('/issues');
   }
-  return '/settings';
+  return authenticationSession.appendProjectRoutePrefix('/settings');
 };
 
 export const DefaultRoute = () => {
@@ -26,7 +26,5 @@ export const DefaultRoute = () => {
     return <Navigate to="/sign-in" replace={true}></Navigate>;
   }
 
-  return (
-    <Navigate to={determineDefaultRoute(checkAccess)} replace={true}></Navigate>
-  );
+  return <Navigate to={determineDefaultRoute(checkAccess)} replace></Navigate>;
 };

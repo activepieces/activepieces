@@ -168,11 +168,12 @@ export default function IssuesTable() {
         FlowRunStatus.TIMEOUT,
       ],
     }).toString();
+    const pathname = authenticationSession.appendProjectRoutePrefix('/runs');
     if (newWindow) {
-      openNewWindow('/runs', searchParams);
+      openNewWindow(pathname, searchParams);
     } else {
       navigate({
-        pathname: '/runs',
+        pathname,
         search: searchParams,
       });
     }
