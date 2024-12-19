@@ -83,11 +83,11 @@ function getInitialRun(
         return;
       }
       socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-      console.log('clear TEST_FLOW_RUN_STARTED listener'+ run.id)
+      console.log('clear TEST_FLOW_RUN_STARTED listener' + run.id);
       resolve(run);
     };
- 
+
     socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
-    console.log('listened to TEST_FLOW_RUN_STARTED')
+    console.log('listened to TEST_FLOW_RUN_STARTED');
   });
 }
