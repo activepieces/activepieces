@@ -76,6 +76,7 @@ import { AddIndiciesToTriggerEventSqlite1732324359348 } from './migration/sqlite
 import { AddIndiciesToRunSqlite1732324481815 } from './migration/sqlite/1732324481815-AddIndiciesToRunSqlite'
 import { CreateProjectRoleTableSqlite1732482844483 } from './migration/sqlite/1732482844483-CreateProjectRoleTableSqlite'
 import { AddProjectRelationInUserInvitationSqlite1732791068873 } from './migration/sqlite/1732791068873-AddProjectRelationInUserInvitationSqlite'
+import { TablesProductSqlite1734354249984 } from './migration/sqlite/1734354249984-TablesProductSqlite'
 import { RemoveWorkerTypeSqlite1734439194575 } from './migration/sqlite/1734439194575-RemoveWorkerTypeSqlite'
 import { AddCopilotSettingsSqlite1734479435668 } from './migration/sqlite/1734479435668-AddCopilotSettingsSqlite'
 
@@ -171,6 +172,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIndiciesToTriggerEventSqlite1732324359348,
         AddIndiciesToRunSqlite1732324481815,
         AddProjectRelationInUserInvitationSqlite1732791068873,
+        TablesProductSqlite1734354249984,
         RemoveWorkerTypeSqlite1734439194575,
         AddCopilotSettingsSqlite1734479435668,
     ]
