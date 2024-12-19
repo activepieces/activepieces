@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { hubspotApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { additionalPropertyNamesDropdown, getDefaultProperties } from '../common/props';
+import { OBJECT_TYPE } from '../common/constants';
 
 export const getContactAction = createAction({
 	auth: hubspotAuth,

@@ -8,6 +8,7 @@ import { hubSpotClient } from './client';
 import { hubspotApiCall } from '.';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { HubspotProperty } from './types';
+import { DEFAULT_CONTACT_PROPERTIES, DEFAULT_DEAL_PROPERTIES, DEFAULT_TICKET_PROPERTIES } from './constants';
 
 export const hubSpotAuthentication = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -68,8 +69,14 @@ export const hubSpotListIdDropdown = Property.Dropdown<number>({
 
 export function getDefaultProperties(objectType:string) {
 	if (objectType === "contact") {
-	  return DEFAULT_CONTACT_PROPERTIES;
-	} else {
+	  return DEFAULT_CONTACT_PROPERTIES;}
+	else if (objectType === "deal") {
+	  return DEFAULT_DEAL_PROPERTIES;
+	}
+	else if(objectType === "ticket") {
+	  return DEFAULT_TICKET_PROPERTIES;
+	}
+	 else {
 	  return [];
 	}
 }

@@ -14,6 +14,8 @@ import { createDealAction } from './lib/actions/create-deal';
 import { updateDealAction } from './lib/actions/update-deal';
 import { dealStageUpdatedTrigger } from './lib/triggers/deal-stage-updated';
 import { getContactAction } from './lib/actions/get-contact';
+import { getDealAction } from './lib/actions/get-deal';
+import { getTicketAction } from './lib/actions/get-ticket';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -52,6 +54,8 @@ export const hubspot = createPiece({
 		hubSpotListsAddContactAction,
 		hubSpotGetOwnerByEmailAction,
 		getContactAction,
+		getDealAction,
+		getTicketAction,
 		createDealAction,
 		updateDealAction,
 		createCustomApiCallAction({
