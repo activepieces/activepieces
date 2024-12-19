@@ -4,6 +4,7 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { ShortcutProps } from '@/components/ui/shortcut';
+import { Action } from '@activepieces/shared';
 
 import { BuilderState } from '../../builder-hooks';
 
@@ -47,6 +48,7 @@ export type CanvasContextMenuProps = Pick<
   | 'setPieceSelectorStep'
 > & {
   children?: React.ReactNode;
+  actionsToPaste: Action[];
 };
 export const CanvasContextMenu = ({
   selectedNodes,
@@ -57,6 +59,7 @@ export const CanvasContextMenu = ({
   exitStepSettings,
   readonly,
   setPieceSelectorStep,
+  actionsToPaste,
 }: CanvasContextMenuProps) => {
   const doesNotContainTrigger = !selectedNodes.some(
     (node) => node === flowVersion.trigger.name,
@@ -76,6 +79,7 @@ export const CanvasContextMenu = ({
             flowVersion={flowVersion}
             exitStepSettings={exitStepSettings}
             readonly={readonly}
+            actionsToPaste={actionsToPaste}
             setPieceSelectorStep={setPieceSelectorStep}
           ></CanvasContextMenuContent>
         </ContextMenuContent>

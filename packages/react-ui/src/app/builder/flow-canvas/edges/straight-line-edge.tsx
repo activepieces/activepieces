@@ -38,8 +38,7 @@ export const ApStraightLineCanvasEdge = ({
             (targetY - sourceY) / 2 -
             flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height
           }
-          // add 100 to the width to make the add button group hoverable
-          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 100}
+          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
           className="overflow-visible cursor-default"
         >
