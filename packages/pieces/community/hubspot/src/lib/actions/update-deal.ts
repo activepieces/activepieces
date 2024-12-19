@@ -21,7 +21,7 @@ import {
 	ListPropertiesResponse,
 	PropertyResponse,
 	SearchDealsResponse,
-} from '../common/models';
+} from '../common/types';
 
 export const updateDealAction = createAction({
 	auth: hubspotAuth,

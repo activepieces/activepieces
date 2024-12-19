@@ -23,7 +23,7 @@ import {
 	ListDealPipelinesResponse,
 	ListPipelineStagesResponse,
 	SearchDealsResponse,
-} from '../common/models';
+} from '../common/types';
 
 const polling: Polling<
 	PiecePropValueSchema<typeof hubspotAuth>,
