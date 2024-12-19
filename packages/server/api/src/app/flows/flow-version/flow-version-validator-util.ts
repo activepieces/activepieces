@@ -207,7 +207,7 @@ function validateProps(
     const valid = propsValidator.Check(input)
     return {
         valid,
-        cleanInput: valid ? (Value.Clean(propsSchema, input) as Record<string, unknown>) : undefined,
+        cleanInput: input,
     }
 }
 
