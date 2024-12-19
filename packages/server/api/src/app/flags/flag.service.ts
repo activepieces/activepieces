@@ -27,8 +27,6 @@ export const flagService = {
             id: In([
                 ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 ApFlagId.CLOUD_AUTH_ENABLED,
-                ApFlagId.CODE_COPILOT_ENABLED,
-                ApFlagId.HTTP_REQUEST_COPILOT_ENABLED,
                 ApFlagId.PROJECT_LIMITS_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
@@ -127,18 +125,6 @@ export const flagService = {
             {
                 id: ApFlagId.PROJECT_LIMITS_ENABLED,
                 value: false,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.CODE_COPILOT_ENABLED,
-                value: !isNil(system.get(AppSystemProp.OPENAI_API_KEY)),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.HTTP_REQUEST_COPILOT_ENABLED,
-                value: !isNil(system.get(AppSystemProp.OPENAI_API_KEY)),
                 created,
                 updated,
             },

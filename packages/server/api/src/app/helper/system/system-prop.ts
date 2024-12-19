@@ -7,12 +7,9 @@ export enum AppSystemProp {
     API_RATE_LIMIT_AUTHN_ENABLED = 'API_RATE_LIMIT_AUTHN_ENABLED',
     API_RATE_LIMIT_AUTHN_MAX = 'API_RATE_LIMIT_AUTHN_MAX',
     API_RATE_LIMIT_AUTHN_WINDOW = 'API_RATE_LIMIT_AUTHN_WINDOW',
-    AZURE_OPENAI_API_VERSION = 'AZURE_OPENAI_API_VERSION',
-    AZURE_OPENAI_ENDPOINT = 'AZURE_OPENAI_ENDPOINT',
     CLIENT_REAL_IP_HEADER = 'CLIENT_REAL_IP_HEADER',
     CLOUD_AUTH_ENABLED = 'CLOUD_AUTH_ENABLED',
     CONFIG_PATH = 'CONFIG_PATH',
-    COPILOT_INSTANCE_TYPE = 'COPILOT_INSTANCE_TYPE',
     DB_TYPE = 'DB_TYPE',
     DEV_PIECES = 'DEV_PIECES',
     ENCRYPTION_KEY = 'ENCRYPTION_KEY',
@@ -24,9 +21,21 @@ export enum AppSystemProp {
      */
     LICENSE_KEY = 'LICENSE_KEY',
     MAX_CONCURRENT_JOBS_PER_PROJECT = 'MAX_CONCURRENT_JOBS_PER_PROJECT',
+    /**
+     * @deprecated this now can be done from the platform admin page.
+     */
     OPENAI_API_BASE_URL = 'OPENAI_API_BASE_URL',
+    /**
+     * @deprecated this now can be done from the platform admin page.
+     */
     OPENAI_API_KEY = 'OPENAI_API_KEY',
+    /**
+     * @deprecated this now can be done from the platform admin page.
+     */
     PERPLEXITY_API_KEY = 'PERPLEXITY_API_KEY',
+    /**
+     * @deprecated this now can be done from the platform admin page.
+     */
     PERPLEXITY_BASE_URL = 'PERPLEXITY_BASE_URL',
     PIECES_SYNC_MODE = 'PIECES_SYNC_MODE',
     POSTGRES_DATABASE = 'POSTGRES_DATABASE',

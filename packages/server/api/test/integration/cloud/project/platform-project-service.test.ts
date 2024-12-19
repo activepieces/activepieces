@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { platformProjectService } from '../../../../src/app/ee/projects/platform-project-service'
@@ -6,10 +6,12 @@ import { setupServer } from '../../../../src/app/server'
 import { createMockFile, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockPieceMetadata, mockBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    mockLog = app!.log!
 })
 
 afterAll(async () => {
@@ -42,7 +44,7 @@ describe('Platform Project Service', () => {
             })
 
             // act
-            await platformProjectService.hardDelete({ id: mockProject.id })
+            await platformProjectService(mockLog).hardDelete({ id: mockProject.id })
 
             // assert
             const flowCount = await databaseConnection().getRepository('flow').countBy({ projectId: mockProject.id })
@@ -66,7 +68,7 @@ describe('Platform Project Service', () => {
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
             // act
-            await platformProjectService.hardDelete({ id: mockProject.id })
+            await platformProjectService(mockLog).hardDelete({ id: mockProject.id })
 
             // assert
             const fileCount = await databaseConnection().getRepository('file').countBy({ projectId: mockProject.id })

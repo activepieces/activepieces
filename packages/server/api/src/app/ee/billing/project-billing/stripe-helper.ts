@@ -2,6 +2,8 @@ import { getTasksPriceId } from '@activepieces/ee-shared'
 import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ApEdition,
+    ApEnvironment,
+    apId,
     assertNotNullOrUndefined,
     ProjectId,
     UserMeta,
@@ -52,6 +54,10 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = stripeHelper(log).getStripe()
         if (edition !== ApEdition.CLOUD) {
             return undefined
+        }
+        const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+        if (environment === ApEnvironment.TESTING) {
+            return apId()
         }
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
         try {

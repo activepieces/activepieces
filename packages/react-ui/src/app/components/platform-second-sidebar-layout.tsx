@@ -44,7 +44,7 @@ export default function PlatformSecondSidebarLayout({
       title: t('Setup'),
       items: [
         {
-          title: t('Universal AI'),
+          title: t('AI'),
           href: '/platform/setup/ai',
           icon: <Sparkles size={iconSize} />,
         },

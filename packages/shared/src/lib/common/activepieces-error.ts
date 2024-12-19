@@ -69,6 +69,7 @@ export type ApErrorParams =
     | NoChatResponseParams
     | InvalidSmtpCredentialsErrorParams
     | InvalidGitCredentialsParams
+    | CopilotFailedErrorParams
     | ProjectExternalIdAlreadyExistsParams
 export type BaseErrorParams<T, V> = {
     code: T
@@ -403,6 +404,10 @@ export type InvalidGitCredentialsParams = BaseErrorParams<ErrorCode.INVALID_GIT_
     message: string
 }>
 
+export type CopilotFailedErrorParams = BaseErrorParams<ErrorCode.COPILOT_FAILED, {
+    message: string
+}>
+
 export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
     externalId: string
 }>
@@ -463,4 +468,5 @@ export enum ErrorCode {
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
+    COPILOT_FAILED = 'COPILOT_FAILED',
 }
