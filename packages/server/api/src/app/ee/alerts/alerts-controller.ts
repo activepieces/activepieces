@@ -1,11 +1,11 @@
 import { CreateAlertParams, ListAlertsParams } from '@activepieces/ee-shared'
-import { ApId, PrincipalType } from '@activepieces/shared'
+import { ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { alertsService } from './alerts-service'
 
 export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListAlertsRequest, async (req) => {
-        return alertsService.list({
+        return alertsService(req.log).list({
             projectId: req.query.projectId,
             cursor: req.query.cursor,
             limit: req.query.limit ?? 10,
@@ -13,7 +13,7 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateAlertRequest, async (req) => {
-        return alertsService.add({
+        return alertsService(req.log).add({
             projectId: req.body.projectId,
             channel: req.body.channel,
             receiver: req.body.receiver,
@@ -21,7 +21,7 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteAlertRequest, async (req) => {
-        return alertsService.delete({
+        return alertsService(req.log).delete({
             alertId: req.params.id,
         })
     })
@@ -29,6 +29,7 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAlertsRequest = {
     config: {
+        permission: Permission.READ_ALERT,
         allowedPrincipals: [
             PrincipalType.USER,
         ],
@@ -40,6 +41,7 @@ const ListAlertsRequest = {
 
 const CreateAlertRequest = {
     config: {
+        permission: Permission.WRITE_ALERT,
         allowedPrincipals: [
             PrincipalType.USER,
         ],
@@ -51,6 +53,7 @@ const CreateAlertRequest = {
 
 const DeleteAlertRequest = {
     config: {
+        permission: Permission.WRITE_ALERT,
         allowedPrincipals: [
             PrincipalType.USER,
         ],

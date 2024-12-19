@@ -1,12 +1,14 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class removeCollectionVersion1678492809093
 implements MigrationInterface {
     name = 'removeCollectionVersion1678492809093'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('Running migration removeCollectionVersion1678492809093')
+        log.info('Running migration removeCollectionVersion1678492809093')
         await queryRunner.query(
             'ALTER TABLE "instance" DROP CONSTRAINT "fk_instance_collection_version"',
         )
@@ -58,7 +60,7 @@ implements MigrationInterface {
             `
             await queryRunner.query(updateCollectionQuery)
         }
-        logger.info('Finished migration removeCollectionVersion1678492809093')
+        log.info('Finished migration removeCollectionVersion1678492809093')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

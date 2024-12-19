@@ -63,9 +63,8 @@ function AppConnectionsPage() {
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
-  const { checkAccess } = useAuthorization();
   const { toast } = useToast();
-
+  const { checkAccess } = useAuthorization();
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown

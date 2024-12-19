@@ -1,4 +1,3 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -7,12 +6,15 @@ import {
     FileLocation,
     FileType,
     PrincipalType,
-    StepFileUpsert,
+    StepFileUpsertRequest,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { jwtUtils } from '../../helper/jwt-utils'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'
 import { stepFileService } from './step-file.service'
@@ -22,16 +24,16 @@ const useS3SignedUrls = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS)
 
 export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/signed', SignedFileRequest, async (request, reply) => {
-        const file = await getFileByToken(request.query.token)
+        const file = await getFileByToken(request.query.token, request.log)
 
         if (useS3SignedUrls && file.location === FileLocation.S3) {
-            const url = await s3Helper.getS3SignedUrl(file.s3Key!, file.fileName ?? 'unknown')
+            const url = await s3Helper(request.log).getS3SignedUrl(file.s3Key!, file.fileName ?? 'unknown')
             return reply
                 .status(StatusCodes.TEMPORARY_REDIRECT)
                 .header('Location', url)
                 .send()
         }
-        const { data } = await fileService.getDataOrThrow({
+        const { data } = await fileService(request.log).getDataOrThrow({
             fileId: file.id,
             type: FileType.FLOW_STEP_FILE,
         })
@@ -46,13 +48,15 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', UpsertStepFileRequest, async (request) => {
-        const file = await stepFileService.saveAndEnrich({
-            fileName: request.body.file.filename,
+        return stepFileService(request.log).saveAndEnrich({
+            fileName: request.body.fileName,
             flowId: request.body.flowId,
             stepName: request.body.stepName,
-            file: request.body.file.data as Buffer,
-        }, request.hostname, request.principal.projectId)
-        return file
+            data: request.body.file?.data as Buffer | undefined,
+            hostname: request.hostname,
+            projectId: request.principal.projectId,
+            contentLength: request.body.contentLength,
+        })
     })
 }
 
@@ -60,13 +64,13 @@ type FileToken = {
     fileId: string
 }
 
-async function getFileByToken(token: string): Promise<Omit<File, 'data'>> {
+async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Omit<File, 'data'>> {
     try {
         const decodedToken = await jwtUtils.decodeAndVerify<FileToken>({
             jwt: token,
             key: await jwtUtils.getJwtSecret(),
         })
-        return await fileService.getFileOrThrow({
+        return await fileService(log).getFileOrThrow({
             fileId: decodedToken.fileId,
             type: FileType.FLOW_STEP_FILE,
         })
@@ -97,7 +101,7 @@ const UpsertStepFileRequest = {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
     schema: {
-        body: StepFileUpsert,
+        body: StepFileUpsertRequest,
     },
 }
 

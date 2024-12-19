@@ -11,6 +11,8 @@ import {
   Workflow,
   Link,
   Puzzle,
+  ScanFace,
+  HeartPulse,
 } from 'lucide-react';
 
 import SidebarLayout, { SidebarItem } from '@/app/components/sidebar-layout';
@@ -42,7 +44,7 @@ export default function PlatformSecondSidebarLayout({
       title: t('Setup'),
       items: [
         {
-          title: t('Universal AI'),
+          title: t('AI'),
           href: '/platform/setup/ai',
           icon: <Sparkles size={iconSize} />,
         },
@@ -77,9 +79,9 @@ export default function PlatformSecondSidebarLayout({
           icon: <ScrollText size={iconSize} />,
         },
         {
-          title: t('API Keys'),
-          href: '/platform/security/api-keys',
-          icon: <Key size={iconSize} />,
+          title: t('Single Sign On'),
+          href: '/platform/security/sso',
+          icon: <ShieldPlus size={iconSize} />,
         },
         {
           title: t('Signing Keys'),
@@ -87,9 +89,14 @@ export default function PlatformSecondSidebarLayout({
           icon: <Lock size={iconSize} />,
         },
         {
-          title: t('Single Sign On'),
-          href: '/platform/security/sso',
-          icon: <ShieldPlus size={iconSize} />,
+          title: t('Project Roles'),
+          href: '/platform/security/project-roles',
+          icon: <ScanFace size={iconSize} />,
+        },
+        {
+          title: t('API Keys'),
+          href: '/platform/security/api-keys',
+          icon: <Key size={iconSize} />,
         },
       ],
     },
@@ -100,6 +107,11 @@ export default function PlatformSecondSidebarLayout({
           title: t('Workers'),
           href: '/platform/infrastructure/workers',
           icon: <Monitor size={iconSize} />,
+        },
+        {
+          title: t('Health'),
+          href: '/platform/infrastructure/health',
+          icon: <HeartPulse size={iconSize} />,
         },
       ],
     },

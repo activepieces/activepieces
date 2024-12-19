@@ -32,11 +32,13 @@ import { EditGlobalConnectionDialog } from '@/features/connections/components/ed
 import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
 import { globalConnectionsApi } from '@/features/connections/lib/global-connections-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
+  Permission,
 } from '@activepieces/shared';
 
 const STATUS_QUERY_PARAM = 'status';
@@ -60,6 +62,7 @@ const GlobalConnectionsTable = () => {
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
   >([]);
+  const { checkAccess } = useAuthorization();
   const { toast } = useToast();
   const location = useLocation();
   const { platform } = platformHooks.useCurrentPlatform();
@@ -268,6 +271,10 @@ const GlobalConnectionsTable = () => {
     },
   });
 
+  const userHasPermissionToWriteAppConnection = checkAccess(
+    Permission.WRITE_APP_CONNECTION,
+  );
+
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
       await Promise.all(ids.map((id) => globalConnectionsApi.delete(id)));
@@ -311,6 +318,7 @@ const GlobalConnectionsTable = () => {
                   <Button
                     className="w-full mr-2"
                     size="sm"
+                    disabled={!userHasPermissionToWriteAppConnection}
                     variant="destructive"
                   >
                     <Trash className="mr-2 w-4" />

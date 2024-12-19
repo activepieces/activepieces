@@ -1,12 +1,11 @@
 import {
     ActivepiecesError,
     AddPieceRequestBody,
+    DefaultProjectRole,
     EndpointScope,
     ErrorCode,
     PieceScope,
-    Principal,
     PrincipalType,
-    ProjectMemberRole,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 import {
@@ -18,7 +17,7 @@ import { StatusCodes } from 'http-status-codes'
 import { flagService } from '../../flags/flag.service'
 import { pieceService } from '../../pieces/piece-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { getPrincipalRoleOrThrow } from '../authentication/rbac/rbac-middleware'
+import { projectMemberService } from '../project-members/project-member.service'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -34,17 +33,33 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
         const platformId = req.principal.platform.id
         if (flagService.isCloudPlatform(platformId)) {
             assertOneOfTheseScope(req.body.scope, [PieceScope.PROJECT])
-            await assertProjectAdminCanInstallPieceOnCloud(req.principal)
+            const platformRole = await projectMemberService(req.log).getRole({
+                projectId: req.principal.projectId,
+                userId: req.principal.id,
+            })
+            if (platformRole?.name !== DefaultProjectRole.ADMIN) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: {
+                        message: 'Only admin role is allowed for cloud platform',
+                    },
+                })
+            }
+            await pieceService(req.log).installPiece(
+                platformId,
+                req.principal.projectId,
+                req.body,
+            )
         }
         else {
             assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
             await platformMustBeOwnedByCurrentUser.call(app, req, reply)
+            await pieceService(req.log).installPiece(
+                platformId,
+                undefined,
+                req.body,
+            )
         }
-        await pieceService.installPiece(
-            platformId,
-            req.principal.projectId,
-            req.body,
-        )
         await reply.status(StatusCodes.CREATED).send({})
     },
     )
@@ -83,17 +98,3 @@ function assertOneOfTheseScope(
         })
     }
 }
-async function assertProjectAdminCanInstallPieceOnCloud(
-    principal: Principal,
-): Promise<void> {
-    const role = await getPrincipalRoleOrThrow(principal)
-    if (role !== ProjectMemberRole.ADMIN) {
-        throw new ActivepiecesError({
-            code: ErrorCode.AUTHORIZATION,
-            params: {
-                message: 'Only platform admin can install a piece',
-            },
-        })
-    }
-}
-

@@ -22,7 +22,7 @@ import { appConnectionService } from './app-connection-service/app-connection-se
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
-        const appConnection = await appConnectionService.upsert({
+        const appConnection = await appConnectionService(request.log).upsert({
             platformId: request.principal.platform.id,
             projectIds: [request.principal.projectId],
             type: request.body.type,
@@ -33,7 +33,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PROJECT,
         })
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -45,7 +45,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
     })
 
     app.post('/:id', UpdateConnectionValueRequest, async (request) => {
-        const appConnection = await appConnectionService.update({
+        const appConnection = await appConnectionService(request.log).update({
             id: request.params.id,
             platformId: request.principal.platform.id,
             projectIds: [request.principal.projectId],
@@ -61,7 +61,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
     app.get('/', ListAppConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
         const { displayName, pieceName, status, cursor, limit, scope } = request.query
 
-        const appConnections = await appConnectionService.list({
+        const appConnections = await appConnectionService(request.log).list({
             pieceName,
             displayName,
             status,
@@ -74,24 +74,24 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
 
         const appConnectionsWithoutSensitiveData: SeekPage<AppConnectionWithoutSensitiveData> = {
             ...appConnections,
-            data: appConnections.data.map(appConnectionService.removeSensitiveData),
+            data: appConnections.data.map(appConnectionService(request.log).removeSensitiveData),
         }
         return appConnectionsWithoutSensitiveData
     },
     )
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
-        const connection = await appConnectionService.getOneOrThrowWithoutValue({
+        const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
             id: request.params.id,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
         })
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,
             },
         })
-        await appConnectionService.delete({
+        await appConnectionService(request.log).delete({
             id: request.params.id,
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PROJECT,

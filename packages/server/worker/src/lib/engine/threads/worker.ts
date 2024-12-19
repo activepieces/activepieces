@@ -1,6 +1,8 @@
 import { Worker, WorkerOptions } from 'worker_threads'
-import { ApSemaphore, getEngineTimeout, logger, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
+import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
 import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { workerMachine } from '../../utils/machine'
 
 export type WorkerResult = {
     engine: EngineResponse<unknown>
@@ -15,7 +17,9 @@ export class EngineWorker {
     lock: ApSemaphore
     enginePath: string
     engineOptions: WorkerOptions | undefined
-    constructor(maxWorkers: number, enginePath: string, engineOptions?: WorkerOptions) {
+    log: FastifyBaseLogger
+    constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, engineOptions?: WorkerOptions) {
+        this.log = log
         this.enginePath = enginePath
         this.engineOptions = engineOptions
         this.workers = []
@@ -30,19 +34,19 @@ export class EngineWorker {
     }
 
     async executeTask(operationType: EngineOperationType, operation: EngineOperation): Promise<WorkerResult> {
-        logger.trace({
+        this.log.trace({
             operationType,
             operation,
         }, 'Executing operation')
         await this.lock.acquire()
         const workerIndex = this.availableWorkerIndexes.pop()
-        logger.debug({
+        this.log.debug({
             workerIndex,
         }, 'Acquired worker')
         assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
         const worker = this.workers[workerIndex]
-        const environment = system.getOrThrow(SharedSystemProp.ENVIRONMENT)
-        const timeout = getEngineTimeout(operationType)
+        const environment = workerMachine.getSettings().ENVIRONMENT
+        const timeout = getEngineTimeout(operationType, workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS)
         try {
 
             const result = await new Promise<WorkerResult>((resolve, reject) => {
@@ -87,7 +91,7 @@ export class EngineWorker {
                 })
 
                 worker.on('exit', () => {
-                    logger.error({
+                    this.log.error({
                         stdError,
                         stdOut,
                         workerIndex,
@@ -101,13 +105,20 @@ export class EngineWorker {
         }
         finally {
             if (environment === ApEnvironment.DEVELOPMENT) {
-                logger.trace({
-                    workerIndex,
-                }, 'Removing worker in development mode to avoid caching issues')
-                rejectedPromiseHandler(worker.terminate())
+                try {
+                    this.log.trace({
+                        workerIndex,
+                    }, 'Removing worker in development mode to avoid caching issues')
+                    await worker.terminate()
+                }
+                catch (e) {
+                    this.log.error({
+                        error: e,
+                    }, 'Error terminating worker')
+                }
                 this.workers[workerIndex] = new Worker(this.enginePath, this.engineOptions)
             }
-            logger.debug({
+            this.log.debug({
                 workerIndex,
             }, 'Releasing worker')
             this.availableWorkerIndexes.push(workerIndex)

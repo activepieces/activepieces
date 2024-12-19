@@ -46,6 +46,7 @@ export const tidycalnewcontact = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
   test: async (context) => {
@@ -53,6 +54,7 @@ export const tidycalnewcontact = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
+      files: context.files,
     });
   },
 });

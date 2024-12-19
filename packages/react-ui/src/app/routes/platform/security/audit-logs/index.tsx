@@ -85,7 +85,7 @@ export default function AuditLogsPage() {
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM);
       const action = searchParams.get('action');
-      const projectId = searchParams.get('projectId');
+      const projectId = searchParams.getAll('projectId');
       const userId = searchParams.get('userId');
       return auditEventsApi.list({
         cursor: cursor ?? undefined,

@@ -12,7 +12,6 @@ import {
   WebsocketClientEvent,
   CreateStepRunRequestBody,
   StepRunResponse,
-  isFlowStateTerminal,
   BulkRetryFlowRequestBody,
 } from '@activepieces/shared';
 
@@ -35,36 +34,8 @@ export const flowRunsApi = {
     onUpdate: (response: FlowRun) => void,
   ): Promise<void> {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
-    const initalRun = await getInitialRun(socket, request.flowVersionId);
-    onUpdate(initalRun);
-  },
-  addRunListener(
-    socket: Socket,
-    runId: string,
-    onUpdate: (response: FlowRun) => void,
-  ) {
-    const handleProgress = (response: FlowRun) => {
-      if (runId !== response.id) {
-        return;
-      }
-      onUpdate(response);
-      if (isFlowStateTerminal(response.status)) {
-        socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-        socket.off('error', handleError);
-        console.log('clear FLOW_RUN_PROGRESS listener'+ response.id)
-
-      }
-    };
-    const handleError = (error: any) => {
-      socket.off(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-      socket.off('error', handleError);
-      console.log('clear FLOW_RUN_PROGRESS listener',error)
-
-    };
-
-    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, handleProgress);
-    console.log('listened to FLOW_RUN_PROGRESS')
-    socket.on('error', handleError);
+    const initialRun = await getInitialRun(socket, request.flowVersionId);
+    onUpdate(initialRun);
   },
   testStep(
     socket: Socket,
@@ -84,7 +55,7 @@ export const flowRunsApi = {
             handleStepFinished,
           );
           socket.off('error', handleError);
-          console.log('clear TEST_STEP_FINISHED listener'+ response.id)
+          console.log('clear TEST_STEP_FINISHED listener' + response.id);
 
           resolve(response);
         }
@@ -93,11 +64,11 @@ export const flowRunsApi = {
       const handleError = (error: any) => {
         socket.off(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
         socket.off('error', handleError);
-        console.log('clear TEST_STEP_FINISHED listener', error)
+        console.log('clear TEST_STEP_FINISHED listener', error);
         reject(error);
       };
       socket.on(WebsocketClientEvent.TEST_STEP_FINISHED, handleStepFinished);
-      console.log('listened to TEST_STEP_FINISHED')
+      console.log('listened to TEST_STEP_FINISHED');
       socket.on('error', handleError);
     });
   },
@@ -111,7 +82,6 @@ function getInitialRun(
       if (run.flowVersionId !== flowVersionId) {
         return;
       }
-    
       socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
       console.log('clear TEST_FLOW_RUN_STARTED listener'+ run.id)
       resolve(run);

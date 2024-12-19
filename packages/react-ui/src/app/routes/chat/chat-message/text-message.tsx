@@ -104,7 +104,11 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
           {content}
         </Markdown>
         {role === 'bot' && (
-          <CopyButton textToCopy={content} className="size-6 p-1 mt-2" />
+          <CopyButton
+            textToCopy={content}
+            tooltipSide="bottom"
+            className="size-6 p-1 mt-2"
+          />
         )}
       </>
     );

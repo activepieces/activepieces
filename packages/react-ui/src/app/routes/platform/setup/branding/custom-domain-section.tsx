@@ -6,7 +6,7 @@ import { CheckCircleIcon, Trash } from 'lucide-react';
 import { AddCustomDomainDialog } from '@/app/routes/platform/setup/branding/add-custom-domain';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/seperator';
+import { Separator } from '@/components/ui/separator';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,

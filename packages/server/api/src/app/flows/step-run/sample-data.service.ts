@@ -1,7 +1,7 @@
+import { UserInteractionJobType } from '@activepieces/server-shared'
 import {
     Action,
     apId,
-    File,
     FileCompression,
     FileType,
     FlowId,
@@ -11,34 +11,32 @@ import {
     isNil,
     PlatformId,
     ProjectId,
+    SaveSampleDataResponse,
     StepRunResponse,
     Trigger,
 } from '@activepieces/shared'
-import { engineRunner } from 'server-worker'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { FastifyBaseLogger } from 'fastify'
+import { EngineHelperActionResult, EngineHelperResponse } from 'server-worker'
 import { fileRepo, fileService } from '../../file/file.service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { flowVersionService } from '../flow-version/flow-version.service'
 
-export const sampleDataService = {
+export const sampleDataService = (log: FastifyBaseLogger) => ({
     async runAction({
         projectId,
         flowVersionId,
         stepName,
-        platformId,
     }: RunActionParams): Promise<Omit<StepRunResponse, 'id'>> {
-        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
+        const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         const step = flowStructureUtil.getActionOrThrow(stepName, flowVersion.trigger)
-        const engineToken = await accessTokenManager.generateEngineToken({
+
+        const { result, standardError, standardOutput } = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperActionResult>>({
             projectId,
-            platformId,
+            flowVersion,
+            jobType: UserInteractionJobType.EXECUTE_ACTION,
+            stepName: step.name,
+            sampleData: await this.getSampleDataForFlow(projectId, flowVersion),
         })
-        const { result, standardError, standardOutput } =
-            await engineRunner.executeAction(engineToken, {
-                stepName: step.name,
-                flowVersion,
-                projectId,
-                sampleData: await sampleDataService.getSampleDataForFlow(projectId, flowVersion),
-            })
 
         return {
             success: result.success,
@@ -52,14 +50,16 @@ export const sampleDataService = {
         flowVersionId,
         stepName,
         payload,
-    }: SaveSampleDataParams): Promise<File> {
-        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
+    }: SaveSampleDataParams): Promise<SaveSampleDataResponse> {
+        const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         const step = flowStructureUtil.getStepOrThrow(stepName, flowVersion.trigger)
-        const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step)
-        return fileService.save({
+        const fileId = await useExistingOrCreateNewSampleId(projectId, flowVersion, step, log)
+        const data = Buffer.from(JSON.stringify(payload))
+        return fileService(log).save({
             projectId,
             fileId,
-            data: Buffer.from(JSON.stringify(payload)),
+            data,
+            size: data.length,
             type: FileType.SAMPLE_DATA,
             compression: FileCompression.NONE,
             metadata: {
@@ -77,7 +77,7 @@ export const sampleDataService = {
             return {}
         }
         if (!isNil(sampleDataFileId)) {
-            const { data } = await fileService.getDataOrThrow({
+            const { data } = await fileService(log).getDataOrThrow({
                 projectId: params.projectId,
                 fileId: sampleDataFileId,
                 type: FileType.SAMPLE_DATA,
@@ -103,7 +103,7 @@ export const sampleDataService = {
     async getSampleDataForFlow(projectId: ProjectId, flowVersion: FlowVersion): Promise<Record<string, unknown>> {
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
         const sampleDataPromises = steps.map(async (step) => {
-            const data = await sampleDataService.getOrReturnEmpty({
+            const data = await this.getOrReturnEmpty({
                 projectId,
                 flowVersion,
                 stepName: step.name,
@@ -113,14 +113,14 @@ export const sampleDataService = {
         const sampleDataArray = await Promise.all(sampleDataPromises)
         return Object.assign({}, ...sampleDataArray)
     },
-}
+})
 
-async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion: FlowVersion, step: Action | Trigger): Promise<string> {
+async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion: FlowVersion, step: Action | Trigger, log: FastifyBaseLogger): Promise<string> {
     const sampleDataId = step.settings.inputUiInfo?.sampleDataFileId
     if (isNil(sampleDataId)) {
         return apId()
     }
-    const file = await fileService.getFileOrThrow({
+    const file = await fileService(log).getFileOrThrow({
         projectId,
         fileId: sampleDataId,
         type: FileType.SAMPLE_DATA,

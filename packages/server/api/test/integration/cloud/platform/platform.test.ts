@@ -1,5 +1,6 @@
 import {
     apId,
+    CopilotProviderType,
     FilteredPieceBehavior,
     LocalesEnum,
     PlatformRole,
@@ -9,15 +10,16 @@ import {
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { setupServer } from '../../../..//src/app/server'
+import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import { createMockPlatform, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await databaseConnection().initialize()
+    await initializeDatabase({ runMigrations: false })
     app = await setupServer()
 })
 
@@ -165,14 +167,27 @@ describe('Platform API', () => {
                 },
 
             }
-            const mockPlatform = createMockPlatform({ ownerId: mockOwnerUser.id, smtp: {
-                host: faker.internet.password(),
-                port: 123,
-                user: faker.internet.password(),
-                password: faker.internet.password(),
-                senderEmail: faker.internet.password(),
-                senderName: faker.internet.password(),
-            }, federatedAuthProviders: providers, flowIssuesEnabled: false, alertsEnabled: false })
+            const mockPlatform = createMockPlatform({
+                ownerId: mockOwnerUser.id, smtp: {
+                    host: faker.internet.password(),
+                    port: 123,
+                    user: faker.internet.password(),
+                    password: faker.internet.password(),
+                    senderEmail: faker.internet.password(),
+                    senderName: faker.internet.password(),
+                },
+                federatedAuthProviders: providers,
+                flowIssuesEnabled: false,
+                alertsEnabled: false,
+                copilotSettings: {
+                    providers: {
+                        [CopilotProviderType.OPENAI]: {
+                            baseUrl: faker.internet.password(),
+                            apiKey: faker.internet.password(),
+                        },
+                    },
+                }
+            })
             await databaseConnection().getRepository('platform').save(mockPlatform)
 
             await databaseConnection().getRepository('user').update(mockOwnerUser.id, {
@@ -214,6 +229,7 @@ describe('Platform API', () => {
             expect(responseBody.federatedAuthProviders.github).toStrictEqual({
                 clientId: providers.github.clientId,
             })
+            expect(responseBody.copilotSettings.providers.openai).toStrictEqual({})
             expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)

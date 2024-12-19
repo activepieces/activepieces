@@ -1,4 +1,6 @@
-import { ActivepiecesError, ApFlagId, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, Project, ProjectMemberRole, User } from '@activepieces/shared'
+import { ActivepiecesError, ApFlagId, assertNotNullOrUndefined, ErrorCode, isNil, PrincipalType, Project, ProjectRole, User } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { projectMemberService } from '../../../ee/project-members/project-member.service'
 import { flagService } from '../../../flags/flag.service'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -8,8 +10,7 @@ import { accessTokenManager } from '../../lib/access-token-manager'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
 
 const DEFAULT_PLATFORM_NAME = 'platform'
-
-export const communityAuthenticationServiceHooks: AuthenticationServiceHooks = {
+export const communityAuthenticationServiceHooks = (log: FastifyBaseLogger): AuthenticationServiceHooks => ({
     async preSignIn() {
         // Empty
     },
@@ -17,18 +18,18 @@ export const communityAuthenticationServiceHooks: AuthenticationServiceHooks = {
         const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
         if (userCreated?.value) {
             assertNotNullOrUndefined(platformId, 'platformId')
-            await assertUserIsInvitedToPlatformOrProject({ email, platformId })
+            await assertUserIsInvitedToPlatformOrProject(log, { email, platformId })
         }
     },
     async postSignUp({ user }) {
         const platformCreated = await platformService.hasAnyPlatforms()
         if (platformCreated) {
             assertNotNullOrUndefined(user.platformId, 'user.platformId')
-            await userInvitationsService.provisionUserInvitation({
+            await userInvitationsService(log).provisionUserInvitation({
                 email: user.email,
                 platformId: user.platformId,
             })
-            return getProjectAndToken(user)
+            return getProjectAndToken(log, user)
         }
         const platform = await platformService.create({
             ownerId: user.id,
@@ -39,24 +40,24 @@ export const communityAuthenticationServiceHooks: AuthenticationServiceHooks = {
             ownerId: user.id,
             platformId: platform.id,
         })
-        return getProjectAndToken(user)
+        return getProjectAndToken(log, user)
     },
 
     async postSignIn({ user }) {
-        return getProjectAndToken(user)
+        return getProjectAndToken(log, user)
     },
-}
+})
 
 
 
-async function assertUserIsInvitedToPlatformOrProject({
+async function assertUserIsInvitedToPlatformOrProject(log: FastifyBaseLogger, {
     email,
     platformId,
 }: {
     email: string
     platformId: string
 }): Promise<void> {
-    const isInvited = await userInvitationsService.hasAnyAcceptedInvitations({
+    const isInvited = await userInvitationsService(log).hasAnyAcceptedInvitations({
         platformId,
         email,
     })
@@ -70,7 +71,7 @@ async function assertUserIsInvitedToPlatformOrProject({
     }
 }
 
-async function getProjectAndToken(user: User): Promise<{ user: User, project: Project, token: string, projectRole: ProjectMemberRole }> {
+async function getProjectAndToken(log: FastifyBaseLogger, user: User): Promise<{ user: User, project: Project, token: string, projectRole: ProjectRole }> {
     const updatedUser = await userService.getOneOrFail({ id: user.id })
 
     const project = await projectService.getOneForUser(updatedUser)
@@ -92,10 +93,20 @@ async function getProjectAndToken(user: User): Promise<{ user: User, project: Pr
         },
         tokenVersion: user.tokenVersion,
     })
+    const projectRole = await projectMemberService(log).getRole({ userId: user.id, projectId: project.id })
+
+    if (isNil(projectRole)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVITATION_ONLY_SIGN_UP,
+            params: {
+                message: 'No project role found for user',
+            },
+        })
+    }
     return {
         user: updatedUser,
         token,
         project,
-        projectRole: ProjectMemberRole.ADMIN,
+        projectRole,
     }
 }

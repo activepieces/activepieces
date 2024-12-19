@@ -30,6 +30,26 @@ export async function getWorkSheetName(
 	return sheetName;
 }
 
+export async function getWorkSheetGridSize(
+	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+	spreadSheetId: string,
+	sheetId: number,
+) {
+	const authClient = new OAuth2Client();
+	authClient.setCredentials(auth);
+
+	const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+	const res = await sheets.spreadsheets.get({ spreadsheetId: spreadSheetId, includeGridData: true, fields: 'sheets.properties(sheetId,title,sheetType,gridProperties)' });
+	const sheetRange = res.data.sheets?.find((f) => f.properties?.sheetId == sheetId)?.properties?.gridProperties;
+
+	if (!sheetRange) {
+		throw Error(`Unable to get grid size for sheet ${sheetId} in spreadsheet ${spreadSheetId}`);
+	}
+
+	return sheetRange
+}
+
 export async function getWorkSheetValues(
 	auth: PiecePropValueSchema<typeof googleSheetsAuth>,
 	spreadsheetId: string,
@@ -109,12 +129,12 @@ export function hashObject(obj: Record<string, unknown>): string {
 	return hash.digest('hex');
 }
 
-export function transformWorkSheetValues(rowValues: any[][], oldRowCount: number) {
+export function transformWorkSheetValues(rowValues: any[][], oldRowCount: number,headerCount: number) {
 	const result = [];
 	for (let i = 0; i < rowValues.length; i++) {
 		const values: any = {};
-		for (let j = 0; j < rowValues[i].length; j++) {
-			values[columnToLabel(j)] = rowValues[i][j];
+		for (let j = 0; j < headerCount ; j++) {
+			values[columnToLabel(j)] = rowValues[i][j] ?? "";
 		}
 		result.push({
 			row: oldRowCount + i + 1,

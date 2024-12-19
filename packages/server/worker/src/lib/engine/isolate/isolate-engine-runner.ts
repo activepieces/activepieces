@@ -1,33 +1,34 @@
 import fs from 'node:fs/promises'
-import { hashUtils, logger, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
+import { webhookSecretsUtils } from '@activepieces/server-shared'
 import { Action, ActionType, apId, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { appNetworkUtils } from '../../utils/app-network-utils'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { pieceEngineUtil } from '../flow-engine-util'
 import { IsolateSandbox } from './sandbox/isolate-sandbox'
-import { SandBoxCacheType } from './sandbox/provisioner/sandbox-cache-key'
 import { sandboxProvisioner } from './sandbox/provisioner/sandbox-provisioner'
 
-
-export const isolateEngineRunner: EngineRunner = {
+export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async executeFlow(engineToken, operation) {
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            publicUrl: await networkUtls.getPublicUrl(),
-            internalApiUrl: networkUtls.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
         }
-        const sandbox = await prepareFlowSandbox(engineToken, operation.runEnvironment, operation.flowVersion, operation.projectId)
-        return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input)
+        const sandbox = await prepareFlowSandbox(log, engineToken, operation.runEnvironment, operation.flowVersion, operation.projectId)
+        return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input, log)
     },
     async extractPieceMetadata(
+        engineToken: string,
         operation: ExecuteExtractPieceMetadata,
     ): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
-        logger.debug({ operation }, '[EngineHelper#extractPieceMetadata]')
+        log.debug({ operation }, '[EngineHelper#extractPieceMetadata]')
 
-        const sandbox = await sandboxProvisioner.provision({
-            type: SandBoxCacheType.NONE,
-            pieces: [operation],
+        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        const sandbox = await sandboxProvisioner(log).provision({
+            pieces: [lockedPiece],
             customPiecesPathKey: apId(),
         })
 
@@ -35,23 +36,21 @@ export const isolateEngineRunner: EngineRunner = {
             EngineOperationType.EXTRACT_PIECE_METADATA,
             sandbox,
             operation,
+            log,
         )
     },
     async executeTrigger(engineToken, operation) {
-        logger.debug(
+        log.debug(
             { hookType: operation.hookType, projectId: operation.projectId },
             '[EngineHelper#executeTrigger]',
         )
-        const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, operation.flowVersion)
-        const lockedVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
+        const triggerPiece = await pieceEngineUtil(log).getTriggerPiece(engineToken, operation.flowVersion)
+        const lockedVersion = await pieceEngineUtil(log).lockSingleStepPieceVersion({
             engineToken,
             stepName: operation.flowVersion.trigger.name,
             flowVersion: operation.flowVersion,
         })
-        const sandbox = await sandboxProvisioner.provision({
-            type: SandBoxCacheType.PIECE,
-            pieceName: triggerPiece.pieceName,
-            pieceVersion: triggerPiece.pieceVersion,
+        const sandbox = await sandboxProvisioner(log).provision({
             pieces: [triggerPiece],
             customPiecesPathKey: operation.projectId,
         })
@@ -62,57 +61,51 @@ export const isolateEngineRunner: EngineRunner = {
             test: operation.test,
             triggerPayload: operation.triggerPayload,
             flowVersion: lockedVersion,
-            appWebhookUrl: await webhookUtils.getAppWebhookUrl({
+            appWebhookUrl: await webhookUtils(log).getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
             }),
-            publicUrl: await networkUtls.getPublicUrl(),
-            internalApiUrl: networkUtls.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
         }
-        return execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, input)
+        return execute(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, input, log)
     },
     async executeProp(engineToken, operation) {
         const { piece } = operation
-        const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
-        const sandbox = await sandboxProvisioner.provision({
-            type: SandBoxCacheType.PIECE,
-            pieceName: lockedPiece.pieceName,
-            pieceVersion: lockedPiece.pieceVersion,
+        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
+        const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: operation.projectId,
         })
 
         const input: ExecutePropsOptions = {
             ...operation,
-            publicUrl: await networkUtls.getPublicUrl(),
-            internalApiUrl: networkUtls.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
 
-        return execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, input)
+        return execute(EngineOperationType.EXECUTE_PROPERTY, sandbox, input, log)
     },
     async executeValidateAuth(engineToken, operation) {
         const { piece, platformId } = operation
-        const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
-        const sandbox = await sandboxProvisioner.provision({
-            type: SandBoxCacheType.PIECE,
-            pieceName: lockedPiece.pieceName,
-            pieceVersion: lockedPiece.pieceVersion,
+        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
+        const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: platformId,
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            publicUrl: await networkUtls.getPublicUrl(),
-            internalApiUrl: networkUtls.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
-        return execute(EngineOperationType.EXECUTE_VALIDATE_AUTH, sandbox, input)
+        return execute(EngineOperationType.EXECUTE_VALIDATE_AUTH, sandbox, input, log)
     },
     async executeAction(engineToken, operation) {
         const step = flowStructureUtil.getActionOrThrow(operation.stepName, operation.flowVersion.trigger)
-        const lockedFlowVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
+        const lockedFlowVersion = await pieceEngineUtil(log).lockSingleStepPieceVersion({
             engineToken,
             flowVersion: operation.flowVersion,
             stepName: operation.stepName,
@@ -121,63 +114,61 @@ export const isolateEngineRunner: EngineRunner = {
             engineToken,
             lockedFlowVersion.id,
             lockedFlowVersion.state,
-            lockedFlowVersion.flowId,
             step,
             operation.projectId,
+            log,
         )
         const input: ExecuteStepOperation = {
             flowVersion: lockedFlowVersion,
             stepName: operation.stepName,
             projectId: operation.projectId,
             sampleData: operation.sampleData,
-            publicUrl: await networkUtls.getPublicUrl(),
-            internalApiUrl: networkUtls.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
 
-        return execute(EngineOperationType.EXECUTE_STEP, sandbox, input)
+        return execute(EngineOperationType.EXECUTE_STEP, sandbox, input, log)
     },
-}
+})
 
 const execute = async <Result extends EngineHelperResult>(
     operationType: EngineOperationType,
     sandbox: IsolateSandbox,
     input: EngineOperation,
+    log: FastifyBaseLogger,
 ): Promise<EngineHelperResponse<Result>> => {
     try {
-        logger.trace(
+        log.trace(
             { operationType, sandboxId: sandbox.boxId },
             '[EngineHelper#execute]',
         )
         const sandboxPath = sandbox.getSandboxFolderPath()
         await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify(input))
         const sandboxResponse = await sandbox.runOperation(operationType, input)
-        return await engineRunnerUtils.readResults(sandboxResponse)
+        return await engineRunnerUtils(log).readResults(sandboxResponse)
     }
     finally {
-        await sandboxProvisioner.release({ sandbox })
+        await sandboxProvisioner(log).release({ sandbox })
 
     }
 }
 
-async function prepareFlowSandbox(engineToken: string, runEnvironment: RunEnvironment, flowVersion: FlowVersion, projectId: string): Promise<IsolateSandbox> {
-    const pieces = await pieceEngineUtil.extractFlowPieces({
+async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, runEnvironment: RunEnvironment, flowVersion: FlowVersion, projectId: string): Promise<IsolateSandbox> {
+    const pieces = await pieceEngineUtil(log).extractFlowPieces({
         flowVersion,
         engineToken,
     })
-    const codeSteps = pieceEngineUtil.getCodeSteps(flowVersion)
+    const codeSteps = pieceEngineUtil(log).getCodeSteps(flowVersion)
     switch (runEnvironment) {
         case RunEnvironment.PRODUCTION:
-            return sandboxProvisioner.provision({
-                type: SandBoxCacheType.FLOW,
-                flowVersionId: flowVersion.id,
+            return sandboxProvisioner(log).provision({
                 pieces,
                 codeSteps,
                 customPiecesPathKey: projectId,
             })
         case RunEnvironment.TESTING:
-            return sandboxProvisioner.provision({
-                type: SandBoxCacheType.NONE,
+            return sandboxProvisioner(log).provision({
                 pieces,
                 codeSteps,
                 customPiecesPathKey: projectId,
@@ -189,27 +180,19 @@ async function getSandboxForAction(
     engineToken: string,
     flowVersionId: string,
     flowVersionState: FlowVersionState,
-    flowId: string,
     action: Action,
     projectId: string,
+    log: FastifyBaseLogger,
 ): Promise<IsolateSandbox> {
     switch (action.type) {
         case ActionType.PIECE: {
-            const { pieceName, pieceVersion } = action.settings
-            return sandboxProvisioner.provision({
-                type: SandBoxCacheType.PIECE,
-                pieceName,
-                pieceVersion,
-                pieces: [await pieceEngineUtil.getExactPieceForStep(engineToken, action)],
+            return sandboxProvisioner(log).provision({
+                pieces: [await pieceEngineUtil(log).getExactPieceForStep(engineToken, action)],
                 customPiecesPathKey: projectId,
             })
         }
         case ActionType.CODE: {
-            return sandboxProvisioner.provision({
-                type: SandBoxCacheType.CODE,
-                flowId,
-                name: action.name,
-                sourceCodeHash: hashUtils.hashObject(action.settings.sourceCode),
+            return sandboxProvisioner(log).provision({
                 codeSteps: [
                     {
                         name: action.name,
@@ -223,8 +206,7 @@ async function getSandboxForAction(
         }
         case ActionType.ROUTER:
         case ActionType.LOOP_ON_ITEMS:
-            return sandboxProvisioner.provision({
-                type: SandBoxCacheType.NONE,
+            return sandboxProvisioner(log).provision({
                 customPiecesPathKey: projectId,
             })
     }

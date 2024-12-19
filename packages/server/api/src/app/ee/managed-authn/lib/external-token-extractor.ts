@@ -1,69 +1,74 @@
 import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
-import { logger } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PiecesFilterType, ProjectMemberRole } from '@activepieces/shared'
+import { ActivepiecesError, DefaultProjectRole, ErrorCode, isNil, PiecesFilterType, PlatformId } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
+import { FastifyBaseLogger } from 'fastify'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
+import { projectRoleService } from '../../project-role/project-role.service'
 import { signingKeyService } from '../../signing-key/signing-key-service'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
 
-export const externalTokenExtractor = {
-    async extract(token: string): Promise<ExternalPrincipal> {
-        const decoded = jwtUtils.decode<ExternalTokenPayload>({ jwt: token })
+export const externalTokenExtractor = (log: FastifyBaseLogger) => {
+    return {
+        async extract(token: string): Promise<ExternalPrincipal> {
+            const decoded = jwtUtils.decode<ExternalTokenPayload>({ jwt: token })
 
-        const signingKeyId = decoded?.header?.kid
+            const signingKeyId = decoded?.header?.kid
 
-        if (isNil(signingKeyId)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.INVALID_BEARER_TOKEN,
-                params: {
-                    message: 'signing key id is not found in the header',
-                },
-            })
-        }
-
-        const signingKey = await getSigningKey({
-            signingKeyId,
-        })
-
-        try {
-            const payload = await jwtUtils.decodeAndVerify<ExternalTokenPayload>({
-                jwt: token,
-                key: signingKey.publicKey,
-                algorithm: ALGORITHM,
-                issuer: null,
-            })
-
-            const optionalEmail = payload.email ?? payload.externalUserId
-
-            const { piecesFilterType, piecesTags } = extractPieces(payload)
-            return {
-                platformId: signingKey.platformId,
-                externalUserId: payload.externalUserId,
-                externalProjectId: payload.externalProjectId,
-                externalEmail: optionalEmail,
-                externalFirstName: payload.firstName,
-                externalLastName: payload.lastName,
-                role: payload?.role ?? ProjectMemberRole.EDITOR,
-                tasks: payload?.tasks,
-                pieces: {
-                    filterType: piecesFilterType ?? PiecesFilterType.NONE,
-                    tags: piecesTags ?? [],
-                },
+            if (isNil(signingKeyId)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVALID_BEARER_TOKEN,
+                    params: {
+                        message: 'signing key id is not found in the header',
+                    },
+                })
             }
-        }
-        catch (error) {
-            logger.error({ name: 'ExternalTokenExtractor#extract', error })
 
-            throw new ActivepiecesError({
-                code: ErrorCode.INVALID_BEARER_TOKEN,
-                params: {
-                    message:
-                        error instanceof Error ? error.message : 'error decoding token',
-                },
+            const signingKey = await getSigningKey({
+                signingKeyId,
             })
-        }
-    },
+
+            try {
+                const payload = await jwtUtils.decodeAndVerify<ExternalTokenPayload>({
+                    jwt: token,
+                    key: signingKey.publicKey,
+                    algorithm: ALGORITHM,
+                    issuer: null,
+                })
+
+                const optionalEmail = payload.email ?? payload.externalUserId
+
+                const projectRole = await getProjectRole(payload, signingKey.platformId)
+
+                const { piecesFilterType, piecesTags } = extractPieces(payload)
+                return {
+                    platformId: signingKey.platformId,
+                    externalUserId: payload.externalUserId,
+                    externalProjectId: payload.externalProjectId,
+                    externalEmail: optionalEmail,
+                    externalFirstName: payload.firstName,
+                    externalLastName: payload.lastName,
+                    projectRole: projectRole.name,
+                    tasks: payload?.tasks,
+                    pieces: {
+                        filterType: piecesFilterType ?? PiecesFilterType.NONE,
+                        tags: piecesTags ?? [],
+                    },
+                }
+            }
+            catch (error) {
+                log.error({ name: 'ExternalTokenExtractor#extract', error })
+
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVALID_BEARER_TOKEN,
+                    params: {
+                        message:
+                            error instanceof Error ? error.message : 'error decoding token',
+                    },
+                })
+            }
+        },
+    }
 }
 
 const getSigningKey = async ({
@@ -104,6 +109,19 @@ function extractPieces(payload: ExternalTokenPayload) {
     }
 }
 
+async function getProjectRole(payload: ExternalTokenPayload, platformId: PlatformId) {
+    if ('role' in payload && !isNil(payload.role)) {
+        return projectRoleService.getOneOrThrow({
+            name: payload.role,
+            platformId,
+        })
+    }
+    return projectRoleService.getOneOrThrow({
+        name: DefaultProjectRole.EDITOR,
+        platformId,
+    })
+}
+
 function externalTokenPayload() {
     const v1 = Type.Object({
         externalUserId: Type.String(),
@@ -115,7 +133,7 @@ function externalTokenPayload() {
     const v2 = Type.Composite([v1,
         Type.Object({
             tasks: Type.Optional(Type.Number()),
-            role: Type.Optional(Type.Enum(ProjectMemberRole)),
+            role: Type.Optional(Type.Enum(DefaultProjectRole)),
             pieces: Type.Optional(Type.Object({
                 filterType: Type.Enum(PiecesFilterType),
                 tags: Type.Optional(Type.Array(Type.String())),
@@ -128,6 +146,7 @@ function externalTokenPayload() {
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
         piecesTags: Type.Optional(Type.Array(Type.String())),
     })])
+
     return Type.Union([v2, v3])
 }
 
@@ -142,7 +161,7 @@ export type ExternalPrincipal = {
     externalEmail: string
     externalFirstName: string
     externalLastName: string
-    role: ProjectMemberRole
+    projectRole: string
     pieces: {
         filterType: PiecesFilterType
         tags: string[]

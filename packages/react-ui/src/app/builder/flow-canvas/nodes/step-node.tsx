@@ -1,46 +1,56 @@
 import { useDraggable } from '@dnd-kit/core';
-import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Handle, NodeProps, Position } from '@xyflow/react';
 import { t } from 'i18next';
-import {
-  ArrowRightLeft,
-  CopyPlus,
-  EllipsisVertical,
-  Trash,
-} from 'lucide-react';
-import React, { useMemo, useState, useRef } from 'react';
+import { ChevronDown, RouteOff } from 'lucide-react';
+import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { InvalidStepIcon } from '@/components/custom/alert-icon';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { Tooltip, TooltipContent } from '@/components/ui/tooltip';
-import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import {
+  Action,
+  ActionType,
   FlowOperationType,
   FlowRun,
   FlowRunStatus,
   FlowVersion,
+  Trigger,
   TriggerType,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
 
 import { StepStatusIcon } from '../../../../features/flow-runs/components/step-status-icon';
-import { flowUtilConsts } from '../consts';
-import { ApStepNode } from '../types';
+import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../utils/consts';
+import { ApStepNode } from '../utils/types';
+
+function hasSkippedParent(stepName: string, trigger: Trigger): boolean {
+  const step = flowStructureUtil.getStep(stepName, trigger);
+  if (!step) {
+    return false;
+  }
+
+  const skippedParents = flowStructureUtil
+    .findPathToStep(trigger, stepName)
+    .filter(
+      (p) =>
+        (p.type === ActionType.LOOP_ON_ITEMS || p.type === ActionType.ROUTER) &&
+        flowStructureUtil.isChildOf(p, stepName) &&
+        p.skip,
+    );
+  return skippedParents.length > 0;
+}
 
 function getStepStatus(
   stepName: string | undefined,
@@ -71,7 +81,6 @@ const StepActionWrapper = React.memo(
 StepActionWrapper.displayName = 'StepActionWrapper';
 const ApStepCanvasNode = React.memo(
   ({ data }: NodeProps & Omit<ApStepNode, 'position'>) => {
-    const { toast } = useToast();
     const [
       selectStepByName,
       setAllowCanvasPanning,
@@ -81,11 +90,11 @@ const ApStepCanvasNode = React.memo(
       run,
       readonly,
       exitStepSettings,
-      applyOperation,
-      removeStepSelection,
       flowVersion,
       loopIndexes,
-      setSampleData,
+      setSelectedBranchIndex,
+      setPieceSelectorStep,
+      pieceSelectorStep,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.setAllowCanvasPanning,
@@ -95,58 +104,37 @@ const ApStepCanvasNode = React.memo(
       state.run,
       state.readonly,
       state.exitStepSettings,
-      state.applyOperation,
-      state.removeStepSelection,
       state.flowVersion,
       state.loopsIndexes,
-      state.setSampleData,
+      state.setSelectedBranchIndex,
+      state.setPieceSelectorStep,
+      state.pieceSelectorStep,
     ]);
-    const pieceSelectorOperation = useRef<
-      FlowOperationType.UPDATE_ACTION | FlowOperationType.UPDATE_TRIGGER
-    >(FlowOperationType.UPDATE_ACTION);
-    const deleteStep = () => {
-      setSampleData(data.step!.name, undefined);
-      applyOperation(
-        {
-          type: FlowOperationType.DELETE_ACTION,
-          request: {
-            name: data.step!.name,
-          },
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-      removeStepSelection();
-    };
-
-    const duplicateStep = () => {
-      applyOperation(
-        {
-          type: FlowOperationType.DUPLICATE_ACTION,
-          request: {
-            stepName: data.step!.name,
-          },
-        },
-        () => toast(UNSAVED_CHANGES_TOAST),
-      );
-    };
+    const openPieceSelector = pieceSelectorStep === data.step!.name;
+    const step =
+      flowStructureUtil.getStep(data.step!.name, flowVersion.trigger) ||
+      data.step!;
     const { stepMetadata } = piecesHooks.useStepMetadata({
-      step: data.step!,
+      step,
     });
+
     const stepIndex = useMemo(() => {
       const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
-      return steps.findIndex((step) => step.name === data.step!.name) + 1;
+      return steps.findIndex((s) => s.name === step.name) + 1;
     }, [data, flowVersion]);
 
-    const [openStepActionsMenu, setOpenStepActionsMenu] = useState(false);
-    const [openPieceSelector, setOpenPieceSelector] = useState(false);
+    const isTrigger = flowStructureUtil.isTrigger(step.type);
+    const isAction = flowStructureUtil.isAction(step.type);
 
-    const isTrigger = flowStructureUtil.isTrigger(data.step!.type);
-    const isAction = flowStructureUtil.isAction(data.step!.type);
+    const pieceSelectorOperation = isAction
+      ? FlowOperationType.UPDATE_ACTION
+      : FlowOperationType.UPDATE_TRIGGER;
     const isEmptyTriggerSelected =
-      selectedStep === 'trigger' && data.step?.type === TriggerType.EMPTY;
+      selectedStep === 'trigger' && step.type === TriggerType.EMPTY;
+    const isSkipped = (step as Action).skip;
 
     const { attributes, listeners, setNodeRef } = useDraggable({
-      id: data.step!.name,
+      id: step.name,
       disabled: isTrigger || readonly,
       data: {
         type: flowUtilConsts.DRAGGED_STEP_TAG,
@@ -154,35 +142,40 @@ const ApStepCanvasNode = React.memo(
     });
 
     const stepOutputStatus = useMemo(() => {
-      return getStepStatus(data.step?.name, run, loopIndexes, flowVersion);
-    }, [data.step!.name, run, loopIndexes, flowVersion]);
+      return getStepStatus(step.name, run, loopIndexes, flowVersion);
+    }, [step.name, run, loopIndexes, flowVersion]);
+
     const showRunningIcon =
-      isNil(stepOutputStatus) && run?.status === FlowRunStatus.RUNNING;
+      isNil(stepOutputStatus) &&
+      run?.status === FlowRunStatus.RUNNING &&
+      !hasSkippedParent(step.name, flowVersion.trigger);
+
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
       const { name } = data.step!;
       selectStepByName(name);
+      setSelectedBranchIndex(null);
       e.preventDefault();
       e.stopPropagation();
     };
-
     return (
       <div
-        id={data.step!.name}
+        {...{ [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name }}
         style={{
           height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
           width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
         className={cn(
-          'transition-all  border-box rounded-sm  border  border-solid  border-border relative hover:border-primary group',
+          'transition-all border-box rounded-sm border border-solid border-border relative hover:border-primary group',
           {
             'shadow-step-container': !isDragging,
             'border-primary': isSelected,
             'bg-background': !isDragging,
             'border-none': isDragging,
             'shadow-none': isDragging,
+            'bg-accent/70': isSkipped,
           },
         )}
         onClick={(e) => handleStepClick(e)}
@@ -192,7 +185,7 @@ const ApStepCanvasNode = React.memo(
         onMouseLeave={() => {
           setAllowCanvasPanning(true);
         }}
-        key={data.step?.name}
+        key={step.name}
         ref={openPieceSelector ? null : setNodeRef}
         {...(!openPieceSelector ? attributes : {})}
         {...(!openPieceSelector ? listeners : {})}
@@ -203,7 +196,7 @@ const ApStepCanvasNode = React.memo(
             top: `${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 - 12}px`,
           }}
         >
-          {data.step?.name}
+          {step.name}
         </div>
         <div
           className={cn(
@@ -218,22 +211,20 @@ const ApStepCanvasNode = React.memo(
           {!isDragging && (
             <PieceSelector
               initialSelectedPiece={
-                data.step?.type === TriggerType.EMPTY
+                step.type === TriggerType.EMPTY
                   ? undefined
                   : stepMetadata?.displayName
               }
               operation={{
                 type: isEmptyTriggerSelected
                   ? FlowOperationType.UPDATE_TRIGGER
-                  : pieceSelectorOperation.current,
-                stepName: data.step!.name!,
+                  : pieceSelectorOperation,
+                stepName: step.name,
               }}
               open={openPieceSelector || isEmptyTriggerSelected}
               onOpenChange={(open) => {
-                setOpenPieceSelector(open);
-                if (open) {
-                  setOpenStepActionsMenu(false);
-                } else if (data.step?.type === TriggerType.EMPTY) {
+                setPieceSelectorStep(open ? step.name : null);
+                if (!open && step.type === TriggerType.EMPTY) {
                   exitStepSettings();
                 }
               }}
@@ -249,106 +240,47 @@ const ApStepCanvasNode = React.memo(
               >
                 <div className="flex h-full items-center justify-between gap-3 w-full">
                   <div className="flex items-center justify-center min-w-[46px] h-full">
-                    <PieceIcon
-                      logoUrl={stepMetadata?.logoUrl}
-                      displayName={stepMetadata?.displayName}
-                      showTooltip={false}
-                      size={'lg'}
-                    ></PieceIcon>
+                    <div className={isSkipped ? 'opacity-80' : ''}>
+                      <PieceIcon
+                        logoUrl={stepMetadata?.logoUrl}
+                        displayName={stepMetadata?.displayName}
+                        showTooltip={false}
+                        size={'lg'}
+                      ></PieceIcon>
+                    </div>
                   </div>
                   <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
                     <div className=" flex items-center justify-between min-w-0 w-full">
                       <div className="text-sm truncate grow shrink ">
-                        {stepIndex}. {data.step?.displayName}
+                        {stepIndex}. {step.displayName}
                       </div>
 
-                      {!readonly && (
-                        <div
+                      {(!readonly || !isTrigger) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1 size-7 "
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
+                            if (e.target) {
+                              const rightClickEvent = new MouseEvent(
+                                'contextmenu',
+                                {
+                                  bubbles: true,
+                                  cancelable: true,
+                                  view: window,
+                                  button: 2,
+                                  clientX: e.clientX,
+                                  clientY: e.clientY,
+                                },
+                              );
+                              e.target.dispatchEvent(rightClickEvent);
+                            }
                           }}
                         >
-                          <DropdownMenu
-                            open={openStepActionsMenu}
-                            onOpenChange={(open) => {
-                              setOpenStepActionsMenu(open);
-                            }}
-                            modal={true}
-                          >
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="p-1 size-7 "
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                }}
-                              >
-                                <EllipsisVertical className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              className="w-44 absolute"
-                              onCloseAutoFocus={(e) => e.preventDefault()}
-                            >
-                              <DropdownMenuItem
-                                onSelect={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  pieceSelectorOperation.current = isAction
-                                    ? FlowOperationType.UPDATE_ACTION
-                                    : FlowOperationType.UPDATE_TRIGGER;
-                                  setOpenStepActionsMenu(false);
-                                  setOpenPieceSelector(true);
-                                  selectStepByName(data.step!.name!);
-                                }}
-                              >
-                                <StepActionWrapper>
-                                  <ArrowRightLeft className=" h-4 w-4 " />
-                                  <span>Replace</span>
-                                </StepActionWrapper>
-                              </DropdownMenuItem>
-
-                              {isAction && (
-                                <DropdownMenuItem
-                                  onSelect={(e) => {
-                                    e.preventDefault();
-                                    duplicateStep();
-                                    setOpenStepActionsMenu(false);
-                                  }}
-                                >
-                                  <StepActionWrapper>
-                                    <CopyPlus className="h-4 w-4" />
-                                    {t('Duplicate')}
-                                  </StepActionWrapper>
-                                </DropdownMenuItem>
-                              )}
-
-                              {isAction && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onSelect={(e) => {
-                                      e.preventDefault();
-                                      deleteStep();
-                                      setOpenStepActionsMenu(false);
-                                      setAllowCanvasPanning(true);
-                                    }}
-                                  >
-                                    <StepActionWrapper>
-                                      <Trash className="mr-2 h-4 w-4 text-destructive" />
-                                      <span className="text-destructive">
-                                        Delete
-                                      </span>
-                                    </StepActionWrapper>
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                          <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
+                        </Button>
                       )}
                     </div>
 
@@ -356,23 +288,33 @@ const ApStepCanvasNode = React.memo(
                       <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
                         {stepMetadata?.displayName}
                       </div>
-                      <div className="w-4 flex mt-0.5 items-center justify-center">
+                      <div className="w-4 flex mt-0.5 items-center justify-center h-[20px]">
                         {stepOutputStatus && (
                           <StepStatusIcon
                             status={stepOutputStatus}
                             size="4"
                           ></StepStatusIcon>
                         )}
-                        {showRunningIcon && (
-                          <LoadingSpinner className="w-4 h-4 text-primary"></LoadingSpinner>
+                        {showRunningIcon && !isSkipped && (
+                          <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>
                         )}
-                        {!data.step?.valid && (
+                        {isSkipped && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <RouteOff className="w-4 h-4"> </RouteOff>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              {t('Skipped')}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {!step.valid && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="mr-3">
                                 <InvalidStepIcon
                                   size={16}
-                                  viewBox="0 0 16 16"
+                                  viewBox="0 0 16 15"
                                   className="stroke-0 animate-fade"
                                 ></InvalidStepIcon>
                               </div>

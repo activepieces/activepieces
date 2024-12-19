@@ -1,4 +1,3 @@
-import { AppSystemProp, DatabaseType, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import {
     ArrayContains,
@@ -25,7 +24,7 @@ import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
-import { ReferralEntity } from '../ee/referrals/referral.entity'
+import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
@@ -34,6 +33,8 @@ import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
+import { DatabaseType, system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -75,6 +76,7 @@ function getEntities(): EntitySchema<unknown>[] {
         UserInvitationEntity,
         WorkerMachineEntity,
         AiProviderEntity,
+        ProjectRoleEntity,
     ]
 
     switch (edition) {
@@ -91,9 +93,9 @@ function getEntities(): EntitySchema<unknown>[] {
                 FlowTemplateEntity,
                 GitRepoEntity,
                 AuditEventEntity,
+
                 // CLOUD
                 AppSumoEntity,
-                ReferralEntity,
                 ConnectionKeyEntity,
                 AppCredentialEntity,
                 ProjectBillingEntity,
@@ -109,7 +111,7 @@ function getEntities(): EntitySchema<unknown>[] {
 }
 
 const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
     const value: Partial<Record<ApEnvironment, boolean>> = {
         [ApEnvironment.TESTING]: true,

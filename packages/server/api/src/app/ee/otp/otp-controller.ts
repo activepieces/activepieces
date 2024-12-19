@@ -9,7 +9,7 @@ export const otpController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateOtpRequest, async (req, res) => {
         const platformId = await resolvePlatformIdForAuthnRequest(req.body.email, req)
         assertNotNullOrUndefined(platformId, 'platformId')
-        await otpService.createAndSend({
+        await otpService(req.log).createAndSend({
             platformId,
             email: req.body.email,
             type: req.body.type,

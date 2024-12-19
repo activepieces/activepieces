@@ -4,31 +4,35 @@ import {
     ProjectMemberWithUser,
 } from '@activepieces/ee-shared'
 import {
+    ApId,
     apId,
     Cursor,
+    DefaultProjectRole,
+    PlatformId,
     PlatformRole,
     ProjectId,
-    ProjectMemberRole,
+    ProjectRole,
     SeekPage,
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { projectRoleService } from '../project-role/project-role.service'
 import {
     ProjectMemberEntity,
 } from './project-member.entity'
-
 const repo = repoFactory(ProjectMemberEntity)
 
-export const projectMemberService = {
+export const projectMemberService = (_log: FastifyBaseLogger) => ({
     async upsert({
         userId,
         projectId,
-        role,
+        projectRoleName,
     }: UpsertParams): Promise<ProjectMember> {
         const { platformId } = await projectService.getOneOrThrow(projectId)
         const existingProjectMember = await repo().findOneBy({
@@ -38,30 +42,37 @@ export const projectMemberService = {
         })
         const projectMemberId = existingProjectMember?.id ?? apId()
 
+        const projectRole = await projectRoleService.getOneOrThrow({
+            name: projectRoleName,
+            platformId,
+        })
+
         const projectMember: NewProjectMember = {
             id: projectMemberId,
             updated: dayjs().toISOString(),
             userId,
             platformId,
             projectId,
-            role,
+            projectRoleId: projectRole.id,
         }
 
-        const upsertResult = await repo().upsert(projectMember, [
+        await repo().upsert(projectMember, [
             'projectId',
             'userId',
             'platformId',
         ])
 
-        return {
-            ...projectMember,
-            created: upsertResult.generatedMaps[0].created,
-        }
+        return repo().findOneOrFail({
+            where: {
+                id: projectMemberId,
+            },
+        })
     },
     async list(
         projectId: ProjectId,
         cursorRequest: Cursor | null,
         limit: number,
+        projectRoleId: string | undefined,
     ): Promise<SeekPage<ProjectMemberWithUser>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -76,9 +87,22 @@ export const projectMemberService = {
         const queryBuilder = repo()
             .createQueryBuilder('project_member')
             .where({ projectId })
+
+        if (projectRoleId) {
+            queryBuilder.andWhere({ projectRoleId })
+        }
+
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const enrichedData = await Promise.all(
-            data.map(enrichProjectMemberWithUser),
+            data.map(async (member) => {
+                const enrichedMember = await enrichProjectMemberWithUser(member)
+                return {
+                    ...enrichedMember,
+                    projectRole: await projectRoleService.getOneOrThrowById({
+                        id: member.projectRoleId,
+                    }),
+                }
+            }),
         )
         return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
     },
@@ -88,22 +112,48 @@ export const projectMemberService = {
     }: {
         projectId: ProjectId
         userId: UserId
-    }): Promise<ProjectMemberRole | null> {
+    }): Promise<ProjectRole | null> {
         const project = await projectService.getOneOrThrow(projectId)
         const user = await userService.getOneOrFail({
             id: userId,
         })
+
         if (user.id === project.ownerId) {
-            return ProjectMemberRole.ADMIN
+            return projectRoleService.getOneOrThrow({ name: DefaultProjectRole.ADMIN, platformId: project.platformId })
         }
         if (project.platformId === user.platformId && user.platformRole === PlatformRole.ADMIN) {
-            return ProjectMemberRole.ADMIN
+            return projectRoleService.getOneOrThrow({ name: DefaultProjectRole.ADMIN, platformId: project.platformId })
         }
         const member = await repo().findOneBy({
             projectId,
             userId,
         })
-        return member?.role ?? null
+
+        if (!member) {
+            return null
+        }
+
+        const projectRole = await projectRoleService.getOneOrThrowById({
+            id: member.projectRoleId,
+        })
+
+        return projectRole
+    },
+    async update(params: UpdateMemberRole): Promise<ProjectMember> {
+        const projectRole = await projectRoleService.getOneOrThrow({
+            name: params.role,
+            platformId: params.platformId,
+        })
+        await repo().update({ 
+            id: params.id,
+            projectId: params.projectId,
+        }, {
+            projectRoleId: projectRole.id,
+        })
+        return repo().findOneByOrFail({
+            id: params.id,
+            projectId: params.projectId,
+        })
     },
     async delete(
         projectId: ProjectId,
@@ -114,15 +164,23 @@ export const projectMemberService = {
     async countTeamMembers(projectId: ProjectId): Promise<number> {
         return repo().countBy({ projectId })
     },
-}
+})
 
 type UpsertParams = {
     userId: string
     projectId: ProjectId
-    role: ProjectMemberRole
+    projectRoleName: string
 }
 
-type NewProjectMember = Omit<ProjectMember, 'created'>
+type NewProjectMember = Omit<ProjectMember, 'created' | 'projectRole'>
+
+
+type UpdateMemberRole = {
+    id: ApId
+    projectId: ProjectId
+    platformId: PlatformId
+    role: string
+}
 
 async function enrichProjectMemberWithUser(
     projectMember: ProjectMember,
@@ -130,8 +188,12 @@ async function enrichProjectMemberWithUser(
     const user = await userService.getOneOrFail({
         id: projectMember.userId,
     })
+    const projectRole = await projectRoleService.getOneOrThrowById({
+        id: projectMember.projectRoleId,
+    })
     return {
         ...projectMember,
+        projectRole,
         user: {
             platformId: user.platformId,
             platformRole: user.platformRole,

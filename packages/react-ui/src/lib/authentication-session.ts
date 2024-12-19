@@ -31,9 +31,6 @@ export const authenticationSession = {
   getPlatformId(): string | null {
     return this.getCurrentUser()?.platformId ?? null;
   },
-  getUserProjectRole() {
-    return this.getCurrentUser()?.projectRole ?? null;
-  },
   getUserPlatformRole() {
     return this.getCurrentUser()?.platformRole ?? null;
   },
@@ -45,7 +42,6 @@ export const authenticationSession = {
       JSON.stringify({
         ...this.getCurrentUser(),
         projectId,
-        projectRole: result.projectRole,
       }),
     );
     window.dispatchEvent(new Event('storage'));

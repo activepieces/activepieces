@@ -8,14 +8,18 @@ import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
 import { _addBranch } from './add-branch'
+import { _getActionsForCopy } from './copy-action-operations'
 import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
 import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
+import { _getOperationsForPaste } from './paste-operations'
+import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
+
 
 export enum FlowOperationType {
     LOCK_AND_PUBLISH = 'LOCK_AND_PUBLISH',
@@ -34,6 +38,7 @@ export enum FlowOperationType {
     DELETE_BRANCH = 'DELETE_BRANCH',
     ADD_BRANCH = 'ADD_BRANCH',
     DUPLICATE_BRANCH = 'DUPLICATE_BRANCH',
+    SET_SKIP_ACTION = 'SET_SKIP_ACTION',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -46,6 +51,13 @@ export const AddBranchRequest = Type.Object({
     conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
     branchName: Type.String(),
 })
+
+export const SkipActionRequest = Type.Object({
+    names: Type.Array(Type.String()),
+    skip: Type.Boolean(),
+})
+
+export type SkipActionRequest = Static<typeof SkipActionRequest>
 
 export const DuplicateBranchRequest = Type.Object({
     branchIndex: Type.Number(),
@@ -90,8 +102,9 @@ export const ChangeNameRequest = Type.Object({
 
 export type ChangeNameRequest = Static<typeof ChangeNameRequest>
 
+
 export const DeleteActionRequest = Type.Object({
-    name: Type.String(),
+    names: Type.Array(Type.String()),
 })
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>
@@ -289,11 +302,22 @@ export const FlowOperationRequest = Type.Union([
             title: 'Duplicate Branch',
         },
     ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.SET_SKIP_ACTION),
+            request: SkipActionRequest,
+        },
+        {
+            title: 'Skip Action',
+        },
+    ),
 ])
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
 
 export const flowOperations = {
+    getActionsForCopy: _getActionsForCopy,
+    getOperationsForPaste: _getOperationsForPaste,
     apply(flowVersion: FlowVersion, operation: FlowOperationRequest): FlowVersion {
         let clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
         switch (operation.type) {
@@ -366,6 +390,11 @@ export const flowOperations = {
                 operations.forEach((operation) => {
                     clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })
+                break
+            }
+            case FlowOperationType.SET_SKIP_ACTION: {
+                clonedVersion = _skipAction(clonedVersion, operation.request)
+                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
             default:

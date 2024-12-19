@@ -6,12 +6,14 @@ import {
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
+import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption,columnToLabel } from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { getWorkSheetName } from '../triggers/helpers';
+import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { MarkdownVariant } from '@activepieces/shared';
+
+type RowValueType = Record<string, any>
 
 export const insertMultipleRowsAction = createAction({
 	auth: googleSheetsAuth,
@@ -69,17 +71,23 @@ export const insertMultipleRowsAction = createAction({
 
 				switch (valuesInputType) {
 					case 'csv':
+						fields['markdown'] = Property.MarkDown({
+							value: `Ensure the first row contains column headers that match the sheet's column names.`,
+							variant: MarkdownVariant.INFO,
+						});
 						fields['values'] = Property.LongText({
 							displayName: 'CSV',
 							required: true,
-							description: "Provide values in CSV format. Ensure the first row contains column headers that match the sheet's column names.",
 						});
 						break;
 					case 'json':
+						fields['markdown'] = Property.MarkDown({
+							value: `Provide values in JSON format. Ensure the column names match the sheet's header.`,
+							variant: MarkdownVariant.INFO,
+						});
 						fields['values'] = Property.Json({
 							displayName: 'JSON',
 							required: true,
-							description: "Provide values in JSON format. Ensure the column names match the sheet's header.",
 							defaultValue: [
 								{
 									column1: 'value1',
@@ -93,15 +101,17 @@ export const insertMultipleRowsAction = createAction({
 						});
 						break;
 					case 'column_names': {
-						const values = await googleSheetsCommon.getValues(
-							spreadsheetId,
-							getAccessTokenOrThrow(authentication),
-							sheetId,
-						);
-						const firstRow = values?.[0]?.values ?? [];
+						const headers = await googleSheetsCommon.getGoogleSheetRows({
+							spreadsheetId: spreadsheetId,
+							accessToken: getAccessTokenOrThrow(authentication),
+							sheetId: sheetId,
+							rowIndex_s: 1,
+							rowIndex_e: 1,
+						});
+						const firstRow = headers[0].values ?? {};
 
 						//check for empty headers
-						if (firstRow.length === 0) {
+						if (Object.keys(firstRow).length === 0) {
 							fields['markdown'] = Property.MarkDown({
 								value: `We couldn't find any headers in the selected spreadsheet or worksheet. Please add headers to the sheet and refresh the page to reflect the columns.`,
 								variant: MarkdownVariant.INFO,
@@ -110,6 +120,7 @@ export const insertMultipleRowsAction = createAction({
 							const columns: {
 								[key: string]: any;
 							} = {};
+
 							for (const key in firstRow) {
 								columns[key] = Property.ShortText({
 									displayName: firstRow[key].toString(),
@@ -164,21 +175,23 @@ export const insertMultipleRowsAction = createAction({
 				const fields: DynamicPropsValue = {};
 
 				if (checkForExisting) {
-					const values = await googleSheetsCommon.getValues(
-						spreadsheetId,
-						getAccessTokenOrThrow(authentication),
-						sheetId,
-					);
-					const firstRow = values?.[0]?.values ?? [];
-					const headers: DropdownOption<string>[] = [];
+					const headers = await googleSheetsCommon.getGoogleSheetRows({
+						spreadsheetId: spreadsheetId,
+						accessToken: getAccessTokenOrThrow(authentication),
+						sheetId: sheetId,
+						rowIndex_s: 1,
+						rowIndex_e: 1,
+					});
+					const firstRow = headers[0].values ?? {};
 
 					//check for empty headers
-					if (firstRow.length === 0) {
+					if (Object.keys(firstRow).length === 0) {
 						fields['markdown'] = Property.MarkDown({
 							value: `No headers were found in the selected spreadsheet or worksheet. Please ensure that headers are added to the sheet and refresh the page to display the available columns.`,
 							variant: MarkdownVariant.INFO,
 						});
 					} else {
+						const headers: DropdownOption<string>[] = [];
 						for (const key in firstRow) {
 							headers.push({ label: firstRow[key].toString(), value: key.toString() });
 						}
@@ -220,25 +233,40 @@ export const insertMultipleRowsAction = createAction({
 
 		const duplicateColumn = context.propsValue.check_for_duplicate_column?.['column_name'];
 		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
-		const existingSheetValues = await googleSheetsCommon.getValues(
-			spreadSheetId,
-			context.auth.access_token,
-			sheetId,
-		);
-		const sheetHeaders = existingSheetValues?.[0]?.values ?? {};
 
-		const formattedValues = formatInputRows(valuesInputType, rowValuesInput, sheetHeaders);
-		const valueInputOption = asString ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED;
+		const rowHeaders = await googleSheetsCommon.getGoogleSheetRows({
+			spreadsheetId: spreadSheetId,
+			accessToken: context.auth.access_token,
+			sheetId: sheetId,
+			rowIndex_s: 1,
+			rowIndex_e: 1,
+		});
+
+		const sheetHeaders = rowHeaders[0]?.values ?? {};
 
 		const authClient = new OAuth2Client();
 		authClient.setCredentials(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
+		const formattedValues = await formatInputRows(sheets,spreadSheetId, sheetName,valuesInputType, rowValuesInput, sheetHeaders);
+
+		const valueInputOption = asString ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED;
+
+
 		if (overwriteValues) {
-			return handleOverwrite(sheets, spreadSheetId, sheetName, formattedValues, existingSheetValues, valueInputOption);
+			const sheetGridRange = await getWorkSheetGridSize(context.auth, spreadSheetId, sheetId);
+			const existingGridRowCount = sheetGridRange.rowCount ?? 0;
+			return handleOverwrite(sheets, spreadSheetId, sheetName, formattedValues, existingGridRowCount, valueInputOption);
 		}
 
 		if (checkForDuplicateValues) {
+			const existingSheetValues = await googleSheetsCommon.getGoogleSheetRows({
+				spreadsheetId: spreadSheetId,
+				accessToken: context.auth.access_token,
+				sheetId: sheetId,
+				rowIndex_s: 1,
+				rowIndex_e: undefined,
+			});
 			return handleDuplicates(
 				sheets,
 				spreadSheetId,
@@ -259,10 +287,10 @@ async function handleOverwrite(
 	spreadSheetId: string,
 	sheetName: string,
 	formattedValues: any[],
-	existingSheetValues: any[],
+	existingGridRowCount: number,
 	valueInputOption: ValueInputOption
 ) {
-	const existingRowCount = existingSheetValues.length;
+	const existingRowCount = existingGridRowCount;
 	const inputRowCount = formattedValues.length;
 
 	const updateResponse = await sheets.spreadsheets.values.batchUpdate({
@@ -277,17 +305,27 @@ async function handleOverwrite(
 		},
 	});
 
-	const clearRowsResponse = await sheets.spreadsheets.values.batchClear({
-		spreadsheetId: spreadSheetId,
-		requestBody: {
-			ranges: [`${sheetName}!A${inputRowCount + 2}:ZZZ${Math.max(inputRowCount + 2, existingRowCount)}`],
-		},
-	});
+	// Determine if clearing rows is necessary and within grid size
+	const clearStartRow = inputRowCount + 2; // Start clearing after the last input row 
+	const clearEndRow = Math.max(clearStartRow, existingRowCount); 
 
-	return {
-		...updateResponse.data,
-		...clearRowsResponse.data,
-	};
+	if (clearStartRow <= existingGridRowCount) {
+		const boundedClearEndRow = Math.min(clearEndRow, existingGridRowCount);
+		const clearRowsResponse = await sheets.spreadsheets.values.batchClear({
+			spreadsheetId: spreadSheetId,
+			requestBody: {
+				ranges: [`${sheetName}!A${clearStartRow}:ZZZ${boundedClearEndRow}`],
+			},
+		});
+
+		return {
+			...updateResponse.data,
+			...clearRowsResponse.data,
+		};
+	}
+	return updateResponse.data;
+
+
 }
 
 async function handleDuplicates(
@@ -299,9 +337,15 @@ async function handleDuplicates(
 	duplicateColumn: string,
 	valueInputOption: ValueInputOption
 ) {
+
 	const uniqueValues = formattedInputRows.filter(
 		(inputRow) => !existingSheetValues.some(
-			(existingRow) => existingRow.values[duplicateColumn] === inputRow[duplicateColumn]
+			(existingRow) => {
+				const existingValue = existingRow?.values?.[duplicateColumn];
+				const inputValue = inputRow?.[duplicateColumn];
+				return existingValue != null && inputValue != null &&
+					String(existingValue).toLowerCase().trim() === String(inputValue).toLowerCase().trim();
+			}
 		)
 	);
 
@@ -337,11 +381,14 @@ async function normalInsert(
 	return response.data;
 }
 
-function formatInputRows(
+async function formatInputRows(
+	sheets: sheets_v4.Sheets,
+	spreadSheetId: string,
+	sheetName: string,
 	valuesInputType: string,
 	rowValuesInput: any,
-	sheetHeaders: Record<string, any>
-): any[] {
+	sheetHeaders: RowValueType
+): Promise<RowValueType[]> {
 	let formattedInputRows: any[] = [];
 
 	switch (valuesInputType) {
@@ -349,19 +396,25 @@ function formatInputRows(
 			formattedInputRows = convertCsvToRawValues(rowValuesInput as string, ',', sheetHeaders);
 			break;
 		case 'json':
-			formattedInputRows = convertJsonToRawValues(rowValuesInput as string, sheetHeaders);
+			formattedInputRows = await convertJsonToRawValues(sheets,spreadSheetId, sheetName, rowValuesInput as string, sheetHeaders);
 			break;
 		case 'column_names':
-			formattedInputRows = rowValuesInput as any[];
+			formattedInputRows = rowValuesInput as RowValueType[];
 			break;
 	}
 
 	return formattedInputRows;
 }
 
-function convertJsonToRawValues(json: string | any[], labelHeaders: Record<string, any>): any[] {
+async function convertJsonToRawValues(
+	sheets: sheets_v4.Sheets,
+	spreadSheetId: string,
+	sheetName: string,
+	json: string | Record<string, any>[],
+	 labelHeaders: RowValueType
+): Promise<RowValueType[]> {
 
-	let data: Record<string, any>[];
+	let data: RowValueType[];
 
 	// If the input is a JSON string
 	if (typeof json === 'string') {
@@ -380,11 +433,40 @@ function convertJsonToRawValues(json: string | any[], labelHeaders: Record<strin
 		throw new Error('Input must be an array of objects or a valid JSON string representing it.');
 	}
 
-	return data.map((row: Record<string, any>) => {
+	// Collect all possible headers from the data
+    const allHeaders = new Set<string>();
+    data.forEach((row) => {
+        Object.keys(row).forEach((key) => allHeaders.add(key));
+    });
+
+	// Identify headers not present in labelHeaders
+    const additionalHeaders = Array.from(allHeaders).filter(
+        (header) => !Object.values(labelHeaders).includes(header)
+    );
+
+	//add missing headers to labelHeaders
+	additionalHeaders.forEach((header) => {
+		labelHeaders[columnToLabel(Object.keys(labelHeaders).length)] = header;
+	});
+
+	// update sheets with new headers
+	if (additionalHeaders.length > 0) {
+		await sheets.spreadsheets.values.update({
+		  range: `${sheetName}!A1:ZZZ1`,
+		  spreadsheetId: spreadSheetId,
+		  valueInputOption: ValueInputOption.USER_ENTERED,
+		  requestBody: {
+			majorDimension:Dimension.ROWS,
+			values: [objectToArray(labelHeaders)]
+		  }
+		});
+	  }
+
+	return data.map((row: RowValueType) => {
 		return Object.entries(labelHeaders).reduce((acc, [labelColumn, csvHeader]) => {
 			acc[labelColumn] = row[csvHeader] ?? "";
 			return acc;
-		}, {} as Record<string, any>);
+		}, {} as RowValueType);
 
 	})
 }
@@ -392,7 +474,7 @@ function convertJsonToRawValues(json: string | any[], labelHeaders: Record<strin
 function convertCsvToRawValues(
 	csvText: string,
 	delimiter: string,
-	labelHeaders: Record<string, any>,
+	labelHeaders: RowValueType,
 ) {
 	// Split CSV into rows
 	const rows = csvText.trim().split('\n');
@@ -413,7 +495,7 @@ function convertCsvToRawValues(
 		return newHeaders.reduce((obj, header, index) => {
 			obj[header] = values[index] ?? "";
 			return obj;
-		}, {} as Record<string, any>);
+		}, {} as RowValueType);
 	});
 
 	return result;

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
 
 import {
@@ -27,7 +28,6 @@ import {
   TriggerType,
   WebsocketClientEvent,
   flowStructureUtil,
-  isFlowStateTerminal,
   isNil,
 } from '@activepieces/shared';
 
@@ -133,34 +133,31 @@ const BuilderPage = () => {
         memorizedSelectedStep?.type === ActionType.PIECE ||
         memorizedSelectedStep?.type === TriggerType.PIECE,
     });
-  
 
   const pieceModel = versions
     ? versions[memorizedSelectedStep?.settings.pieceVersion || '']
     : undefined;
   const socket = useSocket();
-  useEffect(()=>{
+
+  const { mutate: fetchAndUpdateRun } = useMutation({
+    mutationFn: flowRunsApi.getPopulated,
+  });
+  useEffect(() => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
-  },[])
-
-
-  useEffect(() => {
-    if (run && !isFlowStateTerminal(run.status)) {
-      flowRunsApi.addRunListener(socket, run.id, (run) => {
-        setRun(run, flowVersion);
-      });
-    }
+    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (runId) => {
+      if (run && run?.id === runId) {
+        fetchAndUpdateRun(runId, {
+          onSuccess: (run) => {
+            setRun(run, flowVersion);
+          },
+        });
+      }
+    });
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
       socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
-      socket.removeAllListeners(WebsocketClientEvent.TEST_STEP_FINISHED);
-      socket.removeAllListeners(WebsocketClientEvent.TEST_FLOW_RUN_STARTED);
-      socket.removeAllListeners(WebsocketClientEvent.GENERATE_CODE_FINISHED);
-      socket.removeAllListeners(
-        WebsocketClientEvent.GENERATE_HTTP_REQUEST_FINISHED,
-      );
     };
   }, [socket.id, run?.id]);
 

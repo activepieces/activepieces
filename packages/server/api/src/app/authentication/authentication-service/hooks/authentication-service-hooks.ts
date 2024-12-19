@@ -1,4 +1,4 @@
-import { Project, ProjectMemberRole, User } from '@activepieces/shared'
+import { Project, User } from '@activepieces/shared'
 
 export enum Provider {
     EMAIL = 'EMAIL',
@@ -20,12 +20,10 @@ type PreParams = {
 
 type PostParams = {
     user: User
-    referringUserId?: string
 }
 
 type PostResult = {
     user: User
     project: Project
     token: string
-    projectRole: ProjectMemberRole | null
 }

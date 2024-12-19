@@ -97,12 +97,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                   reconnectConnection?.scope === AppConnectionScope.PLATFORM
                 }
                 predefinedConnectionName={null}
-                key={reconnectConnection?.externalId || 'newConnection'}
                 piece={params.piece}
                 onConnectionCreated={(connection) => {
                   refetch();
                   field.onChange(addBrackets(connection.externalId));
                 }}
+                key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
                 open={connectionDialogOpen}
                 setOpen={setConnectionDialogOpen}
               ></CreateOrEditConnectionDialog>

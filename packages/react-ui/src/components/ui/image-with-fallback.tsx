@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -7,17 +7,28 @@ interface ImageWithFallbackProps
   fallback?: React.ReactNode;
 }
 
+// In-memory cache to track loaded images
+const loadedImages = new Set<string>();
+
 const ImageWithFallback = ({
   src,
   alt,
   fallback,
   ...props
 }: ImageWithFallbackProps) => {
-  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(!src || !loadedImages.has(src));
+  useEffect(() => {
+    if (src && loadedImages.has(src)) {
+      setIsLoading(false);
+    }
+  }, [src]);
 
   const handleLoad = () => {
-    setIsLoading(false);
+    if (src) {
+      loadedImages.add(src); // Mark the image as loaded
+      setIsLoading(false);
+    }
   };
 
   const handleError = () => {

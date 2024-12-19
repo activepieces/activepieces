@@ -6,6 +6,7 @@ export const UpdateProjectPlatformRequest = Type.Object({
     displayName: Type.Optional(Type.String({
         pattern: SAFE_STRING_PATTERN,
     })),
+    externalId: Type.Optional(Type.String()),
     plan: Type.Optional(Type.Object({
         tasks: Type.Optional(Type.Number({})),
         pieces: Type.Optional(Type.Array(Type.String({}))),

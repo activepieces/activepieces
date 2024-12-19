@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddArchiveIdToPieceMetadata1696950789636
 implements MigrationInterface {
@@ -19,7 +21,7 @@ implements MigrationInterface {
             ADD CONSTRAINT "fk_piece_metadata_file" FOREIGN KEY ("archiveId") REFERENCES "file"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
 
-        logger.info('AddArchiveIdToPieceMetadata1696950789636 up')
+        log.info('AddArchiveIdToPieceMetadata1696950789636 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -33,6 +35,6 @@ implements MigrationInterface {
             ALTER TABLE "piece_metadata" DROP COLUMN "archiveId"
         `)
 
-        logger.info('AddArchiveIdToPieceMetadata1696950789636 down')
+        log.info('AddArchiveIdToPieceMetadata1696950789636 down')
     }
 }

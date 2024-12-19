@@ -1,11 +1,16 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class RemoveFlowInstanceSqlite1702412280963
 implements MigrationInterface {
     name = 'RemoveFlowInstanceSqlite1702412280963'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        log.info({
+            name: this.name,
+        }, 'up')
         await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
         `)
@@ -72,7 +77,7 @@ implements MigrationInterface {
             RENAME TO "DELETED_flow_instance"
         `)
 
-        logger.info('RemoveFlowInstanceSqlite1702412280963 up')
+        log.info('RemoveFlowInstanceSqlite1702412280963 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -136,6 +141,8 @@ implements MigrationInterface {
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
         `)
 
-        logger.info('RemoveFlowInstanceSqlite1702412280963 down')
+        log.info({
+            name: this.name,
+        }, 'down')
     }
 }

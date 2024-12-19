@@ -1,7 +1,8 @@
-import { SharedSystemProp, system } from '@activepieces/server-shared'
+import { WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
 import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
+import { system } from '../../helper/system/system'
 import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
 import { appearanceHelper } from '../helper/appearance-helper'
@@ -39,7 +40,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.SHOW_DOCS] = false
             modifiedFlags[ApFlagId.SHOW_BILLING] = false
             modifiedFlags[ApFlagId.SHOW_REWARDS] = false
-            modifiedFlags[ApFlagId.SHOW_COPILOTS] = false
             modifiedFlags[ApFlagId.PROJECT_LIMITS_ENABLED] = true
             modifiedFlags[ApFlagId.INSTALL_PROJECT_PIECES_ENABLED] = false
             modifiedFlags[ApFlagId.MANAGE_PROJECT_PIECES_ENABLED] = true
@@ -62,7 +62,7 @@ function resolveHostUrl(hostname: string): string {
     if (edition === ApEdition.CLOUD) {
         return `https://${hostname}`
     }
-    const frontendUrl = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
+    const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL)
     return removeTrailingSlash(frontendUrl)
 }
 

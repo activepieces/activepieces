@@ -1,5 +1,4 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import mime from 'mime-types';
 import { encodings } from '../common/encodings';
 
 export const changeFileEncoding = createAction({
@@ -36,11 +35,14 @@ export const changeFileEncoding = createAction({
     const outputFileName = context.propsValue.outputFileName;
     const outputEncoding = context.propsValue.outputEncoding as BufferEncoding;
 
-    const output = Buffer.from(inputFile.toString(), inputEncoding).toString(outputEncoding);
+    // First decode the input buffer using the source encoding
+    const decodedString = inputFile.toString(inputEncoding);
+    // Then encode to the target encoding
+    const encodedBuffer = Buffer.from(decodedString, outputEncoding);
 
     return context.files.write({
       fileName: outputFileName,
-      data: Buffer.from(output),
+      data: encodedBuffer,
     });
   },
 });

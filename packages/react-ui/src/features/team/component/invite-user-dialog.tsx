@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -34,8 +34,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
+import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { PlatformRoleSelect } from '@/features/team/component/platform-role-select';
-import { ProjectRoleSelect } from '@/features/team/component/project-role-select';
 import { userInvitationApi } from '@/features/team/lib/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -45,9 +45,9 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   InvitationType,
+  isNil,
   Permission,
   PlatformRole,
-  ProjectMemberRole,
   UserInvitationWithLink,
 } from '@activepieces/shared';
 
@@ -66,10 +66,11 @@ const FormSchema = Type.Object({
     errorMessage: t('Please select platform role'),
     required: true,
   }),
-  projectRole: Type.Enum(ProjectMemberRole, {
-    errorMessage: t('Please select project role'),
-    required: true,
-  }),
+  projectRole: Type.Optional(
+    Type.String({
+      required: true,
+    }),
+  ),
 });
 
 type FormSchema = Static<typeof FormSchema>;
@@ -103,7 +104,7 @@ export function InviteUserDialog() {
           return userInvitationApi.invite({
             email: data.email.trim().toLowerCase(),
             type: data.type,
-            projectRole: data.projectRole,
+            projectRole: data.projectRole!,
             projectId: project.id,
           });
       }
@@ -125,17 +126,37 @@ export function InviteUserDialog() {
     },
   });
 
+  const { data: rolesData } = useQuery({
+    queryKey: ['project-roles'],
+    queryFn: () => projectRoleApi.list(),
+    enabled:
+      !isNil(platform.projectRolesEnabled) && platform.projectRolesEnabled,
+  });
+
+  const roles = rolesData?.data ?? [];
+
   const form = useForm<FormSchema>({
     resolver: typeboxResolver(FormSchema),
     defaultValues: {
       email: '',
-      type: platform.manageProjectsEnabled
+      type: platform.projectRolesEnabled
         ? InvitationType.PROJECT
         : InvitationType.PLATFORM,
       platformRole: PlatformRole.ADMIN,
-      projectRole: ProjectMemberRole.ADMIN,
+      projectRole: roles?.[0]?.name,
     },
   });
+
+  const onSubmit = (data: FormSchema) => {
+    if (data.type === InvitationType.PROJECT && !data.projectRole) {
+      form.setError('projectRole', {
+        type: 'required',
+        message: t('Please select a project role'),
+      });
+      return;
+    }
+    mutate(data);
+  };
 
   const copyInvitationLink = () => {
     navigator.clipboard.writeText(invitationLink);
@@ -185,7 +206,7 @@ export function InviteUserDialog() {
           {!invitationLink ? (
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit((data) => mutate(data))}
+                onSubmit={form.handleSubmit(onSubmit)}
                 className="flex flex-col gap-4"
               >
                 <FormField
@@ -234,11 +255,44 @@ export function InviteUserDialog() {
                     </FormItem>
                   )}
                 ></FormField>
+
                 {form.getValues().type === InvitationType.PLATFORM && (
                   <PlatformRoleSelect form={form} />
                 )}
                 {form.getValues().type === InvitationType.PROJECT && (
-                  <ProjectRoleSelect form={form} />
+                  <FormField
+                    control={form.control}
+                    name="projectRole"
+                    render={({ field }) => (
+                      <FormItem className="grid gap-2">
+                        <Label>{t('Select Project Role')}</Label>
+                        <Select
+                          onValueChange={(value) => {
+                            const selectedRole = roles.find(
+                              (role) => role.name === value,
+                            );
+                            field.onChange(selectedRole?.name);
+                          }}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('Select Role')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>{t('Roles')}</SelectLabel>
+                              {roles.map((role) => (
+                                <SelectItem key={role.name} value={role.name}>
+                                  {role.name}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
 
                 {form?.formState?.errors?.root?.serverError && (

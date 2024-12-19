@@ -1,15 +1,29 @@
 import { Readable } from 'stream'
-import { AppSystemProp, exceptionHandler, logger, system } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import { FileType, ProjectId } from '@activepieces/shared'
-import { DeleteObjectsCommand, GetObjectCommand, S3 } from '@aws-sdk/client-s3'
+import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 
-export const s3Helper = {
-    async uploadFile(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string, data: Buffer): Promise<string> {
-
-        const s3Key = constructS3Key(platformId, projectId, type, fileId)
-        logger.info({
+export const s3Helper = (log: FastifyBaseLogger) => ({
+    constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): string {
+        const now = dayjs()
+        const datePath = `${now.format('YYYY/MM/DD/HH')}`
+        if (platformId) {
+            return `platform/${platformId}/${type}/${datePath}/${fileId}`
+        }
+        else if (projectId) {
+            return `project/${projectId}/${type}/${datePath}/${fileId}`
+        }
+        else {
+            throw new Error('Either platformId or projectId must be provided')
+        }
+    },
+    async uploadFile(s3Key: string, data: Buffer): Promise<string> {
+        log.info({
             s3Key,
         }, 'uploading file to s3')
         try {
@@ -19,16 +33,16 @@ export const s3Helper = {
                 Body: Readable.from(data),
                 ContentLength: data.length,
             })
-            logger.info({
+            log.info({
                 s3Key,
             }, 'file uploaded to s3')
         }
         catch (error) {
-            logger.error({
+            log.error({
                 s3Key,
                 error,
             }, 'failed to upload file to s3')
-            exceptionHandler.handle(error)
+            exceptionHandler.handle(error, log)
             throw error
         }
         return s3Key
@@ -50,6 +64,15 @@ export const s3Helper = {
         })
         return getSignedUrl(client, command)
     },
+    async putS3SignedUrl(s3Key: string, contentLength: number): Promise<string> {
+        const client = getS3Client()
+        const command = new PutObjectCommand({
+            Bucket: getS3BucketName(),
+            Key: s3Key,
+            ContentLength: contentLength,
+        })
+        return getSignedUrl(client, command)
+    },
     async deleteFiles(s3Keys: string[]): Promise<void> {
         if (s3Keys.length === 0) {
             return
@@ -68,33 +91,19 @@ export const s3Helper = {
                         Quiet: true,
                     },
                 }))
-                logger.info({ count: chunk.length }, 'files deleted from s3')
+                log.info({ count: chunk.length }, 'files deleted from s3')
             }
         }
         catch (error) {
-            logger.error({ error, count: s3Keys.length }, 'failed to delete files from s3')
-            exceptionHandler.handle(error)
+            log.error({ error, count: s3Keys.length }, 'failed to delete files from s3')
+            exceptionHandler.handle(error, log)
             throw error
         }
     },
-}
+})
 
 
 const chunkArray = (array: string[], chunkSize: number) => Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => array.slice(i * chunkSize, (i + 1) * chunkSize))
-
-const constructS3Key = (platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): string => {
-    const now = dayjs()
-    const datePath = `${now.format('YYYY/MM/DD/HH')}`
-    if (platformId) {
-        return `platform/${platformId}/${type}/${datePath}/${fileId}`
-    }
-    else if (projectId) {
-        return `project/${projectId}/${type}/${datePath}/${fileId}`
-    }
-    else {
-        throw new Error('Either platformId or projectId must be provided')
-    }
-}
 
 const getS3Client = () => {
     const region = system.getOrThrow<string>(AppSystemProp.S3_REGION)

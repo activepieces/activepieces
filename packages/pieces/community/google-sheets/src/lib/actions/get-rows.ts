@@ -1,4 +1,5 @@
 import {
+  PiecePropValueSchema,
   Property,
   Store,
   StoreScope,
@@ -6,18 +7,17 @@ import {
 } from '@activepieces/pieces-framework';
 import { googleSheetsAuth } from '../..';
 import {
-  getAllGoogleSheetRows,
-  getGoogleSheetRows,
   googleSheetsCommon,
 } from '../common/common';
 import { isNil } from '@activepieces/shared';
 import { HttpError } from '@activepieces/pieces-common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import { getWorkSheetGridSize } from '../triggers/helpers';
 
 async function getRows(
   store: Store,
-  accessToken: string,
+  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
   spreadsheetId: string,
   sheetId: number,
   memKey: string,
@@ -26,10 +26,16 @@ async function getRows(
   testing: boolean
 ) {
   const sheetName = await googleSheetsCommon.findSheetName(
-    accessToken,
+    auth.access_token,
     spreadsheetId,
     sheetId
   );
+
+  const sheetGridRange = await getWorkSheetGridSize(auth,spreadsheetId,sheetId);
+  const existingGridRowCount = sheetGridRange.rowCount ??0;
+	// const existingGridColumnCount = sheetGridRange.columnCount??26;
+
+
 
   const memVal = await store.get(memKey, StoreScope.FLOW);
 
@@ -50,22 +56,31 @@ async function getRows(
 
   if (startingRow < 1)
     throw Error('Starting row : ' + startingRow + ' is less than 1' + memVal);
-  const endRow = startingRow + groupSize;
+
+
+  if(startingRow > existingGridRowCount-1){
+    return [];
+  }
+
+  const endRow = Math.min(startingRow + groupSize,existingGridRowCount);
+
   if (testing == false) await store.put(memKey, endRow, StoreScope.FLOW);
 
-  const row = await getGoogleSheetRows({
-    accessToken: accessToken,
-    sheetName: sheetName,
-    spreadSheetId: spreadsheetId,
+  const row = await googleSheetsCommon.getGoogleSheetRows({
+    accessToken: auth.access_token,
+    sheetId: sheetId,
+    spreadsheetId: spreadsheetId,
     rowIndex_s: startingRow,
     rowIndex_e: endRow - 1,
   });
 
   if (row.length == 0) {
-    const allRows = await getAllGoogleSheetRows({
-      accessToken: accessToken,
-      sheetName: sheetName,
-      spreadSheetId: spreadsheetId,
+    const allRows = await googleSheetsCommon.getGoogleSheetRows({
+      spreadsheetId: spreadsheetId,
+      accessToken: auth.access_token,
+      sheetId: sheetId,
+      rowIndex_s: undefined,
+      rowIndex_e: undefined,
     });
     const lastRow = allRows.length + 1;
     if (testing == false) await store.put(memKey, lastRow, StoreScope.FLOW);
@@ -120,7 +135,7 @@ export const getRowsAction = createAction({
     try {
       return await getRows(
         store,
-        auth['access_token'],
+        auth,
         propsValue['spreadsheet_id'],
         propsValue['sheet_id'],
         propsValue['memKey'],
@@ -140,7 +155,7 @@ export const getRowsAction = createAction({
     try {
       return await getRows(
         store,
-        auth['access_token'],
+        auth,
         propsValue['spreadsheet_id'],
         propsValue['sheet_id'],
         propsValue['memKey'],

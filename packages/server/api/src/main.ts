@@ -1,10 +1,9 @@
 
-import { logger, system } from '@activepieces/server-shared'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
-import { databaseConnection } from './app/database/database-connection'
-import { seedDevData } from './app/database/seeds/dev-seeds'
+import { initializeDatabase } from './app/database'
 import { initializeLock } from './app/helper/lock'
+import { system } from './app/helper/system/system'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
 
@@ -15,14 +14,14 @@ const start = async (app: FastifyInstance): Promise<void> => {
             port: 3000,
         })
         if (system.isWorker()) {
-            await workerPostBoot()
+            await workerPostBoot(app)
         }
         if (system.isApp()) {
-            await appPostBoot()
+            await appPostBoot(app)
         }
     }
     catch (err) {
-        logger.error(err)
+        app.log.error(err)
         process.exit(1)
     }
 }
@@ -40,8 +39,8 @@ const stop = async (app: FastifyInstance): Promise<void> => {
         process.exit(0)
     }
     catch (err) {
-        logger.error('Error stopping server')
-        logger.error(err)
+        app.log.error('Error stopping server')
+        app.log.error(err)
         process.exit(1)
     }
 }
@@ -57,26 +56,24 @@ function setupTimeZone(): void {
 const main = async (): Promise<void> => {
     setupTimeZone()
     if (system.isApp()) {
-        await databaseConnection().initialize()
-        await databaseConnection().runMigrations()
-        await seedDevData()
+        await initializeDatabase({ runMigrations: true })
         initializeLock()
     }
     const app = await setupServer()
 
     process.on('SIGINT', () => {
-        stop(app).catch((e) => logger.error(e, '[Main#stop]'))
+        stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
     })
 
     process.on('SIGTERM', () => {
-        stop(app).catch((e) => logger.error(e, '[Main#stop]'))
+        stop(app).catch((e) => system.globalLogger().error(e, '[Main#stop]'))
     })
 
     await start(app)
 }
 
 main().catch((e) => {
-    logger.error(e, '[Main#main]')
+    system.globalLogger().error(e, '[Main#main]')
     process.exit(1)
 })
 

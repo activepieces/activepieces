@@ -1,17 +1,20 @@
 import {
     ActivepiecesError,
     ErrorCode,
+    Permission,
     ProjectId,
-    ProjectMemberRole,
+    RoleType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { flagService } from '../../flags/flag.service'
 import { userInvitationsService } from '../../user-invitations/user-invitation.service'
 import { projectMemberService } from '../project-members/project-member.service'
+import { projectRoleService } from '../project-role/project-role.service'
 import { projectLimitsService } from './project-plan.service'
 
-export const projectMembersLimit = {
-    async limit({ projectId, platformId, role }: { projectId: ProjectId, platformId: string, role: ProjectMemberRole }): Promise<void> {
-        const shouldLimit = await shouldLimitMembers({ projectId, platformId, role })
+export const projectMembersLimit = (log: FastifyBaseLogger) => ({
+    async limit({ projectId, platformId, projectRoleName }: { projectId: ProjectId, platformId: string, projectRoleName: string }): Promise<void> {
+        const shouldLimit = await shouldLimitMembers({ projectId, platformId, projectRoleName, log })
 
         if (shouldLimit) {
             throw new ActivepiecesError({
@@ -22,11 +25,11 @@ export const projectMembersLimit = {
             })
         }
     },
-}
+})
 
 const UNLIMITED_TEAM_MEMBERS = 100
 
-async function shouldLimitMembers({ projectId, platformId, role }: { projectId: ProjectId, platformId: string, role: ProjectMemberRole }): Promise<boolean> {
+async function shouldLimitMembers({ projectId, platformId, projectRoleName, log }: { projectId: ProjectId, platformId: string, projectRoleName: string, log: FastifyBaseLogger }): Promise<boolean> {
     if (!flagService.isCloudPlatform(platformId)) {
         return false
     }
@@ -35,9 +38,13 @@ async function shouldLimitMembers({ projectId, platformId, role }: { projectId: 
         return false
     }
     if (projectPlan.teamMembers === UNLIMITED_TEAM_MEMBERS) {
-        return role !== ProjectMemberRole.ADMIN
+        const projectRole = await projectRoleService.getOneOrThrow({
+            name: projectRoleName,
+            platformId,
+        })
+        return projectRole.type !== RoleType.DEFAULT || (projectRole.permissions?.includes(Permission.WRITE_PROJECT) === false)
     }
-    const numberOfMembers = await projectMemberService.countTeamMembers(projectId)
-    const numberOfInvitations = await userInvitationsService.countByProjectId(projectId)
+    const numberOfMembers = await projectMemberService(log).countTeamMembers(projectId)
+    const numberOfInvitations = await userInvitationsService(log).countByProjectId(projectId)
     return numberOfMembers + numberOfInvitations > projectPlan.teamMembers
 }

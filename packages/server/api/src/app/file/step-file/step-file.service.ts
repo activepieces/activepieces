@@ -1,25 +1,25 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import {
     File,
     FileCompression,
     FileType,
-    StepFileWithUrl,
+    isNil,
+    StepFileUpsertResponse,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { domainHelper } from '../../helper/domain-helper'
 import { jwtUtils } from '../../helper/jwt-utils'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { fileService } from '../file.service'
+import { s3Helper } from '../s3-helper'
 
 const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
-export const stepFileService = {
-    async saveAndEnrich(
-        params: SaveParams,
-        hostname: string,
-        projectId: string,
-    ): Promise<StepFileWithUrl> {
-        const file = await fileService.save({
-            data: params.file,
+export const stepFileService = (log: FastifyBaseLogger) => ({
+    async saveAndEnrich(params: SaveParams): Promise<StepFileUpsertResponse> {
+        const file = await fileService(log).save({
+            data: params.data ?? null,
             metadata: {
                 stepName: params.stepName,
                 flowId: params.flowId,
@@ -27,37 +27,45 @@ export const stepFileService = {
             fileName: params.fileName,
             type: FileType.FLOW_STEP_FILE,
             compression: FileCompression.NONE,
-            projectId,
+            projectId: params.projectId,
+            size: params.contentLength,
         })
-        return enrichWithUrl(hostname, file)
+        return {
+            uploadUrl: await constructUploadUrl(log, file.s3Key, params.data, params.contentLength),
+            url: await constructDownloadUrl(params.hostname, file),
+        }
     },
+})
+
+async function constructUploadUrl(log: FastifyBaseLogger, s3Key: string | undefined, data: Buffer | undefined, contentLength: number): Promise<string | undefined> {
+    const dataSent = !isNil(data)
+    const isNotS3 = isNil(s3Key)
+    if (isNotS3 || dataSent) {
+        return undefined
+    }
+    return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
 }
 
-async function enrichWithUrl(
-    hostname: string,
-    file: File,
-): Promise<StepFileWithUrl> {
-    const jwtSecret = await jwtUtils.getJwtSecret()
+async function constructDownloadUrl(hostname: string, file: File): Promise<string> {
     const accessToken = await jwtUtils.sign({
         payload: {
             fileId: file.id,
         },
         expiresInSeconds: dayjs.duration(executionRetentionInDays, 'days').asSeconds(),
-        key: jwtSecret,
+        key: await jwtUtils.getJwtSecret(),
     })
-    const url = await domainHelper.get().constructApiUrlFromRequest({
+    return domainHelper.get().constructApiUrlFromRequest({
         domain: hostname,
         path: `v1/step-files/signed?token=${accessToken}`,
     })
-    return {
-        ...file,
-        url,
-    }
 }
 
 type SaveParams = {
     fileName: string
     flowId: string
     stepName: string
-    file: Buffer
+    data: Buffer | undefined
+    contentLength: number
+    hostname: string
+    projectId: string
 }

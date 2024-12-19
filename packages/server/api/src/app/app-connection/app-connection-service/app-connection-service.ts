@@ -1,4 +1,4 @@
-import { exceptionHandler, logger, SharedSystemProp, system } from '@activepieces/server-shared'
+import { exceptionHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -21,20 +21,23 @@ import {
     UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { engineRunner } from 'server-worker'
+import { FastifyBaseLogger } from 'fastify'
+import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-worker'
 import { Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
-import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
 import { encryptUtils } from '../../helper/encryption'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import {
-    getPiecePackage,
+    getPiecePackageWithoutArchive,
     pieceMetadataService,
 } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
+import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import {
     AppConnectionEntity,
     AppConnectionSchema,
@@ -44,7 +47,7 @@ import { oauth2Util } from './oauth2/oauth2-util'
 
 const repo = repoFactory(AppConnectionEntity)
 
-export const appConnectionService = {
+export const appConnectionService = (log: FastifyBaseLogger) => ({
     async upsert(params: UpsertParams): Promise<AppConnectionWithoutSensitiveData> {
         const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type } = params
 
@@ -54,7 +57,7 @@ export const appConnectionService = {
             pieceName,
             projectId: projectIds?.[0],
             platformId,
-        })
+        }, log)
 
         const encryptedConnectionValue = encryptUtils.encryptObject({
             ...validatedConnectionValue,
@@ -134,7 +137,7 @@ export const appConnectionService = {
             return encryptedAppConnection
         }
 
-        return this.decryptAndRefreshConnection(encryptedAppConnection, projectId)
+        return this.decryptAndRefreshConnection(encryptedAppConnection, projectId, log)
     },
 
     async getOneOrThrowWithoutValue(params: GetOneParams): Promise<AppConnectionWithoutSensitiveData> {
@@ -239,17 +242,18 @@ export const appConnectionService = {
     async decryptAndRefreshConnection(
         encryptedAppConnection: AppConnectionSchema,
         projectId: ProjectId,
+        log: FastifyBaseLogger,
     ): Promise<AppConnection | null> {
         const appConnection = decryptConnection(encryptedAppConnection)
-        if (!needRefresh(appConnection)) {
-            return oauth2Util.removeRefreshTokenAndClientSecret(appConnection)
+        if (!needRefresh(appConnection, log)) {
+            return oauth2Util(log).removeRefreshTokenAndClientSecret(appConnection)
         }
 
-        const refreshedConnection = await lockAndRefreshConnection({ projectId, externalId: appConnection.externalId })
+        const refreshedConnection = await lockAndRefreshConnection({ projectId, externalId: appConnection.externalId, log })
         if (isNil(refreshedConnection)) {
             return null
         }
-        return oauth2Util.removeRefreshTokenAndClientSecret(refreshedConnection)
+        return oauth2Util(log).removeRefreshTokenAndClientSecret(refreshedConnection)
     },
     async deleteAllProjectConnections(projectId: string) {
         await repo().delete({
@@ -257,7 +261,7 @@ export const appConnectionService = {
             projectIds: APArrayContains('projectIds', [projectId]),
         })
     },
-}
+})
 
 async function assertProjectIds(projectIds: ProjectId[], platformId: string): Promise<void> {
     const filteredProjects = await projectRepo().countBy({
@@ -275,18 +279,19 @@ async function assertProjectIds(projectIds: ProjectId[], platformId: string): Pr
 }
 const validateConnectionValue = async (
     params: ValidateConnectionValueParams,
+    log: FastifyBaseLogger,
 ): Promise<AppConnectionValue> => {
     const { value, pieceName, projectId, platformId } = params
 
     switch (value.type) {
         case AppConnectionType.PLATFORM_OAUTH2: {
-            const tokenUrl = await oauth2Util.getOAuth2TokenUrl({
+            const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 projectId,
                 pieceName,
                 platformId,
                 props: value.props,
             })
-            return oauth2Handler[value.type].claim({
+            return oauth2Handler[value.type](log).claim({
                 projectId,
                 platformId,
                 pieceName,
@@ -303,13 +308,13 @@ const validateConnectionValue = async (
             })
         }
         case AppConnectionType.CLOUD_OAUTH2: {
-            const tokenUrl = await oauth2Util.getOAuth2TokenUrl({
+            const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 projectId,
                 pieceName,
                 platformId,
                 props: value.props,
             })
-            return oauth2Handler[value.type].claim({
+            return oauth2Handler[value.type](log).claim({
                 projectId,
                 platformId,
                 pieceName,
@@ -325,13 +330,13 @@ const validateConnectionValue = async (
             })
         }
         case AppConnectionType.OAUTH2: {
-            const tokenUrl = await oauth2Util.getOAuth2TokenUrl({
+            const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
                 projectId,
                 pieceName,
                 platformId,
                 props: value.props,
             })
-            const auth = await oauth2Handler[value.type].claim({
+            const auth = await oauth2Handler[value.type](log).claim({
                 projectId,
                 platformId,
                 pieceName,
@@ -352,7 +357,7 @@ const validateConnectionValue = async (
                 projectId,
                 platformId,
                 auth,
-            })
+            }, log)
             return auth
         }
         case AppConnectionType.CUSTOM_AUTH:
@@ -363,7 +368,7 @@ const validateConnectionValue = async (
                 pieceName,
                 projectId,
                 auth: value,
-            })
+            }, log)
     }
 
     return value
@@ -382,38 +387,36 @@ function decryptConnection(
 
 const engineValidateAuth = async (
     params: EngineValidateAuthParams,
+    log: FastifyBaseLogger,
 ): Promise<void> => {
-    const environment = system.getOrThrow(SharedSystemProp.ENVIRONMENT)
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return
     }
     const { pieceName, auth, projectId, platformId } = params
 
-    const pieceMetadata = await pieceMetadataService.getOrThrow({
+    const pieceMetadata = await pieceMetadataService(log).getOrThrow({
         name: pieceName,
         projectId,
         version: undefined,
         platformId,
     })
 
-    const engineToken = await accessTokenManager.generateEngineToken({
-        platformId,
-        projectId,
-    })
-
-    const engineResponse = await engineRunner.executeValidateAuth(engineToken, {
-        piece: await getPiecePackage(projectId, platformId, {
+    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperValidateAuthResult>>({
+        piece: await getPiecePackageWithoutArchive(log, projectId, platformId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
             pieceType: pieceMetadata.pieceType,
             packageType: pieceMetadata.packageType,
         }),
+        projectId,
         platformId,
-        auth,
+        connectionValue: auth,
+        jobType: UserInteractionJobType.EXECUTE_VALIDATION,
     })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
-        logger.error(
+        log.error(
             engineResponse,
             '[AppConnectionService#engineValidateAuth] engineResponse',
         )
@@ -445,13 +448,16 @@ const engineValidateAuth = async (
 async function lockAndRefreshConnection({
     projectId,
     externalId,
+    log,
 }: {
     projectId: ProjectId
     externalId: string
+    log: FastifyBaseLogger
 }) {
     const refreshLock = await distributedLock.acquireLock({
         key: `${projectId}_${externalId}`,
         timeout: 20000,
+        log,
     })
 
     let appConnection: AppConnection | null = null
@@ -465,10 +471,10 @@ async function lockAndRefreshConnection({
             return encryptedAppConnection
         }
         appConnection = decryptConnection(encryptedAppConnection)
-        if (!needRefresh(appConnection)) {
+        if (!needRefresh(appConnection, log)) {
             return appConnection
         }
-        const refreshedAppConnection = await refresh(appConnection, projectId)
+        const refreshedAppConnection = await refresh(appConnection, projectId, log)
 
         await repo().update(refreshedAppConnection.id, {
             status: AppConnectionStatus.ACTIVE,
@@ -477,8 +483,8 @@ async function lockAndRefreshConnection({
         return refreshedAppConnection
     }
     catch (e) {
-        exceptionHandler.handle(e)
-        if (!isNil(appConnection) && oauth2Util.isUserError(e)) {
+        exceptionHandler.handle(e, log)
+        if (!isNil(appConnection) && oauth2Util(log).isUserError(e)) {
             appConnection.status = AppConnectionStatus.ERROR
             await repo().update(appConnection.id, {
                 status: appConnection.status,
@@ -492,7 +498,7 @@ async function lockAndRefreshConnection({
     return appConnection
 }
 
-function needRefresh(connection: AppConnection): boolean {
+function needRefresh(connection: AppConnection, log: FastifyBaseLogger): boolean {
     if (connection.status === AppConnectionStatus.ERROR) {
         return false
     }
@@ -500,16 +506,16 @@ function needRefresh(connection: AppConnection): boolean {
         case AppConnectionType.PLATFORM_OAUTH2:
         case AppConnectionType.CLOUD_OAUTH2:
         case AppConnectionType.OAUTH2:
-            return oauth2Util.isExpired(connection.value)
+            return oauth2Util(log).isExpired(connection.value)
         default:
             return false
     }
 }
 
-async function refresh(connection: AppConnection, projectId: ProjectId): Promise<AppConnection> {
+async function refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
     switch (connection.value.type) {
         case AppConnectionType.PLATFORM_OAUTH2:
-            connection.value = await oauth2Handler[connection.value.type].refresh({
+            connection.value = await oauth2Handler[connection.value.type](log).refresh({
                 pieceName: connection.pieceName,
                 platformId: connection.platformId,
                 projectId,
@@ -517,7 +523,7 @@ async function refresh(connection: AppConnection, projectId: ProjectId): Promise
             })
             break
         case AppConnectionType.CLOUD_OAUTH2:
-            connection.value = await oauth2Handler[connection.value.type].refresh({
+            connection.value = await oauth2Handler[connection.value.type](log).refresh({
                 pieceName: connection.pieceName,
                 platformId: connection.platformId,
                 projectId,
@@ -525,7 +531,7 @@ async function refresh(connection: AppConnection, projectId: ProjectId): Promise
             })
             break
         case AppConnectionType.OAUTH2:
-            connection.value = await oauth2Handler[connection.value.type].refresh({
+            connection.value = await oauth2Handler[connection.value.type](log).refresh({
                 pieceName: connection.pieceName,
                 platformId: connection.platformId,
                 projectId,

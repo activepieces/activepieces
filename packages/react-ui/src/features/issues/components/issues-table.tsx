@@ -149,7 +149,34 @@ export default function IssuesTable() {
     ],
     [userHasPermissionToMarkAsResolved, handleMarkAsResolved, t],
   );
-
+  const userHasPermisionToSeeRuns = checkAccess(Permission.READ_RUN);
+  const handleRowClick = ({
+    newWindow,
+    flowId,
+    created,
+  }: {
+    newWindow: boolean;
+    flowId: string;
+    created: string;
+  }) => {
+    const searchParams = createSearchParams({
+      flowId: flowId,
+      createdAfter: created,
+      status: [
+        FlowRunStatus.FAILED,
+        FlowRunStatus.INTERNAL_ERROR,
+        FlowRunStatus.TIMEOUT,
+      ],
+    }).toString();
+    if (newWindow) {
+      openNewWindow('/runs', searchParams);
+    } else {
+      navigate({
+        pathname: '/runs',
+        search: searchParams,
+      });
+    }
+  };
   return (
     <div className="flex-col w-full">
       <div className=" flex">
@@ -198,25 +225,16 @@ export default function IssuesTable() {
             },
           },
         ]}
-        onRowClick={(row, newWindow) => {
-          const searchParams = createSearchParams({
-            flowId: row.flowId,
-            createdAfter: row.created,
-            status: [
-              FlowRunStatus.FAILED,
-              FlowRunStatus.INTERNAL_ERROR,
-              FlowRunStatus.TIMEOUT,
-            ],
-          }).toString();
-          if (newWindow) {
-            openNewWindow('/runs', searchParams);
-          } else {
-            navigate({
-              pathname: '/runs',
-              search: searchParams,
-            });
-          }
-        }}
+        onRowClick={
+          userHasPermisionToSeeRuns
+            ? (row, newWindow) =>
+                handleRowClick({
+                  newWindow,
+                  flowId: row.flowId,
+                  created: row.created,
+                })
+            : undefined
+        }
       />
     </div>
   );

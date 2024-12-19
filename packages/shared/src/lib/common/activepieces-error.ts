@@ -2,7 +2,8 @@ import { FileId } from '../file'
 import { FlowRunId } from '../flow-run/flow-run'
 import { FlowId } from '../flows/flow'
 import { FlowVersionId } from '../flows/flow-version'
-import { ProjectId, ProjectMemberRole } from '../project'
+import { ProjectId } from '../project'
+import { ProjectRole } from '../project-role/project-role'
 import { UserId } from '../user'
 import { ApId } from './id-generator'
 import { Permission } from './security'
@@ -68,6 +69,8 @@ export type ApErrorParams =
     | NoChatResponseParams
     | InvalidSmtpCredentialsErrorParams
     | InvalidGitCredentialsParams
+    | CopilotFailedErrorParams
+    | ProjectExternalIdAlreadyExistsParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -115,7 +118,7 @@ ErrorCode.PERMISSION_DENIED,
 {
     userId: UserId
     projectId: ProjectId
-    role: ProjectMemberRole
+    projectRole: ProjectRole | null
     permission: Permission | undefined
 }
 >
@@ -401,6 +404,14 @@ export type InvalidGitCredentialsParams = BaseErrorParams<ErrorCode.INVALID_GIT_
     message: string
 }>
 
+export type CopilotFailedErrorParams = BaseErrorParams<ErrorCode.COPILOT_FAILED, {
+    message: string
+}>
+
+export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
+    externalId: string
+}>
+
 export enum ErrorCode {
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
     AUTHENTICATION = 'AUTHENTICATION',
@@ -415,6 +426,7 @@ export enum ErrorCode {
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
+    PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_FORM_NOT_FOUND = 'FLOW_FORM_NOT_FOUND',
     FILE_NOT_FOUND = 'FILE_NOT_FOUND',
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
@@ -456,4 +468,5 @@ export enum ErrorCode {
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
+    COPILOT_FAILED = 'COPILOT_FAILED',
 }

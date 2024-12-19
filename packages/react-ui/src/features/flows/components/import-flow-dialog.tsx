@@ -184,9 +184,11 @@ const ImportFlowDialog = (
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
+    console.log('handleFileChange');
     const files = event.target.files;
     if (!files?.[0]) return;
 
+    console.log('handleFileChange 2');
     setTemplates([]);
     setFailedFiles([]);
     setErrorMessage('');
@@ -220,6 +222,9 @@ const ImportFlowDialog = (
       setErrorMessage(t('Unsupported file type'));
       return;
     }
+
+    console.log('handleFileChange 3');
+    console.log(newTemplates);
 
     setTemplates(newTemplates);
   };
@@ -257,7 +262,7 @@ const ImportFlowDialog = (
           </div>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          <div className="w-full flex justify-between items-center">
+          <div className="w-full flex flex-col gap-2 justify-between items-start">
             <span className="w-16 text-sm font-medium text-gray-700">
               {t('Flow')}
             </span>
@@ -270,7 +275,7 @@ const ImportFlowDialog = (
             />
           </div>
           {!props.insideBuilder && (
-            <div className="w-full flex justify-between items-center">
+            <div className="w-full flex flex-col gap-2 justify-between items-start">
               <span className="w-16 text-sm font-medium text-gray-700">
                 {t('Folder')}
               </span>
@@ -310,6 +315,13 @@ const ImportFlowDialog = (
           </FormError>
         )}
         <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setIsDialogOpen(false)}
+            disabled={isPending}
+          >
+            {t('Cancel')}
+          </Button>
           <Button onClick={handleSubmit} loading={isPending}>
             {t('Import')}
           </Button>

@@ -38,8 +38,9 @@ import {
     Platform,
     PlatformRole,
     Project,
-    ProjectMemberRole,
     ProjectPlan,
+    ProjectRole,
+    RoleType,
     RunEnvironment,
     TemplateType,
     TriggerType,
@@ -216,6 +217,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         customDomainsEnabled: platform?.customDomainsEnabled ?? faker.datatype.boolean(),
         projectRolesEnabled: platform?.projectRolesEnabled ?? faker.datatype.boolean(),
         alertsEnabled: platform?.alertsEnabled ?? faker.datatype.boolean(),
+        copilotSettings: platform?.copilotSettings ?? undefined,
     }
 }
 
@@ -245,7 +247,9 @@ export const createMockPlatformWithOwner = (
 }
 
 export const createMockProjectMember = (
-    projectMember?: Partial<ProjectMember>,
+    projectMember?: Omit<Partial<ProjectMember>, 'projectRoleId'> & {
+        projectRoleId: string
+    },
 ): ProjectMember => {
     assertNotNullOrUndefined(projectMember?.userId, 'userId')
     return {
@@ -253,9 +257,9 @@ export const createMockProjectMember = (
         created: projectMember?.created ?? faker.date.recent().toISOString(),
         updated: projectMember?.updated ?? faker.date.recent().toISOString(),
         platformId: projectMember?.platformId ?? apId(),
+        projectRoleId: projectMember.projectRoleId,
         userId: projectMember?.userId,
         projectId: projectMember?.projectId ?? apId(),
-        role: projectMember?.role ?? faker.helpers.enumValue(ProjectMemberRole),
     }
 }
 
@@ -501,6 +505,7 @@ export const mockBasicSetup = async (params?: MockBasicSetupParams): Promise<Moc
         ownerId: mockOwner.id,
         auditLogEnabled: true,
         apiKeysEnabled: true,
+        customRolesEnabled: true,
         customDomainsEnabled: true,
     })
     await databaseConnection().getRepository('platform').save(mockPlatform)
@@ -533,6 +538,18 @@ export const createMockFile = (file?: Partial<File>): File => {
         compression: file?.compression ?? faker.helpers.enumValue(FileCompression),
         data: file?.data ?? Buffer.from(faker.lorem.paragraphs()),
         type: file?.type ?? faker.helpers.enumValue(FileType),
+    }
+}
+
+export const createMockProjectRole = (projectRole?: Partial<ProjectRole>): ProjectRole => {
+    return {
+        id: projectRole?.id ?? apId(),
+        name: projectRole?.name ?? faker.lorem.word(),
+        created: projectRole?.created ?? faker.date.recent().toISOString(),
+        updated: projectRole?.updated ?? faker.date.recent().toISOString(),
+        permissions: projectRole?.permissions ?? [],
+        platformId: projectRole?.platformId ?? apId(),
+        type: projectRole?.type ?? faker.helpers.enumValue(RoleType),
     }
 }
 

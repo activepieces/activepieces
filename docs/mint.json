@@ -243,6 +243,7 @@
       "pages": [
         "install/configuration/overview",
         "install/configuration/environment-variables",
+        "install/configuration/seperate-workers",
         "install/configuration/setup-app-webhooks",
         "install/configuration/hardware",
         "install/configuration/setup-ssl",
@@ -326,8 +327,10 @@
     {
       "group": "Misc",
       "pages": [
-        "developers/misc/create-new-ai-provider",
+        "developers/misc/build-piece",
+        "developers/misc/publish-piece",
         "developers/misc/pieces-ci-cd",
+        "developers/misc/create-new-ai-provider",
         "developers/misc/private-fork"
       ]
     },

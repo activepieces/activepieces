@@ -26,18 +26,18 @@ export const globalConnectionModule: FastifyPluginAsyncTypebox = async (app) => 
 
 const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', UpsertGlobalConnectionRequest, async (request, reply) => {
-        const appConnection = await appConnectionService.upsert({
+        const appConnection = await appConnectionService(request.log).upsert({
             platformId: request.principal.platform.id,
             type: request.body.type,
             projectIds: request.body.projectIds,
-            externalId: apId(),
+            externalId: request.body.externalId ?? apId(),
             value: request.body.value,
             displayName: request.body.displayName,
             pieceName: request.body.pieceName,
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PLATFORM,
         })
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -49,7 +49,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateGlobalConnectionRequest, async (request) => {
-        return appConnectionService.update({
+        return appConnectionService(request.log).update({
             id: request.params.id,
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PLATFORM,
@@ -64,7 +64,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListGlobalConnectionsRequest, async (request): Promise<SeekPage<AppConnectionWithoutSensitiveData>> => {
         const { displayName, pieceName, status, cursor, limit } = request.query
 
-        const appConnections = await appConnectionService.list({
+        const appConnections = await appConnectionService(request.log).list({
             pieceName,
             displayName,
             status,
@@ -77,24 +77,24 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
 
         return {
             ...appConnections,
-            data: appConnections.data.map(appConnectionService.removeSensitiveData),
+            data: appConnections.data.map(appConnectionService(request.log).removeSensitiveData),
         }
     },
     )
 
     app.delete('/:id', DeleteGlobalConnectionRequest, async (request, reply): Promise<void> => {
-        const connection = await appConnectionService.getOneOrThrowWithoutValue({
+        const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
             id: request.params.id,
             platformId: request.principal.platform.id,
             projectId: null,
         })
-        await appConnectionService.delete({
+        await appConnectionService(request.log).delete({
             id: request.params.id,
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PLATFORM,
             projectId: null,
         })
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,

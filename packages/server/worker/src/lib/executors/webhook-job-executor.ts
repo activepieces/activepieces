@@ -1,4 +1,4 @@
-import { WebhookJobData } from '@activepieces/server-shared'
+import { pinoLogging, WebhookJobData } from '@activepieces/server-shared'
 import {
     EngineHttpResponse,
     FlowStatus,
@@ -8,20 +8,27 @@ import {
     ProgressUpdateType,
     RunEnvironment,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { engineApiService, workerApiService } from '../api/server-api.service'
 import { webhookUtils } from '../utils/webhook-utils'
 
-export const webhookExecutor = {
+export const webhookExecutor = (log: FastifyBaseLogger) => ({
     async consumeWebhook(
         data: WebhookJobData,
         engineToken: string,
         workerToken: string,
     ): Promise<void> {
+        const webhookLogger = pinoLogging.createWebhookContextLog({
+            log,
+            webhookId: data.requestId,
+            flowId: data.flowId,
+        })
+        webhookLogger.info('Webhook job executor started')
         const { payload, saveSampleData, flowVersionToRun } = data
 
         if (saveSampleData) {
-            await handleSampleData(data, engineToken, workerToken)
+            await handleSampleData(data, engineToken, workerToken, webhookLogger)
         }
 
         const onlySaveSampleData = isNil(flowVersionToRun)
@@ -34,12 +41,12 @@ export const webhookExecutor = {
             return
         }
 
-        const populatedFlowToRun = await getFlowToRun(workerToken, engineToken, flowVersionToRun, data)
+        const populatedFlowToRun = await getFlowToRun(workerToken, engineToken, flowVersionToRun, data, log)
         if (isNil(populatedFlowToRun)) {
             return
         }
 
-        const handshakeResponse = await webhookUtils.handshake({
+        const handshakeResponse = await webhookUtils(webhookLogger).handshake({
             engineToken,
             populatedFlow: populatedFlowToRun,
             payload,
@@ -64,8 +71,8 @@ export const webhookExecutor = {
             return
         }
 
-
-        const filteredPayloads = await webhookUtils.extractPayload({
+        
+        const filteredPayloads = await webhookUtils(webhookLogger).extractPayload({
             engineToken,
             flowVersion: populatedFlowToRun.version,
             payload,
@@ -95,9 +102,9 @@ export const webhookExecutor = {
             return
         }
     },
-}
-async function getFlowToRun(workerToken: string, engineToken: string, flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, data: WebhookJobData): Promise<PopulatedFlow | null> {
-    const flowToRun = await engineApiService(engineToken).getFlowWithExactPieces({
+})
+async function getFlowToRun(workerToken: string, engineToken: string, flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, data: WebhookJobData, log: FastifyBaseLogger): Promise<PopulatedFlow | null> {
+    const flowToRun = await engineApiService(engineToken, log).getFlowWithExactPieces({
         flowId: data.flowId,
         type: flowVersionToRun,
     })
@@ -115,7 +122,7 @@ async function getFlowToRun(workerToken: string, engineToken: string, flowVersio
         return null
     }
 
-    const latestFlowVersion = await engineApiService(engineToken).getFlowWithExactPieces({
+    const latestFlowVersion = await engineApiService(engineToken, log).getFlowWithExactPieces({
         flowId: data.flowId,
         type: GetFlowVersionForWorkerRequestType.LATEST,
     })
@@ -132,10 +139,12 @@ async function handleSampleData(
     data: WebhookJobData,
     engineToken: string,
     workerToken: string,
+    log: FastifyBaseLogger,
 ): Promise<void> {
     const { flowId, payload } = data
     const latestFlowVersion = await engineApiService(
         engineToken,
+        log,
     ).getFlowWithExactPieces({
         flowId,
         type: GetFlowVersionForWorkerRequestType.LATEST,
@@ -150,7 +159,7 @@ async function handleSampleData(
         return
     }
 
-    const payloads = await webhookUtils.extractPayload({
+    const payloads = await webhookUtils(log).extractPayload({
         engineToken,
         flowVersion: latestFlowVersion.version,
         payload,
@@ -158,7 +167,7 @@ async function handleSampleData(
         simulate: true,
     })
 
-    await webhookUtils.savePayloadsAsSampleData({
+    webhookUtils(log).savePayloadsAsSampleData({
         flowVersion: latestFlowVersion.version,
         projectId: latestFlowVersion.projectId,
         workerToken,
@@ -175,7 +184,7 @@ async function stopAndReply(
     if (isNil(data.synchronousHandlerId)) {
         return
     }
-    await workerApiService(workerToken).sendWebhookUpdate({
+    await workerApiService(workerToken).sendUpdate({
         workerServerId: data.synchronousHandlerId,
         requestId: data.requestId,
         response,

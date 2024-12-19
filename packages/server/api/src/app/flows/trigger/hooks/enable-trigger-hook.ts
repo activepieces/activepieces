@@ -4,9 +4,8 @@ import {
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
 import {
-    AppSystemProp,
     JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType,
-    system,
+    UserInteractionJobType,
 } from '@activepieces/server-shared'
 import {
     ApEdition,
@@ -19,17 +18,17 @@ import {
     TriggerHookType,
     TriggerType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import {
     EngineHelperResponse,
     EngineHelperTriggerResult,
-    engineRunner,
-    webhookUtils,
 } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
-import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
-import { projectService } from '../../../project/project-service'
-import { flowQueue } from '../../../workers/queue'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
+import { jobQueue } from '../../../workers/queue'
+import { userInteractionWatcher } from '../../../workers/user-interaction-watcher'
 import { triggerUtils } from './trigger-utils'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
@@ -50,6 +49,7 @@ function constructEveryXMinuteCron(minute: number): string {
 
 export const enablePieceTrigger = async (
     params: EnableParams,
+    log: FastifyBaseLogger,
 ): Promise<EngineHelperResponse<
 EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
 > | null> => {
@@ -58,25 +58,15 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         return null
     }
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await triggerUtils.getPieceTriggerOrThrow({
+    const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({
         trigger: flowTrigger,
         projectId,
     })
 
-    const webhookUrl = await webhookUtils.getWebhookUrl({
-        flowId: flowVersion.flowId,
-        simulate,
-    })
-    const platformId = await projectService.getPlatformId(projectId)    
-    const engineToken = await accessTokenManager.generateEngineToken({
-        projectId,
-        platformId,
-    })
-
-    const engineHelperResponse = await engineRunner.executeTrigger(engineToken, {
+    const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>>>({
+        jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion,
-        webhookUrl,
         projectId,
         test: simulate,
     })
@@ -103,7 +93,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
             const renewConfiguration = pieceTrigger.renewConfiguration
             switch (renewConfiguration?.strategy) {
                 case WebhookRenewStrategy.CRON: {
-                    await flowQueue.add({
+                    await jobQueue(log).add({
                         id: flowVersion.id,
                         type: JobType.REPEATING,
                         data: {
@@ -141,7 +131,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                 }
                 // END EE
             }
-            await flowQueue.add({
+            await jobQueue(log).add({
                 id: flowVersion.id,
                 type: JobType.REPEATING,
                 data: {
