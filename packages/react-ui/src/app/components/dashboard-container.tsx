@@ -36,21 +36,21 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     isNil(link.hasPermission) || link.hasPermission;
   const links: SidebarLink[] = [
     {
-      to: '/flows',
+      to: authenticationSession.appendProjectRoutePrefix('/flows'),
       label: t('Flows'),
       icon: Workflow,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_FLOW),
     },
     {
-      to: '/runs',
+      to: authenticationSession.appendProjectRoutePrefix('/runs'),
       label: t('Runs'),
       icon: Logs,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_RUN),
     },
     {
-      to: '/issues',
+      to: authenticationSession.appendProjectRoutePrefix('/issues'),
       label: t('Issues'),
       icon: AlertCircle,
       notification: showIssuesNotification,
@@ -58,26 +58,20 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       hasPermission: checkAccess(Permission.READ_ISSUES),
     },
     {
-      to: '/connections',
+      to: authenticationSession.appendProjectRoutePrefix('/connections'),
       label: t('Connections'),
       icon: Link2,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
     },
     {
-      to: '/settings',
+      to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
       label: t('Settings'),
       icon: Wrench,
     },
   ]
     .filter(embedFilter)
-    .filter(permissionFilter)
-    .map((link) => {
-      return {
-        ...link,
-        to: `/projects/${currentProjectId}${link.to}`,
-      };
-    });
+    .filter(permissionFilter);
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <Sidebar

@@ -99,8 +99,6 @@ const FlowRunsPage = () => {
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
-            console.log('isChecked', isChecked);
-
             if (isChecked) {
               const allRows = table.getRowModel().rows.map((row) => ({
                 id: row.original.id,
@@ -378,9 +376,13 @@ const FlowRunsPage = () => {
   const handleRowClick = useCallback(
     (row: FlowRun, newWindow: boolean) => {
       if (newWindow) {
-        openNewWindow(`/runs/${row.id}`);
+        openNewWindow(
+          authenticationSession.appendProjectRoutePrefix(`/runs/${row.id}`),
+        );
       } else {
-        navigate(`/runs/${row.id}`);
+        navigate(
+          authenticationSession.appendProjectRoutePrefix(`/runs/${row.id}`),
+        );
       }
     },
     [navigate, openNewWindow],
