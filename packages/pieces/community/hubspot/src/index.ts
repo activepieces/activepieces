@@ -16,6 +16,10 @@ import { dealStageUpdatedTrigger } from './lib/triggers/deal-stage-updated';
 import { getContactAction } from './lib/actions/get-contact';
 import { getDealAction } from './lib/actions/get-deal';
 import { getTicketAction } from './lib/actions/get-ticket';
+import { getCompanyAction } from './lib/actions/get-company';
+import { getPipelineStageDeatilsAction } from './lib/actions/get-pipeline-stage-details';
+import { getProductAction } from './lib/actions/get-product';
+import { addContactToWorkflowAction } from './lib/actions/add-contact-to-workflow';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -24,18 +28,23 @@ export const hubspotAuth = PieceAuth.OAuth2({
 	scope: [
 		'crm.lists.read',
 		'crm.lists.write',
-		'crm.objects.contacts.read',
-		'crm.objects.contacts.write',
-		'crm.objects.owners.read',
 		'crm.objects.companies.read',
 		'crm.objects.companies.write',
+		'crm.objects.contacts.read',
+		'crm.objects.contacts.write',
+		'crm.objects.custom.read',
+		'crm.objects.custom.write',
 		'crm.objects.deals.read',
 		'crm.objects.deals.write',
 		'crm.objects.line_items.read',
-		'crm.schemas.line_items.read',
+		'crm.objects.owners.read',
 		'crm.schemas.companies.read',
 		'crm.schemas.contacts.read',
+		'crm.schemas.custom.read',
 		'crm.schemas.deals.read',
+		'crm.schemas.line_items.read',
+		'automation',
+		'e-commerce',
 		'tickets',
 	],
 });
@@ -55,7 +64,11 @@ export const hubspot = createPiece({
 		hubSpotGetOwnerByEmailAction,
 		getContactAction,
 		getDealAction,
+		getCompanyAction,
 		getTicketAction,
+		getProductAction,
+		getPipelineStageDeatilsAction,
+		addContactToWorkflowAction,
 		createDealAction,
 		updateDealAction,
 		createCustomApiCallAction({

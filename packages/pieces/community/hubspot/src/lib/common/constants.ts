@@ -3,6 +3,7 @@ export const enum OBJECT_TYPE {
   COMPANY = 'company',
   DEAL = 'deal',
   TICKET = 'ticket',
+  PRODUCT = 'product'
 }
 
 export const DEFAULT_CONTACT_PROPERTIES = [
@@ -66,4 +67,45 @@ export const DEFAULT_TICKET_PROPERTIES = [
   'hs_lastmodifieddate',
   'hubspot_owner_id',
   'hubspot_team_id',
+];
+
+export const DEFAULT_COMPANY_PROPERTIES = [
+  "name",
+  "domain",
+  "industry",
+  "about_us",
+  "phone",
+  "address",
+  "address2",
+  "city",
+  "state",
+  "zip",
+  "country",
+  "website",
+  "type",
+  "description",
+  "founded_year",
+  "hs_createdate",
+  "hs_lastmodifieddate",
+  "hs_object_id",
+  "is_public",
+  "timezone",
+  "total_money_raised",
+  "total_revenue",
+  "owneremail",
+  "ownername",
+  "numberofemployees",
+  "annualrevenue",
+  "lifecyclestage",
+  "createdate",
+  "web_technologies",
+];
+
+export const DEFAULT_PRODUCT_PROPERTIES = [
+  "createdate",
+  "description",
+  "name",
+  "price",
+  "tax",
+  "hs_lastmodifieddate",
 ];
