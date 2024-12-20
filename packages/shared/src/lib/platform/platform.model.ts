@@ -128,6 +128,7 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     'gitSyncEnabled',
     'analyticsEnabled',
     'showPoweredBy',
+    'environmentEnabled',
     'auditLogEnabled',
     'embeddingEnabled',
     'managePiecesEnabled',

@@ -62,8 +62,10 @@ export default function ProjectSettingsLayout({
       hasPermission: checkAccess(Permission.READ_ALERT),
     },
     {
-      title: t('Environment'),
-      href: '/settings/environment',
+      title: t('Environments'),
+      href: authenticationSession.appendProjectRoutePrefix(
+        '/settings/environments',
+      ),
       icon: <GitBranch size={iconSize} />,
       hasPermission: checkAccess(Permission.READ_GIT_REPO),
     },

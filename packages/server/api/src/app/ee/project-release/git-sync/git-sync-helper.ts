@@ -4,11 +4,11 @@ import { ProjectSyncError } from '@activepieces/ee-shared'
 import { fileExists } from '@activepieces/server-shared'
 import { Flow, flowMigrations, FlowOperationType, flowStructureUtil, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { flowRepo } from '../../flows/flow/flow.repo'
-import { flowService } from '../../flows/flow/flow.service'
-import { projectService } from '../../project/project-service'
+import { flowService } from '../../../flows/flow/flow.service'
+import { projectService } from '../../../project/project-service'
 import { GitFile } from './project-diff/project-diff.service'
 import { ProjectMappingState } from './project-diff/project-mapping-state'
+import { flowRepo } from '../../../flows/flow/flow.repo'
 
 export const gitSyncHelper = (log: FastifyBaseLogger) => ({
     async getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {

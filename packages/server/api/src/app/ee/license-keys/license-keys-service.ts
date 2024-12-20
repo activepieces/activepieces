@@ -103,8 +103,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         await platformService.update({
             id: platformId,
             ssoEnabled: key.ssoEnabled,
-            // TODO: ADD THIS COLUMN TO SUPABASE
-            environmentEnabled: true,
+            environmentEnabled: key.environmentEnabled,
             showPoweredBy: key.showPoweredBy,
             embeddingEnabled: key.embeddingEnabled,
             auditLogEnabled: key.auditLogEnabled,

@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { Nullable } from '../common'
 
 export enum ProjectReleaseType {
     GIT = 'GIT',
@@ -6,7 +7,7 @@ export enum ProjectReleaseType {
 
 const BaseProjectReleaseRequestBody = Type.Object({
     name: Type.String(),
-    description: Type.Union([Type.String(), Type.Null()]),
+    description: Nullable(Type.String()),
 })
 
 export const CreateProjectReleaseFromGitRequestBody = Type.Composite([
@@ -23,3 +24,10 @@ export const CreateProjectReleaseRequestBody = Type.Union([
 ])
 
 export type CreateProjectReleaseRequestBody = Static<typeof CreateProjectReleaseRequestBody>
+
+export const ListProjectReleasesRequest = Type.Object({
+    cursor: Nullable(Type.String()),
+    limit: Type.Optional(Type.Number({ default: 10 })),
+})
+
+export type ListProjectReleasesRequest = Static<typeof ListProjectReleasesRequest>

@@ -27,10 +27,10 @@ import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { gitRepoService } from '../../ee/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { projectService } from '../../project/project-service'
 import { flowService } from './flow.service'
+import { gitRepoService } from '../../ee/project-release/git-sync/git-sync.service'
 
 const DEFAULT_PAGE_SIZE = 10
 

@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
+import { cn } from '@/lib/utils';
 
 const ReleaseCard = () => {
   const { project, refetch } = projectHooks.useCurrentProject();
@@ -43,7 +44,13 @@ const ReleaseCard = () => {
           </div>
         </div>
         <div className="flex flex-row justify-center items-center gap-1">
-          <Button variant={'basic'} onClick={() => mutate()}>
+          <Button
+            variant={'basic'}
+            onClick={() => mutate()}
+            className={cn('', {
+              'text-destructive': project.releasesEnabled,
+            })}
+          >
             {project.releasesEnabled ? t('Disable') : t('Enable')}
           </Button>
         </div>

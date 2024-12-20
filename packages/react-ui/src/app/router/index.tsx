@@ -341,12 +341,12 @@ const routes = [
   },
 
   ...ProjectRouterWrapper({
-    path: '/settings/environment',
+    path: '/settings/environments',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_GIT_REPO}>
           <ProjectSettingsLayout>
-            <PageTitle title="Environment">
+            <PageTitle title="Environments">
               <EnvironmentPage />
             </PageTitle>
           </ProjectSettingsLayout>
