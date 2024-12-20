@@ -18,7 +18,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { hubSpotClient } from './client';
 
-enum HubspotFieldType {
+export enum HubspotFieldType {
 	BooleanCheckBox = 'booleancheckbox',
 	Date = 'date',
 	File = 'file',

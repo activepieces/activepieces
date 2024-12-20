@@ -1,13 +1,14 @@
 import {
 	DropdownOption,
+	DynamicPropsValue,
 	OAuth2PropertyValue,
 	PieceAuth,
 	Property,
 } from '@activepieces/pieces-framework';
 import { hubSpotClient } from './client';
-import { hubspotApiCall } from '.';
+import { hubspotApiCall, HubspotFieldType } from '.';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { HubspotProperty, WorkflowResponse } from './types';
+import { HubspotProperty, HubspotPropertyGroup, WorkflowResponse } from './types';
 import {
 	DEFAULT_COMPANY_PROPERTIES,
 	DEFAULT_CONTACT_PROPERTIES,
@@ -15,6 +16,7 @@ import {
 	DEFAULT_PRODUCT_PROPERTIES,
 	DEFAULT_TICKET_PROPERTIES,
 } from './constants';
+import { Record } from '@sinclair/typebox';
 
 export const hubSpotAuthentication = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -89,7 +91,122 @@ export function getDefaultProperties(objectType: string) {
 	}
 }
 
-export const additionalPropertyNamesDropdown = (objectType: string) =>
+export const objectPropertiesDropdown = (objectType: string, existingProperties: string[]) =>
+	Property.DynamicProperties({
+		displayName: 'Object Properties',
+		refreshers: [],
+		required: false,
+		props: async ({ auth }) => {
+			if (!auth) return {};
+
+			const props: DynamicPropsValue = {};
+			const token = (auth as OAuth2PropertyValue).access_token;
+
+			const propertiyGroupsResponse = await hubspotApiCall<{ results: HubspotPropertyGroup[] }>({
+				accessToken: token,
+				method: HttpMethod.GET,
+				resourceUri: `/crm/v3/properties/${objectType}/groups`,
+			});
+
+			const groupFlatMap = propertiyGroupsResponse.results.reduce((map, item) => {
+				map[item.name] = item.label;
+				return map;
+			}, {} as Record<string, string>);
+
+			const propertiesResponse = await hubspotApiCall<{ results: HubspotProperty[] }>({
+				accessToken: token,
+				method: HttpMethod.GET,
+				resourceUri: `/crm/v3/properties/${objectType}`,
+			});
+
+			for (const property of propertiesResponse.results) {
+				if (
+					existingProperties.includes(property.name) ||
+					property.modificationMetadata?.readOnlyValue ||
+					property.hidden
+				) {
+					continue;
+				}
+
+				const propertyName = `${groupFlatMap[property.groupName] ?? ''}: ${property.name}`;
+
+				switch (property.fieldType) {
+					case HubspotFieldType.BooleanCheckBox:
+						props[property.name] = Property.Checkbox({
+							displayName: propertyName,
+							description: property.description ?? '',
+							required: false,
+						});
+						break;
+					case HubspotFieldType.Date:
+						props[property.name] = Property.DateTime({
+							displayName: propertyName,
+							description: property.description ?? '',
+							required: false,
+						});
+						break;
+					case HubspotFieldType.Number:
+						props[property.name] = Property.Number({
+							displayName: propertyName,
+							description: property.description ?? '',
+							required: false,
+						});
+						break;
+					case HubspotFieldType.PhoneNumber:
+					case HubspotFieldType.Text:
+						props[property.name] = Property.ShortText({
+							displayName: propertyName,
+							description: property.description ?? '',
+							required: false,
+						});
+						break;
+					case HubspotFieldType.TextArea:
+					case HubspotFieldType.Html:
+						props[property.name] = Property.LongText({
+							displayName: propertyName,
+							description: property.description ?? '',
+							required: false,
+						});
+						break;
+					case HubspotFieldType.CheckBox:
+						props[property.name]=Property.StaticMultiSelectDropdown({
+							displayName:propertyName,
+							description:property.description ?? '',
+							required:false,
+							options:{
+								disabled:false,
+								options:property.options ? property.options.map((option) => {
+									return {
+										label: option.label,
+										value: option.value,
+									};
+								}):[]
+							}
+						});
+						break;
+					case HubspotFieldType.Select:
+					case HubspotFieldType.Radio:
+						props[property.name] = Property.StaticDropdown({
+							displayName: propertyName,
+							description: property.description ?? '',
+							required: false,
+							options: {
+								options: property.options ? property.options.map((option) => {
+									return {
+										label: option.label,
+										value: option.value,
+									};
+								}):[]
+							},
+						});
+						break;
+				}
+			}
+			return props;
+		},
+	});
+
+export const additionalPropertyToRetriveDropdown = (objectType: string) =>
 	Property.MultiSelectDropdown({
 		displayName: 'Additional Properties',
 		refreshers: [],

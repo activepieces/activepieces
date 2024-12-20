@@ -2,7 +2,7 @@ import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { hubspotApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { additionalPropertyNamesDropdown, getDefaultProperties } from '../common/props';
+import { additionalPropertyToRetriveDropdown, getDefaultProperties } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 
 export const getDealAction = createAction({
@@ -16,7 +16,7 @@ export const getDealAction = createAction({
             description: 'The ID of the deal to get.',
             required: true,
         }),
-        additionalProperties:additionalPropertyNamesDropdown(OBJECT_TYPE.DEAL)
+        additionalProperties:additionalPropertyToRetriveDropdown(OBJECT_TYPE.DEAL)
 
     },
     async run(context) {

@@ -131,6 +131,7 @@ export type SearchDealsResponse = {
 		};
 	};
 };
+// ["date","textarea","number","select","file","calculation_equation","checkbox","calculation_rollup","text","calculation_read_time","booleancheckbox","radio","phonenumber","html"]
 
 enum HubspotFieldType {
 	BooleanCheckBox = 'booleancheckbox',
@@ -151,10 +152,26 @@ export type HubspotProperty= {
 	name: string;
 	label: string;
 	description: string;
+	hidden:boolean;
 	type: string;
+	groupName:string;
 	fieldType: HubspotFieldType;
-	options: [];
+	referencedObjectType?:string;
+	modificationMetadata?:{
+		archivable: boolean;
+		readOnlyDefinition: boolean;
+		readOnlyValue: boolean;
+	}
+	options: Array<{label:string,value:string}>;
+	
 }
+
+export type HubspotPropertyGroup = {
+	name: string;
+	label: string;
+	displayOrder: number;
+	archived: boolean;
+};
 
 export type WorkflowResponse = 
 {
