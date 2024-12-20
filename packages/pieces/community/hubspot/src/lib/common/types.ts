@@ -155,3 +155,12 @@ export type HubspotProperty= {
 	fieldType: HubspotFieldType;
 	options: [];
 }
+
+export type WorkflowResponse = 
+{
+	id:number;
+	insertAt:number;
+	updatedAt:number;
+	name:string;
+	enabled:boolean
+}

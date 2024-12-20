@@ -7,8 +7,14 @@ import {
 import { hubSpotClient } from './client';
 import { hubspotApiCall } from '.';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { HubspotProperty } from './types';
-import { DEFAULT_CONTACT_PROPERTIES, DEFAULT_DEAL_PROPERTIES, DEFAULT_TICKET_PROPERTIES } from './constants';
+import { HubspotProperty, WorkflowResponse } from './types';
+import {
+	DEFAULT_COMPANY_PROPERTIES,
+	DEFAULT_CONTACT_PROPERTIES,
+	DEFAULT_DEAL_PROPERTIES,
+	DEFAULT_PRODUCT_PROPERTIES,
+	DEFAULT_TICKET_PROPERTIES,
+} from './constants';
 
 export const hubSpotAuthentication = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -67,17 +73,19 @@ export const hubSpotListIdDropdown = Property.Dropdown<number>({
 	},
 });
 
-export function getDefaultProperties(objectType:string) {
-	if (objectType === "contact") {
-	  return DEFAULT_CONTACT_PROPERTIES;}
-	else if (objectType === "deal") {
-	  return DEFAULT_DEAL_PROPERTIES;
-	}
-	else if(objectType === "ticket") {
-	  return DEFAULT_TICKET_PROPERTIES;
-	}
-	 else {
-	  return [];
+export function getDefaultProperties(objectType: string) {
+	if (objectType === 'contact') {
+		return DEFAULT_CONTACT_PROPERTIES;
+	} else if (objectType === 'deal') {
+		return DEFAULT_DEAL_PROPERTIES;
+	} else if (objectType === 'ticket') {
+		return DEFAULT_TICKET_PROPERTIES;
+	} else if (objectType === 'company') {
+		return DEFAULT_COMPANY_PROPERTIES;
+	} else if (objectType === 'product') {
+		return DEFAULT_PRODUCT_PROPERTIES;
+	} else {
+		return [];
 	}
 }
 
@@ -103,7 +111,7 @@ export const additionalPropertyNamesDropdown = (objectType: string) =>
 
 			const options: DropdownOption<string>[] = [];
 			for (const property of propertiesResponse.results) {
-				if(defaultProperties.includes(property.name)) {
+				if (defaultProperties.includes(property.name)) {
 					continue;
 				}
 				options.push({
@@ -118,3 +126,40 @@ export const additionalPropertyNamesDropdown = (objectType: string) =>
 			};
 		},
 	});
+
+export const workflowIdDropdown = Property.Dropdown({
+	displayName: 'Workflow',
+	refreshers: [],
+	// description: 'Workflow to add contact to',
+	required: true,
+	options: async ({ auth }) => {
+		if (!auth) {
+			return buildEmptyList({
+				placeholder: 'Please connect your account.',
+			});
+		}
+
+		const token = (auth as OAuth2PropertyValue).access_token;
+		const workflowsResponse = await hubspotApiCall<{ workflows: WorkflowResponse[] }>({
+			accessToken: token,
+			method: HttpMethod.GET,
+			resourceUri: `/automation/v2/workflows`,
+		});
+
+		const options: DropdownOption<number>[] = [];
+
+		for (const workflow of workflowsResponse.workflows) {
+			if (workflow.enabled) {
+				options.push({
+					label: workflow.name,
+					value: workflow.id,
+				});
+			}
+		}
+
+		return {
+			disabled: false,
+			options,
+		};
+	},
+});
