@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import { enrichErrorContext, PackageInfo, packageManager, SharedSystemProp, system } from '@activepieces/server-shared'
+import { enrichErrorContext, PackageInfo, packageManager, systemConstants } from '@activepieces/server-shared'
 import {
     getPackageAliasForPiece,
     getPackageArchivePathForPiece,
@@ -7,19 +7,18 @@ import {
     PackageType,
     PiecePackage,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 
-export const PACKAGE_ARCHIVE_PATH = resolve(
-    system.getOrThrow(SharedSystemProp.PACKAGE_ARCHIVE_PATH),
-)
+export const PACKAGE_ARCHIVE_PATH = resolve(systemConstants.PACKAGE_ARCHIVE_PATH)
 
 export abstract class PieceManager {
-    async install({ projectPath, pieces }: InstallParams): Promise<void> {
+    async install({ projectPath, pieces, log }: InstallParams): Promise<void> {
         try {
             if (isEmpty(pieces)) {
                 return
             }
 
-            await packageManager.init({
+            await packageManager(log).init({
                 path: projectPath,
             })
 
@@ -28,6 +27,7 @@ export abstract class PieceManager {
             await this.installDependencies({
                 projectPath,
                 pieces: uniquePieces,
+                log,
             })
         }
         catch (error) {
@@ -72,6 +72,7 @@ export abstract class PieceManager {
 type InstallParams = {
     projectPath: string
     pieces: PiecePackage[]
+    log: FastifyBaseLogger
 }
 
 const getPackageSpecForPiece = (

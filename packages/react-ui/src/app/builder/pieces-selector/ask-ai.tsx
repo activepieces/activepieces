@@ -1,11 +1,10 @@
 import { t } from 'i18next';
 import { Sparkle } from 'lucide-react';
 
-import { ApFlagId } from '@activepieces/shared';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { Button, ButtonProps } from '../../../components/ui/button';
 import { AskAiButtonOperations } from '../../../features/pieces/lib/types';
-import { flagsHooks } from '../../../hooks/flags-hooks';
 import { useBuilderStateContext } from '../builder-hooks';
 
 const AskAiButton = ({
@@ -17,9 +16,8 @@ const AskAiButton = ({
   operation: AskAiButtonOperations;
   varitant: ButtonProps['variant'];
 }) => {
-  const { data: isCopilotEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.CODE_COPILOT_ENABLED,
-  );
+  const isCopilotEnabled = platformHooks.isCopilotEnabled();
+
   const setAskiAiButtonProps = useBuilderStateContext(
     (state) => state.setAskAiButtonProps,
   );

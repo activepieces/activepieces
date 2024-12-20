@@ -1,7 +1,9 @@
 import { getTasksPriceId } from '@activepieces/ee-shared'
-import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ApEdition,
+    ApEnvironment,
+    apId,
     assertNotNullOrUndefined,
     ProjectId,
     UserMeta,
@@ -9,6 +11,8 @@ import {
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 import { projectService } from '../../../project/project-service'
 import { projectUsageService } from '../../../project/usage/project-usage-service'
 import { projectBillingService } from './project-billing.service'
@@ -51,6 +55,10 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         if (edition !== ApEdition.CLOUD) {
             return undefined
         }
+        const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+        if (environment === ApEnvironment.TESTING) {
+            return apId()
+        }
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
         try {
             // Retrieve the customer by their email
@@ -74,7 +82,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             return newCustomer.id
         }
         catch (error) {
-            exceptionHandler.handle(error)
+            exceptionHandler.handle(error, log)
             throw error
         }
     },

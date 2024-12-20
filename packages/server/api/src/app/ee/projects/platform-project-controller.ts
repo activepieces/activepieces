@@ -72,7 +72,10 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         return platformProjectService(request.log).update({
             platformId: request.principal.platform.id,
             projectId: request.params.id,
-            request: request.body,
+            request: {
+                ...request.body,
+                externalId: ownThePlatform ? request.body.externalId : undefined,
+            },
         })
     })
 

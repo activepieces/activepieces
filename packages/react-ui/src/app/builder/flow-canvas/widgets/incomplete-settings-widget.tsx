@@ -6,7 +6,7 @@ import { BuilderState } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
 import { FlowVersion, flowStructureUtil } from '@activepieces/shared';
 
-import { flowCanvasUtils } from '../flow-canvas-utils';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 
 type IncompleteSettingsButtonProps = {
   flowVersion: FlowVersion;

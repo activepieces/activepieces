@@ -1,5 +1,4 @@
 import { TlsOptions } from 'node:tls'
-import { AppSystemProp, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
@@ -21,6 +20,8 @@ import { ModifyBilling1694902537045 } from '../ee/database/migrations/postgres/1
 import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
@@ -168,6 +169,8 @@ import { AddProjectRelationInUserInvitation1732790412900 } from './migration/pos
 import { CreateProjectReleaseTable1734418823028 } from './migration/postgres/1734418823028-CreateProjectReleaseTable'
 import { AddReleasesEnablingBoolean1734429537542 } from './migration/postgres/1734429537542-AddReleasesEnablingBoolean'
 import { RenameGitSyncToEnvironment1734431436773 } from './migration/postgres/1734431436773-RenameGitSyncToEnvironment'
+import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
+import { AddCopilotSettings1734479886363 } from './migration/postgres/1734479886363-AddCopilotSettings'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -282,6 +285,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         CreateProjectReleaseTable1734418823028,
         AddReleasesEnablingBoolean1734429537542,
         RenameGitSyncToEnvironment1734431436773,
+        RemoveWorkerType1734439097357,
+        AddCopilotSettings1734479886363,
     ]
 
     const edition = system.getEdition()
@@ -372,7 +377,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
 }
 
 const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
         return {}

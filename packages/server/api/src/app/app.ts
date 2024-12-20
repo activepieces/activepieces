@@ -1,6 +1,6 @@
 import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AppSystemProp, initializeSentry, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
+import { exceptionHandler, rejectedPromiseHandler, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -71,6 +71,8 @@ import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
 import { openapiModule } from './helper/openapi/openapi.module'
+import { QueueMode, system } from './helper/system/system'
+import { AppSystemProp } from './helper/system/system-prop'
 import { systemJobsSchedule } from './helper/system-jobs'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
@@ -174,7 +176,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     })
 
     app.io.on('connection', (socket: Socket) => {
-        rejectedPromiseHandler(websocketService.init(socket))
+        rejectedPromiseHandler(websocketService.init(socket, app.log), app.log)
     })
 
     app.addHook('onResponse', async (request, reply) => {
@@ -291,7 +293,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
-            initializeSentry()
+            exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)
@@ -367,10 +369,10 @@ export async function appPostBoot(app: FastifyInstance): Promise<void> {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.`)
+The application started on ${system.get(WorkerSystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.`)
 
-    const environment = system.get(SharedSystemProp.ENVIRONMENT)
-    const piecesSource = system.getOrThrow(SharedSystemProp.PIECES_SOURCE)
+    const environment = system.get(AppSystemProp.ENVIRONMENT)
+    const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)
     const pieces = process.env.AP_DEV_PIECES
 
     app.log.warn(

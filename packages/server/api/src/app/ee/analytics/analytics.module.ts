@@ -1,5 +1,6 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { analyticsService } from './analytics.service'
 import { piecesAnalyticsService } from './pieces-analytics.service'

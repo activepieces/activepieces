@@ -62,7 +62,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                     date: dayjs().toISOString(),
                     key: request.key,
                 },
-            }))
+            }), log)
         }
         catch (e) {
             // ignore

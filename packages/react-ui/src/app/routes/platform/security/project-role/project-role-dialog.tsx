@@ -247,7 +247,7 @@ export const ProjectRoleDialog = ({
                           }
                           disabled={disabled}
                         >
-                          None
+                          {t('None')}
                         </Button>
                       )}
                       <Button
@@ -258,7 +258,7 @@ export const ProjectRoleDialog = ({
                         }
                         disabled={disabled}
                       >
-                        Read
+                        {t('Read')}
                       </Button>
                       <Button
                         className="h-9 px-4"
@@ -268,7 +268,7 @@ export const ProjectRoleDialog = ({
                         }
                         disabled={disabled}
                       >
-                        Write
+                        {t('Write')}
                       </Button>
                     </div>
                   </div>

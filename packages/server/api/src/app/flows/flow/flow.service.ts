@@ -1,4 +1,4 @@
-import { AppSystemProp, rejectedPromiseHandler, system } from '@activepieces/server-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -28,6 +28,8 @@ import { emailService } from '../../ee/helper/email/email-service'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
@@ -214,6 +216,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             ? await distributedLock.acquireLock({
                 key: id,
                 timeout: 30000,
+                log,
             })
             : null
 
@@ -353,9 +356,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     pieceName: flow.version.trigger.settings.pieceName,
                     pieceVersion: flow.version.trigger.settings.pieceVersion,
                 },
-            },
-            ),
-            )
+            }), log)
         }
 
         await flowRepo().update(flowId, {
@@ -414,6 +415,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const lock = await distributedLock.acquireLock({
             key: id,
             timeout: 10000,
+            log,
         })
 
         try {
@@ -424,7 +426,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
             rejectedPromiseHandler(flowSideEffects(log).preDelete({
                 flowToDelete,
-            }))
+            }), log)
 
             await flowRepo().delete({ id })
         }

@@ -1,4 +1,4 @@
-import { createWebhookContextLog, WebhookJobData } from '@activepieces/server-shared'
+import { pinoLogging, WebhookJobData } from '@activepieces/server-shared'
 import {
     EngineHttpResponse,
     FlowStatus,
@@ -19,7 +19,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         engineToken: string,
         workerToken: string,
     ): Promise<void> {
-        const webhookLogger = createWebhookContextLog({
+        const webhookLogger = pinoLogging.createWebhookContextLog({
             log,
             webhookId: data.requestId,
             flowId: data.flowId,
@@ -41,7 +41,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const populatedFlowToRun = await getFlowToRun(workerToken, engineToken, flowVersionToRun, data)
+        const populatedFlowToRun = await getFlowToRun(workerToken, engineToken, flowVersionToRun, data, log)
         if (isNil(populatedFlowToRun)) {
             return
         }
@@ -71,7 +71,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             return
         }
 
-
+        
         const filteredPayloads = await webhookUtils(webhookLogger).extractPayload({
             engineToken,
             flowVersion: populatedFlowToRun.version,
@@ -103,8 +103,8 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         }
     },
 })
-async function getFlowToRun(workerToken: string, engineToken: string, flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, data: WebhookJobData): Promise<PopulatedFlow | null> {
-    const flowToRun = await engineApiService(engineToken).getFlowWithExactPieces({
+async function getFlowToRun(workerToken: string, engineToken: string, flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, data: WebhookJobData, log: FastifyBaseLogger): Promise<PopulatedFlow | null> {
+    const flowToRun = await engineApiService(engineToken, log).getFlowWithExactPieces({
         flowId: data.flowId,
         type: flowVersionToRun,
     })
@@ -122,7 +122,7 @@ async function getFlowToRun(workerToken: string, engineToken: string, flowVersio
         return null
     }
 
-    const latestFlowVersion = await engineApiService(engineToken).getFlowWithExactPieces({
+    const latestFlowVersion = await engineApiService(engineToken, log).getFlowWithExactPieces({
         flowId: data.flowId,
         type: GetFlowVersionForWorkerRequestType.LATEST,
     })
@@ -144,6 +144,7 @@ async function handleSampleData(
     const { flowId, payload } = data
     const latestFlowVersion = await engineApiService(
         engineToken,
+        log,
     ).getFlowWithExactPieces({
         flowId,
         type: GetFlowVersionForWorkerRequestType.LATEST,

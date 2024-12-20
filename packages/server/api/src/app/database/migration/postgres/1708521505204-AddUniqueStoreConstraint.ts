@@ -1,11 +1,13 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddUniqueStoreConstraint1708521505204 implements MigrationInterface {
     name = 'AddUniqueStoreConstraint1708521505204'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info(`${this.name} is up`)
+        log.info(`${this.name} is up`)
         // Delete entries larger than 128 characters
 
         await queryRunner.query(`
@@ -27,7 +29,7 @@ export class AddUniqueStoreConstraint1708521505204 implements MigrationInterface
             ALTER TABLE "store-entry"
             ADD CONSTRAINT "UQ_6f251cc141de0a8d84d7a4ac17d" UNIQUE ("projectId", "key")
         `)
-        logger.info(`${this.name} is finished`)
+        log.info(`${this.name} is finished`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

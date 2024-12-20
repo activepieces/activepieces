@@ -1,4 +1,4 @@
-import { GetRunForWorkerRequest, JobStatus, QueueName, SharedSystemProp, system, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
+import { GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowId, FlowRunResponse, FlowRunStatus, FlowStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, ProjectId, RemoveStableJobEngineRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
@@ -10,6 +10,8 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerHooks } from '../flows/trigger'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'
@@ -52,7 +54,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             body: UpdateJobRequest,
         },
     }, async (request) => {
-        const environment = system.getOrThrow(SharedSystemProp.ENVIRONMENT)
+        const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
         if (environment === ApEnvironment.TESTING) {
             return {}
         }
@@ -92,7 +94,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
             tags: runDetails.tags ?? [],
         })
         let uploadUrl: string | undefined
-        const updateLogs = !isNil(executionStateContentLength)
+        const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
         if (updateLogs) {
             uploadUrl = await flowRunService(request.log).updateLogsAndReturnUploadUrl({
                 flowRunId: runId,

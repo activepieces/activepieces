@@ -8,7 +8,6 @@ import {
     ProjectSyncPlan,
     ProjectSyncPlanOperation, PushGitRepoRequest,
 } from '@activepieces/ee-shared'
-import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -22,6 +21,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowService } from '../../flows/flow/flow.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { gitHelper } from './git-helper'
 import { gitSyncHelper } from './git-sync-helper'

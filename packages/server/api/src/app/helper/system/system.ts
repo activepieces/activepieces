@@ -1,5 +1,6 @@
 import os from 'os'
 import path from 'path'
+import { ContainerType, PiecesSource, pinoLogging, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -9,7 +10,9 @@ import {
     isNil,
     PieceSyncMode,
 } from '@activepieces/shared'
-import { AppSystemProp, SharedSystemProp, SystemProp, WorkerSystemProps } from './system-prop'
+import { FastifyBaseLogger } from 'fastify'
+import { Level } from 'pino'
+import { AppSystemProp, SystemProp } from './system-prop'
 
 
 export enum CopilotInstanceTypes {
@@ -17,27 +20,11 @@ export enum CopilotInstanceTypes {
     OPENAI = 'OPENAI',
 }
 
-export enum PiecesSource {
-    /**
-   * @deprecated Use `DB`, as `CLOUD_AND_DB` is no longer supported.
-   */
-    CLOUD_AND_DB = 'CLOUD_AND_DB',
-    DB = 'DB',
-    FILE = 'FILE',
-}
-
-
 export enum RedisType {
     SENTINEL = 'SENTINEL',
     DEFAULT = 'DEFAULT',
 }
 
-
-export enum ContainerType {
-    WORKER = 'WORKER',
-    APP = 'APP',
-    WORKER_AND_APP = 'WORKER_AND_APP',
-}
 
 export enum QueueMode {
     REDIS = 'REDIS',
@@ -49,6 +36,7 @@ export enum DatabaseType {
     SQLITE3 = 'SQLITE3',
 }
 
+
 const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: '50',
@@ -58,31 +46,27 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.CONFIG_PATH]: path.join(os.homedir(), '.activepieces'),
     [AppSystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [AppSystemProp.EDITION]: ApEdition.COMMUNITY,
-    [SharedSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
+    [AppSystemProp.APP_WEBHOOK_SECRETS]: '{}',
+    [WorkerSystemProp.CONTAINER_TYPE]: ContainerType.WORKER_AND_APP,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
-    [SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
+    [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
-    [AppSystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
-    [AppSystemProp.AZURE_OPENAI_API_VERSION]: '2023-06-01-preview',
     [AppSystemProp.TRIGGER_FAILURES_THRESHOLD]: '576',
-    [SharedSystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
-    [SharedSystemProp.ENVIRONMENT]: 'prod',
-    [SharedSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
-    [WorkerSystemProps.FLOW_WORKER_CONCURRENCY]: '10',
-    [WorkerSystemProps.POLLING_POOL_SIZE]: '5',
+    [AppSystemProp.ENVIRONMENT]: 'prod',
+    [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
+    [AppSystemProp.FLOW_WORKER_CONCURRENCY]: '10',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
-    [WorkerSystemProps.SCHEDULED_WORKER_CONCURRENCY]: '10',
-    [SharedSystemProp.LOG_LEVEL]: 'info',
-    [SharedSystemProp.LOG_PRETTY]: 'false',
-    [SharedSystemProp.PACKAGE_ARCHIVE_PATH]: 'cache/archives',
-    [SharedSystemProp.PIECES_SOURCE]: PiecesSource.DB,
+    [AppSystemProp.SCHEDULED_WORKER_CONCURRENCY]: '10',
+    [AppSystemProp.LOG_LEVEL]: 'info',
+    [AppSystemProp.LOG_PRETTY]: 'false',
+    [AppSystemProp.PIECES_SOURCE]: PiecesSource.DB,
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.QUEUE_MODE]: QueueMode.REDIS,
-    [SharedSystemProp.MAX_FILE_SIZE_MB]: '4',
+    [AppSystemProp.MAX_FILE_SIZE_MB]: '4',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
-    [SharedSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
-    [SharedSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
-    [SharedSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
+    [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
+    [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
+    [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.DEFAULT,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
@@ -92,7 +76,23 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
 }
 
+let globalLogger: FastifyBaseLogger
 export const system = {
+    globalLogger(): FastifyBaseLogger {
+        if (isNil(globalLogger)) {
+            const logLevel: Level = this.get(AppSystemProp.LOG_LEVEL) ?? 'info'
+            const logPretty = this.getBoolean(AppSystemProp.LOG_PRETTY) ?? false
+            const lokiUrl = this.get(AppSystemProp.LOKI_URL)
+            const lokiPassword = this.get(AppSystemProp.LOKI_PASSWORD)
+            const lokiUsername = this.get(AppSystemProp.LOKI_USERNAME)
+            globalLogger = pinoLogging.initLogger(logLevel, logPretty, {
+                url: lokiUrl,
+                password: lokiPassword,
+                username: lokiUsername,
+            })
+        }
+        return globalLogger
+    },
     get<T extends string>(prop: SystemProp): T | undefined {
         return getEnvVar(prop) as T | undefined
     },
@@ -170,12 +170,12 @@ export const system = {
     },
     isWorker(): boolean {
         return [ContainerType.WORKER, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(SharedSystemProp.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(WorkerSystemProp.CONTAINER_TYPE),
         )
     },
     isApp(): boolean {
         return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(
-            this.getOrThrow<ContainerType>(SharedSystemProp.CONTAINER_TYPE),
+            this.getOrThrow<ContainerType>(WorkerSystemProp.CONTAINER_TYPE),
         )
     },
 }

@@ -608,9 +608,17 @@ const FlowsPage = () => {
             bulkActions={bulkActions}
             onRowClick={(row, newWindow) => {
               if (newWindow) {
-                openNewWindow(`/flows/${row.id}`);
+                openNewWindow(
+                  authenticationSession.appendProjectRoutePrefix(
+                    `/flows/${row.id}`,
+                  ),
+                );
               } else {
-                navigate(`/flows/${row.id}`);
+                navigate(
+                  authenticationSession.appendProjectRoutePrefix(
+                    `/flows/${row.id}`,
+                  ),
+                );
               }
             }}
           />
