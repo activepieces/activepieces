@@ -186,7 +186,7 @@ describe('Platform API', () => {
                             apiKey: faker.internet.password(),
                         },
                     },
-                }
+                },
             })
             await databaseConnection().getRepository('platform').save(mockPlatform)
 
