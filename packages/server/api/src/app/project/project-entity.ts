@@ -4,6 +4,7 @@ import {
     Folder,
     Platform,
     Project,
+    Table,
     TriggerEvent,
     User,
 } from '@activepieces/shared'
@@ -12,6 +13,7 @@ import { ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../data
 
 type ProjectSchema = Project & {
     owner: User
+    tables: Table[]
     flows: Flow[]
     files: File[]
     folders: Folder[]
@@ -100,6 +102,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         flows: {
             type: 'one-to-many',
             target: 'flow',
+            inverseSide: 'project',
+        },
+        tables: {
+            type: 'one-to-many',
+            target: 'table',
             inverseSide: 'project',
         },
     },
