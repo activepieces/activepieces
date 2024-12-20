@@ -56,11 +56,12 @@ import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
+import { ProjectReleasesPage } from '../routes/project-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import AppearancePage from '../routes/settings/appearance';
+import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
-import { GitSyncPage } from '../routes/settings/git-sync';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
@@ -201,6 +202,16 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
+    path: '/releases',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Releases">
+          <ProjectReleasesPage />
+        </PageTitle>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
     path: '/plans',
     element: (
       <FlagRouteGuard flag={ApFlagId.SHOW_BILLING}>
@@ -330,13 +341,13 @@ const routes = [
   },
 
   ...ProjectRouterWrapper({
-    path: '/settings/git-sync',
+    path: '/settings/environments',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_GIT_REPO}>
           <ProjectSettingsLayout>
-            <PageTitle title="Git Sync">
-              <GitSyncPage />
+            <PageTitle title="Environments">
+              <EnvironmentPage />
             </PageTitle>
           </ProjectSettingsLayout>
         </RoutePermissionGuard>

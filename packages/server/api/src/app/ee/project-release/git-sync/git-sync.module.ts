@@ -13,14 +13,14 @@ import {
 } from '@fastify/type-provider-typebox'
 import { FastifyPluginAsync } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { platformService } from '../../platform/platform.service'
-import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { gitRepoService } from './git-sync.service'
+import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
+import { entitiesMustBeOwnedByCurrentProject } from '../../../authentication/authorization'
+import { platformService } from '../../../platform/platform.service'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.gitSyncEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.environmentEnabled))
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
 
@@ -38,6 +38,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
             gitRepo,
             userId,
             dryRun: false,
+            selectedOperations: [],
         })
     })
 
@@ -68,6 +69,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
             gitRepo,
             dryRun: request.body.dryRun ?? false,
             userId: request.principal.id,
+            selectedOperations: request.body.selectedOperations,
         })
     })
 

@@ -58,6 +58,7 @@ export type PullGitRepoFromProjectRequest = Static<typeof PullGitRepoFromProject
 
 export const PullGitRepoRequest = Type.Object({
     dryRun: Type.Optional(Type.Boolean()),
+    selectedOperations: Type.Optional(Type.Array(Type.String())),
 })
 export type PullGitRepoRequest = Static<typeof PullGitRepoRequest>
 
