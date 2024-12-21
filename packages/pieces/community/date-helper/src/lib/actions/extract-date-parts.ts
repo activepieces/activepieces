@@ -5,6 +5,7 @@ import {
   timeParts,
   timeFormatDescription,
   parseDate,
+  getCorrectedFormat,
 } from '../common';
 
 export const extractDateParts = createAction({
@@ -56,7 +57,7 @@ export const extractDateParts = createAction({
   },
   async run(context) {
     const inputDate = context.propsValue.inputDate;
-    const inputFormat = context.propsValue.inputFormat;
+    const inputFormat = getCorrectedFormat(context.propsValue.inputFormat);
     const unitExtract = context.propsValue.unitExtract;
 
     const BeforeDate = parseDate(inputDate, inputFormat);

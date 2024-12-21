@@ -4,6 +4,7 @@ import {
   timeFormat,
   timeFormatDescription,
   timeZoneOptions,
+  getCorrectedFormat,
 } from '../common';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -69,9 +70,9 @@ export const formatDateAction = createAction({
   },
   async run(context) {
     const inputDate = context.propsValue.inputDate;
-    const inputFormat = context.propsValue.inputFormat;
+    const inputFormat = getCorrectedFormat(context.propsValue.inputFormat);
     const inputTimeZone = context.propsValue.inputTimeZone as string;
-    const outputFormat = context.propsValue.outputFormat;
+    const outputFormat = getCorrectedFormat(context.propsValue.outputFormat);
     const outputTimeZone = context.propsValue.outputTimeZone as string;
 
     return {
