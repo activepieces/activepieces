@@ -1,39 +1,50 @@
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { hubspotApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { additionalPropertyNamesDropdown, getDefaultProperties } from '../common/props';
+import {
+	additionalPropertiesToRetriveDropdown,
+	getDefaultPropertiesForObject,
+} from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
+import { Client } from '@hubspot/api-client';
+import { MarkdownVariant } from '@activepieces/shared';
 
 export const getCompanyAction = createAction({
-    auth: hubspotAuth,
-    name: 'get-company',
-    displayName: 'Get Company',
-    description: 'Gets a company.',
-    props: {
-        companyId : Property.ShortText({
-            displayName: 'Company ID',
-            description: 'The ID of the company to get.',
-            required: true,
-        }),
-        additionalProperties:additionalPropertyNamesDropdown(OBJECT_TYPE.COMPANY)
+	auth: hubspotAuth,
+	name: 'get-company',
+	displayName: 'Get Company',
+	description: 'Gets a company.',
+	props: {
+		companyId: Property.ShortText({
+			displayName: 'Company ID',
+			description: 'The ID of the company to get.',
+			required: true,
+		}),
+		markdown: Property.MarkDown({
+			variant: MarkdownVariant.INFO,
+			value: `### Properties to retrieve:
+					
+					name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies
+					
+					**Specify here a list of additional properties to retrieve**`,
+		}),
+		additionalPropertiesToRetrieve: additionalPropertiesToRetriveDropdown({
+			objectType: OBJECT_TYPE.COMPANY,
+			displayName: 'Additional properties to retrieve',
+			required: false,
+		}),
+	},
+	async run(context) {
+		const { companyId, additionalPropertiesToRetrieve = [] } = context.propsValue;
 
-    },
-    async run(context) {
-        const companyId = context.propsValue.companyId;
-        const additionalProperties = context.propsValue.additionalProperties ?? [];
+		const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.COMPANY);
 
-        const defaultProperties = getDefaultProperties(OBJECT_TYPE.COMPANY)
+		const client = new Client({ accessToken: context.auth.access_token });
 
-        const companyResponse = await hubspotApiCall({
-            accessToken: context.auth.access_token,
-            method: HttpMethod.GET,
-            resourceUri:`/crm/v3/objects/companies/${companyId}`,
-            query:{
-                properties: [...defaultProperties, ...additionalProperties].join(',')
-            }
-        })
+		const companyDetails = await client.crm.companies.basicApi.getById(companyId, [
+			...defaultCompanyProperties,
+			...additionalPropertiesToRetrieve,
+		]);
 
-        return companyResponse;
-    },
+		return companyDetails;
+	},
 });

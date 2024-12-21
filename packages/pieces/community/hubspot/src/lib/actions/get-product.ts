@@ -1,39 +1,50 @@
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { hubspotApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { additionalPropertyNamesDropdown, getDefaultProperties } from '../common/props';
+import {
+	additionalPropertiesToRetriveDropdown,
+	getDefaultPropertiesForObject,
+} from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
+import { Client } from '@hubspot/api-client';
+import { MarkdownVariant } from '@activepieces/shared';
 
 export const getProductAction = createAction({
-    auth: hubspotAuth,
-    name: 'get-product',
-    displayName: 'Get Product',
-    description: 'Gets a product.',
-    props: {
-        productId : Property.ShortText({
-            displayName: 'Product ID',
-            description: 'The ID of the product to get.',
-            required: true,
-        }),
-        additionalProperties:additionalPropertyNamesDropdown(OBJECT_TYPE.PRODUCT)
+	auth: hubspotAuth,
+	name: 'get-product',
+	displayName: 'Get Product',
+	description: 'Gets a product.',
+	props: {
+		productId: Property.ShortText({
+			displayName: 'Product ID',
+			description: 'The ID of the product to get.',
+			required: true,
+		}),
+		markdown: Property.MarkDown({
+			variant: MarkdownVariant.INFO,
+			value: `### Properties to retrieve:
+											
+                    createdate, description, name, price, tax, hs_lastmodifieddate	
+																	
+					**Specify here a list of additional properties to retrieve**`,
+		}),
+		additionalPropertiesToRetrieve: additionalPropertiesToRetriveDropdown({
+			objectType: OBJECT_TYPE.PRODUCT,
+			displayName: 'Additional properties to retrieve',
+			required: false,
+		}),
+	},
+	async run(context) {
+		const { productId, additionalPropertiesToRetrieve = [] } = context.propsValue;
 
-    },
-    async run(context) {
-        const productId = context.propsValue.productId;
-        const additionalProperties = context.propsValue.additionalProperties ?? [];
+		const defaultProductProperties = getDefaultPropertiesForObject(OBJECT_TYPE.PRODUCT);
 
-        const defaultProperties = getDefaultProperties(OBJECT_TYPE.PRODUCT)
+		const client = new Client({ accessToken: context.auth.access_token });
 
-        const productResponse = await hubspotApiCall({
-            accessToken: context.auth.access_token,
-            method: HttpMethod.GET,
-            resourceUri:`/crm/v3/objects/products/${productId}`,
-            query:{
-                properties: [...defaultProperties, ...additionalProperties].join(',')
-            }
-        })
+		const productDetails = await client.crm.products.basicApi.getById(productId, [
+			...defaultProductProperties,
+			...additionalPropertiesToRetrieve,
+		]);
 
-        return productResponse;
-    },
+		return productDetails;
+	},
 });

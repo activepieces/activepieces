@@ -1,40 +1,50 @@
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { hubspotApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { additionalPropertyNamesDropdown, getDefaultProperties } from '../common/props';
+import {
+	additionalPropertiesToRetriveDropdown,
+	getDefaultPropertiesForObject,
+} from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
+import { Client } from '@hubspot/api-client';
+import { MarkdownVariant } from '@activepieces/shared';
 
 export const getTicketAction = createAction({
-    auth: hubspotAuth,
-    name: 'get-ticket',
-    displayName: 'Get Ticket',
-    description: 'Gets a ticket.',
-    props: {
-        ticketId : Property.ShortText({
-            displayName: 'Ticket ID',
-            description: 'The ID of the ticket to get.',
-            required: true,
-        }),
-        additionalProperties:additionalPropertyNamesDropdown(OBJECT_TYPE.TICKET)
+	auth: hubspotAuth,
+	name: 'get-ticket',
+	displayName: 'Get Ticket',
+	description: 'Gets a ticket.',
+	props: {
+		ticketId: Property.ShortText({
+			displayName: 'Ticket ID',
+			description: 'The ID of the ticket to get.',
+			required: true,
+		}),
+		markdown: Property.MarkDown({
+			variant: MarkdownVariant.INFO,
+			value: `### Properties to retrieve:
+													
+					subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
+																			
+					**Specify here a list of additional properties to retrieve**`,
+		}),
+		additionalPropertiesToRetrieve: additionalPropertiesToRetriveDropdown({
+			objectType: OBJECT_TYPE.TICKET,
+			displayName: 'Additional properties to retrieve',
+			required: false,
+		}),
+	},
+	async run(context) {
+		const { ticketId, additionalPropertiesToRetrieve = [] } = context.propsValue;
 
-    },
-    async run(context) {
-        const ticketId = context.propsValue.ticketId;
-        const additionalProperties = context.propsValue.additionalProperties ?? [];
+		const defaultTicketProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TICKET);
 
-        const defaultProperties = getDefaultProperties(OBJECT_TYPE.TICKET)
+		const client = new Client({ accessToken: context.auth.access_token });
 
-        // https://developers.hubspot.com/docs/reference/api/crm/objects/tickets#get-%2Fcrm%2Fv3%2Fobjects%2Ftickets%2F%7Bticketid%7D
-        const ticketResponse = await hubspotApiCall({
-            accessToken: context.auth.access_token,
-            method: HttpMethod.GET,
-            resourceUri:`/crm/v3/objects/tickets/${ticketId}`,
-            query:{
-                properties: [...defaultProperties, ...additionalProperties].join(',')
-            }
-        })
+		const ticketDeatils = await client.crm.tickets.basicApi.getById(ticketId, [
+			...defaultTicketProperties,
+			...additionalPropertiesToRetrieve,
+		]);
 
-        return ticketResponse;
-    },
+		return ticketDeatils;
+	},
 });
