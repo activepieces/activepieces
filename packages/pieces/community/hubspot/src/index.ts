@@ -21,6 +21,7 @@ import { getPipelineStageDeatilsAction } from './lib/actions/get-pipeline-stage-
 import { getProductAction } from './lib/actions/get-product';
 import { addContactToWorkflowAction } from './lib/actions/add-contact-to-workflow';
 import { createTicketAction } from './lib/actions/create-ticket';
+import { updateTicketAction } from './lib/actions/update-ticket';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -70,6 +71,7 @@ export const hubspot = createPiece({
 		getDealAction,
 		getCompanyAction,
 		createTicketAction,
+		updateTicketAction,
 		getTicketAction,
 		getProductAction,
 		getPipelineStageDeatilsAction,
