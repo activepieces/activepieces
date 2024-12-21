@@ -326,8 +326,7 @@ export const objectPropertiesDropdown = (objectType: string, excludedProperties:
 					});
 					continue;
 				}
-				if(property.name ==="hs_all_assigned_business_unit_ids")
-				{
+				if (property.name === 'hs_all_assigned_business_unit_ids') {
 					// TO DO : Add business unit options
 					// const businessUnitOptions = await fetchBusinessUnitsOptions(authValue.access_token);
 					// props[property.name] = Property.StaticMultiSelectDropdown({
@@ -348,8 +347,13 @@ export const objectPropertiesDropdown = (objectType: string, excludedProperties:
 		},
 	});
 
-export const additionalPropertiesToRetriveDropdown = (params: DropdownParams) =>
-	Property.MultiSelectDropdown({
+export const propertiesDropdown = (
+	params: DropdownParams,
+	includeDefaultProperties: boolean = false,
+	isSingleSelect: boolean = false,
+) => {
+	const dropdownFunction = isSingleSelect ? Property.Dropdown : Property.MultiSelectDropdown;
+	return dropdownFunction({
 		displayName: params.displayName,
 		refreshers: [],
 		required: params.required,
@@ -366,16 +370,26 @@ export const additionalPropertiesToRetriveDropdown = (params: DropdownParams) =>
 			// Fetch all properties for the given object type
 			const allProperties = await client.crm.properties.coreApi.getAll(params.objectType);
 
-			const defaultProperties = getDefaultPropertiesForObject(params.objectType);
+			const propertyGroups = await client.crm.properties.groupsApi.getAll(params.objectType);
+
+			const groupLabels = propertyGroups.results.reduce((map, group) => {
+				map[group.name] = group.label;
+				return map;
+			}, {} as Record<string, string>);
+
+			const defaultProperties = includeDefaultProperties
+				? []
+				: getDefaultPropertiesForObject(params.objectType);
 
 			// Filter and create options for properties that are not default
 			const options: DropdownOption<string>[] = [];
 			for (const property of allProperties.results) {
-				if (defaultProperties.includes(property.name)) {
+				if (!includeDefaultProperties && defaultProperties.includes(property.name)) {
 					continue;
 				}
+				const propertyDisplayName = `${groupLabels[property.groupName] || ''}: ${property.label}`;
 				options.push({
-					label: property.label,
+					label: propertyDisplayName,
 					value: property.name,
 				});
 			}
@@ -386,6 +400,7 @@ export const additionalPropertiesToRetriveDropdown = (params: DropdownParams) =>
 			};
 		},
 	});
+};
 
 export const workflowIdDropdown = Property.Dropdown({
 	displayName: 'Workflow',

@@ -181,3 +181,19 @@ export type WorkflowResponse =
 	name:string;
 	enabled:boolean
 }
+
+export enum FilterOperatorEnum {
+    Eq = "EQ",
+    Neq = "NEQ",
+    Lt = "LT",
+    Lte = "LTE",
+    Gt = "GT",
+    Gte = "GTE",
+    Between = "BETWEEN",
+    In = "IN",
+    NotIn = "NOT_IN",
+    HasProperty = "HAS_PROPERTY",
+    NotHasProperty = "NOT_HAS_PROPERTY",
+    ContainsToken = "CONTAINS_TOKEN",
+    NotContainsToken = "NOT_CONTAINS_TOKEN",
+}

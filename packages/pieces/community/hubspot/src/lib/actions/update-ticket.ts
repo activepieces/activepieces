@@ -3,7 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { OBJECT_TYPE } from '../common/constants';
 import {
-    additionalPropertiesToRetriveDropdown,
+    propertiesDropdown,
     getDefaultPropertiesForObject,
     objectPropertiesDropdown,
     pipelineDropdown,
@@ -50,7 +50,7 @@ export const updateTicketAction = createAction({
             
             **Specify here a list of additional properties to retrieve**`,
         }),
-        additionalPropertiesToRetrieve: additionalPropertiesToRetriveDropdown({
+        additionalPropertiesToRetrieve: propertiesDropdown({
             objectType: OBJECT_TYPE.TICKET,
             displayName: 'Additional properties to retrieve',
             required: false,
@@ -63,8 +63,9 @@ export const updateTicketAction = createAction({
             pipelineId,
             pipelineStageId,
             objectProperites = {},
-            additionalPropertiesToRetrieve = [],
         } = context.propsValue;
+        const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve??[];
+
 
         const ticketProperties: Record<string, string> = {
         };

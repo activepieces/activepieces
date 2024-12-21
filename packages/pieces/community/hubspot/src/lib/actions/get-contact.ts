@@ -1,7 +1,7 @@
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-	additionalPropertiesToRetriveDropdown,
+	propertiesDropdown,
 	getDefaultPropertiesForObject,
 } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
@@ -27,14 +27,16 @@ export const getContactAction = createAction({
 									
 					**Specify here a list of additional properties to retrieve**`,
 		}),
-		additionalPropertiesToRetrieve: additionalPropertiesToRetriveDropdown({
+		additionalPropertiesToRetrieve: propertiesDropdown({
 			objectType: OBJECT_TYPE.CONTACT,
 			displayName: 'Additional properties to retrieve',
 			required: false,
 		}),
 	},
 	async run(context) {
-		const { contactId, additionalPropertiesToRetrieve = [] } = context.propsValue;
+		const { contactId } = context.propsValue;
+		const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve??[];
+
 
 		const defaultContactProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT);
 
