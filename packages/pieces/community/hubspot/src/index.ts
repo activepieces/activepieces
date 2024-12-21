@@ -20,6 +20,7 @@ import { getCompanyAction } from './lib/actions/get-company';
 import { getPipelineStageDeatilsAction } from './lib/actions/get-pipeline-stage-details';
 import { getProductAction } from './lib/actions/get-product';
 import { addContactToWorkflowAction } from './lib/actions/add-contact-to-workflow';
+import { createTicketAction } from './lib/actions/create-ticket';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -46,6 +47,9 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'automation',
 		'e-commerce',
 		'tickets',
+		'settings.users.read',
+		'settings.users.teams.read',
+		// 'business_units_view.read'
 	],
 });
 
@@ -65,6 +69,7 @@ export const hubspot = createPiece({
 		getContactAction,
 		getDealAction,
 		getCompanyAction,
+		createTicketAction,
 		getTicketAction,
 		getProductAction,
 		getPipelineStageDeatilsAction,

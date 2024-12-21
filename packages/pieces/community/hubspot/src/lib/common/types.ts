@@ -152,10 +152,10 @@ export type HubspotProperty= {
 	name: string;
 	label: string;
 	description: string;
-	hidden:boolean;
+	hidden?:boolean;
 	type: string;
 	groupName:string;
-	fieldType: HubspotFieldType;
+	fieldType: string;
 	referencedObjectType?:string;
 	modificationMetadata?:{
 		archivable: boolean;
