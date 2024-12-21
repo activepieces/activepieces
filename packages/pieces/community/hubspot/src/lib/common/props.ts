@@ -9,7 +9,7 @@ import {
 import { hubSpotClient } from './client';
 import { hubspotApiCall, HubspotFieldType } from '.';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { HubspotPropertyGroup, WorkflowResponse, HubspotProperty } from './types';
+import {  WorkflowResponse, HubspotProperty } from './types';
 import {
 	DEFAULT_COMPANY_PROPERTIES,
 	DEFAULT_CONTACT_PROPERTIES,
@@ -19,7 +19,7 @@ import {
 	OBJECT_TYPE,
 } from './constants';
 import { Client } from '@hubspot/api-client';
-import { hubspotAuth } from '@activepieces/piece-hubspot';
+import { hubspotAuth } from '../../';
 
 export const hubSpotAuthentication = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -349,8 +349,8 @@ export const objectPropertiesDropdown = (objectType: string, excludedProperties:
 
 export const propertiesDropdown = (
 	params: DropdownParams,
-	includeDefaultProperties: boolean = false,
-	isSingleSelect: boolean = false,
+	includeDefaultProperties = false,
+	isSingleSelect = false,
 ) => {
 	const dropdownFunction = isSingleSelect ? Property.Dropdown : Property.MultiSelectDropdown;
 	return dropdownFunction({
