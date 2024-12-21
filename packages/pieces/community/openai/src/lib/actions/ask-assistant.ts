@@ -20,8 +20,9 @@ export const askAssistant = createAction({
       required: true,
       description: 'The assistant which will generate the completion.',
       refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
+      options: async (values) => {
+        const auth = values.auth as {apiKey:string , baseURL:string};
+        if (!auth.apiKey) {
           return {
             disabled: true,
             placeholder: 'Enter your API key first',
@@ -30,7 +31,8 @@ export const askAssistant = createAction({
         }
         try {
           const openai = new OpenAI({
-            apiKey: auth as string,
+            apiKey: auth.apiKey,
+            baseURL: auth.baseURL,
           });
           const assistants = await openai.beta.assistants.list();
 
@@ -69,7 +71,8 @@ export const askAssistant = createAction({
     });
 
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.apiKey,
+      baseURL: auth.baseURL,
     });
     const { assistant, prompt, memoryKey } = propsValue;
     const runCheckDelay = 1000;
