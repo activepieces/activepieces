@@ -7,6 +7,7 @@ import {
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { ExecutionType, FlowStatus, isNil, PauseType, TriggerType } from '@activepieces/shared';
 import { CallableFlowRequest, CallableFlowResponse } from '../common';
+import dayjs from 'dayjs';
 
 type FlowValue = {
   id: string;
@@ -163,6 +164,7 @@ export const callFlow = createAction({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
           response: {},
+          timeoutDate: dayjs().add(10, 'minutes').toISOString(),
         }
       })
     }
