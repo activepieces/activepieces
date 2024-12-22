@@ -138,11 +138,11 @@ const systemPropValidators: {
     // Copilot
     [AppSystemProp.PERPLEXITY_API_KEY]: stringValidator,
     [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
-
+    [AppSystemProp.GEMINI_API_KEY]: stringValidator,
     // AppSystemProp
     [AppSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
     [AppSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
-
+    
 
 }
 

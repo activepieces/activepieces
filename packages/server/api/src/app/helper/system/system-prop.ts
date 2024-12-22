@@ -119,6 +119,8 @@ export enum AppSystemProp {
     LOKI_PASSWORD = 'LOKI_PASSWORD',
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
+
+    GEMINI_API_KEY = 'GEMINI_API_KEY',
 }
 
 
