@@ -1,8 +1,8 @@
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-	propertiesDropdown,
 	getDefaultPropertiesForObject,
+	standardObjectPropertiesDropdown,
 } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
@@ -27,7 +27,7 @@ export const getCompanyAction = createAction({
 					
 					**Specify here a list of additional properties to retrieve**`,
 		}),
-		additionalPropertiesToRetrieve: propertiesDropdown({
+		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.COMPANY,
 			displayName: 'Additional properties to retrieve',
 			required: false,

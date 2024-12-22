@@ -2,6 +2,7 @@ import {
 	DropdownOption,
 	DynamicPropsValue,
 	OAuth2PropertyValue,
+	Piece,
 	PieceAuth,
 	PiecePropValueSchema,
 	Property,
@@ -260,7 +261,91 @@ function createPropertyDefinition(property: HubspotProperty, propertyDisplayName
 	}
 }
 
-export const objectPropertiesDropdown = (objectType: string, excludedProperties: string[]) =>
+async function retriveObjectProperties(
+	auth: PiecePropValueSchema<typeof hubspotAuth>,
+	objectType: string,
+	excludedProperties: string[] = [],
+) {
+	const client = new Client({ accessToken: auth.access_token });
+
+	// Fetch property groups
+	const propertyGroups = await client.crm.properties.groupsApi.getAll(objectType);
+	const groupLabels = propertyGroups.results.reduce((map, group) => {
+		map[group.name] = group.label;
+		return map;
+	}, {} as Record<string, string>);
+
+	// Fetch all properties for the given object type
+	const allProperties = await client.crm.properties.coreApi.getAll(objectType);
+
+	const props: DynamicPropsValue = {};
+
+	for (const property of allProperties.results) {
+		// skip read only properties
+		if (
+			excludedProperties.includes(property.name) ||
+			property.modificationMetadata?.readOnlyValue ||
+			property.hidden
+		) {
+			continue;
+		}
+
+		// create property name with property group name
+		const propertyDisplayName = `${groupLabels[property.groupName] || ''}: ${property.label}`;
+
+		if (property.referencedObjectType) {
+			props[property.name] = await createReferencedPropertyDefinition(
+				property,
+				propertyDisplayName,
+				auth.access_token,
+			);
+			continue;
+		}
+		if (property.name === 'hs_shared_user_ids') {
+			const userOptions = await fetchUsersOptions(auth.access_token);
+			props[property.name] = Property.StaticMultiSelectDropdown({
+				displayName: propertyDisplayName,
+				required: false,
+				options: {
+					disabled: false,
+					options: userOptions,
+				},
+			});
+			continue;
+		}
+		if (property.name === 'hs_shared_team_ids') {
+			const teamOptions = await fetchTeamsOptions(auth.access_token);
+			props[property.name] = Property.StaticMultiSelectDropdown({
+				displayName: propertyDisplayName,
+				required: false,
+				options: {
+					disabled: false,
+					options: teamOptions,
+				},
+			});
+			continue;
+		}
+		if (property.name === 'hs_all_assigned_business_unit_ids') {
+			// TO DO : Add business unit options
+			// const businessUnitOptions = await fetchBusinessUnitsOptions(authValue.access_token);
+			// props[property.name] = Property.StaticMultiSelectDropdown({
+			// 	displayName: propertyDisplayName,
+			// 	required: false,
+			// 	options: {
+			// 		disabled: false,
+			// 		options: businessUnitOptions,
+			// 	},
+			// });
+			continue;
+		}
+
+		props[property.name] = createPropertyDefinition(property, propertyDisplayName);
+	}
+	// Remove null props
+	return Object.fromEntries(Object.entries(props).filter(([_, prop]) => prop !== null));
+}
+
+export const standardObjectDynamicProperties = (objectType: string, excludedProperties: string[]) =>
 	Property.DynamicProperties({
 		displayName: 'Object Properties',
 		refreshers: [],
@@ -271,87 +356,25 @@ export const objectPropertiesDropdown = (objectType: string, excludedProperties:
 			// if (typeof createIfNotExists === "boolean" && createIfNotExists === false) {
 			// 	return {};
 			// }
-
-			const props: DynamicPropsValue = {};
 			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-			const client = new Client({ accessToken: authValue.access_token });
-
-			const propertyGroups = await client.crm.properties.groupsApi.getAll(objectType);
-
-			const groupLabels = propertyGroups.results.reduce((map, group) => {
-				map[group.name] = group.label;
-				return map;
-			}, {} as Record<string, string>);
-
-			const allProperties = await client.crm.properties.coreApi.getAll(objectType);
-
-			for (const property of allProperties.results) {
-				// skip read only properties
-				if (
-					excludedProperties.includes(property.name) ||
-					property.modificationMetadata?.readOnlyValue ||
-					property.hidden
-				) {
-					continue;
-				}
-
-				// create property name with property group name
-				const propertyDisplayName = `${groupLabels[property.groupName] || ''}: ${property.label}`;
-
-				if (property.referencedObjectType) {
-					props[property.name] = await createReferencedPropertyDefinition(
-						property,
-						propertyDisplayName,
-						authValue.access_token,
-					);
-					continue;
-				}
-				if (property.name === 'hs_shared_user_ids') {
-					const userOptions = await fetchUsersOptions(authValue.access_token);
-					props[property.name] = Property.StaticMultiSelectDropdown({
-						displayName: propertyDisplayName,
-						required: false,
-						options: {
-							disabled: false,
-							options: userOptions,
-						},
-					});
-					continue;
-				}
-				if (property.name === 'hs_shared_team_ids') {
-					const teamOptions = await fetchTeamsOptions(authValue.access_token);
-					props[property.name] = Property.StaticMultiSelectDropdown({
-						displayName: propertyDisplayName,
-						required: false,
-						options: {
-							disabled: false,
-							options: teamOptions,
-						},
-					});
-					continue;
-				}
-				if (property.name === 'hs_all_assigned_business_unit_ids') {
-					// TO DO : Add business unit options
-					// const businessUnitOptions = await fetchBusinessUnitsOptions(authValue.access_token);
-					// props[property.name] = Property.StaticMultiSelectDropdown({
-					// 	displayName: propertyDisplayName,
-					// 	required: false,
-					// 	options: {
-					// 		disabled: false,
-					// 		options: businessUnitOptions,
-					// 	},
-					// });
-					continue;
-				}
-
-				props[property.name] = createPropertyDefinition(property, propertyDisplayName);
-			}
-			// Remove null props
-			return Object.fromEntries(Object.entries(props).filter(([_, prop]) => prop !== null));
+			return await retriveObjectProperties(authValue, objectType, excludedProperties);
 		},
 	});
 
-export const propertiesDropdown = (
+export const customObjectDynamicProperties = Property.DynamicProperties({
+	displayName: 'Custom Object Properties',
+	refreshers: ['customObjectType'],
+	required: false,
+	props: async ({ auth, customObjectType }) => {
+		if (!auth || !customObjectType) {
+			return {};
+		}
+		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+		return await retriveObjectProperties(authValue, customObjectType as unknown as string);
+	},
+});
+
+export const standardObjectPropertiesDropdown = (
 	params: DropdownParams,
 	includeDefaultProperties = false,
 	isSingleSelect = false,
@@ -405,6 +428,58 @@ export const propertiesDropdown = (
 		},
 	});
 };
+
+export const customObjectPropertiesDropdown = (displayName: string, required: boolean,	isSingleSelect = false,
+) =>
+	Property.DynamicProperties({
+		displayName,
+		refreshers: ['customObjectType'],
+		required,
+		props: async ({ auth, customObjectType }) => {
+			if (!auth || !customObjectType) {
+				return {};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+
+			const client = new Client({ accessToken: authValue.access_token });
+
+			// Fetch all properties for the given object type
+			const allProperties = await client.crm.properties.coreApi.getAll(
+				customObjectType as unknown as string,
+			);
+
+			const propertyGroups = await client.crm.properties.groupsApi.getAll(
+				customObjectType as unknown as string,
+			);
+
+			const groupLabels = propertyGroups.results.reduce((map, group) => {
+				map[group.name] = group.label;
+				return map;
+			}, {} as Record<string, string>);
+
+			const options: DropdownOption<string>[] = [];
+			for (const property of allProperties.results) {
+				const propertyDisplayName = `${groupLabels[property.groupName] || ''}: ${property.label}`;
+				options.push({
+					label: propertyDisplayName,
+					value: property.name,
+				});
+			}
+
+			const props: DynamicPropsValue = {};
+			const dropdownFunction = isSingleSelect ? Property.StaticDropdown : Property.StaticMultiSelectDropdown;
+
+			props['values'] = dropdownFunction({
+				displayName,
+				required,
+				options: {
+					disabled: false,
+					options,
+				},
+			});
+			return props;
+		},
+	});
 
 export const workflowIdDropdown = Property.Dropdown({
 	displayName: 'Workflow',
@@ -508,7 +583,35 @@ export const pipelineStageDropdown = (params: DropdownParams) =>
 			};
 		},
 	});
+export const customObjectDropdown = Property.Dropdown({
+	displayName: 'Type of Custom Object',
+	refreshers: [],
+	required: true,
+	options: async ({ auth }) => {
+		if (!auth) {
+			return buildEmptyList({
+				placeholder: 'Please connect your account.',
+			});
+		}
 
+		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+		const client = new Client({ accessToken: authValue.access_token });
+
+		const customObjectsResponse = await client.crm.schemas.coreApi.getAll();
+
+		const options = customObjectsResponse.results.map((customObj) => {
+			return {
+				label: customObj.labels.plural ?? customObj.name,
+				value: customObj.objectTypeId,
+			};
+		});
+
+		return {
+			disabled: false,
+			options,
+		};
+	},
+});
 type DropdownParams = {
 	objectType: OBJECT_TYPE;
 	displayName: string;

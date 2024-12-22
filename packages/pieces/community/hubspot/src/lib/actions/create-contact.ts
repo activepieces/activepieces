@@ -1,13 +1,10 @@
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-	getDefaultPropertiesForObject,
-	objectPropertiesDropdown,
-	propertiesDropdown,
-} from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+
 import { MarkdownVariant } from '@activepieces/shared';
 import { Client } from '@hubspot/api-client';
+import { getDefaultPropertiesForObject, standardObjectDynamicProperties, standardObjectPropertiesDropdown } from '../common/props';
+import { OBJECT_TYPE } from '../common/constants';
 
 export const createContactAction = createAction({
 	auth: hubspotAuth,
@@ -15,7 +12,7 @@ export const createContactAction = createAction({
 	displayName: 'Create Contact',
 	description: 'Creates a contact in Hubspot.',
 	props: {
-		objectProperties: objectPropertiesDropdown(OBJECT_TYPE.CONTACT, []),
+		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.CONTACT, []),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
 			value: `### Properties to retrieve:
@@ -24,7 +21,7 @@ export const createContactAction = createAction({
                                             
                     **Specify here a list of additional properties to retrieve**`,
 		}),
-		additionalPropertiesToRetrieve: propertiesDropdown({
+		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.CONTACT,
 			displayName: 'Additional properties to retrieve',
 			required: false,

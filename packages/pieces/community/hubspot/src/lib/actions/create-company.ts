@@ -1,6 +1,6 @@
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { objectPropertiesDropdown, propertiesDropdown ,getDefaultPropertiesForObject} from '../common/props';
+import { getDefaultPropertiesForObject, standardObjectDynamicProperties, standardObjectPropertiesDropdown} from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/shared';
 import { Client } from '@hubspot/api-client';
@@ -11,7 +11,7 @@ export const createCompanyAction = createAction({
 	displayName: 'Create Company',
 	description: 'Creates a company in Hubspot.',
 	props: {
-		objectProperties: objectPropertiesDropdown(OBJECT_TYPE.COMPANY, []),
+		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.COMPANY, []),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
 			value: `### Properties to retrieve:
@@ -20,7 +20,7 @@ export const createCompanyAction = createAction({
                             
                     **Specify here a list of additional properties to retrieve**`,
 		}),
-		additionalPropertiesToRetrieve: propertiesDropdown({
+		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.COMPANY,
 			displayName: 'Additional properties to retrieve',
 			required: false,

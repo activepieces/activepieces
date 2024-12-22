@@ -1,9 +1,11 @@
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { objectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+
 import { Client } from '@hubspot/api-client';
+import { standardObjectDynamicProperties } from '../common/props';
+import { OBJECT_TYPE } from '../common/constants';
 import { FilterOperatorEnum } from '../common/types';
+
 
 export const createOrUpdateContactAction = createAction({
 	auth: hubspotAuth,
@@ -15,7 +17,7 @@ export const createOrUpdateContactAction = createAction({
 			displayName: 'Contact Email',
 			required: true,
 		}),
-		objectProperties: objectPropertiesDropdown(OBJECT_TYPE.CONTACT, ['email']),
+		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.CONTACT, ['email']),
 	},
 	async run(context) {
 		const email = context.propsValue.email;

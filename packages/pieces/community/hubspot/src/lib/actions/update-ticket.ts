@@ -1,15 +1,10 @@
-import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
-import { OBJECT_TYPE } from '../common/constants';
-import {
-    propertiesDropdown,
-    getDefaultPropertiesForObject,
-    objectPropertiesDropdown,
-    pipelineDropdown,
-    pipelineStageDropdown,
-} from '../common/props';
+
 import { MarkdownVariant } from '@activepieces/shared';
+import { hubspotAuth } from '../../';
+import { getDefaultPropertiesForObject, pipelineDropdown, pipelineStageDropdown, standardObjectDynamicProperties, standardObjectPropertiesDropdown } from '../common/props';
+import { OBJECT_TYPE } from '../common/constants';
 
 export const updateTicketAction = createAction({
     auth: hubspotAuth,
@@ -37,7 +32,7 @@ export const updateTicketAction = createAction({
             displayName: 'Ticket Pipeline Stage',
             required: false,
         }),
-        objectProperites: objectPropertiesDropdown(OBJECT_TYPE.TICKET, [
+        objectProperites: standardObjectDynamicProperties(OBJECT_TYPE.TICKET, [
             'subject',
             'hs_pipeline',
             'hs_pipeline_stage',
@@ -50,7 +45,7 @@ export const updateTicketAction = createAction({
             
             **Specify here a list of additional properties to retrieve**`,
         }),
-        additionalPropertiesToRetrieve: propertiesDropdown({
+        additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
             objectType: OBJECT_TYPE.TICKET,
             displayName: 'Additional properties to retrieve',
             required: false,

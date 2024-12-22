@@ -1,7 +1,9 @@
 import { MarkdownVariant } from '@activepieces/shared';
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getDefaultPropertiesForObject, propertiesDropdown } from '../common/props';
+import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown
+
+ } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
@@ -12,7 +14,7 @@ export const findProductAction = createAction({
 	displayName: 'Find Product',
 	description: 'Finds a product by searching.',
 	props: {
-		firstSearchPropertyName: propertiesDropdown(
+		firstSearchPropertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.PRODUCT,
 				displayName: 'First search property name',
@@ -25,7 +27,7 @@ export const findProductAction = createAction({
 			displayName: 'First search property value',
 			required: true,
 		}),
-		secondSearchPropertyName: propertiesDropdown(
+		secondSearchPropertyName: standardObjectPropertiesDropdown(
 			{
 				objectType: OBJECT_TYPE.PRODUCT,
 				displayName: 'Second search property name',
@@ -46,7 +48,7 @@ export const findProductAction = createAction({
 
                     **Specify here a list of additional properties to retrieve**`,
 		}),
-		additionalPropertiesToRetrieve: propertiesDropdown({
+		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.PRODUCT,
 			displayName: 'Additional properties to retrieve',
 			required: false,

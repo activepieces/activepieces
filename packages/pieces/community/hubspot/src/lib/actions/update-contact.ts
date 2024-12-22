@@ -2,8 +2,9 @@ import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
-    objectPropertiesDropdown,
-    propertiesDropdown,
+    standardObjectDynamicProperties,
+    standardObjectPropertiesDropdown,
+
 } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/shared';
@@ -20,7 +21,7 @@ export const updateContactAction = createAction({
             description: 'The ID of the contact to update.',
             required: true,
         }),
-        objectProperties: objectPropertiesDropdown(OBJECT_TYPE.CONTACT, []),
+        objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.CONTACT, []),
         markdown: Property.MarkDown({
             variant: MarkdownVariant.INFO,
             value: `### Properties to retrieve:
@@ -29,7 +30,7 @@ export const updateContactAction = createAction({
                                             
                     **Specify here a list of additional properties to retrieve**`,
         }),
-        additionalPropertiesToRetrieve: propertiesDropdown({
+        additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
             objectType: OBJECT_TYPE.CONTACT,
             displayName: 'Additional properties to retrieve',
             required: false,
