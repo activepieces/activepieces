@@ -9,7 +9,7 @@ import {
 import { hubSpotClient } from './client';
 import { hubspotApiCall, HubspotFieldType } from '.';
 import { HttpMethod } from '@activepieces/pieces-common';
-import {  WorkflowResponse, HubspotProperty } from './types';
+import { WorkflowResponse, HubspotProperty } from './types';
 import {
 	DEFAULT_COMPANY_PROPERTIES,
 	DEFAULT_CONTACT_PROPERTIES,
@@ -267,6 +267,10 @@ export const objectPropertiesDropdown = (objectType: string, excludedProperties:
 		required: false,
 		props: async ({ auth }) => {
 			if (!auth) return {};
+			// Useful for Find actions
+			// if (typeof createIfNotExists === "boolean" && createIfNotExists === false) {
+			// 	return {};
+			// }
 
 			const props: DynamicPropsValue = {};
 			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
