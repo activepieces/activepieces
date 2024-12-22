@@ -4,11 +4,11 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
-import { userService } from '../../user/user-service'
-import { ProjectReleaseEntity } from './project-release.entity'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { userService } from '../../user/user-service'
 import { gitRepoService } from './git-sync/git-sync.service'
+import { ProjectReleaseEntity } from './project-release.entity'
 
 const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 

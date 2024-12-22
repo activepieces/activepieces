@@ -7,6 +7,7 @@ import { ActivepiecesError, apId,
     PlatformRole,
     Project,
     ProjectId,
+    ProjectMappingState,
     spreadIfDefined,
     User,
     UserId,
@@ -55,6 +56,7 @@ export const projectService = {
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
+                ...spreadIfDefined('mapping', request.mapping),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -171,6 +173,7 @@ type UpdateParams = {
     externalId?: string
     notifyStatus?: NotificationStatus
     releasesEnabled?: boolean
+    mapping?: ProjectMappingState
 }
 
 type CreateParams = {

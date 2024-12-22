@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common'
-import { ProjectReleaseType } from './project-release.request'
 import { UserMeta } from '../user'
+import { ProjectReleaseType } from './project-release.request'
 
 export const ProjectRelease = Type.Object({
     ...BaseModelSchema,

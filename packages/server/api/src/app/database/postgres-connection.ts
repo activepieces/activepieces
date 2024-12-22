@@ -171,6 +171,7 @@ import { AddReleasesEnablingBoolean1734429537542 } from './migration/postgres/17
 import { RenameGitSyncToEnvironment1734431436773 } from './migration/postgres/1734431436773-RenameGitSyncToEnvironment'
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
 import { AddCopilotSettings1734479886363 } from './migration/postgres/1734479886363-AddCopilotSettings'
+import { AddMappingForProject1734886495968 } from './migration/postgres/1734886495968-AddMappingForProject'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -287,6 +288,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameGitSyncToEnvironment1734431436773,
         RemoveWorkerType1734439097357,
         AddCopilotSettings1734479886363,
+        AddMappingForProject1734886495968,
     ]
 
     const edition = system.getEdition()

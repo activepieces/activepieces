@@ -1,32 +1,11 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { ProjectSyncError } from '@activepieces/ee-shared'
 import { fileExists } from '@activepieces/server-shared'
-import { Flow, flowMigrations, FlowOperationType, flowStructureUtil, PopulatedFlow } from '@activepieces/shared'
-import { FastifyBaseLogger } from 'fastify'
-import { flowService } from '../../../flows/flow/flow.service'
-import { projectService } from '../../../project/project-service'
-import { GitFile } from './project-diff/project-diff.service'
-import { ProjectMappingState } from './project-diff/project-mapping-state'
-import { flowRepo } from '../../../flows/flow/flow.repo'
+import { Flow, flowMigrations, PopulatedFlow } from '@activepieces/shared'
+import { StateFile } from '../project-diff/project-diff.service'
+import { ProjectMappingState } from '../project-diff/project-mapping-state'
 
-export const gitSyncHelper = (log: FastifyBaseLogger) => ({
-    async getStateFromDB(projectId: string): Promise<PopulatedFlow[]> {
-        const flows = await flowRepo().findBy({
-            projectId,
-        })
-        return Promise.all(
-            flows.map((f) => {
-                return flowService(log).getOnePopulatedOrThrow({
-                    id: f.id,
-                    projectId,
-                    removeConnectionsName: false,
-                    removeSampleData: true,
-                })
-            }),
-        )
-    },
-
+export const gitSyncHelper = () => ({
     async getMappingStateFromGit(
         stateFolderPath: string,
         projectId: string,
@@ -41,9 +20,9 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async getStateFromGit(flowPath: string): Promise<GitFile[]> {
+    async getStateFromGit(flowPath: string): Promise<StateFile[]> {
         const flowFiles = await fs.readdir(flowPath)
-        const parsedFlows: GitFile[] = []
+        const parsedFlows: StateFile[] = []
         for (const file of flowFiles) {
             const flow: PopulatedFlow = JSON.parse(
                 await fs.readFile(path.join(flowPath, file), 'utf-8'),
@@ -60,81 +39,6 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
         return parsedFlows
     },
 
-    async createFlowInProject(flow: PopulatedFlow, projectId: string): Promise<PopulatedFlow> {
-        const createdFlow = await flowService(log).create({
-            projectId,
-            request: {
-                displayName: flow.version.displayName,
-                projectId,
-            },
-        })
-        return this.updateFlowInProject(createdFlow, flow, projectId)
-    },
-
-    async updateFlowInProject(originalFlow: PopulatedFlow, newFlow: PopulatedFlow,
-        projectId: string,
-    ): Promise<PopulatedFlow> {
-        const project = await projectService.getOneOrThrow(projectId)
-
-        const newFlowVersion = flowStructureUtil.transferFlow(newFlow.version, (step) => {
-            const oldStep = flowStructureUtil.getStep(step.name, originalFlow.version.trigger)
-            if (oldStep?.settings?.input?.auth) {
-                step.settings.input.auth = oldStep.settings.input.auth
-            }
-            return step
-        })
-
-        return flowService(log).update({
-            id: originalFlow.id,
-            projectId,
-            platformId: project.platformId,
-            lock: true,
-            userId: project.ownerId,
-            operation: {
-                type: FlowOperationType.IMPORT_FLOW,
-                request: {
-                    displayName: newFlow.version.displayName,
-                    trigger: newFlowVersion.trigger,
-                    schemaVersion: newFlow.version.schemaVersion,
-                },
-            },
-        })
-    },
-
-    async republishFlow(flowId: string, projectId: string): Promise<ProjectSyncError | null> {
-        const project = await projectService.getOneOrThrow(projectId)
-        const flow = await flowService(log).getOnePopulated({ id: flowId, projectId })
-        if (!flow) {
-            return null
-        }
-        if (!flow.version.valid) {
-            return {
-                flowId,
-                message: `Flow ${flow.version.displayName} #${flow.id} is not valid`,
-            }
-        }
-        try {
-            await flowService(log).update({
-                id: flowId,
-                projectId,
-                platformId: project.platformId,
-                lock: true,
-                userId: project.ownerId,
-                operation: {
-                    type: FlowOperationType.LOCK_AND_PUBLISH,
-                    request: {},
-                },
-            })
-            return null
-        }
-        catch (e) {
-            return {
-                flowId,
-                message: `Failed to publish flow ${flow.version.displayName} #${flow.id}`,
-            }
-        }
-    },
-
     async upsertFlowToGit(fileName: string, flow: Flow, flowFolderPath: string): Promise<void> {
         const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
         await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
@@ -147,14 +51,6 @@ export const gitSyncHelper = (log: FastifyBaseLogger) => ({
             await fs.unlink(flowJsonPath)
         }
         return exists
-    },
-
-    async deleteFlowFromProject(flowId: string, projectId: string): Promise<void> {
-        const flow = await flowService(log).getOne({ id: flowId, projectId })
-        if (!flow) {
-            return
-        }
-        await flowService(log).delete({ id: flowId, projectId })
     },
 })
 

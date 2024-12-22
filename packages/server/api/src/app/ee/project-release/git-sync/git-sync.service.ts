@@ -13,21 +13,22 @@ import {
     ApEdition,
     apId,
     ErrorCode,
-    FlowStatus,
     isNil,
     SeekPage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { gitHelper } from './git-helper'
-import { gitSyncHelper } from './git-sync-helper'
-import { GitRepoEntity } from './git-sync.entity'
+import { repoFactory } from '../../../core/db/repo-factory'
+import { flowService } from '../../../flows/flow/flow.service'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
-import { flowService } from '../../../flows/flow/flow.service'
-import { repoFactory } from '../../../core/db/repo-factory'
-import { ProjectMappingState } from './project-diff/project-mapping-state'
-import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
+import { projectDiffService, ProjectOperation } from '../project-diff/project-diff.service'
+import { ProjectMappingState } from '../project-diff/project-mapping-state'
+import { projectStateHelper } from '../project-state/project-state-helper'
+import { projectStateService } from '../project-state/project-state.service'
+import { gitHelper } from './git-helper'
+import { gitSyncHelper } from './git-sync-helper'
+import { GitRepoEntity } from './git-sync.entity'
 
 const repo = repoFactory(GitRepoEntity)
 
@@ -103,7 +104,7 @@ export const gitRepoService = (log: FastifyBaseLogger) => ({
         const gitRepo = await this.getOrThrow({ id })
         const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         const project = await projectService.getOneOrThrow(gitRepo.projectId)
-        const mappingState = gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()
+        const mappingState = project.mapping ? new ProjectMappingState(project.mapping) : ProjectMappingState.empty()
         switch (request.type) {
             case GitPushOperationType.PUSH_FLOW: {
                 const flow = await flowService(log).getOnePopulatedOrThrow({
@@ -113,27 +114,23 @@ export const gitRepoService = (log: FastifyBaseLogger) => ({
                     removeSampleData: true,
                 })
                 const flowName = mappingState.findSourceId(request.flowId) ?? request.flowId
-                await gitSyncHelper(log).upsertFlowToGit(flowName, flow, flowFolderPath)
-                await repo().update({ id: gitRepo.id }, {
-                    mapping: mappingState.mapFlow({
-                        sourceId: flowName,
-                        targetId: flow.id,
-                    }),
-                })
+                await gitSyncHelper().upsertFlowToGit(flowName, flow, flowFolderPath)
+                await projectService.update(project.id, { mapping: mappingState.mapFlow({
+                    sourceId: flowName,
+                    targetId: flow.id,
+                }) })
                 await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flow ${flow.id}`)
                 break
             }
             case GitPushOperationType.DELETE_FLOW: {
-                const mappingState = gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()
-                await repo().update({ id: gitRepo.id }, {
-                    mapping: mappingState.deleteFlow(request.flowId),
-                })
+                const mappingState = project.mapping ? new ProjectMappingState(project.mapping) : ProjectMappingState.empty()
+                await projectService.update(project.id, { mapping: mappingState.deleteFlow(request.flowId) })
 
                 const sourceFlowId = mappingState.findSourceId(request.flowId)
                 if (isNil(sourceFlowId)) {
                     break
                 }
-                const deleted = await gitSyncHelper(log).deleteFlowFromGit(sourceFlowId, flowFolderPath)
+                const deleted = await gitSyncHelper().deleteFlowFromGit(sourceFlowId, flowFolderPath)
                 if (deleted) {
                     await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowId} from user interface`)
                 }
@@ -144,61 +141,22 @@ export const gitRepoService = (log: FastifyBaseLogger) => ({
     async pull({ gitRepo, dryRun, userId, selectedOperations }: PullGitRepoRequest): Promise<ProjectSyncPlan> {
         const project = await projectService.getOneOrThrow(gitRepo.projectId)
         const { flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
-        const gitProjectState = await gitSyncHelper(log).getStateFromGit(flowFolderPath)
-        const dbProjectState = await gitSyncHelper(log).getStateFromDB(project.id)
-        const mappingState = (gitRepo.mapping ? new ProjectMappingState(gitRepo.mapping) : ProjectMappingState.empty()).clean({
+        const gitProjectState = await gitSyncHelper().getStateFromGit(flowFolderPath)
+        const dbProjectState = await projectStateHelper(log).getStateFromDB(project.id)
+        const mappingState = (project.mapping ? new ProjectMappingState(project.mapping) : ProjectMappingState.empty()).clean({
             gitFiles: gitProjectState,
             projectFlows: dbProjectState,
         })
         const operations = projectDiffService.diff({
-            gitFiles: gitProjectState,
-            projectFlows: dbProjectState,
+            newState: gitProjectState,
+            oldState: dbProjectState,
             mapping: mappingState,
         })
         if (dryRun) {
             return toResponse(operations)
         }
-        let newMapState: ProjectMappingState = mappingState
-        const publishJobs: Promise<ProjectSyncError | null>[] = []
-        for (const operation of operations) {
-            switch (operation.type) {
-                case ProjectOperationType.UPDATE_FLOW: {
-                    if (!selectedOperations?.includes(operation.projectFlow.id)) {
-                        continue
-                    }
-                    const flowUpdated = await gitSyncHelper(log).updateFlowInProject(operation.projectFlow, operation.gitFile.flow, gitRepo.projectId)
-                    if (flowUpdated.status === FlowStatus.ENABLED) {
-                        publishJobs.push(gitSyncHelper(log).republishFlow(flowUpdated.id, gitRepo.projectId))
-                    }
-                    newMapState = newMapState.mapFlow({
-                        sourceId: operation.gitFile.baseFilename,
-                        targetId: flowUpdated.id,
-                    })
-                    break
-                }
-                case ProjectOperationType.CREATE_FLOW: {
-                    if (!selectedOperations?.includes(operation.gitFile.flow.id)) {
-                        continue
-                    }
-                    const flowCreated = await gitSyncHelper(log).createFlowInProject(operation.gitFile.flow, gitRepo.projectId)
-                    newMapState = newMapState.mapFlow({
-                        sourceId: operation.gitFile.baseFilename,
-                        targetId: flowCreated.id,
-                    })
-                    break
-                }
-                case ProjectOperationType.DELETE_FLOW: {
-                    if (!selectedOperations?.includes(operation.projectFlow.id)) {
-                        continue
-                    }
-                    await gitSyncHelper(log).deleteFlowFromProject(operation.projectFlow.id, gitRepo.projectId)
-                    newMapState = newMapState.deleteFlow(operation.projectFlow.id)
-                    break
-                }
-            }
-        }
-        await repo().update({ id: gitRepo.id }, { mapping: newMapState })
-        const errors = (await Promise.all(publishJobs)).filter((f): f is ProjectSyncError => f !== null)
+        const { mappingState: newMapState, errors } = await projectStateService(log).apply({ projectId: gitRepo.projectId, operations, mappingState, selectedOperations })
+        await projectService.update(project.id, { mapping: newMapState })
         return toResponse(operations, errors)
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
@@ -223,28 +181,28 @@ function toResponse(operations: ProjectOperation[], errors: ProjectSyncError[] =
                 return {
                     type: operation.type,
                     flow: {
-                        id: operation.projectFlow.id,
-                        displayName: operation.projectFlow.version.displayName,
+                        id: operation.state.flow.id,
+                        displayName: operation.state.flow.version.displayName,
                     },
                 }
             case ProjectOperationType.CREATE_FLOW:
                 return {
                     type: operation.type,
                     flow: {
-                        id: operation.gitFile.baseFilename,
-                        displayName: operation.gitFile.flow.version.displayName,
+                        id: operation.state.baseFilename,
+                        displayName: operation.state.flow.version.displayName,
                     },
                 }
             case ProjectOperationType.UPDATE_FLOW:
                 return {
                     type: operation.type,
                     flow: {
-                        id: operation.gitFile.flow.id,
-                        displayName: operation.gitFile.flow.version.displayName,
+                        id: operation.newStateFile.flow.id,
+                        displayName: operation.newStateFile.flow.version.displayName,
                     },
                     targetFlow: {
-                        id: operation.projectFlow.id,
-                        displayName: operation.projectFlow.version.displayName,
+                        id: operation.oldStateFile.flow.id,
+                        displayName: operation.oldStateFile.flow.version.displayName,
                     },
                 }
         }
