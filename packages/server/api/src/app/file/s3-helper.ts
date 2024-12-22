@@ -1,7 +1,6 @@
-import { randomUUID } from 'crypto'
 import { Readable } from 'stream'
 import { exceptionHandler } from '@activepieces/server-shared'
-import { FileType, ProjectId } from '@activepieces/shared'
+import { apId, FileType, ProjectId } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from 'dayjs'
@@ -102,9 +101,9 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         }
     },
     async validateS3Configuration(): Promise<void> {
-        const client     = getS3Client()
+        const client = getS3Client()
         const bucketName = getS3BucketName()
-        const testKey    = `activepieces-${randomUUID()}-validation-test-key`
+        const testKey = `activepieces-${apId()}-validation-test-key`
 
         try {
             await client.putObject({
@@ -124,7 +123,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             })
         }
         catch (error: unknown) {
-            throw new Error(`S3 validation failed: ${error.message}`)
+            throw new Error(`S3 validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
     },
 })
