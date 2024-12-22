@@ -2,7 +2,7 @@ import { MarkdownVariant } from '@activepieces/shared';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { hubspotAuth } from '../../';
-import {  customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
+import { customObjectDropdown, customObjectPropertiesDropdown } from '../common/props';
 import { FilterOperatorEnum } from '../common/types';
 
 export const findCustomObjectAction = createAction({
@@ -12,12 +12,20 @@ export const findCustomObjectAction = createAction({
 	description: 'Finds a custom object by searching.',
 	props: {
 		customObjectType: customObjectDropdown,
-		firstSearchPropertyName: customObjectPropertiesDropdown('First search property name', true,true),
+		firstSearchPropertyName: customObjectPropertiesDropdown(
+			'First search property name',
+			true,
+			true,
+		),
 		firstSearchPropertyValue: Property.ShortText({
 			displayName: 'First search property value',
 			required: true,
 		}),
-		secondSearchPropertyName: customObjectPropertiesDropdown('Second search property name', false,true),
+		secondSearchPropertyName: customObjectPropertiesDropdown(
+			'Second search property name',
+			false,
+			true,
+		),
 		secondSearchPropertyValue: Property.ShortText({
 			displayName: 'Second search property value',
 			required: false,
@@ -37,14 +45,16 @@ export const findCustomObjectAction = createAction({
 	},
 	async run(context) {
 		const customObjectType = context.propsValue.customObjectType as string;
-		const {
-			firstSearchPropertyValue,
-			secondSearchPropertyValue,
-		} = context.propsValue;
-        const firstSearchPropertyName = context.propsValue.firstSearchPropertyName?.['values'] as string;
-        const secondSearchPropertyName = context.propsValue.secondSearchPropertyName?.['values'] as string;
+		const { firstSearchPropertyValue, secondSearchPropertyValue } = context.propsValue;
+		const firstSearchPropertyName = context.propsValue.firstSearchPropertyName?.[
+			'values'
+		] as string;
+		const secondSearchPropertyName = context.propsValue.secondSearchPropertyName?.[
+			'values'
+		] as string;
 
-		let additionalPropertiesToRetrieve =context.propsValue.additionalPropertiesToRetrieve?.['values'];
+		let additionalPropertiesToRetrieve =
+			context.propsValue.additionalPropertiesToRetrieve?.['values'];
 
 		try {
 			if (Array.isArray(additionalPropertiesToRetrieve)) {
@@ -72,9 +82,6 @@ export const findCustomObjectAction = createAction({
 				value: secondSearchPropertyValue,
 			});
 		}
-
-        console.log(JSON.stringify(filters));
-        console.log(JSON.stringify(additionalPropertiesToRetrieve));
 
 		const client = new Client({ accessToken: context.auth.access_token });
 

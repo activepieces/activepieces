@@ -33,6 +33,10 @@ import { findProductAction } from './lib/actions/find-product';
 import { createCompanyAction } from './lib/actions/create-company';
 import { findCompanyAction } from './lib/actions/find-company';
 import { updateCompanyAction } from './lib/actions/update-company';
+import { createCustomObjectAction } from './lib/actions/create-custom-object';
+import { updateCustomObjectAction } from './lib/actions/updated-custom-object';
+import { getCustomObjectAction } from './lib/actions/get-custom-object';
+import { findCustomObjectAction } from './lib/actions/find-custom-object';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -96,6 +100,10 @@ export const hubspot = createPiece({
 		updateProductAction,
 		findProductAction,
 		getProductAction,
+		createCustomObjectAction,
+		updateCustomObjectAction,
+		getCustomObjectAction,
+		findCustomObjectAction,
 		getPipelineStageDeatilsAction,
 		addContactToWorkflowAction,
 		createDealAction,
