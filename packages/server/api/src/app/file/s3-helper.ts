@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import { Readable } from 'stream'
 import { exceptionHandler } from '@activepieces/server-shared'
 import { FileType, ProjectId } from '@activepieces/shared'
@@ -98,6 +99,32 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
             log.error({ error, count: s3Keys.length }, 'failed to delete files from s3')
             exceptionHandler.handle(error, log)
             throw error
+        }
+    },
+    async validateS3Configuration(): Promise<void> {
+        const client     = getS3Client()
+        const bucketName = getS3BucketName()
+        const testKey    = `activepieces-${randomUUID()}-validation-test-key`
+
+        try {
+            await client.putObject({
+                Bucket: bucketName,
+                Key: testKey,
+                Body: 'activepieces-test',
+            })
+
+            await client.headObject({
+                Bucket: bucketName,
+                Key: testKey,
+            })
+
+            await client.deleteObject({
+                Bucket: bucketName,
+                Key: testKey,
+            })
+        }
+        catch (error: unknown) {
+            throw new Error(`S3 validation failed: ${error.message}`)
         }
     },
 })
