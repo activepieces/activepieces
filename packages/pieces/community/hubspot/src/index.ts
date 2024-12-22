@@ -24,6 +24,7 @@ import { createTicketAction } from './lib/actions/create-ticket';
 import { updateTicketAction } from './lib/actions/update-ticket';
 import { findTicketAction } from './lib/actions/find-ticket';
 import { createContactAction } from './lib/actions/create-contact';
+import { updateContactAction } from './lib/actions/update-contact';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -70,6 +71,7 @@ export const hubspot = createPiece({
 		hubSpotListsAddContactAction,
 		hubSpotGetOwnerByEmailAction,
 		createContactAction,
+		updateContactAction,
 		getContactAction,
 		getDealAction,
 		getCompanyAction,
