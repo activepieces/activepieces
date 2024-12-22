@@ -19,4 +19,7 @@ export const projectReleaseApi = {
   async download(releaseId: string) {
     return await api.post<Buffer>(`/v1/project-releases/${releaseId}/download`);
   },
+  async rollback(releaseId: string) {
+    return await api.post<void>(`/v1/project-releases/${releaseId}/apply`);
+  },
 };

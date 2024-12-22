@@ -143,10 +143,7 @@ export const gitRepoService = (log: FastifyBaseLogger) => ({
         const { flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         const gitProjectState = await gitSyncHelper().getStateFromGit(flowFolderPath)
         const dbProjectState = await projectStateHelper(log).getStateFromDB(project.id)
-        const mappingState = (project.mapping ? new ProjectMappingState(project.mapping) : ProjectMappingState.empty()).clean({
-            gitFiles: gitProjectState,
-            projectFlows: dbProjectState,
-        })
+        const mappingState = await projectStateService(log).getMappingState(project.id, gitProjectState, dbProjectState)
         const operations = projectDiffService.diff({
             newState: gitProjectState,
             oldState: dbProjectState,
@@ -155,8 +152,7 @@ export const gitRepoService = (log: FastifyBaseLogger) => ({
         if (dryRun) {
             return toResponse(operations)
         }
-        const { mappingState: newMapState, errors } = await projectStateService(log).apply({ projectId: gitRepo.projectId, operations, mappingState, selectedOperations })
-        await projectService.update(project.id, { mapping: newMapState })
+        const { errors } = await projectStateService(log).apply({ projectId: gitRepo.projectId, operations, mappingState, selectedOperations })
         return toResponse(operations, errors)
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
@@ -189,7 +185,7 @@ function toResponse(operations: ProjectOperation[], errors: ProjectSyncError[] =
                 return {
                     type: operation.type,
                     flow: {
-                        id: operation.state.baseFilename,
+                        id: operation.state.flow.id,
                         displayName: operation.state.flow.version.displayName,
                     },
                 }

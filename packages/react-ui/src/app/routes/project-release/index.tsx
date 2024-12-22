@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
-import { projectApi } from '@/lib/project-api';
 import { formatUtils } from '@/lib/utils';
 import { ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
 
@@ -44,14 +43,8 @@ const ProjectReleasesPage = () => {
   const { mutate: rollbackProjectRelease, isPending: isRollingBack } =
     useMutation({
       mutationKey: ['rollback-project-release'],
-      mutationFn: ({
-        projectId,
-        releaseId,
-      }: {
-        projectId: string;
-        releaseId: string;
-      }) => {
-        return projectApi.rollback(projectId, releaseId);
+      mutationFn: ({ releaseId }: { projectId: string; releaseId: string }) => {
+        return projectReleaseApi.rollback(releaseId);
       },
       onSuccess: () => {
         refetch();
@@ -129,7 +122,7 @@ const ProjectReleasesPage = () => {
         />
       ),
       cell: ({ row }) => (
-        <div className="text-left">{row.original.importedBy}</div>
+        <div className="text-left">{row.original.importedByUser?.email}</div>
       ),
     },
     {

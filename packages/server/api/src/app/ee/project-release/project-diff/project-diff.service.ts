@@ -1,5 +1,5 @@
 import { ProjectOperationType } from '@activepieces/ee-shared'
-import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, Step, TriggerType } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, StateFile, Step, TriggerType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { ProjectMappingState } from './project-mapping-state'
 
@@ -14,7 +14,7 @@ export const projectDiffService = {
 
 function findFlowsToCreate({ newState, oldState, mapping }: DiffParams): ProjectOperation[] {
     return newState.filter((newFile) => {
-        const targetId = mapping.findTargetId(newFile.baseFilename)
+        const targetId = mapping.findTargetId(newFile.flow.id)
         return isNil(targetId) || isNil(oldState.find((oldFile) => oldFile.flow.id === targetId))
     }).map((state) => ({
         type: ProjectOperationType.CREATE_FLOW,
@@ -24,7 +24,7 @@ function findFlowsToCreate({ newState, oldState, mapping }: DiffParams): Project
 function findFlowsToDelete({ newState, oldState, mapping }: DiffParams): ProjectOperation[] {
     return oldState.filter((f) => {
         const sourceId = mapping.findSourceId(f.flow.id)
-        return isNil(sourceId) || isNil(newState.find((newFile) => newFile.baseFilename === sourceId))
+        return isNil(sourceId) || isNil(newState.find((newFile) => newFile.flow.id === sourceId))
     }).map((oldFile) => ({
         type: ProjectOperationType.DELETE_FLOW,
         state: oldFile,
@@ -35,14 +35,14 @@ function findFlowsToUpdate({ newState, oldState, mapping }: DiffParams): Project
     const operations: ProjectOperation[] = []
 
     const newStateFiles = newState.filter((state) => {
-        const targetId = mapping.findTargetId(state.baseFilename)
+        const targetId = mapping.findTargetId(state.flow.id)
         return !isNil(targetId) && !isNil(oldState.find((oldFile) => oldFile.flow.id === targetId))
     })
 
     newStateFiles.forEach((ns) => {
-        const destFlowId = mapping.findTargetId(ns.baseFilename)
+        const destFlowId = mapping.findTargetId(ns.flow.id)
         const oldStateFile = oldState.find((os) => os.flow.id === destFlowId)!
-        assertNotNullOrUndefined(oldStateFile, `Could not find target flow for source flow ${ns.baseFilename}`)
+        assertNotNullOrUndefined(oldStateFile, `Could not find target flow for source flow ${ns.flow.id}`)
         if (isFlowChanged(ns.flow, oldStateFile.flow)) {
             operations.push({
                 type: ProjectOperationType.UPDATE_FLOW,
@@ -83,11 +83,7 @@ type DiffParams = {
     mapping: ProjectMappingState
 }
 
-export const StateFile = Type.Object({
-    flow: PopulatedFlow,
-    baseFilename: Type.String(),
-})
-export type StateFile = Static<typeof StateFile>
+
 
 export const ProjectOperation = Type.Union([
     Type.Object({

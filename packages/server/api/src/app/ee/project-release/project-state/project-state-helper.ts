@@ -1,11 +1,9 @@
 import { ProjectSyncError } from '@activepieces/ee-shared'
-import { FlowOperationType, flowStructureUtil, PopulatedFlow } from '@activepieces/shared'
+import { FlowOperationType, flowStructureUtil, PopulatedFlow, StateFile } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { flowService } from '../../../flows/flow/flow.service'
 import { projectService } from '../../../project/project-service'
-import { StateFile } from '../project-diff/project-diff.service'
-
 export const projectStateHelper = (log: FastifyBaseLogger) => ({
     async getStateFromDB(projectId: string): Promise<StateFile[]> {
         const flows = await flowRepo().findBy({
@@ -20,7 +18,6 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                         removeConnectionsName: false,
                         removeSampleData: true,
                     }),
-                    baseFilename: f.id,
                 }
             }),
         )

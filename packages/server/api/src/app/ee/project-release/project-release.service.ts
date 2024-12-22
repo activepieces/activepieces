@@ -9,6 +9,7 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { userService } from '../../user/user-service'
 import { gitRepoService } from './git-sync/git-sync.service'
 import { ProjectReleaseEntity } from './project-release.entity'
+import { projectStateService } from './project-state/project-state.service'
 
 const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
@@ -21,7 +22,7 @@ export const projectReleaseService = {
             dryRun: false,
             selectedOperations: params.selectedOperations,
         })
-        const fileId = await saveFlowsData(params.projectId, params.name, params.log)
+        const fileId = await projectStateService(params.log).save(params.projectId, params.name, params.log)
         const projectRelease: ProjectRelease = {
             id: apId(),
             created: new Date().toISOString(),
@@ -76,32 +77,6 @@ export const projectReleaseService = {
     },
 }
 
-async function saveFlowsData(projectId: ProjectId, name: string, log: FastifyBaseLogger): Promise<FileId> {
-    const flows = await flowRepo().find({
-        where: {
-            projectId,
-        },
-    })
-    const allPopulatedFlows = await Promise.all(flows.map(async (flow) => {
-        return flowService(log).getOnePopulatedOrThrow({
-            id: flow.id,
-            projectId,
-        })
-    }))
-    const flowsData = JSON.stringify(allPopulatedFlows)
-    const fileData = Buffer.from(flowsData)
-
-    const file = await fileService(log).save({
-        projectId,
-        type: FileType.PROJECT_RELEASE,
-        fileName: `${name}.json`,
-        size: fileData.byteLength,
-        data: fileData,
-        compression: FileCompression.NONE,
-    })
-
-    return file.id
-}
 
 type ListParams = {
     projectId: ProjectId

@@ -1,8 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileExists } from '@activepieces/server-shared'
-import { Flow, flowMigrations, PopulatedFlow } from '@activepieces/shared'
-import { StateFile } from '../project-diff/project-diff.service'
+import { Flow, flowMigrations, PopulatedFlow, StateFile } from '@activepieces/shared'
 import { ProjectMappingState } from '../project-diff/project-mapping-state'
 
 export const gitSyncHelper = () => ({
@@ -33,7 +32,6 @@ export const gitSyncHelper = () => ({
                     ...flow,
                     version: migratedFlowVersion,
                 },
-                baseFilename: path.basename(file, '.json'),
             })
         }
         return parsedFlows

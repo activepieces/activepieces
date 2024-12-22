@@ -2,7 +2,9 @@ import { ApId, CreateProjectReleaseRequestBody, FileType, ListProjectReleasesReq
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { fileService } from '../../file/file.service'
+import { projectDiffService } from './project-diff/project-diff.service'
 import { projectReleaseService } from './project-release.service'
+import { projectStateService } from './project-state/project-state.service'
 
 export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListProjectReleasesRequestParams, async (req) => {
@@ -19,6 +21,26 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
             projectId: req.principal.projectId,
             importedBy: req.principal.id,
             log: req.log,
+        })
+    })
+    
+    app.post('/:id/apply', ApplyProjectReleaseRequest, async (req) => {
+        const projectRelease = await projectReleaseService.getOneOrThrow({
+            id: req.params.id,
+            projectId: req.principal.projectId,
+        })
+        const newState = await projectStateService(req.log).getNewState(projectRelease.projectId, projectRelease.fileId, req.log)
+        const oldState = await projectStateService(req.log).getCurrentState(projectRelease.projectId, req.log)
+        const mapping = await projectStateService(req.log).getMappingState(projectRelease.projectId, newState, oldState)
+        const operations = projectDiffService.diff({
+            newState,
+            oldState,
+            mapping,
+        })
+        return projectStateService(req.log).apply({
+            projectId: projectRelease.projectId,
+            operations,
+            mappingState: mapping,
         })
     })
 
@@ -45,6 +67,17 @@ const ListProjectReleasesRequestParams = {
         response: {
             [StatusCodes.OK]: SeekPage(ProjectRelease),
         },
+    },
+}
+
+const ApplyProjectReleaseRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
     },
 }
 
