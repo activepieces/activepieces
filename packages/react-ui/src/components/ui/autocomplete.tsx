@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
 import {
   Command,
   CommandEmpty,
@@ -21,6 +20,7 @@ type Props<T extends string> = {
   className?: string;
   open: boolean;
   setOpen: (open: boolean) => void;
+  listRef?: React.RefObject<HTMLDivElement>;
 };
 
 export function AutoComplete<T extends string>({
@@ -30,7 +30,8 @@ export function AutoComplete<T extends string>({
   children,
   className,
   open,
-  setOpen
+  setOpen,
+  listRef
 }: Props<T>) {
 
   const onSelectItem = (inputValue: string) => {
@@ -41,14 +42,16 @@ export function AutoComplete<T extends string>({
 
   return (
     <div className="flex items-center">
-      <Popover open={open} onOpenChange={setOpen}>
-        <Command shouldFilter={false} className={className}>
+      <Popover open={open} onOpenChange={(open)=>{
+        setOpen(open);
+       
+      }}>
+      
         <PopoverTrigger asChild >
         {children}
 
         </PopoverTrigger>
       
-          {!open && <CommandList aria-hidden="true" className="hidden" />}
           <PopoverContent
             asChild
             onOpenAutoFocus={(e) => e.preventDefault()}
@@ -62,7 +65,9 @@ export function AutoComplete<T extends string>({
             }}
             className="w-[--radix-popover-trigger-width] p-0"
           >
-            <CommandList>
+            <Command className={className} ref={listRef} >
+            
+            <CommandList className="bg-background" >
              <ScrollArea className="h-[200px] overflow-y-auto">
              {items.length > 0 ? (
                 <CommandGroup>
@@ -72,7 +77,6 @@ export function AutoComplete<T extends string>({
                       value={option.value}
                       onMouseDown={(e) => e.preventDefault()}
                       onSelect={onSelectItem} 
-                      tabIndex={0}
                     >
                       <Check
                         className={cn(
@@ -92,8 +96,9 @@ export function AutoComplete<T extends string>({
              </ScrollArea>
             
             </CommandList>
-          </PopoverContent>
         </Command>
+
+          </PopoverContent>
       </Popover>
     </div>
   );

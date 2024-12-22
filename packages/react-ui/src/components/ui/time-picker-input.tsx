@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -149,6 +149,7 @@ const TimePickerInput = React.forwardRef<
       return <TimePickerInputInner {...props} ref={ref} />;
     }
     const [open, setOpen] = React.useState(false);
+    const listRef = useRef<HTMLDivElement>(null);
   return <AutoComplete className={
     cn('bg-transparent text-muted-foreground rounded-xs',
       {
@@ -161,11 +162,26 @@ const TimePickerInput = React.forwardRef<
     selectedValue={""}
     open={open}
     setOpen={setOpen}
+    listRef={listRef}
     onSelectedValueChange={(value)=>{
     const tempDate = new Date(props.date || new Date());
     props.setDate(setDateByType(tempDate, value, props.picker, props.period));
   }} >
-  <TimePickerInputInner {...props} ref={ref} isAutocompleteOpen={open} />
+  <TimePickerInputInner  {...props} onKeyDown={(e)=>{
+    props.onKeyDown?.(e);
+    if(e.key === "ArrowDown" || e.key==="ArrowUp" || e.key==="Enter" && open)
+      {
+       const event = new KeyboardEvent("keydown", {
+        key: e.key,
+        bubbles: true,
+        cancelable: true,
+       });
+       if(listRef.current)
+       {
+        listRef.current.dispatchEvent(event);
+       }
+      }
+  }} ref={ref} isAutocompleteOpen={open} />
   </AutoComplete>
 });
 TimePickerInput.displayName = 'TimePickerInput';
