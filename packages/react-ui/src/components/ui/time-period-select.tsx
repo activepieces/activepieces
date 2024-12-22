@@ -1,5 +1,6 @@
 'use client';
 
+import { t } from 'i18next';
 import * as React from 'react';
 
 import {
@@ -9,11 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 import { Period, display12HourValue, setDateByType } from './time-picker-utils';
-import { t } from 'i18next';
-import { isNil } from '../../../../shared/src';
-import { cn } from '@/lib/utils';
 
 export interface PeriodSelectorProps {
   period: Period;
@@ -28,55 +27,63 @@ export interface PeriodSelectorProps {
 export const TimePeriodSelect = React.forwardRef<
   HTMLButtonElement,
   PeriodSelectorProps
->(({ period, setPeriod, date, setDate, onLeftFocus, onRightFocus, isActive }, ref) => {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === 'ArrowRight') onRightFocus?.();
-    if (e.key === 'ArrowLeft') onLeftFocus?.();
-  };
+>(
+  (
+    { period, setPeriod, date, setDate, onLeftFocus, onRightFocus, isActive },
+    ref,
+  ) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (e.key === 'ArrowRight') onRightFocus?.();
+      if (e.key === 'ArrowLeft') onLeftFocus?.();
+    };
 
-  const handleValueChange = (value: Period) => {
-    setPeriod(value);
+    const handleValueChange = (value: Period) => {
+      setPeriod(value);
 
-    /**
-     * trigger an update whenever the user switches between AM and PM;
-     * otherwise user must manually change the hour each time
-     */
-    if (date) {
-      const tempDate = new Date(date);
-      const hours = display12HourValue(date.getHours());
-      setDate(
-        setDateByType(
-          tempDate,
-          hours.toString(),
-          '12hours',
-          period === 'AM' ? 'PM' : 'AM',
-        ),
-      );
-    }
-  };
-  return (
-    <div className="flex h-10 items-center">
-      <Select
-        defaultValue={period}
-        onValueChange={(value: Period) => handleValueChange(value)}
-      >
-        <SelectTrigger
-          ref={ref}
-          className={cn("w-[73px] h-[29px] rounded-xs justify-center p-0 transition-all 0 border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm shadow-none gap-3 ",{
-            'bg-background': isActive,
-            'hover:bg-accent': !isActive
-          })}
-          onKeyDown={handleKeyDown}
+      /**
+       * trigger an update whenever the user switches between AM and PM;
+       * otherwise user must manually change the hour each time
+       */
+      if (date) {
+        const tempDate = new Date(date);
+        const hours = display12HourValue(date.getHours());
+        setDate(
+          setDateByType(
+            tempDate,
+            hours.toString(),
+            '12hours',
+            period === 'AM' ? 'PM' : 'AM',
+          ),
+        );
+      }
+    };
+    return (
+      <div className="flex h-10 items-center">
+        <Select
+          defaultValue={period}
+          onValueChange={(value: Period) => handleValueChange(value)}
         >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="AM">{t('AM')}</SelectItem>
-          <SelectItem value="PM">{t('PM')}</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-  );
-});
+          <SelectTrigger
+            ref={ref}
+            className={cn(
+              'w-[73px] h-[29px] rounded-xs justify-center p-0 transition-all 0 border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm shadow-none gap-3 ',
+              {
+                'bg-background': isActive,
+                'hover:bg-accent': !isActive,
+              },
+            )}
+            onKeyDown={handleKeyDown}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="AM">{t('AM')}</SelectItem>
+            <SelectItem value="PM">{t('PM')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  },
+);
 
 TimePeriodSelect.displayName = 'TimePeriodSelect';

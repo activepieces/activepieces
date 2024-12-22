@@ -1,16 +1,17 @@
-import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { t } from 'i18next';
+import { Check } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandList,
-} from "./command";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
-import { t } from "i18next";
-import { ScrollArea } from "./scroll-area";
-
+} from './command';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { ScrollArea } from './scroll-area';
 
 type Props<T extends string> = {
   selectedValue: T;
@@ -31,74 +32,67 @@ export function AutoComplete<T extends string>({
   className,
   open,
   setOpen,
-  listRef
+  listRef,
 }: Props<T>) {
-
   const onSelectItem = (inputValue: string) => {
     onSelectedValueChange(inputValue as T);
     setOpen(false);
   };
 
-
   return (
     <div className="flex items-center">
-      <Popover open={open} onOpenChange={(open)=>{
-        setOpen(open);
-       
-      }}>
-      
-        <PopoverTrigger asChild >
-        {children}
+      <Popover
+        open={open}
+        onOpenChange={(open) => {
+          setOpen(open);
+        }}
+      >
+        <PopoverTrigger asChild>{children}</PopoverTrigger>
 
-        </PopoverTrigger>
-      
-          <PopoverContent
-            asChild
-            onOpenAutoFocus={(e) => e.preventDefault()}
-            onInteractOutside={(e) => {
-              if (
-                e.target instanceof Element &&
-                e.target.hasAttribute("cmdk-input")
-              ) {
-                e.preventDefault();
-              }
-            }}
-            className="w-[--radix-popover-trigger-width] p-0"
-          >
-            <Command className={className} ref={listRef} >
-            
-            <CommandList className="bg-background" >
-             <ScrollArea className="h-[200px] overflow-y-auto">
-             {items.length > 0 ? (
-                <CommandGroup>
-                  {items.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onSelect={onSelectItem} 
-                    >
-                      <Check
-                        className={cn(
-                          "h-4 w-4",
-                          selectedValue === option.value
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      {option.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              ) : 
-              <CommandEmpty>{t('No items')}</CommandEmpty>}
-             
-             </ScrollArea>
-            
+        <PopoverContent
+          asChild
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onInteractOutside={(e) => {
+            if (
+              e.target instanceof Element &&
+              e.target.hasAttribute('cmdk-input')
+            ) {
+              e.preventDefault();
+            }
+          }}
+          className="w-[--radix-popover-trigger-width] p-0"
+        >
+          <Command className={className} ref={listRef}>
+            <CommandList className="bg-background">
+              <ScrollArea className="h-[200px] overflow-y-auto">
+                {items.length > 0 ? (
+                  <CommandGroup>
+                    {items.map((option) => (
+                      <CommandItem
+                        key={option.value}
+                        value={option.value}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onSelect={onSelectItem}
+                      >
+                        <Check
+                          className={cn(
+                            'h-4 w-4',
+                            selectedValue === option.value
+                              ? 'opacity-100'
+                              : 'opacity-0',
+                          )}
+                        />
+                        {option.label}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ) : (
+                  <CommandEmpty>{t('No items')}</CommandEmpty>
+                )}
+              </ScrollArea>
             </CommandList>
-        </Command>
-
-          </PopoverContent>
+          </Command>
+        </PopoverContent>
       </Popover>
     </div>
   );

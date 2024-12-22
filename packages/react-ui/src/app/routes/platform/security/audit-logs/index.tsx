@@ -1,6 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CheckIcon, Folder, Key, Link2, Logs, Users, Wand, Workflow } from 'lucide-react';
+import {
+  CheckIcon,
+  Folder,
+  Key,
+  Link2,
+  Logs,
+  Users,
+  Wand,
+  Workflow,
+} from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -193,7 +202,8 @@ export default function AuditLogsPage() {
                 <DataTableColumnHeader column={column} title={t('Project')} />
               ),
               cell: ({ row }) => {
-                return row.original.projectId && 'project' in row.original.data ? (
+                return row.original.projectId &&
+                  'project' in row.original.data ? (
                   <Link to={`/projects/${row.original.projectId}`}>
                     <div className="text-left text-primary hover:underline">
                       {row.original.data.project?.displayName}

@@ -2,7 +2,9 @@ import React, { useRef } from 'react';
 
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
 
+import { AutoComplete } from './autocomplete';
 import {
   Period,
   TimePickerType,
@@ -10,8 +12,6 @@ import {
   getDateByType,
   setDateByType,
 } from './time-picker-utils';
-import { isNil } from '../../../../shared/src';
-import { AutoComplete } from './autocomplete';
 
 export interface TimePickerInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -22,7 +22,7 @@ export interface TimePickerInputProps
   onRightFocus?: () => void;
   onLeftFocus?: () => void;
   isActive: boolean;
-  autoCompleteList?: {value: string, label: string}[];
+  autoCompleteList?: { value: string; label: string }[];
   isAutocompleteOpen?: boolean;
 }
 
@@ -107,9 +107,7 @@ const TimePickerInputInner = React.forwardRef<
       }
     };
 
- 
     return (
-      
       <Input
         ref={ref}
         id={id || picker}
@@ -119,8 +117,8 @@ const TimePickerInputInner = React.forwardRef<
           className,
           {
             'bg-background': isActive,
-            'hover:bg-accent': !isActive
-          }
+            'hover:bg-accent': !isActive,
+          },
         )}
         value={value || calculatedValue}
         onChange={(e) => {
@@ -138,51 +136,60 @@ const TimePickerInputInner = React.forwardRef<
     );
   },
 );
-
+TimePickerInputInner.displayName = 'TimePickerInputInner';
 const TimePickerInput = React.forwardRef<
   HTMLInputElement,
   TimePickerInputProps
 >((props, ref) => {
-  const {autoCompleteList, isActive} = props;
-  if(isNil(autoCompleteList) || autoCompleteList.length === 0) 
-    {
-      return <TimePickerInputInner {...props} ref={ref} />;
-    }
-    const [open, setOpen] = React.useState(false);
-    const listRef = useRef<HTMLDivElement>(null);
-  return <AutoComplete className={
-    cn('bg-transparent text-muted-foreground rounded-xs',
-      {
+  const { autoCompleteList, isActive } = props;
+  const [open, setOpen] = React.useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
+  if (isNil(autoCompleteList) || autoCompleteList.length === 0) {
+    return <TimePickerInputInner {...props} ref={ref} />;
+  }
+  return (
+    <AutoComplete
+      className={cn('bg-transparent text-muted-foreground rounded-xs', {
         'bg-background': isActive,
         'hover:bg-accent': !isActive,
-        'text-foreground': isActive
-      }
-    )
-  } items={autoCompleteList} 
-    selectedValue={""}
-    open={open}
-    setOpen={setOpen}
-    listRef={listRef}
-    onSelectedValueChange={(value)=>{
-    const tempDate = new Date(props.date || new Date());
-    props.setDate(setDateByType(tempDate, value, props.picker, props.period));
-  }} >
-  <TimePickerInputInner  {...props} onKeyDown={(e)=>{
-    props.onKeyDown?.(e);
-    if(e.key === "ArrowDown" || e.key==="ArrowUp" || e.key==="Enter" && open)
-      {
-       const event = new KeyboardEvent("keydown", {
-        key: e.key,
-        bubbles: true,
-        cancelable: true,
-       });
-       if(listRef.current)
-       {
-        listRef.current.dispatchEvent(event);
-       }
-      }
-  }} ref={ref} isAutocompleteOpen={open} />
-  </AutoComplete>
+        'text-foreground': isActive,
+      })}
+      items={autoCompleteList}
+      selectedValue={''}
+      open={open}
+      setOpen={setOpen}
+      listRef={listRef}
+      onSelectedValueChange={(value) => {
+        const tempDate = new Date(props.date || new Date());
+        props.setDate(
+          setDateByType(tempDate, value, props.picker, props.period),
+        );
+      }}
+    >
+      <TimePickerInputInner
+        {...props}
+        onKeyDown={(e) => {
+          props.onKeyDown?.(e);
+          if (
+            e.key === 'ArrowDown' ||
+            e.key === 'ArrowUp' ||
+            (e.key === 'Enter' && open)
+          ) {
+            const event = new KeyboardEvent('keydown', {
+              key: e.key,
+              bubbles: true,
+              cancelable: true,
+            });
+            if (listRef.current) {
+              listRef.current.dispatchEvent(event);
+            }
+          }
+        }}
+        ref={ref}
+        isAutocompleteOpen={open}
+      />
+    </AutoComplete>
+  );
 });
 TimePickerInput.displayName = 'TimePickerInput';
 
