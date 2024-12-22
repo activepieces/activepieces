@@ -27,6 +27,9 @@ import { createContactAction } from './lib/actions/create-contact';
 import { updateContactAction } from './lib/actions/update-contact';
 import { findContactAction } from './lib/actions/find-contact';
 import { createOrUpdateContactAction } from './lib/actions/create-or-update-contact';
+import { createProductAction } from './lib/actions/create-product';
+import { updateProductAction } from './lib/actions/update-product';
+import { findProductAction } from './lib/actions/find-product';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -83,6 +86,9 @@ export const hubspot = createPiece({
 		findContactAction,
 		createOrUpdateContactAction,
 		findTicketAction,
+		createProductAction,
+		updateProductAction,
+		findProductAction,
 		getProductAction,
 		getPipelineStageDeatilsAction,
 		addContactToWorkflowAction,
