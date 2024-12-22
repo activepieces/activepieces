@@ -1,4 +1,4 @@
-import { hubspotAuth } from '@activepieces/piece-hubspot';
+import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	objectPropertiesDropdown,
