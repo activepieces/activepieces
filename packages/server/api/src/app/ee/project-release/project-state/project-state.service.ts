@@ -1,5 +1,5 @@
 import { ProjectOperationType, ProjectSyncError } from '@activepieces/ee-shared'
-import { FileCompression, FileId, FileType, FlowStatus, isNil, PopulatedFlow, ProjectId, StateFile } from '@activepieces/shared'
+import { FileCompression, FileId, FileType, FlowStatus, isNil, ProjectId, StateFile } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../../../file/file.service'
 import { flowRepo } from '../../../flows/flow/flow.repo'
@@ -51,7 +51,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             }
         }
         await projectService.update(projectId, { mapping: newMapState })
-        console.log('newMapState', newMapState)
         const errors = (await Promise.all(publishJobs)).filter((f): f is ProjectSyncError => f !== null)
         return {
             errors,
