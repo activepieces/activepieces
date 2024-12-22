@@ -131,23 +131,6 @@ export type SearchDealsResponse = {
 		};
 	};
 };
-// ["date","textarea","number","select","file","calculation_equation","checkbox","calculation_rollup","text","calculation_read_time","booleancheckbox","radio","phonenumber","html"]
-
-enum HubspotFieldType {
-	BooleanCheckBox = 'booleancheckbox',
-	Date = 'date',
-	File = 'file',
-	Number = 'number',
-	CalculationEquation = 'calculation_equation',
-	PhoneNumber = 'phonenumber',
-	Text = 'text',
-	TextArea = 'textarea',
-	Html = 'html',
-	CheckBox = 'checkbox',
-	Select = 'select',
-	Radio = 'radio',
-}
-
 export type HubspotProperty= {
 	name: string;
 	label: string;
@@ -196,4 +179,19 @@ export enum FilterOperatorEnum {
     NotHasProperty = "NOT_HAS_PROPERTY",
     ContainsToken = "CONTAINS_TOKEN",
     NotContainsToken = "NOT_CONTAINS_TOKEN",
+}
+
+export enum HubspotFieldType {
+	BooleanCheckBox = 'booleancheckbox',
+	Date = 'date',
+	File = 'file',
+	Number = 'number',
+	CalculationEquation = 'calculation_equation',
+	PhoneNumber = 'phonenumber',
+	Text = 'text',
+	TextArea = 'textarea',
+	Html = 'html',
+	CheckBox = 'checkbox',
+	Select = 'select',
+	Radio = 'radio',
 }

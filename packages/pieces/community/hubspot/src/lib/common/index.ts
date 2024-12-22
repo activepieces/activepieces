@@ -15,21 +15,9 @@ import {
 	ShortTextProperty,
 } from '@activepieces/pieces-framework';
 import { hubSpotClient } from './client';
+import { HubspotFieldType } from './types';
 
-export enum HubspotFieldType {
-	BooleanCheckBox = 'booleancheckbox',
-	Date = 'date',
-	File = 'file',
-	Number = 'number',
-	CalculationEquation = 'calculation_equation',
-	PhoneNumber = 'phonenumber',
-	Text = 'text',
-	TextArea = 'textarea',
-	Html = 'html',
-	CheckBox = 'checkbox',
-	Select = 'select',
-	Radio = 'radio',
-}
+
 
 interface HubspotProperty {
 	name: string;

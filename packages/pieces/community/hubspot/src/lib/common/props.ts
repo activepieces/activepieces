@@ -2,15 +2,13 @@ import {
 	DropdownOption,
 	DynamicPropsValue,
 	OAuth2PropertyValue,
-	Piece,
 	PieceAuth,
 	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
 import { hubSpotClient } from './client';
-import { HubspotFieldType } from '.';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { WorkflowResponse, HubspotProperty } from './types';
+import { WorkflowResponse, HubspotProperty,HubspotFieldType } from './types';
 import {
 	DEFAULT_COMPANY_PROPERTIES,
 	DEFAULT_CONTACT_PROPERTIES,

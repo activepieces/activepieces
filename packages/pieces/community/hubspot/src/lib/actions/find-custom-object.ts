@@ -53,18 +53,20 @@ export const findCustomObjectAction = createAction({
 			'values'
 		] as string;
 
-		let additionalPropertiesToRetrieve =
+		const additionalPropertiesToRetrieve =
 			context.propsValue.additionalPropertiesToRetrieve?.['values'];
+
+		let propertiesToRetrieve;
 
 		try {
 			if (Array.isArray(additionalPropertiesToRetrieve)) {
-				additionalPropertiesToRetrieve = additionalPropertiesToRetrieve;
+				propertiesToRetrieve = additionalPropertiesToRetrieve;
 			}
 			if (typeof additionalPropertiesToRetrieve === 'string') {
-				additionalPropertiesToRetrieve = JSON.parse(additionalPropertiesToRetrieve as string);
+				propertiesToRetrieve = JSON.parse(additionalPropertiesToRetrieve as string);
 			}
 		} catch (error) {
-			additionalPropertiesToRetrieve = [];
+			propertiesToRetrieve = [];
 		}
 
 		const filters = [
@@ -87,7 +89,7 @@ export const findCustomObjectAction = createAction({
 
 		const response = await client.crm.objects.searchApi.doSearch(customObjectType, {
 			limit: 100,
-			properties: additionalPropertiesToRetrieve,
+			properties: propertiesToRetrieve,
 			filterGroups: [{ filters }],
 		});
 

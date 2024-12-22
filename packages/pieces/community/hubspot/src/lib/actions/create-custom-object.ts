@@ -33,18 +33,19 @@ export const createCustomObjectAction = createAction({
 	async run(context) {
 		const customObjectType = context.propsValue.customObjectType as string;
 		const objectProperties = context.propsValue.objectProperties ?? {};
-		let additionalPropertiesToRetrieve =
+		const additionalPropertiesToRetrieve =
 			context.propsValue.additionalPropertiesToRetrieve?.['values'];
 
+		let propertiesToRetrieve;
 		try {
 			if (Array.isArray(additionalPropertiesToRetrieve)) {
-				additionalPropertiesToRetrieve = additionalPropertiesToRetrieve;
+				propertiesToRetrieve = additionalPropertiesToRetrieve;
 			}
 			if (typeof additionalPropertiesToRetrieve === 'string') {
-				additionalPropertiesToRetrieve = JSON.parse(additionalPropertiesToRetrieve as string);
+				propertiesToRetrieve = JSON.parse(additionalPropertiesToRetrieve as string);
 			}
 		} catch (error) {
-			additionalPropertiesToRetrieve = [];
+			propertiesToRetrieve = [];
 		}
 
 		const customObjectProperties: Record<string, string> = {};
@@ -65,7 +66,7 @@ export const createCustomObjectAction = createAction({
 		const customObjectDetails = await client.crm.objects.basicApi.getById(
 			customObjectType,
 			createdCustomObject.id,
-			additionalPropertiesToRetrieve,
+			propertiesToRetrieve,
 		);
 
 		return customObjectDetails;
