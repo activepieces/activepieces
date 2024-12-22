@@ -30,6 +30,7 @@ import { createOrUpdateContactAction } from './lib/actions/create-or-update-cont
 import { createProductAction } from './lib/actions/create-product';
 import { updateProductAction } from './lib/actions/update-product';
 import { findProductAction } from './lib/actions/find-product';
+import { createCompanyAction } from './lib/actions/create-company';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -79,6 +80,7 @@ export const hubspot = createPiece({
 		updateContactAction,
 		getContactAction,
 		getDealAction,
+		createCompanyAction,
 		getCompanyAction,
 		createTicketAction,
 		updateTicketAction,
