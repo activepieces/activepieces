@@ -1,6 +1,7 @@
 import { ContainerType, PiecesSource, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { DatabaseType, QueueMode, RedisType, system } from './system/system'
@@ -169,6 +170,20 @@ const validateSystemPropTypes = () => {
 
 export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise<void> => {
 
+    const test = system.get(AppSystemProp.ENVIRONMENT)
+    const fileStorageLocation = process.env.AP_FILE_STORAGE_LOCATION
+    if (test !== ApEnvironment.TESTING && fileStorageLocation === FileLocation.S3) {
+        try {
+            await s3Helper(log).validateS3Configuration()
+        }
+        catch (error: unknown) {
+            throw new Error(JSON.stringify({
+                message: 'S3 validation failed. Check your configuration and credentials.',
+                docUrl: 'https://www.activepieces.com/docs/install/configuration/overview#configure-s3-optional',
+            }))
+        }
+    }
+
     const errors = validateSystemPropTypes()
     if (Object.keys(errors).length > 0) {
         log.warn({
@@ -212,7 +227,6 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     }
 
     const edition = system.getEdition()
-    const test = system.get(AppSystemProp.ENVIRONMENT)
     if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && test !== ApEnvironment.TESTING) {
         const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
         if (![ExecutionMode.SANDBOXED, ExecutionMode.SANDBOX_CODE_ONLY].includes(executionMode)) {
