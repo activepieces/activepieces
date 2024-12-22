@@ -64,6 +64,8 @@ import { GitSyncPage } from '../routes/settings/git-sync';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
+import { TablesPage } from '../routes/tables';
+import { TablePage } from '../routes/tables/id';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
@@ -172,6 +174,30 @@ const routes = [
         <RoutePermissionGuard permission={Permission.READ_RUN}>
           <PageTitle title="Runs">
             <FlowRunsPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/tables',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_TABLE}>
+          <PageTitle title="Tables">
+            <TablesPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/tables/:tableId',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_TABLE}>
+          <PageTitle title="Table">
+            <TablePage />
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
