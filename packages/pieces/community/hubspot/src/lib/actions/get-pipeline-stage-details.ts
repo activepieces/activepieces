@@ -1,7 +1,6 @@
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { hubspotApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { Client } from '@hubspot/api-client';
 
 export const getPipelineStageDeatilsAction = createAction({
 	auth: hubspotAuth,
@@ -40,12 +39,14 @@ export const getPipelineStageDeatilsAction = createAction({
 		const pipelineId = context.propsValue.pipelineId;
 		const stageId = context.propsValue.stageId;
 
-		const stageResponse = await hubspotApiCall({
-			accessToken: context.auth.access_token,
-			method: HttpMethod.GET,
-			resourceUri: `/crm/v3/pipelines/${objectType}/${pipelineId}/stages/${stageId}`,
-		});
+		const client = new Client({ accessToken: context.auth.access_token });
 
-		return stageResponse;
+		const response = await client.crm.pipelines.pipelineStagesApi.getById(
+			objectType,
+			pipelineId,
+			stageId,
+		);
+
+		return response;
 	},
 });

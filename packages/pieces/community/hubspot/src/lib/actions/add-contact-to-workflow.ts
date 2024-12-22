@@ -1,8 +1,7 @@
 import { hubspotAuth } from "../../";
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { workflowIdDropdown } from "../common/props";
-import { hubspotApiCall } from "../common";
-import { HttpMethod } from "@activepieces/pieces-common";
+import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 export const addContactToWorkflowAction = createAction({
     auth:hubspotAuth,
@@ -21,10 +20,13 @@ export const addContactToWorkflowAction = createAction({
         const contactEmail = context.propsValue.email;
         const workflowId = context.propsValue.workflowId;
 
-        const response = await hubspotApiCall({
-            accessToken: context.auth.access_token,
+        const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            resourceUri:`/automation/v2/workflows/${workflowId}/enrollments/contacts/${contactEmail}`,
+            url: `https://api.hubapi.com/automation/v2/workflows/${workflowId}/enrollments/contacts/${contactEmail}`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: context.auth.access_token,
+            },
         })
 
         return response;

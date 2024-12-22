@@ -2,9 +2,6 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { hubSpotListsAddContactAction } from './lib/actions/add-contact-to-list-action';
-import { createHubspotContact } from './lib/actions/create-contact.action';
-import { hubSpotContactsCreateOrUpdateAction } from './lib/actions/create-or-update-contact-action';
-import { hubSpotGetOwnerByEmailAction } from './lib/actions/search-owner-by-email';
 import { newCompanyAdded } from './lib/triggers/new-company-added';
 import { newContactAdded } from './lib/triggers/new-contact-added';
 import { newDealAdded } from './lib/triggers/new-deal-added';
@@ -37,6 +34,8 @@ import { createCustomObjectAction } from './lib/actions/create-custom-object';
 import { updateCustomObjectAction } from './lib/actions/updated-custom-object';
 import { getCustomObjectAction } from './lib/actions/get-custom-object';
 import { findCustomObjectAction } from './lib/actions/find-custom-object';
+import { getOwnerByEmailAction } from './lib/actions/get-owner-by-email';
+import { getOwnerByIdAction } from './lib/actions/get-owner-by-id';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -78,36 +77,35 @@ export const hubspot = createPiece({
 	categories: [PieceCategory.SALES_AND_CRM],
 	auth: hubspotAuth,
 	actions: [
-		createHubspotContact,
-		hubSpotContactsCreateOrUpdateAction,
 		hubSpotListsAddContactAction,
-		hubSpotGetOwnerByEmailAction,
-		createContactAction,
-		updateContactAction,
-		getContactAction,
-		getDealAction,
-		createCompanyAction,
-		updateCompanyAction,
-		findCompanyAction,
-		getCompanyAction,
-		createTicketAction,
-		updateTicketAction,
-		getTicketAction,
-		findContactAction,
-		createOrUpdateContactAction,
-		findTicketAction,
-		createProductAction,
-		updateProductAction,
-		findProductAction,
-		getProductAction,
-		createCustomObjectAction,
-		updateCustomObjectAction,
-		getCustomObjectAction,
-		findCustomObjectAction,
-		getPipelineStageDeatilsAction,
 		addContactToWorkflowAction,
+		createCompanyAction,
+		createContactAction,
+		createCustomObjectAction,
 		createDealAction,
+		createOrUpdateContactAction,
+		createProductAction,
+		createTicketAction,
+		getCompanyAction,
+		getContactAction,
+		getCustomObjectAction,
+		getDealAction,
+		getProductAction,
+		getTicketAction,
+		updateCompanyAction,
+		updateContactAction,
+		updateCustomObjectAction,
 		updateDealAction,
+		updateProductAction,
+		updateTicketAction,
+		findCompanyAction,
+		findContactAction,
+		findCustomObjectAction,
+		findProductAction,
+		findTicketAction,
+		getOwnerByEmailAction,
+		getOwnerByIdAction,
+		getPipelineStageDeatilsAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.hubapi.com',
 			auth: hubspotAuth,

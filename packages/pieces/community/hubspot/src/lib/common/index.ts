@@ -1,9 +1,7 @@
 import {
 	AuthenticationType,
-	HttpMessageBody,
 	HttpMethod,
 	HttpRequest,
-	QueryParams,
 	httpClient,
 } from '@activepieces/pieces-common';
 import {
@@ -223,43 +221,3 @@ export const hubspotCommon = {
 	}),
 };
 
-export type RequestParams = Record<string, string | number | string[] | undefined>;
-
-export type HubspotApiCallParams = {
-	accessToken: string;
-	method: HttpMethod;
-	resourceUri: string;
-	query?: RequestParams;
-	body?: any;
-};
-
-export async function hubspotApiCall<T extends HttpMessageBody>({
-	accessToken,
-	method,
-	resourceUri,
-	query,
-	body,
-}: HubspotApiCallParams): Promise<T> {
-	const baseUrl = 'https://api.hubapi.com';
-	const qs: QueryParams = {};
-
-	if (query) {
-		for (const [key, value] of Object.entries(query)) {
-			if (value !== null && value !== undefined) {
-				qs[key] = String(value);
-			}
-		}
-	}
-	const request: HttpRequest = {
-		method,
-		url: baseUrl + resourceUri,
-		authentication: {
-			type: AuthenticationType.BEARER_TOKEN,
-			token: accessToken,
-		},
-		queryParams: qs,
-		body,
-	};
-	const response = await httpClient.sendRequest<T>(request);
-	return response.body;
-}

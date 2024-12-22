@@ -8,8 +8,8 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { hubSpotClient } from './client';
-import { hubspotApiCall, HubspotFieldType } from '.';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HubspotFieldType } from '.';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { WorkflowResponse, HubspotProperty } from './types';
 import {
 	DEFAULT_COMPANY_PROPERTIES,
@@ -429,7 +429,10 @@ export const standardObjectPropertiesDropdown = (
 	});
 };
 
-export const customObjectPropertiesDropdown = (displayName: string, required: boolean,	isSingleSelect = false,
+export const customObjectPropertiesDropdown = (
+	displayName: string,
+	required: boolean,
+	isSingleSelect = false,
 ) =>
 	Property.DynamicProperties({
 		displayName,
@@ -467,7 +470,9 @@ export const customObjectPropertiesDropdown = (displayName: string, required: bo
 			}
 
 			const props: DynamicPropsValue = {};
-			const dropdownFunction = isSingleSelect ? Property.StaticDropdown : Property.StaticMultiSelectDropdown;
+			const dropdownFunction = isSingleSelect
+				? Property.StaticDropdown
+				: Property.StaticMultiSelectDropdown;
 
 			props['values'] = dropdownFunction({
 				displayName,
@@ -494,15 +499,17 @@ export const workflowIdDropdown = Property.Dropdown({
 		}
 
 		const token = (auth as OAuth2PropertyValue).access_token;
-		const workflowsResponse = await hubspotApiCall<{ workflows: WorkflowResponse[] }>({
-			accessToken: token,
+		const workflowsResponse = await httpClient.sendRequest<{ workflows: WorkflowResponse[] }>({
 			method: HttpMethod.GET,
-			resourceUri: `/automation/v2/workflows`,
+			url: `https://api.hubapi.com/automation/v2/workflows`,
+			authentication: {
+				type: AuthenticationType.BEARER_TOKEN,
+				token: token,
+			},
 		});
-
 		const options: DropdownOption<number>[] = [];
 
-		for (const workflow of workflowsResponse.workflows) {
+		for (const workflow of workflowsResponse.body.workflows) {
 			if (workflow.enabled) {
 				options.push({
 					label: workflow.name,
