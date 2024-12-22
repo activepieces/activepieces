@@ -32,7 +32,7 @@ export const createTicketAction = createAction({
 			displayName: 'Ticket Pipeline Stage',
 			required: true,
 		}),
-		objectProperites: objectPropertiesDropdown(OBJECT_TYPE.TICKET, [
+		objectProperties : objectPropertiesDropdown(OBJECT_TYPE.TICKET, [
 			'subject',
 			'hs_pipeline',
 			'hs_pipeline_stage',
@@ -56,8 +56,8 @@ export const createTicketAction = createAction({
 			ticketName,
 			pipelineId,
 			pipelineStageId,
-			objectProperites = {},
 		} = context.propsValue;
+		const objectProperites = context.propsValue.objectProperties??{};
 		const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve??[];
 
 

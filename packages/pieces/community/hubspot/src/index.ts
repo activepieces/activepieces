@@ -23,6 +23,7 @@ import { addContactToWorkflowAction } from './lib/actions/add-contact-to-workflo
 import { createTicketAction } from './lib/actions/create-ticket';
 import { updateTicketAction } from './lib/actions/update-ticket';
 import { findTicketAction } from './lib/actions/find-ticket';
+import { createContactAction } from './lib/actions/create-contact';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -68,6 +69,7 @@ export const hubspot = createPiece({
 		hubSpotContactsCreateOrUpdateAction,
 		hubSpotListsAddContactAction,
 		hubSpotGetOwnerByEmailAction,
+		createContactAction,
 		getContactAction,
 		getDealAction,
 		getCompanyAction,

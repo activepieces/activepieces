@@ -62,8 +62,8 @@ export const updateTicketAction = createAction({
             ticketName,
             pipelineId,
             pipelineStageId,
-            objectProperites = {},
         } = context.propsValue;
+        const objectProperites = context.propsValue.objectProperites??{};
         const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve??[];
 
 
