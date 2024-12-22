@@ -10,6 +10,8 @@ import {
   getDateByType,
   setDateByType,
 } from './time-picker-utils';
+import { isNil } from '../../../../shared/src';
+import { AutoComplete } from './autocomplete';
 
 export interface TimePickerInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -19,9 +21,12 @@ export interface TimePickerInputProps
   period?: Period;
   onRightFocus?: () => void;
   onLeftFocus?: () => void;
+  isActive: boolean;
+  autoCompleteList?: {value: string, label: string}[];
+  isAutocompleteOpen?: boolean;
 }
 
-const TimePickerInput = React.forwardRef<
+const TimePickerInputInner = React.forwardRef<
   HTMLInputElement,
   TimePickerInputProps
 >(
@@ -40,6 +45,8 @@ const TimePickerInput = React.forwardRef<
       period,
       onLeftFocus,
       onRightFocus,
+      isActive,
+      isAutocompleteOpen,
       ...props
     },
     ref,
@@ -83,7 +90,7 @@ const TimePickerInput = React.forwardRef<
       e.preventDefault();
       if (e.key === 'ArrowRight') onRightFocus?.();
       if (e.key === 'ArrowLeft') onLeftFocus?.();
-      if (['ArrowUp', 'ArrowDown'].includes(e.key)) {
+      if (['ArrowUp', 'ArrowDown'].includes(e.key) && !isAutocompleteOpen) {
         const step = e.key === 'ArrowUp' ? 1 : -1;
         const newValue = getArrowByType(calculatedValue, step, picker);
         if (flag) setFlag(false);
@@ -92,7 +99,6 @@ const TimePickerInput = React.forwardRef<
       }
       if (e.key >= '0' && e.key <= '9') {
         if (picker === '12hours') setPrevIntKey(e.key);
-
         const newValue = calculateNewValue(e.key);
         if (flag) onRightFocus?.();
         setFlag((prev) => !prev);
@@ -101,14 +107,20 @@ const TimePickerInput = React.forwardRef<
       }
     };
 
+ 
     return (
+      
       <Input
         ref={ref}
         id={id || picker}
         name={name || picker}
         className={cn(
-          'w-[48px] text-center font-mono text-base tabular-nums caret-transparent focus:bg-accent focus:text-accent-foreground [&::-webkit-inner-spin-button]:appearance-none',
+          'w-[73px] h-[29px] p-0 text-center rounded-xs bg-transparent transition-all  text-sm tabular-nums border-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-inner-spin-button]:appearance-none',
           className,
+          {
+            'bg-background': isActive,
+            'hover:bg-accent': !isActive
+          }
         )}
         value={value || calculatedValue}
         onChange={(e) => {
@@ -127,6 +139,35 @@ const TimePickerInput = React.forwardRef<
   },
 );
 
+const TimePickerInput = React.forwardRef<
+  HTMLInputElement,
+  TimePickerInputProps
+>((props, ref) => {
+  const {autoCompleteList, isActive} = props;
+  if(isNil(autoCompleteList) || autoCompleteList.length === 0) 
+    {
+      return <TimePickerInputInner {...props} ref={ref} />;
+    }
+    const [open, setOpen] = React.useState(false);
+  return <AutoComplete className={
+    cn('bg-transparent text-muted-foreground rounded-xs',
+      {
+        'bg-background': isActive,
+        'hover:bg-accent': !isActive,
+        'text-foreground': isActive
+      }
+    )
+  } items={autoCompleteList} 
+    selectedValue={""}
+    open={open}
+    setOpen={setOpen}
+    onSelectedValueChange={(value)=>{
+    const tempDate = new Date(props.date || new Date());
+    props.setDate(setDateByType(tempDate, value, props.picker, props.period));
+  }} >
+  <TimePickerInputInner {...props} ref={ref} isAutocompleteOpen={open} />
+  </AutoComplete>
+});
 TimePickerInput.displayName = 'TimePickerInput';
 
 export { TimePickerInput };

@@ -2,7 +2,7 @@
 
 import { format, subDays, addDays } from 'date-fns';
 import { t } from 'i18next';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 
@@ -23,7 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 
 import { ClockPicker } from './clock-picker';
-import { Label } from './label';
+
 import { Separator } from './separator';
 
 type DatePickerWithRangeProps = {
@@ -37,24 +37,24 @@ type DatePickerWithRangeProps = {
 };
 
 const applyTimeToDate = ({
-  sourceDate,
+  timeDate,
   targetDate,
 }: {
-  sourceDate: Date;
+  timeDate: Date;
   targetDate: Date;
 }): Date => {
   // Extract time components from sourceDate
-  const hours = sourceDate.getHours();
-  const minutes = sourceDate.getMinutes();
-  const seconds = sourceDate.getSeconds();
-  const milliseconds = sourceDate.getMilliseconds();
+  const hours = timeDate.getHours();
+  const minutes = timeDate.getMinutes();
+  const seconds = timeDate.getSeconds();
+  const milliseconds = timeDate.getMilliseconds();
 
   // Apply the time components to targetDate
   targetDate.setHours(hours, minutes, seconds, milliseconds);
 
   return targetDate; // Return the updated targetDate
 };
-const getInitialTimeDate = () => {
+const getStartToEndDayTime = () => {
   const now = new Date();
   const startDate = new Date(
     now.getFullYear(),
@@ -90,37 +90,49 @@ export function DatePickerWithRange({
 }: DatePickerWithRangeProps) {
   const [date, setDate] = React.useState<DateRange | undefined>();
   const [timeDate, setTimeDate] = React.useState<DateRange>(
-    getInitialTimeDate(),
+    {
+      from: undefined,
+      to: undefined,
+    }
   );
   React.useEffect(() => {
     setDate({
       from: from ? new Date(from) : undefined,
       to: to ? new Date(to) : undefined,
     });
-    const initialTimeDate = getInitialTimeDate();
     setTimeDate({
-      from: from ? new Date(from) : initialTimeDate.from,
-      to: to ? new Date(to) : initialTimeDate.to,
+      from: from ? new Date(from) : undefined,
+      to: to ? new Date(to) : undefined,
     });
   }, [from, to]);
 
   const handleSelect = (selectedDate: DateRange | undefined) => {
     if (selectedDate) {
+
       const newDate = {
         from:
           selectedDate.from && timeDate.from
             ? applyTimeToDate({
-                sourceDate: timeDate.from,
+                timeDate: timeDate.from,
                 targetDate: selectedDate.from,
               })
+            : selectedDate.from? applyTimeToDate({
+              timeDate: getStartToEndDayTime().from,
+              targetDate: selectedDate.from,
+            })
             : undefined,
         to:
           selectedDate.to && timeDate.to
             ? applyTimeToDate({
-                sourceDate: timeDate.to,
+                timeDate: timeDate.to,
                 targetDate: selectedDate.to,
               })
-            : undefined,
+            : selectedDate.to
+              ? applyTimeToDate({
+                  timeDate: getStartToEndDayTime().to,
+                  targetDate: selectedDate.to,
+                })
+              : undefined,
       };
       setDate(newDate);
       onChange(newDate);
@@ -165,7 +177,7 @@ export function DatePickerWithRange({
             id="date"
             variant={'outline'}
             className={cn(
-              'w-[300px] h-8 border-dashed justify-start text-left font-normal',
+              'min-w-[90px] h-8 border-dashed justify-start text-left font-normal',
               !date && 'text-muted-foreground',
             )}
           >
@@ -173,11 +185,20 @@ export function DatePickerWithRange({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, 'LLL dd, y')}-{' '}
-                  {format(date.to, 'LLL dd, y')}
+                <div className='flex gap-2 items-center'>
+                  <div>
+                    {format(date.from, 'LLL dd, y, hh:mm a')}
+                  </div>
+                  <div>
+                    {t('to')}
+                  </div>
+                  <div>
+                    {format(date.to, 'LLL dd, y, hh:mm a')}
+                  </div>
+                </div>
                 </>
               ) : (
-                format(date.from, 'LLL dd, y')
+                format(date.from, 'LLL dd, y, hh:mm a')
               )
             ) : (
               <span>Pick a date range</span>
@@ -193,17 +214,17 @@ export function DatePickerWithRange({
               <SelectContent>
                 {presetType === 'past' ? (
                   <>
-                    <SelectItem value="week">Last Week</SelectItem>
-                    <SelectItem value="month">Last Month</SelectItem>
-                    <SelectItem value="3months">Last 3 Months</SelectItem>
-                    <SelectItem value="6months">Last 6 Months</SelectItem>
+                    <SelectItem value="week">{t('Last Week')}</SelectItem>
+                    <SelectItem value="month">{t('Last Month')}</SelectItem>
+                    <SelectItem value="3months">{t('Last 3 Months')}</SelectItem>
+                    <SelectItem value="6months">{t('Last 6 Months')}</SelectItem>
                   </>
                 ) : (
                   <>
-                    <SelectItem value="7">Next 7 days</SelectItem>
-                    <SelectItem value="30">Next 30 days</SelectItem>
-                    <SelectItem value="90">Next 90 days</SelectItem>
-                    <SelectItem value="180">Next 180 days</SelectItem>
+                    <SelectItem value="7">{t('Next 7 days')}</SelectItem>
+                    <SelectItem value="30">{t('Next 30 days')}</SelectItem>
+                    <SelectItem value="90">{t('Next 90 days')}</SelectItem>
+                    <SelectItem value="180">{t('Next 180 days')}</SelectItem>
                   </>
                 )}
               </SelectContent>
@@ -221,40 +242,44 @@ export function DatePickerWithRange({
             toDate={maxDate}
             fromDate={minDate}
           />
-          <Separator className="my-2"></Separator>
-          <div className="flex gap-2 justify-center items-center flex-col mb-2">
-            <div className="flex gap-2 justify-center items-center mt-2">
-              <Label className="mr-1">{t('Starting Time')}</Label>
+          <Separator className="mb-4"></Separator>
+          <div className='flex gap-1.5 px-2 items-center text-sm'>
+              <Clock className='w-4 h-4 text-muted-foreground'></Clock>
+              {t('Select Time Range')}
+          </div>
+        
+          <div className="flex gap-3  items-center mt-3 px-2 mb-2">
+            <div className="flex gap-2 grow justify-center items-center items-center">
               <ClockPicker
                 date={timeDate.from}
                 setDate={(fromTime) => {
-                  if (date?.from) {
+                  const fromDate = date?.from ?? new Date();
                     const fromWithCorrectedTime = applyTimeToDate({
-                      sourceDate: fromTime,
-                      targetDate: date.from,
+                      timeDate: fromTime,
+                      targetDate: fromDate,
                     });
                     setDate({
                       from: fromWithCorrectedTime,
-                      to: date.to,
+                      to: date?.to,
                     });
                     onChange({
                       from: fromWithCorrectedTime,
-                      to: date.to,
+                      to: date?.to,
                     });
-                  }
                   setTimeDate({ ...timeDate, from: fromTime });
                 }}
               ></ClockPicker>
             </div>
-            <div className="flex gap-2 justify-center items-center mt-2">
-              <Label>{t('Finshing Time')}</Label>
+
+            {t('to')}
+
+            <div className="flex gap-2 grow justify-center items-center ">
               <ClockPicker
                 date={timeDate.to}
                 setDate={(toTime) => {
-                  const toDate = date?.to ?? date?.from;
-                  if (toDate) {
+                  const toDate = date?.to ?? date?.from ?? new Date();
                     const toWithCorrectedTime = applyTimeToDate({
-                      sourceDate: toTime,
+                      timeDate: toTime,
                       targetDate: toDate,
                     });
                     setDate({
@@ -265,7 +290,6 @@ export function DatePickerWithRange({
                       from: date?.from,
                       to: toWithCorrectedTime,
                     });
-                  }
                   setTimeDate({ ...timeDate, to: toTime });
                 }}
               ></ClockPicker>

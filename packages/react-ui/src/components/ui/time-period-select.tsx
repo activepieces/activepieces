@@ -11,6 +11,9 @@ import {
 } from '@/components/ui/select';
 
 import { Period, display12HourValue, setDateByType } from './time-picker-utils';
+import { t } from 'i18next';
+import { isNil } from '../../../../shared/src';
+import { cn } from '@/lib/utils';
 
 export interface PeriodSelectorProps {
   period: Period;
@@ -19,12 +22,13 @@ export interface PeriodSelectorProps {
   setDate: (date: Date) => void;
   onRightFocus?: () => void;
   onLeftFocus?: () => void;
+  isActive: boolean;
 }
 
 export const TimePeriodSelect = React.forwardRef<
   HTMLButtonElement,
   PeriodSelectorProps
->(({ period, setPeriod, date, setDate, onLeftFocus, onRightFocus }, ref) => {
+>(({ period, setPeriod, date, setDate, onLeftFocus, onRightFocus, isActive }, ref) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'ArrowRight') onRightFocus?.();
     if (e.key === 'ArrowLeft') onLeftFocus?.();
@@ -50,7 +54,6 @@ export const TimePeriodSelect = React.forwardRef<
       );
     }
   };
-
   return (
     <div className="flex h-10 items-center">
       <Select
@@ -59,14 +62,17 @@ export const TimePeriodSelect = React.forwardRef<
       >
         <SelectTrigger
           ref={ref}
-          className="w-[65px] focus:bg-accent focus:text-accent-foreground"
+          className={cn("w-[73px] h-[29px] rounded-xs justify-center p-0 transition-all 0 border-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm shadow-none gap-3 ",{
+            'bg-background': isActive,
+            'hover:bg-accent': !isActive
+          })}
           onKeyDown={handleKeyDown}
         >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="AM">AM</SelectItem>
-          <SelectItem value="PM">PM</SelectItem>
+          <SelectItem value="AM">{t('AM')}</SelectItem>
+          <SelectItem value="PM">{t('PM')}</SelectItem>
         </SelectContent>
       </Select>
     </div>
