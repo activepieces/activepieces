@@ -13,6 +13,7 @@ import {
 	DEFAULT_COMPANY_PROPERTIES,
 	DEFAULT_CONTACT_PROPERTIES,
 	DEFAULT_DEAL_PROPERTIES,
+	DEFAULT_LINE_ITEM_PROPERTIES,
 	DEFAULT_PRODUCT_PROPERTIES,
 	DEFAULT_TICKET_PROPERTIES,
 	OBJECT_TYPE,
@@ -89,6 +90,8 @@ export function getDefaultPropertiesForObject(objectType: OBJECT_TYPE): string[]
 			return DEFAULT_COMPANY_PROPERTIES;
 		case OBJECT_TYPE.PRODUCT:
 			return DEFAULT_PRODUCT_PROPERTIES;
+		case OBJECT_TYPE.LINE_ITEM:
+			return DEFAULT_LINE_ITEM_PROPERTIES;
 		default:
 			return [];
 	}
@@ -309,7 +312,7 @@ async function retriveObjectProperties(
 		) {
 			continue;
 		}
-		
+
 		// create property name with property group name
 		const propertyDisplayName = `${groupLabels[property.groupName] || ''}: ${property.label}`;
 
@@ -621,6 +624,44 @@ export const pipelineStageDropdown = (params: DropdownParams) =>
 			};
 		},
 	});
+
+export const productDropdown =(params: DropdownParams) => Property.Dropdown({
+	displayName: params.displayName,
+	refreshers: [],
+	required: params.required,
+	description: params.description,
+	options: async ({ auth }) => {
+		if (!auth) {
+			return buildEmptyList({
+				placeholder: 'Please connect your account.',
+			});
+		}
+
+		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+		const client = new Client({ accessToken: authValue.access_token });
+
+		const options: DropdownOption<string>[] = [];
+
+		const limit = 100;
+		let after: string | undefined;
+		do {
+			const response = await client.crm.products.basicApi.getPage(limit, after, ['name']);
+			for (const product of response.results) {
+				options.push({
+					label: product.properties.name ?? product.id,
+					value: product.id,
+				});
+			}
+
+			after = response.paging?.next?.after;
+		} while (after);
+
+		return {
+			disabled: false,
+			options,
+		};
+	},
+});
 export const customObjectDropdown = Property.Dropdown({
 	displayName: 'Type of Custom Object',
 	refreshers: [],

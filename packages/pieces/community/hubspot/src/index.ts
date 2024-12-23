@@ -37,6 +37,10 @@ import { findCustomObjectAction } from './lib/actions/find-custom-object';
 import { getOwnerByEmailAction } from './lib/actions/get-owner-by-email';
 import { getOwnerByIdAction } from './lib/actions/get-owner-by-id';
 import { findDealAction } from './lib/actions/find-deal';
+import { createLineItemAction } from './lib/actions/create-line-item';
+import { getLineItemAction } from './lib/actions/get-line-item';
+import { updateLineItemAction } from './lib/actions/update-line-item';
+import { findLineItemAction } from './lib/actions/find-line-item';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -85,6 +89,7 @@ export const hubspot = createPiece({
 		createContactAction,
 		createCustomObjectAction,
 		createDealAction,
+		createLineItemAction,
 		createOrUpdateContactAction,
 		createProductAction,
 		createTicketAction,
@@ -92,18 +97,21 @@ export const hubspot = createPiece({
 		getContactAction,
 		getCustomObjectAction,
 		getDealAction,
+		getLineItemAction,
 		getProductAction,
 		getTicketAction,
 		updateCompanyAction,
 		updateContactAction,
 		updateCustomObjectAction,
 		updateDealAction,
+		updateLineItemAction,
 		updateProductAction,
 		updateTicketAction,
 		findCompanyAction,
 		findContactAction,
 		findCustomObjectAction,
 		findDealAction,
+		findLineItemAction,
 		findProductAction,
 		findTicketAction,
 		getOwnerByEmailAction,
