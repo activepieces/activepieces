@@ -31,11 +31,12 @@ import { createCompanyAction } from './lib/actions/create-company';
 import { findCompanyAction } from './lib/actions/find-company';
 import { updateCompanyAction } from './lib/actions/update-company';
 import { createCustomObjectAction } from './lib/actions/create-custom-object';
-import { updateCustomObjectAction } from './lib/actions/updated-custom-object';
+import { updateCustomObjectAction } from './lib/actions/update-custom-object';
 import { getCustomObjectAction } from './lib/actions/get-custom-object';
 import { findCustomObjectAction } from './lib/actions/find-custom-object';
 import { getOwnerByEmailAction } from './lib/actions/get-owner-by-email';
 import { getOwnerByIdAction } from './lib/actions/get-owner-by-id';
+import { findDealAction } from './lib/actions/find-deal';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -62,6 +63,7 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'automation',
 		'e-commerce',
 		'tickets',
+		'settings.currencies.read',
 		'settings.users.read',
 		'settings.users.teams.read',
 		// 'business_units_view.read'
@@ -101,6 +103,7 @@ export const hubspot = createPiece({
 		findCompanyAction,
 		findContactAction,
 		findCustomObjectAction,
+		findDealAction,
 		findProductAction,
 		findTicketAction,
 		getOwnerByEmailAction,

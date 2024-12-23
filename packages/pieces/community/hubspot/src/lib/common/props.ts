@@ -8,7 +8,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { hubSpotClient } from './client';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { WorkflowResponse, HubspotProperty,HubspotFieldType } from './types';
+import { WorkflowResponse, HubspotProperty, HubspotFieldType } from './types';
 import {
 	DEFAULT_COMPANY_PROPERTIES,
 	DEFAULT_CONTACT_PROPERTIES,
@@ -151,6 +151,28 @@ async function fetchTeamsOptions(accessToken: string): Promise<DropdownOption<st
 	return options;
 }
 
+async function fetchCurrenciesOptions(accessToken: string): Promise<DropdownOption<string>[]> {
+	const options: DropdownOption<string>[] = [];
+
+	const response = await httpClient.sendRequest<{
+		results: Array<{ currencyCode: string; currencyName: string }>;
+	}>({
+		method: HttpMethod.GET,
+		url: 'https://api.hubapi.com/settings/v3/currencies/codes',
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token: accessToken,
+		},
+	});
+	for (const currency of response.body.results) {
+		options.push({
+			label: currency.currencyName,
+			value: currency.currencyCode,
+		});
+	}
+	return options;
+}
+
 // async function fetchBusinessUnitsOptions(accessToken: string): Promise<DropdownOption<string>[]> {
 // 	const client = new Client({ accessToken: accessToken });
 // 	const options: DropdownOption<string>[] = [];
@@ -287,7 +309,7 @@ async function retriveObjectProperties(
 		) {
 			continue;
 		}
-
+		
 		// create property name with property group name
 		const propertyDisplayName = `${groupLabels[property.groupName] || ''}: ${property.label}`;
 
@@ -311,7 +333,7 @@ async function retriveObjectProperties(
 			});
 			continue;
 		}
-		if (property.name === 'hs_shared_team_ids') {
+		if (['hs_shared_team_ids', 'hs_attributed_team_ids'].includes(property.name)) {
 			const teamOptions = await fetchTeamsOptions(auth.access_token);
 			props[property.name] = Property.StaticMultiSelectDropdown({
 				displayName: propertyDisplayName,
@@ -319,6 +341,18 @@ async function retriveObjectProperties(
 				options: {
 					disabled: false,
 					options: teamOptions,
+				},
+			});
+			continue;
+		}
+		if (property.name === 'deal_currency_code') {
+			const currencyOptions = await fetchCurrenciesOptions(auth.access_token);
+			props[property.name] = Property.StaticDropdown({
+				displayName: propertyDisplayName,
+				required: false,
+				options: {
+					disabled: false,
+					options: currencyOptions,
 				},
 			});
 			continue;
@@ -336,7 +370,6 @@ async function retriveObjectProperties(
 			// });
 			continue;
 		}
-
 		props[property.name] = createPropertyDefinition(property, propertyDisplayName);
 	}
 	// Remove null props

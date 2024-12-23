@@ -19,7 +19,6 @@ export const updateTicketAction = createAction({
         }),
         ticketName: Property.ShortText({
             displayName: 'Ticket Name',
-            description: 'The name of the ticket to create.',
             required: false,
         }),
         pipelineId: pipelineDropdown({
