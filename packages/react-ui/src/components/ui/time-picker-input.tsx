@@ -12,6 +12,7 @@ import {
   getDateByType,
   setDateByType,
 } from './time-picker-utils';
+import { setDate } from 'date-fns';
 
 export interface TimePickerInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -113,7 +114,7 @@ const TimePickerInputInner = React.forwardRef<
         id={id || picker}
         name={name || picker}
         className={cn(
-          'w-[73px] h-[29px] p-0 text-center rounded-xs bg-transparent transition-all  text-sm tabular-nums border-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-inner-spin-button]:appearance-none',
+          'w-[73px] h-[29px] p-0 text-center rounded-xs bg-transparent transition-all  text-sm tabular-nums border-none [&::-webkit-inner-spin-button]:appearance-none',
           className,
           {
             'bg-background': isActive,
@@ -123,6 +124,7 @@ const TimePickerInputInner = React.forwardRef<
         value={value || calculatedValue}
         onChange={(e) => {
           e.preventDefault();
+          debugger;
           onChange?.(e);
         }}
         type={type}
@@ -147,6 +149,7 @@ const TimePickerInput = React.forwardRef<
   if (isNil(autoCompleteList) || autoCompleteList.length === 0) {
     return <TimePickerInputInner {...props} ref={ref} />;
   }
+  const [filterValue, setFilterValue] = React.useState('');
   return (
     <AutoComplete
       className={cn('bg-transparent text-muted-foreground rounded-xs', {
@@ -154,13 +157,16 @@ const TimePickerInput = React.forwardRef<
         'hover:bg-accent': !isActive,
         'text-foreground': isActive,
       })}
-      items={autoCompleteList}
+      items={autoCompleteList.filter((item)=>item.label.includes(filterValue))}
       selectedValue={''}
       open={open}
-      setOpen={setOpen}
+      setOpen={(open)=>{
+        setFilterValue('');
+        setOpen(open);
+      }}
       listRef={listRef}
       onSelectedValueChange={(value) => {
-        const tempDate = new Date(props.date || new Date());
+        const tempDate = new Date(props.date || new Date(new Date().setHours(0,0,0,0)));
         props.setDate(
           setDateByType(tempDate, value, props.picker, props.period),
         );
@@ -183,7 +189,14 @@ const TimePickerInput = React.forwardRef<
             if (listRef.current) {
               listRef.current.dispatchEvent(event);
             }
+            
           }
+         
+        }}
+        setDate={(date)=>{
+          props.setDate(date);
+          const filterValue = getDateByType(date, props.picker);
+          setFilterValue(filterValue[0] === '0' ? filterValue.slice(1) : filterValue);
         }}
         ref={ref}
         isAutocompleteOpen={open}

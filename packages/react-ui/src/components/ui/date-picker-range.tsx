@@ -270,7 +270,7 @@ export function DatePickerWithRange({
               <ClockPicker
                 date={timeDate.to}
                 setDate={(toTime) => {
-                  const toDate = date?.to ?? date?.from ?? new Date();
+                  const toDate = date?.to ?? new Date();
                   const toWithCorrectedTime = applyTimeToDate({
                     timeDate: toTime,
                     targetDate: toDate,
