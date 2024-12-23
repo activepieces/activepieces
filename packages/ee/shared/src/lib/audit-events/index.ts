@@ -19,7 +19,6 @@ export const ListAuditEventsRequest = Type.Object({
   action: Type.Optional(Type.String()),
   projectId: Type.Optional(Type.Array(Type.String())),
   userId: Type.Optional(Type.String()),
-  before: Type.Optional(Type.String()),
   createdBefore: Type.Optional(Type.String()),
   createdAfter: Type.Optional(Type.String()),
 });
