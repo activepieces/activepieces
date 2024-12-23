@@ -460,9 +460,11 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           return {
             pieceSelectorStep: step,
             selectedStep: step ? step : state.selectedStep,
-            rightSidebar: step
-              ? RightSideBarType.PIECE_SETTINGS
-              : state.rightSidebar,
+            rightSidebar:
+              (step && step !== 'trigger') ||
+              state.flowVersion.trigger.type !== TriggerType.EMPTY
+                ? RightSideBarType.PIECE_SETTINGS
+                : state.rightSidebar,
           };
         });
       },
