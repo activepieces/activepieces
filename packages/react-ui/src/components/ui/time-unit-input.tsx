@@ -13,7 +13,7 @@ import {
   setDateByType,
 } from './time-picker-utils';
 
-export interface TimePickerInputProps
+export interface TimeUnitPickerInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   picker: TimePickerType;
   date: Date | undefined;
@@ -24,11 +24,12 @@ export interface TimePickerInputProps
   isActive: boolean;
   autoCompleteList?: { value: string; label: string }[];
   isAutocompleteOpen?: boolean;
+  name?: string;
 }
 
-const TimePickerInputInner = React.forwardRef<
+const TimeUnitPickerInputInner = React.forwardRef<
   HTMLInputElement,
-  TimePickerInputProps
+  TimeUnitPickerInputProps
 >(
   (
     {
@@ -37,7 +38,9 @@ const TimePickerInputInner = React.forwardRef<
       value,
       id,
       name,
-      date = new Date(new Date().setHours(0, 0, 0, 0)),
+      date = !name || name === 'from'
+        ? new Date(new Date().setHours(0, 0, 0, 0))
+        : new Date(new Date().setHours(23, 59, 59, 999)),
       setDate,
       onChange,
       onKeyDown,
@@ -47,7 +50,7 @@ const TimePickerInputInner = React.forwardRef<
       onRightFocus,
       isActive,
       isAutocompleteOpen,
-      ...props
+      onClick,
     },
     ref,
   ) => {
@@ -86,6 +89,7 @@ const TimePickerInputInner = React.forwardRef<
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      onKeyDown?.(e);
       if (e.key === 'Tab') return;
       e.preventDefault();
       if (e.key === 'ArrowRight') onRightFocus?.();
@@ -100,7 +104,6 @@ const TimePickerInputInner = React.forwardRef<
       if (e.key >= '0' && e.key <= '9') {
         if (picker === '12hours') setPrevIntKey(e.key);
         const newValue = calculateNewValue(e.key);
-        if (flag) onRightFocus?.();
         setFlag((prev) => !prev);
         const tempDate = new Date(date);
         setDate(setDateByType(tempDate, newValue, picker, period));
@@ -113,11 +116,10 @@ const TimePickerInputInner = React.forwardRef<
         id={id || picker}
         name={name || picker}
         className={cn(
-          'w-[73px] h-[29px] p-0 text-center rounded-xs bg-transparent transition-all  text-sm tabular-nums border-none [&::-webkit-inner-spin-button]:appearance-none',
+          'hover:bg-accent caret-primary w-[73px] h-[29px] p-0 text-center rounded-xs bg-transparent transition-all  text-sm tabular-nums border-none [&::-webkit-inner-spin-button]:appearance-none',
           className,
           {
             'bg-background': isActive,
-            'hover:bg-accent': !isActive,
           },
         )}
         value={value || calculatedValue}
@@ -127,19 +129,16 @@ const TimePickerInputInner = React.forwardRef<
         }}
         type={type}
         inputMode="decimal"
-        onKeyDown={(e) => {
-          onKeyDown?.(e);
-          handleKeyDown(e);
-        }}
-        {...props}
+        onKeyDown={handleKeyDown}
+        onClick={onClick}
       />
     );
   },
 );
-TimePickerInputInner.displayName = 'TimePickerInputInner';
-const TimePickerInput = React.forwardRef<
+TimeUnitPickerInputInner.displayName = 'TimeUnitPickerInputInner';
+const TimeUnitPickerInput = React.forwardRef<
   HTMLInputElement,
-  TimePickerInputProps
+  TimeUnitPickerInputProps
 >((props, ref) => {
   const { autoCompleteList, isActive } = props;
   const [open, setOpen] = React.useState(false);
@@ -147,35 +146,11 @@ const TimePickerInput = React.forwardRef<
   const [filterValue, setFilterValue] = React.useState('');
 
   if (isNil(autoCompleteList) || autoCompleteList.length === 0) {
-    return <TimePickerInputInner {...props} ref={ref} />;
+    return <TimeUnitPickerInputInner {...props} ref={ref} />;
   }
   return (
-    <AutoComplete
-      className={cn('bg-transparent text-muted-foreground rounded-xs', {
-        'bg-background': isActive,
-        'hover:bg-accent': !isActive,
-        'text-foreground': isActive,
-      })}
-      items={autoCompleteList.filter((item) =>
-        item.label.includes(filterValue),
-      )}
-      selectedValue={''}
-      open={open}
-      setOpen={(open) => {
-        setFilterValue('');
-        setOpen(open);
-      }}
-      listRef={listRef}
-      onSelectedValueChange={(value) => {
-        const tempDate = new Date(
-          props.date || new Date(new Date().setHours(0, 0, 0, 0)),
-        );
-        props.setDate(
-          setDateByType(tempDate, value, props.picker, props.period),
-        );
-      }}
-    >
-      <TimePickerInputInner
+    <>
+      <TimeUnitPickerInputInner
         {...props}
         onKeyDown={(e) => {
           props.onKeyDown?.(e);
@@ -192,6 +167,7 @@ const TimePickerInput = React.forwardRef<
             if (listRef.current) {
               listRef.current.dispatchEvent(event);
             }
+            event.preventDefault();
           }
         }}
         setDate={(date) => {
@@ -203,10 +179,41 @@ const TimePickerInput = React.forwardRef<
         }}
         ref={ref}
         isAutocompleteOpen={open}
+        onClick={() => {
+          setFilterValue('');
+          setOpen(true);
+        }}
       />
-    </AutoComplete>
+      <AutoComplete
+        className={cn('bg-transparent text-muted-foreground rounded-xs', {
+          'bg-background': isActive,
+          'hover:bg-accent': !isActive,
+          'text-foreground': isActive,
+        })}
+        items={autoCompleteList.filter((item) =>
+          item.label.includes(filterValue),
+        )}
+        selectedValue={''}
+        open={open}
+        setOpen={(open) => {
+          setFilterValue('');
+          setOpen(open);
+        }}
+        listRef={listRef}
+        onSelectedValueChange={(value) => {
+          const tempDate = new Date(
+            props.date || new Date(new Date().setHours(0, 0, 0, 0)),
+          );
+          props.setDate(
+            setDateByType(tempDate, value, props.picker, props.period),
+          );
+        }}
+      >
+        <div className="w-full"></div>
+      </AutoComplete>
+    </>
   );
 });
-TimePickerInput.displayName = 'TimePickerInput';
+TimeUnitPickerInput.displayName = 'TimeUnitPickerInput';
 
-export { TimePickerInput };
+export { TimeUnitPickerInput };

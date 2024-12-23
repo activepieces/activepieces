@@ -36,7 +36,6 @@ export const TimePeriodSelect = React.forwardRef<
       if (e.key === 'ArrowRight') onRightFocus?.();
       if (e.key === 'ArrowLeft') onLeftFocus?.();
     };
-
     const handleValueChange = (value: Period) => {
       setPeriod(value);
 
@@ -60,16 +59,15 @@ export const TimePeriodSelect = React.forwardRef<
     return (
       <div className="flex h-10 items-center">
         <Select
-          defaultValue={period}
+          value={period}
           onValueChange={(value: Period) => handleValueChange(value)}
         >
           <SelectTrigger
             ref={ref}
             className={cn(
-              'w-[73px] h-[29px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1  rounded-xs justify-center p-0 transition-all border-none text-sm shadow-none gap-3 ',
+              ' hover:bg-accent w-[73px] h-[29px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1  rounded-xs justify-center p-0 transition-all border-none text-sm shadow-none gap-3 ',
               {
                 'bg-background': isActive,
-                'hover:bg-accent': !isActive,
               },
             )}
             onKeyDown={handleKeyDown}

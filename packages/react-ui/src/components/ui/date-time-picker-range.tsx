@@ -22,8 +22,8 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
-import { ClockPicker } from './clock-picker';
 import { Separator } from './separator';
+import { TimePicker } from './time-picker';
 
 type DateTimePickerWithRangeProps = {
   onChange: (date: DateRange | undefined) => void;
@@ -162,7 +162,6 @@ export function DateTimePickerWithRange({
     newDate.from!.setHours(0, 0, 0, 0);
     newDate.to!.setHours(23, 59, 59, 999);
     setDate(newDate);
-    setTimeDate(newDate);
     onChange(newDate);
   };
 
@@ -236,15 +235,53 @@ export function DateTimePickerWithRange({
             fromDate={minDate}
           />
           <Separator className="mb-4"></Separator>
-          <div className="flex gap-1.5 px-2 items-center text-sm">
-            <Clock className="w-4 h-4 text-muted-foreground"></Clock>
-            {t('Select Time Range')}
+          <div className="flex justify-between items-center ">
+            <div className="flex gap-1.5 px-2 items-center text-sm">
+              <Clock className="w-4 h-4 text-muted-foreground"></Clock>
+              {t('Select Time Range')}
+            </div>
+            <Button
+              variant={'ghost'}
+              size={'sm'}
+              className="text-primary hover:!text-primary"
+              onClick={() => {
+                const fromTime = new Date(new Date().setHours(0, 0, 0, 0));
+                const toTime = new Date(new Date().setHours(23, 59, 59, 999));
+                setTimeDate({
+                  from: fromTime,
+                  to: toTime,
+                });
+                const fromDate = date?.from
+                  ? applyTimeToDate({
+                      timeDate: fromTime,
+                      targetDate: date.from,
+                    })
+                  : undefined;
+                const toDate = date?.to
+                  ? applyTimeToDate({
+                      timeDate: toTime,
+                      targetDate: date.to,
+                    })
+                  : undefined;
+                setDate({
+                  from: fromDate,
+                  to: toDate,
+                });
+                onChange({
+                  from: fromDate,
+                  to: toDate,
+                });
+              }}
+            >
+              {t('Clear')}
+            </Button>
           </div>
 
           <div className="flex gap-3  items-center mt-3 px-2 mb-2">
             <div className="flex gap-2 grow justify-center items-center items-center">
-              <ClockPicker
+              <TimePicker
                 date={timeDate.from}
+                name="from"
                 setDate={(fromTime) => {
                   const fromDate = date?.from ?? new Date();
                   const fromWithCorrectedTime = applyTimeToDate({
@@ -261,14 +298,15 @@ export function DateTimePickerWithRange({
                   });
                   setTimeDate({ ...timeDate, from: fromTime });
                 }}
-              ></ClockPicker>
+              ></TimePicker>
             </div>
 
             {t('to')}
 
             <div className="flex gap-2 grow justify-center items-center ">
-              <ClockPicker
+              <TimePicker
                 date={timeDate.to}
+                name="to"
                 setDate={(toTime) => {
                   const toDate = date?.to ?? new Date();
                   const toWithCorrectedTime = applyTimeToDate({
@@ -285,7 +323,7 @@ export function DateTimePickerWithRange({
                   });
                   setTimeDate({ ...timeDate, to: toTime });
                 }}
-              ></ClockPicker>
+              ></TimePicker>
             </div>
           </div>
         </PopoverContent>

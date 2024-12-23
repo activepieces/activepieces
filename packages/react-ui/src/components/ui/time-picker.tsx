@@ -6,13 +6,14 @@ import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { TimePeriodSelect } from './time-period-select';
-import { TimePickerInput } from './time-picker-input';
 import { Period } from './time-picker-utils';
+import { TimeUnitPickerInput } from './time-unit-input';
 
-interface TimePickerDemoProps {
+interface TimePickerProps {
   date: Date | undefined;
   setDate: (date: Date) => void;
   showSeconds?: boolean;
+  name?: string;
 }
 
 const minutesItems = new Array(60).fill(0).map((_, index) => ({
@@ -25,18 +26,30 @@ const hoursItems = new Array(12).fill(0).map((_, index) => ({
   label: index + 1 < 10 ? `0${index + 1}` : (index + 1).toString(),
 }));
 
-export function ClockPicker({
+export function TimePicker({
   date,
   setDate,
   showSeconds,
-}: TimePickerDemoProps) {
+  name = 'from',
+}: TimePickerProps) {
   const [period, setPeriod] = React.useState<Period>(() => {
     if (date) {
       return date.getHours() >= 12 ? 'PM' : 'AM';
     }
-    return 'AM';
+    return name === 'from' ? 'AM' : 'PM';
   });
-  const isActive = !isNil(date);
+  React.useEffect(() => {
+    if (date && date.getHours() >= 12) {
+      setPeriod('PM');
+    } else {
+      setPeriod(name === 'from' ? 'AM' : 'PM');
+    }
+  }, [date]);
+  const hasValueChanged =
+    name === 'from'
+      ? date?.getHours() !== 0 || date?.getMinutes() !== 0 || period !== 'AM'
+      : date?.getHours() !== 23 || date?.getMinutes() !== 59 || period !== 'PM';
+  const isActive = !isNil(date) && hasValueChanged;
   const minuteRef = React.useRef<HTMLInputElement>(null);
   const hourRef = React.useRef<HTMLInputElement>(null);
   const secondRef = React.useRef<HTMLInputElement>(null);
@@ -52,12 +65,13 @@ export function ClockPicker({
       )}
     >
       <div className="grid gap-1 text-center">
-        <TimePickerInput
+        <TimeUnitPickerInput
           picker="12hours"
           isActive={isActive}
           period={period}
           date={date}
           setDate={setDate}
+          name={name}
           ref={hourRef}
           onRightFocus={() => minuteRef.current?.focus()}
           autoCompleteList={hoursItems}
@@ -65,11 +79,13 @@ export function ClockPicker({
       </div>
       :
       <div className="grid gap-1 text-center">
-        <TimePickerInput
+        <TimeUnitPickerInput
           picker="minutes"
           id="minutes12"
           isActive={isActive}
+          name={name}
           date={date}
+          period={period}
           setDate={setDate}
           ref={minuteRef}
           onLeftFocus={() => hourRef.current?.focus()}
@@ -81,9 +97,10 @@ export function ClockPicker({
         <>
           :
           <div className="grid gap-1 text-center">
-            <TimePickerInput
+            <TimeUnitPickerInput
               picker="seconds"
               id="seconds12"
+              name={name}
               isActive={isActive}
               date={date}
               setDate={setDate}
