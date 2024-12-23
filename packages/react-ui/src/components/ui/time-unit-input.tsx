@@ -144,7 +144,6 @@ const TimeUnitPickerInput = React.forwardRef<
   const [open, setOpen] = React.useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const [filterValue, setFilterValue] = React.useState('');
-
   if (isNil(autoCompleteList) || autoCompleteList.length === 0) {
     return <TimeUnitPickerInputInner {...props} ref={ref} />;
   }
@@ -209,7 +208,7 @@ const TimeUnitPickerInput = React.forwardRef<
           );
         }}
       >
-        <div className="w-full"></div>
+        <div className="w-full -mt-2"></div>
       </AutoComplete>
     </>
   );
