@@ -52,17 +52,13 @@ const getPublicIp = async (): Promise<IpMetadata> => {
             }
             return ipMetadata
         }
-
-        ipMetadata = {
-            ip: 'Unknown',
-        }
-        return ipMetadata
+        throw error;
     }
 }
 
 const getPublicUrl = async (environment: ApEnvironment, frontendUrl: string): Promise<string> => {
     let url = frontendUrl
-    
+
     if (extractHostname(url) === 'localhost' && environment === ApEnvironment.PRODUCTION) {
         url = `http://${(await networkUtls.getPublicIp()).ip}`
     }
