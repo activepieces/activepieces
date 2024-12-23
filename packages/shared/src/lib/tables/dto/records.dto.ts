@@ -6,6 +6,7 @@ export const CreateRecordsRequest = Type.Object({
         key: Type.String(),
         value: Type.String(),
     }))),
+    tableId: Type.String(),
 })
 
 export type CreateRecordsRequest = Static<typeof CreateRecordsRequest>
@@ -15,11 +16,13 @@ export const UpdateRecordRequest = Type.Object({
         key: Type.String(),
         value: Type.String(),
     }))),
+    tableId: Type.String(),
 })
 
 export type UpdateRecordRequest = Static<typeof UpdateRecordRequest>
 
 export const ListRecordsRequest = Type.Object({
+    tableId: Type.String(),
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
 })

@@ -1,35 +1,47 @@
-import { apId, CreateFieldRequest, Field } from '@activepieces/shared'
+import { ActivepiecesError, apId, CreateFieldRequest, ErrorCode, Field, isNil } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { FieldEntity } from './field.entity'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
 export const fieldService = {
-    async create({ tableId, request }: { tableId: string, request: CreateFieldRequest }): Promise<Field> {
+    async create({ request, projectId }: { request: CreateFieldRequest, projectId: string } ): Promise<Field> {
         const field = await fieldRepo().save({
             ...request,
-            tableId,
+            projectId,
             id: apId(),
         })
         return field
     },
 
-    async getAll({ tableId }: { tableId: string }): Promise<Field[]> {
+    async getAll({ projectId, tableId }: { projectId: string, tableId: string }): Promise<Field[]> {
         return fieldRepo().find({
-            where: { tableId },
+            where: { projectId, tableId },
         })
     },
 
-    async getById({ tableId, id }: { tableId: string, id: string }): Promise<Field | null> {
-        return fieldRepo().findOne({
-            where: { tableId, id },
+    async getById({ id, projectId }: { id: string, projectId: string }): Promise<Field> {
+        const field = await fieldRepo().findOne({
+            where: { id, projectId },
         })
+
+        if (isNil(field)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'Field',
+                    entityId: id,
+                },
+            })
+        }
+
+        return field
     },
 
-    async delete({ tableId, id }: { tableId: string, id: string }): Promise<void> {
+    async delete({ id, projectId }: { id: string, projectId: string }): Promise<void> {
         await fieldRepo().delete({
-            tableId,
             id,
+            projectId,
         })
     },
 }

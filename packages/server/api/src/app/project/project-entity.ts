@@ -1,9 +1,12 @@
 import {
     AppConnection,
+    Cell,
+    Field,
     Flow,
     Folder,
     Platform,
     Project,
+    Record,
     Table,
     TriggerEvent,
     User,
@@ -14,6 +17,9 @@ import { ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../data
 type ProjectSchema = Project & {
     owner: User
     tables: Table[]
+    fields: Field[]
+    records: Record[]
+    cells: Cell[]
     flows: Flow[]
     files: File[]
     folders: Folder[]
@@ -107,6 +113,21 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         tables: {
             type: 'one-to-many',
             target: 'table',
+            inverseSide: 'project',
+        },
+        fields: {
+            type: 'one-to-many',
+            target: 'field',
+            inverseSide: 'project',
+        },
+        records: {
+            type: 'one-to-many',
+            target: 'record',
+            inverseSide: 'project',
+        },
+        cells: {
+            type: 'one-to-many',
+            target: 'cell',
             inverseSide: 'project',
         },
     },

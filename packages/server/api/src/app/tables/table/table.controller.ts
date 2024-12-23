@@ -1,4 +1,4 @@
-import { CreateTableRequest, ImportTableRequest, PrincipalType, Table } from '@activepieces/shared'
+import { CreateTableRequest, PrincipalType, Table } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { tableService } from './table.service'
@@ -10,7 +10,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.principal.projectId,
             request: request.body,
         })
-        await reply.status(StatusCodes.OK).send(response)
+        await reply.status(StatusCodes.CREATED).send(response)
     },
     )
 
@@ -27,27 +27,15 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.principal.projectId,
             id: request.params.id,
         })
-        await reply.status(StatusCodes.OK).send({})
+        await reply.status(StatusCodes.NO_CONTENT).send()
     },
     )
 
-    fastify.get('/:id', GetTableByIdRequest, async (request, reply) => {
-        const response = await tableService.getById({
+    fastify.get('/:id', GetTableByIdRequest, async (request) => {
+        return tableService.getById({
             projectId: request.principal.projectId,
             id: request.params.id,
         })
-
-        if (!response) {
-            await reply.status(StatusCodes.NOT_FOUND).send('Table not found')
-            return
-        }
-        
-        await reply.status(StatusCodes.OK).send(response)
-    },
-    )
-
-    fastify.post('/:id/import', ImportRequest, async (request, reply) => {
-        await reply.status(StatusCodes.OK).send('Not implemented')
     },
     )
 }
@@ -58,6 +46,9 @@ const CreateRequest =  {
     },
     schema: {
         body: CreateTableRequest,
+        response: {
+            [StatusCodes.CREATED]: Table,
+        },
     },
 }
 
@@ -88,19 +79,6 @@ const GetTableByIdRequest = {
         }),
         response: {
             [StatusCodes.OK]: Table,
-            [StatusCodes.NOT_FOUND]: Type.String(),
         },
-    },
-}
-
-const ImportRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
-    },
-    schema: {
-        params: Type.Object({
-            id: Type.String(),
-        }),
-        body: ImportTableRequest,
     },
 }

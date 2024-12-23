@@ -5,6 +5,6 @@ import { tablesController } from './table/table.controller'
 
 export const tablesModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(tablesController, { prefix: '/v1/tables' })
-    await app.register(fieldController, { prefix: '/v1/tables' })
-    await app.register(recordController, { prefix: '/v1/tables' })
+    await app.register(fieldController, { prefix: '/v1/fields' })
+    await app.register(recordController, { prefix: '/v1/records' })
 }

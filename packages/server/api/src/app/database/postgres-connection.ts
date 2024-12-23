@@ -168,6 +168,7 @@ import { AddIndiciesToRunAndTriggerData1732324567513 } from './migration/postgre
 import { AddProjectRelationInUserInvitation1732790412900 } from './migration/postgres/1732790673766-AddProjectRelationInUserInvitation'
 import { TablesProduct1734355488179 } from './migration/postgres/1734355488179-TablesProduct'
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
+import { FieldAndRecordAndCellProjectId1734969829406 } from './migration/postgres/1734969829406-FieldAndRecordAndCell_ProjectId'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -281,6 +282,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddProjectRelationInUserInvitation1732790412900,
         TablesProduct1734355488179,
         RemoveWorkerType1734439097357,
+        FieldAndRecordAndCellProjectId1734969829406,
     ]
 
     const edition = system.getEdition()

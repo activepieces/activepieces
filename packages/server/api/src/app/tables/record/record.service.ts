@@ -1,4 +1,4 @@
-import { apId, CreateRecordsRequest, Cursor, PopulatedRecord, SeekPage, UpdateRecordRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, CreateRecordsRequest, Cursor, ErrorCode, isNil, PopulatedRecord, SeekPage, UpdateRecordRequest } from '@activepieces/shared'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -11,11 +11,11 @@ import { RecordEntity } from './record.entity'
 const recordRepo = repoFactory(RecordEntity)
 
 export const recordService = {
-    async create({ tableId, request }: { tableId: string, request: CreateRecordsRequest }): Promise<PopulatedRecord[]> {
+    async create({ request, projectId }: { request: CreateRecordsRequest, projectId: string }): Promise<PopulatedRecord[]> {
         return transaction(async (entityManager: EntityManager) => {
             // Find existing fields for the table
             const existingFields = await entityManager.getRepository(FieldEntity).find({
-                where: { tableId },
+                where: { tableId: request.tableId, projectId },
             })
 
             // Filter out cells with non-existing fields during record creation
@@ -27,7 +27,7 @@ export const recordService = {
 
             // Prepare record insertions
             const recordInsertions = validRecords.map(() => ({
-                tableId,
+                tableId: request.tableId,
                 id: apId(),
             }))
 
@@ -40,6 +40,7 @@ export const recordService = {
                     return {
                         recordId: recordInsertions[index].id,
                         fieldId: field?.id,
+                        projectId,
                         value: cellData.value,
                         id: apId(),
                     }
@@ -53,7 +54,8 @@ export const recordService = {
             const fullyPopulatedRecords = await entityManager.getRepository(RecordEntity).find({
                 where: {
                     id: In(insertedRecordIds),
-                    tableId,
+                    tableId: request.tableId,
+                    projectId,
                 },
                 relations: ['cells'],
                 order: {
@@ -65,7 +67,7 @@ export const recordService = {
         })
     },
 
-    async list({ tableId, cursorRequest, limit }: ListParams): Promise<SeekPage<PopulatedRecord>> {
+    async list({ tableId, projectId, cursorRequest, limit }: ListParams): Promise<SeekPage<PopulatedRecord>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
         const paginator = buildPaginator({
@@ -81,33 +83,52 @@ export const recordService = {
         const paginationResult = await paginator.paginate(
             recordRepo()
                 .createQueryBuilder('record')
-                .where({ tableId })
+                .where({ tableId, projectId })
                 .leftJoinAndSelect('record.cells', 'cell'),
         )
 
         return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
     },
 
-    async getById({ tableId, id }: { tableId: string, id: string }): Promise<PopulatedRecord | null> {
-        return recordRepo().findOne({
-            where: { tableId, id },
+    async getById({ id, projectId }: { id: string, projectId: string }): Promise<PopulatedRecord> {
+        const record = await recordRepo().findOne({
+            where: { id, projectId },
             relations: ['cells'],
         })
+
+        if (isNil(record)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'Record',
+                    entityId: id,
+                },
+            })
+        }
+
+        return record
     },
 
-    async update({ tableId, id, request }: { tableId: string, id: string, request: UpdateRecordRequest }): Promise<PopulatedRecord | null> {
+    async update({ id, projectId, request }: { id: string, projectId: string, request: UpdateRecordRequest }): Promise<PopulatedRecord> {
+        const { tableId } = request
         return transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
-                where: { tableId, id },
+                where: { projectId, tableId, id },
             })
 
-            if (!record) {
-                return null
+            if (isNil(record)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'Record',
+                        entityId: id,
+                    },
+                })
             }
 
             if (request.cells && request.cells.length > 0) {
                 const existingFields = await entityManager.getRepository(FieldEntity).find({
-                    where: { tableId },
+                    where: { projectId, tableId },
                 })
 
                 // Filter out cells with non-existing fields
@@ -121,6 +142,7 @@ export const recordService = {
                     return {
                         recordId: id,
                         fieldId: field?.id,
+                        projectId,
                         value: cellData.value,
                         id: apId(),
                     }
@@ -137,24 +159,35 @@ export const recordService = {
 
             // Fetch and return the updated record with full details
             const updatedRecord = await entityManager.getRepository(RecordEntity).findOne({
-                where: { id, tableId },
+                where: { id, projectId, tableId },
                 relations: ['cells'],
             })
+
+            if (isNil(updatedRecord)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'Record',
+                        entityId: id,
+                    },
+                })
+            }
 
             return updatedRecord
         })
     },
 
-    async delete({ tableId, id }: { tableId: string, id: string }): Promise<void> {
+    async delete({ id, projectId }: { id: string, projectId: string }): Promise<void> {
         await recordRepo().delete({
-            tableId,
             id,
+            projectId,
         })
     },
 }
 
 type ListParams = {
     tableId: string
+    projectId: string
     cursorRequest: Cursor | null
     limit: number
 }
