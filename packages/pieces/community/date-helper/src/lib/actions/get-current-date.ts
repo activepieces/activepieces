@@ -8,6 +8,7 @@ import {
   timeFormat,
   timeFormatDescription,
   timeZoneOptions,
+  getCorrectedFormat
 } from '../common';
 
 dayjs.extend(utc);
@@ -46,7 +47,7 @@ export const getCurrentDate = createAction({
     }),
   },
   async run(context) {
-    const timeFormat = context.propsValue.timeFormat;
+    const timeFormat = getCorrectedFormat(context.propsValue.timeFormat);
     const timeZone = context.propsValue.timeZone;
     return { result: dayjs().tz(timeZone).format(timeFormat) };
   },

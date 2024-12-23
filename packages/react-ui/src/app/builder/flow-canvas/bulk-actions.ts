@@ -62,11 +62,11 @@ export async function getActionsInClipboard(): Promise<Action[]> {
   try {
     const clipboardText = await navigator.clipboard.readText();
     const request: CopyActionsRequest = JSON.parse(clipboardText);
-
     if (request && request.type === 'COPY_ACTIONS') {
       return request.actions;
     }
   } catch (error) {
+    console.error('Error getting actions in clipboard', error);
     return [];
   }
 

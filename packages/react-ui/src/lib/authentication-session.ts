@@ -28,6 +28,13 @@ export const authenticationSession = {
     const decodedJwt = jwtDecode<{ projectId: string }>(token);
     return decodedJwt.projectId;
   },
+  appendProjectRoutePrefix(path: string): string {
+    const projectId = this.getProjectId();
+    if (isNil(projectId)) {
+      return path;
+    }
+    return `/projects/${projectId}${path.startsWith('/') ? path : `/${path}`}`;
+  },
   getPlatformId(): string | null {
     return this.getCurrentUser()?.platformId ?? null;
   },

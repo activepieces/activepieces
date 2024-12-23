@@ -15,11 +15,9 @@ import { flowUtilConsts } from '../utils/consts';
 import { ApButtonData } from '../utils/types';
 
 import { AskAiIndicator, shouldShowAskAiIndicator } from './ask-ai-indicator';
-import { PasteButton } from './paste-button';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-
   const [activeDraggingStep, readonly, showAskAiIndicator] =
     useBuilderStateContext((state) => [
       state.activeDraggingStep,
@@ -139,11 +137,6 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 >
                   {!actionMenuOpen && (
                     <Plus className="w-3 h-3 stroke-[3px] text-white" />
-                  )}
-                  {!actionMenuOpen && (
-                    <div className="absolute -top-[1px] left-[25px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out">
-                      <PasteButton addButtonData={props} />
-                    </div>
                   )}
                 </div>
               </div>

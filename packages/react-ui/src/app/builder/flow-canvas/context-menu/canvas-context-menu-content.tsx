@@ -27,7 +27,6 @@ import {
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
-import { usePasteActionsInClipboard } from '../../builder-hooks';
 import {
   copySelectedNodes,
   deleteSelectedNodes,
@@ -60,6 +59,7 @@ export const CanvasContextMenuContent = ({
   flowVersion,
   exitStepSettings,
   readonly,
+  actionsToPaste,
   setPieceSelectorStep,
 }: CanvasContextMenuProps) => {
   const disabled = selectedNodes.length === 0;
@@ -67,7 +67,6 @@ export const CanvasContextMenuContent = ({
     (node) =>
       !!(flowStructureUtil.getStep(node, flowVersion.trigger) as Action)?.skip,
   );
-  const actionsToPaste = usePasteActionsInClipboard();
   const doesNotContainTrigger = !selectedNodes.some(
     (node) => node === flowVersion.trigger.name,
   );
@@ -77,6 +76,7 @@ export const CanvasContextMenuContent = ({
     selectedNodes[0],
     flowVersion.trigger,
   );
+
   const showPasteAsFirstLoopAction =
     selectedNodes.length === 1 &&
     firstSelectedStep?.type === ActionType.LOOP_ON_ITEMS;

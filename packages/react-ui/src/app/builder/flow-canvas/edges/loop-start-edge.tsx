@@ -48,7 +48,7 @@ export const ApLoopStartLineCanvasEdge = ({
         <foreignObject
           x={buttonPosition.x}
           y={buttonPosition.y}
-          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 100}
+          width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
           className="overflow-visible cursor-default"
         >
