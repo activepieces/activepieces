@@ -47,7 +47,7 @@ describe('Project Release API', () => {
                     description: projectRelease.description,
                     type: ProjectReleaseType.GIT,
                     repoId: mockGitRepo.id,
-                    selectedOperations: [],
+                    selectedFlowsIds: [],
                 },
                 headers: {
                     authorization: `Bearer ${testToken}`,

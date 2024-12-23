@@ -2,37 +2,26 @@ import fs from 'fs/promises'
 import path from 'path'
 import { fileExists } from '@activepieces/server-shared'
 import { Flow, flowMigrations, FlowState, PopulatedFlow } from '@activepieces/shared'
-import { ProjectMappingState } from '../project-diff/project-mapping-state'
+import { FastifyBaseLogger } from 'fastify'
+import { ProjectState } from '../project-diff/project-mapping-state'
 
-export const gitSyncHelper = () => ({
-    async getMappingStateFromGit(
-        stateFolderPath: string,
-        projectId: string,
-    ): Promise<ProjectMappingState> {
-        const _statePath = path.join(stateFolderPath, projectId + '.json')
-        try {
-            const state = await fs.readFile(_statePath, 'utf-8')
-            return new ProjectMappingState(JSON.parse(state))
-        }
-        catch (e) {
-            return ProjectMappingState.empty()
-        }
-    },
-
-    async getStateFromGit(flowPath: string): Promise<FlowState[]> {
+export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
+    async getStateFromGit(flowPath: string): Promise<ProjectState> {
         const flowFiles = await fs.readdir(flowPath)
-        const parsedFlows: FlowState[] = []
+        const flows: FlowState[] = []
         for (const file of flowFiles) {
             const flow: PopulatedFlow = JSON.parse(
                 await fs.readFile(path.join(flowPath, file), 'utf-8'),
             )
             const migratedFlowVersion = flowMigrations.apply(flow.version)
-            parsedFlows.push({
+            flows.push({
                 ...flow,
                 version: migratedFlowVersion,
             })
         }
-        return parsedFlows
+        return {
+            flows,
+        }
     },
 
     async upsertFlowToGit(fileName: string, flow: Flow, flowFolderPath: string): Promise<void> {

@@ -1,37 +1,46 @@
-import { ActivepiecesError, ApId, apId, ErrorCode, isNil, ListProjectReleasesRequest, ProjectId, ProjectRelease, ProjectReleaseType, SeekPage } from '@activepieces/shared'
+import { ProjectOperationType, ProjectSyncError, ProjectSyncPlan, ProjectSyncPlanOperation } from '@activepieces/ee-shared'
+import { ActivepiecesError, apId, ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ErrorCode, isNil, ListProjectReleasesRequest, ProjectId, ProjectRelease, ProjectReleaseType, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { userService } from '../../user/user-service'
+import { gitSyncHelper } from './git-sync/git-sync-helper'
 import { gitRepoService } from './git-sync/git-sync.service'
+import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
+import { ProjectState } from './project-diff/project-mapping-state'
 import { ProjectReleaseEntity } from './project-release.entity'
 import { projectStateService } from './project-state/project-state.service'
 
 const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
 export const projectReleaseService = {
-    async create(params: CreateProjectReleaseParams): Promise<ProjectRelease> {
-        const gitRepo = await gitRepoService(params.log).getOneByProjectOrThrow({ projectId: params.projectId })
-        await gitRepoService(params.log).pull({
-            gitRepo,
-            userId: params.importedBy,
-            dryRun: false,
-            selectedOperations: params.selectedOperations,
+    async create(projectId: ProjectId, importedBy: ApId, params: CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectRelease> {
+   
+        const diffs = await findDiffOperations(projectId, params, log)
+        await projectStateService(log).apply({
+            projectId,
+            operations: diffs,
+            mappingState: await projectStateService(log).getProjectMappingState(projectId),
+            selectedFlowsIds: params.selectedFlowsIds,
         })
-        const fileId = await projectStateService(params.log).save(params.projectId, params.name, params.log)
+        const fileId = await projectStateService(log).save(projectId, params.name, log)
         const projectRelease: ProjectRelease = {
             id: apId(),
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
-            projectId: params.projectId,
-            importedBy: params.importedBy,
+            projectId,
+            importedBy,
             fileId,
             name: params.name,
             description: params.description,
             type: params.type,
         }
         return projectReleaseRepo().save(projectRelease)
+    },
+    async releasePlan(projectId: ProjectId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectSyncPlan> {
+        const diffs = await findDiffOperations(projectId, params, log)
+        return toResponse(diffs)
     },
     async list({ projectId, request }: ListParams): Promise<SeekPage<ProjectRelease>> {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
@@ -73,7 +82,70 @@ export const projectReleaseService = {
         return projectRelease
     },
 }
+async function findDiffOperations(projectId: ProjectId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectOperation[]> {
+    const newState = await getStateFromCreateRequest(projectId, params, log)
+    const oldState = await projectStateService(log).getCurrentState(projectId, log)
 
+    return projectDiffService.diff({
+        newState,
+        oldState,
+        mapping: await projectStateService(log).getProjectMappingState(projectId),
+    })
+}
+
+function toResponse(operations: ProjectOperation[], errors: ProjectSyncError[] = []): ProjectSyncPlan {
+    const responsePlans: ProjectSyncPlanOperation[] = operations.map((operation) => {
+        switch (operation.type) {
+            case ProjectOperationType.DELETE_FLOW:
+                return {
+                    type: operation.type,
+                    flow: {
+                        id: operation.flowState.id,
+                        displayName: operation.flowState.version.displayName,
+                    },
+                }
+            case ProjectOperationType.CREATE_FLOW:
+                return {
+                    type: operation.type,
+                    flow: {
+                        id: operation.flowState.id,
+                        displayName: operation.flowState.version.displayName,
+                    },
+                }
+            case ProjectOperationType.UPDATE_FLOW:
+                return {
+                    type: operation.type,
+                    flow: {
+                        id: operation.newFlowState.id,
+                        displayName: operation.newFlowState.version.displayName,
+                    },
+                    targetFlow: {
+                        id: operation.flowState.id,
+                        displayName: operation.flowState.version.displayName,
+                    },
+                }
+        }
+    })
+    return {
+        errors,
+        operations: responsePlans,
+    }
+}
+async function getStateFromCreateRequest(projectId: string, request: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectState> {
+    switch (request.type) {
+        case ProjectReleaseType.GIT: {
+            const gitRepo = await gitRepoService(log).getOneByProjectOrThrow({ projectId })
+            return gitSyncHelper(log).getStateFromGit(gitRepo.id)
+        }
+        case ProjectReleaseType.ROLLBACK: {
+            const projectRelease = await projectReleaseService.getOneOrThrow({
+                id: request.projectReleaseId,
+                projectId,
+            })
+            return projectStateService(log).getStateFromRelease(projectId, projectRelease.fileId, log)
+        }
+    }
+}
 
 type ListParams = {
     projectId: ProjectId
@@ -83,15 +155,4 @@ type ListParams = {
 type GetOneProjectReleaseParams = {
     id: ApId
     projectId: ProjectId
-}
-
-type CreateProjectReleaseParams = {
-    projectId: ProjectId
-    importedBy: ApId
-    name: string
-    description: string | null | undefined
-    log: FastifyBaseLogger
-    type: ProjectReleaseType
-    selectedOperations: string[]
-    repoId: string
 }

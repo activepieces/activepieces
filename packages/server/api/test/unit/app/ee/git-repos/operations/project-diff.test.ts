@@ -1,45 +1,53 @@
 
 import { faker } from '@faker-js/faker'
 import { nanoid } from 'nanoid'
-import { projectDiffService } from '../../../../../../src/app/ee/git-sync/project-diff/project-diff.service'
-import { ProjectMappingState } from '../../../../../../src/app/ee/git-sync/project-diff/project-mapping-state'
 import { flowGenerator } from '../../../../../helpers/flow-generator'
-
-
-
+import { projectDiffService } from 'packages/server/api/src/app/ee/project-release/project-diff/project-diff.service'
+import { ProjectMappingState } from '@activepieces/shared'
 describe('Project Diff Service', () => {
 
     it('should return the flow to delete', async () => {
         const flowTwo = flowGenerator.simpleActionAndTrigger()
-        const toFlows = [flowTwo]
         const diff = projectDiffService.diff({
-            fromFlows: [],
-            destinationFlows: toFlows,
+            oldState: {
+                flows: []
+            },
+            newState: {
+                flows: [flowTwo]
+            },
             mapping: ProjectMappingState.empty(),
         })
         expect(diff.length).toBe(1)
         expect(diff[0].type).toBe('DELETE_FLOW')
-        expect(diff[0].flow).toBe(flowTwo)
+        expect(diff[0].flowState).toBe(flowTwo)
     })
 
     it('should return the flow to create', async () => {
         const flowTwo = flowGenerator.simpleActionAndTrigger()
         const diff = projectDiffService.diff({
-            fromFlows: [flowTwo],
-            destinationFlows: [],
+            oldState: {
+                flows: []
+            },
+            newState: {
+                flows: [flowTwo]
+            },
             mapping: ProjectMappingState.empty(),
         })
         expect(diff.length).toBe(1)
         expect(diff[0].type).toBe('CREATE_FLOW')
-        expect(diff[0].flow).toBe(flowTwo)
+        expect(diff[0].flowState).toBe(flowTwo)
     })
 
     it('should return the flow to create If the mapping is invalid', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowTwo = flowGenerator.simpleActionAndTrigger()
         const diff = projectDiffService.diff({
-            fromFlows: [flowOne],
-            destinationFlows: [flowTwo],
+            oldState: {
+                flows: [flowOne]
+            },
+            newState: {
+                flows: [flowTwo]
+            },
             mapping: ProjectMappingState.empty().mapFlow({
                 sourceId: nanoid(),
                 targetId: flowTwo.id,
@@ -61,8 +69,12 @@ describe('Project Diff Service', () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowTwo = flowGenerator.simpleActionAndTrigger()
         const diff = projectDiffService.diff({
-            fromFlows: [flowOne],
-            destinationFlows: [flowTwo],
+            oldState: {
+                flows: [flowOne]
+            },
+            newState: {
+                flows: [flowTwo]
+            },
             mapping: ProjectMappingState.empty().mapFlow({
                 sourceId: flowOne.id,
                 targetId: flowTwo.id,
@@ -81,8 +93,12 @@ describe('Project Diff Service', () => {
         const flowOneDist = flowGenerator.randomizeMetadata(flowOne.version)
         flowOneDist.version.trigger.settings.inputUiInfo = faker.airline.airplane()
         const diff = projectDiffService.diff({
-            fromFlows: [flowOne],
-            destinationFlows: [flowOneDist],
+            oldState: {
+                flows: [flowOne]
+            },
+            newState: {
+                flows: [flowOneDist]
+            },
             mapping: ProjectMappingState.empty().mapFlow({
                 sourceId: flowOne.id,
                 targetId: flowOneDist.id,
@@ -99,8 +115,12 @@ describe('Project Diff Service', () => {
         const flowOneDist = flowGenerator.simpleActionAndTrigger()
         const flowThreeDist = flowGenerator.randomizeMetadata(flowThree.version)
         const diff = projectDiffService.diff({
-            fromFlows: [flowOne, flowTwo],
-            destinationFlows: [flowOneDist, flowThreeDist],
+            oldState: {
+                flows: [flowOne, flowTwo]
+            },
+            newState: {
+                flows: [flowOneDist, flowThreeDist]
+            },
             mapping: ProjectMappingState.empty().mapFlow({
                 sourceId: flowOne.id,
                 targetId: flowOneDist.id,

@@ -42,17 +42,6 @@ export const PushGitRepoRequest = Type.Object({
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
 
-export const PullGitRepoFromProjectRequest = Type.Object({
-    projectId: Type.String(),
-})
-export type PullGitRepoFromProjectRequest = Static<typeof PullGitRepoFromProjectRequest>
-
-export const PullGitRepoRequest = Type.Object({
-    dryRun: Type.Optional(Type.Boolean()),
-    selectedOperations: Type.Optional(Type.Array(Type.String())),
-})
-export type PullGitRepoRequest = Static<typeof PullGitRepoRequest>
-
 export const ConfigureRepoRequest = Type.Object({
     projectId: Type.String({
         minLength: 1,

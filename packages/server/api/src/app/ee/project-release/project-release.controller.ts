@@ -1,10 +1,8 @@
-import { ApId, CreateProjectReleaseRequestBody, FileType, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
+import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, FileType, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { fileService } from '../../file/file.service'
-import { projectDiffService } from './project-diff/project-diff.service'
 import { projectReleaseService } from './project-release.service'
-import { projectStateService } from './project-state/project-state.service'
 
 export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListProjectReleasesRequestParams, async (req) => {
@@ -15,33 +13,11 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.post('/', CreateProjectReleaseRequest, async (req) => {
-        return projectReleaseService.create({
-            ...req.body,
-            description: req.body.description ?? null,
-            projectId: req.principal.projectId,
-            importedBy: req.principal.id,
-            log: req.log,
-        })
+        return projectReleaseService.create(req.principal.projectId, req.principal.id, req.body, req.log)
     })
-    
-    app.post('/:id/apply', ApplyProjectReleaseRequest, async (req) => {
-        const projectRelease = await projectReleaseService.getOneOrThrow({
-            id: req.params.id,
-            projectId: req.principal.projectId,
-        })
-        const newState = await projectStateService(req.log).getNewState(projectRelease.projectId, projectRelease.fileId, req.log)
-        const oldState = await projectStateService(req.log).getCurrentState(projectRelease.projectId, req.log)
-        const mapping = await projectStateService(req.log).getMappingState(projectRelease.projectId, newState, oldState)
-        const operations = projectDiffService.diff({
-            newState,
-            oldState,
-            mapping,
-        })
-        return projectStateService(req.log).apply({
-            projectId: projectRelease.projectId,
-            operations,
-            mappingState: mapping,
-        })
+
+    app.post('/diff', DiffProjectReleaseRequest, async (req) => {
+        return projectReleaseService.releasePlan(req.principal.projectId, req.body, req.log)
     })
 
     app.post('/:id/download', DownloadProjectReleaseRequest, async (req) => {
@@ -58,6 +34,7 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     })
 }
 
+
 const ListProjectReleasesRequestParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
@@ -70,14 +47,12 @@ const ListProjectReleasesRequestParams = {
     },
 }
 
-const ApplyProjectReleaseRequest = {
+const DiffProjectReleaseRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        params: Type.Object({
-            id: ApId,
-        }),
+        body: DiffReleaseRequest,
     },
 }
 
