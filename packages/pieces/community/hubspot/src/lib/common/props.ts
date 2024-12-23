@@ -7,7 +7,12 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { hubSpotClient } from './client';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+	AuthenticationType,
+	httpClient,
+	HttpMethod,
+	HttpRequest,
+} from '@activepieces/pieces-common';
 import { WorkflowResponse, HubspotProperty, HubspotFieldType } from './types';
 import {
 	DEFAULT_COMPANY_PROPERTIES,
@@ -625,43 +630,44 @@ export const pipelineStageDropdown = (params: DropdownParams) =>
 		},
 	});
 
-export const productDropdown =(params: DropdownParams) => Property.Dropdown({
-	displayName: params.displayName,
-	refreshers: [],
-	required: params.required,
-	description: params.description,
-	options: async ({ auth }) => {
-		if (!auth) {
-			return buildEmptyList({
-				placeholder: 'Please connect your account.',
-			});
-		}
-
-		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-		const client = new Client({ accessToken: authValue.access_token });
-
-		const options: DropdownOption<string>[] = [];
-
-		const limit = 100;
-		let after: string | undefined;
-		do {
-			const response = await client.crm.products.basicApi.getPage(limit, after, ['name']);
-			for (const product of response.results) {
-				options.push({
-					label: product.properties.name ?? product.id,
-					value: product.id,
+export const productDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		displayName: params.displayName,
+		refreshers: [],
+		required: params.required,
+		description: params.description,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return buildEmptyList({
+					placeholder: 'Please connect your account.',
 				});
 			}
 
-			after = response.paging?.next?.after;
-		} while (after);
+			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+			const client = new Client({ accessToken: authValue.access_token });
 
-		return {
-			disabled: false,
-			options,
-		};
-	},
-});
+			const options: DropdownOption<string>[] = [];
+
+			const limit = 100;
+			let after: string | undefined;
+			do {
+				const response = await client.crm.products.basicApi.getPage(limit, after, ['name']);
+				for (const product of response.results) {
+					options.push({
+						label: product.properties.name ?? product.id,
+						value: product.id,
+					});
+				}
+
+				after = response.paging?.next?.after;
+			} while (after);
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
 export const customObjectDropdown = Property.Dropdown({
 	displayName: 'Type of Custom Object',
 	refreshers: [],
@@ -691,6 +697,62 @@ export const customObjectDropdown = Property.Dropdown({
 		};
 	},
 });
+
+export const staticListsDropdown = Property.Dropdown({
+	displayName: 'List ID',
+	refreshers: [],
+	required: true,
+	options: async ({ auth }) => {
+		if (!auth) {
+			return buildEmptyList({
+				placeholder: 'Please connect your account.',
+			});
+		}
+
+		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+		const options: DropdownOption<number>[] = [];
+
+		let offset = 0;
+		let hasMore = true;
+		do {
+			const request: HttpRequest = {
+				url: 'https://api.hubapi.com/contacts/v1/lists/static',
+				method: HttpMethod.GET,
+				authentication: {
+					type: AuthenticationType.BEARER_TOKEN,
+					token: authValue.access_token,
+				},
+				queryParams: {
+					count: '100',
+					offset: offset.toString(),
+				},
+			};
+			const response = await httpClient.sendRequest<{
+				total: number;
+				offset: number;
+				'has-more': boolean;
+				lists: Array<{ name: string; listId: number }>;
+			}>(request);
+
+			for (const list of response.body.lists) {
+				options.push({
+					label: list.name,
+					value: list.listId,
+				});
+			}
+			offset += 100;
+			hasMore = response.body['has-more'];
+
+		} while (hasMore);
+
+		return {
+			disabled: false,
+			options,
+		};
+	},
+});
+
+
 type DropdownParams = {
 	objectType: OBJECT_TYPE;
 	displayName: string;
