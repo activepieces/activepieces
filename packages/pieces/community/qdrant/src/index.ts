@@ -13,15 +13,13 @@ import { getPoints } from './lib/actions/get-points';
 import { searchPoints } from './lib/actions/search-points';
 
 const qdrantConnectionDescription = `
-# Qdrant Connection
-
-## Using Qdrant cloud
+### Using Qdrant cloud
 1. Connect to your [Qdrant cloud account](https://cloud.qdrant.io)
 2. Create a new cluster if it's the first time you  use Qdrant
 3. Go to Data Access Control and create a new api key and copy it
-4. Go to clusters, click on the arrow \`>\` and copy the Cluster URL
+4. Go to clusters, click on the arrow \`>\` and copy the Cluster URL.
 
-## Using self-hosted Qdrant
+### Using self-hosted Qdrant
 Try to create your own qdrant instance using the [documentation guides](https://qdrant.tech/documentation/guides/)
 `;
 

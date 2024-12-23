@@ -107,7 +107,7 @@ export const returnResponse = createAction({
         break;
       case ResponseType.REDIRECT:
         response.status = StatusCodes.MOVED_PERMANENTLY;
-        response.headers = { ...response.headers, Location: bodyInput };
+        response.headers = { ...response.headers, Location: ensureProtocol(bodyInput) };
         break;
     }
 
@@ -123,4 +123,11 @@ function praseToJson(body: unknown) {
     return JSON.parse(body);
   }
   return JSON.parse(JSON.stringify(body));
+}
+
+function ensureProtocol(url: string): string {
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return `https://${url}`;
+  }
+  return url;
 }

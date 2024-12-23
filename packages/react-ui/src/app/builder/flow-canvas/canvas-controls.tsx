@@ -1,6 +1,13 @@
-import { Node, useReactFlow } from '@xyflow/react';
+import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { Fullscreen, Minus, Plus, RotateCw } from 'lucide-react';
+import {
+  Fullscreen,
+  Hand,
+  Minus,
+  MousePointer,
+  Plus,
+  RotateCw,
+} from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -9,10 +16,13 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
-import { flowUtilConsts } from './consts';
-import { flowCanvasUtils } from './flow-canvas-utils';
-import { ApNode } from './types';
+import { useBuilderStateContext } from '../builder-hooks';
+
+import { flowUtilConsts } from './utils/consts';
+import { flowCanvasUtils } from './utils/flow-canvas-utils';
+import { ApNode } from './utils/types';
 const verticalPaddingOnFitView = 100;
 const duration = 500;
 // Calculate the node's position in relation to the canvas
@@ -58,6 +68,19 @@ const calculateViewportDelta = (
       ? nodePosition.y - canvas.height + flowUtilConsts.AP_NODE_SIZE.STEP.height
       : 0,
 });
+
+const PanningModeIndicator = ({ toggled }: { toggled: boolean }) => {
+  return (
+    <div
+      className={cn(
+        'absolute transition-all bg-primary/15 w-full h-full top-0 left-0',
+        {
+          'opacity-0': !toggled,
+        },
+      )}
+    ></div>
+  );
+};
 
 const CanvasControls = ({
   canvasWidth,
@@ -166,48 +189,98 @@ const CanvasControls = ({
     }
   };
 
+  const [setPanningMode, panningMode] = useBuilderStateContext((state) => {
+    return [state.setPanningMode, state.panningMode];
+  });
+  const spacePressed = useKeyPress('Space');
+  const shiftPressed = useKeyPress('Shift');
+  const isInGrabMode =
+    (spacePressed || panningMode === 'grab') && !shiftPressed;
+
   return (
-    <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="secondary" size="sm" onClick={handleZoomReset}>
-            <RotateCw className="w-5 h-5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top">{t('Reset Zoom')}</TooltipContent>
-      </Tooltip>
+    <>
+      <div className="bg-secondary absolute left-[10px] bottom-[60px] z-50 flex flex-col gap-2 shadow-md">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                if (!spacePressed) {
+                  setPanningMode('pan');
+                }
+              }}
+              className="relative focus:outline-0"
+            >
+              <PanningModeIndicator toggled={!isInGrabMode} />
+              <MousePointer className="w-5 h-5"></MousePointer>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t('Select Mode')}</TooltipContent>
+        </Tooltip>
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="secondary" size="sm" onClick={handleZoomIn}>
-            <Plus className="w-5 h-5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top">{t('Zoom In')}</TooltipContent>
-      </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                if (!spacePressed) {
+                  setPanningMode('grab');
+                }
+              }}
+              className="relative focus:outline-0"
+            >
+              <PanningModeIndicator toggled={isInGrabMode} />
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="secondary" size="sm" onClick={handleZoomOut}>
-            <Minus className="w-5 h-5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top">{t('Zoom Out')}</TooltipContent>
-      </Tooltip>
+              <Hand className="w-5 h-5"></Hand>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">{t('Move Mode')}</TooltipContent>
+        </Tooltip>
+      </div>
+      <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row shadow-md">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="secondary" size="sm" onClick={handleZoomReset}>
+              <RotateCw className="w-5 h-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{t('Reset Zoom')}</TooltipContent>
+        </Tooltip>
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => handleFitToView(false)}
-          >
-            <Fullscreen className="w-5 h-5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top">{t('Fit to View')}</TooltipContent>
-      </Tooltip>
-    </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="secondary" size="sm" onClick={handleZoomIn}>
+              <Plus className="w-5 h-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{t('Zoom In')}</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="secondary" size="sm" onClick={handleZoomOut}>
+              <Minus className="w-5 h-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{t('Zoom Out')}</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleFitToView(false)}
+            >
+              <Fullscreen className="w-5 h-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{t('Fit to View')}</TooltipContent>
+        </Tooltip>
+      </div>
+    </>
   );
 };
 

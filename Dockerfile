@@ -1,4 +1,4 @@
-FROM node:18.20.4-bullseye-slim AS base
+FROM node:18.20.5-bullseye-slim AS base
 
 # Use a cache mount for apt to speed up the process
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         poppler-data && \
     yarn config set python /usr/bin/python3 && \
     npm install -g node-gyp
-RUN npm i -g npm@9.9.3 pnpm@9.12.1 cross-env@7.0.3
+RUN npm i -g npm@9.9.3 pnpm@9.15.0
 
 # Set the locale
 ENV LANG en_US.UTF-8

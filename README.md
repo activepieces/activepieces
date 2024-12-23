@@ -350,6 +350,10 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://rafal.fyi"><img src="https://avatars.githubusercontent.com/u/10667346?v=4?s=100" width="100px;" alt="Rafal Zawadzki"/><br /><sub><b>Rafal Zawadzki</b></sub></a><br /><a href="#plugin-rafalzawadzki" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.pdfmonkey.io/"><img src="https://avatars.githubusercontent.com/u/119303?v=4?s=100" width="100px;" alt="Simon Courtois"/><br /><sub><b>Simon Courtois</b></sub></a><br /><a href="#plugin-simonc" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/alegria-solutions"><img src="https://avatars.githubusercontent.com/u/124846022?v=4?s=100" width="100px;" alt="alegria-solutions"/><br /><sub><b>alegria-solutions</b></sub></a><br /><a href="#plugin-alegria-solutions" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/D-Rowe-FS"><img src="https://avatars.githubusercontent.com/u/142934784?v=4?s=100" width="100px;" alt="D-Rowe-FS"/><br /><sub><b>D-Rowe-FS</b></sub></a><br /><a href="#plugin-D-Rowe-FS" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ChineseHamberger"><img src="https://avatars.githubusercontent.com/u/101547635?v=4?s=100" width="100px;" alt="张晟杰"/><br /><sub><b>张晟杰</b></sub></a><br /><a href="#plugin-ChineseHamberger" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

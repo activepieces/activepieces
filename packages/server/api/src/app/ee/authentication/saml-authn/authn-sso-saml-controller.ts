@@ -1,6 +1,11 @@
+import { ApplicationEventName } from '@activepieces/ee-shared'
+import { networkUtls } from '@activepieces/server-shared'
 import { ActivepiecesError, ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
+import { eventsHooks } from '../../../helper/application-events'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
 import { platformService } from '../../../platform/platform.service'
 import { authenticationHelper } from '../authentication-service/hooks/authentication-helper'
@@ -18,7 +23,7 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             body: req.body,
             query: req.query,
         })
-        const { token, project } = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const { token, project } = await authenticationHelper(req.log).getProjectAndTokenOrThrow(user)
         const url = new URL('/authenticate', `${req.protocol}://${req.hostname}`)
         const response: AuthenticationResponse = {
             token,  
@@ -26,6 +31,17 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             projectId: project.id,
         }
         url.searchParams.append('response', JSON.stringify(response))
+        eventsHooks.get(req.log).sendUserEvent({
+            platformId,
+            userId: response.id,
+            projectId: response.projectId,
+            ip: networkUtls.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+        }, {
+            action: ApplicationEventName.USER_SIGNED_UP,
+            data: {
+                source: 'sso',
+            },
+        })
         return res.redirect(url.toString())
     })
 }

@@ -1,4 +1,4 @@
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -16,7 +16,6 @@ import {
     FlowRunStatus,
     FlowVersionId,
     isNil,
-    MAX_LOG_SIZE,
     PauseMetadata,
     PauseType,
     ProgressUpdateType,
@@ -25,6 +24,7 @@ import {
     SeekPage,
     spreadIfDefined,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
@@ -36,7 +36,9 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
-import { webhookResponseWatcher } from '../../workers/helper/webhook-response-watcher'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
+import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
@@ -44,8 +46,9 @@ import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
+const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
 
-export const flowRunService = {
+export const flowRunService = (log: FastifyBaseLogger) => ({
     async list({
         projectId,
         flowId,
@@ -99,7 +102,7 @@ export const flowRunService = {
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
-        const oldFlowRun = await flowRunService.getOneOrThrow({
+        const oldFlowRun = await flowRunService(log).getOneOrThrow({
             id: flowRunId,
             projectId,
         })
@@ -116,15 +119,15 @@ export const flowRunService = {
 
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
-                return flowRunService.addToQueue({
+                return flowRunService(log).addToQueue({
                     flowRunId: newFlowRun.id,
                     executionType: ExecutionType.RESUME,
                     progressUpdateType: ProgressUpdateType.NONE,
                     checkRequestId: false,
                 })
             case FlowRetryStrategy.ON_LATEST_VERSION: {
-                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(newFlowRun.id)
-                return flowRunService.addToQueue({
+                const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(newFlowRun.id, log)
+                return flowRunService(log).addToQueue({
                     payload,
                     flowRunId: newFlowRun.id,
                     executionType: ExecutionType.BEGIN,
@@ -146,7 +149,9 @@ export const flowRunService = {
         executionType,
         checkRequestId,
     }: AddToQueueParams): Promise<FlowRun | null> {
-        logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
+        log.info({
+            flowRunId,
+        }, '[FlowRunService#resume] adding flow run to queue')
 
         const flowRunToResume = await flowRunRepo().findOneBy({
             id: flowRunId,
@@ -163,12 +168,12 @@ export const flowRunService = {
         const pauseMetadata = flowRunToResume.pauseMetadata
         const matchRequestId = isNil(pauseMetadata) || (pauseMetadata.type === PauseType.WEBHOOK && requestId === pauseMetadata.requestId)
         if (matchRequestId || !checkRequestId) {
-            return flowRunService.start({
+            return flowRunService(log).start({
                 payload,
                 flowRunId: flowRunToResume.id,
                 projectId: flowRunToResume.projectId,
                 flowVersionId: flowRunToResume.flowVersionId,
-                synchronousHandlerId: returnHandlerId(pauseMetadata, requestId),
+                synchronousHandlerId: returnHandlerId(pauseMetadata, requestId, log),
                 httpRequestId: requestId,
                 progressUpdateType,
                 executionType,
@@ -200,7 +205,7 @@ export const flowRunService = {
 
 
         const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
-        await flowRunSideEffects.finish(flowRun)
+        await flowRunSideEffects(log).finish(flowRun)
         return flowRun
     },
 
@@ -215,9 +220,9 @@ export const flowRunService = {
         progressUpdateType,
         httpRequestId,
     }: StartParams): Promise<FlowRun> {
-        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
+        const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
-        const flow = await flowService.getOneOrThrow({
+        const flow = await flowService(log).getOneOrThrow({
             id: flowVersion.flowId,
             projectId,
         })
@@ -229,13 +234,13 @@ export const flowRunService = {
             flowVersionId: flowVersion.id,
             environment,
             flowDisplayName: flowVersion.displayName,
-        })
+        }, log)
 
         flowRun.status = FlowRunStatus.RUNNING
 
         const savedFlowRun = await flowRunRepo().save(flowRun)
-        const priority = await getJobPriority(savedFlowRun.projectId, synchronousHandlerId)
-        await flowRunSideEffects.start({
+        const priority = await getJobPriority(synchronousHandlerId)
+        await flowRunSideEffects(log).start({
             flowRun: savedFlowRun,
             httpRequestId,
             payload,
@@ -249,9 +254,9 @@ export const flowRunService = {
     },
 
     async test({ projectId, flowVersionId }: TestParams): Promise<FlowRun> {
-        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
+        const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
-        const sampleData = await sampleDataService.getOrReturnEmpty({
+        const sampleData = await sampleDataService(log).getOrReturnEmpty({
             projectId,
             flowVersion,
             stepName: flowVersion.trigger.name,
@@ -262,16 +267,17 @@ export const flowRunService = {
             payload: sampleData,
             environment: RunEnvironment.TESTING,
             executionType: ExecutionType.BEGIN,
-            synchronousHandlerId: webhookResponseWatcher.getServerId(),
+            synchronousHandlerId: engineResponseWatcher(log).getServerId(),
             httpRequestId: undefined,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
         })
     },
 
     async pause(params: PauseParams): Promise<void> {
-        logger.info(
-            `[FlowRunService#pause] flowRunId=${params.flowRunId} pauseType=${params.pauseMetadata.type}`,
-        )
+        log.info({
+            flowRunId: params.flowRunId,
+            pauseType: params.pauseMetadata.type,
+        }, '[FlowRunService] pausing flow run')
 
         const { flowRunId, pauseMetadata } = params
         await flowRunRepo().update(flowRunId, {
@@ -282,7 +288,7 @@ export const flowRunService = {
 
         const flowRun = await flowRunRepo().findOneByOrFail({ id: flowRunId })
 
-        await flowRunSideEffects.pause({ flowRun })
+        await flowRunSideEffects(log).pause({ flowRun })
     },
 
     async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
@@ -306,7 +312,7 @@ export const flowRunService = {
         const flowRun = await this.getOneOrThrow(params)
         let steps = {}
         if (!isNil(flowRun.logsFileId)) {
-            const { data } = await fileService.getDataOrThrow({
+            const { data } = await fileService(log).getDataOrThrow({
                 fileId: flowRun.logsFileId,
                 projectId: flowRun.projectId,
             })
@@ -324,30 +330,34 @@ export const flowRunService = {
     },
     async updateLogsAndReturnUploadUrl({ flowRunId, logsFileId, projectId, executionStateString, executionStateContentLength }: UpdateLogs): Promise<string | undefined> {
         const executionState = executionStateString ? Buffer.from(executionStateString) : undefined
-        if (executionStateContentLength > MAX_LOG_SIZE || (!isNil(executionState) && executionState.byteLength > MAX_LOG_SIZE)) {
+        if (executionStateContentLength > maxFileSizeInBytes || (!isNil(executionState) && executionState.byteLength > maxFileSizeInBytes)) {
             const errors = new Error(
-                'Execution Output is too large, maximum size is ' + MAX_LOG_SIZE,
+                'Execution Output is too large, maximum size is ' + maxFileSizeInBytes,
             )
-            exceptionHandler.handle(errors)
+            exceptionHandler.handle(errors, log)
             throw errors
         }
         const newLogsFileId = logsFileId ?? apId()
-        const file = await fileService.save({
+        const file = await fileService(log).save({
             fileId: newLogsFileId,
             projectId,
             data: executionState ?? null,
             size: executionStateContentLength,
             type: FileType.FLOW_RUN_LOG,
             compression: FileCompression.NONE,
+            metadata: {
+                flowRunId,
+                projectId,
+            },
         })
         if (isNil(logsFileId)) {
             await flowRunRepo().update(flowRunId, {
                 logsFileId: newLogsFileId,
             })
         }
-        return getUploadUrl(file.s3Key, executionState, executionStateContentLength)
+        return getUploadUrl(file.s3Key, executionState, executionStateContentLength, log)
     },
-}
+})
 
 async function filterFlowRunsAndApplyFilters(
     projectId: ProjectId,
@@ -393,22 +403,23 @@ async function filterFlowRunsAndApplyFilters(
 }
 
 
-const getUploadUrl = async (s3Key: string | undefined, executionDate: unknown, contentLength: number): Promise<string | undefined> => {
+const getUploadUrl = async (s3Key: string | undefined, executionDate: unknown, contentLength: number, log: FastifyBaseLogger): Promise<string | undefined> => {
     if (!isNil(executionDate)) {
         return undefined
     }
     assertNotNullOrUndefined(s3Key, 's3Key')
-    return s3Helper.putS3SignedUrl(s3Key, contentLength)
+    return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
 }
 
 const getFlowRunOrCreate = async (
     params: GetOrCreateParams,
+    log: FastifyBaseLogger,
 ): Promise<Partial<FlowRun>> => {
     const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } =
         params
 
     if (id) {
-        return flowRunService.getOneOrThrow({
+        return flowRunService(log).getOneOrThrow({
             id,
             projectId,
         })
@@ -427,12 +438,13 @@ const getFlowRunOrCreate = async (
 
 async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
     flowRunId: FlowRunId,
+    log: FastifyBaseLogger,
 ): Promise<unknown> {
-    const flowRun = await flowRunService.getOnePopulatedOrThrow({
+    const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
         id: flowRunId,
         projectId: undefined,
     })
-    const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(
+    const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
         flowRun.flowId,
     )
     await flowRunRepo().update(flowRunId, {
@@ -441,8 +453,8 @@ async function updateFlowRunToLatestFlowVersionIdAndReturnPayload(
     return flowRun.steps ? flowRun.steps[flowVersion.trigger.name]?.output : undefined
 }
 
-function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined): string {
-    const handlerId = webhookResponseWatcher.getServerId()
+function returnHandlerId(pauseMetadata: PauseMetadata | undefined, requestId: string | undefined, log: FastifyBaseLogger): string {
+    const handlerId = engineResponseWatcher(log).getServerId()
     if (isNil(pauseMetadata)) {
         return handlerId
     }

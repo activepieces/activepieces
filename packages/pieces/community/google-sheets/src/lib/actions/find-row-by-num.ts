@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { googleSheetsCommon, getGoogleSheetRows } from '../common/common';
+import { googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../..';
 
 export const findRowByNumAction = createAction({
@@ -18,16 +18,11 @@ export const findRowByNumAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const sheetName = await googleSheetsCommon.findSheetName(
-      auth['access_token'],
-      propsValue['spreadsheet_id'],
-      propsValue['sheet_id']
-    );
 
-    const row = await getGoogleSheetRows({
+    const row = await googleSheetsCommon.getGoogleSheetRows({
       accessToken: auth['access_token'],
-      sheetName: sheetName,
-      spreadSheetId: propsValue['spreadsheet_id'],
+      sheetId: propsValue['sheet_id'],
+      spreadsheetId: propsValue['spreadsheet_id'],
       rowIndex_s: propsValue['rowNumber'],
       rowIndex_e: propsValue['rowNumber'],
     });

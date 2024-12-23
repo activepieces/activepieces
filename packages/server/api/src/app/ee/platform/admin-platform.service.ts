@@ -7,12 +7,13 @@ import {
     ProjectId,
     UserId,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { customDomainService } from '../custom-domains/custom-domain.service'
 import { licenseKeysService } from '../license-keys/license-keys-service'
 
-export const adminPlatformService = {
+export const adminPlatformService = (log: FastifyBaseLogger) => ({
     async add({
         userId,
         projectId,
@@ -35,22 +36,27 @@ export const adminPlatformService = {
             id: platform.id,
             customDomainsEnabled: true,
         })
-        
-        await customDomainService.create({
+
+        const customDomain = await customDomainService.create({
             domain,
             platformId: platform.id,
         })
 
-        await licenseKeysService.requestTrial({
+        await licenseKeysService(log).requestTrial({
             email: `mo+trial${name}@activepieces.com`,
             fullName: name,
             companyName: name,
             goal: 'Manual Trial',
             numberOfEmployees: 'TBD',
         })
+
+        await customDomainService.verifyDomain({
+            id: customDomain.id,
+            platformId: customDomain.platformId,
+        })
         return platform
     },
-}
+})
 
 type AdminAddPlatformParams = {
     userId: UserId

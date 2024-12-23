@@ -296,6 +296,9 @@
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
+      "@activepieces/piece-harvest": [
+        "packages/pieces/community/harvest/src/index.ts"
+      ],
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
@@ -401,6 +404,9 @@
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-outlook-calendar": [
+        "packages/pieces/community/microsoft-outlook-calendar/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
       ],
@@ -470,6 +476,9 @@
       ],
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
+      ],
+      "@activepieces/piece-pylon": [
+        "packages/pieces/community/pylon/src/index.ts"
       ],
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"

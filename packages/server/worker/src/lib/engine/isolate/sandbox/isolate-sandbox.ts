@@ -2,8 +2,10 @@ import { exec } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process, { arch, cwd } from 'node:process'
-import { AppSystemProp, fileExists, getEngineTimeout, logger, PiecesSource, SharedSystemProp, system } from '@activepieces/server-shared'
+import { fileExists, getEngineTimeout, PiecesSource } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { workerMachine } from '../../../utils/machine'
 import { ExecuteSandboxResult } from '../../engine-runner'
 
 type SandboxCtorParams = {
@@ -12,11 +14,11 @@ type SandboxCtorParams = {
 
 
 type AssignCacheParams = {
-    cacheKey: string
     globalCachePath: string
     globalCodesPath: string
     flowVersionId?: string
     customPiecesPath: string | undefined
+    log: FastifyBaseLogger
 }
 
 const getIsolateExecutableName = (): string => {
@@ -38,7 +40,7 @@ export class IsolateSandbox {
 
     public readonly boxId: number
     public inUse = false
-    private _cacheKey?: string
+    private _log?: FastifyBaseLogger
     private _globalCachePath?: string
     private _globalCodesPath?: string
     private _flowVersionId?: string
@@ -47,13 +49,8 @@ export class IsolateSandbox {
     public constructor(params: SandboxCtorParams) {
         this.boxId = params.boxId
     }
-
-    public get cacheKey(): string | undefined {
-        return this._cacheKey
-    }
-
     public async cleanUp(): Promise<void> {
-        logger.debug({ boxId: this.boxId }, '[IsolateSandbox#recreate]')
+        this._log?.debug({ boxId: this.boxId }, '[IsolateSandbox#recreate]')
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --cleanup`)
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --init`)
     }
@@ -70,7 +67,7 @@ export class IsolateSandbox {
 
         try {
 
-            const timeout = getEngineTimeout(operationType)
+            const timeout = getEngineTimeout(operationType, workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS)
             const dirsToBindArgs = this.getDirsToBindArgs()
             const propagatedEnvVars = Object.entries(this.getEnvironmentVariables()).map(([key, value]) => `--env=${key}='${value}'`)
             const fullCommand = [
@@ -111,7 +108,7 @@ export class IsolateSandbox {
             standardError: await readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' }),
         }
 
-        logger.debug(result, '[IsolateSandbox#runCommandLine] result')
+        this._log?.debug(result, '[IsolateSandbox#runCommandLine] result')
 
         return result
     }
@@ -126,21 +123,22 @@ export class IsolateSandbox {
 
 
     public async assignCache({
-        cacheKey,
         globalCachePath,
+        log,
         globalCodesPath,
         flowVersionId,
         customPiecesPath,
     }: AssignCacheParams): Promise<void> {
-        logger.debug(
-            { boxId: this.boxId, cacheKey, globalCachePath, globalCodesPath, flowVersionId },
-            '[IsolateSandbox#assignCache]',
-        )
-        this._cacheKey = cacheKey
+        this._log = log
         this._globalCachePath = globalCachePath
         this._globalCodesPath = globalCodesPath
         this._customPiecesPath = customPiecesPath
         this._flowVersionId = flowVersionId
+
+        log.debug(
+            { boxId: this.boxId, globalCachePath, globalCodesPath, flowVersionId },
+            '[IsolateSandbox#assignCache]',
+        )
     }
 
     protected async parseMetaFile(): Promise<Record<string, unknown>> {
@@ -164,14 +162,13 @@ export class IsolateSandbox {
         }
 
         const output = JSON.parse(await readFile(outputFile, { encoding: 'utf-8' }))
-        logger.trace(output, '[Sandbox#parseFunctionOutput] output')
+        this._log?.trace(output, '[Sandbox#parseFunctionOutput] output')
         return output
     }
 
     private static runIsolate(cmd: string): Promise<string> {
         const currentDir = cwd()
         const fullCmd = `${currentDir}/packages/server/api/src/assets/${this.isolateExecutableName} ${cmd}`
-        logger.debug({ fullCmd }, '[IsolateSandbox#runIsolate] fullCmd')
         return new Promise((resolve, reject) => {
             exec(fullCmd, (error, stdout: string | PromiseLike<string>, stderr) => {
                 if (error) {
@@ -188,19 +185,19 @@ export class IsolateSandbox {
     }
 
     private getEnvironmentVariables(): Record<string, string> {
-        const allowedEnvVariables = system.getList(SharedSystemProp.SANDBOX_PROPAGATED_ENV_VARS)
+        const allowedEnvVariables = workerMachine.getSettings().SANDBOX_PROPAGATED_ENV_VARS
         const propagatedEnvVars = Object.fromEntries(allowedEnvVariables.map((envVar) => [envVar, process.env[envVar]]))
         return {
             ...propagatedEnvVars,
             HOME: '/tmp/',
             NODE_OPTIONS: '--enable-source-maps',
-            AP_EXECUTION_MODE: system.getOrThrow(SharedSystemProp.EXECUTION_MODE),
-            AP_PIECES_SOURCE: system.getOrThrow(SharedSystemProp.PIECES_SOURCE),
-            AP_PAUSED_FLOW_TIMEOUT_DAYS: system.getOrThrow(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+            AP_EXECUTION_MODE: workerMachine.getSettings().EXECUTION_MODE,
+            AP_PIECES_SOURCE: workerMachine.getSettings().PIECES_SOURCE,
+            AP_PAUSED_FLOW_TIMEOUT_DAYS: workerMachine.getSettings().PAUSED_FLOW_TIMEOUT_DAYS.toString(),
             AP_BASE_CODE_DIRECTORY: IsolateSandbox.sandboxCodesCachePath,
-            AP_MAX_FILE_SIZE_MB: system.getOrThrow(SharedSystemProp.MAX_FILE_SIZE_MB),
-            AP_FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
-            AP_S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
+            AP_MAX_FILE_SIZE_MB: workerMachine.getSettings().MAX_FILE_SIZE_MB.toString(),
+            AP_FILE_STORAGE_LOCATION: workerMachine.getSettings().FILE_STORAGE_LOCATION,
+            AP_S3_USE_SIGNED_URLS: workerMachine.getSettings().S3_USE_SIGNED_URLS,
         }
     }
 
@@ -226,7 +223,7 @@ export class IsolateSandbox {
             dirsToBind.push(`--dir=${path.join(IsolateSandbox.sandboxCodesCachePath, this._flowVersionId)}=${path.resolve(globalCodesCachePath, this._flowVersionId)}`)
         }
 
-        const piecesSource = system.getOrThrow<PiecesSource>(SharedSystemProp.PIECES_SOURCE)
+        const piecesSource = workerMachine.getSettings().PIECES_SOURCE
 
         if (piecesSource === PiecesSource.FILE) {
             const basePath = path.resolve(__dirname.split('/dist')[0])

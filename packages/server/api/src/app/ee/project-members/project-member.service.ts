@@ -16,6 +16,7 @@ import {
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -25,10 +26,9 @@ import { projectRoleService } from '../project-role/project-role.service'
 import {
     ProjectMemberEntity,
 } from './project-member.entity'
-
 const repo = repoFactory(ProjectMemberEntity)
 
-export const projectMemberService = {
+export const projectMemberService = (_log: FastifyBaseLogger) => ({
     async upsert({
         userId,
         projectId,
@@ -72,6 +72,7 @@ export const projectMemberService = {
         projectId: ProjectId,
         cursorRequest: Cursor | null,
         limit: number,
+        projectRoleId: string | undefined,
     ): Promise<SeekPage<ProjectMemberWithUser>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -86,6 +87,11 @@ export const projectMemberService = {
         const queryBuilder = repo()
             .createQueryBuilder('project_member')
             .where({ projectId })
+
+        if (projectRoleId) {
+            queryBuilder.andWhere({ projectRoleId })
+        }
+
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const enrichedData = await Promise.all(
             data.map(async (member) => {
@@ -158,7 +164,7 @@ export const projectMemberService = {
     async countTeamMembers(projectId: ProjectId): Promise<number> {
         return repo().countBy({ projectId })
     },
-}
+})
 
 type UpsertParams = {
     userId: string

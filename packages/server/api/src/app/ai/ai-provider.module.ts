@@ -1,4 +1,3 @@
-import { logger } from '@activepieces/server-shared'
 import {
     AiProviderConfig,
     AiProviderWithoutSensitiveData,
@@ -46,7 +45,7 @@ const aiProviderController: FastifyPluginCallbackTypebox = (
 ) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     fastify.post('/', CreateProxyConfigRequest, async (request) => {
-        telemetry
+        telemetry(request.log)
             .trackProject(request.principal.projectId, {
                 name: TelemetryEventName.AI_PROVIDER_CONFIGURED,
                 payload: {
@@ -56,7 +55,7 @@ const aiProviderController: FastifyPluginCallbackTypebox = (
                 },
             })
             .catch((e) =>
-                logger.error(
+                fastify.log.error(
                     e,
                     '[ConfigureAiProvider#telemetry] telemetry.trackProject',
                 ),

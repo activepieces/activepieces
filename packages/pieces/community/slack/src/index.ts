@@ -3,6 +3,7 @@ import {
   OAuth2PropertyValue,
   PieceAuth,
   createPiece,
+  Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import crypto from 'node:crypto';
@@ -124,10 +125,28 @@ export const slack = createPiece({
         return 'https://slack.com/api';
       },
       auth: slackAuth,
-      authMapping: async (auth) => {
-        return {
-          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-        };
+      authMapping: async (auth, propsValue) => {
+        if (propsValue.useUserToken) {
+          return {
+            Authorization: `Bearer ${
+              (auth as OAuth2PropertyValue).data['authed_user']?.access_token
+            }`,
+          };
+        } else {
+          return {
+            Authorization: `Bearer ${
+              (auth as OAuth2PropertyValue).access_token
+            }`,
+          };
+        }
+      },
+      extraProps: {
+        useUserToken: Property.Checkbox({
+          displayName: 'Use user token',
+          description: 'Use user token instead of bot token',
+          required: true,
+          defaultValue: false,
+        }),
       },
     }),
   ],

@@ -43,7 +43,7 @@ export const declareCertificationFolderToRetake = createAction({
   },
 
   async run(context) {
-    const message = {
+     const message = {
       detailedResult: context.propsValue.detailedResult,
       europeanLanguageLevel: context.propsValue.europeanLanguageLevel,
       examinationDate: context.propsValue.examinationDate

@@ -7552,6 +7552,9 @@
                               "displayName": {
                                 "type": "string"
                               },
+                              "skip": {
+                                "type": "boolean"
+                              },
                               "type": {
                                 "type": "string",
                                 "enum": [
@@ -7651,6 +7654,9 @@
                               "displayName": {
                                 "type": "string"
                               },
+                              "skip": {
+                                "type": "boolean"
+                              },
                               "type": {
                                 "type": "string",
                                 "enum": [
@@ -7706,6 +7712,9 @@
                               },
                               "displayName": {
                                 "type": "string"
+                              },
+                              "skip": {
+                                "type": "boolean"
                               },
                               "type": {
                                 "type": "string",
@@ -7836,6 +7845,9 @@
                               },
                               "displayName": {
                                 "type": "string"
+                              },
+                              "skip": {
+                                "type": "boolean"
                               },
                               "type": {
                                 "type": "string",
@@ -8219,6 +8231,9 @@
                                   "displayName": {
                                     "type": "string"
                                   },
+                                  "skip": {
+                                    "type": "boolean"
+                                  },
                                   "type": {
                                     "type": "string",
                                     "enum": [
@@ -8318,6 +8333,9 @@
                                   "displayName": {
                                     "type": "string"
                                   },
+                                  "skip": {
+                                    "type": "boolean"
+                                  },
                                   "type": {
                                     "type": "string",
                                     "enum": [
@@ -8373,6 +8391,9 @@
                                   },
                                   "displayName": {
                                     "type": "string"
+                                  },
+                                  "skip": {
+                                    "type": "boolean"
                                   },
                                   "type": {
                                     "type": "string",
@@ -8503,6 +8524,9 @@
                                   },
                                   "displayName": {
                                     "type": "string"
+                                  },
+                                  "skip": {
+                                    "type": "boolean"
                                   },
                                   "type": {
                                     "type": "string",
@@ -9348,6 +9372,37 @@
                         "required": [
                           "branchIndex",
                           "stepName"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
+                  },
+                  {
+                    "title": "Skip Action",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "SET_SKIP_ACTION"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "skip": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "skip"
                         ]
                       }
                     },

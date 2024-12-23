@@ -85,6 +85,7 @@ export const onChangedData = createTrigger({
       store,
       auth,
       propsValue,
+      files: context.files,
     });
   },
   async onEnable(context) {
@@ -111,6 +112,7 @@ export const onChangedData = createTrigger({
       store,
       auth,
       propsValue,
+      files: context.files,
     });
   },
 });

@@ -1,11 +1,13 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddAuditLogIndicies1731711188507 implements MigrationInterface {
     name = 'AddAuditLogIndicies1731711188507'
     transaction = false
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        log.info({
             name: this.name,
         }, 'up')
         await queryRunner.query(`
@@ -23,7 +25,7 @@ export class AddAuditLogIndicies1731711188507 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        log.info({
             name: this.name,
         }, 'down')
         await queryRunner.query(`

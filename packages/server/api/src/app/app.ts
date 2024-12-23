@@ -1,6 +1,6 @@
 import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { AppSystemProp, initializeSentry, logger, QueueMode, rejectedPromiseHandler, SharedSystemProp, system } from '@activepieces/server-shared'
+import { exceptionHandler, rejectedPromiseHandler, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, isNil, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -55,7 +55,6 @@ import { projectMemberModule } from './ee/project-members/project-member.module'
 import { projectRoleModule } from './ee/project-role/project-role.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
-import { referralModule } from './ee/referrals/referral.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { fileModule } from './file/file.module'
@@ -71,6 +70,8 @@ import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { domainHelper } from './helper/domain-helper'
 import { openapiModule } from './helper/openapi/openapi.module'
+import { QueueMode, system } from './helper/system/system'
+import { AppSystemProp } from './helper/system/system-prop'
 import { systemJobsSchedule } from './helper/system-jobs'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
@@ -90,7 +91,7 @@ import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
 import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
-import { webhookResponseWatcher } from './workers/helper/webhook-response-watcher'
+import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
@@ -174,9 +175,13 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     })
 
     app.io.on('connection', (socket: Socket) => {
-        rejectedPromiseHandler(websocketService.init(socket))
+        rejectedPromiseHandler(websocketService.init(socket, app.log), app.log)
     })
 
+    app.addHook('onResponse', async (request, reply) => {
+        // eslint-disable-next-line
+        reply.header('x-request-id', request.id)
+    })
     app.addHook('onRequest', async (request, reply) => {
         const route = app.hasRoute({
             method: request.method as HTTPMethods,
@@ -193,7 +198,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
 
     app.addHook('preHandler', securityHandlerChain)
     app.addHook('preHandler', rbacMiddleware)
-    await systemJobsSchedule.init()
+    await systemJobsSchedule(app.log).init()
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
@@ -211,7 +216,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
-    await pieceSyncService.setup()
+    await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
     await app.register(issuesModule)
     await app.register(authnSsoSamlModule)
@@ -245,10 +250,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         },
     )
 
-    await validateEnvPropsOnStartup()
+    await validateEnvPropsOnStartup(app.log)
 
     const edition = system.getEdition()
-    logger.info({
+    app.log.info({
         edition,
     }, 'Activepieces Edition')
     switch (edition) {
@@ -258,7 +263,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
-            await app.register(referralModule)
             await app.register(adminPieceModule)
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
@@ -278,18 +282,16 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectBillingModule)
             await app.register(projectRoleModule)
             await app.register(globalConnectionModule)
-            setPlatformOAuthService({
-                service: platformOAuth2Service,
-            })
-            projectHooks.setHooks(projectEnterpriseHooks)
+            setPlatformOAuthService(platformOAuth2Service(app.log))
+            projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            flowRunHooks.setHooks(platformRunHooks)
-            pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
+            flowRunHooks.set(platformRunHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
-            initializeSentry()
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)
@@ -310,13 +312,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(globalConnectionModule)
-            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService.sendReminderJobHandler)
-            setPlatformOAuthService({
-                service: platformOAuth2Service,
-            })
-            projectHooks.setHooks(projectEnterpriseHooks)
+            systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
+            setPlatformOAuthService(platformOAuth2Service(app.log))
+            projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
-            flowRunHooks.setHooks(platformRunHooks)
+            flowRunHooks.set(platformRunHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
@@ -330,10 +330,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     }
 
     app.addHook('onClose', async () => {
-        logger.info('Shutting down')
-        await flowConsumer.close()
-        await systemJobsSchedule.close()
-        await webhookResponseWatcher.shutdown()
+        app.log.info('Shutting down')
+        await flowConsumer(app.log).close()
+        await systemJobsSchedule(app.log).close()
+        await engineResponseWatcher(app.log).shutdown()
     })
 
     return app
@@ -356,9 +356,9 @@ async function getAdapter() {
 }
 
 
-export async function appPostBoot(): Promise<void> {
+export async function appPostBoot(app: FastifyInstance): Promise<void> {
 
-    logger.info(`
+    app.log.info(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
    /  \\    | |         | |      | |    \\ \\  / /  | |__    | |__) |   | |   | |__    | |      | |__    | (___
@@ -366,20 +366,20 @@ export async function appPostBoot(): Promise<void> {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-The application started on ${system.get(SharedSystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.`)
+The application started on ${system.get(WorkerSystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.`)
 
-    const environment = system.get(SharedSystemProp.ENVIRONMENT)
-    const piecesSource = system.getOrThrow(SharedSystemProp.PIECES_SOURCE)
+    const environment = system.get(AppSystemProp.ENVIRONMENT)
+    const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)
     const pieces = process.env.AP_DEV_PIECES
 
-    logger.warn(
+    app.log.warn(
         `[WARNING]: Pieces will be loaded from source type ${piecesSource}`,
     )
     if (environment === ApEnvironment.DEVELOPMENT) {
-        logger.warn(
+        app.log.warn(
             `[WARNING]: The application is running in ${environment} mode.`,
         )
-        logger.warn(
+        app.log.warn(
             `[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`,
         )
     }

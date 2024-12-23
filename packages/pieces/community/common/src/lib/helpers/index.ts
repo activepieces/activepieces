@@ -1,39 +1,71 @@
-import { OAuth2PropertyValue, PieceAuthProperty, Property, StaticDropdownProperty, createAction } from "@activepieces/pieces-framework";
-import { HttpError, HttpHeaders, HttpMethod, HttpRequest, QueryParams, httpClient } from "../http";
-import { assertNotNullOrUndefined } from "@activepieces/shared";
+import {
+  OAuth2PropertyValue,
+  PieceAuthProperty,
+  Property,
+  StaticDropdownProperty,
+  createAction,
+  StaticPropsValue,
+  InputPropertyMap,
+} from '@activepieces/pieces-framework';
+import {
+  HttpError,
+  HttpHeaders,
+  HttpMethod,
+  HttpRequest,
+  QueryParams,
+  httpClient,
+} from '../http';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 
-export const getAccessTokenOrThrow = (auth: OAuth2PropertyValue | undefined): string => {
+export const getAccessTokenOrThrow = (
+  auth: OAuth2PropertyValue | undefined
+): string => {
   const accessToken = auth?.access_token;
 
   if (accessToken === undefined) {
-    throw new Error("Invalid bearer token");
+    throw new Error('Invalid bearer token');
   }
 
   return accessToken;
 };
 
-export function createCustomApiCallAction({ auth, baseUrl, authMapping, description, displayName, name, props }: {
-  auth?: PieceAuthProperty,
-  baseUrl: (auth?: unknown) => string,
-  authMapping?: (auth: unknown) => Promise<HttpHeaders>,
+export function createCustomApiCallAction({
+  auth,
+  baseUrl,
+  authMapping,
+  description,
+  displayName,
+  name,
+  props,
+  extraProps,
+}: {
+  auth?: PieceAuthProperty;
+  baseUrl: (auth?: unknown) => string;
+  authMapping?: (
+    auth: unknown,
+    propsValue: StaticPropsValue<any>
+  ) => Promise<HttpHeaders>;
   //   add description as a parameter that can be null
-  description?: string | null,
-  displayName?: string | null,
-  name?: string | null,
+  description?: string | null;
+  displayName?: string | null;
+  name?: string | null;
   props?: {
-    url?: Partial<ReturnType<typeof Property.ShortText>>,
-    method?: Partial<StaticDropdownProperty<HttpMethod, boolean>>,
-    headers?: Partial<ReturnType<typeof Property.Object>>,
-    queryParams?: Partial<ReturnType<typeof Property.Object>>,
-    body?: Partial<ReturnType<typeof Property.Json>>,
-    failsafe?: Partial<ReturnType<typeof Property.Checkbox>>,
-    timeout?: Partial<ReturnType<typeof Property.Number>>,
-  }
+    url?: Partial<ReturnType<typeof Property.ShortText>>;
+    method?: Partial<StaticDropdownProperty<HttpMethod, boolean>>;
+    headers?: Partial<ReturnType<typeof Property.Object>>;
+    queryParams?: Partial<ReturnType<typeof Property.Object>>;
+    body?: Partial<ReturnType<typeof Property.Json>>;
+    failsafe?: Partial<ReturnType<typeof Property.Checkbox>>;
+    timeout?: Partial<ReturnType<typeof Property.Number>>;
+  };
+  extraProps?: InputPropertyMap;
 }) {
   return createAction({
     name: name ? name : 'custom_api_call',
     displayName: displayName ? displayName : 'Custom API Call',
-    description: description ? description : 'Make a custom API call to a specific endpoint',
+    description: description
+      ? description
+      : 'Make a custom API call to a specific endpoint',
     auth: auth ? auth : undefined,
     requireAuth: auth ? true : false,
     props: {
@@ -49,26 +81,27 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping, descript
               required: true,
               defaultValue: baseUrl(auth),
               ...(props?.url ?? {}),
-            })
-          }
-        }
+            }),
+          };
+        },
       }),
       method: Property.StaticDropdown({
         displayName: 'Method',
         required: true,
         options: {
-          options: Object.values(HttpMethod).map(v => {
+          options: Object.values(HttpMethod).map((v) => {
             return {
               label: v,
               value: v,
-            }
-          })
+            };
+          }),
         },
         ...(props?.method ?? {}),
       }),
       headers: Property.Object({
         displayName: 'Headers',
-        description: 'Authorization headers are injected automatically from your connection.',
+        description:
+          'Authorization headers are injected automatically from your connection.',
         required: true,
         ...(props?.headers ?? {}),
       }),
@@ -92,6 +125,7 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping, descript
         required: false,
         ...(props?.timeout ?? {}),
       }),
+      ...extraProps,
     },
 
     run: async (context) => {
@@ -103,12 +137,12 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping, descript
 
       let headersValue = headers as HttpHeaders;
       if (authMapping) {
-        const headers = await authMapping(context.auth)
+        const headers = await authMapping(context.auth, context.propsValue);
         if (headers) {
           headersValue = {
             ...headersValue,
-            ...headers
-          }
+            ...headers,
+          };
         }
       }
 
@@ -128,10 +162,10 @@ export function createCustomApiCallAction({ auth, baseUrl, authMapping, descript
         return await httpClient.sendRequest(request);
       } catch (error) {
         if (failsafe) {
-          return (error as HttpError).errorMessage()
+          return (error as HttpError).errorMessage();
         }
         throw error;
       }
-    }
-  })
+    },
+  });
 }

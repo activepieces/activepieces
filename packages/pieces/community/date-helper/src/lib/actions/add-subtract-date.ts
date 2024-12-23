@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import advancedFormat from 'dayjs/plugin/advancedFormat';
 import {
+  getCorrectedFormat,
   optionalTimeFormats,
   parseDate,
   timeFormat,
@@ -36,7 +37,7 @@ export const addSubtractDateAction = createAction({
         options: optionalTimeFormats,
       },
       required: true,
-      defaultValue: timeFormat.format00,
+      defaultValue: getCorrectedFormat(timeFormat.format00),
     }),
     outputFormat: Property.StaticDropdown({
       displayName: 'To Time Format',
@@ -45,7 +46,7 @@ export const addSubtractDateAction = createAction({
         options: optionalTimeFormats,
       },
       required: true,
-      defaultValue: timeFormat.format00,
+      defaultValue: getCorrectedFormat(timeFormat.format00),
     }),
     expression: Property.LongText({
       displayName: 'Expression',
@@ -56,7 +57,7 @@ export const addSubtractDateAction = createAction({
   },
   async run(context) {
     const inputDate = context.propsValue.inputDate;
-    const inputDateFormat = context.propsValue.inputDateFormat;
+    const inputDateFormat = getCorrectedFormat(context.propsValue.inputDateFormat);
     const outputFormat = context.propsValue.outputFormat;
     const expression = context.propsValue.expression;
     const BeforeDate = parseDate(inputDate, inputDateFormat);

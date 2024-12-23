@@ -21,23 +21,24 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 ) => {
 
     app.get('/role', GetCurrentProjectMemberRoleRequest, async (request) => {
-        return  projectMemberService.getRole({
+        return  projectMemberService(request.log).getRole({
             projectId: request.principal.projectId,
             userId: request.principal.id,
         })
     })
 
     app.get('/', ListProjectMembersRequestQueryOptions, async (request) => {
-        return projectMemberService.list(
+        return projectMemberService(request.log).list(
             request.principal.projectId,
             request.query.cursor ?? null,
             request.query.limit ?? DEFAULT_LIMIT_SIZE,
+            request.query.projectRoleId ?? undefined,
         )
     })
 
 
     app.post('/:id', UpdateProjectMemberRoleRequest, async (req) => {
-        return projectMemberService.update({
+        return projectMemberService(req.log).update({
             id: req.params.id,
             role: req.body.role,
             projectId: req.principal.projectId,
@@ -47,7 +48,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 
 
     app.delete('/:id', DeleteProjectMemberRequest, async (request, reply) => {
-        await projectMemberService.delete(
+        await projectMemberService(request.log).delete(
             request.principal.projectId,
             request.params.id,
         )
@@ -91,7 +92,7 @@ const ListProjectMembersRequestQueryOptions = {
         tags: ['project-members'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListProjectMembersRequestQuery,
-        responnse: {
+        response: {
             [StatusCodes.OK]: SeekPage(ProjectMemberWithUser),
         },
     },

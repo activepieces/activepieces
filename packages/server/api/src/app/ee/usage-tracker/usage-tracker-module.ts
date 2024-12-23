@@ -1,10 +1,11 @@
-import { AppSystemProp, system } from '@activepieces/server-shared'
 import { Platform } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { Between, Equal } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flagService } from '../../flags/flag.service'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
@@ -16,9 +17,9 @@ const userRepo = repoFactory(UserEntity)
 const projectRepo = repoFactory(ProjectEntity)
 const platformRepo = repoFactory(PlatformEntity)
 
-export const usageTrackerModule: FastifyPluginAsyncTypebox = async () => {
+export const usageTrackerModule: FastifyPluginAsyncTypebox = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.USAGE_REPORT, sendUsageReport)
-    await systemJobsSchedule.upsertJob({
+    await systemJobsSchedule(app.log).upsertJob({
         job: {
             name: SystemJobName.USAGE_REPORT,
             data: {},

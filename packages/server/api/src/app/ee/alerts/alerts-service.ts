@@ -1,6 +1,7 @@
 import { Alert, AlertChannel, Issue, ListAlertsParams } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -12,7 +13,7 @@ import { alertsHandler } from './alerts-handler'
 
 const repo = repoFactory(AlertEntity)
 
-export const alertsService = {
+export const alertsService = (log: FastifyBaseLogger) => ({
     async sendAlertOnRunFinish({ issue, flowRunId }: { issue: Issue, flowRunId: string }): Promise<void> {
         const project = await projectService.getOneOrThrow(issue.projectId)
         const platform = await platformService.getOneOrThrow(project.platformId)
@@ -20,9 +21,9 @@ export const alertsService = {
             return
         }
 
-        const flowVersion = await flowVersionService.getLatestLockedVersionOrThrow(issue.flowId)
+        const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
 
-        await alertsHandler[project.notifyStatus]({
+        await alertsHandler(log)[project.notifyStatus]({
             flowRunId,
             projectId: issue.projectId,
             platformId: platform.id,
@@ -85,7 +86,7 @@ export const alertsService = {
             id: alertId,
         })
     },
-}
+})
 
 type AddPrams = { 
     projectId: string

@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition, apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 implements MigrationInterface {
     name = 'MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258'
@@ -24,7 +26,7 @@ export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 impl
             ALTER TABLE "signing_key" DROP COLUMN "generatedBy"
         `)
 
-        logger.info({ name: this.name }, 'up')
+        log.info({ name: this.name }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -54,7 +56,7 @@ export class MoveGeneratedByFromSigningKeyToAuditEventPostgres1709669091258 impl
             ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
 
-        logger.info({ name: this.name }, 'down')
+        log.info({ name: this.name }, 'down')
     }
 
 }

@@ -47,6 +47,7 @@ export const onEventChanged = createTrigger({
       propsValue: {
         calendarId: propsValue.calendarId,
       },
+      files: context.files,
     });
   },
   async onEnable(context) {
@@ -79,6 +80,7 @@ export const onEventChanged = createTrigger({
       propsValue: {
         calendarId: propsValue.calendarId,
       },
+      files: context.files,
     });
   },
 });

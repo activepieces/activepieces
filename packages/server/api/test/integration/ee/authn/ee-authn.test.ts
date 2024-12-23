@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -14,15 +14,17 @@ import {
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    mockLog = app!.log!
 })
 
 beforeEach(async () => {
-    emailService.sendOtp = jest.fn()
-    stripeHelper.getOrCreateCustomer = jest
+    emailService(mockLog).sendOtp = jest.fn()
+    stripeHelper(mockLog).getOrCreateCustomer = jest
         .fn()
         .mockResolvedValue(faker.string.alphanumeric())
     await databaseConnection().getRepository('flag').delete({})

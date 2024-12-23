@@ -33,7 +33,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
         const platformId = req.principal.platform.id
         if (flagService.isCloudPlatform(platformId)) {
             assertOneOfTheseScope(req.body.scope, [PieceScope.PROJECT])
-            const platformRole = await projectMemberService.getRole({
+            const platformRole = await projectMemberService(req.log).getRole({
                 projectId: req.principal.projectId,
                 userId: req.principal.id,
             })
@@ -45,16 +45,21 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
                     },
                 })
             }
+            await pieceService(req.log).installPiece(
+                platformId,
+                req.principal.projectId,
+                req.body,
+            )
         }
         else {
             assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
             await platformMustBeOwnedByCurrentUser.call(app, req, reply)
+            await pieceService(req.log).installPiece(
+                platformId,
+                undefined,
+                req.body,
+            )
         }
-        await pieceService.installPiece(
-            platformId,
-            req.principal.projectId,
-            req.body,
-        )
         await reply.status(StatusCodes.CREATED).send({})
     },
     )

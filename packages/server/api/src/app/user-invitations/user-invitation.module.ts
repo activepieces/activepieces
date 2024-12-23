@@ -19,7 +19,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
@@ -45,9 +45,9 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
                 break
         }
         const status = request.principal.type === PrincipalType.SERVICE ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
-        const projectRole = await getProjectRoleAndAssertIfFound(request.principal.platform.id, request.body)
+        const projectRole = await getProjectRoleAndAssertIfFound(request.principal.platform.id, request.body, request.log)
         const platformId = request.principal.platform.id
-        const invitation = await userInvitationsService.create({
+        const invitation = await userInvitationsService(request.log).create({
             email,
             type,
             platformId,
@@ -62,7 +62,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListUserInvitationsRequestParams, async (request, reply) => {
         const projectId = await getProjectIdAndAssertPermission(app, request, reply, request.query)
-        const invitations = await userInvitationsService.list({
+        const invitations = await userInvitationsService(request.log).list({
             platformId: request.principal.platform.id,
             projectId: request.query.type === InvitationType.PROJECT ? projectId : null,
             type: request.query.type,
@@ -74,8 +74,8 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
-        const invitation = await userInvitationsService.getOneByInvitationTokenOrThrow(request.body.invitationToken)
-        await userInvitationsService.accept({
+        const invitation = await userInvitationsService(request.log).getOneByInvitationTokenOrThrow(request.body.invitationToken)
+        await userInvitationsService(request.log).accept({
             invitationId: invitation.id,
             platformId: invitation.platformId,
         })
@@ -83,7 +83,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteInvitationRequestParams, async (request, reply) => {
-        const invitation = await userInvitationsService.getOneOrThrow({
+        const invitation = await userInvitationsService(request.log).getOneOrThrow({
             id: request.params.id,
             platformId: request.principal.platform.id,
         })
@@ -97,7 +97,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
                 break
         }
-        await userInvitationsService.delete({
+        await userInvitationsService(request.log).delete({
             id: request.params.id,
             platformId: request.principal.platform.id,
         })
@@ -106,14 +106,14 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 
-const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendUserInvitationRequest): Promise<ProjectRole | null> => {
+const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendUserInvitationRequest, log: FastifyBaseLogger): Promise<ProjectRole | null> => {
     const { type } = request
     if (type === InvitationType.PLATFORM) {
         return null
     }
     const projectRoleName = request.projectRole
     
-    await projectMembersLimit.limit({
+    await projectMembersLimit(log).limit({
         projectId: request.projectId,
         platformId,
         projectRoleName,
@@ -149,7 +149,7 @@ async function assertPrincipalHasPermissionToProject(fastify: FastifyInstance, r
         })
     }
     await platformMustHaveFeatureEnabled((platform) => platform.projectRolesEnabled).call(fastify, request, reply)
-    await assertRoleHasPermission(request.principal, permission)
+    await assertRoleHasPermission(request.principal, permission, request.log)
 }
 
 
@@ -163,7 +163,7 @@ const ListUserInvitationsRequestParams = {
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListUserInvitationsRequest,
-        responnse: {
+        response: {
             [StatusCodes.OK]: SeekPage(UserInvitation),
         },
     },

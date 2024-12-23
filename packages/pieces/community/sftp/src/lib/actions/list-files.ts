@@ -2,7 +2,7 @@ import { endClient, sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient } from 'basic-ftp';
-import { getClient } from '../..';
+import { getClient, getProtocolBackwardCompatibility } from '../..';
 
 async function listSFTP(client: Client, directoryPath: string) {
   const contents = await client.list(directoryPath);
@@ -43,10 +43,10 @@ export const listFolderContentsAction = createAction({
   async run(context) {
     const client = await getClient(context.auth);
     const directoryPath = context.propsValue.directoryPath;
-
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
     try {
       let contents;
-      switch (context.auth.protocol) {
+      switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
           contents = await listFTP(client as FTPClient, directoryPath);
@@ -68,7 +68,7 @@ export const listFolderContentsAction = createAction({
         error: err,
       };
     } finally {
-      await endClient(client);
+      await endClient(client, context.auth.protocol);
     }
   },
 });

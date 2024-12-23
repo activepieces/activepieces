@@ -1,6 +1,7 @@
-import { logger, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PackageType, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flagService } from '../../flags/flag.service'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -11,12 +12,12 @@ import { userService } from '../../user/user-service'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
-const handleUnexpectedSecretsManagerError = (message: string) => {
-    logger.error(`[ERROR]: Unexpected error from secret manager: ${message}`)
+const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: string) => {
+    log.error(`[ERROR]: Unexpected error from secret manager: ${message}`)
     throw new Error(message)
 }
 
-export const licenseKeysService = {
+export const licenseKeysService = (log: FastifyBaseLogger) => ({
     async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<void> {
         const response = await fetch(secretManagerLicenseKeysRoute, {
             method: 'POST',
@@ -33,7 +34,7 @@ export const licenseKeysService = {
         }
         if (!response.ok) {
             const errorMessage = JSON.stringify(await response.json())
-            handleUnexpectedSecretsManagerError(errorMessage)
+            handleUnexpectedSecretsManagerError(log, errorMessage)
         }
     },
     async markAsActiviated(request: { key: string, platformId: string }): Promise<void> {
@@ -53,15 +54,15 @@ export const licenseKeysService = {
             }
             if (!response.ok) {
                 const errorMessage = JSON.stringify(await response.json())
-                handleUnexpectedSecretsManagerError(errorMessage)
+                handleUnexpectedSecretsManagerError(log, errorMessage)
             }
-            rejectedPromiseHandler(telemetry.trackPlatform(request.platformId, {
+            rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
                 name: TelemetryEventName.KEY_ACTIVIATED,
                 payload: {
                     date: dayjs().toISOString(),
                     key: request.key,
                 },
-            }))
+            }), log)
         }
         catch (e) {
             // ignore
@@ -77,7 +78,7 @@ export const licenseKeysService = {
         }
         if (!response.ok) {
             const errorMessage = JSON.stringify(await response.json())
-            handleUnexpectedSecretsManagerError(errorMessage)
+            handleUnexpectedSecretsManagerError(log, errorMessage)
         }
         return response.json()
     },
@@ -95,8 +96,8 @@ export const licenseKeysService = {
             id: platformId,
             ...turnedOffFeatures,
         })
-        await deactivatePlatformUsersOtherThanAdmin(platformId)
-        await deletePrivatePieces(platformId)
+        await deactivatePlatformUsersOtherThanAdmin(platformId, log)
+        await deletePrivatePieces(platformId, log)
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         await platformService.update({
@@ -120,14 +121,14 @@ export const licenseKeysService = {
             analyticsEnabled: key.analyticsEnabled,
         })
     },
-}
+})
 
-const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string) => {
+const deactivatePlatformUsersOtherThanAdmin: (platformId: string, log: FastifyBaseLogger) => Promise<void> = async (platformId: string, log: FastifyBaseLogger) => {
     const { data } = await userService.list({
         platformId,
     })
     const users = data.filter(f => f.platformRole !== PlatformRole.ADMIN).map(u => {
-        logger.debug(`Deactivating user ${u.email}`)
+        log.debug(`Deactivating user ${u.email}`)
         return userService.update({
             id: u.id,
             status: UserStatus.INACTIVE,
@@ -139,23 +140,22 @@ const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<voi
 }
 
 
-const deletePrivatePieces: (platformId: string) => Promise<void> = async (platformId: string) => {
+const deletePrivatePieces = async (platformId: string, log: FastifyBaseLogger): Promise<void> => {
     const latestRelease = await flagService.getCurrentRelease()
-    const pieces = await pieceMetadataService.list({
+    const pieces = await pieceMetadataService(log).list({
         edition: ApEdition.ENTERPRISE,
         includeHidden: true,
         release: latestRelease,
         platformId,
     })
     const piecesToDelete = pieces.filter((piece) => piece.packageType === PackageType.ARCHIVE && piece.id).map((piece) =>
-        pieceMetadataService.delete({
+        pieceMetadataService(log).delete({
             id: piece.id!,
             projectId: piece.projectId,
         }),
     )
     await Promise.all(piecesToDelete)
 }
-
 
 
 const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {

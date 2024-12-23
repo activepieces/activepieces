@@ -1,5 +1,5 @@
-import { logger } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { AuthenticationServiceHooks } from '../../../../authentication/authentication-service/hooks/authentication-service-hooks'
 import { platformService } from '../../../../platform/platform.service'
 import { projectService } from '../../../../project/project-service'
@@ -9,20 +9,20 @@ import { authenticationHelper } from './authentication-helper'
 
 const DEFAULT_PLATFORM_NAME = 'Activepieces'
 
-export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = {
+export const enterpriseAuthenticationServiceHooks = (log: FastifyBaseLogger): AuthenticationServiceHooks => ({
     async preSignIn({ email, platformId, provider }) {
-        await authenticationHelper.assertEmailAuthIsEnabled({
+        await authenticationHelper(log).assertEmailAuthIsEnabled({
             platformId,
             provider,
         })
-        await authenticationHelper.assertDomainIsAllowed({ email, platformId })
+        await authenticationHelper(log).assertDomainIsAllowed({ email, platformId })
     },
     async preSignUp({ email, platformId, provider }) {
-        await authenticationHelper.assertEmailAuthIsEnabled({
+        await authenticationHelper(log).assertEmailAuthIsEnabled({
             platformId,
             provider,
         })
-        await authenticationHelper.assertUserIsInvitedAndDomainIsAllowed({
+        await authenticationHelper(log).assertUserIsInvitedAndDomainIsAllowed({
             email,
             platformId,
         })
@@ -30,17 +30,17 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
     async postSignUp({ user }) {
         const platformCreated = await platformService.hasAnyPlatforms()
         if (platformCreated) {
-            logger.info({
+            log.info({
                 email: user.email,
                 platformId: user.platformId,
             }, '[postSignUp] provisionUserInvitation')
-            await authenticationHelper.autoVerifyUserIfEligible(user)
-            await userInvitationsService.provisionUserInvitation({
+            await authenticationHelper(log).autoVerifyUserIfEligible(user)
+            await userInvitationsService(log).provisionUserInvitation({
                 email: user.email,
                 platformId: user.platformId!,
             })
             const updatedUser = await userService.getOneOrFail({ id: user.id })
-            const result = await authenticationHelper.getProjectAndTokenOrThrow(user)
+            const result = await authenticationHelper(log).getProjectAndTokenOrThrow(user)
             return {
                 user: updatedUser,
                 ...result,
@@ -59,14 +59,14 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             platformId: platform.id,
         })
 
-        await userInvitationsService.provisionUserInvitation({
+        await userInvitationsService(log).provisionUserInvitation({
             email: user.email,
             platformId: user.platformId!,
         })
 
         await userService.verify({ id: user.id })
         const updatedUser = await userService.getOneOrFail({ id: user.id })
-        const result = await authenticationHelper.getProjectAndTokenOrThrow(updatedUser)
+        const result = await authenticationHelper(log).getProjectAndTokenOrThrow(updatedUser)
         return {
             user: updatedUser,
             ...result,
@@ -75,14 +75,14 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
 
     async postSignIn({ user }) {
         assertNotNullOrUndefined(user.platformId, 'Platform id is not defined')
-        await userInvitationsService.provisionUserInvitation({
+        await userInvitationsService(log).provisionUserInvitation({
             email: user.email,
             platformId: user.platformId,
         })
-        const result = await authenticationHelper.getProjectAndTokenOrThrow(user)
+        const result = await authenticationHelper(log).getProjectAndTokenOrThrow(user)
         return {
             user,
             ...result,
         }
     },
-}
+})

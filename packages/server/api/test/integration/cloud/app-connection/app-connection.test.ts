@@ -6,7 +6,7 @@ import {
     PrincipalType,
     ProjectRole,
 } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -22,10 +22,12 @@ import {
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    mockLog = app!.log!
 })
 
 afterAll(async () => {
@@ -71,8 +73,8 @@ describe('AppConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
-            
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
@@ -140,7 +142,7 @@ describe('AppConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
 
             const mockToken = await generateMockToken({

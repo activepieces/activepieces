@@ -11,7 +11,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
     app.post('/', AdminAddPlatformRequest, async (req, res) => {
-        const newPlatform = await adminPlatformService.add(req.body)
+        const newPlatform = await adminPlatformService(req.log).add(req.body)
 
         return res.status(StatusCodes.CREATED).send(newPlatform)
     })

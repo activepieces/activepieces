@@ -69,6 +69,8 @@ export type ApErrorParams =
     | NoChatResponseParams
     | InvalidSmtpCredentialsErrorParams
     | InvalidGitCredentialsParams
+    | CopilotFailedErrorParams
+    | ProjectExternalIdAlreadyExistsParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -402,6 +404,14 @@ export type InvalidGitCredentialsParams = BaseErrorParams<ErrorCode.INVALID_GIT_
     message: string
 }>
 
+export type CopilotFailedErrorParams = BaseErrorParams<ErrorCode.COPILOT_FAILED, {
+    message: string
+}>
+
+export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
+    externalId: string
+}>
+
 export enum ErrorCode {
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
     AUTHENTICATION = 'AUTHENTICATION',
@@ -416,6 +426,7 @@ export enum ErrorCode {
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
+    PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_FORM_NOT_FOUND = 'FLOW_FORM_NOT_FOUND',
     FILE_NOT_FOUND = 'FILE_NOT_FOUND',
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
@@ -457,4 +468,5 @@ export enum ErrorCode {
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
+    COPILOT_FAILED = 'COPILOT_FAILED',
 }
