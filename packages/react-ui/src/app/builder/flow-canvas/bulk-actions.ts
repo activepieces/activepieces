@@ -94,9 +94,10 @@ export function pasteNodes(
 export function getLastLocationAsPasteLocation(
   flowVersion: FlowVersion,
 ): PasteLocation {
-  const firstLevelParents = [flowVersion.trigger,...flowStructureUtil.getAllNextActionsWithoutChildren(
+  const firstLevelParents = [
     flowVersion.trigger,
-  )]
+    ...flowStructureUtil.getAllNextActionsWithoutChildren(flowVersion.trigger),
+  ];
   const lastAction = firstLevelParents[firstLevelParents.length - 1];
   return {
     parentStepName: lastAction.name,
