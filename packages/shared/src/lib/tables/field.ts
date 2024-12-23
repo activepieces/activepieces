@@ -13,6 +13,7 @@ export const Field = Type.Object({
     name: Type.String(),
     type: Type.Enum(FieldType),
     tableId: Type.String(),
+    projectId: Type.String(),
 })
 
 export type Field = Static<typeof Field>

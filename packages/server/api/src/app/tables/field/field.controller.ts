@@ -5,40 +5,33 @@ import { fieldService } from './field.service'
 
 export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
 
-    fastify.post('/:id/fields', CreateRequest, async (request, reply) => {
-        const response = await fieldService.create({
-            tableId: request.params.id,
-            request: request.body,
-        })
-        await reply.status(StatusCodes.OK).send(response)
+    fastify.post('/', CreateRequest, async (request, reply) => {
+        const response = await fieldService.create({ request: request.body, projectId: request.principal.projectId })
+        await reply.status(StatusCodes.CREATED).send(response)
     },
     )
 
-    fastify.get('/:id/fields/:fieldId', GetFieldByIdRequest, async (request, reply) => {
-        const response = await fieldService.getById({
-            tableId: request.params.id,
-            id: request.params.fieldId,
+    fastify.get('/', GetFieldsRequest, async (request) => {
+        return fieldService.getAll({
+            projectId: request.principal.projectId,
+            tableId: request.query.tableId,
         })
-
-        if (!response) {
-            await reply.status(StatusCodes.NOT_FOUND).send('Field not found')
-            return
-        }
-
-        await reply.status(StatusCodes.OK).send(response)
     },
     )
 
-    fastify.delete('/:id/fields/:fieldId', DeleteFieldRequest, async (request) => {
+    fastify.get('/:id', GetFieldByIdRequest, (request) => {
+        return fieldService.getById({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+        })
+    },
+    )
+
+    fastify.delete('/:id', DeleteFieldRequest, async (request) => {
         return fieldService.delete({
-            tableId: request.params.id,
-            id: request.params.fieldId,
+            id: request.params.id,
+            projectId: request.principal.projectId,
         })
-    },
-    )
-
-    fastify.get('/:id/fields', GetFieldsRequest, async (request, reply) => {
-        await reply.status(StatusCodes.OK).send({})
     },
     )
 }
@@ -49,9 +42,9 @@ const CreateRequest = {
     },
     schema: {
         body: CreateFieldRequest,
-        params: Type.Object({
-            id: Type.String(),
-        }),
+    },
+    response: {
+        [StatusCodes.CREATED]: Field,
     },
 }
 
@@ -62,12 +55,7 @@ const GetFieldByIdRequest = {
     schema: {
         params: Type.Object({
             id: Type.String(),
-            fieldId: Type.String(),
         }),
-        response: {
-            [StatusCodes.OK]: Field,
-            [StatusCodes.NOT_FOUND]: Type.String(),
-        },
     },
 }
 
@@ -78,7 +66,6 @@ const DeleteFieldRequest = {
     schema: {
         params: Type.Object({
             id: Type.String(),
-            fieldId: Type.String(),
         }),
     },
 }
@@ -88,8 +75,8 @@ const GetFieldsRequest = {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
+        querystring: Type.Object({
+            tableId: Type.String(),
         }),
     },
 }

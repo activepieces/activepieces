@@ -9,59 +9,46 @@ const DEFAULT_PAGE_SIZE = 10
 export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
-    fastify.post('/:id/records', CreateRequest, async (request, reply) => {
+    fastify.post('/', CreateRequest, async (request, reply) => {
         const response = await recordService.create({
-            tableId: request.params.id,
             request: request.body,
+            projectId: request.principal.projectId,
         })
-        await reply.status(StatusCodes.OK).send(response)
+        await reply.status(StatusCodes.CREATED).send(response)
     },
     )
 
-    fastify.get('/:id/records/:recordId', GetRecordByIdRequest, async (request, reply) => {
-        const response = await recordService.getById({
-            tableId: request.params.id,
-            id: request.params.recordId,
+    fastify.get('/:id', GetRecordByIdRequest, async (request) => {
+        return recordService.getById({
+            id: request.params.id,
+            projectId: request.principal.projectId,
         })
-
-        if (!response) {
-            await reply.status(StatusCodes.NOT_FOUND).send('Record not found')
-            return
-        }
-
-        await reply.status(StatusCodes.OK).send(response)
     },
     )
 
-    fastify.post('/:id/records/:recordId', UpdateRequest, async (request, reply) => {
-        const response = await recordService.update({
-            tableId: request.params.id,
-            id: request.params.recordId,
+    fastify.post('/:id', UpdateRequest, async (request) => {
+        return recordService.update({
+            id: request.params.id,
             request: request.body,
+            projectId: request.principal.projectId,
         })
-
-        if (!response) {
-            await reply.status(StatusCodes.NOT_FOUND).send('Record not found')
-            return
-        }
-
-        await reply.status(StatusCodes.OK).send(response)
     },
     )
 
-    fastify.delete('/:id/records/:recordId', DeleteRecordRequest, async (request, reply) => {
+    fastify.delete('/:id', DeleteRecordRequest, async (request, reply) => {
         await recordService.delete({
-            tableId: request.params.id,
-            id: request.params.recordId,
+            id: request.params.id,
+            projectId: request.principal.projectId,
         })
 
-        await reply.status(StatusCodes.OK).send()
+        await reply.status(StatusCodes.NO_CONTENT).send()
     },
     )
 
-    fastify.get('/:id/records', ListRequest, async (request) => {
+    fastify.get('/', ListRequest, async (request) => {
         return recordService.list({
-            tableId: request.params.id,
+            tableId: request.query.tableId,
+            projectId: request.principal.projectId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
         })
@@ -75,11 +62,8 @@ const CreateRequest = {
     },
     schema: {
         body: CreateRecordsRequest,
-        params: Type.Object({
-            id: Type.String(),
-        }),
         response: {
-            [StatusCodes.OK]: Type.Array(PopulatedRecord),
+            [StatusCodes.CREATED]: Type.Array(PopulatedRecord),
         },
     },
 }
@@ -91,7 +75,6 @@ const GetRecordByIdRequest = {
     schema: {
         params: Type.Object({
             id: Type.String(),
-            recordId: Type.String(),
         }),
         response: {
             [StatusCodes.OK]: PopulatedRecord,
@@ -107,12 +90,10 @@ const UpdateRequest = {
     schema: {
         params: Type.Object({
             id: Type.String(),
-            recordId: Type.String(),
         }),
         body: UpdateRecordRequest,
         response: {
             [StatusCodes.OK]: PopulatedRecord,
-            [StatusCodes.NOT_FOUND]: Type.String(),
         },
     },
 }
@@ -124,7 +105,6 @@ const DeleteRecordRequest = {
     schema: {
         params: Type.Object({
             id: Type.String(),
-            recordId: Type.String(),
         }),
     },
 }
@@ -134,9 +114,6 @@ const ListRequest = {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
-        }),
         querystring: ListRecordsRequest,
         response: {
             [StatusCodes.OK]: SeekPage(PopulatedRecord),

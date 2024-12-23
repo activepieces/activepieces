@@ -78,6 +78,7 @@ import { CreateProjectRoleTableSqlite1732482844483 } from './migration/sqlite/17
 import { AddProjectRelationInUserInvitationSqlite1732791068873 } from './migration/sqlite/1732791068873-AddProjectRelationInUserInvitationSqlite'
 import { TablesProductSqlite1734354249984 } from './migration/sqlite/1734354249984-TablesProductSqlite'
 import { RemoveWorkerTypeSqlite1734439194575 } from './migration/sqlite/1734439194575-RemoveWorkerTypeSqlite'
+import { FieldAndRecordAndCellProjectId1734967659746 } from './migration/sqlite/1734967659746-FieldAndRecordAndCell_ProjectIdSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -173,6 +174,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddProjectRelationInUserInvitationSqlite1732791068873,
         TablesProductSqlite1734354249984,
         RemoveWorkerTypeSqlite1734439194575,
+        FieldAndRecordAndCellProjectId1734967659746,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

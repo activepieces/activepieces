@@ -5,6 +5,7 @@ import { Cell } from './cell'
 export const Record = Type.Object({
     ...BaseModelSchema,
     tableId: Type.String(),
+    projectId: Type.String(),
 })
 
 export type Record = Static<typeof Record>

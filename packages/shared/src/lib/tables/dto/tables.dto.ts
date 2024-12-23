@@ -5,9 +5,3 @@ export const CreateTableRequest = Type.Object({
 })
 
 export type CreateTableRequest = Static<typeof CreateTableRequest>
-
-export const ImportTableRequest = Type.Object({
-    data: Type.String(),
-})
-
-export type ImportTableRequest = Static<typeof ImportTableRequest>

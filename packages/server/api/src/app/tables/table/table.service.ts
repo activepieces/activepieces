@@ -1,4 +1,4 @@
-import { apId, CreateTableRequest, Table } from '@activepieces/shared'
+import { ActivepiecesError, apId, CreateTableRequest, ErrorCode, isNil, Table } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { TableEntity } from './table.entity'
 
@@ -21,10 +21,22 @@ export const tableService = {
         })
     },
 
-    async getById({ projectId, id }: { projectId: string, id: string }): Promise<Table | null> {
-        return tableRepo().findOne({
+    async getById({ projectId, id }: { projectId: string, id: string }): Promise<Table> {
+        const table = await tableRepo().findOne({
             where: { projectId, id },
         })
+
+        if (isNil(table)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'Table',
+                    entityId: id,
+                },
+            })
+        }
+
+        return table
     },
 
     async delete({ projectId, id }: { projectId: string, id: string }): Promise<void> {
@@ -33,8 +45,4 @@ export const tableService = {
             id,
         })
     },
-
-    // async import({ projectId, id, data }: { projectId: string, id: string, data: any }): Promise<void> {
-    //     // Implement import logic here
-    // },
 }

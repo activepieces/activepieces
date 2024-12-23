@@ -5,6 +5,7 @@ export const Cell = Type.Object({
     ...BaseModelSchema,
     recordId: Type.String(),
     fieldId: Type.String(),
+    projectId: Type.String(),
     value: Type.Unknown(),
 })
 

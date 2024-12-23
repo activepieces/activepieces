@@ -1,9 +1,10 @@
-import { Cell, Record, Table } from '@activepieces/shared'
+import { Cell, Project, Record, Table } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type RecordSchema = Record & {
     table: Table
+    project: Project
     cells: Cell[]
 }
 
@@ -12,6 +13,10 @@ export const RecordEntity = new EntitySchema<RecordSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         tableId: {
+            ...ApIdSchema,
+            nullable: false,
+        },
+        projectId: {
             ...ApIdSchema,
             nullable: false,
         },
@@ -25,6 +30,16 @@ export const RecordEntity = new EntitySchema<RecordSchema>({
             joinColumn: {
                 name: 'tableId',
                 foreignKeyConstraintName: 'fk_record_table_id',
+            },
+        },
+        project: {
+            type: 'many-to-one',
+            target: 'project',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'projectId',
+                foreignKeyConstraintName: 'fk_record_project_id',
             },
         },
         cells: {
