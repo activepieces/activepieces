@@ -7,10 +7,11 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { DropdownState } from '@activepieces/pieces-framework';
+import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
 import { Action, isNil, Trigger } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
+import { ExecutePropsResult } from '../../../../../pieces/community/framework/src/lib/property/input/dropdown/common';
 
 type SelectPiecePropertyProps = {
   refreshers: string[];
@@ -38,7 +39,7 @@ const DynamicDropdownPieceProperty = React.memo(
       options: [],
     });
     const { mutate, isPending } = useMutation<
-      DropdownState<unknown>,
+      ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN>,
       Error,
       { input: Record<string, unknown> }
     >({
@@ -46,14 +47,14 @@ const DynamicDropdownPieceProperty = React.memo(
         const { settings } = form.getValues();
         const actionOrTriggerName = settings.actionName ?? settings.triggerName;
         const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        return piecesApi.options<DropdownState<unknown>>({
+        return piecesApi.options({
           pieceName,
           pieceVersion,
           pieceType,
           packageType,
           propertyName: props.propertyName,
           actionOrTriggerName: actionOrTriggerName,
-          input: input,
+          input,
           flowVersionId: flowVersion.id,
           flowId: flowVersion.flowId,
         });
@@ -80,7 +81,7 @@ const DynamicDropdownPieceProperty = React.memo(
         { input },
         {
           onSuccess: (response) => {
-            setDropdownState(response);
+            setDropdownState(response.options);
           },
         },
       );

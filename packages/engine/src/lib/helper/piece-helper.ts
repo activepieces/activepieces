@@ -24,9 +24,10 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
+import { ExecutePropsResult } from 'packages/pieces/community/framework/src/lib/property/input/dropdown/common'
 
 export const pieceHelper = {
-    async executeProps({ params, piecesSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult> {
+    async executeProps({ params, piecesSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
         const property = await pieceLoader.getPropOrThrow({
             params,
             piecesSource,
@@ -61,7 +62,7 @@ export const pieceHelper = {
                 const dynamicProperty = property as DynamicProperties<boolean>
                 const props = await dynamicProperty.props(resolvedInput, ctx)
                 return {
-                    type: 'dynamicproperties',
+                    type: PropertyType.DYNAMIC,
                     options: props,
                 }
             }
@@ -73,7 +74,7 @@ export const pieceHelper = {
                 >
                 const options = await multiSelectProperty.options(resolvedInput, ctx)
                 return {
-                    type: 'dropdown',
+                    type: PropertyType.MULTI_SELECT_DROPDOWN,
                     options,
                 }
             }
@@ -81,14 +82,14 @@ export const pieceHelper = {
             const dropdownProperty = property as DropdownProperty<unknown, boolean>
             const options = await dropdownProperty.options(resolvedInput, ctx)
             return {
-                type: 'dropdown',
+                type: PropertyType.DROPDOWN,
                 options,
             }
         }
         catch (e) {
             console.error(e)
             return {
-                type: 'dropdown',
+                type: PropertyType.DROPDOWN,
                 options: {
                     disabled: true,
                     options: [],
@@ -160,10 +161,3 @@ export const pieceHelper = {
 
 type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, piecesSource: string, constants: EngineConstants }
 
-type ExecutePropsResult = {
-    type: 'dropdown'
-    options: DropdownState<unknown>
-} | {
-    type: 'dynamicproperties'
-    options: Record<string, DynamicPropsValue>
-}

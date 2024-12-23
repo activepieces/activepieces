@@ -8,12 +8,13 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { PiecePropertyMap } from '@activepieces/pieces-framework';
+import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
+import { ExecutePropsResult } from '../../../../../pieces/community/framework/src/lib/property/input/dropdown/common';
 
 type DynamicPropertiesProps = {
   refreshers: string[];
@@ -36,7 +37,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const newRefreshers = [...props.refreshers, 'auth'];
 
   const { mutate, isPending } = useMutation<
-    PiecePropertyMap,
+    ExecutePropsResult<PropertyType.DYNAMIC>,
     Error,
     { input: Record<string, unknown> }
   >({
@@ -44,7 +45,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
       const { pieceName, pieceVersion, pieceType, packageType } = settings;
-      return piecesApi.options<PiecePropertyMap>({
+      return piecesApi.options<PropertyType.DYNAMIC>({
         pieceName,
         pieceVersion,
         pieceType,
@@ -108,12 +109,11 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
             `settings.input.${props.propertyName}`,
           );
           const defaultValue = formUtils.getDefaultValueForStep(
-            response,
+            response.options,
             currentValue ?? {},
           );
-          setPropertyMap(response);
-          updateFormSchema(`settings.input.${props.propertyName}`, response);
-
+          setPropertyMap(response.options);
+          updateFormSchema(`settings.input.${props.propertyName}`, response.options);
           if (!readonly) {
             const schemaInput: Record<string, unknown> =
               form.getValues()?.settings?.inputUiInfo?.schema ?? {};

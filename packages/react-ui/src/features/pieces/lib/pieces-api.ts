@@ -6,6 +6,7 @@ import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PiecePropertyMap,
+  PropertyType,
 } from '@activepieces/pieces-framework';
 import {
   Action,
@@ -22,6 +23,7 @@ import {
 } from '@activepieces/shared';
 
 import { PieceStepMetadata, StepMetadata } from './types';
+import { ExecutePropsResult } from '../../../../../pieces/community/framework/src/lib/property/input/dropdown/common';
 
 export const CORE_STEP_METADATA: Record<
   Exclude<ActionType, ActionType.PIECE> | TriggerType.EMPTY,
@@ -64,10 +66,10 @@ export const piecesApi = {
       version: request.version ?? undefined,
     });
   },
-  options<T extends DropdownState<unknown> | PiecePropertyMap>(
+  options<T extends PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>(
     request: PieceOptionRequest,
-  ): Promise<T> {
-    return api.post<T>(`/v1/pieces/options`, request);
+  ): Promise<ExecutePropsResult<T>> {
+    return api.post<ExecutePropsResult<T>>(`/v1/pieces/options`, request);
   },
   mapToMetadata(
     type: 'action' | 'trigger',
