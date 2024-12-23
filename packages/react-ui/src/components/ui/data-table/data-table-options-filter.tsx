@@ -3,7 +3,7 @@ import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 import { useSearchParams } from 'react-router-dom';
 
-import { DateTimePickerWithRange } from '../date-picker-range';
+import { DateTimePickerWithRange } from '../date-time-picker-range';
 
 import { DataTableInputPopover } from './data-table-input-popover';
 import { DataTableSelectPopover } from './data-table-select-popover';

@@ -1,6 +1,7 @@
 'use client';
 
 import dayjs from 'dayjs';
+import { t } from 'i18next';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
 import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
@@ -14,7 +15,6 @@ import {
 import { DateTimePickerWithRange } from '@/components/ui/date-time-picker-range';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsReportResponse } from '@activepieces/shared';
-import { t } from 'i18next';
 
 type TaskUsageProps = {
   report?: AnalyticsReportResponse;

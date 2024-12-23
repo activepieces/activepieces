@@ -12,7 +12,6 @@ import {
   getDateByType,
   setDateByType,
 } from './time-picker-utils';
-import { setDate } from 'date-fns';
 
 export interface TimePickerInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -124,7 +123,6 @@ const TimePickerInputInner = React.forwardRef<
         value={value || calculatedValue}
         onChange={(e) => {
           e.preventDefault();
-          debugger;
           onChange?.(e);
         }}
         type={type}
@@ -146,10 +144,11 @@ const TimePickerInput = React.forwardRef<
   const { autoCompleteList, isActive } = props;
   const [open, setOpen] = React.useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const [filterValue, setFilterValue] = React.useState('');
+
   if (isNil(autoCompleteList) || autoCompleteList.length === 0) {
     return <TimePickerInputInner {...props} ref={ref} />;
   }
-  const [filterValue, setFilterValue] = React.useState('');
   return (
     <AutoComplete
       className={cn('bg-transparent text-muted-foreground rounded-xs', {
@@ -157,16 +156,20 @@ const TimePickerInput = React.forwardRef<
         'hover:bg-accent': !isActive,
         'text-foreground': isActive,
       })}
-      items={autoCompleteList.filter((item)=>item.label.includes(filterValue))}
+      items={autoCompleteList.filter((item) =>
+        item.label.includes(filterValue),
+      )}
       selectedValue={''}
       open={open}
-      setOpen={(open)=>{
+      setOpen={(open) => {
         setFilterValue('');
         setOpen(open);
       }}
       listRef={listRef}
       onSelectedValueChange={(value) => {
-        const tempDate = new Date(props.date || new Date(new Date().setHours(0,0,0,0)));
+        const tempDate = new Date(
+          props.date || new Date(new Date().setHours(0, 0, 0, 0)),
+        );
         props.setDate(
           setDateByType(tempDate, value, props.picker, props.period),
         );
@@ -189,14 +192,14 @@ const TimePickerInput = React.forwardRef<
             if (listRef.current) {
               listRef.current.dispatchEvent(event);
             }
-            
           }
-         
         }}
-        setDate={(date)=>{
+        setDate={(date) => {
           props.setDate(date);
           const filterValue = getDateByType(date, props.picker);
-          setFilterValue(filterValue[0] === '0' ? filterValue.slice(1) : filterValue);
+          setFilterValue(
+            filterValue[0] === '0' ? filterValue.slice(1) : filterValue,
+          );
         }}
         ref={ref}
         isAutocompleteOpen={open}

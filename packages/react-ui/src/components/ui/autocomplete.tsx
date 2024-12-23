@@ -64,13 +64,14 @@ export function AutoComplete<T extends string>({
         >
           <Command className={className} ref={listRef}>
             <CommandList className="bg-background">
-              <ScrollArea className={cn('',{
-                'h-[12.5rem]':items.length >= 5,
-                'h-[2.5rem]':items.length ===1,
-                'h-[5rem]': items.length ===2,
-                'h-[7.5rem]': items.length ===3,
-                'h-[10rem]': items.length ===4,
-              })}
+              <ScrollArea
+                className={cn('', {
+                  'h-[12.5rem]': items.length >= 5,
+                  'h-[2.5rem]': items.length === 1,
+                  'h-[5rem]': items.length === 2,
+                  'h-[7.5rem]': items.length === 3,
+                  'h-[10rem]': items.length === 4,
+                })}
               >
                 {items.length > 0 ? (
                   <CommandGroup>
