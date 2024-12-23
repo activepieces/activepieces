@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils';
 import { ClockPicker } from './clock-picker';
 import { Separator } from './separator';
 
-type DatePickerWithRangeProps = {
+type DateTimePickerWithRangeProps = {
   onChange: (date: DateRange | undefined) => void;
   className?: string;
   from?: string;
@@ -78,7 +78,7 @@ const getStartToEndDayTime = () => {
     to: endDate,
   };
 };
-export function DatePickerWithRange({
+export function DateTimePickerWithRange({
   className,
   onChange,
   from,
@@ -86,7 +86,7 @@ export function DatePickerWithRange({
   maxDate = new Date(),
   minDate,
   presetType = 'past',
-}: DatePickerWithRangeProps) {
+}: DateTimePickerWithRangeProps) {
   const [date, setDate] = React.useState<DateRange | undefined>();
   const [timeDate, setTimeDate] = React.useState<DateRange>({
     from: undefined,
