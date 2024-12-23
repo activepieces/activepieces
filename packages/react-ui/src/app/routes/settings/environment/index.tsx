@@ -79,14 +79,17 @@ const EnvironmentPage = () => {
                 <div className="flex flex-col justify-center items-center gap-2">
                   {!gitSync && <ConnectGitDialog></ConnectGitDialog>}
                   {gitSync && (
-                    <Button
-                      size={'sm'}
-                      onClick={() => mutate()}
-                      className="w-32 text-destructive"
-                      variant={'basic'}
-                    >
-                      {t('Disconnect')}
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <ReviewChangeDialog gitSync={gitSync} />
+                      <Button
+                        size={'sm'}
+                        onClick={() => mutate()}
+                        className="w-32 text-destructive"
+                        variant={'basic'}
+                      >
+                        {t('Disconnect')}
+                      </Button>
+                    </div>
                   )}
                 </div>
               </>
@@ -98,11 +101,6 @@ const EnvironmentPage = () => {
             )}
           </div>
         </Card>
-        <div className="flex w-full">
-          {gitSync && (
-            <ReviewChangeDialog gitSync={gitSync}></ReviewChangeDialog>
-          )}
-        </div>
         <ReleaseCard />
       </div>
     </LockedFeatureGuard>

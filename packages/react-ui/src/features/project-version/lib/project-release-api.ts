@@ -10,7 +10,6 @@ export const projectReleaseApi = {
     return await api.get<SeekPage<ProjectRelease>>(`/v1/project-releases`);
   },
   async create(requestBody: CreateProjectReleaseRequestBody) {
-    console.log('requestBody', requestBody);
     return await api.post<ProjectRelease>('/v1/project-releases', requestBody);
   },
   async delete(id: string) {

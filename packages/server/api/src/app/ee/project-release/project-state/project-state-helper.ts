@@ -1,26 +1,23 @@
 import { ProjectSyncError } from '@activepieces/ee-shared'
-import { FlowOperationType, flowStructureUtil, PopulatedFlow, StateFile } from '@activepieces/shared'
+import { FlowOperationType, FlowState, flowStructureUtil, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { flowService } from '../../../flows/flow/flow.service'
 import { projectService } from '../../../project/project-service'
 export const projectStateHelper = (log: FastifyBaseLogger) => ({
-    async getStateFromDB(projectId: string): Promise<StateFile[]> {
-        const flows = await flowRepo().findBy({
-            projectId,
+    async getStateFromDB(projectId: string): Promise<FlowState[]> {
+        const flows = await flowRepo().find({
+            where: {
+                projectId,
+            },
         })
-        return Promise.all(
-            flows.map(async (f) => {
-                return {
-                    flow: await flowService(log).getOnePopulatedOrThrow({
-                        id: f.id,
-                        projectId,
-                        removeConnectionsName: false,
-                        removeSampleData: true,
-                    }),
-                }
-            }),
-        )
+        const allPopulatedFlows = await Promise.all(flows.map(async (flow) => {
+            return flowService(log).getOnePopulatedOrThrow({
+                id: flow.id,
+                projectId,
+            })
+        }))
+        return allPopulatedFlows
     },
 
     async createFlowInProject(flow: PopulatedFlow, projectId: string): Promise<PopulatedFlow> {
@@ -34,7 +31,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
         return this.updateFlowInProject(createdFlow, flow, projectId)
     },
 
-    async updateFlowInProject(originalFlow: PopulatedFlow, newFlow: PopulatedFlow,
+    async updateFlowInProject(originalFlow: FlowState, newFlow: FlowState,
         projectId: string,
     ): Promise<PopulatedFlow> {
         const project = await projectService.getOneOrThrow(projectId)

@@ -1,5 +1,5 @@
 import { ProjectOperationType } from '@activepieces/ee-shared'
-import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, StateFile, Step, TriggerType } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, FlowState, Step, TriggerType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { ProjectMappingState } from './project-mapping-state'
 
@@ -14,8 +14,8 @@ export const projectDiffService = {
 
 function findFlowsToCreate({ newState, oldState, mapping }: DiffParams): ProjectOperation[] {
     return newState.filter((newFile) => {
-        const targetId = mapping.findTargetId(newFile.flow.id)
-        return isNil(targetId) || isNil(oldState.find((oldFile) => oldFile.flow.id === targetId))
+        const targetId = mapping.findTargetId(newFile.id)
+        return isNil(targetId) || isNil(oldState.find((oldFile) => oldFile.id === targetId))
     }).map((state) => ({
         type: ProjectOperationType.CREATE_FLOW,
         state,
@@ -23,8 +23,8 @@ function findFlowsToCreate({ newState, oldState, mapping }: DiffParams): Project
 }
 function findFlowsToDelete({ newState, oldState, mapping }: DiffParams): ProjectOperation[] {
     return oldState.filter((f) => {
-        const sourceId = mapping.findSourceId(f.flow.id)
-        return isNil(sourceId) || isNil(newState.find((newFile) => newFile.flow.id === sourceId))
+        const sourceId = mapping.findSourceId(f.id)
+        return isNil(sourceId) || isNil(newState.find((newFile) => newFile.id === sourceId))
     }).map((oldFile) => ({
         type: ProjectOperationType.DELETE_FLOW,
         state: oldFile,
@@ -34,23 +34,34 @@ function findFlowsToDelete({ newState, oldState, mapping }: DiffParams): Project
 function findFlowsToUpdate({ newState, oldState, mapping }: DiffParams): ProjectOperation[] {
     const operations: ProjectOperation[] = []
 
+    console.log('mapping', mapping)
+    console.log('newState', newState)
+    console.log('oldState', oldState)
+
     const newStateFiles = newState.filter((state) => {
-        const targetId = mapping.findTargetId(state.flow.id)
-        return !isNil(targetId) && !isNil(oldState.find((oldFile) => oldFile.flow.id === targetId))
+        const targetId = mapping.findTargetId(state.id)
+        return !isNil(targetId) && !isNil(oldState.find((oldFile) => oldFile.id === targetId))
     })
 
+    console.log('newStateFiles', newStateFiles)
+    let num = 1
     newStateFiles.forEach((ns) => {
-        const destFlowId = mapping.findTargetId(ns.flow.id)
-        const oldStateFile = oldState.find((os) => os.flow.id === destFlowId)!
-        assertNotNullOrUndefined(oldStateFile, `Could not find target flow for source flow ${ns.flow.id}`)
-        if (isFlowChanged(ns.flow, oldStateFile.flow)) {
+        const destFlowId = mapping.findTargetId(ns.id)
+        const os = oldState.find((os) => os.id === destFlowId)!
+        assertNotNullOrUndefined(os, `Could not find target flow for source flow ${ns.id}`)
+        console.log('step ' + num)
+        num++
+        console.log('os', os)
+        console.log('ns', ns)
+        if (isFlowChanged(os, ns)) {
             operations.push({
                 type: ProjectOperationType.UPDATE_FLOW,
-                newStateFile: ns,
-                oldStateFile,
+                newState: ns,
+                oldState: os,
             })
         }
     })
+    console.log('operations', operations)
     return operations
 }
 
@@ -78,8 +89,8 @@ function normalize(flowVersion: FlowVersion): FlowVersion {
 
 
 type DiffParams = {
-    newState: StateFile[]
-    oldState: StateFile[]
+    newState: FlowState[]
+    oldState: FlowState[]
     mapping: ProjectMappingState
 }
 
@@ -88,16 +99,16 @@ type DiffParams = {
 export const ProjectOperation = Type.Union([
     Type.Object({
         type: Type.Literal(ProjectOperationType.UPDATE_FLOW),
-        newStateFile: StateFile,
-        oldStateFile: StateFile,
+        newState: FlowState,
+        oldState: FlowState,
     }),
     Type.Object({
         type: Type.Literal(ProjectOperationType.CREATE_FLOW),
-        state: StateFile,
+        state: FlowState,
     }),
     Type.Object({
         type: Type.Literal(ProjectOperationType.DELETE_FLOW),
-        state: StateFile,
+        state: FlowState,
     }),
 ])
 

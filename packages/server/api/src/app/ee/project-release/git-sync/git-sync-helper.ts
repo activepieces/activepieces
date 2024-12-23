@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileExists } from '@activepieces/server-shared'
-import { Flow, flowMigrations, PopulatedFlow, StateFile } from '@activepieces/shared'
+import { Flow, flowMigrations, FlowState, PopulatedFlow } from '@activepieces/shared'
 import { ProjectMappingState } from '../project-diff/project-mapping-state'
 
 export const gitSyncHelper = () => ({
@@ -19,19 +19,17 @@ export const gitSyncHelper = () => ({
         }
     },
 
-    async getStateFromGit(flowPath: string): Promise<StateFile[]> {
+    async getStateFromGit(flowPath: string): Promise<FlowState[]> {
         const flowFiles = await fs.readdir(flowPath)
-        const parsedFlows: StateFile[] = []
+        const parsedFlows: FlowState[] = []
         for (const file of flowFiles) {
             const flow: PopulatedFlow = JSON.parse(
                 await fs.readFile(path.join(flowPath, file), 'utf-8'),
             )
             const migratedFlowVersion = flowMigrations.apply(flow.version)
             parsedFlows.push({
-                flow: {
-                    ...flow,
-                    version: migratedFlowVersion,
-                },
+                ...flow,
+                version: migratedFlowVersion,
             })
         }
         return parsedFlows

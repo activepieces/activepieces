@@ -142,7 +142,7 @@ const ReviewChangeDialog = ({ gitSync }: ReviewChangeDialogProps) => {
               setOpen(false);
             }}
           >
-            {t('Close')}
+            {t('Cancel')}
           </Button>
           <Button
             size={'sm'}

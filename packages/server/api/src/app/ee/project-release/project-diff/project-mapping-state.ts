@@ -1,4 +1,4 @@
-import { isNil, PopulatedFlow, StateFile } from '@activepieces/shared'
+import { isNil, PopulatedFlow, FlowState } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export class ProjectMappingState {
@@ -22,12 +22,17 @@ export class ProjectMappingState {
         })
     }
 
-    clean({ stateOne, stateTwo }: { stateOne: StateFile[], stateTwo: StateFile[] }): ProjectMappingState {
-        const sourceIds = new Set(stateOne.map(f => f.flow.id))
-        const targetIds = new Set(stateTwo.map(f => f.flow.id))
+    merge({ stateOne, stateTwo }: { stateOne: FlowState[], stateTwo: FlowState[] }): ProjectMappingState {
+        const sourceIds = new Set(stateOne.map(f => f.id))
+        const targetIds = new Set(stateTwo.map(f => f.id))
         const filtered = Object.entries(this.flows).filter(([targetId, { sourceId }]) => {
+            console.log('sourceId', sourceId)
+            console.log('targetId', targetId)
             return sourceIds.has(sourceId) && targetIds.has(targetId)
         })
+        console.log('sourceIds', sourceIds)
+        console.log('targetIds', targetIds)
+        console.log('filtered', filtered)
         return new ProjectMappingState({
             flows: Object.fromEntries(filtered),
         })

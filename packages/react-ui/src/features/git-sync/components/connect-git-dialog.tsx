@@ -38,7 +38,13 @@ import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
 
-const ConnectGitDialog = () => {
+type ConnectGitProps = {
+  open?: boolean;
+  setOpen?: (open: boolean) => void;
+  showButton?: boolean;
+};
+
+const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
   const projectId = authenticationSession.getProjectId()!;
   const { platform } = platformHooks.useCurrentPlatform();
 
@@ -93,12 +99,14 @@ const ConnectGitDialog = () => {
         className="grid space-y-4"
         onSubmit={form.handleSubmit((data) => mutate(data))}
       >
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button size={'sm'} className="w-32">
-              {t('Connect Git')}
-            </Button>
-          </DialogTrigger>
+        <Dialog open={open} onOpenChange={setOpen}>
+          {showButton && (
+            <DialogTrigger asChild>
+              <Button size={'sm'} className="w-32">
+                {t('Connect Git')}
+              </Button>
+            </DialogTrigger>
+          )}
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>{t('Connect Git')}</DialogTitle>

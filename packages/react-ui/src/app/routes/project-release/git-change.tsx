@@ -1,8 +1,8 @@
 import { UpdateIcon } from '@radix-ui/react-icons';
-import { t } from 'i18next';
 import { Minus, Plus } from 'lucide-react';
 import React from 'react';
 
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   ProjectOperationType,
   ProjectSyncPlanOperation,
@@ -10,41 +10,51 @@ import {
 
 type GitChangeProps = {
   change: ProjectSyncPlanOperation;
+  selected: boolean;
+  onSelect: (selected: boolean) => void;
 };
-export const GitChange = React.memo(({ change }: GitChangeProps) => {
-  return (
-    <>
-      {change.type === ProjectOperationType.CREATE_FLOW && (
-        <div className="flex gap-4 text-success-300 justify-center items-center">
-          <Plus className="w-4 h-4"></Plus>
-          <span className="flex-grow items-center justify-center">
-            {t('Create "{flowName}" Flow', {
-              flowName: change.flow.displayName,
-            })}
-          </span>
+
+export const GitChange = React.memo(
+  ({ change, selected, onSelect }: GitChangeProps) => {
+    const renderDiffInfo = (flowName: string) => (
+      <div className="flex items-center justify-between text-sm hover:bg-accent/20 rounded-md py-1">
+        <div className="flex items-center gap-2">
+          {change.type === ProjectOperationType.CREATE_FLOW && (
+            <Plus className="w-4 h-4 shrink-0" />
+          )}
+          {change.type === ProjectOperationType.UPDATE_FLOW && (
+            <UpdateIcon className="w-4 h-4 shrink-0" />
+          )}
+          {change.type === ProjectOperationType.DELETE_FLOW && (
+            <Minus className="w-4 h-4 shrink-0" />
+          )}
+          {flowName}
         </div>
-      )}
-      {change.type === ProjectOperationType.UPDATE_FLOW && (
-        <div className="flex gap-4 text-warn-dark justify-center items-center">
-          <UpdateIcon className="w-4 h-4"></UpdateIcon>
-          <span className="flex-grow items-center justify-center">
-            {t('Update "{flowName}" Flow', {
-              flowName: change.targetFlow.displayName,
-            })}
-          </span>
-        </div>
-      )}
-      {change.type === ProjectOperationType.DELETE_FLOW && (
-        <div className="flex gap-4 text-destructive-300 justify-center items-center">
-          <Minus className="w-4 h-4"></Minus>
-          <span className="flex-grow items-center justify-center">
-            {t('Delete "{flowName}" Flow', {
-              flowName: change.flow.displayName,
-            })}
-          </span>
-        </div>
-      )}
-    </>
-  );
-});
+      </div>
+    );
+
+    return (
+      <div>
+        {change.type === ProjectOperationType.CREATE_FLOW && (
+          <div className="flex gap-2 text-success items-center">
+            <Checkbox checked={selected} onCheckedChange={onSelect} />
+            {renderDiffInfo(change.flow.displayName)}
+          </div>
+        )}
+        {change.type === ProjectOperationType.UPDATE_FLOW && (
+          <div className="flex gap-2 text-warning items-center">
+            <Checkbox checked={selected} onCheckedChange={onSelect} />
+            {renderDiffInfo(change.targetFlow.displayName)}
+          </div>
+        )}
+        {change.type === ProjectOperationType.DELETE_FLOW && (
+          <div className="flex gap-2 text-destructive items-center">
+            <Checkbox checked={selected} onCheckedChange={onSelect} />
+            {renderDiffInfo(change.flow.displayName)}
+          </div>
+        )}
+      </div>
+    );
+  },
+);
 GitChange.displayName = 'GitChange';

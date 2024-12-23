@@ -1,5 +1,5 @@
 import { ProjectOperationType, ProjectSyncError } from '@activepieces/ee-shared'
-import { FileCompression, FileId, FileType, FlowStatus, isNil, ProjectId, StateFile } from '@activepieces/shared'
+import { FileCompression, FileId, FileType, FlowState, FlowStatus, isNil, ProjectId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../../../file/file.service'
 import { flowRepo } from '../../../flows/flow/flow.repo'
@@ -16,40 +16,41 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         for (const operation of operations) {
             switch (operation.type) {
                 case ProjectOperationType.UPDATE_FLOW: {
-                    if (!isNil(selectedOperations) && !selectedOperations.includes(operation.newStateFile.flow.id)) {
+                    if (!isNil(selectedOperations) && !selectedOperations.includes(operation.newState.id)) {
                         continue
                     }
-                    const flowUpdated = await projectStateHelper(log).updateFlowInProject(operation.oldStateFile.flow, operation.newStateFile.flow, projectId)
+                    const flowUpdated = await projectStateHelper(log).updateFlowInProject(operation.oldState, operation.newState, projectId)
                     if (flowUpdated.status === FlowStatus.ENABLED) {
                         publishJobs.push(projectStateHelper(log).republishFlow(flowUpdated.id, projectId))
                     }
                     newMapState = newMapState.mapFlow({
-                        sourceId: operation.newStateFile.flow.id,
+                        sourceId: operation.newState.id,
                         targetId: flowUpdated.id,
                     })
                     break
                 }
                 case ProjectOperationType.CREATE_FLOW: {
-                    if (!isNil(selectedOperations) && !selectedOperations.includes(operation.state.flow.id)) {
+                    if (!isNil(selectedOperations) && !selectedOperations.includes(operation.state.id)) {
                         continue
                     }
-                    const flowCreated = await projectStateHelper(log).createFlowInProject(operation.state.flow, projectId)
+                    const flowCreated = await projectStateHelper(log).createFlowInProject(operation.state, projectId)
                     newMapState = newMapState.mapFlow({
-                        sourceId: operation.state.flow.id,
+                        sourceId: operation.state.id,
                         targetId: flowCreated.id,
                     })
                     break
                 }
                 case ProjectOperationType.DELETE_FLOW: {
-                    if (!isNil(selectedOperations) && !selectedOperations.includes(operation.state.flow.id)) {
+                    if (!isNil(selectedOperations) && !selectedOperations.includes(operation.state.id)) {
                         continue
                     }
-                    await projectStateHelper(log).deleteFlowFromProject(operation.state.flow.id, projectId)
-                    newMapState = newMapState.deleteFlow(operation.state.flow.id)
+                    await projectStateHelper(log).deleteFlowFromProject(operation.state.id, projectId)
+                    newMapState = newMapState.deleteFlow(operation.state.id)
                     break
                 }
             }
         }
+        console.log('updatingMappingState', newMapState)
         await projectService.update(projectId, { mapping: newMapState })
         const errors = (await Promise.all(publishJobs)).filter((f): f is ProjectSyncError => f !== null)
         return {
@@ -57,7 +58,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         }
     },
     async save(projectId: ProjectId, name: string, log: FastifyBaseLogger): Promise<FileId> {
-        const fileToSave: StateFile[] = await this.getCurrentState(projectId, log)
+        const fileToSave: FlowState[] = await this.getCurrentState(projectId, log)
         
         const fileData = Buffer.from(JSON.stringify(fileToSave))
     
@@ -71,7 +72,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         })
         return file.id
     },
-    async getNewState(projectId: ProjectId, fileId: FileId, log: FastifyBaseLogger): Promise<StateFile[]> {
+    async getNewState(projectId: ProjectId, fileId: FileId, log: FastifyBaseLogger): Promise<FlowState[]> {
         const file = await fileService(log).getFileOrThrow({
             projectId,
             fileId,
@@ -79,7 +80,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         })
         return JSON.parse(file.data.toString())
     },
-    async getCurrentState(projectId: ProjectId, log: FastifyBaseLogger): Promise<StateFile[]> {
+    async getCurrentState(projectId: ProjectId, log: FastifyBaseLogger): Promise<FlowState[]> {
         const flows = await flowRepo().find({
             where: {
                 projectId,
@@ -91,13 +92,11 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 projectId,
             })
         }))
-        return allPopulatedFlows.map((f) => ({
-            flow: f,
-        }))
+        return allPopulatedFlows
     },
-    async getMappingState(projectId: ProjectId, stateOne: StateFile[], stateTwo: StateFile[]): Promise<ProjectMappingState> {
+    async getMappingState(projectId: ProjectId, stateOne: FlowState[], stateTwo: FlowState[]): Promise<ProjectMappingState> {
         const project = await projectService.getOneOrThrow(projectId)
-        const mappingState = (project.mapping ? new ProjectMappingState(project.mapping) : ProjectMappingState.empty()).clean({
+        const mappingState = (project.mapping ? new ProjectMappingState(project.mapping) : ProjectMappingState.empty()).merge({
             stateOne,
             stateTwo,
         })

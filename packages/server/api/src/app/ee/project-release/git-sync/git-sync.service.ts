@@ -177,28 +177,28 @@ function toResponse(operations: ProjectOperation[], errors: ProjectSyncError[] =
                 return {
                     type: operation.type,
                     flow: {
-                        id: operation.state.flow.id,
-                        displayName: operation.state.flow.version.displayName,
+                        id: operation.state.id,
+                        displayName: operation.state.version.displayName,
                     },
                 }
             case ProjectOperationType.CREATE_FLOW:
                 return {
                     type: operation.type,
                     flow: {
-                        id: operation.state.flow.id,
-                        displayName: operation.state.flow.version.displayName,
+                        id: operation.state.id,
+                        displayName: operation.state.version.displayName,
                     },
                 }
             case ProjectOperationType.UPDATE_FLOW:
                 return {
                     type: operation.type,
                     flow: {
-                        id: operation.newStateFile.flow.id,
-                        displayName: operation.newStateFile.flow.version.displayName,
+                        id: operation.newState.id,
+                        displayName: operation.newState.version.displayName,
                     },
                     targetFlow: {
-                        id: operation.oldStateFile.flow.id,
-                        displayName: operation.oldStateFile.flow.version.displayName,
+                        id: operation.oldState.id,
+                        displayName: operation.oldState.version.displayName,
                     },
                 }
         }
