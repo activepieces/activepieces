@@ -43,6 +43,7 @@ import { updateLineItemAction } from './lib/actions/update-line-item';
 import { findLineItemAction } from './lib/actions/find-line-item';
 import { removeContactFromListAction } from './lib/actions/remove-contact-from-list';
 import { uploadFileAction } from './lib/actions/upload-file';
+import { removeEmailSubscriptionAction } from './lib/actions/remove-email-subscription';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -69,6 +70,7 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'automation',
 		'e-commerce',
 		'tickets',
+		'content',
 		'settings.currencies.read',
 		'settings.users.read',
 		'settings.users.teams.read',
@@ -104,6 +106,7 @@ export const hubspot = createPiece({
 		getProductAction,
 		getTicketAction,
 		removeContactFromListAction,
+		removeEmailSubscriptionAction,
 		updateCompanyAction,
 		updateContactAction,
 		updateCustomObjectAction,
