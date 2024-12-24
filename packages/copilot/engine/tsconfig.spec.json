@@ -13,14 +13,14 @@
   "include": [
     "vite.config.ts",
     "vitest.config.ts",
-    "src/**/*.test.ts",
-    "src/**/*.spec.ts",
-    "src/**/*.test.tsx",
-    "src/**/*.spec.tsx",
-    "src/**/*.test.js",
-    "src/**/*.spec.js",
-    "src/**/*.test.jsx",
-    "src/**/*.spec.jsx",
-    "src/**/*.d.ts"
+    "engine/src/**/*.test.ts",
+    "engine/src/**/*.spec.ts",
+    "engine/src/**/*.test.tsx",
+    "engine/src/**/*.spec.tsx",
+    "engine/src/**/*.test.js",
+    "engine/src/**/*.spec.js",
+    "engine/src/**/*.test.jsx",
+    "engine/src/**/*.spec.jsx",
+    "engine/src/**/*.d.ts"
   ]
 }

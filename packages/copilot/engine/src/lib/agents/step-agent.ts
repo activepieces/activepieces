@@ -4,7 +4,7 @@ import { openai } from '@ai-sdk/openai';
 import axios from 'axios';
 import { stepGenerationSchema } from './schemas';
 import { PieceMetadata, ActionBase, TriggerBase } from '@activepieces/pieces-framework';
-import { BranchOperator, RouterExecutionType } from '@activepieces/shared';
+
 
 interface StepContext {
   stepType: 'PIECE_TRIGGER' | 'PIECE' | 'ROUTER';
