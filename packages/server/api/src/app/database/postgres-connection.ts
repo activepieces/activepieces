@@ -167,8 +167,6 @@ import { AddAuditLogIndicies1731711188507 } from './migration/postgres/173171118
 import { AddIndiciesToRunAndTriggerData1732324567513 } from './migration/postgres/1732324567513-AddIndiciesToRunAndTriggerData'
 import { AddProjectRelationInUserInvitation1732790412900 } from './migration/postgres/1732790673766-AddProjectRelationInUserInvitation'
 import { CreateProjectReleaseTable1734418823028 } from './migration/postgres/1734418823028-CreateProjectReleaseTable'
-import { AddReleasesEnablingBoolean1734429537542 } from './migration/postgres/1734429537542-AddReleasesEnablingBoolean'
-import { RenameGitSyncToEnvironment1734431436773 } from './migration/postgres/1734431436773-RenameGitSyncToEnvironment'
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
 import { AddCopilotSettings1734479886363 } from './migration/postgres/1734479886363-AddCopilotSettings'
 import { AddMappingForProject1734886495968 } from './migration/postgres/1734886495968-AddMappingForProject'
@@ -283,9 +281,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddGlobalConnectionsAndRbacForPlatform1731532843905,
         AddIndiciesToRunAndTriggerData1732324567513,
         AddProjectRelationInUserInvitation1732790412900,
-        CreateProjectReleaseTable1734418823028,
-        AddReleasesEnablingBoolean1734429537542,
-        RenameGitSyncToEnvironment1734431436773,
         RemoveWorkerType1734439097357,
         AddCopilotSettings1734479886363,
         AddMappingForProject1734886495968,
@@ -364,6 +359,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MigrateAuditEventSchema1723489038729,
                 AddAiTokensForProjectPlan1726446092010,
                 AddAuditLogIndicies1731711188507,
+                CreateProjectReleaseTable1734418823028
 
             )
             break

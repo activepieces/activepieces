@@ -24,18 +24,17 @@ import {
   ProjectReleaseType,
 } from '@activepieces/shared';
 import { DownloadButton } from './download-button';
-import { useApplyPlan } from './apply-plan';
+import { useState } from 'react';
+import { ApplyButton } from './apply-plan';
 
 const ProjectReleasesPage = () => {
-
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-releases'],
     queryFn: () => projectReleaseApi.list(),
   });
 
-  const { ApplyButton, ApplyPlanDialog } = useApplyPlan({
-    onSuccess: refetch,
-  });
+  const [selectedRelease, setSelectedRelease] = useState<ProjectRelease | null>(null);
+  const [isLoadingApplyPlan, setIsLoadingApplyPlan] = useState(false);
 
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {
@@ -99,11 +98,14 @@ const ProjectReleasesPage = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem className="cursor-pointer" asChild>
                 <ApplyButton
+                  loading={isLoadingApplyPlan}
                   variant="ghost"
+                  onSuccess={refetch}
                   className="w-full justify-start"
                   request={{ type: ProjectReleaseType.GIT }}
+                  onClick={() => setSelectedRelease(null)}
                 >
                   <div className="flex flex-row gap-2 items-center">
                     <Plus className="h-4 w-4" />
@@ -127,12 +129,15 @@ const ProjectReleasesPage = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <ApplyButton
+                      onSuccess={refetch}
                       variant="ghost"
                       className="size-8 p-0"
                       request={{
                         type: ProjectReleaseType.ROLLBACK,
                         projectReleaseId: row.id,
                       }}
+                      defaultName={`Rollback ${row.name}`}
+                      onClick={() => setSelectedRelease(row)}
                     >
                       <Undo2 className="size-4" />
                     </ApplyButton>
@@ -144,7 +149,6 @@ const ProjectReleasesPage = () => {
           },
         ]}
       />
-      <ApplyPlanDialog />
     </div>
   );
 };

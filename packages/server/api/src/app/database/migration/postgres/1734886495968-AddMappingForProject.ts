@@ -5,6 +5,14 @@ export class AddMappingForProject1734886495968 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
+            ALTER TABLE "platform"
+                RENAME COLUMN "gitSyncEnabled" TO "environmentEnabled"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "project"
+            ADD "releasesEnabled" boolean NOT NULL DEFAULT false
+        `)
+        await queryRunner.query(`
             ALTER TABLE "project"
             ADD "mapping" jsonb
         `)
@@ -26,6 +34,13 @@ export class AddMappingForProject1734886495968 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         const hasGitRepoTable = await queryRunner.hasTable('git_repo')
         
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+                RENAME COLUMN "environmentEnabled" TO "gitSyncEnabled"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "project" DROP COLUMN "releasesEnabled"
+        `)
         await queryRunner.query(`
             ALTER TABLE "project" DROP COLUMN "mapping"
         `)

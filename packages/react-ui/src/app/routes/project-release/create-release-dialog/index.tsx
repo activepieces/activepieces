@@ -34,6 +34,7 @@ type GitReleaseDialogProps = {
   setOpen: (open: boolean) => void;
   refetch: () => void;
   plan: ProjectSyncPlan | undefined;
+  defaultName?: string;
 };
 
 const formSchema = z.object({
@@ -48,6 +49,7 @@ const CreateReleaseDialog = ({
   setOpen,
   refetch,
   plan,
+  defaultName = '',
 }: GitReleaseDialogProps) => {
   const [isApplyingChanges, setIsApplyingChanges] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
@@ -59,7 +61,7 @@ const CreateReleaseDialog = ({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
+      name: defaultName,
       description: '',
     },
   });

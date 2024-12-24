@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ProjectReleaseType, DiffReleaseRequest } from '@activepieces/shared';
+import { DiffReleaseRequest } from '@activepieces/shared';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { CreateReleaseDialog } from './create-release-dialog';
@@ -10,15 +10,17 @@ import { ReactNode } from 'react';
 type ApplyButtonProps = ButtonProps & {
   request: DiffReleaseRequest;
   children: ReactNode;
+  onSuccess: () => void;
+  defaultName?: string;
 };
 
-export const useApplyPlan = ({ onSuccess }: { onSuccess: () => void }) => {
+export const ApplyButton = ({ request, children, onSuccess, defaultName, ...props }: ApplyButtonProps) => {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [syncPlan, setSyncPlan] = useState<any>(null);
   const [loadingRequestId, setLoadingRequestId] = useState<string | null>(null);
 
-  const { mutate: loadSyncPlan } = useMutation({
+  const { mutate: loadSyncPlan, isPending: isLoadingApplyPlan } = useMutation({
     mutationFn: (request: DiffReleaseRequest) => projectReleaseApi.diff(request),
     onSuccess: (plan) => {
       setSyncPlan(plan);
@@ -31,22 +33,11 @@ export const useApplyPlan = ({ onSuccess }: { onSuccess: () => void }) => {
     },
   });
 
-  const ApplyPlanDialog = () => (
-    dialogOpen && (
-      <CreateReleaseDialog
-        open={dialogOpen}
-        setOpen={setDialogOpen}
-        refetch={onSuccess}
-        plan={syncPlan}
-      />
-    )
-  );
+  const requestId = JSON.stringify(request);
+  const isLoading = loadingRequestId === requestId;
 
-  const ApplyButton = ({ request, children, ...props }: ApplyButtonProps) => {
-    const requestId = JSON.stringify(request);
-    const isLoading = loadingRequestId === requestId;
-
-    return (
+  return (
+    <>
       <Button
         {...props}
         loading={isLoading}
@@ -57,11 +48,16 @@ export const useApplyPlan = ({ onSuccess }: { onSuccess: () => void }) => {
       >
         {children}
       </Button>
-    );
-  };
 
-  return {
-    ApplyPlanDialog,
-    ApplyButton,
-  };
-}; 
+      {dialogOpen && (
+        <CreateReleaseDialog
+          open={dialogOpen}
+          setOpen={setDialogOpen}
+          refetch={onSuccess}
+          plan={syncPlan}
+          defaultName={defaultName}
+        />
+      )}
+    </>
+  );
+};
