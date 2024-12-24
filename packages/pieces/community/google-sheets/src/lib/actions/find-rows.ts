@@ -58,7 +58,7 @@ export const findRowsAction = createAction({
     const startingRow = propsValue.startingRow ?? 1;
     const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
 
-    let rows = await googleSheetsCommon.getGoogleSheetRows({
+    const rows = await googleSheetsCommon.getGoogleSheetRows({
       spreadsheetId: spreadSheetId,
       accessToken: auth.access_token,
       sheetId: sheetId,
