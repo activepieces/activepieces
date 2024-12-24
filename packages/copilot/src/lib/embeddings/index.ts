@@ -32,7 +32,7 @@ export async function generatePiecesEmbeddings(): Promise<void> {
   }
 }
 
-export async function findRelevantPieces(query: string, threshold: number = 0.45): Promise<EmbeddedPiece[]> {
+export async function findRelevantPieces(query: string, threshold: number = 0.35): Promise<EmbeddedPiece[]> {
   try {
     // Load existing embeddings
     const embeddedPieces = await loadEmbeddings(EMBEDDINGS_PATH);
