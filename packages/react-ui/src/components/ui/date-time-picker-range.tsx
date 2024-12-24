@@ -47,11 +47,14 @@ const applyTimeToDate = ({
   const minutes = timeDate.getMinutes();
   const seconds = timeDate.getSeconds();
   const milliseconds = timeDate.getMilliseconds();
-
-  // Apply the time components to targetDate
-  targetDate.setHours(hours, minutes, seconds, milliseconds);
-
-  return targetDate; // Return the updated targetDate
+  return new Date(
+    new Date(new Date(targetDate)).setHours(
+      hours,
+      minutes,
+      seconds,
+      milliseconds,
+    ),
+  ); // Return the updated targetDate
 };
 const getStartToEndDayTime = () => {
   const now = new Date();
@@ -87,21 +90,14 @@ export function DateTimePickerWithRange({
   minDate,
   presetType = 'past',
 }: DateTimePickerWithRangeProps) {
-  const [date, setDate] = React.useState<DateRange | undefined>();
-  const [timeDate, setTimeDate] = React.useState<DateRange>({
-    from: undefined,
-    to: undefined,
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: from ? new Date(from) : undefined,
+    to: to ? new Date(to) : undefined,
   });
-  React.useEffect(() => {
-    setDate({
-      from: from ? new Date(from) : undefined,
-      to: to ? new Date(to) : undefined,
-    });
-    setTimeDate({
-      from: from ? new Date(from) : undefined,
-      to: to ? new Date(to) : undefined,
-    });
-  }, [from, to]);
+  const [timeDate, setTimeDate] = React.useState<DateRange>({
+    from: from ? new Date(from) : undefined,
+    to: to ? new Date(to) : undefined,
+  });
 
   const handleSelect = (selectedDate: DateRange | undefined) => {
     if (selectedDate) {
@@ -245,24 +241,27 @@ export function DateTimePickerWithRange({
               size={'sm'}
               className="text-primary hover:!text-primary"
               onClick={() => {
-                const fromTime = new Date(new Date().setHours(0, 0, 0, 0));
-                const toTime = new Date(new Date().setHours(23, 59, 59, 999));
-                setTimeDate({
-                  from: fromTime,
-                  to: toTime,
-                });
+                const fromTime = getStartToEndDayTime().from;
+                const toTime = getStartToEndDayTime().to;
                 const fromDate = date?.from
                   ? applyTimeToDate({
                       timeDate: fromTime,
                       targetDate: date.from,
                     })
                   : undefined;
+
                 const toDate = date?.to
                   ? applyTimeToDate({
                       timeDate: toTime,
                       targetDate: date.to,
                     })
                   : undefined;
+
+                setTimeDate({
+                  from: fromTime,
+                  to: toTime,
+                });
+
                 setDate({
                   from: fromDate,
                   to: toDate,
@@ -308,7 +307,7 @@ export function DateTimePickerWithRange({
                 date={timeDate.to}
                 name="to"
                 setDate={(toTime) => {
-                  const toDate = date?.to ?? new Date();
+                  const toDate = date?.to ?? date?.from ?? new Date();
                   const toWithCorrectedTime = applyTimeToDate({
                     timeDate: toTime,
                     targetDate: toDate,

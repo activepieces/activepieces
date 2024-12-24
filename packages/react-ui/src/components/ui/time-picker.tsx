@@ -41,7 +41,7 @@ export function TimePicker({
   React.useEffect(() => {
     if (date && date.getHours() >= 12) {
       setPeriod('PM');
-    } else {
+    } else if (!date) {
       setPeriod(name === 'from' ? 'AM' : 'PM');
     }
   }, [date]);
