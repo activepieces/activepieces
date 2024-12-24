@@ -174,11 +174,6 @@ export const FlowCanvas = React.memo(
     }, [setViewport, getViewport]);
     const onSelectionChange = useCallback(
       (ev: OnSelectionChangeParams) => {
-        console.log(
-          'onSelectionChange',
-          ev.nodes.map((n) => n.id),
-          selectedStep,
-        );
         const selectedNodes = ev.nodes.map((n) => n.id);
         if (selectedNodes.length === 0 && selectedStep) {
           selectedNodes.push(selectedStep);
