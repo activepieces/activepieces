@@ -4,7 +4,6 @@ import {
     MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -32,6 +31,7 @@ import { flagService } from '../../flags/flag.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { projectUsageService } from '../../project/usage/project-usage-service'
@@ -80,10 +80,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         projectId,
         request,
     }: UpdateParams): Promise<ProjectWithLimits> {
-        await projectService.update(projectId, {
-            displayName: request.displayName,
-            externalId: request.externalId,
-        })
+        await projectService.update(projectId, request)
         if (!isNil(request.plan)) {
             const isSubscribed = await isSubscribedInStripe(projectId, log)
             const project = await projectService.getOneOrThrow(projectId)

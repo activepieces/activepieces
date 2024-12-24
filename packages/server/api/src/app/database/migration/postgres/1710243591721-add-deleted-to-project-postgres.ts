@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddDeletedToProjectPostgres1710243591721 implements MigrationInterface {
     name = 'AddDeletedToProjectPostgres1710243591721'
@@ -10,7 +12,7 @@ export class AddDeletedToProjectPostgres1710243591721 implements MigrationInterf
             ADD "deleted" TIMESTAMP WITH TIME ZONE
         `)
 
-        logger.info({ name: this.name }, 'up')
+        log.info({ name: this.name }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -18,7 +20,7 @@ export class AddDeletedToProjectPostgres1710243591721 implements MigrationInterf
             ALTER TABLE "project" DROP COLUMN "deleted"
         `)
 
-        logger.info({ name: this.name }, 'down')
+        log.info({ name: this.name }, 'down')
     }
 
 }

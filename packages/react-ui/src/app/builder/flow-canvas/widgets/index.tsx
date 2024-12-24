@@ -7,7 +7,7 @@ import { TestFlowWidget } from '@/app/builder/flow-canvas/widgets/test-flow-widg
 import ViewOnlyWidget from '@/app/builder/flow-canvas/widgets/view-only-widget';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../consts';
+import { flowUtilConsts } from '../utils/consts';
 
 const AboveFlowWidgets = React.memo(() => {
   const [flowVersion, setRun, selectStepByName, readonly] =

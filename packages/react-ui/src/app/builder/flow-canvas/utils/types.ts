@@ -32,6 +32,8 @@ export type ApStepNode = {
   data: {
     step: Action | Trigger;
   };
+  selectable?: boolean;
+  style?: React.CSSProperties;
 };
 
 export type ApLoopReturnNode = {
@@ -42,22 +44,24 @@ export type ApLoopReturnNode = {
     y: number;
   };
   data: Record<string, never>;
+  selectable?: boolean;
 };
 
-export type ApButtonData =
+export type ApButtonData = {
+  edgeId: string;
+} & (
   | {
-      edgeId: string;
       parentStepName: string;
       stepLocationRelativeToParent:
         | StepLocationRelativeToParent.AFTER
         | StepLocationRelativeToParent.INSIDE_LOOP;
     }
   | {
-      edgeId: string;
       parentStepName: string;
       stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
       branchIndex: number;
-    };
+    }
+);
 
 export type ApBigAddButtonNode = {
   id: string;
@@ -67,6 +71,8 @@ export type ApBigAddButtonNode = {
     y: number;
   };
   data: ApButtonData;
+  selectable?: boolean;
+  style?: React.CSSProperties;
 };
 
 export type ApGraphEndNode = {
@@ -79,6 +85,7 @@ export type ApGraphEndNode = {
   data: {
     showWidget?: boolean;
   };
+  selectable?: boolean;
 };
 
 export type ApNode =

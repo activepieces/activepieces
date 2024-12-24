@@ -7,6 +7,7 @@ import {
   timeFormat,
   timeFormatDescription,
   timeZoneOptions,
+  getCorrectedFormat,
 } from '../common';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -86,7 +87,7 @@ export const nextDayofWeek = createAction({
       time: z.string().regex(/^\d\d:\d\d$/),
     });
 
-    const timeFormat = context.propsValue.timeFormat;
+    const timeFormat = getCorrectedFormat(context.propsValue.timeFormat);
     const timeZone = context.propsValue.timeZone as string;
     const dayIndex = context.propsValue.weekday as number;
     const currentTime = context.propsValue.currentTime as boolean;

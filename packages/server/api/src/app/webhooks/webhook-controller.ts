@@ -1,14 +1,14 @@
 import {
-    AppSystemProp,
-    createWebhookContextLog,
     JobType,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    system,
+    pinoLogging,
 } from '@activepieces/server-shared'
 import {
+    ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     apId,
     EngineHttpResponse,
+    ErrorCode,
     EventPayload,
     Flow,
     FlowStatus,
@@ -23,6 +23,8 @@ import { StatusCodes } from 'http-status-codes'
 import { tasksLimit } from '../ee/project-plan/tasks-limit'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { flowService } from '../flows/flow/flow.service'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
@@ -125,7 +127,7 @@ async function handleWebhook({
 }: HandleWebhookParams): Promise<EngineHttpResponse> {
     const webhookHeader = 'x-webhook-id'
     const webhookRequestId = apId()
-    const log = createWebhookContextLog({ log: request.log, webhookId: webhookRequestId, flowId })
+    const log = pinoLogging.createWebhookContextLog({ log: request.log, webhookId: webhookRequestId, flowId })
     const flow = await flowService(log).getOneById(flowId)
     if (isNil(flow)) {
         log.info('Flow not found, returning GONE')
@@ -252,7 +254,10 @@ async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<v
     const exceededLimit = await tasksLimit(log).exceededLimit({
         projectId: flow.projectId,
     })
-    if (exceededLimit) {
+    if (!exceededLimit) {
+        return
+    }
+    if (flow.status === FlowStatus.ENABLED) {
         log.info({
             message: 'disable webhook out of flow quota',
             projectId: flow.projectId,
@@ -264,7 +269,12 @@ async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<v
             newStatus: FlowStatus.DISABLED,
         })
     }
-
+    throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: {
+            metric: 'tasks',
+        },
+    })
 }
 
 const WEBHOOK_PARAMS = {

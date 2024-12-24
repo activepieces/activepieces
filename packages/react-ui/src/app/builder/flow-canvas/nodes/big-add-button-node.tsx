@@ -13,12 +13,12 @@ import {
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../consts';
 import {
   AskAiIndicator,
   shouldShowAskAiIndicator,
 } from '../edges/ask-ai-indicator';
-import { ApBigAddButtonNode } from '../types';
+import { flowUtilConsts } from '../utils/consts';
+import { ApBigAddButtonNode } from '../utils/types';
 
 const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
@@ -72,7 +72,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                     width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                   }}
                   id={id}
-                  className={cn('  rounded bg-accent', {
+                  className={cn('rounded bg-accent relative', {
                     'bg-primary/80': showDropIndicator || pieceSelectorOpen,
                     'shadow-add-button':
                       isIsStepInsideDropzone || pieceSelectorOpen,

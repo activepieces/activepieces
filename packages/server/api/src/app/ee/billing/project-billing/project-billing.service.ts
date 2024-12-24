@@ -16,6 +16,7 @@ export const projectBillingService = (log: FastifyBaseLogger) => ({
         const projectBilling = await distributedLock.acquireLock({
             key: `project_billing_${projectId}`,
             timeout: 30 * 1000,
+            log,
         })
         try {
             const project = await projectService.getOneOrThrow(projectId)

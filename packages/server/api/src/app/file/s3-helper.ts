@@ -1,10 +1,12 @@
 import { Readable } from 'stream'
-import { AppSystemProp, exceptionHandler, system } from '@activepieces/server-shared'
-import { FileType, ProjectId } from '@activepieces/shared'
+import { exceptionHandler } from '@activepieces/server-shared'
+import { apId, FileType, ProjectId } from '@activepieces/shared'
 import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 
 export const s3Helper = (log: FastifyBaseLogger) => ({
     constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): string {
@@ -40,7 +42,7 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
                 s3Key,
                 error,
             }, 'failed to upload file to s3')
-            exceptionHandler.handle(error)
+            exceptionHandler.handle(error, log)
             throw error
         }
         return s3Key
@@ -94,8 +96,34 @@ export const s3Helper = (log: FastifyBaseLogger) => ({
         }
         catch (error) {
             log.error({ error, count: s3Keys.length }, 'failed to delete files from s3')
-            exceptionHandler.handle(error)
+            exceptionHandler.handle(error, log)
             throw error
+        }
+    },
+    async validateS3Configuration(): Promise<void> {
+        const client = getS3Client()
+        const bucketName = getS3BucketName()
+        const testKey = `activepieces-${apId()}-validation-test-key`
+
+        try {
+            await client.putObject({
+                Bucket: bucketName,
+                Key: testKey,
+                Body: 'activepieces-test',
+            })
+
+            await client.headObject({
+                Bucket: bucketName,
+                Key: testKey,
+            })
+
+            await client.deleteObject({
+                Bucket: bucketName,
+                Key: testKey,
+            })
+        }
+        catch (error: unknown) {
+            throw new Error(`S3 validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
     },
 })

@@ -9,7 +9,7 @@ export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
     async executeRepeatingJob({ data, engineToken, workerToken }: Params): Promise<void> {
         const { flowVersionId, jobType } = data
 
-        const populatedFlow = await engineApiService(engineToken).getFlowWithExactPieces({
+        const populatedFlow = await engineApiService(engineToken, log).getFlowWithExactPieces({
             versionId: flowVersionId,
             type: GetFlowVersionForWorkerRequestType.EXACT,
         })
@@ -21,7 +21,7 @@ export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
                 flowVersionId,
                 publishedVersionId: populatedFlow?.publishedVersionId,
             }, 'removing stale flow')
-            await engineApiService(engineToken).removeStaleFlow({
+            await engineApiService(engineToken, log).removeStaleFlow({
                 flowId: populatedFlow?.id,
                 flowVersionId,
             })

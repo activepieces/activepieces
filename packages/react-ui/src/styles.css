@@ -123,11 +123,17 @@
 
 .react-flow {
   --xy-edge-stroke-selected-default: #b1b1b7 !important;
-  --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7;
-  --selection-border-default: 0px solid #b1b1b7;
-  --node-border-default: 0px solid #b1b1b7;
+  --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7 !important;
+  --selection-border-default: 0px solid #b1b1b7 !important;
+  --node-border-default: 0px solid #b1b1b7 !important;
+  --xy-selection-border-default: 1px dotted hsl(var(--primary-300))!important;
+  --xy-selection-background-color-default: hsl(var(--primary-100)/0.25) !important;
 }
 
+.react-flow__pane.selection,.react-flow__nodesselection-rect
+{
+  cursor: default !important;
+}
 .react-flow__edge.selectable > path {
   /* If necessary, add !important to the rule */
   pointer-events: none !important;

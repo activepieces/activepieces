@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises'
-import { networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
+import { webhookSecretsUtils } from '@activepieces/server-shared'
 import { Action, ActionType, apId, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { appNetworkUtils } from '../../utils/app-network-utils'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { pieceEngineUtil } from '../flow-engine-util'
@@ -13,8 +14,8 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            publicUrl: await networkUtls.getPublicUrl(),
-            internalApiUrl: networkUtls.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
         }
         const sandbox = await prepareFlowSandbox(log, engineToken, operation.runEnvironment, operation.flowVersion, operation.projectId)
         return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input, log)
@@ -25,7 +26,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     ): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
         log.debug({ operation }, '[EngineHelper#extractPieceMetadata]')
 
-        const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, operation)
+        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: apId(),
@@ -43,8 +44,8 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             { hookType: operation.hookType, projectId: operation.projectId },
             '[EngineHelper#executeTrigger]',
         )
-        const triggerPiece = await pieceEngineUtil.getTriggerPiece(engineToken, operation.flowVersion)
-        const lockedVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
+        const triggerPiece = await pieceEngineUtil(log).getTriggerPiece(engineToken, operation.flowVersion)
+        const lockedVersion = await pieceEngineUtil(log).lockSingleStepPieceVersion({
             engineToken,
             stepName: operation.flowVersion.trigger.name,
             flowVersion: operation.flowVersion,
@@ -63,8 +64,8 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             appWebhookUrl: await webhookUtils(log).getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
             }),
-            publicUrl: await networkUtls.getPublicUrl(),
-            internalApiUrl: networkUtls.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
         }
@@ -72,7 +73,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     },
     async executeProp(engineToken, operation) {
         const { piece } = operation
-        const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: operation.projectId,
@@ -80,8 +81,8 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
         const input: ExecutePropsOptions = {
             ...operation,
-            publicUrl: await networkUtls.getPublicUrl(),
-            internalApiUrl: networkUtls.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
 
@@ -89,22 +90,22 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     },
     async executeValidateAuth(engineToken, operation) {
         const { piece, platformId } = operation
-        const lockedPiece = await pieceEngineUtil.getExactPieceVersion(engineToken, piece)
+        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, piece)
         const sandbox = await sandboxProvisioner(log).provision({
             pieces: [lockedPiece],
             customPiecesPathKey: platformId,
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            publicUrl: await networkUtls.getPublicUrl(),
-            internalApiUrl: networkUtls.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
         return execute(EngineOperationType.EXECUTE_VALIDATE_AUTH, sandbox, input, log)
     },
     async executeAction(engineToken, operation) {
         const step = flowStructureUtil.getActionOrThrow(operation.stepName, operation.flowVersion.trigger)
-        const lockedFlowVersion = await pieceEngineUtil.lockSingleStepPieceVersion({
+        const lockedFlowVersion = await pieceEngineUtil(log).lockSingleStepPieceVersion({
             engineToken,
             flowVersion: operation.flowVersion,
             stepName: operation.stepName,
@@ -122,8 +123,8 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             stepName: operation.stepName,
             projectId: operation.projectId,
             sampleData: operation.sampleData,
-            publicUrl: await networkUtls.getPublicUrl(),
-            internalApiUrl: networkUtls.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
 
@@ -154,11 +155,11 @@ const execute = async <Result extends EngineHelperResult>(
 }
 
 async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, runEnvironment: RunEnvironment, flowVersion: FlowVersion, projectId: string): Promise<IsolateSandbox> {
-    const pieces = await pieceEngineUtil.extractFlowPieces({
+    const pieces = await pieceEngineUtil(log).extractFlowPieces({
         flowVersion,
         engineToken,
     })
-    const codeSteps = pieceEngineUtil.getCodeSteps(flowVersion)
+    const codeSteps = pieceEngineUtil(log).getCodeSteps(flowVersion)
     switch (runEnvironment) {
         case RunEnvironment.PRODUCTION:
             return sandboxProvisioner(log).provision({
@@ -186,7 +187,7 @@ async function getSandboxForAction(
     switch (action.type) {
         case ActionType.PIECE: {
             return sandboxProvisioner(log).provision({
-                pieces: [await pieceEngineUtil.getExactPieceForStep(engineToken, action)],
+                pieces: [await pieceEngineUtil(log).getExactPieceForStep(engineToken, action)],
                 customPiecesPathKey: projectId,
             })
         }

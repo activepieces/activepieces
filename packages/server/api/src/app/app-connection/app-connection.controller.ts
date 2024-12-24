@@ -33,7 +33,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PROJECT,
         })
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -85,7 +85,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
         })
-        eventsHooks.get().sendUserEventFromRequest(request, {
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,

@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class RemoveFlowInstance1702379794665 implements MigrationInterface {
     name = 'RemoveFlowInstance1702379794665'
@@ -40,7 +42,7 @@ export class RemoveFlowInstance1702379794665 implements MigrationInterface {
             RENAME TO "DELETED_flow_instance"
         `)
 
-        logger.info('RemoveFlowInstance1702379794665 up')
+        log.info('RemoveFlowInstance1702379794665 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -74,6 +76,6 @@ export class RemoveFlowInstance1702379794665 implements MigrationInterface {
             ALTER TABLE "flow" DROP COLUMN "status"
         `)
 
-        logger.info('RemoveFlowInstance1702379794665 down')
+        log.info('RemoveFlowInstance1702379794665 down')
     }
 }

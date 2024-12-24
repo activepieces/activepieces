@@ -1,12 +1,13 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
+const log = system.globalLogger()
 const FLOW_VERSION_TABLE = 'flow_version'
 const PIECE_TYPE = 'PIECE'
 
 export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('addVersionToPieceSteps1677521257188, started')
+        log.info('addVersionToPieceSteps1677521257188, started')
 
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
@@ -31,11 +32,11 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
             }
         }
 
-        logger.info('addVersionToPieceSteps1677521257188, finished')
+        log.info('addVersionToPieceSteps1677521257188, finished')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info('addVersionToPieceSteps1677521257188, started')
+        log.info('addVersionToPieceSteps1677521257188, started')
 
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
@@ -60,6 +61,6 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
             }
         }
 
-        logger.info('addVersionToPieceSteps1677521257188, finished')
+        log.info('addVersionToPieceSteps1677521257188, finished')
     }
 }

@@ -4,7 +4,7 @@ import {
 } from '@activepieces/ee-shared'
 import { DefaultProjectRole, Permission, Platform, PlatformRole, PrincipalType, Project, ProjectRole, RoleType, User } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -22,17 +22,19 @@ import {
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    mockLog = app!.log!
 })
 
 beforeEach(async () => {
-    stripeHelper.getOrCreateCustomer = jest
+    stripeHelper(mockLog).getOrCreateCustomer = jest
         .fn()
         .mockResolvedValue(faker.string.uuid())
-    emailService.sendInvitation = jest.fn()
+    emailService(mockLog).sendInvitation = jest.fn()
 })
 
 afterAll(async () => {

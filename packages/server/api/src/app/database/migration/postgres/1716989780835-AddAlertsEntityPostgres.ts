@@ -1,6 +1,8 @@
-import { logger } from '@activepieces/server-shared'
 import { apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface {
     name = 'AddAlertsEntityPostgres1716989780835'
@@ -36,7 +38,7 @@ export class AddAlertsEntityPostgres1716989780835 implements MigrationInterface 
         `)
 
         const countAlerts = await insertAlertsInBatches(projects, queryRunner)
-        logger.info(`CreateAlerts1716989780835 Migrated ${countAlerts} alerts`)
+        log.info(`CreateAlerts1716989780835 Migrated ${countAlerts} alerts`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
