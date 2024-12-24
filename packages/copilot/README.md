@@ -1,11 +1,21 @@
-# copilot
+## Setup
 
-This library was generated with [Nx](https://nx.dev).
+Create a `.env` file in `packages/copilot/.env` with your OpenAI API key:
 
-## Building
+```
+OPENAI_API_KEY=sk-...
+```
 
-Run `nx build copilot` to build the library.
+## Running Testing
 
-## Running unit tests
+to run the copilot against all use cases, run `nx test copilot`
 
-Run `nx test copilot` to execute the unit tests via [Vitest](https://vitest.dev/).
+
+## Compiling Examples
+
+
+The examples are generated from the UI and saved as JSON files in `packages/copilot/src/lib/examples/original`.
+
+To compile the examples into a format that can be used by the copilot, run `nx compile copilot`.
+
+This will create a new directory `packages/copilot/src/lib/examples/compiled` with the compiled examples.
