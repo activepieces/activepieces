@@ -3,7 +3,9 @@ import {
   SeekPage,
   CreateProjectReleaseRequestBody,
   ProjectRelease,
+  ProjectReleaseType,
 } from '@activepieces/shared';
+import { ProjectSyncPlan } from '@activepieces/ee-shared';
 
 export const projectReleaseApi = {
   async list() {
@@ -18,7 +20,9 @@ export const projectReleaseApi = {
   async download(releaseId: string) {
     return await api.post<Buffer>(`/v1/project-releases/${releaseId}/download`);
   },
-  async rollback(releaseId: string) {
-    return await api.post<void>(`/v1/project-releases/${releaseId}/apply`);
+  async diff(type: ProjectReleaseType) {
+    return await api.post<ProjectSyncPlan>(`/v1/project-releases/diff`, {
+      type,
+    });
   },
 };

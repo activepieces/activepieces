@@ -24,7 +24,7 @@ import {
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { formatUtils } from '@/lib/utils';
-import { ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
+import { assertNotNullOrUndefined, ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
 
 import { GitReleaseDialog } from './git-release-dialog';
 
@@ -43,8 +43,16 @@ const ProjectReleasesPage = () => {
   const { mutate: rollbackProjectRelease, isPending: isRollingBack } =
     useMutation({
       mutationKey: ['rollback-project-release'],
-      mutationFn: ({ releaseId }: { projectId: string; releaseId: string }) => {
-        return projectReleaseApi.rollback(releaseId);
+      mutationFn: ({ releaseId }: { releaseId: string }) => {
+        const release = data?.data.filter((r) => r.id === releaseId)[0];
+        assertNotNullOrUndefined(release, 'Release not found');
+        return projectReleaseApi.create({
+          type: ProjectReleaseType.ROLLBACK,
+          projectReleaseId: releaseId,
+          name: release.name,
+          description: release.description,
+          selectedFlowsIds: [],
+        });
       },
       onSuccess: () => {
         refetch();
@@ -61,8 +69,8 @@ const ProjectReleasesPage = () => {
 
   const { mutate: downloadProjectRelease } = useMutation({
     mutationKey: ['download-project-release'],
-    mutationFn: ({ releaseId }: { releaseId: string }) => {
-      return projectReleaseApi.download(releaseId);
+    mutationFn: async ({ releaseId }: { releaseId: string }) => {
+      return await projectReleaseApi.download(releaseId);
     },
     onSuccess: (data) => {
       const zip = new JSZip();
@@ -210,7 +218,6 @@ const ProjectReleasesPage = () => {
                       entityName={`${t('Project Release')} ${row.fileId}`}
                       mutationFn={async () =>
                         rollbackProjectRelease({
-                          projectId: row.projectId,
                           releaseId: row.id,
                         })
                       }

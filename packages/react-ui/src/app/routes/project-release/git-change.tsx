@@ -42,7 +42,7 @@ export const GitChange = React.memo(
           </div>
         )}
         {change.type === ProjectOperationType.UPDATE_FLOW && (
-          <div className="flex gap-2 text-warning items-center">
+          <div className="flex gap-2 items-center">
             <Checkbox checked={selected} onCheckedChange={onSelect} />
             {renderDiffInfo(change.targetFlow.displayName)}
           </div>

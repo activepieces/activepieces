@@ -7,7 +7,6 @@ import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog';
-import { ReviewChangeDialog } from '@/features/git-sync/components/review-change-dialog';
 import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -77,10 +76,9 @@ const EnvironmentPage = () => {
                   </p>
                 </div>
                 <div className="flex flex-col justify-center items-center gap-2">
-                  {!gitSync && <ConnectGitDialog></ConnectGitDialog>}
+                  {!gitSync && <ConnectGitDialog showButton={true}></ConnectGitDialog>}
                   {gitSync && (
                     <div className="flex flex-col gap-2">
-                      <ReviewChangeDialog gitSync={gitSync} />
                       <Button
                         size={'sm'}
                         onClick={() => mutate()}

@@ -22,7 +22,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog';
-import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -95,18 +94,14 @@ const GitReleaseDialog = ({
   }, [open, form]);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: FormData) => {
+    mutationFn: async () => {
       if (gitSync) {
-        return gitSyncApi.pull(gitSync.id, {
-          dryRun: true,
-          selectedOperations: Array.from(selectedChanges),
-        });
+        return await projectReleaseApi.diff(ProjectReleaseType.GIT);
       }
     },
     onSuccess: (plan) => {
       if (step === 2) {
         setOpen(false);
-
         return;
       }
       if (plan?.operations.length === 0) {
@@ -127,9 +122,9 @@ const GitReleaseDialog = ({
     },
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async () => {
     try {
-      await mutate(data);
+      await mutate();
     } catch (error) {
       form.setError('root', {
         message: t('Failed to pull from Git. Please try again.'),
@@ -145,7 +140,7 @@ const GitReleaseDialog = ({
           .create({
             name: form.getValues('name'),
             description: form.getValues('description'),
-            selectedOperations: Array.from(selectedChanges),
+            selectedFlowsIds: Array.from(selectedChanges),
             repoId: gitSync.id,
             type: ProjectReleaseType.GIT,
           })

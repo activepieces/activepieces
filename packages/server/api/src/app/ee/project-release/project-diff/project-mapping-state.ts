@@ -26,7 +26,6 @@ export class ProjectMappingState {
     deleteFlow(targetId: string): ProjectMappingState {
         const { [targetId]: _, ...rest } = this.flows
         return new ProjectMappingState({
-            ...this,
             flows: rest,
         })
     }

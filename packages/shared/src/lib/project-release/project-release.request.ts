@@ -10,7 +10,6 @@ const BaseProjectReleaseRequestBody = Type.Object({
     name: Type.String(),
     description: Nullable(Type.String()),
     selectedFlowsIds: Type.Array(Type.String()),
-
 })
 
 export const CreateProjectReleaseFromGitRequestBody = Type.Composite([

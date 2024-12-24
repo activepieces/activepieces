@@ -43,8 +43,8 @@ function findFlowsToUpdate({ newState, oldState, mapping }: DiffParams): Project
         if (isFlowChanged(os, ns)) {
             return {
                 type: ProjectOperationType.UPDATE_FLOW,
-                flowState: ns,
-                newFlowState: os,
+                flowState: os,
+                newFlowState: ns,
             } as ProjectOperation
         }
         return null

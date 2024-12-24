@@ -3,6 +3,7 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { fileService } from '../../file/file.service'
 import { projectReleaseService } from './project-release.service'
+import { platformService } from '../../platform/platform.service'
 
 export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListProjectReleasesRequestParams, async (req) => {
@@ -13,11 +14,15 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.post('/', CreateProjectReleaseRequest, async (req) => {
-        return projectReleaseService.create(req.principal.projectId, req.principal.id, req.body, req.log)
+        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
+        const ownerId = platform.ownerId
+        return projectReleaseService.create(req.principal.projectId, ownerId, req.principal.id, req.body, req.log)
     })
 
     app.post('/diff', DiffProjectReleaseRequest, async (req) => {
-        return projectReleaseService.releasePlan(req.principal.projectId, req.body, req.log)
+        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
+        const ownerId = platform.ownerId
+        return projectReleaseService.releasePlan(req.principal.projectId, ownerId, req.body, req.log)
     })
 
     app.post('/:id/download', DownloadProjectReleaseRequest, async (req) => {
