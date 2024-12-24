@@ -1,12 +1,11 @@
 import { api } from '@/lib/api';
-import { ProjectSyncPlan } from '@activepieces/ee-shared';
 import {
   SeekPage,
   CreateProjectReleaseRequestBody,
   ProjectRelease,
-  ProjectReleaseType,
-  ProjectState,
+  DiffReleaseRequest,
 } from '@activepieces/shared';
+import { ProjectSyncPlan } from '@activepieces/ee-shared';
 
 export const projectReleaseApi = {
   async list() {
@@ -18,14 +17,10 @@ export const projectReleaseApi = {
   async delete(id: string) {
     return await api.delete<void>(`/v1/project-releases/${id}`);
   },
-  async download(releaseId: string) {
-    return await api.post<ProjectState>(
-      `/v1/project-releases/${releaseId}/download`,
-    );
+  async export(releaseId: string) {
+    return await api.post<unknown>(`/v1/project-releases/${releaseId}/export`);
   },
-  async diff(type: ProjectReleaseType) {
-    return await api.post<ProjectSyncPlan>(`/v1/project-releases/diff`, {
-      type,
-    });
+  async diff(request: DiffReleaseRequest) {
+    return await api.post<ProjectSyncPlan>(`/v1/project-releases/diff`, request);
   },
 };

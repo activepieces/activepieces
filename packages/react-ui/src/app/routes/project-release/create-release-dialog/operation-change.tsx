@@ -8,53 +8,54 @@ import {
   ProjectSyncPlanOperation,
 } from '@activepieces/ee-shared';
 
-type GitChangeProps = {
+const renderDiffInfo = (flowName: string, icon: React.ReactNode) => (
+  <div className="flex items-center justify-between text-sm hover:bg-accent/20 rounded-md py-1">
+    <div className="flex items-center gap-2">
+      {icon}
+      {flowName}
+    </div>
+  </div>
+);
+
+type OperationChangeProps = {
   change: ProjectSyncPlanOperation;
   selected: boolean;
   onSelect: (selected: boolean) => void;
 };
 
-export const GitChange = React.memo(
-  ({ change, selected, onSelect }: GitChangeProps) => {
-    const renderDiffInfo = (flowName: string) => (
-      <div className="flex items-center justify-between text-sm hover:bg-accent/20 rounded-md py-1">
-        <div className="flex items-center gap-2">
-          {change.type === ProjectOperationType.CREATE_FLOW && (
-            <Plus className="w-4 h-4 shrink-0" />
-          )}
-          {change.type === ProjectOperationType.UPDATE_FLOW && (
-            <UpdateIcon className="w-4 h-4 shrink-0" />
-          )}
-          {change.type === ProjectOperationType.DELETE_FLOW && (
-            <Minus className="w-4 h-4 shrink-0" />
-          )}
-          {flowName}
-        </div>
-      </div>
-    );
-
+export const OperationChange = React.memo(
+  ({ change, selected, onSelect }: OperationChangeProps) => {
     return (
       <div>
         {change.type === ProjectOperationType.CREATE_FLOW && (
           <div className="flex gap-2 text-success items-center">
             <Checkbox checked={selected} onCheckedChange={onSelect} />
-            {renderDiffInfo(change.flow.displayName)}
+            {renderDiffInfo(
+              change.flow.displayName,
+              <Plus className="w-4 h-4 shrink-0" />
+            )}
           </div>
         )}
         {change.type === ProjectOperationType.UPDATE_FLOW && (
           <div className="flex gap-2 items-center">
             <Checkbox checked={selected} onCheckedChange={onSelect} />
-            {renderDiffInfo(change.targetFlow.displayName)}
+            {renderDiffInfo(
+              change.targetFlow.displayName,
+              <UpdateIcon className="w-4 h-4 shrink-0" />
+            )}
           </div>
         )}
         {change.type === ProjectOperationType.DELETE_FLOW && (
           <div className="flex gap-2 text-destructive items-center">
             <Checkbox checked={selected} onCheckedChange={onSelect} />
-            {renderDiffInfo(change.flow.displayName)}
+            {renderDiffInfo(
+              change.flow.displayName,
+              <Minus className="w-4 h-4 shrink-0" />
+            )}
           </div>
         )}
       </div>
     );
   },
 );
-GitChange.displayName = 'GitChange';
+OperationChange.displayName = 'OperationChange';

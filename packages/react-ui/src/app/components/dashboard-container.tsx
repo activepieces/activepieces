@@ -67,7 +67,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
     },
     {
-      to: '/releases',
+      to: authenticationSession.appendProjectRoutePrefix('/releases'),
       label: t('Releases'),
       icon: Box,
       hasPermission: project.releasesEnabled,

@@ -1,11 +1,7 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import JSZip from 'jszip';
-import { Plus, ChevronDown, Undo2, DownloadIcon } from 'lucide-react';
-import { useState } from 'react';
-
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Plus, ChevronDown, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -21,87 +17,24 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { formatUtils } from '@/lib/utils';
 import {
-  assertNotNullOrUndefined,
   ProjectRelease,
   ProjectReleaseType,
-  ProjectState,
 } from '@activepieces/shared';
-
-import { GitReleaseDialog } from './git-release-dialog';
+import { DownloadButton } from './download-button';
+import { useApplyPlan } from './apply-plan';
 
 const ProjectReleasesPage = () => {
-  const { toast } = useToast();
-  const [dialogType, setDialogType] = useState<ProjectReleaseType | null>(null);
-  const [open, setOpen] = useState(false);
-  const [selectedRelease, setSelectedRelease] = useState<ProjectRelease | null>(
-    null,
-  );
+
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-releases'],
     queryFn: () => projectReleaseApi.list(),
   });
 
-  const { mutate: rollbackProjectRelease, isPending: isRollingBack } =
-    useMutation({
-      mutationKey: ['rollback-project-release'],
-      mutationFn: ({ releaseId }: { releaseId: string }) => {
-        const release = data?.data.filter((r) => r.id === releaseId)[0];
-        assertNotNullOrUndefined(release, 'Release not found');
-        return projectReleaseApi.create({
-          type: ProjectReleaseType.ROLLBACK,
-          projectReleaseId: releaseId,
-          name: release.name,
-          description: release.description,
-          selectedFlowsIds: [],
-        });
-      },
-      onSuccess: () => {
-        refetch();
-        toast({
-          title: t('Success'),
-          description: t('Project Release deleted successfully'),
-          duration: 3000,
-        });
-      },
-      onError: () => {
-        toast(INTERNAL_ERROR_TOAST);
-      },
-    });
-
-  const { mutate: downloadProjectRelease } = useMutation({
-    mutationKey: ['download-project-release'],
-    mutationFn: async ({ releaseId }: { releaseId: string }) => {
-      return await projectReleaseApi.download(releaseId);
-    },
-    onSuccess: (data: ProjectState) => {
-      const flows = data.flows;
-      const zip = new JSZip();
-
-      flows.forEach((obj, index) => {
-        const jsonContent = JSON.stringify(obj, null, 2);
-        zip.file(`release-${index + 1}.json`, jsonContent);
-      });
-
-      zip.generateAsync({ type: 'blob' }).then((content) => {
-        const url = window.URL.createObjectURL(content);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute(
-          'download',
-          `project-release-${selectedRelease?.name}.zip`,
-        );
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      });
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
+  const { ApplyButton, ApplyPlanDialog } = useApplyPlan({
+    onSuccess: refetch,
   });
 
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
@@ -166,17 +99,17 @@ const ProjectReleasesPage = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => {
-                  setDialogType(ProjectReleaseType.GIT);
-                  setOpen(true);
-                }}
-              >
-                <div className="flex flex-row gap-2 items-center">
-                  <Plus className="h-4 w-4" />
-                  <span>{t('From Git')}</span>
-                </div>
+              <DropdownMenuItem className="cursor-pointer">
+                <ApplyButton
+                  variant="ghost"
+                  className="w-full justify-start"
+                  request={{ type: ProjectReleaseType.GIT }}
+                >
+                  <div className="flex flex-row gap-2 items-center">
+                    <Plus className="h-4 w-4" />
+                    <span>{t('From Git')}</span>
+                  </div>
+                </ApplyButton>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -187,55 +120,22 @@ const ProjectReleasesPage = () => {
         page={data}
         isLoading={isLoading}
         actions={[
+          (row) => <DownloadButton release={row} />,
           (row) => {
             return (
               <div className="flex items-center justify-center">
                 <Tooltip>
-                  <TooltipTrigger>
-                    <Button
-                      loading={isRollingBack}
+                  <TooltipTrigger asChild>
+                    <ApplyButton
                       variant="ghost"
                       className="size-8 p-0"
-                      onClick={() => {
-                        setSelectedRelease(row);
-                        downloadProjectRelease({ releaseId: row.id });
+                      request={{
+                        type: ProjectReleaseType.ROLLBACK,
+                        projectReleaseId: row.id,
                       }}
                     >
-                      <DownloadIcon className="size-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">{t('Download')}</TooltipContent>
-                </Tooltip>
-              </div>
-            );
-          },
-          (row) => {
-            return (
-              <div className="flex items-center justify-center">
-                <Tooltip>
-                  <TooltipTrigger>
-                    <ConfirmationDeleteDialog
-                      isDanger={true}
-                      title={t('Rollback ' + row.name)}
-                      buttonText={t('Apply Changes')}
-                      message={t(
-                        'Are you sure you want to rollback? This will override all current flows and they will be lost.',
-                      )}
-                      entityName={`${t('Project Release')} ${row.fileId}`}
-                      mutationFn={async () =>
-                        rollbackProjectRelease({
-                          releaseId: row.id,
-                        })
-                      }
-                    >
-                      <Button
-                        loading={isRollingBack}
-                        variant="ghost"
-                        className="size-8 p-0"
-                      >
-                        <Undo2 className="size-4" />
-                      </Button>
-                    </ConfirmationDeleteDialog>
+                      <Undo2 className="size-4" />
+                    </ApplyButton>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
                 </Tooltip>
@@ -244,9 +144,7 @@ const ProjectReleasesPage = () => {
           },
         ]}
       />
-      {open && dialogType === ProjectReleaseType.GIT && (
-        <GitReleaseDialog open={open} setOpen={setOpen} refetch={refetch} />
-      )}
+      <ApplyPlanDialog />
     </div>
   );
 };

@@ -25,7 +25,7 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
         return projectReleaseService.releasePlan(req.principal.projectId, ownerId, req.body, req.log)
     })
 
-    app.post('/:id/download', DownloadProjectReleaseRequest, async (req) => {
+    app.post('/:id/export', ExportProjectReleaseRequest, async (req) => {
         const projectRelease = await projectReleaseService.getOneOrThrow({
             id: req.params.id,
             projectId: req.principal.projectId,
@@ -35,7 +35,7 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
             projectId: projectRelease.projectId,
             type: FileType.PROJECT_RELEASE,
         })
-        return file.data
+        return JSON.parse(file.data.toString())
     })
 }
 
@@ -73,7 +73,7 @@ const CreateProjectReleaseRequest = {
     },
 }
 
-const DownloadProjectReleaseRequest = {
+const ExportProjectReleaseRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
     },

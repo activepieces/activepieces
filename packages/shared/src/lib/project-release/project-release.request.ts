@@ -38,12 +38,13 @@ export type CreateProjectReleaseRequestBody = Static<typeof CreateProjectRelease
 
 export const DiffReleaseRequest = Type.Union([
     Type.Object({
-        type: Type.Literal(ProjectReleaseType.GIT),
-    }),
-    Type.Object({
         type: Type.Literal(ProjectReleaseType.ROLLBACK),
         projectReleaseId: Type.String(),
     }),
+    Type.Object({
+        type: Type.Literal(ProjectReleaseType.GIT),
+    }),
+
 ])
 
 export type DiffReleaseRequest = Static<typeof DiffReleaseRequest>
