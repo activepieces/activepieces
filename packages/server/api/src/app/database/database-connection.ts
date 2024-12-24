@@ -78,7 +78,6 @@ function getEntities(): EntitySchema<unknown>[] {
         WorkerMachineEntity,
         AiProviderEntity,
         ProjectRoleEntity,
-        ProjectReleaseEntity,
     ]
 
     switch (edition) {
@@ -95,6 +94,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 FlowTemplateEntity,
                 GitRepoEntity,
                 AuditEventEntity,
+                ProjectReleaseEntity,
 
                 // CLOUD
                 AppSumoEntity,

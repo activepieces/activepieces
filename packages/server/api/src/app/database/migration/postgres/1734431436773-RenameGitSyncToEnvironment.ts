@@ -6,9 +6,6 @@ export class RenameGitSyncToEnvironment1734431436773 implements MigrationInterfa
     name = 'RenameGitSyncToEnvironment1734431436773'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
-            return
-        }
         await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME COLUMN "gitSyncEnabled" TO "environmentEnabled"
@@ -16,9 +13,6 @@ export class RenameGitSyncToEnvironment1734431436773 implements MigrationInterfa
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
-            return
-        }
         await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME COLUMN "environmentEnabled" TO "gitSyncEnabled"
