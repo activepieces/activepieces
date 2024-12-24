@@ -1,26 +1,28 @@
 import { z } from 'zod';
 
-export const SimpleFlowAction: z.ZodType = z.object({
-  description: z.string(),
+// Define piece settings schema
+export const PieceSettings = z.object({
+  pieceName: z.string(),
+  triggerName: z.string().optional(),
+  actionName: z.string().optional(),
 });
 
-export const ConditionalFlowAction: z.ZodType = z.object({
+// Define a simple action step
+export const FlowStep = z.object({
   description: z.string(),
-  children: z.array(
-    z.object({
-      condition: z.string(),
-    })
-  ),
+  piece: PieceSettings,
+  input: z.record(z.any()).optional(),
 });
 
-export const FlowAction = z.union([SimpleFlowAction, ConditionalFlowAction]);
-
+// Define the flow trigger
 export const FlowTrigger = z.object({
   description: z.string(),
-  nextAction: FlowAction,
+  piece: PieceSettings,
+  input: z.record(z.any()).optional(),
+  nextAction: FlowStep,
 });
 
+// Export types
+export type PieceSettings = z.infer<typeof PieceSettings>;
+export type FlowStep = z.infer<typeof FlowStep>;
 export type FlowTrigger = z.infer<typeof FlowTrigger>;
-export type FlowAction = z.infer<typeof FlowAction>;
-export type SimpleFlowAction = z.infer<typeof SimpleFlowAction>;
-export type ConditionalFlowAction = z.infer<typeof ConditionalFlowAction>;
