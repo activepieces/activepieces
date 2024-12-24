@@ -1,9 +1,11 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
+    "outDir": "../../../dist/packages/copilot/engine",
     "declaration": true,
-    "types": ["node"]
+    "types": ["node"],
+    "module": "commonjs",
+    "target": "es2020"
   },
   "include": ["src/**/*.ts"],
   "exclude": [

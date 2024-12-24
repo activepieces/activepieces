@@ -1,14 +1,13 @@
-import { Flow, FlowType } from '../types/flow-outline';
+import { FlowType } from '../types/flow-outline';
 import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { findRelevantPieces } from '../embeddings';
 import { stepAgent } from './step-agent';
 import { planSchema } from './schemas';
 import { z } from 'zod';
+import { Agent } from '../types/agent';
 
-interface PlannerAgent {
-  plan(prompt: string): Promise<FlowType>;
-}
+interface PlannerAgent extends Agent<FlowType> {}
 
 type StepPlan = z.infer<typeof planSchema>['steps'][0];
 
@@ -68,5 +67,5 @@ export const plannerAgent: PlannerAgent = {
       description: plan.description,
       steps,
     };
-  },
+  }
 };

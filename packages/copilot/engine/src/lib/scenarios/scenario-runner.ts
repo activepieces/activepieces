@@ -1,4 +1,5 @@
-import { Flow, FlowType } from '../types/flow-outline';
+import { FlowType } from '../types/flow-outline';
+import { Agent } from '../types/agent';
 import chalk from 'chalk';
 import { table, getBorderCharacters } from 'table';
 import { scenarios } from '.';
@@ -35,13 +36,40 @@ export async function runScenarios(agent: Agent<FlowType>) {
 
     console.log(table(currentTable, tableConfig));
 
-    results.push({
+    const result = {
       prompt: scenario.prompt(),
       output: output,
-    });
+    };
+
+    // Emit test result through the agent's callback
+    if (agent.onTestResult) {
+      agent.onTestResult({
+        type: 'SCENARIO_COMPLETED',
+        data: {
+          title: scenario.title,
+          ...result,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+
+    results.push(result);
   }
 
+  const summary = {
+    totalScenarios: scenarios.length,
+    completedAt: new Date().toISOString()
+  };
+
   console.log(chalk.bold(`\n📊 Summary: ${scenarios.length} scenarios ran\n`));
+
+  // Emit summary through the agent's callback
+  if (agent.onTestResult) {
+    agent.onTestResult({
+      type: 'TEST_SUMMARY',
+      data: summary
+    });
+  }
 
   return results;
 }

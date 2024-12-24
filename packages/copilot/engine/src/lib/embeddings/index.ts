@@ -7,7 +7,7 @@ import { cosineSimilarity, embedMany } from 'ai';
 import { openai } from '@ai-sdk/openai';
 
 
-const EMBEDDINGS_DIR = path.join(__dirname, '..', '..', '..', '..', 'data');
+const EMBEDDINGS_DIR = path.join(__dirname, '..', '..', '..', '..', '..', 'data');
 const EMBEDDINGS_PATH = path.join(EMBEDDINGS_DIR, 'pieces-embeddings.json');
 
 export async function generatePiecesEmbeddings(): Promise<void> {

@@ -1,4 +1,4 @@
-import { Flow, FlowType } from '../types/flow-outline';
+import { FlowType } from '../types/flow-outline';
 import { Scenario } from '../types/scenario';
 
 export class HubspotMailchimpSync implements Scenario<FlowType> {

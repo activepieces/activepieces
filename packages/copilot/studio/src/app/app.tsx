@@ -1,48 +1,45 @@
-import NxWelcome from './nx-welcome';
-
 import { Route, Routes, Link } from 'react-router-dom';
+import { TestResults } from './_components/test-results';
 
 export function App() {
   return (
-    <div>
-      <NxWelcome title="studio" />
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto py-8">
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-6">
+            <h1 className="text-3xl font-bold mb-6">Copilot Studio</h1>
+            
+            <nav className="mb-8">
+              <ul className="flex space-x-6">
+                <li>
+                  <Link to="/" className="text-blue-600 hover:text-blue-800">Home</Link>
+                </li>
+                <li>
+                  <Link to="/tests" className="text-blue-600 hover:text-blue-800">Test Results</Link>
+                </li>
+              </ul>
+            </nav>
 
-      {/* START: routes */}
-      {/* These routes and navigation have been generated for you */}
-      {/* Feel free to move and update them to fit your needs */}
-      <br />
-      <hr />
-      <br />
-      <div role="navigation">
-        <ul>
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/page-2">Page 2</Link>
-          </li>
-        </ul>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <div className="text-center py-12">
+                    <h2 className="text-2xl mb-4">Welcome to Copilot Studio</h2>
+                    <p className="text-gray-600">
+                      View real-time test results by navigating to the Test Results page.
+                    </p>
+                  </div>
+                }
+              />
+              <Route
+                path="/tests"
+                element={<TestResults />}
+              />
+            </Routes>
+          </div>
+        </div>
       </div>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <div>
-              This is the generated root route.{' '}
-              <Link to="/page-2">Click here for page 2.</Link>
-            </div>
-          }
-        />
-        <Route
-          path="/page-2"
-          element={
-            <div>
-              <Link to="/">Click here to go back to root page.</Link>
-            </div>
-          }
-        />
-      </Routes>
-      {/* END: routes */}
     </div>
   );
 }

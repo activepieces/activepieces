@@ -1,45 +1,52 @@
 {
-  "name": "copilot",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/copilot/src",
-  "projectType": "library",
-  "tags": [],
+  "name": "copilot-engine",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/copilot/engine/src",
+  "projectType": "application",
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/copilot",
-        "main": "packages/copilot/src/index.ts",
-        "tsConfig": "packages/copilot/tsconfig.lib.json",
-        "assets": ["packages/copilot/*.md"]
+        "outputPath": "dist/packages/copilot/engine",
+        "main": "packages/copilot/engine/src/index.ts",
+        "tsConfig": "packages/copilot/engine/tsconfig.lib.json",
+        "assets": ["packages/copilot/engine/*.md"]
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "copilot-engine:build",
+        "watch": true,
+        "inspect": false
       }
     },
     "test": {
       "executor": "@nx/js:node",
       "options": {
-        "buildTarget": "copilot:build",
+        "buildTarget": "copilot-engine:build",
         "host": "0.0.0.0",
         "watch": false,
         "args": ["--compile-examples"]
       },
       "configurations": {
         "production": {
-          "buildTarget": "copilot:build:production"
+          "buildTarget": "copilot-engine:build:production"
         }
       }
     },
     "compile": {
       "executor": "@nx/js:node",
       "options": {
-        "buildTarget": "copilot:build",
+        "buildTarget": "copilot-engine:build",
         "args": ["--compile"]
       }
     },
     "generate-embeddings": {
       "executor": "@nx/js:node",
       "options": {
-        "buildTarget": "copilot:build",
+        "buildTarget": "copilot-engine:build",
         "args": ["--generate-embeddings"]
       }
     }
