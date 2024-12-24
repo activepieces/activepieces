@@ -1,0 +1,40 @@
+{
+  "name": "copilot",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/copilot/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/copilot",
+        "main": "packages/copilot/src/index.ts",
+        "tsConfig": "packages/copilot/tsconfig.lib.json",
+        "assets": ["packages/copilot/*.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "copilot:build",
+        "host": "0.0.0.0",
+        "watch": false,
+        "args": ["--compile-examples"]
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "copilot:build:production"
+        }
+      }
+    },
+    "compile": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "copilot:build",
+        "args": ["--compile"]
+      }
+    }
+  }
+}

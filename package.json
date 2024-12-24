@@ -266,6 +266,7 @@
     "string-strip-html": "8.5.0",
     "stripe": "14.3.0",
     "subsink": "1.0.2",
+    "table": "6.9.0",
     "tailwind-merge": "2.4.0",
     "tailwindcss-animate": "1.0.7",
     "tiktoken": "1.0.11",

@@ -1,23 +1,23 @@
 import { z } from 'zod';
 
-// Operations
-// Simplified Flow Outline
 export const SimpleFlowAction: z.ZodType = z.object({
-    type: z.literal("simple"),
-    nextAction: z.lazy(() => SimpleFlowAction)
+  description: z.string(),
 });
 
 export const ConditionalFlowAction: z.ZodType = z.object({
-    type: z.literal("conditional"),
-    children: z.map(z.string(), z.lazy(() => FlowAction)),
-    nextAction: z.lazy(() => FlowAction)
+  description: z.string(),
+  children: z.array(
+    z.object({
+      condition: z.string(),
+    })
+  ),
 });
 
 export const FlowAction = z.union([SimpleFlowAction, ConditionalFlowAction]);
 
 export const FlowTrigger = z.object({
-    type: z.literal("trigger"),
-    nextAction: FlowAction
+  description: z.string(),
+  nextAction: FlowAction,
 });
 
 export type FlowTrigger = z.infer<typeof FlowTrigger>;
