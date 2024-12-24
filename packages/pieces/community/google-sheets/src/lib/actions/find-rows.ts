@@ -66,14 +66,6 @@ export const findRowsAction = createAction({
       rowIndex_e: undefined,
     });
 
-    // modify row number based on starting row number
-    rows = rows.map((row) => {
-      return {
-        row: row.row + startingRow - 1,
-        values: row.values,
-      };
-    });
-
     const values = rows.map((row) => {
       return row.values;
     });
