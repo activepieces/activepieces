@@ -66,23 +66,22 @@ export const CanvasContextMenu = ({
   actionsToPaste,
   contextMenuType,
 }: CanvasContextMenuProps) => {
-
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent>
-          <CanvasContextMenuContent
-            selectedNodes={selectedNodes}
-            applyOperation={applyOperation}
-            selectedStep={selectedStep}
-            flowVersion={flowVersion}
-            exitStepSettings={exitStepSettings}
-            readonly={readonly}
-            actionsToPaste={actionsToPaste}
-            setPieceSelectorStep={setPieceSelectorStep}
-            contextMenuType={contextMenuType}
-          ></CanvasContextMenuContent>
-        </ContextMenuContent>
+        <CanvasContextMenuContent
+          selectedNodes={selectedNodes}
+          applyOperation={applyOperation}
+          selectedStep={selectedStep}
+          flowVersion={flowVersion}
+          exitStepSettings={exitStepSettings}
+          readonly={readonly}
+          actionsToPaste={actionsToPaste}
+          setPieceSelectorStep={setPieceSelectorStep}
+          contextMenuType={contextMenuType}
+        ></CanvasContextMenuContent>
+      </ContextMenuContent>
     </ContextMenu>
   );
 };

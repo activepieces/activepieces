@@ -230,14 +230,18 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           if (selectedStep === state.selectedStep) {
             return state;
           }
-          const selectedNodes = isNil(selectedStep) || selectedStep === 'trigger' ? [] : [selectedStep]
+          const selectedNodes =
+            isNil(selectedStep) || selectedStep === 'trigger'
+              ? []
+              : [selectedStep];
 
-          const rightSidebar = selectedStep === 'trigger' &&
-          state.flowVersion.trigger.type === TriggerType.EMPTY
-            ? RightSideBarType.NONE
-            : RightSideBarType.PIECE_SETTINGS;
+          const rightSidebar =
+            selectedStep === 'trigger' &&
+            state.flowVersion.trigger.type === TriggerType.EMPTY
+              ? RightSideBarType.NONE
+              : RightSideBarType.PIECE_SETTINGS;
 
-            const leftSidebar = !isNil(state.run)
+          const leftSidebar = !isNil(state.run)
             ? LeftSideBarType.RUN_DETAILS
             : LeftSideBarType.NONE;
 
@@ -490,7 +494,10 @@ const shortcutHandler = (
   const shortcutActivated = Object.entries(CanvasShortcuts).find(
     ([_, shortcut]) =>
       shortcut.shortcutKey?.toLowerCase() === event.key.toLowerCase() &&
-      !!(shortcut.withCtrl === event.ctrlKey || shortcut.withCtrl === event.metaKey) &&
+      !!(
+        shortcut.withCtrl === event.ctrlKey ||
+        shortcut.withCtrl === event.metaKey
+      ) &&
       !!shortcut.withShift === event.shiftKey,
   );
   if (shortcutActivated) {
@@ -527,22 +534,24 @@ export const useHandleKeyPressOnCanvas = () => {
       if (
         e.target instanceof HTMLElement &&
         (e.target === document.body ||
-          e.target.classList.contains('react-flow__nodesselection-rect')
-        || e.target.closest(`[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`)) &&
+          e.target.classList.contains('react-flow__nodesselection-rect') ||
+          e.target.closest(`[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`)) &&
         !readonly
       ) {
-      
-        const selectedNodesWithoutTrigger = selectedNodes.filter((node) => node !== flowVersion.trigger.name);
+        const selectedNodesWithoutTrigger = selectedNodes.filter(
+          (node) => node !== flowVersion.trigger.name,
+        );
         shortcutHandler(e, {
           Copy: () => {
             if (selectedNodesWithoutTrigger.length > 0) {
-              copySelectedNodes({ selectedNodes: selectedNodesWithoutTrigger, flowVersion });
+              copySelectedNodes({
+                selectedNodes: selectedNodesWithoutTrigger,
+                flowVersion,
+              });
             }
           },
           Delete: () => {
-            if (
-               selectedNodes.length > 0
-            ) {
+            if (selectedNodes.length > 0) {
               deleteSelectedNodes({
                 exitStepSettings,
                 selectedStep,
@@ -552,7 +561,7 @@ export const useHandleKeyPressOnCanvas = () => {
             }
           },
           Skip: () => {
-            if ( selectedNodesWithoutTrigger.length > 0) {
+            if (selectedNodesWithoutTrigger.length > 0) {
               toggleSkipSelectedNodes({
                 selectedNodes: selectedNodesWithoutTrigger,
                 flowVersion,
@@ -563,10 +572,14 @@ export const useHandleKeyPressOnCanvas = () => {
           Paste: () => {
             getActionsInClipboard().then((actions) => {
               if (actions.length > 0) {
-                const lastStep = [flowVersion.trigger,...flowStructureUtil
-                  .getAllNextActionsWithoutChildren(flowVersion.trigger)
-                  ].at(-1)!.name;
-                const lastSelectedNode = selectedNodes.length === 1? selectedNodes[0]: null;
+                const lastStep = [
+                  flowVersion.trigger,
+                  ...flowStructureUtil.getAllNextActionsWithoutChildren(
+                    flowVersion.trigger,
+                  ),
+                ].at(-1)!.name;
+                const lastSelectedNode =
+                  selectedNodes.length === 1 ? selectedNodes[0] : null;
                 pasteNodes(
                   actions,
                   flowVersion,
