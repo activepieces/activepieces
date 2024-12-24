@@ -2,7 +2,12 @@
   "name": "copilot",
   "version": "0.0.1",
   "dependencies": {
-    "tslib": "^2.3.0"
+    "tslib": "^2.3.0",
+    "ai": "^2.2.35",
+    "@ai-sdk/openai": "^1.0.0",
+    "axios": "^1.6.7",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.4.1"
   },
   "type": "commonjs",
   "main": "./src/index.js",

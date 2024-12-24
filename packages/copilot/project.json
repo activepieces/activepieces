@@ -35,6 +35,13 @@
         "buildTarget": "copilot:build",
         "args": ["--compile"]
       }
+    },
+    "generate-embeddings": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "copilot:build",
+        "args": ["--generate-embeddings"]
+      }
     }
   }
 }
