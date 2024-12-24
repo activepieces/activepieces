@@ -752,7 +752,6 @@ export const staticListsDropdown = Property.Dropdown({
 	},
 });
 
-
 type DropdownParams = {
 	objectType: OBJECT_TYPE;
 	displayName: string;

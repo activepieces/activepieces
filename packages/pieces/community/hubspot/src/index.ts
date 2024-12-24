@@ -42,6 +42,7 @@ import { getLineItemAction } from './lib/actions/get-line-item';
 import { updateLineItemAction } from './lib/actions/update-line-item';
 import { findLineItemAction } from './lib/actions/find-line-item';
 import { removeContactFromListAction } from './lib/actions/remove-contact-from-list';
+import { uploadFileAction } from './lib/actions/upload-file';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -110,6 +111,7 @@ export const hubspot = createPiece({
 		updateLineItemAction,
 		updateProductAction,
 		updateTicketAction,
+		uploadFileAction,
 		findCompanyAction,
 		findContactAction,
 		findCustomObjectAction,
