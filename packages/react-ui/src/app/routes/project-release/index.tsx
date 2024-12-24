@@ -24,7 +24,12 @@ import {
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { formatUtils } from '@/lib/utils';
-import { assertNotNullOrUndefined, ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
+import {
+  assertNotNullOrUndefined,
+  ProjectRelease,
+  ProjectReleaseType,
+  ProjectState,
+} from '@activepieces/shared';
 
 import { GitReleaseDialog } from './git-release-dialog';
 
@@ -72,10 +77,11 @@ const ProjectReleasesPage = () => {
     mutationFn: async ({ releaseId }: { releaseId: string }) => {
       return await projectReleaseApi.download(releaseId);
     },
-    onSuccess: (data) => {
+    onSuccess: (data: ProjectState) => {
+      const flows = data.flows;
       const zip = new JSZip();
 
-      data.forEach((obj, index) => {
+      flows.forEach((obj, index) => {
         const jsonContent = JSON.stringify(obj, null, 2);
         zip.file(`release-${index + 1}.json`, jsonContent);
       });

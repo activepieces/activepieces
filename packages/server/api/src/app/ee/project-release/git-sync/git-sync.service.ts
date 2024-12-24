@@ -11,6 +11,7 @@ import {
     apId,
     ErrorCode,
     isNil,
+    ProjectState,
     SeekPage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -19,7 +20,7 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
-import { ProjectMappingState, ProjectState } from '../project-diff/project-mapping-state'
+import { ProjectMappingState } from '../project-diff/project-mapping-state'
 import { gitHelper } from './git-helper'
 import { gitSyncHelper } from './git-sync-helper'
 import { GitRepoEntity } from './git-sync.entity'

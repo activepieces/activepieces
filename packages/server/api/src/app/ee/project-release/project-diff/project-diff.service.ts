@@ -1,7 +1,7 @@
 import { ProjectOperationType } from '@activepieces/ee-shared'
-import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, FlowState, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, Step, TriggerType } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, FlowState, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectState, Step, TriggerType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { ProjectMappingState, ProjectState } from './project-mapping-state'
+import { ProjectMappingState } from './project-mapping-state'
 
 export const projectDiffService = {
     diff({ newState, oldState, mapping }: DiffParams): ProjectOperation[] {

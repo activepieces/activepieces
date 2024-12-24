@@ -1,6 +1,4 @@
-import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class RenameGitSyncToEnvironment1734431436773 implements MigrationInterface {
     name = 'RenameGitSyncToEnvironment1734431436773'

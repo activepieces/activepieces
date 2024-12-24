@@ -1,5 +1,4 @@
-import { isNil, PopulatedFlow } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
+import { isNil } from '@activepieces/shared'
 
 export class ProjectMappingState {
     flows: Record<string, {
@@ -49,10 +48,3 @@ export class ProjectMappingState {
     }
 
 }
-
-export const ProjectState = Type.Object({
-    flows: Type.Array(PopulatedFlow),
-})
-
-export type ProjectState = Static<typeof ProjectState>
-

@@ -76,7 +76,9 @@ const EnvironmentPage = () => {
                   </p>
                 </div>
                 <div className="flex flex-col justify-center items-center gap-2">
-                  {!gitSync && <ConnectGitDialog showButton={true}></ConnectGitDialog>}
+                  {!gitSync && (
+                    <ConnectGitDialog showButton={true}></ConnectGitDialog>
+                  )}
                   {gitSync && (
                     <div className="flex flex-col gap-2">
                       <Button

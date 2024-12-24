@@ -1,5 +1,5 @@
 import { ProjectOperationType, ProjectSyncError, ProjectSyncPlan, ProjectSyncPlanOperation } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ErrorCode, isNil, ListProjectReleasesRequest, ProjectId, ProjectRelease, ProjectReleaseType, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ErrorCode, isNil, ListProjectReleasesRequest, ProjectId, ProjectRelease, ProjectReleaseType, ProjectState, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -7,7 +7,6 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { userService } from '../../user/user-service'
 import { gitRepoService } from './git-sync/git-sync.service'
 import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
-import { ProjectState } from './project-diff/project-mapping-state'
 import { ProjectReleaseEntity } from './project-release.entity'
 import { projectStateService } from './project-state/project-state.service'
 
@@ -82,8 +81,8 @@ export const projectReleaseService = {
     },
 }
 async function findDiffOperations(projectId: ProjectId, ownerId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectOperation[]> {
-    const newState = await getStateFromCreateRequest(projectId, ownerId, params, log)
-    const oldState = await projectStateService(log).getCurrentState(projectId, log)
+    const newState = await getStateFromCreateRequest(projectId, ownerId, params, log) as ProjectState
+    const oldState = await projectStateService(log).getCurrentState(projectId, log) as ProjectState
 
     const mapping = await projectStateService(log).getProjectMappingState(projectId)
 

@@ -2,8 +2,8 @@ import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, FileType, Li
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { fileService } from '../../file/file.service'
-import { projectReleaseService } from './project-release.service'
 import { platformService } from '../../platform/platform.service'
+import { projectReleaseService } from './project-release.service'
 
 export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListProjectReleasesRequestParams, async (req) => {

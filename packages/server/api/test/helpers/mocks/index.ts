@@ -570,6 +570,25 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
     }
 }
 
+export const mockEnvironment = async () => {
+    const { mockPlatform, mockOwner, mockProject } = await mockBasicSetup({
+        platform: {
+            environmentEnabled: true,
+        },
+    })
+    
+    const mockApiKey = createMockApiKey({ platformId: mockPlatform.id })
+    await databaseConnection().getRepository('api_key').save(mockApiKey)
+
+    return {
+        mockPlatform,
+        mockOwner,
+        mockApiKey,
+        mockProject,
+    }
+}
+
+
 type CreateMockPlatformWithOwnerParams = {
     platform?: Partial<Omit<Platform, 'ownerId'>>
     owner?: Partial<Omit<User, 'platformId'>>

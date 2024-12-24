@@ -1,9 +1,8 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileExists } from '@activepieces/server-shared'
-import { Flow, flowMigrations, FlowState, PopulatedFlow } from '@activepieces/shared'
+import { Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ProjectState } from '../project-diff/project-mapping-state'
 
 export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
     async getStateFromGit(flowPath: string): Promise<ProjectState> {

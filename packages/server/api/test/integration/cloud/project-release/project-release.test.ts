@@ -1,10 +1,13 @@
-import { PrincipalType, ProjectRelease, ProjectReleaseType } from '@activepieces/shared'
+import { GitBranchType } from '@activepieces/ee-shared'
+import { CreateProjectReleaseRequestBody, PrincipalType, ProjectReleaseType } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockFile, createMockGitRepo, createMockProjectRelease, mockBasicSetup } from '../../../helpers/mocks'
+import { mockEnvironment } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -20,47 +23,60 @@ afterAll(async () => {
 
 describe('Project Release API', () => {
     describe('Create Project Release', () => {
-        it('should create a new project release', async () => {
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockBasicSetup()
-            const testToken = await generateMockToken({
+        it('should create a new project release with git repo', async () => {
+            const { mockProject, mockOwner } = await mockEnvironment()
+
+            const request = {
+                projectId: mockProject.id,
+                remoteUrl: `git@github.com:${faker.internet.userName()}/${faker.internet.userName()}.git`,
+                sshPrivateKey: faker.hacker.noun(),
+                branch: 'main',
+                branchType: GitBranchType.PRODUCTION,
+                slug: 'test-slug',
+            }
+            const token = await generateMockToken({
+                id: mockOwner.id,
+                projectId: mockProject.id,
                 type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
-                projectId: mockProjectOne.id,
+                platform: {
+                    id: mockProject.platformId,
+                },
             })
-
-            const file = createMockFile({ platformId: mockPlatformOne.id, projectId: mockProjectOne.id })
-            await databaseConnection().getRepository('file').save(file)
-
-            const projectRelease = createMockProjectRelease({ projectId: mockProjectOne.id, fileId: file.id, importedBy: mockUserOne.id, type: ProjectReleaseType.GIT })
-            await databaseConnection().getRepository('project_release').save(projectRelease)
-
-            const mockGitRepo = createMockGitRepo({ projectId: mockProjectOne.id })
-            await databaseConnection().getRepository('git_repo').save(mockGitRepo)
 
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/project-releases',
-                body: {
-                    fileId: file.id,
-                    name: projectRelease.name,
-                    description: projectRelease.description,
-                    type: ProjectReleaseType.GIT,
-                    repoId: mockGitRepo.id,
-                    selectedFlowsIds: [],
-                },
+                url: '/v1/git-repos',
+                payload: request,
                 headers: {
-                    authorization: `Bearer ${testToken}`,
+                    authorization: `Bearer ${token}`,
                 },
             })
-            
-            const responseBody = response?.json() as ProjectRelease
-            expect(responseBody.id).toBeDefined()
-            expect(responseBody.projectId).toBe(mockProjectOne.id)
-            expect(responseBody.importedBy).toBe(mockUserOne.id)
-            expect(responseBody.fileId).toBe(projectRelease.fileId)
-            expect(responseBody.name).toBe(projectRelease.name)
-            expect(responseBody.description).toBe(projectRelease.description)
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json()
+
+            const requestProjectRelease: CreateProjectReleaseRequestBody = {
+                name: 'test-name',
+                description: 'test-description',
+                type: ProjectReleaseType.GIT,
+                selectedFlowsIds: [],
+                repoId: responseBody.id,
+            }
+
+            const responseProjectRelease = await app?.inject({
+                method: 'POST',
+                url: '/v1/project-releases',
+                payload: requestProjectRelease,
+                headers: {
+                    authorization: `Bearer ${token}`,
+                },
+            })
+
+            expect(responseProjectRelease?.statusCode).toBe(StatusCodes.CREATED)
+            const responseProjectReleaseBody = responseProjectRelease?.json()
+            expect(responseProjectReleaseBody.name).toBe(requestProjectRelease.name)
+            expect(responseProjectReleaseBody.description).toBe(requestProjectRelease.description)
+            expect(responseProjectReleaseBody.type).toBe(requestProjectRelease.type)
         })
     })
 }) 
