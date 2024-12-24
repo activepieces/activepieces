@@ -1,34 +1,56 @@
-import React, { useEffect, useState } from 'react';
-import { useWebSocket } from './useWebSocket';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useWebSocket } from '../WebSocketContext';
 
 interface TestResult {
   type: string;
-  data: any;
-  timestamp: string;
+  data: {
+    error?: string;
+    message?: string;
+    timestamp: string;
+    scenarioTitle?: string;
+    title?: string;
+    prompt?: string;
+    output?: any;
+  };
 }
 
 export const TestResults: React.FC = () => {
   const [results, setResults] = useState<TestResult[]>([]);
-  const { ws, isConnected } = useWebSocket('ws://localhost:3002');
+  const { ws, isConnected } = useWebSocket();
+
+  const handleMessage = useCallback((event: MessageEvent) => {
+    try {
+      const result = JSON.parse(event.data);
+      console.debug('Test Results received:', result);
+
+      // Handle all relevant test messages
+      if (
+        result.type === 'TEST_ERROR' ||
+        result.type === 'TEST_STOPPED' ||
+        result.type === 'SCENARIO_COMPLETED' ||
+        result.type === 'TEST_SUMMARY' ||
+        (result.type === 'TEST_STATE' && result.data.isRunning)
+      ) {
+        setResults(prev => [...prev, result]);
+      }
+    } catch (err) {
+      console.error('Error parsing test result:', err);
+    }
+  }, []);
 
   useEffect(() => {
     if (!ws) return;
 
-    ws.onmessage = (event) => {
-      try {
-        const result = JSON.parse(event.data);
-        // Only add results that are related to tests
-        if (['TEST_ERROR', 'TEST_STOPPED', 'SCENARIO_COMPLETED', 'TEST_SUMMARY'].includes(result.type)) {
-          setResults((prev) => [...prev, {
-            ...result,
-            timestamp: new Date().toISOString()
-          }]);
-        }
-      } catch (err) {
-        console.error('Error parsing test result:', err);
-      }
+    ws.addEventListener('message', handleMessage);
+
+    return () => {
+      ws.removeEventListener('message', handleMessage);
     };
-  }, [ws]);
+  }, [ws, handleMessage]);
+
+  const clearResults = () => {
+    setResults([]);
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -39,6 +61,14 @@ export const TestResults: React.FC = () => {
             isConnected ? 'bg-green-500' : 'bg-red-500'
           }`} />
         </div>
+        {results.length > 0 && (
+          <button
+            onClick={clearResults}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Clear Results
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-auto space-y-2">
@@ -54,17 +84,32 @@ export const TestResults: React.FC = () => {
                 {result.type === 'SCENARIO_COMPLETED' ? 'Scenario Result' : result.type}
               </span>
               <span className="text-xs text-gray-500">
-                {new Date(result.timestamp).toLocaleTimeString()}
+                {new Date(result.data.timestamp).toLocaleTimeString()}
               </span>
             </div>
-            {result.data.scenarioTitle && (
+            {(result.data.scenarioTitle || result.data.title) && (
               <div className="mt-1 text-sm text-gray-600">
-                Scenario: {result.data.scenarioTitle}
+                Scenario: {result.data.scenarioTitle || result.data.title}
               </div>
             )}
-            <pre className="mt-2 text-xs whitespace-pre-wrap bg-white p-2 rounded">
-              {JSON.stringify(result.data, null, 2)}
-            </pre>
+            {result.data.error && (
+              <div className="mt-1 text-sm text-red-600">
+                Error: {result.data.error}
+              </div>
+            )}
+            {result.data.output && (
+              <div className="mt-2">
+                <div className="text-xs text-gray-500 mb-1">Output:</div>
+                <pre className="text-xs whitespace-pre-wrap bg-white p-2 rounded border border-gray-200">
+                  {JSON.stringify(result.data.output, null, 2)}
+                </pre>
+              </div>
+            )}
+            {!result.data.output && result.data.message && (
+              <div className="mt-1 text-sm text-gray-600">
+                {result.data.message}
+              </div>
+            )}
           </div>
         ))}
         {results.length === 0 && (

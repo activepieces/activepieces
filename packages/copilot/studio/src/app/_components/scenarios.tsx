@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useWebSocket } from './useWebSocket';
+import { useWebSocket } from '../WebSocketContext';
 
 interface Scenario {
   title: string;
@@ -13,21 +13,23 @@ interface TestResult {
     message?: string;
     timestamp: string;
     scenarioTitle?: string;
+    title?: string;
     scenarios?: Scenario[];
+    output?: any;
   };
 }
 
 export function Scenarios() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);
-  const { ws, error: wsError, isConnected } = useWebSocket('ws://localhost:3002');
+  const { ws, error: wsError, isConnected } = useWebSocket();
   const [error, setError] = useState<string | null>(null);
   const [testStatus, setTestStatus] = useState<{ [key: string]: 'running' | 'stopped' | 'idle' }>({});
 
   const handleMessage = useCallback((event: MessageEvent) => {
     try {
       const result: TestResult = JSON.parse(event.data);
-      console.debug('Received message:', result);
+      console.debug('Scenarios received:', result);
 
       switch (result.type) {
         case 'TEST_ERROR':
@@ -40,10 +42,12 @@ export function Scenarios() {
           }
           break;
         case 'TEST_STOPPED':
-          if (result.data.scenarioTitle) {
+        case 'TEST_SUMMARY':
+        case 'SCENARIO_COMPLETED':
+          if (result.data.scenarioTitle || result.data.title) {
             setTestStatus(prev => ({
               ...prev,
-              [result.data.scenarioTitle as string]: 'stopped'
+              [(result.data.scenarioTitle || result.data.title) as string]: 'stopped'
             }));
           }
           break;
@@ -75,10 +79,10 @@ export function Scenarios() {
   useEffect(() => {
     if (!ws) return;
 
-    ws.onmessage = handleMessage;
+    ws.addEventListener('message', handleMessage);
 
     return () => {
-      ws.onmessage = null;
+      ws.removeEventListener('message', handleMessage);
     };
   }, [ws, handleMessage]);
 
