@@ -35,7 +35,7 @@ import {
   toggleSkipSelectedNodes,
 } from '../bulk-actions';
 
-import { CanvasContextMenuProps, CanvasShortcuts } from './canvas-context-menu';
+import { CanvasContextMenuProps, CanvasShortcuts, ContextMenuType } from './canvas-context-menu';
 
 const ShortcutWrapper = ({
   children,
@@ -61,27 +61,33 @@ export const CanvasContextMenuContent = ({
   readonly,
   actionsToPaste,
   setPieceSelectorStep,
+  contextMenuType,
 }: CanvasContextMenuProps) => {
   const disabled = selectedNodes.length === 0;
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>
       !!(flowStructureUtil.getStep(node, flowVersion.trigger) as Action)?.skip,
   );
-  const doesNotContainTrigger = !selectedNodes.some(
+  const doSelectedNodesIncludeTrigger = selectedNodes.some(
     (node) => node === flowVersion.trigger.name,
   );
-  const showPasteAfterLastStep = !readonly && selectedNodes.length === 0;
   const disabledPaste = actionsToPaste.length === 0;
   const firstSelectedStep = flowStructureUtil.getStep(
     selectedNodes[0],
     flowVersion.trigger,
   );
-
+  const showPasteAfterLastStep = !readonly  && contextMenuType === ContextMenuType.CANVAS;
   const showPasteAsFirstLoopAction =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === ActionType.LOOP_ON_ITEMS;
+    firstSelectedStep?.type === ActionType.LOOP_ON_ITEMS && !readonly && contextMenuType === ContextMenuType.STEP;
   const showPasteAsBranchChild =
-    selectedNodes.length === 1 && firstSelectedStep?.type === ActionType.ROUTER;
+    selectedNodes.length === 1 && firstSelectedStep?.type === ActionType.ROUTER && !readonly && contextMenuType === ContextMenuType.STEP;
+  const showPasteAfterCurrentStep = selectedNodes.length === 1 && !readonly && contextMenuType === ContextMenuType.STEP;
+  const showReplace = selectedNodes.length === 1 && !readonly && contextMenuType === ContextMenuType.STEP
+  const showCopy = !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP
+  const showDuplicate = selectedNodes.length === 1 && !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP && !readonly
+  const showSkip = !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP && !readonly
+  const showDelete = !readonly && contextMenuType === ContextMenuType.STEP
 
   const duplicateStep = () => {
     applyOperation(
@@ -94,10 +100,10 @@ export const CanvasContextMenuContent = ({
       () => toast(UNSAVED_CHANGES_TOAST),
     );
   };
-  const showPasteAfterCurrentStep = selectedNodes.length === 1;
   return (
     <>
-      {selectedNodes.length === 1 && !readonly && (
+
+      { showReplace&& (
         <ContextMenuItem
           disabled={disabled}
           onClick={() => {
@@ -108,7 +114,7 @@ export const CanvasContextMenuContent = ({
           <ArrowLeftRight className="w-4 h-4"></ArrowLeftRight> {t('Replace')}
         </ContextMenuItem>
       )}
-      {doesNotContainTrigger && (
+      {showCopy && (
         <ContextMenuItem
           disabled={disabled}
           onClick={() => {
@@ -121,9 +127,8 @@ export const CanvasContextMenuContent = ({
         </ContextMenuItem>
       )}
 
-      {!readonly && (
         <>
-          {selectedNodes.length === 1 && doesNotContainTrigger && (
+          {showDuplicate && (
             <ContextMenuItem
               disabled={disabled}
               onClick={duplicateStep}
@@ -133,7 +138,7 @@ export const CanvasContextMenuContent = ({
             </ContextMenuItem>
           )}
 
-          {doesNotContainTrigger && (
+          {showSkip && (
             <ContextMenuItem
               disabled={disabled}
               onClick={() => {
@@ -154,8 +159,7 @@ export const CanvasContextMenuContent = ({
               </ShortcutWrapper>
             </ContextMenuItem>
           )}
-          {(showPasteAfterLastStep ||
-            showPasteAsFirstLoopAction ||
+          {(showPasteAsFirstLoopAction ||
             showPasteAsBranchChild ||
             showPasteAfterCurrentStep) && (
             <ContextMenuSeparator></ContextMenuSeparator>
@@ -176,11 +180,10 @@ export const CanvasContextMenuContent = ({
                   );
                 }
               }}
+              className="flex items-center gap-2"
             >
-              <ShortcutWrapper shortcut={CanvasShortcuts['Paste']}>
                 <ClipboardPlus className="w-4 h-4"></ClipboardPlus>{' '}
                 {t('Paste After Last Step')}
-              </ShortcutWrapper>
             </ContextMenuItem>
           )}
 
@@ -301,7 +304,7 @@ export const CanvasContextMenuContent = ({
               {t('Paste Inside Branch')}
             </ContextMenuItem>
           )}
-          {doesNotContainTrigger && !readonly && (
+          {showDelete && (
             <>
               <ContextMenuSeparator />
               <ContextMenuItem
@@ -323,7 +326,6 @@ export const CanvasContextMenuContent = ({
             </>
           )}
         </>
-      )}
     </>
   );
 };

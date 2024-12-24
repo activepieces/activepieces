@@ -36,7 +36,10 @@ export const CanvasShortcuts: CanvasShortcutsProps = {
     shortcutKey: 'e',
   },
 };
-
+export enum ContextMenuType {
+  CANVAS = 'CANVAS',
+  STEP = 'STEP',
+}
 export type CanvasContextMenuProps = Pick<
   BuilderState,
   | 'applyOperation'
@@ -49,6 +52,7 @@ export type CanvasContextMenuProps = Pick<
 > & {
   children?: React.ReactNode;
   actionsToPaste: Action[];
+  contextMenuType: ContextMenuType;
 };
 export const CanvasContextMenu = ({
   selectedNodes,
@@ -60,18 +64,13 @@ export const CanvasContextMenu = ({
   readonly,
   setPieceSelectorStep,
   actionsToPaste,
+  contextMenuType,
 }: CanvasContextMenuProps) => {
-  const doesNotContainTrigger = !selectedNodes.some(
-    (node) => node === flowVersion.trigger.name,
-  );
 
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      {!doesNotContainTrigger && readonly ? (
-        <></>
-      ) : (
-        <ContextMenuContent>
+      <ContextMenuContent>
           <CanvasContextMenuContent
             selectedNodes={selectedNodes}
             applyOperation={applyOperation}
@@ -81,9 +80,9 @@ export const CanvasContextMenu = ({
             readonly={readonly}
             actionsToPaste={actionsToPaste}
             setPieceSelectorStep={setPieceSelectorStep}
+            contextMenuType={contextMenuType}
           ></CanvasContextMenuContent>
         </ContextMenuContent>
-      )}
     </ContextMenu>
   );
 };
