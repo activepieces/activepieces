@@ -11,7 +11,7 @@ import {
 	HubSpotContactsCreateOrUpdateResponse,
 	HubSpotListsResponse,
 	HubSpotRequest,
-} from './models';
+} from './types';
 
 const API = 'https://api.hubapi.com';
 
