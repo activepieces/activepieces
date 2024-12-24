@@ -71,6 +71,7 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'settings.currencies.read',
 		'settings.users.read',
 		'settings.users.teams.read',
+		'files'
 		// 'business_units_view.read'
 	],
 });
