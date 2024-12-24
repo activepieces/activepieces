@@ -17,6 +17,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/copilot-shared": ["packages/copilot/shared/src/index.ts"],
+      "@activepieces/copilot/engine": ["packages/copilot/engine/src/index.ts"],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
@@ -745,6 +747,7 @@
         "packages/pieces/community/zuora/src/index.ts"
       ],
       "copilot": ["packages/copilot/src/index.ts"],
+
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]

@@ -6,6 +6,7 @@ import { stepAgent } from './step-agent';
 import { planSchema } from './schemas';
 import { z } from 'zod';
 import { Agent } from '../types/agent';
+import { TestResultType } from '@activepieces/copilot-shared';
 
 interface PlannerAgent extends Agent<FlowType> {
   onTestResult?: (result: any) => void;
@@ -25,7 +26,7 @@ export const plannerAgent: PlannerAgent = {
 
     // Emit pieces found event
     this.onTestResult?.({
-      type: 'PIECES_FOUND',
+      type: TestResultType.PIECES_FOUND,
       data: {
         timestamp: new Date().toISOString(),
         relevantPieces: relevantPieces.map(p => ({
@@ -66,7 +67,7 @@ export const plannerAgent: PlannerAgent = {
 
     // Emit plan generated event
     this.onTestResult?.({
-      type: 'PLAN_GENERATED',
+      type: TestResultType.PLAN_GENERATED,
       data: {
         timestamp: new Date().toISOString(),
         plan
@@ -87,7 +88,7 @@ export const plannerAgent: PlannerAgent = {
 
       // Emit step created event
       this.onTestResult?.({
-        type: 'STEP_CREATED',
+        type: TestResultType.STEP_CREATED,
         data: {
           timestamp: new Date().toISOString(),
           step
@@ -105,7 +106,7 @@ export const plannerAgent: PlannerAgent = {
 
     // Emit final flow created event
     this.onTestResult?.({
-      type: 'SCENARIO_COMPLETED',
+      type: TestResultType.SCENARIO_COMPLETED,
       data: {
         timestamp: new Date().toISOString(),
         output: flow

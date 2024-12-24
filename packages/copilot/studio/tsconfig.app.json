@@ -9,6 +9,13 @@
       "vite/client"
     ]
   },
+  "noEmit": true,
+  "baseUrl": ".",
+  "paths": {
+    "@activepieces/copilot-shared": [
+      "../../packages/copilot/shared/src"
+    ]
+  },
   "exclude": [
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
