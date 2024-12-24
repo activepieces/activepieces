@@ -1,17 +1,10 @@
 {
-  "name": "copilot",
+  "name": "@activepieces/copilot-engine",
   "version": "0.0.1",
-  "dependencies": {
-    "tslib": "^2.3.0",
-    "ai": "^2.2.35",
-    "@ai-sdk/openai": "^1.0.0",
-    "axios": "^1.6.7",
-    "uuid": "^9.0.1",
-    "dotenv": "^16.4.1"
-  },
-  "type": "commonjs",
-  "main": "./src/index.js",
-  "typings": "./src/index.d.ts",
-  "private": true
-
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/index.ts",
+    "dev": "ts-node-dev --respawn src/index.ts",
+    "test": "jest"
+  }
 }

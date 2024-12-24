@@ -3,13 +3,14 @@ import { Agent } from '../types/agent';
 import chalk from 'chalk';
 import { table, getBorderCharacters } from 'table';
 import { scenarios } from '.';
+import { Scenario } from '../types/scenario';
 
 type EvaluationResult = {
   prompt: string;
   output: FlowType;
 };
 
-export async function runScenarios(agent: Agent<FlowType>) {
+export async function runScenarios(agent: Agent<FlowType>, targetScenario?: Scenario<FlowType>) {
   const results: EvaluationResult[] = [];
   console.log(chalk.bold.blue('\n🚀 Running Scenarios...\n'));
 
@@ -21,7 +22,9 @@ export async function runScenarios(agent: Agent<FlowType>) {
     },
   };
 
-  for (const scenario of scenarios) {
+  const scenariosToRun = targetScenario ? [targetScenario] : scenarios;
+
+  for (const scenario of scenariosToRun) {
     console.log(chalk.bold.yellow(`\nRunning scenario: ${scenario.title}\n`));
 
     const output = await agent.plan(scenario.prompt());
@@ -57,11 +60,11 @@ export async function runScenarios(agent: Agent<FlowType>) {
   }
 
   const summary = {
-    totalScenarios: scenarios.length,
+    totalScenarios: scenariosToRun.length,
     completedAt: new Date().toISOString()
   };
 
-  console.log(chalk.bold(`\n📊 Summary: ${scenarios.length} scenarios ran\n`));
+  console.log(chalk.bold(`\n📊 Summary: ${scenariosToRun.length} scenarios ran\n`));
 
   // Emit summary through the agent's callback
   if (agent.onTestResult) {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useWebSocket } from './useWebSocket';
 
 interface TestResult {
   type: string;
@@ -8,22 +9,20 @@ interface TestResult {
 
 export const TestResults: React.FC = () => {
   const [results, setResults] = useState<TestResult[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const { ws, isConnected, error: wsError } = useWebSocket('ws://localhost:3002');
   const [error, setError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
-    const websocket = new WebSocket('ws://localhost:3002');
+    if (wsError) {
+      setError(wsError);
+    }
+  }, [wsError]);
 
-    websocket.onopen = () => {
-      console.debug('WebSocket connected');
-      setIsConnected(true);
-      setError(null);
-      setWs(websocket);
-    };
+  useEffect(() => {
+    if (!ws) return;
 
-    websocket.onmessage = (event) => {
+    ws.onmessage = (event) => {
       try {
         const result = JSON.parse(event.data);
         switch (result.type) {
@@ -47,24 +46,7 @@ export const TestResults: React.FC = () => {
         console.error('Error parsing test result:', err);
       }
     };
-
-    websocket.onerror = (event) => {
-      console.error('WebSocket error:', event);
-      setError('Failed to connect to test server');
-      setIsConnected(false);
-      setWs(null);
-    };
-
-    websocket.onclose = () => {
-      console.debug('WebSocket disconnected');
-      setIsConnected(false);
-      setWs(null);
-    };
-
-    return () => {
-      websocket.close();
-    };
-  }, []);
+  }, [ws]);
 
   const handleRunTests = () => {
     if (!ws) return;

@@ -1,5 +1,6 @@
 import { Route, Routes, Link } from 'react-router-dom';
 import { TestResults } from './_components/test-results';
+import { Scenarios } from './_components/scenarios';
 
 export function App() {
   return (
@@ -16,6 +17,9 @@ export function App() {
                 </li>
                 <li>
                   <Link to="/tests" className="text-blue-600 hover:text-blue-800">Test Results</Link>
+                </li>
+                <li>
+                  <Link to="/scenarios" className="text-blue-600 hover:text-blue-800">Scenarios</Link>
                 </li>
               </ul>
             </nav>
@@ -35,6 +39,10 @@ export function App() {
               <Route
                 path="/tests"
                 element={<TestResults />}
+              />
+              <Route
+                path="/scenarios"
+                element={<Scenarios />}
               />
             </Routes>
           </div>
