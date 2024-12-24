@@ -1,8 +1,8 @@
-import { FlowTrigger } from '../types/flow-outline';
+import { Flow, FlowType } from '../types/flow-outline';
 import { Scenario } from '../types/scenario';
 
 export class NewRowGoogleSheetsSendSlackMessage
-  implements Scenario<FlowTrigger>
+  implements Scenario<FlowType>
 {
   title = 'New Row Google Sheets Send Slack Message';
 

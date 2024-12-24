@@ -1,7 +1,7 @@
-import { FlowTrigger } from '../types/flow-outline';
+import { Flow, FlowType } from '../types/flow-outline';
 import { Scenario } from '../types/scenario';
 
-export class FailedStripeNotifications implements Scenario<FlowTrigger> {
+export class FailedStripeNotifications implements Scenario<FlowType> {
   title = 'Failed Stripe Payment Notifications';
 
   prompt() {

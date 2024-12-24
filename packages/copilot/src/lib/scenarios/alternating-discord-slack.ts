@@ -1,7 +1,7 @@
-import { FlowTrigger } from '../types/flow-outline';
+import { Flow, FlowType } from '../types/flow-outline';
 import { Scenario } from '../types/scenario';
 
-export class AlternatingDiscordSlack implements Scenario<FlowTrigger> {
+export class AlternatingDiscordSlack implements Scenario<FlowType> {
   title = 'Alternating Discord and Slack Messages';
 
   prompt() {

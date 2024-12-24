@@ -1,7 +1,7 @@
-import { FlowTrigger } from '../types/flow-outline';
+import { Flow, FlowType } from '../types/flow-outline';
 import { Scenario } from '../types/scenario';
 
-export class HubspotMailchimpSync implements Scenario<FlowTrigger> {
+export class HubspotMailchimpSync implements Scenario<FlowType> {
   title = 'Sync HubSpot Contacts to Mailchimp';
 
   prompt() {

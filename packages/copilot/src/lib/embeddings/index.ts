@@ -34,17 +34,15 @@ export async function generatePiecesEmbeddings(): Promise<void> {
 
 export async function findRelevantPieces(query: string, threshold: number = 0.35): Promise<EmbeddedPiece[]> {
   try {
-    // Load existing embeddings
     const embeddedPieces = await loadEmbeddings(EMBEDDINGS_PATH);
     console.debug(`Loaded ${embeddedPieces.length} embedded pieces`);
     
-    // Generate embedding for the query
+
     const { embeddings: [queryEmbedding] } = await embedMany({
       model: openai.embedding('text-embedding-3-small'),
       values: [query],
     });
     
-    // Calculate similarities and sort by score
     const piecesWithScores = embeddedPieces.map(piece => ({
       piece,
       similarity: cosineSimilarity(queryEmbedding, piece.embedding)
@@ -53,13 +51,11 @@ export async function findRelevantPieces(query: string, threshold: number = 0.35
  
     piecesWithScores.sort((a, b) => b.similarity - a.similarity);
 
-    // Log top 5 matches for debugging
     console.debug('Top 5 matches:');
     piecesWithScores.slice(0, 5).forEach(({ piece, similarity }) => {
       console.debug(`- ${piece.metadata.pieceName} (${similarity.toFixed(3)}): ${piece.content}`);
     });
 
-    // Filter by threshold and deduplicate by piece name
     const seenPieceNames = new Set<string>();
     const relevantPieces = piecesWithScores
       .filter(({ similarity }) => similarity >= threshold)
@@ -80,5 +76,5 @@ export async function findRelevantPieces(query: string, threshold: number = 0.35
   }
 }
 
-// Export necessary functions and types
+
 export { EmbeddedPiece, loadEmbeddings, EMBEDDINGS_PATH }; 

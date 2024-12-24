@@ -1,7 +1,7 @@
-import { FlowTrigger } from '../types/flow-outline';
+import { Flow, FlowType } from '../types/flow-outline';
 import { Scenario } from '../types/scenario';
 
-export class StripeCustomerPoems implements Scenario<FlowTrigger> {
+export class StripeCustomerPoems implements Scenario<FlowType> {
   title = 'Stripe Customer Poems to WordPress';
 
   prompt() {

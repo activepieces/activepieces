@@ -1,14 +1,14 @@
-import { FlowTrigger } from '../types/flow-outline';
+import { Flow, FlowType } from '../types/flow-outline';
 import chalk from 'chalk';
 import { table, getBorderCharacters } from 'table';
 import { scenarios } from '.';
 
 type EvaluationResult = {
   prompt: string;
-  output: FlowTrigger;
+  output: FlowType;
 };
 
-export async function runScenarios(agent: Agent<FlowTrigger>) {
+export async function runScenarios(agent: Agent<FlowType>) {
   const results: EvaluationResult[] = [];
   console.log(chalk.bold.blue('\n🚀 Running Scenarios...\n'));
 

@@ -8,9 +8,9 @@ import { SheetsToBlogAI } from './sheets-to-blog-ai';
 import { SheetsToAirtableConditional } from './sheets-to-airtable-conditional';
 import { StripeCustomerPoems } from './stripe-customer-poems';
 import { Scenario } from '../types/scenario';
-import { FlowTrigger } from '../types/flow-outline';
+import { FlowType } from '../types/flow-outline';
 
-export const scenarios: Scenario<FlowTrigger>[] = [
+export const scenarios: Scenario<FlowType>[] = [
   new NewRowGoogleSheetsSendSlackMessage(),
   new SheetsToAirtableConditional(),
   new SheetsConditionalEmail(),

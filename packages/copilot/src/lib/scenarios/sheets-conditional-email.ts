@@ -1,7 +1,7 @@
-import { FlowTrigger } from '../types/flow-outline';
+import { Flow, FlowType } from '../types/flow-outline';
 import { Scenario } from '../types/scenario';
 
-export class SheetsConditionalEmail implements Scenario<FlowTrigger> {
+export class SheetsConditionalEmail implements Scenario<FlowType> {
   title = 'Send Email for Specific Names in Sheet';
 
   prompt() {

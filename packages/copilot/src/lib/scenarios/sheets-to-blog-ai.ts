@@ -1,7 +1,7 @@
-import { FlowTrigger } from '../types/flow-outline';
+import { Flow, FlowType } from '../types/flow-outline';
 import { Scenario } from '../types/scenario';
 
-export class SheetsToBlogAI implements Scenario<FlowTrigger> {
+export class SheetsToBlogAI implements Scenario<FlowType> {
   title = 'AI Blog Posts from Sheet Ideas';
 
   prompt() {

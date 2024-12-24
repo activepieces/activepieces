@@ -1,7 +1,7 @@
-import { FlowTrigger } from '../types/flow-outline';
+import { Flow, FlowType } from '../types/flow-outline';
 import { Scenario } from '../types/scenario';
 
-export class RegularDiscordMessage implements Scenario<FlowTrigger> {
+export class RegularDiscordMessage implements Scenario<FlowType> {
   title = 'Regular Discord Messages';
 
   prompt() {

@@ -1,7 +1,7 @@
-import { FlowTrigger } from '../types/flow-outline';
+import { Flow, FlowType } from '../types/flow-outline';
 import { Scenario } from '../types/scenario';
 
-export class SheetsToAirtableConditional implements Scenario<FlowTrigger> {
+export class SheetsToAirtableConditional implements Scenario<FlowType> {
   title = 'Google Sheets to Airtable with Value Check';
 
   prompt() {

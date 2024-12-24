@@ -12,7 +12,7 @@ export function processPieces(pieces: Piece[]): PieceSegment[] {
       ? `It belongs to the following categories: ${categories.join(', ')}.` 
       : '';
     
-    // Create a comprehensive description segment
+
     if (piece?.description) {
       segments.push({
         id: uuidv4(),
@@ -29,7 +29,7 @@ export function processPieces(pieces: Piece[]): PieceSegment[] {
       });
     }
 
-    // Create trigger-focused segment if has triggers
+
     if (piece?.triggers > 0) {
       segments.push({
         id: uuidv4(),
@@ -42,7 +42,6 @@ export function processPieces(pieces: Piece[]): PieceSegment[] {
       });
     }
 
-    // Create action-focused segment if has actions
     if (piece?.actions > 0) {
       segments.push({
         id: uuidv4(),
@@ -55,7 +54,6 @@ export function processPieces(pieces: Piece[]): PieceSegment[] {
       });
     }
 
-    // Create auth segment if exists
     if (piece?.auth?.description) {
       segments.push({
         id: uuidv4(),

@@ -1,80 +1,61 @@
 import { z } from 'zod';
 
-// Define piece settings schema
-export const PieceSettings = z.object({
+
+export interface PieceSettingsType {
+  pieceName: string;
+  triggerName?: string;
+  actionName?: string;
+}
+
+export const PieceSettings: z.ZodType<PieceSettingsType> = z.object({
   pieceName: z.string(),
   triggerName: z.string().optional(),
   actionName: z.string().optional(),
 });
 
-// Define input parameters
+export type FlowInputType = Record<string, any>;
 export const FlowInput = z.record(z.any());
 
-// Define the base step type without conditions
-export interface BaseStepType {
-  description: string;
-  piece: z.infer<typeof PieceSettings>;
-  input?: Record<string, any>;
-}
-
-// Define router child type
-export interface RouterChildType extends BaseStepType {
+export interface RouterChildType {
+  name: string;
   condition: string;
+  piece: PieceSettingsType;
+  input?: FlowInputType;
 }
 
-// Define router step type
-export interface RouterStepType {
-  description: string;
-  children: RouterChildType[];
-  nextAction?: FlowStepType | null;
-}
-
-// Define the flow step type (can be either a base step or a router)
-export interface FlowStepType {
-  description: string;
-  type: 'PIECE' | 'ROUTER';
-  piece?: z.infer<typeof PieceSettings>;
-  input?: Record<string, any>;
-  children?: RouterChildType[];
-  nextAction?: FlowStepType | null;
-}
-
-// Define the schemas
-export const RouterChild = z.object({
-  description: z.string(),
+export const RouterChild: z.ZodType<RouterChildType> = z.object({
+  name: z.string(),
   condition: z.string(),
   piece: PieceSettings,
   input: FlowInput.optional(),
 });
 
-export const FlowStep: z.ZodType<FlowStepType> = z.lazy(() => 
-  z.object({
-    description: z.string(),
-    type: z.enum(['PIECE', 'ROUTER']),
-    piece: PieceSettings.optional(),
-    input: FlowInput.optional(),
-    children: z.array(RouterChild).optional(),
-    nextAction: z.union([FlowStep, z.null()]).optional(),
-  })
-);
 
-// Define the flow trigger type and schema
-export interface FlowTriggerType {
-  description: string;
-  piece: z.infer<typeof PieceSettings>;
-  input?: Record<string, any>;
-  nextAction: FlowStepType;
+export interface FlowStepType {
+  name: string; 
+  type: 'PIECE_TRIGGER' | 'PIECE' | 'ROUTER';
+  piece?: PieceSettingsType;
+  input?: FlowInputType;
+  children?: RouterChildType[];
 }
 
-export const FlowTrigger: z.ZodType<FlowTriggerType> = z.object({
-  description: z.string(),
-  piece: PieceSettings,
+export const FlowStep: z.ZodType<FlowStepType> = z.object({
+  name: z.string(),
+  type: z.enum(['PIECE_TRIGGER', 'PIECE', 'ROUTER']),
+  piece: PieceSettings.optional(),
   input: FlowInput.optional(),
-  nextAction: FlowStep,
+  children: z.array(RouterChild).optional(),
 });
 
-// Export additional types
-export type PieceSettings = z.infer<typeof PieceSettings>;
-export type FlowInput = z.infer<typeof FlowInput>;
-export type RouterChild = z.infer<typeof RouterChild>;
-export type FlowTrigger = z.infer<typeof FlowTrigger>;
+
+export interface FlowType {
+  name: string;
+  description: string;
+  steps: FlowStepType[];
+}
+
+export const Flow: z.ZodType<FlowType> = z.object({
+  name: z.string(),
+  description: z.string(),
+  steps: z.array(FlowStep),
+});
