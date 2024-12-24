@@ -33,7 +33,7 @@ export interface PieceSegment {
   metadata: {
     pieceId: string;
     pieceName: string;
-    segmentType: 'description' | 'auth' | 'general';
+    segmentType: 'description' | 'auth' | 'general' | 'trigger' | 'action';
   };
 }
 

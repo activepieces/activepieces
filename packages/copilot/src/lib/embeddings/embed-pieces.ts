@@ -4,6 +4,9 @@ import { PieceSegment, EmbeddedPiece } from './types';
 import fs from 'fs/promises';
 import path from 'path';
 
+
+const EMBEDDINGS_DIR = path.join(__dirname, '..', '..', '..', '..', 'data');
+
 export async function embedPieces(segments: PieceSegment[]): Promise<EmbeddedPiece[]> {
   console.debug('Generating embeddings for segments...');
   
