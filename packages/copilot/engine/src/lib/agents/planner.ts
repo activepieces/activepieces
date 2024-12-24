@@ -7,17 +7,33 @@ import { planSchema } from './schemas';
 import { z } from 'zod';
 import { Agent } from '../types/agent';
 
-interface PlannerAgent extends Agent<FlowType> {}
+interface PlannerAgent extends Agent<FlowType> {
+  onTestResult?: (result: any) => void;
+}
 
 type StepPlan = z.infer<typeof planSchema>['steps'][0];
 
 export const plannerAgent: PlannerAgent = {
+  onTestResult: undefined,
+
   async plan(prompt: string): Promise<FlowType> {
     console.debug('Starting flow planning process...');
 
     // Step 1: Find relevant pieces
     const relevantPieces = await findRelevantPieces(prompt);
     console.debug('Found relevant pieces:', relevantPieces.map(p => p.metadata.pieceName));
+
+    // Emit pieces found event
+    this.onTestResult?.({
+      type: 'PIECES_FOUND',
+      data: {
+        timestamp: new Date().toISOString(),
+        relevantPieces: relevantPieces.map(p => ({
+          pieceName: p.metadata.pieceName,
+          content: p.content
+        }))
+      }
+    });
 
     // Step 2: Generate high-level plan using AI
     const { object: plan } = await generateObject({
@@ -48,6 +64,15 @@ export const plannerAgent: PlannerAgent = {
       `,
     });
 
+    // Emit plan generated event
+    this.onTestResult?.({
+      type: 'PLAN_GENERATED',
+      data: {
+        timestamp: new Date().toISOString(),
+        plan
+      }
+    });
+
     // Step 3: Create each step using the step agent
     const steps = [];
     for (let i = 0; i < plan.steps.length; i++) {
@@ -59,13 +84,34 @@ export const plannerAgent: PlannerAgent = {
         previousSteps: steps,
         condition: stepPlan.condition,
       });
+
+      // Emit step created event
+      this.onTestResult?.({
+        type: 'STEP_CREATED',
+        data: {
+          timestamp: new Date().toISOString(),
+          step
+        }
+      });
+
       steps.push(step);
     }
 
-    return {
+    const flow = {
       name: plan.name,
       description: plan.description,
       steps,
     };
+
+    // Emit final flow created event
+    this.onTestResult?.({
+      type: 'SCENARIO_COMPLETED',
+      data: {
+        timestamp: new Date().toISOString(),
+        output: flow
+      }
+    });
+
+    return flow;
   }
 };

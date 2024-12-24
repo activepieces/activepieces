@@ -11,6 +11,28 @@ interface TestResult {
     title?: string;
     prompt?: string;
     output?: any;
+    relevantPieces?: { pieceName: string; content: string }[];
+    plan?: {
+      name: string;
+      description: string;
+      steps: {
+        type: string;
+        pieceName: string;
+        actionOrTriggerName?: string;
+        condition?: string;
+      }[];
+    };
+    step?: {
+      name: string;
+      type: string;
+      piece?: {
+        pieceName: string;
+        actionName?: string;
+        triggerName?: string;
+      };
+      input?: Record<string, any>;
+      children?: any[];
+    };
   };
 }
 
@@ -29,6 +51,9 @@ export const TestResults: React.FC = () => {
         result.type === 'TEST_STOPPED' ||
         result.type === 'SCENARIO_COMPLETED' ||
         result.type === 'TEST_SUMMARY' ||
+        result.type === 'STEP_CREATED' ||
+        result.type === 'PLAN_GENERATED' ||
+        result.type === 'PIECES_FOUND' ||
         (result.type === 'TEST_STATE' && result.data.isRunning)
       ) {
         setResults(prev => [...prev, result]);
@@ -50,6 +75,116 @@ export const TestResults: React.FC = () => {
 
   const clearResults = () => {
     setResults([]);
+  };
+
+  const renderStepContent = (result: TestResult) => {
+    switch (result.type) {
+      case 'PIECES_FOUND':
+        return (
+          <div className="space-y-2">
+            <div className="text-xs text-gray-500">Found Relevant Pieces:</div>
+            <div className="grid gap-2">
+              {result.data.relevantPieces?.map((piece, i) => (
+                <div key={i} className="bg-white p-2 rounded border border-gray-200 text-xs">
+                  <div className="font-medium">{piece.pieceName}</div>
+                  <div className="text-gray-600 mt-1">{piece.content}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'PLAN_GENERATED':
+        return (
+          <div className="space-y-2">
+            <div className="text-xs text-gray-500">Generated Plan:</div>
+            <div className="bg-white p-2 rounded border border-gray-200">
+              <div className="font-medium text-sm">{result.data.plan?.name}</div>
+              <div className="text-xs text-gray-600 mt-1">{result.data.plan?.description}</div>
+              <div className="mt-2 space-y-2">
+                {result.data.plan?.steps.map((step, i) => (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    <div className="bg-blue-100 text-blue-800 px-1.5 rounded">{i + 1}</div>
+                    <div>
+                      <span className="font-medium">{step.type}</span>
+                      <span className="text-gray-600"> using </span>
+                      <span className="font-medium">{step.pieceName}</span>
+                      {step.actionOrTriggerName && (
+                        <span className="text-gray-600"> ({step.actionOrTriggerName})</span>
+                      )}
+                      {step.condition && (
+                        <div className="text-gray-600 mt-0.5">
+                          Condition: {step.condition}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'STEP_CREATED':
+        return (
+          <div className="space-y-2">
+            <div className="text-xs text-gray-500">Created Step:</div>
+            <div className="bg-white p-2 rounded border border-gray-200">
+              <div className="font-medium text-sm">{result.data.step?.name}</div>
+              <div className="text-xs mt-1">
+                <span className="text-gray-600">Type: </span>
+                <span className="font-medium">{result.data.step?.type}</span>
+              </div>
+              {result.data.step?.piece && (
+                <div className="text-xs mt-1">
+                  <span className="text-gray-600">Piece: </span>
+                  <span className="font-medium">{result.data.step.piece.pieceName}</span>
+                  {(result.data.step.piece.actionName || result.data.step.piece.triggerName) && (
+                    <span className="text-gray-600">
+                      {' '}({result.data.step.piece.actionName || result.data.step.piece.triggerName})
+                    </span>
+                  )}
+                </div>
+              )}
+              {result.data.step?.input && (
+                <div className="mt-2">
+                  <div className="text-xs text-gray-500 mb-1">Input Configuration:</div>
+                  <pre className="text-xs bg-gray-50 p-1.5 rounded">
+                    {JSON.stringify(result.data.step.input, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'SCENARIO_COMPLETED':
+        return (
+          <div className="space-y-2">
+            <div className="text-xs text-gray-500">Final Output:</div>
+            <pre className="text-xs whitespace-pre-wrap bg-white p-2 rounded border border-gray-200">
+              {JSON.stringify(result.data.output, null, 2)}
+            </pre>
+          </div>
+        );
+
+      case 'TEST_ERROR':
+        return (
+          <div className="text-sm text-red-600">
+            Error: {result.data.error}
+          </div>
+        );
+
+      default:
+        if (result.data.message) {
+          return (
+            <div className="text-sm text-gray-600">
+              {result.data.message}
+            </div>
+          );
+        }
+        return null;
+    }
   };
 
   return (
@@ -74,42 +209,30 @@ export const TestResults: React.FC = () => {
       <div className="flex-1 overflow-auto space-y-2">
         {results.map((result, index) => (
           <div key={index} className="p-3 bg-gray-50 rounded shadow-sm border border-gray-100">
-            <div className="flex justify-between items-start">
-              <span className={`font-medium text-sm ${
-                result.type === 'TEST_ERROR' ? 'text-red-600' :
-                result.type === 'TEST_STOPPED' ? 'text-orange-600' :
-                result.type === 'SCENARIO_COMPLETED' ? 'text-green-600' :
-                'text-gray-900'
-              }`}>
-                {result.type === 'SCENARIO_COMPLETED' ? 'Scenario Result' : result.type}
-              </span>
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <span className={`font-medium text-sm ${
+                  result.type === 'TEST_ERROR' ? 'text-red-600' :
+                  result.type === 'TEST_STOPPED' ? 'text-orange-600' :
+                  result.type === 'SCENARIO_COMPLETED' ? 'text-green-600' :
+                  result.type === 'PIECES_FOUND' ? 'text-purple-600' :
+                  result.type === 'PLAN_GENERATED' ? 'text-blue-600' :
+                  result.type === 'STEP_CREATED' ? 'text-indigo-600' :
+                  'text-gray-900'
+                }`}>
+                  {result.type.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
+                </span>
+                {(result.data.scenarioTitle || result.data.title) && (
+                  <div className="text-xs text-gray-600 mt-0.5">
+                    Scenario: {result.data.scenarioTitle || result.data.title}
+                  </div>
+                )}
+              </div>
               <span className="text-xs text-gray-500">
                 {new Date(result.data.timestamp).toLocaleTimeString()}
               </span>
             </div>
-            {(result.data.scenarioTitle || result.data.title) && (
-              <div className="mt-1 text-sm text-gray-600">
-                Scenario: {result.data.scenarioTitle || result.data.title}
-              </div>
-            )}
-            {result.data.error && (
-              <div className="mt-1 text-sm text-red-600">
-                Error: {result.data.error}
-              </div>
-            )}
-            {result.data.output && (
-              <div className="mt-2">
-                <div className="text-xs text-gray-500 mb-1">Output:</div>
-                <pre className="text-xs whitespace-pre-wrap bg-white p-2 rounded border border-gray-200">
-                  {JSON.stringify(result.data.output, null, 2)}
-                </pre>
-              </div>
-            )}
-            {!result.data.output && result.data.message && (
-              <div className="mt-1 text-sm text-gray-600">
-                {result.data.message}
-              </div>
-            )}
+            {renderStepContent(result)}
           </div>
         ))}
         {results.length === 0 && (
