@@ -34,7 +34,7 @@ import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { ActivateLicenseDialog } from './activate-license-dialog';
 
 const LICENSE_PROPS_MAP = {
-  gitSyncEnabled: 'Team Collaboration via Git',
+  environmentEnabled: 'Team Collaboration via Git',
   analyticsEnabled: 'Analytics',
   auditLogEnabled: 'Audit Log',
   embeddingEnabled: 'Embedding',

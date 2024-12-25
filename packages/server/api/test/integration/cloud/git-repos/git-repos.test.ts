@@ -8,11 +8,10 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
-    createMockApiKey,
     createMockGitRepo,
     createMockProject,
     createMockUser,
-    mockBasicSetup,
+    mockEnvironment,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -265,21 +264,3 @@ describe('Git API', () => {
         })
     })
 })
-
-const mockEnvironment = async () => {
-    const { mockPlatform, mockOwner, mockProject } = await mockBasicSetup({
-        platform: {
-            gitSyncEnabled: true,
-        },
-    })
-    
-    const mockApiKey = createMockApiKey({ platformId: mockPlatform.id })
-    await databaseConnection().getRepository('api_key').save(mockApiKey)
-
-    return {
-        mockPlatform,
-        mockOwner,
-        mockApiKey,
-        mockProject,
-    }
-}

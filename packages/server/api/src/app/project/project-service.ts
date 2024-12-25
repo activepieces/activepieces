@@ -7,6 +7,7 @@ import { ActivepiecesError, apId,
     PlatformRole,
     Project,
     ProjectId,
+    ProjectMappingState,
     spreadIfDefined,
     User,
     UserId,
@@ -24,6 +25,7 @@ export const projectService = {
             id: apId(),
             ...params,
             notifyStatus: NotificationStatus.ALWAYS,
+            releasesEnabled: false,
         }
         const savedProject = await projectRepo().save(newProject)
         await projectHooks.get(system.globalLogger()).postCreate(savedProject)
@@ -53,6 +55,8 @@ export const projectService = {
                 ...spreadIfDefined('externalId', request.externalId),
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
+                ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
+                ...spreadIfDefined('mapping', request.mapping),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -168,6 +172,8 @@ type UpdateParams = {
     displayName?: string
     externalId?: string
     notifyStatus?: NotificationStatus
+    releasesEnabled?: boolean
+    mapping?: ProjectMappingState
 }
 
 type CreateParams = {
