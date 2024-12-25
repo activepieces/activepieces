@@ -13,5 +13,11 @@ export const copilotModule: FastifyPluginAsyncTypebox = async (fastify) => {
         }
     })
 
+    fastify.post('/v1/copilot/http', async (request, reply) => {
+        // const principal = await accessTokenManager.verifyPrincipal(request.headers.authorization?.split(' ')[1] ?? '' )
+        const response: Record<string, unknown> | null = await copilotService(fastify.log).askHttp(request.body as AskCopilotRequest)
+        return reply.send(response)
+    })
+
 }
 
