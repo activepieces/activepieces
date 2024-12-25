@@ -2,7 +2,7 @@ import { Scenario } from './scenario';
 import { FlowType } from '../types/flow-outline';
 import { Agent } from '../agents/agent';
 import { isNil } from '@activepieces/shared';
-import { WebsocketEventTypes } from '@activepieces/copilot-shared';
+import { WebsocketCopilotUpdate, WebsocketEventTypes } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
 import { websocketUtils } from '../util/websocket';
 
@@ -63,7 +63,7 @@ export async function runScenarios(agent: Agent<FlowType>, targetScenario: strin
 
     // Emit test result through the agent's callback
     websocketUtils.addResult(socket, {
-      type: WebsocketEventTypes.SCENARIO_COMPLETED,
+      type: WebsocketCopilotUpdate.SCENARIO_COMPLETED,
       data: {
         title: scenario.title,
         ...result,

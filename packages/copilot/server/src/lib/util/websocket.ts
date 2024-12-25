@@ -51,7 +51,7 @@ function updateTestState(socket: Socket | null, scenarioTitle: string, status: '
 
 function addResult(socket: Socket | null, result: WebsocketCopilotResult) {
     if (socket) {
-        socket.emit('update-results', result);
+        socket.emit(WebsocketEventTypes.UPDATE_RESULTS, result);
     }
 }
 

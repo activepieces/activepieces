@@ -5,7 +5,7 @@ import { findRelevantPieces } from '../tools/embeddings';
 import { planSchema } from '../types/schemas';
 import { Agent } from './agent';
 import { stepAgent } from './generate-step';
-import { WebsocketEventTypes } from '@activepieces/copilot-shared';
+import { WebsocketCopilotUpdate } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
 import { websocketUtils } from '../util/websocket';
 
@@ -17,7 +17,7 @@ export const plannerAgent: Agent<FlowType> = {
     
     // Emit pieces found event
     websocketUtils.addResult(socket, {
-      type: WebsocketEventTypes.PIECES_FOUND,
+      type: WebsocketCopilotUpdate.PIECES_FOUND,
       data: {
         timestamp: new Date().toISOString(),
         relevantPieces: relevantPieces.map((p) => ({
@@ -60,7 +60,7 @@ export const plannerAgent: Agent<FlowType> = {
 
     // Emit plan generated event
     websocketUtils.addResult(socket, {
-      type: WebsocketEventTypes.PLAN_GENERATED,
+      type: WebsocketCopilotUpdate.PLAN_GENERATED,
       data: {
         timestamp: new Date().toISOString(),
         plan,
@@ -81,7 +81,7 @@ export const plannerAgent: Agent<FlowType> = {
 
       // Emit step created event
       websocketUtils.addResult(socket, {
-        type: WebsocketEventTypes.STEP_CREATED,
+        type: WebsocketCopilotUpdate.STEP_CREATED,
         data: {
           timestamp: new Date().toISOString(),
           step,
@@ -99,7 +99,7 @@ export const plannerAgent: Agent<FlowType> = {
 
     // Emit final flow created event
     websocketUtils.addResult(socket, {
-      type: WebsocketEventTypes.SCENARIO_COMPLETED,
+      type: WebsocketCopilotUpdate.SCENARIO_COMPLETED,
       data: {
         timestamp: new Date().toISOString(),
         output: flow,

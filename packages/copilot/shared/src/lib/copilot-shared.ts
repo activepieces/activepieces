@@ -1,16 +1,8 @@
 
 export enum WebsocketEventTypes {
   RUN_TESTS = 'RUN_TESTS',
-  STOP_TESTS = 'STOP_TESTS',
-  PIECES_FOUND = 'PIECES_FOUND',
-  PLAN_GENERATED = 'PLAN_GENERATED',
-  STEP_CREATED = 'STEP_CREATED',
-  SCENARIO_COMPLETED = 'SCENARIO_COMPLETED',
-  TEST_ERROR = 'TEST_ERROR',
-  TEST_STOPPED = 'TEST_STOPPED',
-  TEST_SUMMARY = 'TEST_SUMMARY',
-  TEST_STATE = 'TEST_STATE',
   GET_STATE = 'GET_STATE',
+  UPDATE_RESULTS = 'UPDATE_RESULTS',
   RESPONSE_GET_STATE = 'RESPONSE_GET_STATE'
 }
 
@@ -76,25 +68,33 @@ export interface TestStateData extends TestResultBase {
   message?: string;
 }
 
+export enum WebsocketCopilotUpdate {
+  PIECES_FOUND = 'PIECES_FOUND',
+  PLAN_GENERATED = 'PLAN_GENERATED',
+  STEP_CREATED = 'STEP_CREATED',
+  SCENARIO_COMPLETED = 'SCENARIO_COMPLETED',
+  TEST_ERROR = 'TEST_ERROR',
+  TEST_STOPPED = 'TEST_STOPPED',
+  TEST_SUMMARY = 'TEST_SUMMARY',
+  TEST_STATE = 'TEST_STATE',
+}
+
 export type WebsocketCopilotResult = {
-  type: WebsocketEventTypes.PIECES_FOUND;
+  type: WebsocketCopilotUpdate.PIECES_FOUND;
   data: PiecesFoundData;
 } | {
-  type: WebsocketEventTypes.PLAN_GENERATED;
+  type: WebsocketCopilotUpdate.PLAN_GENERATED;
   data: PlanGeneratedData;
 } | {
-  type: WebsocketEventTypes.STEP_CREATED;
+  type: WebsocketCopilotUpdate.STEP_CREATED;
   data: StepCreatedData;
 } | {
-  type: WebsocketEventTypes.SCENARIO_COMPLETED;
+  type: WebsocketCopilotUpdate.SCENARIO_COMPLETED;
   data: ScenarioCompletedData;
 } | {
-  type: WebsocketEventTypes.TEST_ERROR;
+  type: WebsocketCopilotUpdate.TEST_ERROR;
   data: TestErrorData;
 } | {
-  type: WebsocketEventTypes.TEST_STATE;
+  type: WebsocketCopilotUpdate.TEST_STATE;
   data: TestStateData;
-} | {
-  type: WebsocketEventTypes.RESPONSE_GET_STATE;
-  data: State;
 }

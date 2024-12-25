@@ -46,13 +46,13 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       setState(data);
     });
 
-    socket.on('update-results', (result: WebsocketCopilotResult) => {
+    socket.on(WebsocketEventTypes.UPDATE_RESULTS, (result: WebsocketCopilotResult) => {
       setResults((prevResults) => [...prevResults, result]);
     });
 
     return () => {
       socket.off(WebsocketEventTypes.RESPONSE_GET_STATE);
-      socket.off('update-results');
+      socket.off(WebsocketEventTypes.UPDATE_RESULTS);
     };
   }, []); // Empty dependency array since we're using ref
 

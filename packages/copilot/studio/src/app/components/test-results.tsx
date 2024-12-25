@@ -1,19 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react';
 import { useWebSocket } from '../WebSocketContext';
 import {
   WebsocketCopilotResult,
-  WebsocketEventTypes,
+  WebsocketCopilotUpdate,
 } from '@activepieces/copilot-shared';
-
 
 export const TestResults: React.FC = () => {
   const { socket, results } = useWebSocket();
 
-
-
   const renderStepContent = (result: WebsocketCopilotResult) => {
     switch (result.type) {
-      case WebsocketEventTypes.PIECES_FOUND:
+      case WebsocketCopilotUpdate.PIECES_FOUND:
         return (
           <div className="space-y-2">
             <div className="text-xs text-gray-500">Found Relevant Pieces:</div>
@@ -33,7 +29,7 @@ export const TestResults: React.FC = () => {
           </div>
         );
 
-      case WebsocketEventTypes.PLAN_GENERATED:
+      case WebsocketCopilotUpdate.PLAN_GENERATED:
         return (
           <div className="space-y-2">
             <div className="text-xs text-gray-500">Generated Plan:</div>
@@ -81,7 +77,7 @@ export const TestResults: React.FC = () => {
           </div>
         );
 
-      case WebsocketEventTypes.STEP_CREATED:
+      case WebsocketCopilotUpdate.STEP_CREATED:
         return (
           <div className="space-y-2">
             <div className="text-xs text-gray-500">Created Step:</div>
@@ -99,14 +95,14 @@ export const TestResults: React.FC = () => {
                   </span>
                   {(result.data.step.piece.actionName ||
                     result.data.step.piece.triggerName) && (
-                    <span className="text-gray-600">
-                      {' '}
-                      (
-                      {result.data.step.piece.actionName ||
-                        result.data.step.piece.triggerName}
-                      )
-                    </span>
-                  )}
+                      <span className="text-gray-600">
+                        {' '}
+                        (
+                        {result.data.step.piece.actionName ||
+                          result.data.step.piece.triggerName}
+                        )
+                      </span>
+                    )}
                 </div>
               )}
               {result.data.step.input && (
@@ -123,7 +119,7 @@ export const TestResults: React.FC = () => {
           </div>
         );
 
-      case WebsocketEventTypes.SCENARIO_COMPLETED:
+      case WebsocketCopilotUpdate.SCENARIO_COMPLETED:
         return (
           <div className="space-y-2">
             <div className="text-xs text-gray-500">Final Output:</div>
@@ -133,7 +129,7 @@ export const TestResults: React.FC = () => {
           </div>
         );
 
-      case WebsocketEventTypes.TEST_ERROR:
+      case WebsocketCopilotUpdate.TEST_ERROR:
         return (
           <div className="text-sm text-red-600">Error: {result.data.error}</div>
         );
@@ -155,9 +151,8 @@ export const TestResults: React.FC = () => {
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold">Test Results</h2>
             <span
-              className={`inline-block w-3 h-3 rounded-full ${
-                socket?.connected ? 'bg-green-500' : 'bg-red-500'
-              }`}
+              className={`inline-block w-3 h-3 rounded-full ${socket?.connected ? 'bg-green-500' : 'bg-red-500'
+                }`}
             />
           </div>
           <div className="flex items-center gap-2">
@@ -176,19 +171,18 @@ export const TestResults: React.FC = () => {
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <span
-                    className={`font-medium text-sm ${
-                      result.type === WebsocketEventTypes.TEST_ERROR
+                    className={`font-medium text-sm ${result.type === WebsocketCopilotUpdate.TEST_ERROR
                         ? 'text-red-600'
-                        : result.type === WebsocketEventTypes.SCENARIO_COMPLETED
-                        ? 'text-green-600'
-                        : result.type === WebsocketEventTypes.PIECES_FOUND
-                        ? 'text-purple-600'
-                        : result.type === WebsocketEventTypes.PLAN_GENERATED
-                        ? 'text-blue-600'
-                        : result.type === WebsocketEventTypes.STEP_CREATED
-                        ? 'text-indigo-600'
-                        : 'text-gray-900'
-                    }`}
+                        : result.type === WebsocketCopilotUpdate.SCENARIO_COMPLETED
+                          ? 'text-green-600'
+                          : result.type === WebsocketCopilotUpdate.PIECES_FOUND
+                            ? 'text-purple-600'
+                            : result.type === WebsocketCopilotUpdate.PLAN_GENERATED
+                              ? 'text-blue-600'
+                              : result.type === WebsocketCopilotUpdate.STEP_CREATED
+                                ? 'text-indigo-600'
+                                : 'text-gray-900'
+                      }`}
                   >
                     {result.type
                       .split('_')
@@ -198,7 +192,7 @@ export const TestResults: React.FC = () => {
                       )
                       .join(' ')}
                   </span>
-                  
+
                   {(result.data as any).scenarioTitle || (result.data as any).title && (
                     <div className="text-xs text-gray-600 mt-0.5">
                       Scenario: {(result.data as any).scenarioTitle || (result.data as any).title}
