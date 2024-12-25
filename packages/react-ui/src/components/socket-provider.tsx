@@ -20,6 +20,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socket.auth = { token };
       if (!socket.connected) {
         socket.connect();
+        socket.emit(CopilotSocketEvents.CONNECTED, {
+          token,
+        });
       }
     } else {
       socket.disconnect();

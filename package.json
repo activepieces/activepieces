@@ -10,6 +10,7 @@
     "dev": "concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:backend": "concurrently -n \"API,ENG\" -c \"bgGreen.bold,bgRed.bold\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:frontend": "concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
+    "dev:copilot": "concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold\" \"nx serve copilot-server\" \"nx serve copilot-studio\"",
     "start": "npm i && npm run dev",
     "cli": "npx ts-node packages/cli/src/index.ts",
     "create-piece": "npx ts-node packages/cli/src/index.ts pieces create",

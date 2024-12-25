@@ -1,72 +1,63 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { State, WebsocketEventTypes, WebsocketCopilotResult } from '@activepieces/copilot-shared';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  ReactNode,
+  useState,
+  useRef,
+} from 'react';
+import { Socket, io } from 'socket.io-client';
 
 interface WebSocketContextType {
-  ws: WebSocket | null;
-  isConnected: boolean;
-  error: string | null;
-  hasEmbeddings: boolean | null;
+  socket: Socket | null;
+  state: State | null;
+  results: WebsocketCopilotResult[];
 }
 
 const WebSocketContext = createContext<WebSocketContextType>({
-  ws: null,
-  isConnected: false,
-  error: null,
-  hasEmbeddings: null
+  socket: null,
+  state: null,
+  results: [],
 });
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
-  const [ws, setWs] = useState<WebSocket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasEmbeddings, setHasEmbeddings] = useState<boolean | null>(null);
+  // Use useRef to maintain a single socket instance across re-renders
+  const socketRef = useRef<Socket | null>(null);
+  const [results, setResults] = useState<WebsocketCopilotResult[]>([]);
+  const [state, setState] = useState<State | null>(null);
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:3002');
+    // Only create socket if it doesn't exist
+    if (!socketRef.current) {
+      socketRef.current = io('http://localhost:3002', {
+        transports: ['websocket'],
+      });
+    }
 
-    socket.onopen = () => {
-      console.debug('WebSocket connected');
-      setIsConnected(true);
-      setError(null);
-      setWs(socket);
-      
-      // Check for embeddings status immediately after connection
-      socket.send(JSON.stringify({ type: 'CHECK_EMBEDDINGS' }));
-    };
+    const socket = socketRef.current;
 
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'EMBEDDINGS_STATUS') {
-          console.debug('Received embeddings status:', data.hasEmbeddings);
-          setHasEmbeddings(data.hasEmbeddings);
-        }
-      } catch (err) {
-        console.error('Error parsing WebSocket message:', err);
-      }
-    };
+    if (!socket.connected) {
+      socket.connect();
+      socket.emit(WebsocketEventTypes.GET_STATE);
+    }
 
-    socket.onerror = () => {
-      console.error('WebSocket error');
-      setError('Failed to connect to test server');
-      setIsConnected(false);
-      setWs(null);
-      setHasEmbeddings(null);
-    };
+    socket.on(WebsocketEventTypes.RESPONSE_GET_STATE, (data: State) => {
+      setState(data);
+    });
 
-    socket.onclose = () => {
-      console.debug('WebSocket disconnected');
-      setIsConnected(false);
-      setWs(null);
-      setHasEmbeddings(null);
-    };
+    socket.on('update-results', (result: WebsocketCopilotResult) => {
+      setResults((prevResults) => [...prevResults, result]);
+    });
 
     return () => {
-      socket.close();
+      socket.off(WebsocketEventTypes.RESPONSE_GET_STATE);
+      socket.off('update-results');
     };
-  }, []);
+  }, []); // Empty dependency array since we're using ref
 
   return (
-    <WebSocketContext.Provider value={{ ws, isConnected, error, hasEmbeddings }}>
+    <WebSocketContext.Provider value={{ socket: socketRef.current, state, results }}>
       {children}
     </WebSocketContext.Provider>
   );
@@ -74,4 +65,4 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
 export function useWebSocket() {
   return useContext(WebSocketContext);
-} 
+}

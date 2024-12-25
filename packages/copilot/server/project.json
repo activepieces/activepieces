@@ -1,0 +1,40 @@
+{
+  "name": "copilot-server",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/copilot/server/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/copilot/server",
+        "main": "packages/copilot/server/src/index.ts",
+        "tsConfig": "packages/copilot/server/tsconfig.lib.json",
+        "assets": ["packages/copilot/server/*.md"]
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node", 
+      "options": {
+        "buildTarget": "copilot-server:build",
+        "watch": true,
+        "inspect": false
+      }
+    },
+    "test": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "copilot-server:build",
+        "host": "0.0.0.0",
+        "watch": false,
+        "args": ["--compile-examples"]
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "copilot-server:build:production"
+        }
+      }
+    }
+  }
+}

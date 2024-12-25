@@ -12,9 +12,7 @@
   "noEmit": true,
   "baseUrl": ".",
   "paths": {
-    "@activepieces/copilot-shared": [
-      "../../packages/copilot/shared/src"
-    ]
+    "@activepieces/copilot-shared": ["../../packages/copilot/shared/src"]
   },
   "exclude": [
     "src/**/*.spec.ts",
