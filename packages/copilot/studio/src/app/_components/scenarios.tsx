@@ -1,74 +1,77 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useWebSocket } from '../WebSocketContext';
+import { 
+  TestResult, 
+  TestResultType,
+  TestErrorData,
+  TestStateData,
+  TestResultBase
+} from '@activepieces/copilot-shared';
 
 interface Scenario {
   title: string;
   prompt: string;
 }
 
-interface TestResult {
-  type: string;
-  data: {
-    error?: string;
-    message?: string;
-    timestamp: string;
-    scenarioTitle?: string;
-    title?: string;
-    scenarios?: Scenario[];
-    output?: any;
-  };
+interface ScenariosMessage extends TestResultBase {
+  scenarios: Scenario[];
 }
+
+type TestStatus = 'running' | 'stopped' | 'idle';
 
 export function Scenarios() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);
   const { ws, error: wsError, isConnected } = useWebSocket();
   const [error, setError] = useState<string | null>(null);
-  const [testStatus, setTestStatus] = useState<{ [key: string]: 'running' | 'stopped' | 'idle' }>({});
+  const [testStatus, setTestStatus] = useState<Record<string, TestStatus>>({});
+
+  const updateTestStatus = useCallback((scenarioTitle: string, status: TestStatus) => {
+    setTestStatus(prev => ({
+      ...prev,
+      [scenarioTitle]: status
+    }));
+  }, []);
 
   const handleMessage = useCallback((event: MessageEvent) => {
     try {
-      const result: TestResult = JSON.parse(event.data);
+      const result: TestResult | { type: 'SCENARIOS', data: ScenariosMessage } = JSON.parse(event.data);
       console.debug('Scenarios received:', result);
 
       switch (result.type) {
-        case 'TEST_ERROR':
-          setError(result.data.error || 'Unknown error');
-          if (result.data.scenarioTitle) {
-            setTestStatus(prev => ({
-              ...prev,
-              [result.data.scenarioTitle as string]: 'stopped'
-            }));
+        case TestResultType.TEST_ERROR:
+          const errorData = result.data as TestErrorData;
+          setError(errorData.error || 'Unknown error');
+          if (errorData.scenarioTitle) {
+            updateTestStatus(errorData.scenarioTitle, 'stopped');
           }
           break;
-        case 'TEST_STOPPED':
-        case 'TEST_SUMMARY':
-        case 'SCENARIO_COMPLETED':
-          if (result.data.scenarioTitle || result.data.title) {
-            setTestStatus(prev => ({
-              ...prev,
-              [(result.data.scenarioTitle || result.data.title) as string]: 'stopped'
-            }));
+        case TestResultType.TEST_STOPPED:
+        case TestResultType.TEST_SUMMARY:
+        case TestResultType.SCENARIO_COMPLETED:
+          const title = result.data.scenarioTitle || result.data.title;
+          if (title) {
+            updateTestStatus(title, 'stopped');
           }
           break;
-        case 'TEST_STATE':
-          if (result.data.scenarios) {
-            setScenarios(result.data.scenarios);
+        case TestResultType.TEST_STATE:
+          const stateData = result.data as TestStateData;
+          if ('scenarios' in result.data) {
+            setScenarios(result.data.scenarios as Scenario[]);
             setLoading(false);
           }
           break;
         case 'SCENARIOS':
-          if (result.data.scenarios) {
-            setScenarios(result.data.scenarios);
-            setLoading(false);
-          }
+          const scenariosData = result.data as ScenariosMessage;
+          setScenarios(scenariosData.scenarios);
+          setLoading(false);
           break;
       }
     } catch (err) {
       console.error('Error handling message:', err);
       setError('Failed to parse server message');
     }
-  }, []);
+  }, [updateTestStatus]);
 
   useEffect(() => {
     if (wsError) {
@@ -86,7 +89,6 @@ export function Scenarios() {
     };
   }, [ws, handleMessage]);
 
-  // Request scenarios if they haven't been received in TEST_STATE
   useEffect(() => {
     if (ws && loading && isConnected) {
       console.debug('Requesting scenarios...');
@@ -97,10 +99,7 @@ export function Scenarios() {
   const runTest = useCallback((scenarioTitle: string) => {
     if (!ws || !isConnected) return;
 
-    setTestStatus(prev => ({
-      ...prev,
-      [scenarioTitle]: 'running'
-    }));
+    updateTestStatus(scenarioTitle, 'running');
 
     ws.send(JSON.stringify({
       type: 'RUN_TESTS',
@@ -108,7 +107,7 @@ export function Scenarios() {
         scenarioTitle
       }
     }));
-  }, [ws, isConnected]);
+  }, [ws, isConnected, updateTestStatus]);
 
   const stopTest = useCallback((scenarioTitle: string) => {
     if (!ws || !isConnected) return;
