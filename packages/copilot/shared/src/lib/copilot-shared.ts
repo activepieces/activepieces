@@ -8,6 +8,7 @@ export enum WebsocketEventTypes {
 export interface RunTestsParams {
   scenarioTitle: string;
   relevanceThreshold?: number;
+  customPrompt?: string;
 }
 
 export type State = {

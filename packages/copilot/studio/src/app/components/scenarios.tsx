@@ -7,11 +7,13 @@ import { useState } from 'react';
 export function Scenarios() {
   const { state, socket } = useWebSocket();
   const [threshold, setThreshold] = useState(0.35);
+  const [customPrompt, setCustomPrompt] = useState('');
 
   function runTest(scenarioTitle: string) {
     socket?.emit(WebsocketEventTypes.RUN_TESTS, { 
       scenarioTitle,
       relevanceThreshold: threshold,
+      customPrompt: customPrompt.trim() || undefined,
     });
   }
 
@@ -41,8 +43,21 @@ export function Scenarios() {
         )}
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 space-y-4">
         <ThresholdControl defaultValue={threshold} onChange={setThreshold} />
+        
+        <div className="space-y-2">
+          <label htmlFor="customPrompt" className="block text-sm font-medium text-gray-700">
+            Custom Planner Prompt (Optional)
+          </label>
+          <textarea
+            id="customPrompt"
+            value={customPrompt}
+            onChange={(e) => setCustomPrompt(e.target.value)}
+            placeholder="Enter a custom prompt for the planner..."
+            className="w-full h-32 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto">

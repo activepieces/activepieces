@@ -11,6 +11,7 @@ import { websocketUtils } from '../util/websocket';
 
 export interface PlanOptions {
   relevanceThreshold?: number;
+  customPrompt?: string;
 }
 
 export const plannerAgent: Agent<FlowType> = {
@@ -34,34 +35,38 @@ export const plannerAgent: Agent<FlowType> = {
     });
 
     // Step 2: Generate high-level plan using AI
+    const defaultPrompt = `
+      You are a planner agent that creates high-level plans for automation flows.
+      
+      Available pieces:
+      ${relevantPieces
+        .map((p) => `- ${p.metadata.pieceName}: ${p.content}`)
+        .join('\n')}
+
+      User request: ${prompt}
+
+      Create a high-level plan that:
+      1. Starts with a trigger step
+      2. Includes necessary action steps
+      3. Uses router steps only when conditional logic is needed
+
+      The plan should have:
+      - A descriptive name that summarizes what it does
+      - A clear description of its purpose
+      - A sequence of steps with their types and piece information
+
+      IMPORTANT:
+      - First try to use piece triggers and actions directly
+      - Only use ROUTER if the logic cannot be handled by piece capabilities
+      - Keep the plan as simple as possible while meeting the requirements
+    `;
+
     const { object: plan } = await generateObject({
       model: openai('gpt-4o'),
       schema: planSchema,
-      prompt: `
-        You are a planner agent that creates high-level plans for automation flows.
-        
-        Available pieces:
-        ${relevantPieces
-          .map((p) => `- ${p.metadata.pieceName}: ${p.content}`)
-          .join('\n')}
-
-        User request: ${prompt}
-
-        Create a high-level plan that:
-        1. Starts with a trigger step
-        2. Includes necessary action steps
-        3. Uses router steps only when conditional logic is needed
-
-        The plan should have:
-        - A descriptive name that summarizes what it does
-        - A clear description of its purpose
-        - A sequence of steps with their types and piece information
-
-        IMPORTANT:
-        - First try to use piece triggers and actions directly
-        - Only use ROUTER if the logic cannot be handled by piece capabilities
-        - Keep the plan as simple as possible while meeting the requirements
-      `,
+      prompt: options?.customPrompt ? 
+        `${options.customPrompt}\n\nAvailable pieces:\n${relevantPieces.map((p) => `- ${p.metadata.pieceName}: ${p.content}`).join('\n')}\n\nUser request: ${prompt}` 
+        : defaultPrompt,
     });
 
     // Emit plan generated event
