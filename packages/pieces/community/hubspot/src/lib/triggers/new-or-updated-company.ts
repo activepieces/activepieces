@@ -67,7 +67,7 @@ export const newOrUpdatedCompanyTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-or-updated-company',
 	displayName: 'Company Recently Created or Updated',
-	description: 'Triggers when a company recenty created or updated',
+	description: 'Triggers when a company recenty created or updated.',
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
