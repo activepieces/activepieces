@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Step Plan Schema
 export const stepPlanSchema = z.object({
     type: z.enum(['PIECE_TRIGGER', 'PIECE', 'ROUTER']),
     pieceName: z.string(),
@@ -8,14 +7,12 @@ export const stepPlanSchema = z.object({
     condition: z.string().optional(),
 });
 
-// High Level Plan Schema
 export const planSchema = z.object({
     name: z.string(),
     description: z.string(),
     steps: z.array(stepPlanSchema),
 });
 
-// Step Generation Schema
 export const stepGenerationSchema = z.object({
     name: z.string(),
     type: z.enum(['PIECE_TRIGGER', 'PIECE', 'ROUTER']),

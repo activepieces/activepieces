@@ -9,11 +9,8 @@ import { scenarios } from './lib/scenarios';
 
 dotenv.config();
 
-// Create an event emitter for test results
-const testEventEmitter = new EventEmitter();
 const wss = new WebSocketServer({ port: 3002 });
 
-// Track active test runs
 let isTestRunning = false;
 let shouldStopTests = false;
 let currentScenario: string | null = null;
@@ -54,7 +51,7 @@ async function runTests(ws: WebSocket, scenarioTitle?: string) {
 
   try {
     if (scenarioTitle) {
-      // Run specific scenario
+  
       const scenario = scenarios.find(s => s.title === scenarioTitle);
       
       if (!scenario) {
@@ -63,7 +60,7 @@ async function runTests(ws: WebSocket, scenarioTitle?: string) {
       
       await runScenarios(modifiedPlannerAgent, scenario);
     } else {
-      // Run all scenarios
+  
       await runScenarios(modifiedPlannerAgent);
     }
   } catch (error) {
@@ -114,11 +111,9 @@ function getScenarios() {
   }));
 }
 
-// WebSocket server setup
 wss.on('connection', (ws) => {
   console.log('Client connected');
 
-  // Send initial state and available scenarios
   ws.send(JSON.stringify({
     type: 'TEST_STATE',
     data: {
@@ -129,7 +124,6 @@ wss.on('connection', (ws) => {
     }
   }));
 
-  // Handle incoming messages
   ws.on('message', async (message) => {
     try {
       const data = JSON.parse(message.toString());

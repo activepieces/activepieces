@@ -25,13 +25,11 @@ export function compileExamples() {
     const originalDir = path.join(process.cwd(), 'packages', 'copilot', 'src', 'lib', 'examples', 'original');
     const compiledDir = path.join(process.cwd(), 'packages', 'copilot', 'src', 'lib', 'examples', 'compiled');
 
-    // Clean compiled directory
     if (fs.existsSync(compiledDir)) {
         fs.rmSync(compiledDir, { recursive: true });
     }
     fs.mkdirSync(compiledDir);
 
-    // Get all JSON files from original directory
     const files = fs.readdirSync(originalDir)
         .filter(file => file.endsWith('.json'));
 

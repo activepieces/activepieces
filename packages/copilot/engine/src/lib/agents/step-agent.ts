@@ -11,7 +11,7 @@ interface StepContext {
   pieceName: string;
   actionOrTriggerName?: string;
   previousSteps?: FlowStepType[];
-  condition?: string;  // For router steps
+  condition?: string;
 }
 
 async function fetchPieceMetadata(pieceName: string): Promise<PieceMetadata | null> {
@@ -109,7 +109,6 @@ export const stepAgent: StepAgent = {
       `;
     }
 
-    // Add common context
     stepContext += `
       ${context.previousSteps ? `\nPrevious Steps:\n${context.previousSteps.map(step => 
         `- ${step.name} (${step.type})`).join('\n')}` : ''}
@@ -117,7 +116,6 @@ export const stepAgent: StepAgent = {
       ${context.condition ? `\nCondition to implement: ${context.condition}` : ''}
     `;
 
-    // Generate the step using AI
     const { object } = await generateObject({
       model: openai('gpt-4o'),
       schema: stepGenerationSchema,
