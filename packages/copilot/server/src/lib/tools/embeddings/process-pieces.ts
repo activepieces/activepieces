@@ -7,6 +7,7 @@ export function processPieces(pieces: Piece[]): PieceSegment[] {
 
   for (const piece of pieces) {
     const displayName = piece.displayName || piece.name;
+    const logoUrl = piece.logoUrl || '';
     const categories = piece.categories || [];
     const categoriesText =
       categories.length > 0
@@ -31,6 +32,7 @@ export function processPieces(pieces: Piece[]): PieceSegment[] {
           pieceId: piece.id,
           pieceName: piece.name,
           segmentType: 'description',
+          logoUrl: logoUrl,
         },
       });
     }
@@ -43,6 +45,7 @@ export function processPieces(pieces: Piece[]): PieceSegment[] {
           pieceId: piece.id,
           pieceName: piece.name,
           segmentType: 'trigger',
+          logoUrl: logoUrl,
         },
       });
     }
@@ -55,6 +58,7 @@ export function processPieces(pieces: Piece[]): PieceSegment[] {
           pieceId: piece.id,
           pieceName: piece.name,
           segmentType: 'action',
+          logoUrl: logoUrl,
         },
       });
     }
@@ -67,6 +71,7 @@ export function processPieces(pieces: Piece[]): PieceSegment[] {
           pieceId: piece.id,
           pieceName: piece.name,
           segmentType: 'auth',
+          logoUrl: logoUrl,
         },
       });
     }

@@ -34,6 +34,7 @@ export interface PieceSegment {
     pieceId: string;
     pieceName: string;
     segmentType: 'description' | 'auth' | 'general' | 'trigger' | 'action';
+    logoUrl: string;
   };
 }
 
