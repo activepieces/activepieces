@@ -2,6 +2,7 @@ export interface PiecesFoundData {
   relevantPieces: Array<{
     pieceName: string;
     content: string;
+    logoUrl?: string;
   }>;
   timestamp: string;
 }

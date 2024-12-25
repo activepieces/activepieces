@@ -23,6 +23,7 @@ export const plannerAgent: Agent<FlowType> = {
         relevantPieces: relevantPieces.map((p) => ({
           pieceName: p.metadata.pieceName,
           content: p.content,
+          logoUrl: p.metadata.logoUrl,
         })),
       }
     });

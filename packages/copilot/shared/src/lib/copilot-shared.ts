@@ -1,4 +1,3 @@
-
 export enum WebsocketEventTypes {
   RUN_TESTS = 'RUN_TESTS',
   GET_STATE = 'GET_STATE',
@@ -25,6 +24,8 @@ export interface PiecesFoundData extends TestResultBase {
   relevantPieces: {
     pieceName: string;
     content: string;
+    logoUrl?: string;
+    relevanceScore: number;
   }[];
 }
 
