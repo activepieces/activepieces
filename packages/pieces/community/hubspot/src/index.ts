@@ -47,6 +47,7 @@ import { removeEmailSubscriptionAction } from './lib/actions/remove-email-subscr
 import { createAssociationsAction } from './lib/actions/create-associations';
 import { removeAssociationsAction } from './lib/actions/remove-associations';
 import { findAssociationsAction } from './lib/actions/find-associations';
+import { newOrUpdatedCompanyTrigger } from './lib/triggers/new-or-updated-company';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -140,6 +141,7 @@ export const hubspot = createPiece({
 		}),
 	],
 	triggers: [
+		newOrUpdatedCompanyTrigger,
 		newTaskAdded,
 		newCompanyAdded,
 		newContactAdded,
