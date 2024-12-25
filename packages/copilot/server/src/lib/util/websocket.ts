@@ -1,7 +1,6 @@
 import { Server, Socket } from "socket.io";
-import { scenarios } from "../scenarios";
+import { runScenarios, scenarios } from "../scenario/scenario-runner";
 import { State, WebsocketCopilotResult, WebsocketEventTypes } from "@activepieces/copilot-shared";
-import { runScenarios } from "../scenarios/scenario-runner";
 import { plannerAgent } from "../agents/planner";
 
 
@@ -9,7 +8,7 @@ let currentState: State = {
     scenarios: scenarios.map((scenario) => {
         return {
             title: scenario.title,
-            prompt: scenario.prompt(),
+            prompt: scenario.prompt,
             status: 'stopped',
         };
     }),

@@ -3,7 +3,7 @@ import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { findRelevantPieces } from '../tools/embeddings';
 import { planSchema } from '../types/schemas';
-import { Agent } from '../types/agent';
+import { Agent } from './agent';
 import { stepAgent } from './generate-step';
 import { WebsocketEventTypes } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
@@ -12,8 +12,6 @@ import { websocketUtils } from '../util/websocket';
 export const plannerAgent: Agent<FlowType> = {
 
   async plan(prompt: string, socket: Socket | null): Promise<FlowType> {
-    console.debug('Starting flow planning process...');
-
     // Step 1: Find relevant pieces
     const relevantPieces = await findRelevantPieces(prompt);
     
