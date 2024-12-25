@@ -28,6 +28,7 @@ export const recordService = {
             // Prepare record insertions
             const recordInsertions = validRecords.map(() => ({
                 tableId: request.tableId,
+                projectId,
                 id: apId(),
             }))
 
@@ -152,7 +153,7 @@ export const recordService = {
                 if (cellsToUpsert.length > 0) {
                     await entityManager.getRepository(CellEntity).upsert(
                         cellsToUpsert,
-                        ['recordId', 'fieldId'], // Unique constraint for upsert
+                        ['projectId', 'fieldId', 'recordId'], // Unique constraint for upsert
                     )
                 }
             }

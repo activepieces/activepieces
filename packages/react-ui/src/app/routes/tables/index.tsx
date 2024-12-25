@@ -1,50 +1,69 @@
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import React, { useState } from 'react';
+import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useNewWindow } from '@/components/embed-provider';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { TableTitle } from '@/components/ui/table-title';
+import { toast } from '@/components/ui/use-toast';
+import { tablesApi } from '@/features/tables/lib/tables-api';
 import { formatUtils } from '@/lib/utils';
-import { SeekPage, Table } from '@activepieces/shared';
-
-const staticData: SeekPage<Table> = {
-  data: [
-    {
-      id: '1',
-      name: 'Table 1',
-      projectId: 'proj-1',
-      created: '2023-01-01T00:00:00Z',
-      updated: '2023-01-02T00:00:00Z',
-    },
-    {
-      id: '2',
-      name: 'Table 2',
-      projectId: 'proj-2',
-      created: '2023-02-01T00:00:00Z',
-      updated: '2023-02-02T00:00:00Z',
-    },
-    {
-      id: '3',
-      name: 'Table 3',
-      projectId: 'proj-3',
-      created: '2023-03-01T00:00:00Z',
-      updated: '2023-03-02T00:00:00Z',
-    },
-  ],
-  next: null,
-  previous: null,
-};
+import { Table } from '@activepieces/shared';
 
 function TablesPage() {
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
-
+  const [showNewTableDialog, setShowNewTableDialog] = useState(false);
+  const [newTableName, setNewTableName] = useState('');
   const [selectedRows, setSelectedRows] = useState<Array<{ id: string }>>([]);
-  const [data] = useState(staticData);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => tablesApi.list(),
+  });
+
+  const createTableMutation = useMutation({
+    mutationFn: async () => {
+      return tablesApi.create({ name: newTableName });
+    },
+    onSuccess: () => {
+      setNewTableName('');
+      setShowNewTableDialog(false);
+      refetch();
+      toast({
+        title: t('Success'),
+        description: t('Table has been created'),
+        duration: 3000,
+      });
+    },
+  });
+
+  const deleteTableMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return tablesApi.delete(id);
+    },
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const handleCreateTable = () => {
+    createTableMutation.mutate();
+  };
 
   const columns: ColumnDef<RowDataWithActions<Table>, unknown>[] = [
     {
@@ -100,7 +119,7 @@ function TablesPage() {
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
     {
-      accessorKey: 'createdAt',
+      accessorKey: 'created',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Created')} />
       ),
@@ -110,16 +129,48 @@ function TablesPage() {
         </div>
       ),
     },
+    {
+      id: 'actions',
+      cell: ({ row }) => {
+        return (
+          <div
+            className="flex items-center justify-end"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ConfirmationDeleteDialog
+              title={t('Delete Table')}
+              message={t(
+                'Are you sure you want to delete this table? This action cannot be undone.',
+              )}
+              mutationFn={async () =>
+                deleteTableMutation.mutate(row.original.id)
+              }
+              entityName={t('table')}
+            >
+              <Button variant="ghost" size="sm">
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </ConfirmationDeleteDialog>
+          </div>
+        );
+      },
+    },
   ];
 
   return (
     <div className="flex-col w-full">
-      <TableTitle>Tables</TableTitle>
+      <div className="flex items-center justify-between">
+        <TableTitle>Tables</TableTitle>
+        <Button onClick={() => setShowNewTableDialog(true)} size="sm">
+          {t('New Table')}
+        </Button>
+      </div>
+
       <DataTable
         columns={columns}
         page={data}
         hidePagination={true}
-        isLoading={false}
+        isLoading={isLoading}
         onRowClick={(row, newWindow) => {
           if (newWindow) {
             openNewWindow(`/tables/${row.id}`);
@@ -128,6 +179,41 @@ function TablesPage() {
           }
         }}
       />
+
+      <Dialog open={showNewTableDialog} onOpenChange={setShowNewTableDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('Create New Table')}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder={t('Table name')}
+              value={newTableName}
+              onChange={(e) => setNewTableName(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleCreateTable();
+                }
+              }}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowNewTableDialog(false)}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button
+              onClick={handleCreateTable}
+              disabled={!newTableName.trim() || createTableMutation.isPending}
+            >
+              {createTableMutation.isPending ? t('Creating...') : t('Create')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

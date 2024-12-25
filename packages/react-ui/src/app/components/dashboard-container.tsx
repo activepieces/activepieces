@@ -1,9 +1,9 @@
 import { t } from 'i18next';
 import {
   AlertCircle,
+  Database,
   Link2,
   Logs,
-  Table,
   Workflow,
   Wrench,
 } from 'lucide-react';
@@ -52,7 +52,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     {
       to: '/tables',
       label: t('Tables'),
-      icon: Table,
+      icon: Database,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_TABLE),
     },

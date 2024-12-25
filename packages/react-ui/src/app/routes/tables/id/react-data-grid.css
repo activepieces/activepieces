@@ -9,3 +9,7 @@
 .fell-grid {
     @apply bg-gray-200 text-black;
 }
+
+.rdg-summary-row {
+    --rdg-summary-row-top: 0px !important;
+}

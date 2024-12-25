@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
 import DataGrid, {
   SelectColumn,
   textEditor,
@@ -6,105 +8,21 @@ import DataGrid, {
   RowsChangeData,
 } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
+import { useParams } from 'react-router-dom';
 
 import { TableTitle } from '@/components/ui/table-title';
-import { formatUtils } from '@/lib/utils';
-import { Field, FieldType, PopulatedRecord } from '@activepieces/shared';
+import { toast } from '@/components/ui/use-toast';
+import { NewFieldDialog } from '@/features/tables/components/new-field-dialog';
+import { NewRecordDialog } from '@/features/tables/components/new-record-dialog';
+import { fieldsApi } from '@/features/tables/lib/fields-api';
+import { recordsApi } from '@/features/tables/lib/records-api';
+import { tablesApi } from '@/features/tables/lib/tables-api';
+import {
+  Field,
+  PopulatedRecord,
+  UpdateRecordRequest,
+} from '@activepieces/shared';
 import './react-data-grid.css';
-
-const staticFields: Field[] = [
-  {
-    id: 'id-1',
-    tableId: 'id-1',
-    name: 'Name',
-    type: FieldType.TEXT,
-    created: formatUtils.formatDate(new Date()),
-    updated: formatUtils.formatDate(new Date()),
-  },
-  {
-    id: 'id-2',
-    tableId: 'id-1',
-    name: 'Age',
-    type: FieldType.NUMBER,
-    created: formatUtils.formatDate(new Date()),
-    updated: formatUtils.formatDate(new Date()),
-  },
-  {
-    id: 'id-3',
-    tableId: 'id-1',
-    name: 'Birthdate',
-    type: FieldType.DATE,
-    created: formatUtils.formatDate(new Date()),
-    updated: formatUtils.formatDate(new Date()),
-  },
-];
-
-const staticRecords: PopulatedRecord[] = [
-  {
-    id: 'rowid-1',
-    tableId: 'id-1',
-    created: formatUtils.formatDate(new Date()),
-    updated: formatUtils.formatDate(new Date()),
-    cells: [
-      {
-        id: 'id-1c',
-        recordId: 'id-1',
-        fieldId: 'id-1',
-        value: 'John Doe',
-        created: formatUtils.formatDate(new Date()),
-        updated: formatUtils.formatDate(new Date()),
-      },
-      {
-        id: 'id-2c',
-        recordId: 'id-1',
-        fieldId: 'id-2',
-        value: 30,
-        created: formatUtils.formatDate(new Date()),
-        updated: formatUtils.formatDate(new Date()),
-      },
-      {
-        id: 'id-3c',
-        recordId: 'id-1',
-        fieldId: 'id-3',
-        value: formatUtils.formatDate(new Date('1990-01-01')),
-        created: formatUtils.formatDate(new Date()),
-        updated: formatUtils.formatDate(new Date()),
-      },
-    ],
-  },
-  {
-    id: 'id-2',
-    tableId: 'id-1',
-    created: formatUtils.formatDate(new Date()),
-    updated: formatUtils.formatDate(new Date()),
-    cells: [
-      {
-        id: 'id-4c',
-        recordId: 'id-2',
-        fieldId: 'id-1',
-        value: 'Jane Smith',
-        created: formatUtils.formatDate(new Date()),
-        updated: formatUtils.formatDate(new Date()),
-      },
-      {
-        id: 'id-5c',
-        recordId: 'id-2',
-        fieldId: 'id-2',
-        value: 25,
-        created: formatUtils.formatDate(new Date()),
-        updated: formatUtils.formatDate(new Date()),
-      },
-      {
-        id: 'id-6c',
-        recordId: 'id-2',
-        fieldId: 'id-3',
-        value: formatUtils.formatDate(new Date('1995-01-01')),
-        created: formatUtils.formatDate(new Date()),
-        updated: formatUtils.formatDate(new Date()),
-      },
-    ],
-  },
-];
 
 type Row = {
   id: string;
@@ -115,35 +33,115 @@ function rowKeyGetter(record: Row) {
   return record.id;
 }
 
-const columns: Column<Row>[] = [
-  SelectColumn,
-  ...staticFields.map((field) => ({
-    key: field.id,
-    name: field.name,
-    resizable: true,
-    renderEditCell: textEditor,
-  })),
-];
-
 function TablePage() {
-  const [rows, setRows] = useState<Row[]>(() =>
-    mapRecordsToRows(staticRecords, staticFields),
-  );
+  const { tableId } = useParams();
   const [selectedRows, setSelectedRows] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
 
-  function onRowsChange(rows: Row[], changeData: RowsChangeData<Row, unknown>) {
+  const { data: fieldsData, refetch: refetchFields } = useQuery({
+    queryKey: ['fields', tableId],
+    queryFn: () => fieldsApi.list(tableId!),
+  });
+
+  const { data: recordsData, refetch: refetchRecords } = useQuery({
+    queryKey: ['records', tableId],
+    queryFn: () =>
+      recordsApi.list({ tableId: tableId!, cursor: undefined, limit: 10 }),
+  });
+
+  const { data: tableData } = useQuery({
+    queryKey: ['table', tableId],
+    queryFn: () => tablesApi.getById(tableId!),
+  });
+
+  const updateRecordMutation = useMutation({
+    mutationFn: async ({
+      recordId,
+      request,
+    }: {
+      recordId: string;
+      request: UpdateRecordRequest;
+    }) => {
+      return recordsApi.update(recordId, request);
+    },
+    onSuccess: () => {
+      refetchRecords();
+      toast({
+        title: 'Success',
+        description: 'Record has been updated',
+        duration: 3000,
+      });
+    },
+  });
+
+  const columns: readonly Column<Row, { id: string }>[] = [
+    {
+      ...SelectColumn,
+      renderSummaryCell: () => (
+        <NewRecordDialog
+          fields={fieldsData ?? []}
+          tableId={tableId!}
+          onRecordCreated={() => refetchRecords()}
+        >
+          <div className="flex items-center justify-center cursor-pointer">
+            <Plus className="h-4 w-4" />
+          </div>
+        </NewRecordDialog>
+      ),
+    },
+    ...(fieldsData?.map((field) => ({
+      key: field.name,
+      name: field.name,
+      renderEditCell: textEditor,
+    })) ?? []),
+    {
+      key: 'new-field',
+      name: (
+        <NewFieldDialog
+          tableId={tableId!}
+          onFieldCreated={() => {
+            refetchRecords();
+            refetchFields();
+          }}
+        >
+          <div className="flex items-center justify-center cursor-pointer">
+            <Plus className="h-4 w-4" />
+          </div>
+        </NewFieldDialog>
+      ),
+      width: 40,
+    },
+  ];
+
+  const rows = recordsData?.data
+    ? mapRecordsToRows(recordsData.data, fieldsData ?? [])
+    : [];
+
+  async function onRowsChange(
+    rows: Row[],
+    changeData: RowsChangeData<Row, { id: string }>,
+  ) {
     const updatedRow = rows[changeData.indexes[0]];
-    const cellName = changeData.column.name;
     const cellValue = updatedRow[changeData.column.key];
-    console.log('updated row id', updatedRow.id);
-    console.log(cellName, cellValue);
-    setRows(rows);
+
+    if (!tableId) return;
+
+    updateRecordMutation.mutate({
+      recordId: updatedRow.id,
+      request: {
+        tableId,
+        cells: [
+          {
+            key: changeData.column.key,
+            value: String(cellValue),
+          },
+        ],
+      },
+    });
   }
 
   function onSelectedRowsChange(newSelectedRows: ReadonlySet<string>) {
-    console.log('selected rows', newSelectedRows);
     setSelectedRows(newSelectedRows);
   }
 
@@ -156,7 +154,7 @@ function TablePage() {
       record.cells.forEach((cell) => {
         const field = fields.find((f) => f.id === cell.fieldId);
         if (field) {
-          row[field.id] = cell.value;
+          row[field.name] = cell.value;
         }
       });
       return row;
@@ -165,7 +163,7 @@ function TablePage() {
 
   return (
     <div className="flex-col w-full">
-      <TableTitle>Table</TableTitle>
+      <TableTitle>{tableData?.name}</TableTitle>
       <DataGrid
         columns={columns}
         rows={rows}
@@ -173,7 +171,8 @@ function TablePage() {
         onRowsChange={onRowsChange}
         selectedRows={selectedRows}
         onSelectedRowsChange={onSelectedRowsChange}
-        className="rdg-light"
+        className="rdg-light mt-8"
+        bottomSummaryRows={[{ id: 'new-record' }]}
       />
     </div>
   );
