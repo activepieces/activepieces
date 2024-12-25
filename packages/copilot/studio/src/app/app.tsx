@@ -53,47 +53,49 @@ function AppContent() {
   const { isConnected, hasEmbeddings } = useWebSocket();
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="h-screen">
-        <div className="h-full">
-          <div className="h-full p-6">
-            <h1 className="text-3xl font-bold mb-6">Copilot Studio</h1>
-            
-            {/* Alerts Section */}
-            {isConnected && hasEmbeddings === false && (
-              <AlertBanner
-                type="warning"
-                title="Embeddings Required"
-                message="Please generate embeddings before running test results. Run the embeddings generation command in your terminal."
-                icon={<WarningIcon />}
-              />
-            )}
-            
-            <div className="grid grid-cols-2 gap-6 h-[calc(100%-5rem)]">
-              {/* Left Column */}
-              <div className="space-y-6 h-full">
-                {/* Top Left Square - Scenarios */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-1/2">
-                  <Scenarios />
-                </div>
-                {/* Bottom Left Square - Future Content */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-1/2">
-                  <h2 className="text-xl font-semibold mb-4">Coming Soon</h2>
-                  <p className="text-gray-600">Future content will be added here.</p>
-                </div>
+    <div className="h-screen bg-gray-100 overflow-hidden">
+      <div className="h-full p-6 flex flex-col">
+        {/* Header Section */}
+        <div className="flex-none mb-6">
+          <h1 className="text-3xl font-bold">Copilot Studio</h1>
+          
+          {/* Alerts Section */}
+          {isConnected && hasEmbeddings === false && (
+            <AlertBanner
+              type="warning"
+              title="Embeddings Required"
+              message="Please generate embeddings before running test results. Run the embeddings generation command in your terminal."
+              icon={<WarningIcon />}
+            />
+          )}
+        </div>
+        
+        {/* Main Content */}
+        <div className="flex-1 min-h-0">
+          <div className="grid grid-cols-2 gap-6 h-full">
+            {/* Left Column */}
+            <div className="grid grid-rows-2 gap-6 h-full min-h-0">
+              {/* Top Left - Scenarios */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-hidden min-h-0">
+                <Scenarios />
               </div>
+              {/* Bottom Left - Future Content */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-hidden min-h-0">
+                <h2 className="text-xl font-semibold mb-4">Coming Soon</h2>
+                <p className="text-gray-600">Future content will be added here.</p>
+              </div>
+            </div>
 
-              {/* Right Column */}
-              <div className="space-y-6 h-full">
-                {/* Top Right Square - Test Results */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-1/2">
-                  <TestResults />
-                </div>
-                {/* Bottom Right Square - Future Content */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-1/2">
-                  <h2 className="text-xl font-semibold mb-4">Coming Soon</h2>
-                  <p className="text-gray-600">Future content will be added here.</p>
-                </div>
+            {/* Right Column */}
+            <div className="grid grid-rows-2 gap-6 h-full min-h-0">
+              {/* Top Right - Test Results */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-hidden min-h-0">
+                <TestResults />
+              </div>
+              {/* Bottom Right - Future Content */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-hidden min-h-0">
+                <h2 className="text-xl font-semibold mb-4">Coming Soon</h2>
+                <p className="text-gray-600">Future content will be added here.</p>
               </div>
             </div>
           </div>

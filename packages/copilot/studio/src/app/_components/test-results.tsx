@@ -193,57 +193,68 @@ export const TestResults: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-semibold">Test Results</h2>
-          <span className={`inline-block w-3 h-3 rounded-full ${
-            isConnected ? 'bg-green-500' : 'bg-red-500'
-          }`} />
+      <div className="flex-none mb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold">Test Results</h2>
+            <span className={`inline-block w-3 h-3 rounded-full ${
+              isConnected ? 'bg-green-500' : 'bg-red-500'
+            }`} />
+          </div>
+          <div className="flex items-center gap-2">
+            {results.length > 0 && (
+              <>
+                <span className="text-sm text-gray-500">{results.length} results</span>
+                <button
+                  onClick={clearResults}
+                  className="text-sm px-2 py-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+                >
+                  Clear
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        {results.length > 0 && (
-          <button
-            onClick={clearResults}
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            Clear Results
-          </button>
-        )}
       </div>
 
-      <div className="flex-1 overflow-auto space-y-2">
-        {results.map((result, index) => (
-          <div key={index} className="p-3 bg-gray-50 rounded shadow-sm border border-gray-100">
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <span className={`font-medium text-sm ${
-                  result.type === TestResultType.TEST_ERROR ? 'text-red-600' :
-                  result.type === TestResultType.TEST_STOPPED ? 'text-orange-600' :
-                  result.type === TestResultType.SCENARIO_COMPLETED ? 'text-green-600' :
-                  result.type === TestResultType.PIECES_FOUND ? 'text-purple-600' :
-                  result.type === TestResultType.PLAN_GENERATED ? 'text-blue-600' :
-                  result.type === TestResultType.STEP_CREATED ? 'text-indigo-600' :
-                  'text-gray-900'
-                }`}>
-                  {result.type.split('_').map((word: string) => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
+      <div className="flex-1 -mx-6 px-6 overflow-y-auto min-h-0">
+        <div className="space-y-2 pb-2">
+          {results.map((result, index) => (
+            <div key={index} className="p-3 bg-gray-50 rounded shadow-sm border border-gray-100">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <span className={`font-medium text-sm ${
+                    result.type === TestResultType.TEST_ERROR ? 'text-red-600' :
+                    result.type === TestResultType.TEST_STOPPED ? 'text-orange-600' :
+                    result.type === TestResultType.SCENARIO_COMPLETED ? 'text-green-600' :
+                    result.type === TestResultType.PIECES_FOUND ? 'text-purple-600' :
+                    result.type === TestResultType.PLAN_GENERATED ? 'text-blue-600' :
+                    result.type === TestResultType.STEP_CREATED ? 'text-indigo-600' :
+                    'text-gray-900'
+                  }`}>
+                    {result.type.split('_').map((word: string) => word.charAt(0) + word.slice(1).toLowerCase()).join(' ')}
+                  </span>
+                  {(result.data.scenarioTitle || result.data.title) && (
+                    <div className="text-xs text-gray-600 mt-0.5">
+                      Scenario: {result.data.scenarioTitle || result.data.title}
+                    </div>
+                  )}
+                </div>
+                <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                  {new Date(result.data.timestamp).toLocaleTimeString()}
                 </span>
-                {(result.data.scenarioTitle || result.data.title) && (
-                  <div className="text-xs text-gray-600 mt-0.5">
-                    Scenario: {result.data.scenarioTitle || result.data.title}
-                  </div>
-                )}
               </div>
-              <span className="text-xs text-gray-500">
-                {new Date(result.data.timestamp).toLocaleTimeString()}
-              </span>
+              <div className="overflow-x-auto">
+                {renderStepContent(result)}
+              </div>
             </div>
-            {renderStepContent(result)}
-          </div>
-        ))}
-        {results.length === 0 && (
-          <div className="text-center text-gray-500 py-8 text-sm">
-            No test results yet. Run a scenario to see results here.
-          </div>
-        )}
+          ))}
+          {results.length === 0 && (
+            <div className="text-center text-gray-500 py-8 text-sm">
+              No test results yet. Run a scenario to see results here.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
