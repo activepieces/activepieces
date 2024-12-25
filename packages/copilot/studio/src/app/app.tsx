@@ -79,24 +79,14 @@ function AppContent() {
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-hidden min-h-0">
                 <Scenarios />
               </div>
-              {/* Bottom Left - Future Content */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-hidden min-h-0">
-                <h2 className="text-xl font-semibold mb-4">Coming Soon</h2>
-                <p className="text-gray-600">Future content will be added here.</p>
-              </div>
             </div>
 
             {/* Right Column */}
-            <div className="grid grid-rows-2 gap-6 h-full min-h-0">
-              {/* Top Right - Test Results */}
+            <div className="grid grid-rows-1 gap-6 h-full min-h-0">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-hidden min-h-0">
                 <TestResults />
               </div>
-              {/* Bottom Right - Future Content */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-hidden min-h-0">
-                <h2 className="text-xl font-semibold mb-4">Coming Soon</h2>
-                <p className="text-gray-600">Future content will be added here.</p>
-              </div>
+            
             </div>
           </div>
         </div>
