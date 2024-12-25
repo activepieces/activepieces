@@ -49,6 +49,8 @@ import { removeAssociationsAction } from './lib/actions/remove-associations';
 import { findAssociationsAction } from './lib/actions/find-associations';
 import { newOrUpdatedCompanyTrigger } from './lib/triggers/new-or-updated-company';
 import { newOrUpdatedContactTrigger } from './lib/triggers/new-or-updated-contact';
+import { newOrUpdatedProductTrigger } from './lib/triggers/new-or-updated-product';
+import { newOrUpdatedLineItemTrigger } from './lib/triggers/new-or-updated-line-item';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -144,11 +146,13 @@ export const hubspot = createPiece({
 	triggers: [
 		newOrUpdatedCompanyTrigger,
 		newOrUpdatedContactTrigger,
+		newOrUpdatedLineItemTrigger,
 		newTaskAdded,
 		newCompanyAdded,
 		newContactAdded,
 		newDealAdded,
 		newTicketAdded,
 		dealStageUpdatedTrigger,
+		newOrUpdatedProductTrigger
 	],
 });

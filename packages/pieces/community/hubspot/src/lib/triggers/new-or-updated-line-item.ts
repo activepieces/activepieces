@@ -23,25 +23,25 @@ const polling: Polling<
 
 		// Extract properties once to avoid recomputation
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
-		const defaultContactProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT);
-		const propertiesToRetrieve = [...defaultContactProperties, ...additionalProperties];
+		const defaultLineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM);
+		const propertiesToRetrieve = [...defaultLineItemProperties, ...additionalProperties];
 
 		const items = [];
 		let after;
 
 		do {
 			const isTest = lastFetchEpochMS === 0;
-			const response = await client.crm.contacts.searchApi.doSearch({
+			const response = await client.crm.lineItems.searchApi.doSearch({
 				limit: isTest ? 10 : 100,
 				properties: propertiesToRetrieve,
-				sorts: ['-lastmodifieddate'],
+				sorts: ['-hs_lastmodifieddate'],
 				filterGroups: isTest
 					? []
 					: [
 							{
 								filters: [
 									{
-										propertyName: 'lastmodifieddate',
+										propertyName: 'hs_lastmodifieddate',
 										operator: FilterOperatorEnum.Gt,
 										value: lastFetchEpochMS.toString(),
 									},
@@ -57,28 +57,28 @@ const polling: Polling<
 		} while (after);
 
 		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['lastmodifieddate']).valueOf(),
+			epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
 			data: item,
 		}));
 	},
 };
 
-export const newOrUpdatedContactTrigger = createTrigger({
+export const newOrUpdatedLineItemTrigger = createTrigger({
 	auth: hubspotAuth,
-	name: 'new-or-updated-contact',
-	displayName: 'Contact Recently Created or Updated',
-	description: 'Triggers when a contact recenty created or updated.',
+	name: 'new-or-updated-line-item',
+	displayName: 'Line Item Recently Created or Updated',
+	description: 'Triggers when a line item recenty created or updated.',
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
 			value: `### Properties to retrieve:
                                     
-                    firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry			
+                    name, description, price, quantity, amount, discount, tax, createdate, hs_object_id, hs_product_id, hs_images, hs_lastmodifieddate, hs_line_item_currency_code, hs_sku, hs_url, hs_cost_of_goods_sold, hs_discount_percentage, hs_term_in_months           
                                     
                     **Specify here a list of additional properties to retrieve**`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
-			objectType: OBJECT_TYPE.CONTACT,
+			objectType: OBJECT_TYPE.LINE_ITEM,
 			displayName: 'Additional properties to retrieve',
 			required: false,
 		}),
@@ -105,37 +105,29 @@ export const newOrUpdatedContactTrigger = createTrigger({
 		return await pollingHelper.poll(polling, context);
 	},
 	sampleData: {
-		createdAt: '2024-12-06T10:52:58.322Z',
+		createdAt: '2024-12-24T16:17:34.281Z',
 		archived: false,
-		id: '82665997707',
+		id: '26854130802',
 		properties: {
-			address: null,
-			annualrevenue: null,
-			city: 'Brisbane',
-			company: 'HubSpot',
-			country: null,
-			createdate: '2024-12-06T10:52:58.322Z',
-			email: 'emailmaria@hubspot.com',
-			fax: null,
-			firstname: 'Maria',
-			hs_createdate: null,
-			hs_email_domain: 'hubspot.com',
-			hs_language: null,
-			hs_object_id: '82665997707',
-			hs_persona: null,
-			industry: null,
-			jobtitle: 'Salesperson',
-			lastmodifieddate: '2024-12-20T12:50:35.201Z',
-			lastname: 'Johnson (Sample Contact)',
-			lifecyclestage: 'lead',
-			mobilephone: null,
-			numemployees: null,
-			phone: null,
-			salutation: null,
-			state: null,
-			website: 'http://www.HubSpot.com',
-			zip: null,
+			amount: '15.00',
+			createdate: '2024-12-24T16:17:34.281Z',
+			description: 'Chair',
+			discount: null,
+			hs_cost_of_goods_sold: '10',
+			hs_discount_percentage: null,
+			hs_images: null,
+			hs_lastmodifieddate: '2024-12-24T16:17:50.488Z',
+			hs_line_item_currency_code: 'USD',
+			hs_object_id: '26854130802',
+			hs_product_id: '17602013482',
+			hs_sku: 'ch-100',
+			hs_term_in_months: null,
+			hs_url: null,
+			name: 'Chair',
+			price: '15.0',
+			quantity: '1',
+			tax: null,
 		},
-		updatedAt: '2024-12-20T12:50:35.201Z',
+		updatedAt: '2024-12-24T16:17:50.488Z',
 	},
 });

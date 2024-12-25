@@ -23,25 +23,25 @@ const polling: Polling<
 
 		// Extract properties once to avoid recomputation
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
-		const defaultContactProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT);
-		const propertiesToRetrieve = [...defaultContactProperties, ...additionalProperties];
+		const defaultProductProperties = getDefaultPropertiesForObject(OBJECT_TYPE.PRODUCT);
+		const propertiesToRetrieve = [...defaultProductProperties, ...additionalProperties];
 
 		const items = [];
 		let after;
 
 		do {
 			const isTest = lastFetchEpochMS === 0;
-			const response = await client.crm.contacts.searchApi.doSearch({
+			const response = await client.crm.products.searchApi.doSearch({
 				limit: isTest ? 10 : 100,
 				properties: propertiesToRetrieve,
-				sorts: ['-lastmodifieddate'],
+				sorts: ['-hs_lastmodifieddate'],
 				filterGroups: isTest
 					? []
 					: [
 							{
 								filters: [
 									{
-										propertyName: 'lastmodifieddate',
+										propertyName: 'hs_lastmodifieddate',
 										operator: FilterOperatorEnum.Gt,
 										value: lastFetchEpochMS.toString(),
 									},
@@ -57,28 +57,28 @@ const polling: Polling<
 		} while (after);
 
 		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['lastmodifieddate']).valueOf(),
+			epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
 			data: item,
 		}));
 	},
 };
 
-export const newOrUpdatedContactTrigger = createTrigger({
+export const newOrUpdatedProductTrigger = createTrigger({
 	auth: hubspotAuth,
-	name: 'new-or-updated-contact',
-	displayName: 'Contact Recently Created or Updated',
-	description: 'Triggers when a contact recenty created or updated.',
+	name: 'new-or-updated-product',
+	displayName: 'Product Recently Created or Updated',
+	description: 'Triggers when a product recenty created or updated.',
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
 			value: `### Properties to retrieve:
                                     
-                    firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry			
+                    createdate, description, name, price, tax, hs_lastmodifieddate
                                     
                     **Specify here a list of additional properties to retrieve**`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
-			objectType: OBJECT_TYPE.CONTACT,
+			objectType: OBJECT_TYPE.PRODUCT,
 			displayName: 'Additional properties to retrieve',
 			required: false,
 		}),
@@ -105,37 +105,18 @@ export const newOrUpdatedContactTrigger = createTrigger({
 		return await pollingHelper.poll(polling, context);
 	},
 	sampleData: {
-		createdAt: '2024-12-06T10:52:58.322Z',
+		createdAt: '2024-12-18T16:10:27.710Z',
 		archived: false,
-		id: '82665997707',
+		id: '17602013482',
 		properties: {
-			address: null,
-			annualrevenue: null,
-			city: 'Brisbane',
-			company: 'HubSpot',
-			country: null,
-			createdate: '2024-12-06T10:52:58.322Z',
-			email: 'emailmaria@hubspot.com',
-			fax: null,
-			firstname: 'Maria',
-			hs_createdate: null,
-			hs_email_domain: 'hubspot.com',
-			hs_language: null,
-			hs_object_id: '82665997707',
-			hs_persona: null,
-			industry: null,
-			jobtitle: 'Salesperson',
-			lastmodifieddate: '2024-12-20T12:50:35.201Z',
-			lastname: 'Johnson (Sample Contact)',
-			lifecyclestage: 'lead',
-			mobilephone: null,
-			numemployees: null,
-			phone: null,
-			salutation: null,
-			state: null,
-			website: 'http://www.HubSpot.com',
-			zip: null,
+			createdate: '2024-12-18T16:10:27.710Z',
+			description: 'Chair',
+			hs_lastmodifieddate: '2024-12-23T08:13:30.314Z',
+			hs_object_id: '17602013482',
+			name: 'Chair',
+			price: '15.0',
+			tax: null,
 		},
-		updatedAt: '2024-12-20T12:50:35.201Z',
+		updatedAt: '2024-12-23T08:13:30.314Z',
 	},
 });
