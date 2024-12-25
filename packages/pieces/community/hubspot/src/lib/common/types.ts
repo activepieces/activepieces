@@ -195,3 +195,9 @@ export enum HubspotFieldType {
 	Select = 'select',
 	Radio = 'radio',
 }
+
+export declare enum AssociationSpecAssociationCategoryEnum {
+    HubspotDefined = "HUBSPOT_DEFINED",
+    UserDefined = "USER_DEFINED",
+    IntegratorDefined = "INTEGRATOR_DEFINED"
+}

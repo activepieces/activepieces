@@ -131,3 +131,27 @@ export const DEFAULT_LINE_ITEM_PROPERTIES = [
 	'hs_discount_percentage',
 	'hs_term_in_months',
 ];
+
+export const STANDARD_OBJECT_TYPES = [
+	{
+	  label: "Contacts",
+	  value: OBJECT_TYPE.CONTACT,
+	},
+	{
+	  label: "Companies",
+	  value: OBJECT_TYPE.COMPANY,
+	},
+	{
+	  label: "Deals",
+	  value: OBJECT_TYPE.DEAL,
+	},
+	{
+	  label: "Tickets",
+	  value: OBJECT_TYPE.TICKET,
+	},
+	{
+	  label: "Line Items",
+	  value: OBJECT_TYPE.LINE_ITEM,
+	},
+	
+  ];

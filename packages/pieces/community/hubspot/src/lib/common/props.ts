@@ -22,6 +22,7 @@ import {
 	DEFAULT_PRODUCT_PROPERTIES,
 	DEFAULT_TICKET_PROPERTIES,
 	OBJECT_TYPE,
+	STANDARD_OBJECT_TYPES,
 } from './constants';
 import { Client } from '@hubspot/api-client';
 import { hubspotAuth } from '../../';
@@ -538,7 +539,9 @@ export const workflowIdDropdown = Property.Dropdown({
 		}
 
 		const token = (auth as OAuth2PropertyValue).access_token;
-		const workflowsResponse = await httpClient.sendRequest<{ workflows: WorkflowResponse[] }>({
+		const workflowsResponse = await httpClient.sendRequest<{
+			workflows: WorkflowResponse[];
+		}>({
 			method: HttpMethod.GET,
 			url: `https://api.hubapi.com/automation/v2/workflows`,
 			authentication: {
@@ -742,8 +745,129 @@ export const staticListsDropdown = Property.Dropdown({
 			}
 			offset += 100;
 			hasMore = response.body['has-more'];
-
 		} while (hasMore);
+
+		return {
+			disabled: false,
+			options,
+		};
+	},
+});
+
+export const fromObjectTypeAssociationDropdown = (params: DropdownParams) =>
+	Property.Dropdown({
+		displayName: params.displayName,
+		refreshers: [],
+		required: params.required,
+		description: params.description,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return buildEmptyList({
+					placeholder: 'Please connect your account.',
+				});
+			}
+
+			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+			const client = new Client({ accessToken: authValue.access_token });
+
+			const customObjectsResponse = await client.crm.schemas.coreApi.getAll();
+
+			//
+			const options = customObjectsResponse.results.map((customObj) => {
+				return {
+					label: customObj.labels.plural ?? customObj.name,
+					value: customObj.objectTypeId,
+				};
+			});
+			return {
+				disabled: false,
+				options: [...STANDARD_OBJECT_TYPES, ...options],
+			};
+		},
+	});
+
+export const associationTypeDropdown = Property.Dropdown({
+	displayName: 'Type of the association',
+	refreshers: ['fromObjectType', 'toObjectType'],
+	required: true,
+	options: async ({ auth, fromObjectType, toObjectType }) => {
+		if (!auth) {
+			return buildEmptyList({
+				placeholder: 'Please connect your account.',
+			});
+		}
+
+		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+		const client = new Client({ accessToken: authValue.access_token });
+		const associationLabels = await client.crm.associations.v4.schema.definitionsApi.getAll(
+			fromObjectType as string,
+			toObjectType as string,
+		);
+
+		const options = associationLabels.results.map((associationLabel) => {
+			return {
+				label: associationLabel.label ?? `${fromObjectType}_to_${toObjectType}`,
+				value: associationLabel.typeId,
+			};
+		});
+
+		return {
+			disabled: false,
+			options,
+		};
+	},
+});
+
+export const toObjectIdsDropdown =(params: DropdownParams) => Property.MultiSelectDropdown({
+	displayName: params.displayName,
+	description: params.description,
+	refreshers: ['toObjectType'],
+	required: params.required,
+	options: async ({ auth, toObjectType }) => {
+		if (!auth) {
+			return buildEmptyList({
+				placeholder: 'Please connect your account.',
+			});
+		}
+
+		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+		const client = new Client({ accessToken: authValue.access_token });
+
+		const limit = 100;
+		const options: DropdownOption<string>[] = [];
+		let after: string | undefined;
+		do {
+			const response = await client.crm.objects.basicApi.getPage(
+				toObjectType as string,
+				limit,
+				after,
+			);
+			for (const object of response.results) {
+				let labelName;
+				switch (toObjectType) {
+					case OBJECT_TYPE.CONTACT:
+						labelName = 'email';
+						break;
+					case OBJECT_TYPE.COMPANY:
+						labelName = 'name';
+						break;
+					case OBJECT_TYPE.DEAL:
+						labelName = 'dealname';
+						break;
+					case OBJECT_TYPE.TICKET:
+						labelName = 'subject';
+						break;
+					case OBJECT_TYPE.LINE_ITEM:
+						labelName = 'name';
+						break;
+				}
+				options.push({
+					label: object.properties[labelName!] ?? object.id,
+					value: object.id,
+				});
+			}
+			after = response.paging?.next?.after;
+		} while (after);
 
 		return {
 			disabled: false,

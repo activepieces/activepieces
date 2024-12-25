@@ -44,6 +44,9 @@ import { findLineItemAction } from './lib/actions/find-line-item';
 import { removeContactFromListAction } from './lib/actions/remove-contact-from-list';
 import { uploadFileAction } from './lib/actions/upload-file';
 import { removeEmailSubscriptionAction } from './lib/actions/remove-email-subscription';
+import { createAssociationsAction } from './lib/actions/create-associations';
+import { removeAssociationsAction } from './lib/actions/remove-associations';
+import { findAssociationsAction } from './lib/actions/find-associations';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -90,6 +93,7 @@ export const hubspot = createPiece({
 	actions: [
 		hubSpotListsAddContactAction,
 		addContactToWorkflowAction,
+		createAssociationsAction,
 		createCompanyAction,
 		createContactAction,
 		createCustomObjectAction,
@@ -105,6 +109,7 @@ export const hubspot = createPiece({
 		getLineItemAction,
 		getProductAction,
 		getTicketAction,
+		removeAssociationsAction,
 		removeContactFromListAction,
 		removeEmailSubscriptionAction,
 		updateCompanyAction,
@@ -115,6 +120,7 @@ export const hubspot = createPiece({
 		updateProductAction,
 		updateTicketAction,
 		uploadFileAction,
+		findAssociationsAction,
 		findCompanyAction,
 		findContactAction,
 		findCustomObjectAction,
