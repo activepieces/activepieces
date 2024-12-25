@@ -5,13 +5,14 @@ import { findRelevantPieces } from '../tools/embeddings';
 import { planSchema } from '../types/schemas';
 import { Agent } from './agent';
 import { stepAgent } from './generate-step';
-import { WebsocketCopilotUpdate } from '@activepieces/copilot-shared';
+import { WebsocketCopilotUpdate, StepConfig } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
 import { websocketUtils } from '../util/websocket';
 
 export interface PlanOptions {
   relevanceThreshold?: number;
   customPrompt?: string;
+  stepConfig?: StepConfig;
 }
 
 export const plannerAgent: Agent<FlowType> = {
@@ -45,10 +46,17 @@ export const plannerAgent: Agent<FlowType> = {
 
       User request: ${prompt}
 
+      ${options?.stepConfig ? `
+      Follow this exact step sequence:
+      ${options.stepConfig.steps.map((step, index) => 
+        `${index + 1}. [${step.type}] ${step.description}`
+      ).join('\n')}
+      ` : `
       Create a high-level plan that:
       1. Starts with a trigger step
       2. Includes necessary action steps
       3. Uses router steps only when conditional logic is needed
+      `}
 
       The plan should have:
       - A descriptive name that summarizes what it does
@@ -59,13 +67,18 @@ export const plannerAgent: Agent<FlowType> = {
       - First try to use piece triggers and actions directly
       - Only use ROUTER if the logic cannot be handled by piece capabilities
       - Keep the plan as simple as possible while meeting the requirements
+      ${options?.stepConfig ? '- Follow the exact step sequence provided above' : ''}
     `;
 
     const { object: plan } = await generateObject({
       model: openai('gpt-4o'),
       schema: planSchema,
       prompt: options?.customPrompt ? 
-        `${options.customPrompt}\n\nAvailable pieces:\n${relevantPieces.map((p) => `- ${p.metadata.pieceName}: ${p.content}`).join('\n')}\n\nUser request: ${prompt}` 
+        `${options.customPrompt}\n\nAvailable pieces:\n${relevantPieces.map((p) => `- ${p.metadata.pieceName}: ${p.content}`).join('\n')}\n\nUser request: ${prompt}${
+          options?.stepConfig ? `\n\nFollow this exact step sequence:\n${options.stepConfig.steps.map((step, index) => 
+            `${index + 1}. [${step.type}] ${step.description}`
+          ).join('\n')}` : ''
+        }` 
         : defaultPrompt,
     });
 

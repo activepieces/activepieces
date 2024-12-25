@@ -9,6 +9,7 @@ export interface RunTestsParams {
   scenarioTitle: string;
   relevanceThreshold?: number;
   customPrompt?: string;
+  stepConfig?: StepConfig;
 }
 
 export type State = {
@@ -104,4 +105,14 @@ export type WebsocketCopilotResult = {
 } | {
   type: WebsocketCopilotUpdate.TEST_STATE;
   data: TestStateData;
+}
+
+export interface PlanStep {
+  type: 'PIECE_TRIGGER' | 'PIECE' | 'ROUTER';
+  description: string;
+  required: boolean;
+}
+
+export interface StepConfig {
+  steps: PlanStep[];
 }

@@ -2,18 +2,44 @@ import { useWebSocket } from '../WebSocketContext';
 import { isNil } from '@activepieces/shared';
 import { WebsocketEventTypes } from '@activepieces/copilot-shared';
 import { ThresholdControl } from './test-results/components/threshold-control';
+import { PlanStepsControl } from './test-results/components/plan-steps-control';
 import { useState } from 'react';
+
+type PlanStep = {
+  type: 'PIECE_TRIGGER' | 'PIECE' | 'ROUTER';
+  description: string;
+  required: boolean;
+};
+
+type StepConfig = {
+  steps: PlanStep[];
+};
 
 export function Scenarios() {
   const { state, socket } = useWebSocket();
   const [threshold, setThreshold] = useState(0.35);
   const [customPrompt, setCustomPrompt] = useState('');
+  const [stepConfig, setStepConfig] = useState<StepConfig>({
+    steps: [
+      {
+        type: 'PIECE_TRIGGER' as const,
+        description: 'Start with a trigger step',
+        required: true
+      },
+      {
+        type: 'PIECE' as const,
+        description: 'Include necessary action steps',
+        required: false
+      }
+    ]
+  });
 
   function runTest(scenarioTitle: string) {
     socket?.emit(WebsocketEventTypes.RUN_TESTS, { 
       scenarioTitle,
       relevanceThreshold: threshold,
       customPrompt: customPrompt.trim() || undefined,
+      stepConfig
     });
   }
 
@@ -58,6 +84,11 @@ export function Scenarios() {
             className="w-full h-32 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
+
+        <PlanStepsControl 
+          value={stepConfig}
+          onChange={setStepConfig}
+        />
       </div>
 
       <div className="flex-1 overflow-auto">
