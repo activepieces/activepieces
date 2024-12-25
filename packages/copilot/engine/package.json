@@ -6,5 +6,8 @@
     "start": "ts-node src/index.ts",
     "dev": "ts-node-dev --respawn src/index.ts",
     "test": "jest"
+  },
+  "dependencies": {
+    "@activepieces/copilot-shared": "workspace:*"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "copilot-shared",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/copilot/copilot-shared/src",
+  "sourceRoot": "packages/copilot/shared/src",
   "projectType": "library",
   "tags": [],
   "targets": {
@@ -9,10 +9,10 @@
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/copilot/copilot-shared",
-        "main": "packages/copilot/copilot-shared/src/index.ts",
-        "tsConfig": "packages/copilot/copilot-shared/tsconfig.lib.json",
-        "assets": ["packages/copilot/copilot-shared/*.md"]
+        "outputPath": "dist/packages/copilot/shared",
+        "main": "packages/copilot/shared/src/index.ts",
+        "tsConfig": "packages/copilot/shared/tsconfig.lib.json",
+        "assets": ["packages/copilot/shared/*.md"]
       }
     }
   }
