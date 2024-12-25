@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Plus, ChevronDown, Undo2 } from 'lucide-react';
+import { Plus, ChevronDown, Undo2, GitBranch, RotateCcw } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -19,22 +20,16 @@ import {
 } from '@/components/ui/tooltip';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { formatUtils } from '@/lib/utils';
-import {
-  ProjectRelease,
-  ProjectReleaseType,
-} from '@activepieces/shared';
-import { DownloadButton } from './download-button';
-import { useState } from 'react';
+import { ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
+
 import { ApplyButton } from './apply-plan';
+import { DownloadButton } from './download-button';
 
 const ProjectReleasesPage = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-releases'],
     queryFn: () => projectReleaseApi.list(),
   });
-
-  const [selectedRelease, setSelectedRelease] = useState<ProjectRelease | null>(null);
-  const [isLoadingApplyPlan, setIsLoadingApplyPlan] = useState(false);
 
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {
@@ -44,6 +39,26 @@ const ProjectReleasesPage = () => {
         <DataTableColumnHeader column={column} title={t('Name')} />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
+    },
+    {
+      accessorKey: 'type',
+      accessorFn: (row) => row.type,
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Source')} />
+      ),
+      cell: ({ row }) => {
+        const isGit = row.original.type === ProjectReleaseType.GIT;
+        return (
+          <div className="flex items-center gap-2">
+            {isGit ? (
+              <GitBranch className="size-4" />
+            ) : (
+              <RotateCcw className="size-4" />
+            )}
+            {isGit ? 'Git' : 'Rollback'}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'created',
@@ -71,13 +86,6 @@ const ProjectReleasesPage = () => {
         <div className="text-left">{row.original.importedByUser?.email}</div>
       ),
     },
-    {
-      accessorKey: 'type',
-      accessorFn: (row) => row.type,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Type')} />
-      ),
-    },
   ];
 
   return (
@@ -86,7 +94,7 @@ const ProjectReleasesPage = () => {
         <div className="flex flex-col gap-2">
           <TableTitle>{t('Project Releases')}</TableTitle>
           <div className="text-sm text-muted-foreground">
-            {t('View all history of imported project releases')}
+            {t('Track and manage your project version history and deployments')}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -100,12 +108,10 @@ const ProjectReleasesPage = () => {
             <DropdownMenuContent>
               <DropdownMenuItem className="cursor-pointer" asChild>
                 <ApplyButton
-                  loading={isLoadingApplyPlan}
                   variant="ghost"
                   onSuccess={refetch}
                   className="w-full justify-start"
                   request={{ type: ProjectReleaseType.GIT }}
-                  onClick={() => setSelectedRelease(null)}
                 >
                   <div className="flex flex-row gap-2 items-center">
                     <Plus className="h-4 w-4" />
@@ -136,8 +142,7 @@ const ProjectReleasesPage = () => {
                         type: ProjectReleaseType.ROLLBACK,
                         projectReleaseId: row.id,
                       }}
-                      defaultName={`Rollback ${row.name}`}
-                      onClick={() => setSelectedRelease(row)}
+                      defaultName={row.name}
                     >
                       <Undo2 className="size-4" />
                     </ApplyButton>

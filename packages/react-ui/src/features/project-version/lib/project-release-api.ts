@@ -1,11 +1,11 @@
 import { api } from '@/lib/api';
+import { ProjectSyncPlan } from '@activepieces/ee-shared';
 import {
   SeekPage,
   CreateProjectReleaseRequestBody,
   ProjectRelease,
   DiffReleaseRequest,
 } from '@activepieces/shared';
-import { ProjectSyncPlan } from '@activepieces/ee-shared';
 
 export const projectReleaseApi = {
   async list() {
@@ -21,6 +21,9 @@ export const projectReleaseApi = {
     return await api.post<unknown>(`/v1/project-releases/${releaseId}/export`);
   },
   async diff(request: DiffReleaseRequest) {
-    return await api.post<ProjectSyncPlan>(`/v1/project-releases/diff`, request);
+    return await api.post<ProjectSyncPlan>(
+      `/v1/project-releases/diff`,
+      request,
+    );
   },
 };

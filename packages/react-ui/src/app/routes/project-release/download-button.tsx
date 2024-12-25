@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
-import { DownloadIcon } from 'lucide-react';
 import { t } from 'i18next';
+import { DownloadIcon } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -13,25 +14,28 @@ import { ProjectRelease } from '@activepieces/shared';
 
 export const DownloadButton = ({ release }: { release: ProjectRelease }) => {
   const { toast } = useToast();
-  const { mutate: downloadProjectRelease, isPending: isDownloading } = useMutation({
-    mutationFn: async ({ releaseId }: { releaseId: string }) => {
-      return await projectReleaseApi.export(releaseId);
-    },
-    onSuccess: (data) => {
-      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${release.name || 'release'}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
+  const { mutate: downloadProjectRelease, isPending: isDownloading } =
+    useMutation({
+      mutationFn: async ({ releaseId }: { releaseId: string }) => {
+        return await projectReleaseApi.export(releaseId);
+      },
+      onSuccess: (data) => {
+        const blob = new Blob([JSON.stringify(data)], {
+          type: 'application/json',
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${release.name || 'release'}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      },
+      onError: () => {
+        toast(INTERNAL_ERROR_TOAST);
+      },
+    });
 
   return (
     <div className="flex items-center justify-center">
@@ -50,4 +54,4 @@ export const DownloadButton = ({ release }: { release: ProjectRelease }) => {
       </Tooltip>
     </div>
   );
-}; 
+};

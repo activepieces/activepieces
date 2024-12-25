@@ -4,11 +4,12 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -17,22 +18,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  ProjectSyncPlan,
-} from '@activepieces/ee-shared';
-import { ProjectReleaseType } from '@activepieces/shared';
-import { Checkbox } from '@/components/ui/checkbox';
+import { ProjectSyncPlan } from '@activepieces/ee-shared';
+import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
+
 import { OperationChange } from './operation-change';
 
-type GitReleaseDialogProps = {
+type CreateReleaseDialogProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   refetch: () => void;
+  diffRequest: DiffReleaseRequest;
   plan: ProjectSyncPlan | undefined;
   defaultName?: string;
 };
@@ -50,8 +49,8 @@ const CreateReleaseDialog = ({
   refetch,
   plan,
   defaultName = '',
-}: GitReleaseDialogProps) => {
-  const [isApplyingChanges, setIsApplyingChanges] = useState(false);
+  diffRequest,
+}: CreateReleaseDialogProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
@@ -66,24 +65,35 @@ const CreateReleaseDialog = ({
     },
   });
 
-  const { mutate: applyChanges } = useMutation({
+  const { mutate: applyChanges, isPending } = useMutation({
     mutationFn: async () => {
-      setIsApplyingChanges(true);
-      if (gitSync) {
-        projectReleaseApi
-          .create({
+      switch (diffRequest.type) {
+        case ProjectReleaseType.GIT:
+          if (!gitSync) {
+            throw new Error('Git sync is not connected');
+          }
+          await projectReleaseApi.create({
             name: form.getValues('name'),
             description: form.getValues('description'),
             selectedFlowsIds: Array.from(selectedChanges),
             repoId: gitSync.id,
-            type: ProjectReleaseType.GIT,
-          })
-          .then(() => {
-            refetch();
-            setOpen(false);
-            setIsApplyingChanges(false);
+            type: diffRequest.type,
           });
+          break;
+        case ProjectReleaseType.ROLLBACK:
+          await projectReleaseApi.create({
+            name: form.getValues('name'),
+            description: form.getValues('description'),
+            selectedFlowsIds: Array.from(selectedChanges),
+            projectReleaseId: diffRequest.projectReleaseId,
+            type: diffRequest.type,
+          });
+          break;
       }
+    },
+    onSuccess: () => {
+      refetch();
+      setOpen(false);
     },
     onError: (error) => {
       console.error(error);
@@ -91,29 +101,30 @@ const CreateReleaseDialog = ({
     },
   });
 
-  const [selectedChanges, setSelectedChanges] = useState<Set<string>>(new Set(plan?.operations.map(op => op.flow.id) || []));
+  const [selectedChanges, setSelectedChanges] = useState<Set<string>>(
+    new Set(plan?.operations.map((op) => op.flow.id) || []),
+  );
 
   const handleSelectAll = (checked: boolean) => {
     if (!plan) return;
     setSelectedChanges(
-      new Set(checked ? plan.operations.map((op) => op.flow.id) : [])
+      new Set(checked ? plan.operations.map((op) => op.flow.id) : []),
     );
   };
 
-  if (!gitSync) {
-    return <ConnectGitDialog open={open} setOpen={setOpen} />;
-  }
-
   return (
-    <Dialog open={open} onOpenChange={(newOpenState: boolean) => {
-      if (newOpenState) {
-        form.reset({
-          name: '',
-          description: '',
-        });
-      }
-      setOpen(newOpenState);
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpenState: boolean) => {
+        if (newOpenState) {
+          form.reset({
+            name: '',
+            description: '',
+          });
+        }
+        setOpen(newOpenState);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('Create Git Release')}</DialogTitle>
@@ -153,12 +164,13 @@ const CreateReleaseDialog = ({
           <div className="max-h-[50vh] overflow-y-auto space-y-2">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 py-2 border-b">
-                <Checkbox 
+                <Checkbox
                   checked={selectedChanges.size === plan?.operations.length}
                   onCheckedChange={handleSelectAll}
                 />
                 <Label className="text-sm font-medium">
-                  {t('Changes')} ({selectedChanges.size}/{plan?.operations.length || 0})
+                  {t('Changes')} ({selectedChanges.size}/
+                  {plan?.operations.length || 0})
                 </Label>
               </div>
             </div>
@@ -173,8 +185,10 @@ const CreateReleaseDialog = ({
                       new Set(
                         checked
                           ? [...selectedChanges, operation.flow.id]
-                          : [...selectedChanges].filter((id) => id !== operation.flow.id)
-                      )
+                          : [...selectedChanges].filter(
+                              (id) => id !== operation.flow.id,
+                            ),
+                      ),
                     );
                   }}
                 />
@@ -197,7 +211,7 @@ const CreateReleaseDialog = ({
           </Button>
           <Button
             size={'sm'}
-            loading={isApplyingChanges}
+            loading={isPending}
             disabled={!form.formState.isValid || selectedChanges.size === 0}
             onClick={() => {
               applyChanges();
