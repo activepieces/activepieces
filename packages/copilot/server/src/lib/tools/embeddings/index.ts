@@ -68,24 +68,29 @@ export async function findRelevantPieces(
       values: [query],
     });
 
-    const piecesWithScores = embeddedPieces.map((piece) => ({
-      piece,
-      similarity: cosineSimilarity(queryEmbedding, piece.embedding),
-    }));
-
-    piecesWithScores.sort((a, b) => b.similarity - a.similarity);
-
-    const seenPieceNames = new Set<string>();
-    const relevantPieces = piecesWithScores
+    // Calculate similarities and filter by threshold first
+    const piecesWithScores = embeddedPieces
+      .map((piece) => ({
+        piece,
+        similarity: cosineSimilarity(queryEmbedding, piece.embedding),
+      }))
       .filter(({ similarity }) => similarity >= threshold)
-      .reduce<EmbeddedPiece[]>((acc, { piece }) => {
-        if (!seenPieceNames.has(piece.metadata.pieceName)) {
-          seenPieceNames.add(piece.metadata.pieceName);
-          acc.push(piece);
-        }
-        return acc;
-      }, []);
+      .sort((a, b) => b.similarity - a.similarity);
 
+    // Then deduplicate and create final pieces
+    const seenPieceNames = new Set<string>();
+    const relevantPieces = piecesWithScores.reduce<EmbeddedPiece[]>((acc, { piece, similarity }) => {
+      if (!seenPieceNames.has(piece.metadata.pieceName)) {
+        seenPieceNames.add(piece.metadata.pieceName);
+        acc.push({
+          ...piece,
+          similarity,
+        });
+      }
+      return acc;
+    }, []);
+
+    console.debug(`Found ${relevantPieces.length} relevant pieces with threshold ${threshold}`);
     return relevantPieces;
   } catch (error) {
     console.error('Error finding relevant pieces:', error);

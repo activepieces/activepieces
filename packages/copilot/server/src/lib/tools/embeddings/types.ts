@@ -38,6 +38,15 @@ export interface PieceSegment {
   };
 }
 
-export interface EmbeddedPiece extends PieceSegment {
+export interface EmbeddedPiece {
+  id: string;
+  content: string;
+  metadata: {
+    pieceId: string;
+    pieceName: string;
+    segmentType: string;
+    logoUrl?: string;
+  };
   embedding: number[];
+  similarity?: number;
 }

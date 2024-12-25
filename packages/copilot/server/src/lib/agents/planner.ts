@@ -9,11 +9,15 @@ import { WebsocketCopilotUpdate } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
 import { websocketUtils } from '../util/websocket';
 
+export interface PlanOptions {
+  relevanceThreshold?: number;
+}
+
 export const plannerAgent: Agent<FlowType> = {
 
-  async plan(prompt: string, socket: Socket | null): Promise<FlowType> {
+  async plan(prompt: string, socket: Socket | null, options?: PlanOptions): Promise<FlowType> {
     // Step 1: Find relevant pieces
-    const relevantPieces = await findRelevantPieces(prompt);
+    const relevantPieces = await findRelevantPieces(prompt, options?.relevanceThreshold);
     
     // Emit pieces found event
     websocketUtils.addResult(socket, {
@@ -24,6 +28,7 @@ export const plannerAgent: Agent<FlowType> = {
           pieceName: p.metadata.pieceName,
           content: p.content,
           logoUrl: p.metadata.logoUrl,
+          relevanceScore: p.similarity || 0,
         })),
       }
     });

@@ -1,12 +1,18 @@
 import { useWebSocket } from '../WebSocketContext';
 import { isNil } from '@activepieces/shared';
 import { WebsocketEventTypes } from '@activepieces/copilot-shared';
+import { ThresholdControl } from './test-results/components/threshold-control';
+import { useState } from 'react';
 
 export function Scenarios() {
   const { state, socket } = useWebSocket();
+  const [threshold, setThreshold] = useState(0.35);
 
   function runTest(scenarioTitle: string) {
-    socket?.emit(WebsocketEventTypes.RUN_TESTS, { scenarioTitle });
+    socket?.emit(WebsocketEventTypes.RUN_TESTS, { 
+      scenarioTitle,
+      relevanceThreshold: threshold,
+    });
   }
 
   const isLoading = isNil(state?.scenarios)
@@ -17,7 +23,6 @@ export function Scenarios() {
       </div>
     );
   }
-
 
   return (
     <div className="h-full flex flex-col">
@@ -35,6 +40,11 @@ export function Scenarios() {
           </span>
         )}
       </div>
+
+      <div className="mb-4">
+        <ThresholdControl defaultValue={threshold} onChange={setThreshold} />
+      </div>
+
       <div className="flex-1 overflow-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 sticky top-0">

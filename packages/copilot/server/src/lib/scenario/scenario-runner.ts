@@ -2,7 +2,7 @@ import { Scenario } from './scenario';
 import { FlowType } from '../types/flow-outline';
 import { Agent } from '../agents/agent';
 import { isNil } from '@activepieces/shared';
-import { WebsocketCopilotUpdate, WebsocketEventTypes } from '@activepieces/copilot-shared';
+import { WebsocketCopilotUpdate, RunTestsParams } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
 import { websocketUtils } from '../util/websocket';
 
@@ -45,15 +45,18 @@ export const scenarios: Scenario<FlowType>[] = [
   },
 ];
 
-export async function runScenarios(agent: Agent<FlowType>, targetScenario: string[] | null, socket: Socket | null) {
+export async function runScenarios(agent: Agent<FlowType>, targetScenario: RunTestsParams[] | null, socket: Socket | null) {
   const scenariosToRun = scenarios.filter((scenario) =>
-    targetScenario?.includes(scenario.title) || isNil(targetScenario)
+    targetScenario?.some(ts => ts.scenarioTitle === scenario.title) || isNil(targetScenario)
   );
 
   for (const scenario of scenariosToRun) {
     await websocketUtils.updateTestState(socket, scenario.title, 'running');
 
-    const output = await agent.plan(scenario.prompt, socket);
+    const testParams = targetScenario?.find(ts => ts.scenarioTitle === scenario.title);
+    const output = await agent.plan(scenario.prompt, socket, {
+      relevanceThreshold: testParams?.relevanceThreshold,
+    });
 
     const result = {
       prompt: scenario.prompt,

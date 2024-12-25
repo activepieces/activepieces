@@ -5,6 +5,11 @@ export enum WebsocketEventTypes {
   RESPONSE_GET_STATE = 'RESPONSE_GET_STATE'
 }
 
+export interface RunTestsParams {
+  scenarioTitle: string;
+  relevanceThreshold?: number;
+}
+
 export type State = {
   scenarios: {
     title: string;
