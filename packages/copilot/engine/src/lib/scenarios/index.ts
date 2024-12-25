@@ -9,6 +9,7 @@ import { SheetsToAirtableConditional } from './sheets-to-airtable-conditional';
 import { StripeCustomerPoems } from './stripe-customer-poems';
 import { Scenario } from '../types/scenario';
 import { FlowType } from '../types/flow-outline';
+import { ShopifyCustomerTagging } from './shopfiy-customer-tag';
 
 export const scenarios: Scenario<FlowType>[] = [
   new NewRowGoogleSheetsSendSlackMessage(),
@@ -20,5 +21,6 @@ export const scenarios: Scenario<FlowType>[] = [
   new FailedStripeNotifications(),
   new SheetsToBlogAI(),
   new HubspotMailchimpSync(),
+  new ShopifyCustomerTagging(),
 ];
 
