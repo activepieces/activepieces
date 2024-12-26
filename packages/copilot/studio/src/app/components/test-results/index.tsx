@@ -1,4 +1,4 @@
-import { useWebSocket } from '../WebSocketContext';
+import { useWebSocket } from '../../WebSocketContext';
 import {
   WebsocketCopilotResult,
   WebsocketCopilotUpdate,
@@ -9,7 +9,7 @@ import {
   StepCreated,
   ScenarioCompleted,
   TestError,
-} from './test-results/components';
+} from './components';
 
 export const TestResults: React.FC = () => {
   const { socket, results } = useWebSocket();
