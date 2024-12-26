@@ -8,6 +8,7 @@ import { stepAgent } from './generate-step';
 import { WebsocketCopilotUpdate, StepConfig } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
 import { websocketUtils } from '../util/websocket';
+import { PromptTemplate } from '../util/prompt-template';
 
 export interface PlanOptions {
   relevanceThreshold?: number;
@@ -16,7 +17,6 @@ export interface PlanOptions {
 }
 
 export const plannerAgent: Agent<FlowType> = {
-
   async plan(prompt: string, socket: Socket | null, options?: PlanOptions): Promise<FlowType> {
     // Step 1: Find relevant pieces
     const relevantPieces = await findRelevantPieces(prompt, options?.relevanceThreshold);
@@ -36,53 +36,33 @@ export const plannerAgent: Agent<FlowType> = {
     });
 
     // Step 2: Generate high-level plan using AI
-    const defaultPrompt = `
-      You are a planner agent that creates high-level plans for automation flows.
-      
-      Available pieces:
-      ${relevantPieces
-        .map((p) => `- ${p.metadata.pieceName}: ${p.content}`)
-        .join('\n')}
+    const availablePieces = relevantPieces
+      .map((p) => `- ${p.metadata.pieceName}: ${p.content}`)
+      .join('\n');
 
-      User request: ${prompt}
-
-      ${options?.stepConfig ? `
-      Follow this exact step sequence:
-      ${options.stepConfig.steps.map((step, index) => 
+    const stepConfigText = options?.stepConfig ? 
+      `Follow this exact step sequence:\n${options.stepConfig.steps.map((step, index) => 
         `${index + 1}. [${step.type}] ${step.description}`
-      ).join('\n')}
-      ` : `
-      Create a high-level plan that:
-      1. Starts with a trigger step
-      2. Includes necessary action steps
-      3. Uses router steps only when conditional logic is needed
-      `}
+      ).join('\n')}` : '';
 
-      The plan should have:
-      - A descriptive name that summarizes what it does
-      - A clear description of its purpose
-      - A sequence of steps with their types and piece information
+    const promptVariables = {
+      available_pieces: `Available pieces:\n${availablePieces}`,
+      user_prompt: prompt,
+      step_config: stepConfigText,
+      step_config_note: options?.stepConfig ? '- Follow the exact step sequence provided above' : ''
+    };
 
-      IMPORTANT:
-      - First try to use piece triggers and actions directly
-      - Only use ROUTER if the logic cannot be handled by piece capabilities
-      - Keep the plan as simple as possible while meeting the requirements
-      ${options?.stepConfig ? '- Follow the exact step sequence provided above' : ''}
-    `;
+    const finalPrompt = options?.customPrompt ? 
+      PromptTemplate.processCustomPrompt(options.customPrompt, promptVariables) : 
+      PromptTemplate.getPlannerPrompt(promptVariables);
 
     const { object: plan } = await generateObject({
       model: openai('gpt-4o'),
       schema: planSchema,
-      prompt: options?.customPrompt ? 
-        `${options.customPrompt}\n\nAvailable pieces:\n${relevantPieces.map((p) => `- ${p.metadata.pieceName}: ${p.content}`).join('\n')}\n\nUser request: ${prompt}${
-          options?.stepConfig ? `\n\nFollow this exact step sequence:\n${options.stepConfig.steps.map((step, index) => 
-            `${index + 1}. [${step.type}] ${step.description}`
-          ).join('\n')}` : ''
-        }` 
-        : defaultPrompt,
-        maxRetries: 3,
-        temperature: 0.3,
-        maxTokens: 1000,
+      prompt: finalPrompt,
+      maxRetries: 3,
+      temperature: 0.3,
+      maxTokens: 1000,
     });
 
     // Emit plan generated event
