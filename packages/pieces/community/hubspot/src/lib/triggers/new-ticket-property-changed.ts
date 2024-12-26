@@ -28,30 +28,30 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 
 		// Extract properties once to avoid recomputation
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
-		const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT);
-		const propertiesToRetrieve = [...defaultCompanyProperties, ...additionalProperties];
+		const defaultTicketProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TICKET);
+		const propertiesToRetrieve = [...defaultTicketProperties, ...additionalProperties];
 
 		const items = [];
-		// For test, we only fetch 10 contacts
+		// For test, we only fetch 10 tickets
 		if (lastFetchEpochMS === 0) {
-			const response = await client.crm.contacts.searchApi.doSearch({
+			const response = await client.crm.tickets.searchApi.doSearch({
 				limit: 10,
 				properties: propertiesToRetrieve,
-				sorts: ['-lastmodifieddate'],
+				sorts: ['-hs_lastmodifieddate'],
 			});
 			items.push(...response.results);
 			return items.map((item) => ({
-				epochMilliSeconds: dayjs(item.properties['lastmodifieddate']).valueOf(),
+				epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
 				data: item,
 			}));
 		}
-		//fetch updated contacts
-		const updatedContacts = [];
+		//fetch updated tickets
+		const updatedTickets = [];
 		let after;
 		do {
-			const response = await client.crm.contacts.searchApi.doSearch({
+			const response = await client.crm.tickets.searchApi.doSearch({
 				limit: 100,
-				sorts: ['-lastmodifieddate'],
+				sorts: ['-hs_lastmodifieddate'],
 				filterGroups: [
 					{
 						filters: [
@@ -60,7 +60,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 								operator: FilterOperatorEnum.HasProperty,
 							},
 							{
-								propertyName: 'lastmodifieddate',
+								propertyName: 'hs_lastmodifieddate',
 								operator: FilterOperatorEnum.Gt,
 								value: lastFetchEpochMS.toString(),
 							},
@@ -69,52 +69,52 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 				],
 			});
 			after = response.paging?.next?.after;
-			updatedContacts.push(...response.results);
+			updatedTickets.push(...response.results);
 		} while (after);
 
-		if (updatedContacts.length === 0) {
+		if (updatedTickets.length === 0) {
 			return [];
 		}
 
-		// Fetch contacts with property history
-		const updatedContcatsWithPropertyHistory = await client.crm.contacts.batchApi.read({
+		// Fetch tickets with property history
+		const updatedTicketsWithPropertyHistory = await client.crm.tickets.batchApi.read({
 			propertiesWithHistory: [propertyToCheck],
 			properties: propertiesToRetrieve,
-			inputs: updatedContacts.map((contact) => {
+			inputs: updatedTickets.map((ticket) => {
 				return {
-					id: contact.id,
+					id: ticket.id,
 				};
 			}),
 		});
 
-		for (const contact of updatedContcatsWithPropertyHistory.results) {
-			const history = contact.propertiesWithHistory?.[propertyToCheck];
+		for (const ticket of updatedTicketsWithPropertyHistory.results) {
+			const history = ticket.propertiesWithHistory?.[propertyToCheck];
 			if (!history || history.length === 0) {
 				continue;
 			}
 			const propertyLastModifiedDateTimeStamp = dayjs(history[0].timestamp).valueOf();
 			if (propertyLastModifiedDateTimeStamp > lastFetchEpochMS) {
-				const { propertiesWithHistory, ...item } = contact;
+				const { propertiesWithHistory, ...item } = ticket;
 				items.push(item);
 			}
 		}
 
 		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['lastmodifieddate']).valueOf(),
+			epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
 			data: item,
 		}));
 	},
 };
 
-export const newContactPropertyChangedTrigger = createTrigger({
+export const newTicketPropertyChangedTrigger = createTrigger({
 	auth: hubspotAuth,
-	name: 'new-contact-property-changed',
-	displayName: 'New Contact Property Change',
-	description: 'Triggers when a specified property is updated on a contact.',
+	name: 'new-ticket-property-changed',
+	displayName: 'New Ticket Property Change',
+	description: 'Triggers when a specified property is updated on a ticket.',
 	props: {
 		propertyName: standardObjectPropertiesDropdown(
 			{
-				objectType: OBJECT_TYPE.CONTACT,
+				objectType: OBJECT_TYPE.TICKET,
 				displayName: 'Property Name',
 				required: true,
 			},
@@ -124,13 +124,13 @@ export const newContactPropertyChangedTrigger = createTrigger({
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
 			value: `### Properties to retrieve:
-											
-					firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry			
-													
-					**Specify here a list of additional properties to retrieve**`,
+                    
+                    subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
+                    
+                    **Specify here a list of additional properties to retrieve**`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
-			objectType: OBJECT_TYPE.CONTACT,
+			objectType: OBJECT_TYPE.TICKET,
 			displayName: 'Additional properties to retrieve',
 			required: false,
 		}),
@@ -157,37 +157,25 @@ export const newContactPropertyChangedTrigger = createTrigger({
 		return await pollingHelper.poll(polling, context);
 	},
 	sampleData: {
-		createdAt: '2024-12-06T10:52:58.322Z',
+		createdAt: '2024-12-21T14:23:38.368Z',
 		archived: false,
-		id: '82665997707',
+		id: '18092693102',
 		properties: {
-			address: null,
-			annualrevenue: null,
-			city: 'Brisbane',
-			company: 'HubSpot',
-			country: null,
-			createdate: '2024-12-06T10:52:58.322Z',
-			email: 'emailmaria@hubspot.com',
-			fax: null,
-			firstname: 'Maria',
-			hs_createdate: null,
-			hs_email_domain: 'hubspot.com',
-			hs_language: null,
-			hs_object_id: '82665997707',
-			hs_persona: null,
-			industry: null,
-			jobtitle: 'Salesperson',
-			lastmodifieddate: '2024-12-20T12:50:35.201Z',
-			lastname: 'Johnson (Sample Contact)',
-			lifecyclestage: 'lead',
-			mobilephone: null,
-			numemployees: null,
-			phone: null,
-			salutation: null,
-			state: null,
-			website: 'http://www.HubSpot.com',
-			zip: null,
+			content: null,
+			createdate: '2024-12-21T14:23:38.368Z',
+			hs_lastmodifieddate: '2024-12-26T08:11:34.374Z',
+			hs_object_id: '18092693102',
+			hs_pipeline: '0',
+			hs_pipeline_stage: '1',
+			hs_resolution: 'ISSUE_FIXED',
+			hs_ticket_category: null,
+			hs_ticket_id: '18092693102',
+			hs_ticket_priority: null,
+			hubspot_owner_id: null,
+			hubspot_team_id: null,
+			source_type: null,
+			subject: 'NEW',
 		},
-		updatedAt: '2024-12-20T12:50:35.201Z',
+		updatedAt: '2024-12-26T08:11:34.374Z',
 	},
 });
