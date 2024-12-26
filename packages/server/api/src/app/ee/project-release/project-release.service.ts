@@ -9,34 +9,41 @@ import { gitRepoService } from './git-sync/git-sync.service'
 import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
 import { ProjectReleaseEntity } from './project-release.entity'
 import { projectStateService } from './project-state/project-state.service'
-
+import { memoryLock } from '@activepieces/server-shared'
 const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
 export const projectReleaseService = {
     async create(projectId: ProjectId, ownerId: ApId, importedBy: ApId, params: CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectRelease> {
-        const diffs = await findDiffOperations(projectId, ownerId, params, log)
-        await projectStateService(log).apply({
-            projectId,
-            operations: diffs,
-            mappingState: await projectStateService(log).getProjectMappingState(projectId),
-            selectedFlowsIds: params.selectedFlowsIds,
-            type: params.type,
-            releaseId: params.type === ProjectReleaseType.ROLLBACK ? params.projectReleaseId : undefined,
-            log,
-        })
-        const fileId = await projectStateService(log).save(projectId, params.name, log)
-        const projectRelease: ProjectRelease = {
-            id: apId(),
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-            projectId,
-            importedBy,
-            fileId,
-            name: params.name,
-            description: params.description,
-            type: params.type,
+        const lockKey = `project-release:${projectId}`
+        const lock = await memoryLock.acquire(lockKey)
+        try {
+            const diffs = await findDiffOperations(projectId, ownerId, params, log)
+            await projectStateService(log).apply({
+                projectId,
+                operations: diffs,
+                mappingState: await projectStateService(log).getProjectMappingState(projectId),
+                selectedFlowsIds: params.selectedFlowsIds,
+                type: params.type,
+                releaseId: params.type === ProjectReleaseType.ROLLBACK ? params.projectReleaseId : undefined,
+                log,
+            })
+            const fileId = await projectStateService(log).save(projectId, params.name, log)
+            const projectRelease: ProjectRelease = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                projectId,
+                importedBy,
+                fileId,
+                name: params.name,
+                description: params.description,
+                type: params.type,
+            }
+            return projectReleaseRepo().save(projectRelease)
         }
-        return projectReleaseRepo().save(projectRelease)
+        finally {
+            await lock.release()
+        }
     },
     async releasePlan(projectId: ProjectId, userId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectSyncPlan> {
         const diffs = await findDiffOperations(projectId, userId, params, log)

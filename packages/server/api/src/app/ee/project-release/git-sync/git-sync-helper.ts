@@ -31,8 +31,14 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
     },
 
     async upsertFlowToGit(fileName: string, flow: Flow, flowFolderPath: string): Promise<void> {
-        const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
-        await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
+        try {
+            const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
+            await fs.mkdir(path.dirname(flowJsonPath), { recursive: true })
+            await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
+        } catch (error) {
+            _log.error(`Failed to write flow file ${fileName}: ${error}`)
+            throw error
+        }
     },
 
     async deleteFlowFromGit(flowId: string, flowFolderPath: string): Promise<boolean> {

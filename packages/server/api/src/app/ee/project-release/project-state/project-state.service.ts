@@ -112,7 +112,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         })
         const projectReleaseState = await projectStateService(log).getStateFromRelease(projectId, projectRelease.fileId, log)
         await projectService.update(projectId, { mapping: projectReleaseState.mapping })
-        return
     }
     const cleanedMapState: ProjectMappingState = new ProjectMappingState({
         flows: Object.fromEntries(Object.entries(newMapState.flows).filter(([flowId, _]) => flowRepo().existsBy( { id: flowId }))),

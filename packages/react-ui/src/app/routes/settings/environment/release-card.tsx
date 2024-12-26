@@ -59,5 +59,5 @@ const ReleaseCard = () => {
   );
 };
 
-ReleaseCard.displayName = 'GitSyncCard';
+ReleaseCard.displayName = 'ReleaseCard';
 export { ReleaseCard };
