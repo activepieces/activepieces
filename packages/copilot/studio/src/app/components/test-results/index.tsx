@@ -9,6 +9,7 @@ import {
   StepCreated,
   ScenarioCompleted,
   TestError,
+  ActiveScenarioCard,
 } from './components';
 
 export const TestResults: React.FC = () => {
@@ -31,13 +32,16 @@ export const TestResults: React.FC = () => {
       case WebsocketCopilotUpdate.TEST_ERROR:
         return <TestError data={result.data} />;
 
-      default:
-        if ('message' in result.data && result.data.message) {
-          return (
-            <div className="text-sm text-gray-600">{result.data.message}</div>
-          );
+      case WebsocketCopilotUpdate.TEST_STATE:
+        return <ActiveScenarioCard data={result.data} />;
+
+      default: {
+        const message = (result as { data: { message?: string } }).data.message;
+        if (message) {
+          return <div className="text-sm text-gray-600">{message}</div>;
         }
         return null;
+      }
     }
   };
 
@@ -78,6 +82,8 @@ export const TestResults: React.FC = () => {
                         ? 'text-blue-600'
                         : result.type === WebsocketCopilotUpdate.STEP_CREATED
                         ? 'text-indigo-600'
+                        : result.type === WebsocketCopilotUpdate.TEST_STATE
+                        ? 'text-blue-600'
                         : 'text-gray-900'
                     }`}
                   >

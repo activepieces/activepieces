@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { runScenarios, scenarios } from "../scenario/scenario-runner";
-import { State, WebsocketCopilotResult, WebsocketEventTypes, RunTestsParams } from "@activepieces/copilot-shared";
+import { State, WebsocketCopilotResult, WebsocketEventTypes, RunTestsParams, WebsocketCopilotUpdate } from "@activepieces/copilot-shared";
 import { plannerAgent } from "../agents/planner";
 
 let currentState: State = {
@@ -37,13 +37,30 @@ export function startWebSocketServer() {
 
 function updateTestState(socket: Socket | null, scenarioTitle: string, status: 'running' | 'stopped') {
     if (socket) {
-        socket.emit(WebsocketEventTypes.RESPONSE_GET_STATE, {
+        // Update global state
+        const updatedState = {
             ...currentState,
             scenarios: currentState.scenarios.map((scenario) => ({
                 ...scenario,
                 status: scenario.title === scenarioTitle ? status : scenario.status,
             })),
-        });
+        };
+        currentState = updatedState;
+        socket.emit(WebsocketEventTypes.RESPONSE_GET_STATE, updatedState);
+
+        // Emit test state event
+        const scenario = currentState.scenarios.find(s => s.title === scenarioTitle);
+        if (scenario) {
+            websocketUtils.addResult(socket, {
+                type: WebsocketCopilotUpdate.TEST_STATE,
+                data: {
+                    title: scenario.title,
+                    prompt: scenario.prompt,
+                    isRunning: status === 'running',
+                    timestamp: new Date().toISOString(),
+                }
+            });
+        }
     }
 }
 
