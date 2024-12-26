@@ -1,5 +1,6 @@
 .rdg-cell {
     --rdg-selection-color: none !important;
+    padding-inline: 0px !important;
 }
 
 .rdg-summary-row {

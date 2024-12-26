@@ -68,7 +68,7 @@ function TextEditor({
           )}
           autoComplete="off"
         />
-        <div className="flex-none bg-primary/10 p-1">
+        <div className="flex-none bg-primary/10 p-1 mr-2">
           <Edit2 className="h-4 w-4 text-primary" />
         </div>
       </div>

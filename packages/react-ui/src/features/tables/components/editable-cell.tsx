@@ -84,7 +84,7 @@ export function EditableCell({
     <div
       id={`editable-cell-${rowIdx}-${column.key}`}
       className={cn(
-        'h-full flex items-center justify-between gap-2 px-2 py-2',
+        'h-full flex items-center justify-between gap-2 pl-2 py-2',
         'group cursor-pointer border',
         isSelected ? 'border-primary' : 'border-transparent',
       )}
