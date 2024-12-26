@@ -13,7 +13,7 @@ import {
 } from './components';
 
 export const TestResults: React.FC = () => {
-  const { socket, results } = useWebSocket();
+  const { socket, results, clearResults } = useWebSocket();
 
   const renderStepContent = (result: WebsocketCopilotResult) => {
     switch (result.type) {
@@ -47,28 +47,35 @@ export const TestResults: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-none mb-3">
+      <div className="flex-none px-6 py-4 border-b border-gray-100">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">Test Results</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold text-gray-900">Test Results</h2>
             <span
-              className={`inline-block w-3 h-3 rounded-full ${
+              className={`inline-block w-2.5 h-2.5 rounded-full ${
                 socket?.connected ? 'bg-green-500' : 'bg-red-500'
               }`}
             />
           </div>
-          <div className="flex items-center gap-2"></div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={clearResults}
+              className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 rounded-md transition-colors duration-200"
+            >
+              Clear Results
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 -mx-6 px-6 overflow-y-auto min-h-0">
-        <div className="space-y-2 pb-2">
+      <div className="flex-1 overflow-y-auto min-h-0 px-6">
+        <div className="space-y-3 py-4">
           {results.map((result, index) => (
             <div
               key={index}
-              className="p-3 bg-gray-50 rounded shadow-sm border border-gray-100"
+              className="bg-gray-50 rounded-lg shadow-sm ring-1 ring-gray-200 border-gray-100 p-4"
             >
-              <div className="flex justify-between items-start mb-2">
+              <div className="flex justify-between items-start mb-3">
                 <div>
                   <span
                     className={`font-medium text-sm ${
@@ -98,14 +105,14 @@ export const TestResults: React.FC = () => {
 
                   {((result.data as any).scenarioTitle ||
                     (result.data as any).title) && (
-                    <div className="text-xs text-gray-600 mt-0.5">
+                    <div className="text-xs text-gray-600 mt-1">
                       Scenario:{' '}
                       {(result.data as any).scenarioTitle ||
                         (result.data as any).title}
                     </div>
                   )}
                 </div>
-                <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                <span className="text-xs text-gray-500 whitespace-nowrap ml-3">
                   {new Date((result.data as any).timestamp).toLocaleTimeString()}
                 </span>
               </div>
@@ -113,8 +120,9 @@ export const TestResults: React.FC = () => {
             </div>
           ))}
           {results.length === 0 && (
-            <div className="text-center text-gray-500 py-8 text-sm">
-              No test results yet. Run a scenario to see results here.
+            <div className="text-center text-gray-600 py-12">
+              <p className="text-sm">No test results yet.</p>
+              <p className="text-xs text-gray-500 mt-1">Run a scenario to see results here.</p>
             </div>
           )}
         </div>

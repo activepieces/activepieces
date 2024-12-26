@@ -10,8 +10,8 @@ export const MainContent = ({ className }: MainContentProps) => {
 
   return (
     <div className={cn('flex-1 bg-gray-100 overflow-hidden', className)}>
-      <div className="h-full p-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 h-full overflow-hidden">
+      <div className="h-full p-4">
+        <div className="bg-white rounded-md h-full overflow-hidden">
           <TestResults />
         </div>
       </div>

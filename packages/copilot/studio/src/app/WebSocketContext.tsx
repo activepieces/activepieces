@@ -6,6 +6,7 @@ import {
   ReactNode,
   useState,
   useRef,
+  useCallback,
 } from 'react';
 import { Socket, io } from 'socket.io-client';
 
@@ -13,12 +14,14 @@ interface WebSocketContextType {
   socket: Socket | null;
   state: State | null;
   results: WebsocketCopilotResult[];
+  clearResults: () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType>({
   socket: null,
   state: null,
   results: [],
+  clearResults: () => {},
 });
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
@@ -26,6 +29,10 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const socketRef = useRef<Socket | null>(null);
   const [results, setResults] = useState<WebsocketCopilotResult[]>([]);
   const [state, setState] = useState<State | null>(null);
+
+  const clearResults = useCallback(() => {
+    setResults([]);
+  }, []);
 
   useEffect(() => {
     // Only create socket if it doesn't exist
@@ -57,7 +64,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   }, []); // Empty dependency array since we're using ref
 
   return (
-    <WebSocketContext.Provider value={{ socket: socketRef.current, state, results }}>
+    <WebSocketContext.Provider value={{ socket: socketRef.current, state, results, clearResults }}>
       {children}
     </WebSocketContext.Provider>
   );

@@ -14,7 +14,6 @@ export function Scenarios() {
       scenarioTitle,
       relevanceThreshold: config.threshold,
       customPrompt: config.customPrompt.trim() || undefined,
-      stepConfig: config.stepConfig
     });
   }
 
