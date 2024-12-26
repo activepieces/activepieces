@@ -818,12 +818,70 @@ export const associationTypeDropdown = Property.Dropdown({
 	},
 });
 
-export const toObjectIdsDropdown =(params: DropdownParams) => Property.MultiSelectDropdown({
-	displayName: params.displayName,
-	description: params.description,
-	refreshers: ['toObjectType'],
-	required: params.required,
-	options: async ({ auth, toObjectType }) => {
+export const toObjectIdsDropdown = (params: DropdownParams) =>
+	Property.MultiSelectDropdown({
+		displayName: params.displayName,
+		description: params.description,
+		refreshers: ['toObjectType'],
+		required: params.required,
+		options: async ({ auth, toObjectType }) => {
+			if (!auth) {
+				return buildEmptyList({
+					placeholder: 'Please connect your account.',
+				});
+			}
+
+			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+			const client = new Client({ accessToken: authValue.access_token });
+
+			const limit = 100;
+			const options: DropdownOption<string>[] = [];
+			let after: string | undefined;
+			do {
+				const response = await client.crm.objects.basicApi.getPage(
+					toObjectType as string,
+					limit,
+					after,
+				);
+				for (const object of response.results) {
+					let labelName;
+					switch (toObjectType) {
+						case OBJECT_TYPE.CONTACT:
+							labelName = 'email';
+							break;
+						case OBJECT_TYPE.COMPANY:
+							labelName = 'name';
+							break;
+						case OBJECT_TYPE.DEAL:
+							labelName = 'dealname';
+							break;
+						case OBJECT_TYPE.TICKET:
+							labelName = 'subject';
+							break;
+						case OBJECT_TYPE.LINE_ITEM:
+							labelName = 'name';
+							break;
+					}
+					options.push({
+						label: object.properties[labelName!] ?? object.id,
+						value: object.id,
+					});
+				}
+				after = response.paging?.next?.after;
+			} while (after);
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+
+export const formDropdown = Property.Dropdown({
+	displayName: 'Form',
+	refreshers: [],
+	required: true,
+	options: async ({ auth }) => {
 		if (!auth) {
 			return buildEmptyList({
 				placeholder: 'Please connect your account.',
@@ -835,35 +893,14 @@ export const toObjectIdsDropdown =(params: DropdownParams) => Property.MultiSele
 
 		const limit = 100;
 		const options: DropdownOption<string>[] = [];
+
 		let after: string | undefined;
 		do {
-			const response = await client.crm.objects.basicApi.getPage(
-				toObjectType as string,
-				limit,
-				after,
-			);
-			for (const object of response.results) {
-				let labelName;
-				switch (toObjectType) {
-					case OBJECT_TYPE.CONTACT:
-						labelName = 'email';
-						break;
-					case OBJECT_TYPE.COMPANY:
-						labelName = 'name';
-						break;
-					case OBJECT_TYPE.DEAL:
-						labelName = 'dealname';
-						break;
-					case OBJECT_TYPE.TICKET:
-						labelName = 'subject';
-						break;
-					case OBJECT_TYPE.LINE_ITEM:
-						labelName = 'name';
-						break;
-				}
+			const response = await client.marketing.forms.formsApi.getPage(after, limit);
+			for (const form of response.results) {
 				options.push({
-					label: object.properties[labelName!] ?? object.id,
-					value: object.id,
+					label: form.name,
+					value: form.id,
 				});
 			}
 			after = response.paging?.next?.after;

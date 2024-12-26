@@ -59,6 +59,7 @@ import { newCustomObjectPropertyChangeTrigger } from './lib/triggers/new-custom-
 import { newLineItemTrigger } from './lib/triggers/new-line-item';
 import { newProductTrigger } from './lib/triggers/new-product';
 import { newCustomObjectTrigger } from './lib/triggers/new-custom-object';
+import { newFormSubmissionTrigger } from './lib/triggers/new-form-submission';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -89,7 +90,8 @@ export const hubspotAuth = PieceAuth.OAuth2({
 		'settings.currencies.read',
 		'settings.users.read',
 		'settings.users.teams.read',
-		'files'
+		'files',
+		'forms'
 		// 'business_units_view.read'
 	],
 });
@@ -152,6 +154,7 @@ export const hubspot = createPiece({
 		}),
 	],
 	triggers: [
+		newFormSubmissionTrigger,
 		newOrUpdatedCompanyTrigger,
 		newOrUpdatedContactTrigger,
 		newOrUpdatedLineItemTrigger,
