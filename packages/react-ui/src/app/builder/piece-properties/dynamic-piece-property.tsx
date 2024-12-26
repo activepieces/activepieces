@@ -119,7 +119,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
               form.getValues()?.settings?.inputUiInfo?.schema ?? {};
             form.setValue(`settings.inputUiInfo.schema`, {
               ...schemaInput,
-              [props.propertyName]: response,
+              [props.propertyName]: response.options,
             } as Record<string, unknown>);
           }
 
