@@ -1,10 +1,12 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Dialog,
   DialogContent,
@@ -16,9 +18,15 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { recordsApi } from '@/features/tables/lib/records-api';
-import { Field } from '@activepieces/shared';
+import { cn, formatUtils } from '@/lib/utils';
+import { Field, FieldType } from '@activepieces/shared';
 
 type NewRecordDialogProps = {
   children: React.ReactNode;
@@ -105,7 +113,44 @@ export function NewRecordDialog({
                 render={({ field: formField }) => (
                   <FormItem className="grid space-y-2">
                     <Label htmlFor={field.id}>{field.name}</Label>
-                    <Input {...formField} id={field.id} />
+                    {field.type === FieldType.DATE ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              'w-full justify-start text-left font-normal',
+                              !formField.value && 'text-muted-foreground',
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {formField.value ? (
+                              formatUtils.formatDateOnly(
+                                new Date(formField.value),
+                              )
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={
+                              formField.value
+                                ? new Date(formField.value)
+                                : undefined
+                            }
+                            onSelect={(date) =>
+                              formField.onChange(date?.toISOString() ?? '')
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <Input {...formField} id={field.id} />
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
