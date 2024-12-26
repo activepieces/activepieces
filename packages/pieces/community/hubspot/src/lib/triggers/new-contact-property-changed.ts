@@ -2,21 +2,18 @@ import { hubspotAuth } from '../../';
 import {
 	createTrigger,
 	PiecePropValueSchema,
-	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
+import { standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
 import { FilterOperatorEnum } from '../common/types';
-import { MarkdownVariant } from '@activepieces/shared';
 
 type Props = {
 	propertyName?: string | string[];
-	additionalPropertiesToRetrieve?: string | string[];
 };
 
 const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
@@ -27,9 +24,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		const propertyToCheck = propsValue.propertyName as string;
 
 		// Extract properties once to avoid recomputation
-		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
-		const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT);
-		const propertiesToRetrieve = [...defaultCompanyProperties, ...additionalProperties];
+		const propertiesToRetrieve = [propertyToCheck];
 
 		const items = [];
 		// For test, we only fetch 10 contacts
@@ -121,19 +116,6 @@ export const newContactPropertyChangedTrigger = createTrigger({
 			true,
 			true,
 		),
-		markdown: Property.MarkDown({
-			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-											
-					firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry			
-													
-					**Specify here a list of additional properties to retrieve**`,
-		}),
-		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
-			objectType: OBJECT_TYPE.CONTACT,
-			displayName: 'Additional properties to retrieve',
-			required: false,
-		}),
 	},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {

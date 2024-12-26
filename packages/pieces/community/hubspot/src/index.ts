@@ -53,6 +53,7 @@ import { newOrUpdatedProductTrigger } from './lib/triggers/new-or-updated-produc
 import { newOrUpdatedLineItemTrigger } from './lib/triggers/new-or-updated-line-item';
 import { newContactPropertyChangedTrigger } from './lib/triggers/new-contact-property-changed';
 import { newTicketPropertyChangedTrigger } from './lib/triggers/new-ticket-property-changed';
+import { newCompanyPropertyChangedTrigger } from './lib/triggers/new-company-propety-changed';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -154,6 +155,7 @@ export const hubspot = createPiece({
 		newContactAdded,
 		newContactPropertyChangedTrigger,
 		newTicketPropertyChangedTrigger,
+		newCompanyPropertyChangedTrigger,
 		newDealAdded,
 		newTicketAdded,
 		dealStageUpdatedTrigger,

@@ -26,9 +26,9 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		const propertiesToRetrieve = [propertyToCheck];
 
 		const items = [];
-		// For test, we only fetch 10 tickets
+		// For test, we only fetch 10 comapnies
 		if (lastFetchEpochMS === 0) {
-			const response = await client.crm.tickets.searchApi.doSearch({
+			const response = await client.crm.companies.searchApi.doSearch({
 				limit: 10,
 				properties: propertiesToRetrieve,
 				sorts: ['-hs_lastmodifieddate'],
@@ -39,11 +39,11 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 				data: item,
 			}));
 		}
-		//fetch updated tickets
-		const updatedTickets = [];
+		//fetch updated companies
+		const updatedComapnies = [];
 		let after;
 		do {
-			const response = await client.crm.tickets.searchApi.doSearch({
+			const response = await client.crm.companies.searchApi.doSearch({
 				limit: 100,
 				sorts: ['-hs_lastmodifieddate'],
 				filterGroups: [
@@ -63,32 +63,32 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 				],
 			});
 			after = response.paging?.next?.after;
-			updatedTickets.push(...response.results);
+			updatedComapnies.push(...response.results);
 		} while (after);
 
-		if (updatedTickets.length === 0) {
+		if (updatedComapnies.length === 0) {
 			return [];
 		}
 
-		// Fetch tickets with property history
-		const updatedTicketsWithPropertyHistory = await client.crm.tickets.batchApi.read({
+		// Fetch companies with property history
+		const updatedComapniesWithPropertyHistory = await client.crm.companies.batchApi.read({
 			propertiesWithHistory: [propertyToCheck],
 			properties: propertiesToRetrieve,
-			inputs: updatedTickets.map((ticket) => {
+			inputs: updatedComapnies.map((company) => {
 				return {
-					id: ticket.id,
+					id: company.id,
 				};
 			}),
 		});
 
-		for (const ticket of updatedTicketsWithPropertyHistory.results) {
-			const history = ticket.propertiesWithHistory?.[propertyToCheck];
+		for (const company of updatedComapniesWithPropertyHistory.results) {
+			const history = company.propertiesWithHistory?.[propertyToCheck];
 			if (!history || history.length === 0) {
 				continue;
 			}
 			const propertyLastModifiedDateTimeStamp = dayjs(history[0].timestamp).valueOf();
 			if (propertyLastModifiedDateTimeStamp > lastFetchEpochMS) {
-				const { propertiesWithHistory, ...item } = ticket;
+				const { propertiesWithHistory, ...item } = company;
 				items.push(item);
 			}
 		}
@@ -100,15 +100,15 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 	},
 };
 
-export const newTicketPropertyChangedTrigger = createTrigger({
+export const newCompanyPropertyChangedTrigger = createTrigger({
 	auth: hubspotAuth,
-	name: 'new-ticket-property-changed',
-	displayName: 'New Ticket Property Change',
-	description: 'Triggers when a specified property is updated on a ticket.',
+	name: 'new-company-property-changed',
+	displayName: 'New Company Property Change',
+	description: 'Triggers when a specified property is updated on a company.',
 	props: {
 		propertyName: standardObjectPropertiesDropdown(
 			{
-				objectType: OBJECT_TYPE.TICKET,
+				objectType: OBJECT_TYPE.COMPANY,
 				displayName: 'Property Name',
 				required: true,
 			},
@@ -138,25 +138,16 @@ export const newTicketPropertyChangedTrigger = createTrigger({
 		return await pollingHelper.poll(polling, context);
 	},
 	sampleData: {
-		createdAt: '2024-12-21T14:23:38.368Z',
-		archived: false,
-		id: '18092693102',
+		id: '27656515180',
 		properties: {
-			content: null,
-			createdate: '2024-12-21T14:23:38.368Z',
-			hs_lastmodifieddate: '2024-12-26T08:11:34.374Z',
-			hs_object_id: '18092693102',
-			hs_pipeline: '0',
-			hs_pipeline_stage: '1',
-			hs_resolution: 'ISSUE_FIXED',
-			hs_ticket_category: null,
-			hs_ticket_id: '18092693102',
-			hs_ticket_priority: null,
-			hubspot_owner_id: null,
-			hubspot_team_id: null,
-			source_type: null,
-			subject: 'NEW',
+			createdate: '2024-12-26T08:36:10.463Z',
+			domain: 'www.activepieces.com',
+			hs_lastmodifieddate: '2024-12-26T08:58:48.657Z',
+			hs_object_id: '27656515180',
+			name: 'Activepieces',
 		},
-		updatedAt: '2024-12-26T08:11:34.374Z',
+		createdAt: '2024-12-26T08:36:10.463Z',
+		updatedAt: '2024-12-26T08:58:48.657Z',
+		archived: false,
 	},
 });
