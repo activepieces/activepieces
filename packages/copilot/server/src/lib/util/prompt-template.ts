@@ -6,19 +6,22 @@ interface PromptVariables {
 
 export class PromptTemplate {
     private static replaceVariables(template: string, variables: PromptVariables): string {
-        console.debug('Replacing variables in template:', template);
-        console.debug('Available variables:', variables);
-        const result = template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+        console.debug('Replacing variables in template', { template, variables });
+
+        return template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
             const trimmedKey = key.trim();
-            const value = variables[trimmedKey] || '';
-            console.debug(`Replacing ${match} with:`, value);
+            const value = variables[trimmedKey];
+            
+            if (value === undefined) {
+                return '';
+            }
+
             return value;
         });
-        console.debug('Result after replacement:', result);
-        return result;
     }
 
     private static processPromptSection(section: string[] | string, variables: PromptVariables): string {
+        
         if (Array.isArray(section)) {
             return section.map(line => this.replaceVariables(line, variables)).join('\n');
         }
@@ -26,32 +29,34 @@ export class PromptTemplate {
     }
 
     static processCustomPrompt(customPrompt: string, variables: PromptVariables): string {
-        console.debug('Processing custom prompt with variables:', variables);
-        console.debug('Custom prompt template:', customPrompt);
-        
+
+        if (!customPrompt?.trim()) {
+            console.warn('[PromptTemplate] Warning: Empty custom prompt provided');
+            return '';
+        }
+
         const processedPrompt = this.replaceVariables(customPrompt, variables);
-        console.debug('Processed custom prompt:', processedPrompt);
-        
         return processedPrompt;
     }
 
-    static getPlannerPrompt(variables: PromptVariables): string {
-        console.debug('Getting planner prompt with variables:', variables);
-        const plannerPrompt = prompts.planner.default;
-        console.debug('Using planner prompt template:', plannerPrompt);
+    static getPlannerPrompt(variables: PromptVariables, customPrompt?: string): string {
+
+        // If custom prompt is provided, process it directly
+        if (customPrompt?.trim()) {
+            return this.processCustomPrompt(customPrompt, variables);
+        }
+        const plannerPrompt = prompts.planner.default
 
         const sections = [
             plannerPrompt.system,
             this.processPromptSection(plannerPrompt.context, variables),
             this.processPromptSection(plannerPrompt.request, variables),
-            this.processPromptSection(plannerPrompt.stepConfig, variables),
             this.processPromptSection(plannerPrompt.defaultGuidelines, variables),
             this.processPromptSection(plannerPrompt.requirements, variables),
             this.processPromptSection(plannerPrompt.important, variables)
         ];
 
         const finalPrompt = sections.filter(Boolean).join('\n\n');
-        console.debug('Final generated prompt:', finalPrompt);
         return finalPrompt;
     }
 } 

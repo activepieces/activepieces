@@ -46,6 +46,8 @@ export const scenarios: Scenario<FlowType>[] = [
 ];
 
 export async function runScenarios(agent: Agent<FlowType>, targetScenario: RunTestsParams[] | null, socket: Socket | null) {
+  console.debug('[ScenarioRunner] Running scenarios with params:', JSON.stringify(targetScenario, null, 2));
+
   const scenariosToRun = scenarios.filter((scenario) =>
     targetScenario?.some(ts => ts.scenarioTitle === scenario.title) || isNil(targetScenario)
   );
@@ -54,8 +56,11 @@ export async function runScenarios(agent: Agent<FlowType>, targetScenario: RunTe
     await websocketUtils.updateTestState(socket, scenario.title, 'running');
 
     const testParams = targetScenario?.find(ts => ts.scenarioTitle === scenario.title);
+    console.debug('[ScenarioRunner] Test params for scenario:', scenario.title, JSON.stringify(testParams, null, 2));
+
     const output = await agent.plan(scenario.prompt, socket, {
       relevanceThreshold: testParams?.relevanceThreshold,
+      customPrompt: testParams?.customPrompt
     });
 
     const result = {

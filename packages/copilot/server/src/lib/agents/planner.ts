@@ -44,8 +44,9 @@ export const plannerAgent: Agent<FlowType> = {
       user_prompt: prompt
     };
 
+    console.log(options?.customPrompt)
     const finalPrompt = options?.customPrompt ? 
-      PromptTemplate.processCustomPrompt(options.customPrompt, promptVariables) : 
+      PromptTemplate.getPlannerPrompt(promptVariables, options.customPrompt) : 
       PromptTemplate.getPlannerPrompt(promptVariables);
 
     const { object: plan } = await generateObject({

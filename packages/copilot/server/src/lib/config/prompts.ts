@@ -2,7 +2,6 @@ export interface PlannerPromptTemplate {
     system: string;
     context: string;
     request: string;
-    stepConfig: string;
     defaultGuidelines: string[];
     requirements: string[];
     important: string[];
@@ -20,7 +19,6 @@ export const prompts: PromptTemplates = {
             system: "You are a planner agent that creates high-level plans for automation flows.",
             context: "{{available_pieces}}",
             request: "User request: {{user_prompt}}",
-            stepConfig: "{{step_config}}",
             defaultGuidelines: [
                 "Create a high-level plan that:",
                 "1. Starts with a trigger step",
@@ -37,8 +35,7 @@ export const prompts: PromptTemplates = {
                 "IMPORTANT:",
                 "- First try to use piece triggers and actions directly",
                 "- Only use ROUTER if the logic cannot be handled by piece capabilities",
-                "- Keep the plan as simple as possible while meeting the requirements",
-                "{{step_config_note}}"
+                "- Keep the plan as simple as possible while meeting the requirements"
             ]
         }
     }

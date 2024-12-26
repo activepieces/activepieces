@@ -15,16 +15,6 @@ const AVAILABLE_VARIABLES = [
     name: 'user_prompt',
     description: 'The original user request',
     example: 'Create a flow that sends emails'
-  },
-  {
-    name: 'step_config',
-    description: 'Step sequence configuration if provided',
-    example: '1. [TRIGGER] Start when...\n2. [ACTION] Then do...'
-  },
-  {
-    name: 'step_config_note',
-    description: 'Additional note about step configuration',
-    example: '- Follow the exact step sequence provided above'
   }
 ];
 
