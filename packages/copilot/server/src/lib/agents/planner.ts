@@ -80,6 +80,9 @@ export const plannerAgent: Agent<FlowType> = {
           ).join('\n')}` : ''
         }` 
         : defaultPrompt,
+        maxRetries: 3,
+        temperature: 0.3,
+        maxTokens: 1000,
     });
 
     // Emit plan generated event
