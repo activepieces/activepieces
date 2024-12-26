@@ -1,5 +1,5 @@
-export type MentionTreeSliceNodeData = {
-  type: 'slice';
+export type MentionTreeChunkNodeData = {
+  type: 'chunk';
   displayName: string;
 };
 
@@ -18,10 +18,9 @@ export type MentionTestNodeData = {
 
 export type MentionTreeNodeDataUnion =
   | MentionTreeNodeData
-  | MentionTreeSliceNodeData
-  | MentionTestNodeData
-  | StepTitleNodeData;
-export type MentionTreeNode<
+  | MentionTreeChunkNodeData
+  | MentionTestNodeData;
+  export type MentionTreeNode<
   T extends MentionTreeNodeDataUnion = MentionTreeNodeDataUnion,
 > = {
   key: string;

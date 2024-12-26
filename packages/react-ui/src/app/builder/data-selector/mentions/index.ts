@@ -15,7 +15,7 @@ import {
 
 type PathSegment = string | number;
 
-const MAX_SLICE_LENGTH = 10;
+const MAX_CHUNK_LENGTH = 10;
 
 function buildTestStepNode(
   displayName: string,
@@ -27,7 +27,7 @@ function buildTestStepNode(
       type: 'value',
       value: displayName,
       displayName,
-      propertyPath: 'none',
+      propertyPath: stepName,
       insertable: false,
     },
     children: [
@@ -42,14 +42,14 @@ function buildTestStepNode(
   };
 }
 
-function buildSliceNode(
+function buildChunkNode(
   displayName: string,
   children: MentionTreeNode<MentionTreeNodeDataUnion>[] | undefined,
 ): MentionTreeNode<MentionTreeNodeDataUnion> {
   return {
     key: displayName,
     data: {
-      type: 'slice',
+      type: 'chunk',
       displayName,
     },
     children,
@@ -107,7 +107,7 @@ function extractUniqueKeys(obj: unknown): Record<string, Node> {
   return result;
 }
 
-function convertArrayToCompactView(
+function convertArrayToZippedView(
   obj: Record<string, Node>,
   propertyPath: PathSegment[],
 ): MentionTreeNode<MentionTreeNodeDataUnion>[] {
@@ -129,7 +129,7 @@ function convertArrayToCompactView(
       },
       children:
         Object.keys(node.properties).length > 0
-          ? convertArrayToCompactView(node.properties, subPath)
+          ? convertArrayToZippedView(node.properties, subPath)
           : undefined,
     });
   }
@@ -169,15 +169,15 @@ function buildMentionNode(
   };
 }
 
-function chunk<T>(
+function breakArrayIntoChunks<T>(
   array: T[],
-  size: number,
+  chunkSize: number,
 ): { items: T[]; range: { start: number; end: number } }[] {
-  return Array.from({ length: Math.ceil(array.length / size) }, (_, i) => ({
-    items: array.slice(i * size, i * size + size),
+  return Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => ({
+    items: array.slice(i * chunkSize, i * chunkSize + chunkSize),
     range: {
-      start: i * size + 1,
-      end: Math.min((i + 1) * size, array.length),
+      start: i * chunkSize + 1,
+      end: Math.min((i + 1) * chunkSize, array.length),
     },
   }));
 }
@@ -186,50 +186,63 @@ function traverseOutput(
   displayName: string,
   propertyPath: PathSegment[],
   node: unknown,
-  compactArray: boolean,
+  zipArraysOfProperties: boolean,
   insertable = true,
 ): MentionTreeNode<MentionTreeNodeDataUnion> {
   if (Array.isArray(node)) {
-    const mentionNodes = node.map((value, idx) =>
-      traverseOutput(
-        `${displayName} [${idx + 1}]`,
-        [...propertyPath, idx],
-        value,
-        compactArray,
+    if(!zipArraysOfProperties)
+    {
+      const mentionNodes = node.map((value, idx) =>
+        traverseOutput(
+          `${displayName} [${idx + 1}]`,
+          [...propertyPath, idx],
+          value,
+          zipArraysOfProperties,
+          insertable,
+        ),
+      );
+      const chunks = breakArrayIntoChunks(mentionNodes, MAX_CHUNK_LENGTH);
+      const isSingleChunk = chunks.length === 1;
+      if (isSingleChunk) {
+        return buildMentionNode(
+          displayName,
+          propertyPath,
+          node,
+          mentionNodes,
+          insertable,
+        );
+      }
+      return buildMentionNode(
+        displayName,
+        propertyPath,
+        undefined,
+        chunks.map((chunk) =>
+          buildChunkNode(
+            `${displayName} [${chunk.range.start}-${chunk.range.end}]`,
+            chunk.items,
+          ),
+        ),
         insertable,
-      ),
-    );
-    const chunks = chunk(mentionNodes, MAX_SLICE_LENGTH);
-    const isSingleChunk = chunks.length === 1;
-    if (isSingleChunk) {
+      );
+    }
+    else {
       return buildMentionNode(
         displayName,
         propertyPath,
         node,
-        mentionNodes,
+        convertArrayToZippedView(extractUniqueKeys(node), propertyPath),
         insertable,
       );
     }
-    return buildMentionNode(
-      displayName,
-      propertyPath,
-      undefined,
-      chunks.map((chunk) =>
-        buildSliceNode(
-          `${displayName} [${chunk.range.start}-${chunk.range.end}]`,
-          chunk.items,
-        ),
-      ),
-      insertable,
-    );
+    
   } else if (isObject(node)) {
     const children = Object.entries(node).map(([key, value]) => {
-      if (Array.isArray(value) && compactArray) {
+      if (Array.isArray(value) && zipArraysOfProperties) {
         return buildMentionNode(
           key,
           [...propertyPath, key],
           value,
-          convertArrayToCompactView(extractUniqueKeys(value), [
+          convertArrayToZippedView(extractUniqueKeys(value), [
             ...propertyPath,
             key,
           ]),
@@ -240,7 +253,7 @@ function traverseOutput(
         key,
         [...propertyPath, key],
         value,
-        compactArray,
+        zipArraysOfProperties,
         insertable,
       );
     });
@@ -269,7 +282,7 @@ function escapeMentionKey(key: string) {
 function traverseStep(
   step: (Action | Trigger) & { dfsIndex: number },
   sampleData: Record<string, unknown>,
-  compactArray: boolean,
+  zipArraysOfProperties: boolean,
 ): MentionTreeNode<MentionTreeNodeDataUnion> {
   const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
   const stepNeedsTesting = isNil(step.settings.inputUiInfo?.lastTestDate);
@@ -280,7 +293,7 @@ function traverseStep(
     displayName,
     [step.name],
     sampleData[step.name],
-    compactArray,
+    zipArraysOfProperties,
     step.type !== ActionType.LOOP_ON_ITEMS,
   );
 }
@@ -307,10 +320,11 @@ function filterBy(
           children: filteredChildren,
         };
       }
-      const searchableValue = isNil(item?.data?.value)
-        ? ''
+      const searchableValue = isNil(item) || item.data.type === 'test' || item.data.type === 'chunk'
+         ? ''
         : JSON.stringify(item?.data?.value).toLowerCase();
-      const displayName = item?.data?.displayName?.toLowerCase();
+
+      const displayName = item?.data?.type === 'value' ? item?.data?.displayName?.toLowerCase() : '';
       const matchDisplayNameOrValue =
         displayName?.includes(query.toLowerCase()) ||
         searchableValue.includes(query.toLowerCase());
