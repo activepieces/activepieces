@@ -205,7 +205,7 @@ function validateProps(
     const propsValidator = TypeCompiler.Compile(propsSchema)
     const valid = propsValidator.Check(input)
     const cleanInput = !isNil(input) ? Object.fromEntries(
-        Object.keys(props).map(key => [key, input?.[key]])
+        Object.keys(props).map(key => [key, input?.[key]]),
     ) : undefined
 
     return {

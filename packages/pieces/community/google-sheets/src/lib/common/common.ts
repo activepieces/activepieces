@@ -330,7 +330,9 @@ async function getGoogleSheetRows({
   const headers = headerResponse.body.values[0]??[];
   const headerCount = headers.length;
 
-  const labeledRowValues = transformWorkSheetValues(rowsResponse.body.values,0,headerCount);
+  const startingRow = rowIndex_s? rowIndex_s-1:0;
+
+  const labeledRowValues = transformWorkSheetValues(rowsResponse.body.values,startingRow,headerCount);
 
   return labeledRowValues;
 }
