@@ -124,15 +124,6 @@ export const plannerAgent: Agent<FlowType> = {
       steps,
     };
 
-    // Emit final flow created event
-    websocketUtils.addResult(socket, {
-      type: WebsocketCopilotUpdate.SCENARIO_COMPLETED,
-      data: {
-        timestamp: new Date().toISOString(),
-        output: flow,
-      }
-    });
-
     return flow;
   },
 };

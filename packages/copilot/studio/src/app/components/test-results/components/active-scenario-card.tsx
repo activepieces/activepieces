@@ -9,6 +9,11 @@ export const ActiveScenarioCard: React.FC<ActiveScenarioCardProps> = ({
 }) => {
   console.debug('Rendering ActiveScenarioCard:', { data });
 
+  // If the scenario is not running, don't render anything
+  if (!data.isRunning) {
+    return null;
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
       <div className="flex items-center justify-between mb-2">

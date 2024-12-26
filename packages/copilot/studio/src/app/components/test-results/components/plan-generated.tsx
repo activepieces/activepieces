@@ -99,7 +99,6 @@ const PlanHeader: FC<{ name: string; description: string; stepsCount: number }> 
   </div>
 );
 
-// Main component
 export const PlanGenerated: FC<PlanGeneratedProps> = ({ data }) => {
   console.debug('[PlanGenerated] Rendering with data:', {
     planName: data.plan.name,

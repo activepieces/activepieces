@@ -8,7 +8,7 @@ interface PiecesFoundProps {
 export const PiecesFound: React.FC<PiecesFoundProps> = ({ data }) => {
   console.debug('Rendering PiecesFound component with data:', data);
 
-  // Sort pieces by relevance score
+
   const sortedPieces = [...data.relevantPieces].sort((a, b) => b.relevanceScore - a.relevanceScore);
 
   return (
