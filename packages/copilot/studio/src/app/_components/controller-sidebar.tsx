@@ -1,6 +1,5 @@
 import { cn } from '../../lib/utils';
 import { ThresholdControl } from '../components/test-results/components/threshold-control';
-import { PlanStepsControl } from '../components/test-results/components/plan-steps-control';
 import { CustomPromptEditor } from '../components/test-results/components/custom-prompt-editor';
 import { useTestConfig } from '../TestConfigContext';
 
@@ -11,7 +10,7 @@ interface ControllerSidebarProps {
 export const ControllerSidebar = ({ className }: ControllerSidebarProps) => {
   console.debug('Rendering ControllerSidebar component');
 
-  const { config, setThreshold, setCustomPrompt, setStepConfig } = useTestConfig();
+  const { config, setThreshold, setCustomPrompt } = useTestConfig();
 
   return (
     <div className={cn('w-96 bg-white border-r border-gray-200 flex flex-col h-full', className)}>
@@ -47,24 +46,6 @@ export const ControllerSidebar = ({ className }: ControllerSidebarProps) => {
               value={config.customPrompt}
               onChange={setCustomPrompt}
             />
-
-            {/* Plan Steps Control Section */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Plan Steps Configuration
-                </label>
-                <span className="text-xs text-gray-500">
-                  {config.stepConfig.steps.length} steps defined
-                </span>
-              </div>
-              <div className="bg-gray-50 rounded-lg">
-                <PlanStepsControl 
-                  value={config.stepConfig}
-                  onChange={setStepConfig}
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>

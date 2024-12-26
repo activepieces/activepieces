@@ -5,7 +5,7 @@ import { findRelevantPieces } from '../tools/embeddings';
 import { planSchema } from '../types/schemas';
 import { Agent } from './agent';
 import { stepAgent } from './generate-step';
-import { WebsocketCopilotUpdate, StepConfig } from '@activepieces/copilot-shared';
+import { WebsocketCopilotUpdate } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
 import { websocketUtils } from '../util/websocket';
 import { PromptTemplate } from '../util/prompt-template';
@@ -13,7 +13,6 @@ import { PromptTemplate } from '../util/prompt-template';
 export interface PlanOptions {
   relevanceThreshold?: number;
   customPrompt?: string;
-  stepConfig?: StepConfig;
 }
 
 export const plannerAgent: Agent<FlowType> = {
@@ -40,16 +39,9 @@ export const plannerAgent: Agent<FlowType> = {
       .map((p) => `- ${p.metadata.pieceName}: ${p.content}`)
       .join('\n');
 
-    const stepConfigText = options?.stepConfig ? 
-      `Follow this exact step sequence:\n${options.stepConfig.steps.map((step, index) => 
-        `${index + 1}. [${step.type}] ${step.description}`
-      ).join('\n')}` : '';
-
     const promptVariables = {
       available_pieces: `Available pieces:\n${availablePieces}`,
-      user_prompt: prompt,
-      step_config: stepConfigText,
-      step_config_note: options?.stepConfig ? '- Follow the exact step sequence provided above' : ''
+      user_prompt: prompt
     };
 
     const finalPrompt = options?.customPrompt ? 
