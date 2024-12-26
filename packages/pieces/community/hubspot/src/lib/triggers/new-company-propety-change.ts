@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../..';
 import {
 	createTrigger,
 	PiecePropValueSchema,
@@ -100,9 +100,9 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 	},
 };
 
-export const newCompanyPropertyChangedTrigger = createTrigger({
+export const newCompanyPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
-	name: 'new-company-property-changed',
+	name: 'new-company-property-change',
 	displayName: 'New Company Property Change',
 	description: 'Triggers when a specified property is updated on a company.',
 	props: {

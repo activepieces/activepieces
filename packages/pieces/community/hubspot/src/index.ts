@@ -51,9 +51,11 @@ import { newOrUpdatedCompanyTrigger } from './lib/triggers/new-or-updated-compan
 import { newOrUpdatedContactTrigger } from './lib/triggers/new-or-updated-contact';
 import { newOrUpdatedProductTrigger } from './lib/triggers/new-or-updated-product';
 import { newOrUpdatedLineItemTrigger } from './lib/triggers/new-or-updated-line-item';
-import { newContactPropertyChangedTrigger } from './lib/triggers/new-contact-property-changed';
-import { newTicketPropertyChangedTrigger } from './lib/triggers/new-ticket-property-changed';
-import { newCompanyPropertyChangedTrigger } from './lib/triggers/new-company-propety-changed';
+import { newContactPropertyChangeTrigger } from './lib/triggers/new-contact-property-change';
+import { newTicketPropertyChangeTrigger } from './lib/triggers/new-ticket-property-change';
+import { newCompanyPropertyChangeTrigger } from './lib/triggers/new-company-propety-change';
+import { newDealPropertyChangeTrigger } from './lib/triggers/new-deal-property-change';
+import { newCustomObjectPropertyChangeTrigger } from './lib/triggers/new-custom-object-property-change';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -153,9 +155,11 @@ export const hubspot = createPiece({
 		newTaskAdded,
 		newCompanyAdded,
 		newContactAdded,
-		newContactPropertyChangedTrigger,
-		newTicketPropertyChangedTrigger,
-		newCompanyPropertyChangedTrigger,
+		newContactPropertyChangeTrigger,
+		newCustomObjectPropertyChangeTrigger,
+		newDealPropertyChangeTrigger,
+		newTicketPropertyChangeTrigger,
+		newCompanyPropertyChangeTrigger,
 		newDealAdded,
 		newTicketAdded,
 		dealStageUpdatedTrigger,

@@ -1,11 +1,15 @@
-import { hubspotAuth } from '../../';
+import { hubspotAuth } from '../..';
 import {
 	createTrigger,
+	DynamicPropsValue,
 	PiecePropValueSchema,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import {
+	customObjectDropdown,
+	customObjectPropertiesDropdown,
+	standardObjectPropertiesDropdown,
+} from '../common/props';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 import { Client } from '@hubspot/api-client';
@@ -13,7 +17,8 @@ import dayjs from 'dayjs';
 import { FilterOperatorEnum } from '../common/types';
 
 type Props = {
-	propertyName?: string | string[];
+	customObjectType?: string;
+	propertyName?: DynamicPropsValue;
 };
 
 const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
@@ -21,14 +26,15 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const client = new Client({ accessToken: auth.access_token });
 
-		const propertyToCheck = propsValue.propertyName as string;
+		const customObjectType = propsValue.customObjectType as string;
+		const propertyToCheck = propsValue.propertyName?.['values'] as string;
 
 		const propertiesToRetrieve = [propertyToCheck];
 
 		const items = [];
-		// For test, we only fetch 10 tickets
+		// For test, we only fetch 10 custom objects
 		if (lastFetchEpochMS === 0) {
-			const response = await client.crm.tickets.searchApi.doSearch({
+			const response = await client.crm.objects.searchApi.doSearch(customObjectType, {
 				limit: 10,
 				properties: propertiesToRetrieve,
 				sorts: ['-hs_lastmodifieddate'],
@@ -39,11 +45,11 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 				data: item,
 			}));
 		}
-		//fetch updated tickets
-		const updatedTickets = [];
+		//fetch updated custom objects
+		const updatedCustomObjects = [];
 		let after;
 		do {
-			const response = await client.crm.tickets.searchApi.doSearch({
+			const response = await client.crm.objects.searchApi.doSearch(customObjectType, {
 				limit: 100,
 				sorts: ['-hs_lastmodifieddate'],
 				filterGroups: [
@@ -63,32 +69,35 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 				],
 			});
 			after = response.paging?.next?.after;
-			updatedTickets.push(...response.results);
+			updatedCustomObjects.push(...response.results);
 		} while (after);
 
-		if (updatedTickets.length === 0) {
+		if (updatedCustomObjects.length === 0) {
 			return [];
 		}
 
-		// Fetch tickets with property history
-		const updatedTicketsWithPropertyHistory = await client.crm.tickets.batchApi.read({
-			propertiesWithHistory: [propertyToCheck],
-			properties: propertiesToRetrieve,
-			inputs: updatedTickets.map((ticket) => {
-				return {
-					id: ticket.id,
-				};
-			}),
-		});
+		// Fetch custom objects with property history
+		const updatedCustomObjectsWithPropertyHistory = await client.crm.objects.batchApi.read(
+			customObjectType,
+			{
+				propertiesWithHistory: [propertyToCheck],
+				properties: propertiesToRetrieve,
+				inputs: updatedCustomObjects.map((customObject) => {
+					return {
+						id: customObject.id,
+					};
+				}),
+			},
+		);
 
-		for (const ticket of updatedTicketsWithPropertyHistory.results) {
-			const history = ticket.propertiesWithHistory?.[propertyToCheck];
+		for (const customObject of updatedCustomObjectsWithPropertyHistory.results) {
+			const history = customObject.propertiesWithHistory?.[propertyToCheck];
 			if (!history || history.length === 0) {
 				continue;
 			}
 			const propertyLastModifiedDateTimeStamp = dayjs(history[0].timestamp).valueOf();
 			if (propertyLastModifiedDateTimeStamp > lastFetchEpochMS) {
-				const { propertiesWithHistory, ...item } = ticket;
+				const { propertiesWithHistory, ...item } = customObject;
 				items.push(item);
 			}
 		}
@@ -100,21 +109,14 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 	},
 };
 
-export const newTicketPropertyChangedTrigger = createTrigger({
+export const newCustomObjectPropertyChangeTrigger = createTrigger({
 	auth: hubspotAuth,
-	name: 'new-ticket-property-changed',
-	displayName: 'New Ticket Property Change',
-	description: 'Triggers when a specified property is updated on a ticket.',
+	name: 'new-custom-object-property-change',
+	displayName: 'New Custom Object Property Change',
+	description: 'Triggers when a specified property is updated on a custom object.',
 	props: {
-		propertyName: standardObjectPropertiesDropdown(
-			{
-				objectType: OBJECT_TYPE.TICKET,
-				displayName: 'Property Name',
-				required: true,
-			},
-			true,
-			true,
-		),
+		customObjectType: customObjectDropdown,
+		propertyName: customObjectPropertiesDropdown('Property Name', true, true),
 	},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
@@ -138,25 +140,15 @@ export const newTicketPropertyChangedTrigger = createTrigger({
 		return await pollingHelper.poll(polling, context);
 	},
 	sampleData: {
-		createdAt: '2024-12-21T14:23:38.368Z',
+		createdAt: '2024-12-22T15:20:16.121Z',
 		archived: false,
-		id: '18092693102',
+		id: '21583829313',
 		properties: {
-			content: null,
-			createdate: '2024-12-21T14:23:38.368Z',
-			hs_lastmodifieddate: '2024-12-26T08:11:34.374Z',
-			hs_object_id: '18092693102',
-			hs_pipeline: '0',
-			hs_pipeline_stage: '1',
-			hs_resolution: 'ISSUE_FIXED',
-			hs_ticket_category: null,
-			hs_ticket_id: '18092693102',
-			hs_ticket_priority: null,
-			hubspot_owner_id: null,
-			hubspot_team_id: null,
-			source_type: null,
-			subject: 'NEW',
+			hs_createdate: '2024-12-22T15:20:16.121Z',
+			hs_lastmodifieddate: '2024-12-22T15:20:16.818Z',
+			hs_object_id: '21583829313',
+			pet_name: 'Oreo',
 		},
-		updatedAt: '2024-12-26T08:11:34.374Z',
+		updatedAt: '2024-12-22T15:20:16.818Z',
 	},
 });
