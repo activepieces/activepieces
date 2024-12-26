@@ -1,5 +1,5 @@
 import { ProjectOperationType, ProjectSyncError } from '@activepieces/ee-shared'
-import { FileCompression, FileId, FileType, FlowStatus, ProjectId, ProjectState } from '@activepieces/shared'
+import { assertNotNullOrUndefined, FileCompression, FileId, FileType, FlowStatus, ProjectId, ProjectReleaseType, ProjectState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../../../file/file.service'
 import { flowRepo } from '../../../flows/flow/flow.repo'
@@ -8,9 +8,10 @@ import { projectService } from '../../../project/project-service'
 import { ProjectOperation } from '../project-diff/project-diff.service'
 import { ProjectMappingState } from '../project-diff/project-mapping-state'
 import { projectStateHelper } from './project-state-helper'
+import { projectReleaseService } from '../project-release.service'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
-    async apply({ projectId, operations, mappingState, selectedFlowsIds  }: ApplyProjectStateRequest): Promise<ApplyProjectStateResponse> {
+    async apply({ projectId, operations, mappingState, selectedFlowsIds, type, releaseId  }: ApplyProjectStateRequest): Promise<ApplyProjectStateResponse> {
         let newMapState: ProjectMappingState = mappingState
         const publishJobs: Promise<ProjectSyncError | null>[] = []
         for (const operation of operations) {
@@ -50,7 +51,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 }
             }
         }
-        await updateProjectState(projectId, newMapState)
+        await updateProjectState(projectId, newMapState, type, log, releaseId)
         const errors = (await Promise.all(publishJobs)).filter((f): f is ProjectSyncError => f !== null)
         return {
             errors,
@@ -97,11 +98,22 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         }))
         return {
             flows: allPopulatedFlows,
+            mapping: await this.getProjectMappingState(projectId)
         }
     },
 })
 
-async function updateProjectState(projectId: ProjectId, newMapState: ProjectMappingState): Promise<void> {
+    async function updateProjectState(projectId: ProjectId, newMapState: ProjectMappingState, type: ProjectReleaseType, log: FastifyBaseLogger, releaseId?: string): Promise<void> {
+    if (type === ProjectReleaseType.ROLLBACK) {
+        assertNotNullOrUndefined(releaseId, 'releaseId is required for rollback')
+        const projectRelease = await projectReleaseService.getOneOrThrow({
+            projectId,
+            id: releaseId,
+        })
+        const projectReleaseState = await projectStateService(log).getStateFromRelease(projectId, projectRelease.fileId, log)
+        await projectService.update(projectId, { mapping: projectReleaseState.mapping })
+        return
+    }
     const cleanedMapState: ProjectMappingState = new ProjectMappingState({
         flows: Object.fromEntries(Object.entries(newMapState.flows).filter(([flowId, _]) => flowRepo().existsBy( { id: flowId }))),
     })
@@ -117,4 +129,7 @@ type ApplyProjectStateRequest = {
     operations: ProjectOperation[]
     mappingState: ProjectMappingState
     selectedFlowsIds: string[]
+    type: ProjectReleaseType
+    releaseId?: string
+    log: FastifyBaseLogger
 }

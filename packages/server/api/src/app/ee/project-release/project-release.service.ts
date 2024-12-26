@@ -20,6 +20,9 @@ export const projectReleaseService = {
             operations: diffs,
             mappingState: await projectStateService(log).getProjectMappingState(projectId),
             selectedFlowsIds: params.selectedFlowsIds,
+            type: params.type,
+            releaseId: params.type === ProjectReleaseType.ROLLBACK ? params.projectReleaseId : undefined,
+            log,
         })
         const fileId = await projectStateService(log).save(projectId, params.name, log)
         const projectRelease: ProjectRelease = {

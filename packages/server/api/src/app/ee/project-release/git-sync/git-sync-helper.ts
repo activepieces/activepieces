@@ -3,23 +3,30 @@ import path from 'path'
 import { fileExists } from '@activepieces/server-shared'
 import { Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { ProjectMappingState } from '../project-diff/project-mapping-state'
 
 export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
     async getStateFromGit(flowPath: string): Promise<ProjectState> {
         const flowFiles = await fs.readdir(flowPath)
         const flows: FlowState[] = []
         for (const file of flowFiles) {
-            const flow: PopulatedFlow = JSON.parse(
-                await fs.readFile(path.join(flowPath, file), 'utf-8'),
-            )
-            const migratedFlowVersion = flowMigrations.apply(flow.version)
-            flows.push({
+            try {
+                const flow: PopulatedFlow = JSON.parse(
+                    await fs.readFile(path.join(flowPath, file), 'utf-8'),
+                )
+                const migratedFlowVersion = flowMigrations.apply(flow.version)
+                flows.push({
                 ...flow,
                 version: migratedFlowVersion,
-            })
+                })
+            }
+            catch (error) {
+                _log.error(`Error parsing flow file ${file}: ${error}`)
+            }
         }
         return {
             flows,
+            mapping: ProjectMappingState.empty(),
         }
     },
 

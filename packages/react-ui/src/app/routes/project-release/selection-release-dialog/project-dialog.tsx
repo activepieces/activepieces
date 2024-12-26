@@ -165,7 +165,7 @@ export function ProjectSelectionDialog({
                   onClick={() => form.handleSubmit(onSubmit)}
                   loading={loading}
                 >
-                  {t('Check Diff')}
+                  {t('Review Actually')}
                 </Button>
               </DialogFooter>
             </form>
