@@ -1,4 +1,4 @@
-import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, FileType, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
+import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, FileType, ListProjectReleasesRequest, PrincipalType, ProjectRelease, ProjectReleaseType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { fileService } from '../../file/file.service'
@@ -22,7 +22,8 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     app.post('/diff', DiffProjectReleaseRequest, async (req) => {
         const platform = await platformService.getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
-        return projectReleaseService.releasePlan(req.principal.projectId, ownerId, req.body, req.log)
+        const projectId = req.body.type === ProjectReleaseType.PROJECT ? req.body.targetProjectId : req.principal.projectId
+        return projectReleaseService.releasePlan(projectId, ownerId, req.body, req.log)
     })
 
     app.post('/:id/export', ExportProjectReleaseRequest, async (req) => {

@@ -359,7 +359,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MigrateAuditEventSchema1723489038729,
                 AddAiTokensForProjectPlan1726446092010,
                 AddAuditLogIndicies1731711188507,
-                CreateProjectReleaseTable1734418823028
+                CreateProjectReleaseTable1734418823028,
 
             )
             break

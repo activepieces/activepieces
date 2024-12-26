@@ -80,6 +80,18 @@ const CreateReleaseDialog = ({
             type: diffRequest.type,
           });
           break;
+        case ProjectReleaseType.PROJECT:
+          if (!diffRequest.targetProjectId) {
+            throw new Error('Project ID is required');
+          }
+          await projectReleaseApi.create({
+            name: form.getValues('name'),
+            description: form.getValues('description'),
+            selectedFlowsIds: Array.from(selectedChanges),
+            targetProjectId: diffRequest.targetProjectId,
+            type: diffRequest.type,
+          });
+          break;
         case ProjectReleaseType.ROLLBACK:
           await projectReleaseApi.create({
             name: form.getValues('name'),

@@ -139,6 +139,9 @@ async function getStateFromCreateRequest(projectId: string, ownerId: ApId, reque
             const gitRepo = await gitRepoService(log).getOneByProjectOrThrow({ projectId })
             return gitRepoService(log).getState({ gitRepo, userId: ownerId, log })
         }
+        case ProjectReleaseType.PROJECT: {
+            return projectStateService(log).getCurrentState(request.targetProjectId, log)
+        }
         case ProjectReleaseType.ROLLBACK: {
             const projectRelease = await projectReleaseService.getOneOrThrow({
                 id: request.projectReleaseId,

@@ -1,7 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Plus, ChevronDown, Undo2, GitBranch, RotateCcw } from 'lucide-react';
+import {
+  Plus,
+  ChevronDown,
+  Undo2,
+  GitBranch,
+  RotateCcw,
+  FolderOpenDot,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -24,6 +31,7 @@ import { ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';
 import { DownloadButton } from './download-button';
+import { SelectionButton } from './selection-dialog';
 
 const ProjectReleasesPage = () => {
   const { data, isLoading, refetch } = useQuery({
@@ -48,14 +56,17 @@ const ProjectReleasesPage = () => {
       ),
       cell: ({ row }) => {
         const isGit = row.original.type === ProjectReleaseType.GIT;
+        const isProject = row.original.type === ProjectReleaseType.PROJECT;
         return (
           <div className="flex items-center gap-2">
             {isGit ? (
               <GitBranch className="size-4" />
+            ) : isProject ? (
+              <FolderOpenDot className="size-4" />
             ) : (
               <RotateCcw className="size-4" />
             )}
-            {isGit ? 'Git' : 'Rollback'}
+            {isGit ? 'Git' : isProject ? 'Project' : 'Rollback'}
           </div>
         );
       },
@@ -118,6 +129,19 @@ const ProjectReleasesPage = () => {
                     <span>{t('From Git')}</span>
                   </div>
                 </ApplyButton>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" asChild>
+                <SelectionButton
+                  variant="ghost"
+                  onSuccess={refetch}
+                  className="w-full justify-start"
+                  ReleaseType={ProjectReleaseType.PROJECT}
+                >
+                  <div className="flex flex-row gap-2 items-center">
+                    <Plus className="h-4 w-4" />
+                    <span>{t('From Project')}</span>
+                  </div>
+                </SelectionButton>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

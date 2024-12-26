@@ -3,6 +3,7 @@ import { Nullable } from '../common'
 
 export enum ProjectReleaseType {
     GIT = 'GIT',
+    PROJECT = 'PROJECT',
     ROLLBACK = 'ROLLBACK',
 }
 
@@ -28,9 +29,18 @@ export const CreateProjectReleaseFromRollbackRequestBody = Type.Composite([
     }),
 ])
 
+export const CreateProjectReleaseFromProjectRequestBody = Type.Composite([
+    BaseProjectReleaseRequestBody,
+    Type.Object({
+        type: Type.Literal(ProjectReleaseType.PROJECT),
+        targetProjectId: Type.String(),
+    }),
+])
+
 export const CreateProjectReleaseRequestBody = Type.Union([
     CreateProjectReleaseFromGitRequestBody,
     CreateProjectReleaseFromRollbackRequestBody,
+    CreateProjectReleaseFromProjectRequestBody,
 ])
 
 export type CreateProjectReleaseRequestBody = Static<typeof CreateProjectReleaseRequestBody>
@@ -38,13 +48,16 @@ export type CreateProjectReleaseRequestBody = Static<typeof CreateProjectRelease
 
 export const DiffReleaseRequest = Type.Union([
     Type.Object({
+        type: Type.Literal(ProjectReleaseType.PROJECT),
+        targetProjectId: Type.String(),
+    }),
+    Type.Object({
         type: Type.Literal(ProjectReleaseType.ROLLBACK),
         projectReleaseId: Type.String(),
     }),
     Type.Object({
         type: Type.Literal(ProjectReleaseType.GIT),
     }),
-
 ])
 
 export type DiffReleaseRequest = Static<typeof DiffReleaseRequest>
