@@ -23,6 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { cn, formatUtils } from '@/lib/utils';
@@ -103,59 +104,63 @@ export function NewRecordDialog({
             onSubmit={form.handleSubmit((data) =>
               createRecordMutation.mutate(data),
             )}
-            className="space-y-4"
+            className="flex flex-col gap-4"
           >
-            {fields.map((field) => (
-              <FormField
-                key={field.id}
-                control={form.control}
-                name={field.id}
-                render={({ field: formField }) => (
-                  <FormItem className="grid space-y-2">
-                    <Label htmlFor={field.id}>{field.name}</Label>
-                    {field.type === FieldType.DATE ? (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              'w-full justify-start text-left font-normal',
-                              !formField.value && 'text-muted-foreground',
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formField.value ? (
-                              formatUtils.formatDateOnly(
-                                new Date(formField.value),
-                              )
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={
-                              formField.value
-                                ? new Date(formField.value)
-                                : undefined
-                            }
-                            onSelect={(date) =>
-                              formField.onChange(date?.toISOString() ?? '')
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    ) : (
-                      <Input {...formField} id={field.id} />
+            <ScrollArea className="max-h-[60vh] pr-4">
+              <div className="space-y-4 p-2">
+                {fields.map((field) => (
+                  <FormField
+                    key={field.id}
+                    control={form.control}
+                    name={field.id}
+                    render={({ field: formField }) => (
+                      <FormItem className="grid space-y-2">
+                        <Label htmlFor={field.id}>{field.name}</Label>
+                        {field.type === FieldType.DATE ? (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  'w-full justify-start text-left font-normal',
+                                  !formField.value && 'text-muted-foreground',
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {formField.value ? (
+                                  formatUtils.formatDateOnly(
+                                    new Date(formField.value),
+                                  )
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={
+                                  formField.value
+                                    ? new Date(formField.value)
+                                    : undefined
+                                }
+                                onSelect={(date) =>
+                                  formField.onChange(date?.toISOString() ?? '')
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          <Input {...formField} id={field.id} />
+                        )}
+                        <FormMessage />
+                      </FormItem>
                     )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
             <DialogFooter>
               <Button
                 type="button"
