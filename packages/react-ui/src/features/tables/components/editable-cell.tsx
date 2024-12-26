@@ -102,14 +102,14 @@ export function EditableCell({
         <Button
           variant="transparent"
           size="sm"
-          className="flex-none"
+          className="text-gray-500"
           onClick={(e) => {
             e.stopPropagation();
             setIsEditing(true);
           }}
         >
-          <div className="bg-primary/10 p-1">
-            <Edit2 className="h-4 w-4 text-primary" />
+          <div className="hover:bg-primary/10 p-1">
+            <Edit2 className="h-4 w-4 text-muted-foreground" />
           </div>
         </Button>
       )}
