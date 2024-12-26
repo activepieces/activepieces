@@ -60,6 +60,7 @@ import { newLineItemTrigger } from './lib/triggers/new-line-item';
 import { newProductTrigger } from './lib/triggers/new-product';
 import { newCustomObjectTrigger } from './lib/triggers/new-custom-object';
 import { newFormSubmissionTrigger } from './lib/triggers/new-form-submission';
+import { newEmailEventTrigger } from './lib/triggers/new-email-event';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -154,6 +155,7 @@ export const hubspot = createPiece({
 		}),
 	],
 	triggers: [
+		newEmailEventTrigger,
 		newFormSubmissionTrigger,
 		newOrUpdatedCompanyTrigger,
 		newOrUpdatedContactTrigger,
