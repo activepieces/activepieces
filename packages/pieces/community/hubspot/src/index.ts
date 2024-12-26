@@ -4,9 +4,9 @@ import { PieceCategory } from '@activepieces/shared';
 import { hubSpotListsAddContactAction } from './lib/actions/add-contact-to-list-action';
 import { newCompanyAdded } from './lib/triggers/new-company-added';
 import { newContactAdded } from './lib/triggers/new-contact-added';
-import { newDealAdded } from './lib/triggers/new-deal-added';
+import { newDealTrigger } from './lib/triggers/new-deal';
 import { newTaskAdded } from './lib/triggers/new-task-added';
-import { newTicketAdded } from './lib/triggers/new-ticket-added';
+import { newTicketTrigger } from './lib/triggers/new-ticket';
 import { createDealAction } from './lib/actions/create-deal';
 import { updateDealAction } from './lib/actions/update-deal';
 import { dealStageUpdatedTrigger } from './lib/triggers/deal-stage-updated';
@@ -56,6 +56,9 @@ import { newTicketPropertyChangeTrigger } from './lib/triggers/new-ticket-proper
 import { newCompanyPropertyChangeTrigger } from './lib/triggers/new-company-propety-change';
 import { newDealPropertyChangeTrigger } from './lib/triggers/new-deal-property-change';
 import { newCustomObjectPropertyChangeTrigger } from './lib/triggers/new-custom-object-property-change';
+import { newLineItemTrigger } from './lib/triggers/new-line-item';
+import { newProductTrigger } from './lib/triggers/new-product';
+import { newCustomObjectTrigger } from './lib/triggers/new-custom-object';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -160,8 +163,11 @@ export const hubspot = createPiece({
 		newDealPropertyChangeTrigger,
 		newTicketPropertyChangeTrigger,
 		newCompanyPropertyChangeTrigger,
-		newDealAdded,
-		newTicketAdded,
+		newDealTrigger,
+		newTicketTrigger,
+		newLineItemTrigger,
+		newProductTrigger,
+		newCustomObjectTrigger,
 		dealStageUpdatedTrigger,
 		newOrUpdatedProductTrigger
 	],
