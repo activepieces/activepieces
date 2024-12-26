@@ -30,7 +30,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
     selectedStep,
   );
   return pathToTargetStep.map((step) =>
-    dataSelectorMentions.traverseStep(step, state.sampleData, true),
+    dataSelectorMentions.traverseStep(step, state.sampleData, state.isFocusInsideListMapperModeInput),
   );
 };
 
