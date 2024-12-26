@@ -1,13 +1,5 @@
 .rdg-cell {
-    @apply bg-gray-200 text-black;
-}
-
-.rdg-cell:hover {
-    @apply bg-gray-300;
-}
-
-.fell-grid {
-    @apply bg-gray-200 text-black;
+    --rdg-selection-color: none !important;
 }
 
 .rdg-summary-row {

@@ -3,15 +3,17 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import DataGrid, {
   SelectColumn,
-  textEditor,
+  // textEditor,
   Column,
   RowsChangeData,
+  RenderCellProps,
 } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useParams } from 'react-router-dom';
 
 import { TableTitle } from '@/components/ui/table-title';
 import { toast } from '@/components/ui/use-toast';
+import { EditableCell } from '@/features/tables/components/editable-cell';
 import { NewFieldDialog } from '@/features/tables/components/new-field-dialog';
 import { NewRecordDialog } from '@/features/tables/components/new-record-dialog';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
@@ -93,7 +95,34 @@ function TablePage() {
     ...(fieldsData?.map((field) => ({
       key: field.name,
       name: field.name,
-      renderEditCell: textEditor,
+      renderCell: ({
+        row,
+        column,
+        rowIdx,
+      }: RenderCellProps<Row, { id: string }>) => (
+        <EditableCell
+          value={row[field.name]}
+          row={row}
+          column={column}
+          rowIdx={rowIdx}
+          onRowChange={(newRow, commitChanges) => {
+            if (commitChanges) {
+              updateRecordMutation.mutate({
+                recordId: row.id,
+                request: {
+                  tableId: tableId!,
+                  cells: [
+                    {
+                      key: field.name,
+                      value: String(newRow[field.name]),
+                    },
+                  ],
+                },
+              });
+            }
+          }}
+        />
+      ),
     })) ?? []),
     {
       key: 'new-field',
