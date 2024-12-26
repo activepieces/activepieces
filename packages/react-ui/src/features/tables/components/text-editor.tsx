@@ -20,7 +20,6 @@ function TextEditor({
 
   useEffect(() => {
     inputRef.current?.focus();
-    inputRef.current?.select();
   }, []);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,34 +36,41 @@ function TextEditor({
   };
 
   return (
-    <div className="relative w-full h-full">
-      <input
-        ref={inputRef}
-        value={value ?? ''}
-        onChange={handleChange}
-        onBlur={commitChanges}
-        onKeyDown={(e) => {
-          e.stopPropagation();
-          if (e.key === 'Enter') {
-            commitChanges();
-            e.preventDefault();
-          }
-          if (e.key === 'Escape') {
-            onClose();
-            e.preventDefault();
-          }
-        }}
+    <div className="h-full">
+      <div
         className={cn(
-          'w-full h-full',
+          'h-full flex items-center gap-2',
           'border-2 border-primary',
-          'bg-background text-sm',
-          'focus:outline-none',
-          'placeholder:text-muted-foreground',
+          'bg-background overflow-hidden',
         )}
-        autoComplete="off"
-      />
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary/10 p-1">
-        <Edit2 className="h-4 w-4 text-primary" />
+      >
+        <input
+          ref={inputRef}
+          value={value ?? ''}
+          onChange={handleChange}
+          onBlur={commitChanges}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === 'Enter') {
+              commitChanges();
+              e.preventDefault();
+            }
+            if (e.key === 'Escape') {
+              onClose();
+              e.preventDefault();
+            }
+          }}
+          className={cn(
+            'flex-1 h-full min-w-0',
+            'border-none text-sm px-2',
+            'focus:outline-none',
+            'placeholder:text-muted-foreground',
+          )}
+          autoComplete="off"
+        />
+        <div className="flex-none bg-primary/10 p-1">
+          <Edit2 className="h-4 w-4 text-primary" />
+        </div>
       </div>
     </div>
   );

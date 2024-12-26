@@ -3,7 +3,6 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import DataGrid, {
   SelectColumn,
-  // textEditor,
   Column,
   RowsChangeData,
   RenderCellProps,
@@ -101,6 +100,7 @@ function TablePage() {
         rowIdx,
       }: RenderCellProps<Row, { id: string }>) => (
         <EditableCell
+          type={field.type}
           value={row[field.name]}
           row={row}
           column={column}

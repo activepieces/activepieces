@@ -3,7 +3,10 @@ import { useState, useEffect } from 'react';
 import { CalculatedColumn } from 'react-data-grid';
 
 import { Button } from '@/components/ui/button';
+import { cn, formatUtils } from '@/lib/utils';
+import { FieldType } from '@activepieces/shared';
 
+import { DateEditor } from './date-editor';
 import { TextEditor } from './text-editor';
 
 type Row = {
@@ -12,6 +15,7 @@ type Row = {
 };
 
 type EditableCellProps = {
+  type: FieldType;
   value: string;
   row: Row;
   column: CalculatedColumn<Row, { id: string }>;
@@ -20,6 +24,7 @@ type EditableCellProps = {
 };
 
 export function EditableCell({
+  type,
   value,
   row,
   column,
@@ -34,7 +39,9 @@ export function EditableCell({
     const handleClickOutside = (event: MouseEvent) => {
       if (
         isSelected &&
-        !(event.target as HTMLElement).closest('.editable-cell')
+        !(event.target as HTMLElement).closest(
+          `#editable-cell-${rowIdx}-${column.key}`,
+        )
       ) {
         setIsSelected(false);
       }
@@ -45,8 +52,17 @@ export function EditableCell({
   }, [isSelected]);
 
   if (isEditing) {
+    let Editor;
+    switch (type) {
+      case FieldType.DATE:
+        Editor = DateEditor;
+        break;
+      default:
+        Editor = TextEditor;
+    }
+
     return (
-      <TextEditor
+      <Editor
         row={row}
         rowIdx={rowIdx}
         column={column}
@@ -56,33 +72,45 @@ export function EditableCell({
             setIsEditing(false);
           }
         }}
-        onClose={() => setIsEditing(false)}
+        onClose={() => {
+          setIsEditing(false);
+          setIsHovered(false);
+        }}
       />
     );
   }
 
   return (
     <div
-      className={`h-full relative flex items-center justify-between px-2 py-2 group cursor-pointer border editable-cell ${
-        isSelected ? 'border-primary' : 'border-transparent'
-      }`}
+      id={`editable-cell-${rowIdx}-${column.key}`}
+      className={cn(
+        'h-full flex items-center justify-between gap-2 px-2 py-2',
+        'group cursor-pointer border',
+        isSelected ? 'border-primary' : 'border-transparent',
+      )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => setIsSelected(true)}
       onDoubleClick={() => setIsEditing(true)}
     >
-      <span className="truncate">{value}</span>
+      <span className="flex-1 truncate">
+        {type === FieldType.DATE && value
+          ? formatUtils.formatDateOnly(new Date(value))
+          : value}
+      </span>
       {isHovered && (
         <Button
           variant="transparent"
           size="sm"
-          className="absolute right-2"
+          className="flex-none"
           onClick={(e) => {
             e.stopPropagation();
             setIsEditing(true);
           }}
         >
-          <Edit2 className="h-4 w-4 text-muted-foreground hover:bg-gray-200" />
+          <div className="bg-primary/10 p-1">
+            <Edit2 className="h-4 w-4 text-primary" />
+          </div>
         </Button>
       )}
     </div>
