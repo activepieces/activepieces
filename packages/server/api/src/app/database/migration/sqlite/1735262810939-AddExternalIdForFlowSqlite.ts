@@ -22,7 +22,7 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 "filteredPieceBehavior" varchar CHECK(
                     "filteredPieceBehavior" IN ('ALLOWED', 'BLOCKED')
                 ) NOT NULL,
-                "environmentEnabled" boolean NOT NULL,
+                "environmentsEnabled" boolean NOT NULL,
                 "defaultLocale" varchar CHECK(
                     "defaultLocale" IN (
                         'nl',
@@ -83,7 +83,7 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                     "embeddingEnabled",
                     "filteredPieceNames",
                     "filteredPieceBehavior",
-                    "environmentEnabled",
+                    "environmentsEnabled",
                     "defaultLocale",
                     "allowedAuthDomains",
                     "enforceAllowedAuthDomains",
@@ -512,7 +512,7 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 "embeddingEnabled",
                 "filteredPieceNames",
                 "filteredPieceBehavior",
-                "environmentEnabled",
+                "environmentsEnabled",
                 "defaultLocale",
                 "allowedAuthDomains",
                 "enforceAllowedAuthDomains",

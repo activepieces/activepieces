@@ -20,7 +20,7 @@ const EnvironmentPage = () => {
 
   const { gitSync, isLoading, refetch } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentEnabled,
+    platform.environmentsEnabled,
   );
 
   const { mutate } = useMutation({
@@ -44,7 +44,7 @@ const EnvironmentPage = () => {
   return (
     <LockedFeatureGuard
       featureKey="ENVIRONMENT"
-      locked={!platform.environmentEnabled}
+      locked={!platform.environmentsEnabled}
       lockTitle={t('Unlock Environment')}
       lockDescription={t(
         "Streamline your team's workflow for a seamless experience to build and deploy flows across your environments",

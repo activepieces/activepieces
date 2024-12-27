@@ -208,7 +208,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
             faker.helpers.enumValue(FilteredPieceBehavior),
         smtp: platform?.smtp,
         flowIssuesEnabled: platform?.flowIssuesEnabled ?? faker.datatype.boolean(),
-        environmentEnabled: platform?.environmentEnabled ?? faker.datatype.boolean(),
+        environmentsEnabled: platform?.environmentsEnabled ?? faker.datatype.boolean(),
         embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
@@ -573,7 +573,7 @@ export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease
 export const mockEnvironment = async () => {
     const { mockPlatform, mockOwner, mockProject } = await mockBasicSetup({
         platform: {
-            environmentEnabled: true,
+            environmentsEnabled: true,
         },
     })
     

@@ -54,7 +54,7 @@ const CreateReleaseDialog = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.environmentEnabled,
+    platform.environmentsEnabled,
   );
 
   const form = useForm<FormData>({
