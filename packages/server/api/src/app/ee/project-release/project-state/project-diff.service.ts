@@ -1,54 +1,56 @@
 import { ProjectOperationType } from '@activepieces/ee-shared'
 import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, FlowState, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectState, Step, TriggerType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { ProjectMappingState } from './project-mapping-state'
 
 export const projectDiffService = {
-    diff({ newState, oldState, mapping }: DiffParams): ProjectOperation[] {
-        const createFlowOperation = findFlowsToCreate({ newState, oldState, mapping })
-        const deleteFlowOperation = findFlowsToDelete({ newState, oldState, mapping })
-        const updateFlowOperations = findFlowsToUpdate({ newState, oldState, mapping })
+    diff({ newState, currentState }: DiffParams): ProjectOperation[] {
+        const createFlowOperation = findFlowsToCreate({ newState, currentState })
+        const deleteFlowOperation = findFlowsToDelete({ newState, currentState })
+        const updateFlowOperations = findFlowsToUpdate({ newState, currentState })
         return [...deleteFlowOperation, ...createFlowOperation, ...updateFlowOperations]
     },
 }
 
-function findFlowsToCreate({ newState, oldState, mapping }: DiffParams): ProjectOperation[] {
-    return newState.flows.filter((newFile) => {
-        const targetId = mapping.findTargetId(newFile.id)
-        return isNil(targetId) || isNil(oldState.flows.find((oldFile) => oldFile.id === targetId))
+function findFlowsToCreate({ newState, currentState }: DiffParams): ProjectOperation[] {
+    return newState.flows.filter((newFlow) => {
+        const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, newFlow.id)
+        return isNil(flow)
     }).map((flowState) => ({
         type: ProjectOperationType.CREATE_FLOW,
         flowState,
     }))
 }
-function findFlowsToDelete({ newState, oldState, mapping }: DiffParams): ProjectOperation[] {
-    return oldState.flows.filter((f) => {
-        const sourceId = mapping.findSourceId(f.id)
-        return isNil(sourceId) || isNil(newState.flows.find((newFile) => newFile.id === sourceId))
+function findFlowsToDelete({ newState, currentState }: DiffParams): ProjectOperation[] {
+    return currentState.flows.filter((currentFlowFromState) => {
+        const flow = newState.flows.find((flowFromNewState) => currentFlowFromState.externalId === flowFromNewState.id || currentFlowFromState.id === flowFromNewState.id)
+        return isNil(flow)
     }).map((flowState) => ({
         type: ProjectOperationType.DELETE_FLOW,
         flowState,
     }))
 }
 
-function findFlowsToUpdate({ newState, oldState, mapping }: DiffParams): ProjectOperation[] {
+function findFlowsToUpdate({ newState, currentState }: DiffParams): ProjectOperation[] {
     const newStateFiles = newState.flows.filter((state) => {
-        const targetId = mapping.findTargetId(state.id)
-        return !isNil(targetId) && !isNil(oldState.flows.find((oldFile) => oldFile.id === targetId))
+        const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, state.id)
+        return !isNil(flow)
     })
-    return newStateFiles.map((ns) => {
-        const destFlowId = mapping.findTargetId(ns.id)
-        const os = oldState.flows.find((os) => os.id === destFlowId)!
-        assertNotNullOrUndefined(os, `Could not find target flow for source flow ${ns.id}`)
-        if (isFlowChanged(os, ns)) {
+    return newStateFiles.map((flowFromNewState) => {
+        const os = searchInFlowForFlowByIdOrExternalId(currentState.flows, flowFromNewState.id)
+        assertNotNullOrUndefined(os, `Could not find target flow for source flow ${flowFromNewState.id}`)
+        if (isFlowChanged(os, flowFromNewState)) {
             return {
                 type: ProjectOperationType.UPDATE_FLOW,
                 flowState: os,
-                newFlowState: ns,
+                newFlowState: flowFromNewState,
             } as ProjectOperation
         }
         return null
     }).filter((op): op is ProjectOperation => op !== null)
+}
+
+function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], id: string): PopulatedFlow | undefined {
+    return flows.find((flow) => flow.id === id || flow.externalId === id)
 }
 
 function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): boolean {
@@ -75,9 +77,10 @@ function normalize(flowVersion: FlowVersion): FlowVersion {
 
 
 type DiffParams = {
-    newState: ProjectState
-    oldState: ProjectState
-    mapping: ProjectMappingState
+    currentState: {
+        flows: PopulatedFlow[]
+    }
+    newState: Pick<ProjectState, 'flows'>
 }
 
 

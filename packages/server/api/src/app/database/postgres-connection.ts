@@ -169,7 +169,7 @@ import { AddProjectRelationInUserInvitation1732790412900 } from './migration/pos
 import { CreateProjectReleaseTable1734418823028 } from './migration/postgres/1734418823028-CreateProjectReleaseTable'
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
 import { AddCopilotSettings1734479886363 } from './migration/postgres/1734479886363-AddCopilotSettings'
-import { AddMappingForProject1734886495968 } from './migration/postgres/1734886495968-AddMappingForProject'
+import { AddExternalIdForFlow1735262417593 } from './migration/postgres/1735262417593-AddExternalIdForFlow'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -283,7 +283,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddProjectRelationInUserInvitation1732790412900,
         RemoveWorkerType1734439097357,
         AddCopilotSettings1734479886363,
-        AddMappingForProject1734886495968,
+        AddExternalIdForFlow1735262417593
     ]
 
     const edition = system.getEdition()

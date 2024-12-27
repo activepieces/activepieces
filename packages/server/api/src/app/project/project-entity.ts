@@ -8,7 +8,7 @@ import {
     User,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE, TIMESTAMP_COLUMN_TYPE } from '../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../database/database-common'
 
 type ProjectSchema = Project & {
     owner: User
@@ -47,10 +47,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: Boolean,
             nullable: false,
             default: false,
-        },
-        mapping: {
-            type: JSONB_COLUMN_TYPE,
-            nullable: true,
         },
     },
     indices: [

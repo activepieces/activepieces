@@ -55,14 +55,6 @@ export const ProjectPlan = Type.Object({
 
 export type ProjectPlan = Static<typeof ProjectPlan>
 
-export const ProjectMappingState = Type.Object({
-    flows: Type.Record(Type.String(), Type.Object({
-        sourceId: Type.String(),
-    })),
-})
-
-export type ProjectMappingState = Static<typeof ProjectMappingState>
-
 export const Project = Type.Object({
     ...BaseModelSchema,
     deleted: Nullable(Type.String()),
@@ -72,7 +64,6 @@ export const Project = Type.Object({
     platformId: ApId,
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),
-    mapping: Type.Optional(ProjectMappingState),
 })
 
 const projectAnalytics = Type.Object(

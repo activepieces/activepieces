@@ -1,8 +1,7 @@
 
 import { faker } from '@faker-js/faker'
 import { nanoid } from 'nanoid'
-import { projectDiffService } from '../../../../../../src/app/ee/project-release/project-diff/project-diff.service'
-import { ProjectMappingState } from '../../../../../../src/app/ee/project-release/project-diff/project-mapping-state'
+import { projectDiffService } from '../../../../../../src/app/ee/project-release/project-state/project-diff.service'
 import { flowGenerator } from '../../../../../helpers/flow-generator'
 
 describe('Project Diff Service', () => {
@@ -10,13 +9,12 @@ describe('Project Diff Service', () => {
     it('should return the flow to delete', async () => {
         const flowTwo = flowGenerator.simpleActionAndTrigger()
         const diff = projectDiffService.diff({
-            oldState: {
-                flows: [],
-            },
-            newState: {
+            currentState: {
                 flows: [flowTwo],
             },
-            mapping: ProjectMappingState.empty(),
+            newState: {
+                flows: [],
+            },
         })
         expect(diff.length).toBe(1)
         expect(diff[0].type).toBe('DELETE_FLOW')
@@ -26,13 +24,12 @@ describe('Project Diff Service', () => {
     it('should return the flow to create', async () => {
         const flowTwo = flowGenerator.simpleActionAndTrigger()
         const diff = projectDiffService.diff({
-            oldState: {
+            currentState: {
                 flows: [],
             },
             newState: {
                 flows: [flowTwo],
             },
-            mapping: ProjectMappingState.empty(),
         })
         expect(diff.length).toBe(1)
         expect(diff[0].type).toBe('CREATE_FLOW')
@@ -40,70 +37,62 @@ describe('Project Diff Service', () => {
     })
 
     it('should return the flow to create If the mapping is invalid', async () => {
-        const flowOne = flowGenerator.simpleActionAndTrigger()
+        const flowOne = flowGenerator.simpleActionAndTrigger(nanoid())
         const flowTwo = flowGenerator.simpleActionAndTrigger()
         const diff = projectDiffService.diff({
-            oldState: {
-                flows: [flowOne],
-            },
-            newState: {
+            currentState: {
                 flows: [flowTwo],
             },
-            mapping: ProjectMappingState.empty().mapFlow({
-                sourceId: nanoid(),
-                targetId: flowTwo.id,
-            }),
+            newState: {
+                flows: [flowOne],
+            },
         })
         expect(diff).toEqual([
             {
                 type: 'DELETE_FLOW',
-                flow: flowTwo,
+                flowState: flowTwo,
             },
             {
                 type: 'CREATE_FLOW',
-                flow: flowOne,
+                flowState: flowOne,
             },
         ])
     })
 
     it('should return the flow to update', async () => {
-        const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowTwo = flowGenerator.simpleActionAndTrigger()
+        const flowOne = flowGenerator.simpleActionAndTrigger(flowTwo.id)
+
         const diff = projectDiffService.diff({
-            oldState: {
+            currentState: {
                 flows: [flowOne],
             },
             newState: {
                 flows: [flowTwo],
             },
-            mapping: ProjectMappingState.empty().mapFlow({
-                sourceId: flowOne.id,
-                targetId: flowTwo.id,
-            }),
         })
         expect(diff.length).toBe(1)
         expect(diff[0]).toEqual({
             type: 'UPDATE_FLOW',
-            flow: flowOne,
-            targetFlow: flowTwo,
+            flowState: flowOne,
+            newFlowState: flowTwo,
         })
     })
 
+
     it('should skip the flow to update if the flow is not changed', async () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
-        const flowOneDist = flowGenerator.randomizeMetadata(flowOne.version)
+        const flowOneDist = flowGenerator.randomizeMetadata(undefined, flowOne.version)
         flowOneDist.version.trigger.settings.inputUiInfo = faker.airline.airplane()
+        flowOne.externalId = flowOneDist.id
+
         const diff = projectDiffService.diff({
-            oldState: {
+            currentState: {
                 flows: [flowOne],
             },
             newState: {
                 flows: [flowOneDist],
             },
-            mapping: ProjectMappingState.empty().mapFlow({
-                sourceId: flowOne.id,
-                targetId: flowOneDist.id,
-            }),
         })
         expect(diff).toEqual([])
     })
@@ -112,35 +101,30 @@ describe('Project Diff Service', () => {
         const flowOne = flowGenerator.simpleActionAndTrigger()
         const flowTwo = flowGenerator.simpleActionAndTrigger()
         const flowThree = flowGenerator.simpleActionAndTrigger()
-
         const flowOneDist = flowGenerator.simpleActionAndTrigger()
-        const flowThreeDist = flowGenerator.randomizeMetadata(flowThree.version)
+        flowOne.externalId = flowOneDist.id
         const diff = projectDiffService.diff({
-            oldState: {
-                flows: [flowOne, flowTwo],
+            currentState: {
+                flows: [flowOne, flowThree],
             },
             newState: {
-                flows: [flowOneDist, flowThreeDist],
+                flows: [flowOneDist, flowTwo],
             },
-            mapping: ProjectMappingState.empty().mapFlow({
-                sourceId: flowOne.id,
-                targetId: flowOneDist.id,
-            }),
         })
         expect(diff.length).toBe(3)
         expect(diff).toEqual([
             {
                 type: 'DELETE_FLOW',
-                flow: flowThreeDist,
+                flowState: flowThree,
             },
             {
                 type: 'CREATE_FLOW',
-                flow: flowTwo,
+                flowState: flowTwo,
             },
             {
                 type: 'UPDATE_FLOW',
-                flow: flowOne,
-                targetFlow: flowOneDist,
+                flowState: flowOne,
+                newFlowState: flowOneDist,
             },
         ])
     })

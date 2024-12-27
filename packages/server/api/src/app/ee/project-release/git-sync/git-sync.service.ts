@@ -19,8 +19,6 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { flowService } from '../../../flows/flow/flow.service'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { system } from '../../../helper/system/system'
-import { projectService } from '../../../project/project-service'
-import { ProjectMappingState } from '../project-diff/project-mapping-state'
 import { gitHelper } from './git-helper'
 import { gitSyncHelper } from './git-sync-helper'
 import { GitRepoEntity } from './git-sync.entity'
@@ -99,34 +97,29 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
     async push({ id, userId, request, log }: PushParams): Promise<void> {
         const gitRepo = await gitRepoService(log).getOrThrow({ id })
         const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
-        const project = await projectService.getOneOrThrow(gitRepo.projectId)
-        const mappingState = project.mapping ? new ProjectMappingState(project.mapping) : ProjectMappingState.empty()
         switch (request.type) {
             case GitPushOperationType.PUSH_FLOW: {
                 const flow = await flowService(log).getOnePopulatedOrThrow({
                     id: request.flowId,
-                    projectId: project.id,
+                    projectId: gitRepo.projectId,
                     removeConnectionsName: false,
                     removeSampleData: true,
                 })
-                const flowName = mappingState.findSourceId(request.flowId) ?? request.flowId
+                const flowName = request.flowId
                 await gitSyncHelper(log).upsertFlowToGit(flowName, flow, flowFolderPath)
-                await projectService.update(project.id, { mapping: mappingState.mapFlow({
-                    sourceId: flowName,
-                    targetId: flow.id,
-                }) })
                 await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flow ${flow.id}`)
                 break
             }
             case GitPushOperationType.DELETE_FLOW: {
-                const mappingState = project.mapping ? new ProjectMappingState(project.mapping) : ProjectMappingState.empty()
-                await projectService.update(project.id, { mapping: mappingState.deleteFlow(request.flowId) })
-
-                const sourceFlowId = mappingState.findSourceId(request.flowId)
-                if (isNil(sourceFlowId)) {
+                const flow = await flowService(log).getOnePopulatedOrThrow({
+                    id: request.flowId,
+                    projectId: gitRepo.projectId,
+                })
+                const externalId = flow.externalId
+                if (isNil(externalId)) {
                     break
                 }
-                const deleted = await gitSyncHelper(log).deleteFlowFromGit(sourceFlowId, flowFolderPath)
+                const deleted = await gitSyncHelper(log).deleteFlowFromGit(externalId, flowFolderPath)
                 if (deleted) {
                     await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowId} from user interface`)
                 }

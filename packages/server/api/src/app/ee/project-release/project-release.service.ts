@@ -6,7 +6,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { userService } from '../../user/user-service'
 import { gitRepoService } from './git-sync/git-sync.service'
-import { projectDiffService, ProjectOperation } from './project-diff/project-diff.service'
+import { projectDiffService, ProjectOperation } from './project-state/project-diff.service'
 import { ProjectReleaseEntity } from './project-release.entity'
 import { projectStateService } from './project-state/project-state.service'
 import { memoryLock } from '@activepieces/server-shared'
@@ -17,29 +17,26 @@ export const projectReleaseService = {
         const lockKey = `project-release:${projectId}`
         const lock = await memoryLock.acquire(lockKey)
         try {
-            const diffs = await findDiffOperations(projectId, ownerId, params, log)
-            await projectStateService(log).apply({
-                projectId,
-                operations: diffs,
-                mappingState: await projectStateService(log).getProjectMappingState(projectId),
-                selectedFlowsIds: params.selectedFlowsIds,
-                type: params.type,
-                releaseId: params.type === ProjectReleaseType.ROLLBACK ? params.projectReleaseId : undefined,
-                log,
-            })
-            const fileId = await projectStateService(log).save(projectId, params.name, log)
-            const projectRelease: ProjectRelease = {
-                id: apId(),
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                projectId,
-                importedBy,
-                fileId,
-                name: params.name,
-                description: params.description,
-                type: params.type,
-            }
-            return projectReleaseRepo().save(projectRelease)
+        const diffs = await findDiffOperations(projectId, ownerId, params, log)
+        await projectStateService(log).apply({
+            projectId,
+            operations: diffs,
+            selectedFlowsIds: params.selectedFlowsIds,
+            log,
+        })
+        const fileId = await projectStateService(log).save(projectId, params.name, log)
+        const projectRelease: ProjectRelease = {
+            id: apId(),
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            projectId,
+            importedBy,
+            fileId,
+            name: params.name,
+            description: params.description,
+            type: params.type,
+        }
+        return projectReleaseRepo().save(projectRelease)
         }
         finally {
             await lock.release()
@@ -92,14 +89,10 @@ export const projectReleaseService = {
 }
 async function findDiffOperations(projectId: ProjectId, ownerId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectOperation[]> {
     const newState = await getStateFromCreateRequest(projectId, ownerId, params, log) as ProjectState
-    const oldState = await projectStateService(log).getCurrentState(projectId, log) as ProjectState
-
-    const mapping = await projectStateService(log).getProjectMappingState(projectId)
-
+    const currentState = await projectStateService(log).getCurrentState(projectId, log) as ProjectState
     const diffs = projectDiffService.diff({
         newState,
-        oldState,
-        mapping,
+        currentState,
     })
 
     return diffs
