@@ -62,6 +62,7 @@ import { newCustomObjectTrigger } from './lib/triggers/new-custom-object';
 import { newFormSubmissionTrigger } from './lib/triggers/new-form-submission';
 import { newEmailEventTrigger } from './lib/triggers/new-email-event';
 import { newBlogArticleTrigger } from './lib/triggers/new-blog-article';
+import { newContactInListTrigger } from './lib/triggers/new-contact-in-list';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -156,6 +157,7 @@ export const hubspot = createPiece({
 		}),
 	],
 	triggers: [
+		newContactInListTrigger,
 		newBlogArticleTrigger,
 		newEmailEventTrigger,
 		newFormSubmissionTrigger,
