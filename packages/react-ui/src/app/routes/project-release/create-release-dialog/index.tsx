@@ -143,8 +143,8 @@ const CreateReleaseDialog = ({
             {diffRequest.type === ProjectReleaseType.GIT
               ? t('Create Git Release')
               : diffRequest.type === ProjectReleaseType.PROJECT
-                ? t('Create Project Release')
-                : t('Rollback Release')}
+              ? t('Create Project Release')
+              : t('Rollback Release')}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">

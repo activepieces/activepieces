@@ -283,7 +283,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddProjectRelationInUserInvitation1732790412900,
         RemoveWorkerType1734439097357,
         AddCopilotSettings1734479886363,
-        AddExternalIdForFlow1735262417593
+        AddExternalIdForFlow1735262417593,
     ]
 
     const edition = system.getEdition()

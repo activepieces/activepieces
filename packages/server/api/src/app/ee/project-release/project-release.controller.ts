@@ -1,4 +1,4 @@
-import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, FileType, ListProjectReleasesRequest, PrincipalType, ProjectRelease, ProjectReleaseType, SeekPage } from '@activepieces/shared'
+import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, FileType, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { fileService } from '../../file/file.service'

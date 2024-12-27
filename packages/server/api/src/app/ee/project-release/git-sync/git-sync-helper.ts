@@ -28,7 +28,8 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
             const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
             await fs.mkdir(path.dirname(flowJsonPath), { recursive: true })
             await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
-        } catch (error) {
+        }
+        catch (error) {
             _log.error(`Failed to write flow file ${fileName}: ${error}`)
             throw error
         }
