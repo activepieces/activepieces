@@ -1,4 +1,5 @@
 import dns from 'node:dns/promises'
+import os from 'os'
 import { ApEnvironment, isNil } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 
@@ -12,25 +13,52 @@ type IpMetadata = {
 
 let ipMetadata: IpMetadata | undefined
 
+const getLocalIp = (): string | null => {
+    const networkInterfaces = os.networkInterfaces()
+    for (const interfaceName of Object.keys(networkInterfaces)) {
+        const networkInterface = networkInterfaces[interfaceName]
+        if (networkInterface) {
+            for (const iface of networkInterface) {
+                if (iface.family === 'IPv4' && !iface.internal) {
+                    return iface.address
+                }
+            }
+        }
+    }
+    return null
+}
+
 const getPublicIp = async (): Promise<IpMetadata> => {
     if (ipMetadata !== undefined) {
         return ipMetadata
     }
 
-    dns.setServers([GOOGLE_DNS])
+    try {
+        dns.setServers([GOOGLE_DNS])
 
-    const ipList = await dns.resolve(PUBLIC_IP_ADDRESS_QUERY, 'TXT')
+        const ipList = await dns.resolve(PUBLIC_IP_ADDRESS_QUERY, 'TXT')
 
-    ipMetadata = {
-        ip: ipList[0][0],
+        ipMetadata = {
+            ip: ipList[0][0],
+        }
+
+        return ipMetadata
     }
-
-    return ipMetadata
+    catch (error) {
+        const localIp = getLocalIp()
+        if (localIp) {
+            ipMetadata = {
+                ip: localIp,
+            }
+            return ipMetadata
+        }
+        throw error
+    }
 }
 
 const getPublicUrl = async (environment: ApEnvironment, frontendUrl: string): Promise<string> => {
     let url = frontendUrl
-    
+
     if (extractHostname(url) === 'localhost' && environment === ApEnvironment.PRODUCTION) {
         url = `http://${(await networkUtls.getPublicIp()).ip}`
     }

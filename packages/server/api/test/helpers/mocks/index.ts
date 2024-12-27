@@ -39,6 +39,8 @@ import {
     PlatformRole,
     Project,
     ProjectPlan,
+    ProjectRelease,
+    ProjectReleaseType,
     ProjectRole,
     RoleType,
     RunEnvironment,
@@ -160,6 +162,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
             project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
+        releasesEnabled: project?.releasesEnabled ?? false,
     }
 }
 
@@ -205,7 +208,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
             faker.helpers.enumValue(FilteredPieceBehavior),
         smtp: platform?.smtp,
         flowIssuesEnabled: platform?.flowIssuesEnabled ?? faker.datatype.boolean(),
-        gitSyncEnabled: platform?.gitSyncEnabled ?? faker.datatype.boolean(),
+        environmentsEnabled: platform?.environmentsEnabled ?? faker.datatype.boolean(),
         embeddingEnabled: platform?.embeddingEnabled ?? faker.datatype.boolean(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
@@ -552,6 +555,39 @@ export const createMockProjectRole = (projectRole?: Partial<ProjectRole>): Proje
         type: projectRole?.type ?? faker.helpers.enumValue(RoleType),
     }
 }
+
+export const createMockProjectRelease = (projectRelease?: Partial<ProjectRelease>): ProjectRelease => {
+    return {
+        id: projectRelease?.id ?? apId(),
+        created: projectRelease?.created ?? faker.date.recent().toISOString(),
+        updated: projectRelease?.updated ?? faker.date.recent().toISOString(),
+        projectId: projectRelease?.projectId ?? apId(),
+        importedBy: projectRelease?.importedBy ?? apId(),
+        fileId: projectRelease?.fileId ?? apId(),
+        name: projectRelease?.name ?? faker.lorem.word(),
+        description: projectRelease?.description ?? faker.lorem.sentence(),
+        type: projectRelease?.type ?? faker.helpers.enumValue(ProjectReleaseType),
+    }
+}
+
+export const mockEnvironment = async () => {
+    const { mockPlatform, mockOwner, mockProject } = await mockBasicSetup({
+        platform: {
+            environmentsEnabled: true,
+        },
+    })
+    
+    const mockApiKey = createMockApiKey({ platformId: mockPlatform.id })
+    await databaseConnection().getRepository('api_key').save(mockApiKey)
+
+    return {
+        mockPlatform,
+        mockOwner,
+        mockApiKey,
+        mockProject,
+    }
+}
+
 
 type CreateMockPlatformWithOwnerParams = {
     platform?: Partial<Omit<Platform, 'ownerId'>>

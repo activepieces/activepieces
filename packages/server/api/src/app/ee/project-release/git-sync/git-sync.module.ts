@@ -1,26 +1,22 @@
 import {
     ConfigureRepoRequest,
     GitRepoWithoutSensitiveData,
-    ProjectSyncPlan,
-    PullGitRepoFromProjectRequest,
-    PullGitRepoRequest,
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
-import { Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { Permission, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { FastifyPluginAsync } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { platformService } from '../../platform/platform.service'
-import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { entitiesMustBeOwnedByCurrentProject } from '../../../authentication/authorization'
+import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
 import { gitRepoService } from './git-sync.service'
 
 export const gitRepoModule: FastifyPluginAsync = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.gitSyncEnabled))
+    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.environmentsEnabled))
     await app.register(gitRepoController, { prefix: '/v1/git-repos' })
 }
 
@@ -30,16 +26,6 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     done,
 ): void => {
 
-    app.post('/pull', PullRepoFromProjectRequestSchema, async (request) => {
-        const platform = await platformService.getOneOrThrow(request.principal.platform.id)
-        const gitRepo = await gitRepoService(request.log).getOneByProjectOrThrow({ projectId: request.body.projectId })
-        const userId = platform.ownerId
-        await gitRepoService(request.log).pull({
-            gitRepo,
-            userId,
-            dryRun: false,
-        })
-    })
 
     app.post('/', ConfigureRepoRequestSchema, async (request, reply) => {
         const gitSync = await gitRepoService(request.log).upsert(request.body)
@@ -57,17 +43,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
             id: request.params.id,
             userId: request.principal.id,
             request: request.body,
-        })
-    })
-
-    app.post('/:id/pull', PullRepoRequestSchema, async (request) => {
-        const gitRepo = await gitRepoService(request.log).getOrThrow({
-            id: request.params.id,
-        })
-        return gitRepoService(request.log).pull({
-            gitRepo,
-            dryRun: request.body.dryRun ?? false,
-            userId: request.principal.id,
+            log: request.log,
         })
     })
 
@@ -82,22 +58,6 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     done()
 }
 
-const PullRepoFromProjectRequestSchema = {
-    config: {
-        allowedPrincipals: [PrincipalType.SERVICE],
-        permission: Permission.WRITE_GIT_REPO,
-    },
-    schema: {
-        description:
-            'Pull all changes from the git repository and overwrite any conflicting changes in the project.',
-        body: PullGitRepoFromProjectRequest,
-        tags: ['git-repo'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        response: {
-            [StatusCodes.OK]: Type.Object({}),
-        },
-    },
-}
 
 const DeleteRepoRequestSchema = {
     config: {
@@ -115,24 +75,6 @@ const DeleteRepoRequestSchema = {
     },
 }
 
-const PullRepoRequestSchema = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER],
-        permission: Permission.WRITE_GIT_REPO,
-    },
-    schema: {
-        description:
-            'Pull all changes from the git repository and overwrite any conflicting changes in the project.',
-        params: Type.Object({
-            id: Type.String(),
-        }),
-        body: PullGitRepoRequest,
-        security: [],
-        response: {
-            [StatusCodes.OK]: ProjectSyncPlan,
-        },
-    },
-}
 
 const PushRepoRequestSchema = {
     config: {

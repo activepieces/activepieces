@@ -3,6 +3,7 @@ import { NotificationStatus, PiecesFilterType, SAFE_STRING_PATTERN } from "@acti
 
 export const UpdateProjectPlatformRequest = Type.Object({
     notifyStatus: Type.Optional(Type.Enum(NotificationStatus)),
+    releasesEnabled: Type.Optional(Type.Boolean()),
     displayName: Type.Optional(Type.String({
         pattern: SAFE_STRING_PATTERN,
     })),

@@ -104,7 +104,7 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             enum: FilteredPieceBehavior,
             nullable: false,
         },
-        gitSyncEnabled: {
+        environmentsEnabled: {
             type: Boolean,
             nullable: false,
         },
