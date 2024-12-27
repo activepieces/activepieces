@@ -64,6 +64,7 @@ import { newEmailEventTrigger } from './lib/triggers/new-email-event';
 import { newBlogArticleTrigger } from './lib/triggers/new-blog-article';
 import { newContactInListTrigger } from './lib/triggers/new-contact-in-list';
 import { newEngagementTrigger } from './lib/triggers/new-engagement';
+import { newEmailSubscriptionsTimelineTrigger } from './lib/triggers/email-subscriptions-timeline';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -158,6 +159,7 @@ export const hubspot = createPiece({
 		}),
 	],
 	triggers: [
+		newEmailSubscriptionsTimelineTrigger,
 		newEngagementTrigger,
 		newContactInListTrigger,
 		newBlogArticleTrigger,
