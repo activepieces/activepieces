@@ -15,6 +15,8 @@ import { flowStructureUtil, isNil } from '@activepieces/shared';
 import { useBuilderStateContext } from '../../builder-hooks';
 
 import { textMentionUtils } from './text-input-utils';
+import { AutocompleteExtension } from './autocomplete-extension';
+import { useCallback } from 'react';
 
 type TextInputWithMentionsProps = {
   className?: string;
@@ -23,31 +25,7 @@ type TextInputWithMentionsProps = {
   placeholder?: string;
   disabled?: boolean;
 };
-const extensions = (placeholder?: string) => {
-  return [
-    Document,
-    History,
-    HardBreak,
-    Placeholder.configure({
-      placeholder,
-    }),
-    Paragraph.configure({
-      HTMLAttributes: {},
-    }),
-    Text,
-    Mention.configure({
-      suggestion: {
-        char: '',
-      },
-      deleteTriggerWithBackspace: true,
-      renderHTML({ node }) {
-        const mentionAttrs: MentionNodeAttrs =
-          node.attrs as unknown as MentionNodeAttrs;
-        return textMentionUtils.generateMentionHtmlElement(mentionAttrs);
-      },
-    }),
-  ];
-};
+
 
 function convertToText(value: unknown): string {
   if (isNil(value)) {
@@ -96,6 +74,37 @@ export const TextInputWithMentions = ({
     );
     editor?.chain().focus().insertContent(mentionNode).run();
   };
+  const extensions = useCallback((placeholder?: string) => {
+    return [
+      Document,
+      History,
+      HardBreak,
+      AutocompleteExtension.configure({
+         applySuggestionCallback: insertMention,
+         steps,
+         stepsMetadata
+      }),
+      Placeholder.configure({
+        placeholder,
+      }),
+      Paragraph.configure({
+        HTMLAttributes: {},
+      }),
+      Text,
+      Mention.configure({
+        suggestion: {
+          char: '',
+        },
+        deleteTriggerWithBackspace: true,
+        renderHTML({ node }) {
+          const mentionAttrs: MentionNodeAttrs =
+            node.attrs as unknown as MentionNodeAttrs;
+          return textMentionUtils.generateMentionHtmlElement(mentionAttrs);
+        },
+      }),
+    ];
+  },[stepsMetadata, steps, insertMention]);
+
   const editor = useEditor({
     editable: !disabled,
     extensions: extensions(placeholder),

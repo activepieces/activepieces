@@ -31,7 +31,7 @@ const keysWithinPath = (path: string) => {
     .map(removeQuotes);
 };
 
-type ApMentionNodeAttrs = {
+export type ApMentionNodeAttrs = {
   logoUrl?: string;
   displayText: string;
   serverValue: string;
@@ -94,7 +94,7 @@ function parseMentionNodeFromText(request: ParseMentionNodeFromText) {
   };
 }
 
-type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
+export type StepMetadataWithDisplayName = StepMetadata & { stepDisplayName: string };
 const getStepMetadataFromPath = (
   path: string,
   steps: (Action | Trigger)[],
