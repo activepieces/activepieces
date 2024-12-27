@@ -29,7 +29,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const eventType = propsValue.eventType;
-		let engagements = [];
+		const engagements = [];
 
 		let hasMore = true;
 		const qs: QueryParams = { limit: '100' };

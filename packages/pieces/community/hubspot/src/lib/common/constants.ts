@@ -133,6 +133,25 @@ export const DEFAULT_LINE_ITEM_PROPERTIES = [
 	'hs_term_in_months',
 ];
 
+
+
+export const DEFAULT_TASK_PROPERTIES = [
+	'hs_task_body',
+	'hubspot_owner_id',
+	'hs_task_subject',
+	'hs_task_status',
+	'hs_task_priority',
+	'hs_task_type',
+	'hs_created_by',
+	'hs_repeat_status',
+	'hs_task_completion_date',
+	'hs_task_is_completed',
+	'hs_timestamp',
+	'hs_queue_membership_ids',
+	'hs_lastmodifieddate',
+	'hs_createdate',
+];
+
 export const STANDARD_OBJECT_TYPES = [
 	{
 		label: 'Contacts',
@@ -156,21 +175,3 @@ export const STANDARD_OBJECT_TYPES = [
 	},
 ];
 
-
-
-export const DEFAULT_TASK_PROPERTIES = [
-	'hs_task_body',
-	'hubspot_owner_id',
-	'hs_task_subject',
-	'hs_task_status',
-	'hs_task_priority',
-	'hs_task_type',
-	'hs_created_by',
-	'hs_repeat_status',
-	'hs_task_completion_date',
-	'hs_task_is_completed',
-	'hs_timestamp',
-	'hs_queue_membership_ids',
-	'hs_lastmodifieddate',
-	'hs_createdate',
-];
