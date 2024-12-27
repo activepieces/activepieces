@@ -1,30 +1,32 @@
-import { t } from 'i18next';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { CopilotAvatar } from './copilot-avatar';
+import { ChatBubble, ChatBubbleMessage } from '@/components/ui/chat/chat-bubble';
 
-import { ChatMessage, CopilotMessage } from './chat-message';
+type LoadingMessageProps = {
+  message: string;
+}
 
-const LoadingMessage = () => {
-  const [message, setMessage] = useState<CopilotMessage>({
-    content: t('Generating Code'),
-    messageType: 'text',
-    userType: 'bot',
-  });
+export const LoadingMessage = ({ message }: LoadingMessageProps) => {
+  const [dots, setDots] = useState('');
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (message.messageType === 'text') {
-        const numberOfDots = message.content.split('.').length - 1;
-        setMessage({
-          ...message,
-          content: `${t('Generating Code')}${
-            numberOfDots === 1 ? '..' : numberOfDots === 2 ? '...' : '.'
-          }`,
-        });
-      }
-    }, 250);
+      setDots(prev => {
+        if (prev.length >= 3) return '';
+        return prev + '.';
+      });
+    }, 500);
+
     return () => clearInterval(interval);
-  });
-  return <ChatMessage message={message} onApplyCode={() => {}} />;
+  }, []);
+
+  return (
+    <ChatBubble variant="received">
+      <CopilotAvatar />
+      <ChatBubbleMessage>
+        {message}
+        <span className="inline-block w-8 text-left">{dots}</span>
+      </ChatBubbleMessage>
+    </ChatBubble>
+  );
 };
-LoadingMessage.displayName = 'LoadingMessage';
-export { LoadingMessage };

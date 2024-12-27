@@ -1,295 +1,102 @@
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { ArrowUp, LoaderCircle } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import { useState, useRef, useEffect } from 'react';
-import { Socket } from 'socket.io-client';
+import { t } from "i18next";
+import { LeftSideBarType, useBuilderStateContext } from "../builder-hooks";
+import { SidebarHeader } from "../sidebar-header";
+import { ChatInput } from "@/components/ui/chat/chat-input";
+import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
+import { Button } from "@/components/ui/button";
+import { ArrowUpIcon} from "@radix-ui/react-icons";
+import { useState, useEffect } from "react";
+import { WelcomeMessage } from "./welcome-message";
+import { UserMessage } from "./user-message";
+import { FeedbackMessage } from "./feedback-message";
+import { LoadingMessage } from "./loading-message";
+import { PiecesMessage } from "./pieces-message";
 
-import { useSocket } from '@/components/socket-provider';
-import { CardList } from '@/components/ui/card-list';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import {
-  INTERNAL_ERROR_TOAST,
-  toast,
-  UNSAVED_CHANGES_TOAST,
-} from '@/components/ui/use-toast';
-import {
-  ActionType,
-  CodeAction,
-  FlowOperationType,
-  flowStructureUtil,
-  AskCopilotCodeResponse,
-  AskCopilotRequest,
-  WebsocketClientEvent,
-  WebsocketServerEvent,
-  AskCopilotTool,
-} from '@activepieces/shared';
-
-import { Textarea } from '../../../components/ui/textarea';
-import { CORE_STEP_METADATA } from '../../../features/pieces/lib/pieces-api';
-import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
-import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
-import { pieceSelectorUtils } from '../pieces-selector/piece-selector-utils';
-import { SidebarHeader } from '../sidebar-header';
-
-import { ChatMessage, CopilotMessage } from './chat-message';
-import { LoadingMessage } from './loading-message';
-
-interface DefaultEventsMap {
-  [event: string]: (...args: any[]) => void;
-}
-
-const COPILOT_WELCOME_MESSAGES: CopilotMessage[] = [
-  {
-    messageType: 'text',
-    content: 'welcome',
-    userType: 'bot',
-  },
-];
-
-async function getCodeResponse(
-  socket: Socket<DefaultEventsMap, DefaultEventsMap>,
-  request: AskCopilotRequest,
-): Promise<AskCopilotCodeResponse> {
-  const id = nanoid();
-
-  socket.emit(WebsocketServerEvent.ASK_COPILOT, {
-    ...request,
-    id,
-  });
-  return new Promise<AskCopilotCodeResponse>((resolve, reject) => {
-    socket.on(
-      WebsocketClientEvent.ASK_COPILOT_FINISHED,
-      (response: AskCopilotCodeResponse) => {
-        resolve(response);
-      },
-    );
-    socket.on('error', (error: any) => {
-      reject(error);
-    });
-  });
+type CopilotMessage = {
+  type: 'welcome' | 'user' | 'feedback' | 'loading' | 'pieces';
+  message?: string;
+  pieces?: string[];
 }
 
 export const CopilotSidebar = () => {
-  const [messages, setMessages] = useState<CopilotMessage[]>(
-    COPILOT_WELCOME_MESSAGES,
-  );
-  const [inputMessage, setInputMessage] = useState('');
-  const [
-    flowVersion,
-    refreshSettings,
-    applyOperation,
-    setLeftSidebar,
-    askAiButtonProps,
-    selectStepByName,
-    setAskAiButtonProps,
-    selectedStep,
-  ] = useBuilderStateContext((state) => [
-    state.flowVersion,
-    state.refreshSettings,
-    state.applyOperation,
-    state.setLeftSidebar,
-    state.askAiButtonProps,
-    state.selectStepByName,
-    state.setAskAiButtonProps,
-    state.selectedStep,
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<CopilotMessage[]>([
+    { type: 'welcome', message: "Hi! I'm Lotfi, your AI assistant. How can I help you today?" }
   ]);
-  const lastMessageRef = useRef<HTMLDivElement>(null);
-  const socket = useSocket();
-  const scrollToLastMessage = () => {
-    setTimeout(() => {
-      lastMessageRef.current?.scrollIntoView({
-        behavior: 'smooth',
-      });
-    }, 1);
-  };
-  const { isPending, mutate } = useMutation({
-    mutationFn: (request: AskCopilotRequest) =>
-      getCodeResponse(socket, request),
-    onSuccess: (response: AskCopilotCodeResponse) => {
-      console.log(response);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          content: {
-            code: response.code,
-            packages: response.packageJson,
-            inputs: response.inputs,
-            icon: response.icon ?? '',
-            title: response.title,
-          },
-          messageType: 'code',
-          userType: 'bot',
-        },
-      ]);
-      scrollToLastMessage();
-    },
-    onError: (error: any) => {
-      toast({
-        title: t('Error generating code'),
-        description: error.message,
-      });
-    },
-  });
+  const [setLeftSidebar] = useBuilderStateContext(
+    (state) => [state.setLeftSidebar],
+  );
 
-  const handleSendMessage = () => {
-    const trimmedInputMessage = inputMessage.trim();
-    if (trimmedInputMessage === '') {
-      return;
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim()) {
+      const newMessages: CopilotMessage[] = [...messages, { type: 'user', message: input }];
+      setMessages(newMessages);
+      setInput(""); 
+      setMessages([...newMessages, { type: 'loading', message: "Discovering relevant pieces" }]);
+      
+      // Add timeout to simulate API call
+      setTimeout(() => {
+        setMessages([
+          ...newMessages,
+          { 
+            type: 'pieces', 
+            pieces: ['@activepieces/piece-google-sheets', '@activepieces/piece-slack']
+          }
+        ]);
+      }, 2000);
     }
-    mutate({
-      prompt: inputMessage,
-      context: messages.map((message) => ({
-        role: message.userType === 'user' ? 'user' : 'assistant',
-        content: JSON.stringify(message.content),
-      })),
-      tools: [AskCopilotTool.GENERATE_CODE],
-      flowId: flowVersion.flowId,
-      flowVersionId: flowVersion.id,
-      selectedStepName: selectedStep ?? undefined,
-    });
-
-    setMessages([
-      ...messages,
-      { content: inputMessage, userType: 'user', messageType: 'text' },
-    ]);
-    setInputMessage('');
-    scrollToLastMessage();
   };
-  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
-  const applyCodeToCurrentStep = (message: CopilotMessage) => {
-    if (!askAiButtonProps) {
-      console.log('no ask ai button props');
-      toast(INTERNAL_ERROR_TOAST);
-      return;
-    }
-    if (message.messageType !== 'code') {
-      return;
-    }
-    if (askAiButtonProps) {
-      const stepName =
-        askAiButtonProps.type === FlowOperationType.UPDATE_ACTION
-          ? askAiButtonProps.stepName
-          : flowStructureUtil.findUnusedName(flowVersion.trigger);
-      const codeAction = pieceSelectorUtils.getDefaultStep({
-        stepName,
-        stepMetadata: CORE_STEP_METADATA[ActionType.CODE],
-        actionOrTrigger: getCoreActions(ActionType.CODE)[0],
-      }) as CodeAction;
-      codeAction.settings = {
-        input: message.content.inputs,
-        sourceCode: {
-          code: message.content.code,
-          packageJson: JSON.stringify(message.content.packages, null, 2),
-        },
-      };
-      codeAction.displayName = message.content.title;
-      codeAction.customLogoUrl = message.content.icon;
-      if (askAiButtonProps.type === FlowOperationType.ADD_ACTION) {
-        applyOperation(
-          {
-            type: FlowOperationType.ADD_ACTION,
-            request: {
-              action: codeAction,
-              ...askAiButtonProps.actionLocation,
-            },
-          },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
-        selectStepByName(stepName);
-        setAskAiButtonProps({
-          type: FlowOperationType.UPDATE_ACTION,
-          stepName: codeAction.name,
-        });
-      } else {
-        const step = flowStructureUtil.getStep(
-          askAiButtonProps.stepName,
-          flowVersion.trigger,
-        );
-        if (step) {
-          applyOperation(
-            {
-              type: FlowOperationType.UPDATE_ACTION,
-              request: {
-                displayName: message.content.title,
-                name: step.name,
-                customLogoUrl: message.content.icon,
-                settings: {
-                  ...codeAction.settings,
-                  input: message.content.inputs,
-                  errorHandlingOptions:
-                    step.type === ActionType.CODE ||
-                    step.type === ActionType.PIECE
-                      ? step.settings.errorHandlingOptions
-                      : codeAction.settings.errorHandlingOptions,
-                },
-                type: ActionType.CODE,
-                valid: true,
-              },
-            },
-            () => toast(UNSAVED_CHANGES_TOAST),
-          );
-        }
-      }
-    }
-    refreshSettings();
-  };
-  useEffect(() => {
-    if (textAreaRef.current) {
-      textAreaRef.current.focus();
-    }
-  }, []);
 
   return (
     <div className="flex flex-col h-full">
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
-        {t('AI Copilot')}
+        {t('Ask Lotfi')}
       </SidebarHeader>
-      <div className="flex flex-col flex-grow overflow-hidden ">
-        <ScrollArea className="flex-grow overflow-auto">
-          <CardList className="pb-3">
-            {messages.map((message, index) => (
-              <ChatMessage
-                key={index}
-                message={message}
-                ref={index === messages.length - 1 ? lastMessageRef : null}
-                onApplyCode={(message) => applyCodeToCurrentStep(message)}
-              />
-            ))}
-            {isPending && <LoadingMessage></LoadingMessage>}
-            <ScrollBar />
-          </CardList>
-        </ScrollArea>
-        <div className="flex items-center py-4 px-3 gap-2 bg-white dark:bg-gray-900 border-t dark:border-gray-700">
-          <Textarea
-            ref={textAreaRef}
-            value={inputMessage}
-            className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12 resize-none"
+      <ChatMessageList className="flex-grow space-y-6">
+        {messages.map((msg, index) => {
+          switch (msg.type) {
+            case 'welcome':
+              return <WelcomeMessage key={index} />;
+            case 'user':
+              return <UserMessage key={index} message={msg.message} />;
+            case 'feedback':
+              return <FeedbackMessage key={index} />;
+            case 'loading':
+              return <LoadingMessage key={index} message={msg.message} />;
+            case 'pieces':
+              return <PiecesMessage key={index} pieces={msg.pieces || []} />;
+            default:
+              return null;
+          }
+        })}
+      </ChatMessageList>
+      <div className="p-4">
+        <form onSubmit={onSubmit}>
+          <ChatInput
+            autoFocus
             minRows={1}
-            autoFocus={true}
-            maxRows={4}
-            placeholder={t('i.e Calculate the sum of a list...')}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey && !isPending) {
-                handleSendMessage();
-                e.preventDefault();
-              }
+            maxRows={10}
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value)
+              e.stopPropagation()
+              e.preventDefault()
             }}
+            placeholder="Message Lotfi"
+            className="rounded-lg"
+            button={
+              <Button
+                disabled={!input}
+                type="submit"
+                size="icon"
+                className="rounded-full min-w-6 min-h-6 h-6 w-6 text-black bg-black"
+              >
+                <ArrowUpIcon className="w-3 h-3 " />
+              </Button>
+            }
           />
-          <button
-            onClick={handleSendMessage}
-            className="transform  w-8 h-8 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600"
-            aria-label={t('Send')}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <LoaderCircle className="w-5 h-5 text-gray-700 dark:text-gray-300 animate-spin" />
-            ) : (
-              <ArrowUp className="w-5 h-5 text-gray-700 dark:text-gray-300 " />
-            )}
-          </button>
-        </div>
+        </form>
       </div>
     </div>
   );

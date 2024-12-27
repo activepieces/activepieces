@@ -34,7 +34,6 @@ import {
 
 import { SearchInput } from '../../../components/ui/search-input';
 
-import { AskAiButton } from './ask-ai';
 import { PiecesCardList } from './pieces-card-list';
 import { StepsCardList } from './steps-card-list';
 
@@ -77,13 +76,11 @@ const PieceSelector = ({
     selectStepByName,
     flowVersion,
     setSampleData,
-    setAskAiButtonProps,
   ] = useBuilderStateContext((state) => [
     state.applyOperation,
     state.selectStepByName,
     state.flowVersion,
     state.setSampleData,
-    state.setAskAiButtonProps,
   ]);
 
   const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
@@ -275,7 +272,6 @@ const PieceSelector = ({
         );
       }
     }
-    setAskAiButtonProps(null);
   };
   const isMobile = pieceSelectorUtils.useIsMobile();
   return (
@@ -320,15 +316,6 @@ const PieceSelector = ({
                   setSelectedMetadata(undefined);
                 }}
               />
-              {operation.type !== FlowOperationType.UPDATE_TRIGGER && (
-                <AskAiButton
-                  varitant="ghost"
-                  operation={operation}
-                  onClick={() => {
-                    onOpenChange(false);
-                  }}
-                ></AskAiButton>
-              )}
             </div>
 
             <PieceTagGroup

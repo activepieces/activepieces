@@ -13,10 +13,6 @@ import {
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import {
-  AskAiIndicator,
-  shouldShowAskAiIndicator,
-} from '../edges/ask-ai-indicator';
 import { flowUtilConsts } from '../utils/consts';
 import { ApBigAddButtonNode } from '../utils/types';
 
@@ -24,11 +20,10 @@ const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
     const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);
     const [pieceSelectorOpen, setPieceSelectorOpen] = useState(false);
-    const [readonly, activeDraggingStep, showAiIndicator] =
+    const [readonly, activeDraggingStep] =
       useBuilderStateContext((state) => [
         state.readonly,
         state.activeDraggingStep,
-        shouldShowAskAiIndicator(state, data),
       ]);
     const draggableId = useId();
     const { setNodeRef } = useDroppable({
@@ -86,53 +81,39 @@ const ApBigAddButtonCanvasNode = React.memo(
                     <PieceSelector
                       operation={
                         data.stepLocationRelativeToParent ===
-                        StepLocationRelativeToParent.INSIDE_BRANCH
+                          StepLocationRelativeToParent.INSIDE_BRANCH
                           ? {
-                              type: FlowOperationType.ADD_ACTION,
-                              actionLocation: {
-                                parentStep: data.parentStepName,
-                                stepLocationRelativeToParent:
-                                  data.stepLocationRelativeToParent,
-                                branchIndex: data.branchIndex,
-                              },
-                            }
+                            type: FlowOperationType.ADD_ACTION,
+                            actionLocation: {
+                              parentStep: data.parentStepName,
+                              stepLocationRelativeToParent:
+                                data.stepLocationRelativeToParent,
+                              branchIndex: data.branchIndex,
+                            },
+                          }
                           : {
-                              type: FlowOperationType.ADD_ACTION,
-                              actionLocation: {
-                                parentStep: data.parentStepName,
-                                stepLocationRelativeToParent:
-                                  data.stepLocationRelativeToParent,
-                              },
-                            }
+                            type: FlowOperationType.ADD_ACTION,
+                            actionLocation: {
+                              parentStep: data.parentStepName,
+                              stepLocationRelativeToParent:
+                                data.stepLocationRelativeToParent,
+                            },
+                          }
                       }
                       open={pieceSelectorOpen}
                       onOpenChange={setPieceSelectorOpen}
                     >
-                      <span>
-                        {showAiIndicator && (
-                          <AskAiIndicator
-                            height={
-                              flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height
-                            }
-                            width={
-                              flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width
-                            }
-                          ></AskAiIndicator>
-                        )}
-                        {!showAiIndicator && (
-                          <Button
-                            variant="transparent"
-                            className="w-full h-full flex items-center hover:bg-accent-foreground rounded"
-                          >
-                            <Plus
-                              className={cn('w-6 h-6 text-accent-foreground ', {
-                                'opacity-0':
-                                  showDropIndicator || pieceSelectorOpen,
-                              })}
-                            />
-                          </Button>
-                        )}
-                      </span>
+                        <Button
+                          variant="transparent"
+                          className="w-full h-full flex items-center hover:bg-accent-foreground rounded"
+                        >
+                          <Plus
+                            className={cn('w-6 h-6 text-accent-foreground ', {
+                              'opacity-0':
+                                showDropIndicator || pieceSelectorOpen,
+                            })}
+                          />
+                        </Button>
                     </PieceSelector>
                   )}
                 </div>
@@ -141,10 +122,9 @@ const ApBigAddButtonCanvasNode = React.memo(
                     style={{
                       height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
                       width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-                      top: `-${
-                        flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 -
+                      top: `-${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 -
                         flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width / 2
-                      }px`,
+                        }px`,
                     }}
                     className=" absolute "
                     ref={setNodeRef}
@@ -174,14 +154,12 @@ const ApBigAddButtonCanvasNode = React.memo(
                 >
                   <g>
                     <path
-                      d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -${
-                        flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 5
-                      } v ${
-                        flowUtilConsts.AP_NODE_SIZE.STEP.height +
+                      d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -${flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 5
+                        } v ${flowUtilConsts.AP_NODE_SIZE.STEP.height +
                         2 *
-                          (flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
-                            5)
-                      }`}
+                        (flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
+                          5)
+                        }`}
                       fill="transparent"
                       strokeWidth="1.5"
                     />

@@ -26,7 +26,6 @@ type CodeEditorProps = {
   onChange: (sourceCode: SourceCode) => void;
   readonly: boolean;
   applyCodeToCurrentStep?: () => void;
-  animateBorderColorToggle: boolean;
   minHeight?: string;
 };
 
@@ -35,7 +34,6 @@ const CodeEditor = ({
   readonly,
   onChange,
   applyCodeToCurrentStep,
-  animateBorderColorToggle,
   minHeight,
 }: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
@@ -44,22 +42,6 @@ const CodeEditor = ({
   const codeApplicationEnabled = typeof applyCodeToCurrentStep === 'function';
   const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [borderColor, setBorderColor] = useState('border');
-  const isFirstRenderRef = useRef(true);
-  useEffect(() => {
-    if (borderColor === 'border' && !isFirstRenderRef.current) {
-      setBorderColor('border-primary shadow-add-button');
-      setTimeout(() => setBorderColor('border'), 1000);
-      if (containerRef.current) {
-        containerRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }
-    }
-    isFirstRenderRef.current = false;
-  }, [animateBorderColorToggle]);
-
   const codeEditorTheme = theme === 'dark' ? githubDark : githubLight;
 
   const { data: allowNpmPackagesInCodeStep } = flagsHooks.useFlag<boolean>(
@@ -107,8 +89,7 @@ const CodeEditor = ({
   return (
     <div
       className={cn(
-        'flex flex-col gap-2 border rounded py-2 px-2 transition-all ',
-        borderColor,
+        'flex flex-col gap-2 border rounded py-2 px-2 transition-all border',
       )}
       ref={containerRef}
     >

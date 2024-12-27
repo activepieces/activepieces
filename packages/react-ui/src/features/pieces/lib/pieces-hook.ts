@@ -103,14 +103,20 @@ export const piecesHooks = {
       },
     };
   },
-  useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
-    return useQueries({
+  usePiecesByName: ({ names }: UseMultiplePiecesProps) => {
+    const queries = useQueries({
       queries: names.map((name) => ({
         queryKey: ['piece', name, undefined],
         queryFn: () => piecesApi.get({ name, version: undefined }),
         staleTime: Infinity,
       })),
     });
+    return {
+      pieces: queries.map(q => q.data),
+      isLoading: queries.some(q => q.isLoading),
+      isSuccess: queries.every(q => q.isSuccess),
+      refetch: () => queries.forEach(q => q.refetch())
+    };
   },
   useStepMetadata: ({ step, enabled = true }: UseStepMetadata) => {
     const query = useQuery<StepMetadata, Error>({

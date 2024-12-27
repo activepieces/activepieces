@@ -29,7 +29,6 @@ import {
 
 import { cn } from '../../../lib/utils';
 
-import { AskAiButton } from './ask-ai';
 import { PieceSearchSuggestions } from './piece-search-suggestions';
 import { PieceTagEnum } from './piece-tag-group';
 
@@ -129,35 +128,6 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
           </React.Fragment>
         ))}
 
-      {noResultsFound &&
-        isCopilotEnabled &&
-        operation.type !== FlowOperationType.UPDATE_TRIGGER && (
-          <div className="flex flex-col gap-2 items-center justify-center h-full ">
-            <WandSparkles className="w-14 h-14" />
-            <div className="text-sm mb-3">
-              {t('Let our AI assistant help you out')}
-            </div>
-            <AskAiButton
-              varitant={'default'}
-              operation={operation}
-              onClick={closePieceSelector}
-            ></AskAiButton>
-            {showRequestPieceButton && (
-              <>
-                {t('Or')}
-                <Link
-                  to={`${supportUrl}/c/feature-requests/9`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button variant="ghost" size="sm">
-                    Request Piece
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        )}
 
       {noResultsFound &&
         (!isCopilotEnabled ||

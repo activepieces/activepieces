@@ -22,7 +22,6 @@ import {
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
-import { AskAiButtonOperations } from '../../features/pieces/lib/types';
 import { useAuthorization } from '../../hooks/authorization-hooks';
 
 import {
@@ -79,10 +78,7 @@ export type BuilderState = {
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
   saving: boolean;
-  /** change this value to trigger the step form to set its values from the step */
-  refreshStepFormSettingsToggle: boolean;
   selectedBranchIndex: number | null;
-  refreshSettings: () => void;
   setSelectedBranchIndex: (index: number | null) => void;
   exitRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
@@ -123,8 +119,6 @@ export type BuilderState = {
       operation: FlowOperationRequest,
     ) => void,
   ) => void;
-  askAiButtonProps: AskAiButtonOperations | null;
-  setAskAiButtonProps: (props: AskAiButtonOperations | null) => void;
   selectedNodes: string[];
   setSelectedNodes: (nodes: string[]) => void;
   panningMode: 'grab' | 'pan';
@@ -194,7 +188,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
-      refreshStepFormSettingsToggle: false,
 
       removeStepSelection: () =>
         set({
@@ -287,13 +280,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       exitStepSettings: () =>
         set((state) => ({
           rightSidebar: RightSideBarType.NONE,
-          leftSidebar:
-            state.leftSidebar === LeftSideBarType.AI_COPILOT
-              ? LeftSideBarType.NONE
-              : state.leftSidebar,
           selectedStep: null,
           selectedBranchIndex: null,
-          askAiButtonProps: null,
         })),
       exitPieceSelector: () =>
         set({
@@ -303,7 +291,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
       setLeftSidebar: (leftSidebar: LeftSideBarType) =>
-        set({ leftSidebar, askAiButtonProps: null }),
+        set({ leftSidebar }),
       setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
         set((state) => {
           return {
@@ -393,10 +381,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
         set({ insertMention });
       },
-      refreshSettings: () =>
-        set((state) => ({
-          refreshStepFormSettingsToggle: !state.refreshStepFormSettingsToggle,
-        })),
 
       selectedBranchIndex: null,
       operationListeners: [],
@@ -420,38 +404,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             (l) => l !== listener,
           ),
         })),
-      askAiButtonProps: null,
-      setAskAiButtonProps: (props) => {
-        return set((state) => {
-          let leftSidebar = state.leftSidebar;
-          if (props) {
-            leftSidebar = LeftSideBarType.AI_COPILOT;
-          } else if (state.leftSidebar === LeftSideBarType.AI_COPILOT) {
-            leftSidebar = LeftSideBarType.NONE;
-          }
-
-          let rightSidebar = state.rightSidebar;
-          if (props && props.type === FlowOperationType.UPDATE_ACTION) {
-            rightSidebar = RightSideBarType.PIECE_SETTINGS;
-          } else if (props) {
-            rightSidebar = RightSideBarType.NONE;
-          }
-
-          let selectedStep = state.selectedStep;
-          if (props && props.type === FlowOperationType.UPDATE_ACTION) {
-            selectedStep = props.stepName;
-          } else if (props) {
-            selectedStep = null;
-          }
-
-          return {
-            askAiButtonProps: props,
-            leftSidebar,
-            rightSidebar,
-            selectedStep,
-          };
-        });
-      },
       selectedNodes: [],
       setSelectedNodes: (nodes) => {
         return set(() => ({

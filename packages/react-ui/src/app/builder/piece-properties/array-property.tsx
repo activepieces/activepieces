@@ -36,34 +36,26 @@ type ArrayField = {
 };
 
 const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
-  return Object.entries(arrayProperties).reduce((acc, [key, value]) => {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(arrayProperties)) {
     switch (value.type) {
       case PropertyType.LONG_TEXT:
-      case PropertyType.SHORT_TEXT:
+      case PropertyType.SHORT_TEXT: 
       case PropertyType.NUMBER:
-        return {
-          ...acc,
-          [key]: '',
-        };
+        result[key] = '';
+        break;
       case PropertyType.CHECKBOX:
-        return {
-          ...acc,
-          [key]: false,
-        };
+        result[key] = false;
+        break;
       case PropertyType.STATIC_DROPDOWN:
       case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
       case PropertyType.MULTI_SELECT_DROPDOWN:
-        return {
-          ...acc,
-          [key]: null,
-        };
       case PropertyType.FILE:
-        return {
-          ...acc,
-          [key]: null,
-        };
+        result[key] = null;
+        break;
     }
-  }, {} as Record<string, unknown>);
+  }
+  return result;
 };
 const ArrayPieceProperty = React.memo(
   ({

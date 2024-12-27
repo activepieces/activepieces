@@ -1,6 +1,6 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { ChevronDown, History, Logs } from 'lucide-react';
+import { Bot, ChevronDown, History, Logs } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   createSearchParams,
@@ -70,6 +70,9 @@ export const BuilderHeader = () => {
   const { embedState } = useEmbedding();
 
   const { data: folderData } = foldersHooks.useFolder(flow.folderId ?? 'NULL');
+
+  // TODO urgent fetch it from flags.
+  const showCopilot = true;
 
   const isLatestVersion =
     flowVersion.state === FlowVersionState.DRAFT ||
@@ -144,7 +147,7 @@ export const BuilderHeader = () => {
             }}
             onRename={(newName) => renameFlowClientSide(newName)}
             onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-            onDuplicate={() => {}}
+            onDuplicate={() => { }}
           >
             <ChevronDown className="h-8 w-8" />
           </FlowActionMenu>
@@ -152,6 +155,20 @@ export const BuilderHeader = () => {
 
         <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
+          {showCopilot && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="gap-2 px-2"
+                  onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
+                >
+                  <Bot className="w-4 h-4" />
+                  {t('Copilot')}
+                </Button>
+              </TooltipTrigger>
+            </Tooltip>
+          )}
           {showSupport && (
             <Tooltip>
               <TooltipTrigger asChild>
