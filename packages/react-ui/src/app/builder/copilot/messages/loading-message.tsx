@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CopilotAvatar } from './copilot-avatar';
+import { CopilotAvatar } from '../copilot-avatar';
 import { ChatBubble, ChatBubbleMessage } from '@/components/ui/chat/chat-bubble';
 
 type LoadingMessageProps = {

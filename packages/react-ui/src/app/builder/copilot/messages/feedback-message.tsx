@@ -1,14 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { ChatBubble, ChatBubbleMessage } from "@/components/ui/chat/chat-bubble";
 import { CheckIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { CopilotAvatar } from "./copilot-avatar";
+import { CopilotAvatar } from "../copilot-avatar";
 
-export const FeedbackMessage = () => (
+type FeedbackMessageProps = {
+  message: string;
+}
+
+export const FeedbackMessage = ({ message }: FeedbackMessageProps) => (
   <ChatBubble variant="received">
     <CopilotAvatar />
     <ChatBubbleMessage>
       <div className="flex flex-col gap-4">
-        <div>I have something for you, What do you think?</div>
+        <div>{message}</div>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -32,4 +36,4 @@ export const FeedbackMessage = () => (
       </div>
     </ChatBubbleMessage>
   </ChatBubble>
-); 
+);

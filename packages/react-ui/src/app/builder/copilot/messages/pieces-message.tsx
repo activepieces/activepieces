@@ -1,6 +1,6 @@
 import { ChatBubble, ChatBubbleMessage } from "@/components/ui/chat/chat-bubble";
 import { PieceIcon } from "@/features/pieces/components/piece-icon";
-import { CopilotAvatar } from "./copilot-avatar";
+import { CopilotAvatar } from "../copilot-avatar";
 import { piecesHooks } from "@/features/pieces/lib/pieces-hook";
 import { LoadingMessage } from "./loading-message";
 

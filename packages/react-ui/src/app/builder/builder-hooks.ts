@@ -174,7 +174,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       flowVersion: initialState.flowVersion,
       leftSidebar: initialState.run
         ? LeftSideBarType.RUN_DETAILS
-        : LeftSideBarType.NONE,
+        : LeftSideBarType.AI_COPILOT,
       readonly: initialState.readonly,
       run: initialState.run,
       saving: false,
@@ -236,7 +236,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
 
           const leftSidebar = !isNil(state.run)
             ? LeftSideBarType.RUN_DETAILS
-            : LeftSideBarType.NONE;
+            : state.leftSidebar;
 
           return {
             selectedStep,

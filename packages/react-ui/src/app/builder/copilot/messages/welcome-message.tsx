@@ -1,5 +1,5 @@
 import { ChatBubble, ChatBubbleMessage } from "@/components/ui/chat/chat-bubble";
-import { CopilotAvatar } from "./copilot-avatar";
+import { CopilotAvatar } from "../copilot-avatar";
 
 export const WelcomeMessage = () => (
   <ChatBubble variant="received">

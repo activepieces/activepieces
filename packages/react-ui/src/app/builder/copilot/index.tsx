@@ -4,13 +4,11 @@ import { SidebarHeader } from "../sidebar-header";
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { Button } from "@/components/ui/button";
-import { ArrowUpIcon} from "@radix-ui/react-icons";
-import { useState, useEffect } from "react";
-import { WelcomeMessage } from "./welcome-message";
-import { UserMessage } from "./user-message";
-import { FeedbackMessage } from "./feedback-message";
-import { LoadingMessage } from "./loading-message";
-import { PiecesMessage } from "./pieces-message";
+import { ArrowUpIcon } from "@radix-ui/react-icons";
+import { useState } from "react";
+import { ActionType, FlowOperationType, flowStructureUtil, isNil, PackageType, PieceType } from "@activepieces/shared";
+import { Workflow } from "lucide-react";
+import { CopilotMessageList } from "./copilot-message-list";
 
 type CopilotMessage = {
   type: 'welcome' | 'user' | 'feedback' | 'loading' | 'pieces';
@@ -23,8 +21,8 @@ export const CopilotSidebar = () => {
   const [messages, setMessages] = useState<CopilotMessage[]>([
     { type: 'welcome', message: "Hi! I'm Lotfi, your AI assistant. How can I help you today?" }
   ]);
-  const [setLeftSidebar] = useBuilderStateContext(
-    (state) => [state.setLeftSidebar],
+  const [setLeftSidebar, applyOperation, selectedStep] = useBuilderStateContext(
+    (state) => [state.setLeftSidebar, state.applyOperation, isNil(state.selectedStep) ? null : flowStructureUtil.getStep(state.selectedStep, state.flow.version.trigger)],
   );
 
   const onSubmit = (e: React.FormEvent) => {
@@ -32,21 +30,108 @@ export const CopilotSidebar = () => {
     if (input.trim()) {
       const newMessages: CopilotMessage[] = [...messages, { type: 'user', message: input }];
       setMessages(newMessages);
-      setInput(""); 
-      setMessages([...newMessages, { type: 'loading', message: "Discovering relevant pieces" }]);
-      
-      // Add timeout to simulate API call
-      setTimeout(() => {
-        setMessages([
-          ...newMessages,
-          { 
-            type: 'pieces', 
-            pieces: ['@activepieces/piece-google-sheets', '@activepieces/piece-slack']
-          }
-        ]);
-      }, 2000);
+      setInput("");
+      addAnimation(newMessages);
     }
   };
+
+  async function addAnimation(messages: CopilotMessage[]) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setMessages([...messages, { type: 'loading', message: 'Thinking...' }]);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Add Gmail action
+    applyOperation(
+      {
+        type: FlowOperationType.ADD_ACTION,
+        request: {
+          parentStep: 'trigger',
+          action: {
+            name: "step_1",
+            skip: false,
+            type: ActionType.PIECE,
+            valid: false,
+            settings: {
+              input: {},
+              pieceName: "@activepieces/piece-gmail",
+              pieceType: PieceType.OFFICIAL,
+              packageType: PackageType.REGISTRY,
+              actionName: "send_email",
+              inputUiInfo: {
+                customizedInputs: {}
+              },
+              pieceVersion: "~0.8.1",
+            },
+            displayName: "Send Email"
+          },
+        },
+      },
+      () => { },
+    );
+
+    await new Promise(resolve => setTimeout(resolve, 2600));
+
+    // Add Slack action
+    applyOperation(
+      {
+        type: FlowOperationType.ADD_ACTION,
+        request: {
+          parentStep: 'step_1',
+          action: {
+            name: "step_2",
+            skip: false,
+            type: ActionType.PIECE,
+            valid: false,
+            settings: {
+              input: {},
+              pieceName: "@activepieces/piece-slack",
+              pieceType: PieceType.OFFICIAL,
+              packageType: PackageType.REGISTRY,
+              actionName: "send_message",
+              inputUiInfo: {
+                customizedInputs: {}
+              },
+              pieceVersion: "~0.5.0",
+            },
+            displayName: "Send Slack Message"
+          },
+        },
+      },
+      () => { },
+    );
+
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // Add Discord action
+    applyOperation(
+      {
+        type: FlowOperationType.ADD_ACTION,
+        request: {
+          parentStep: 'step_2',
+          action: {
+            name: "step_3",
+            skip: false,
+            type: ActionType.PIECE,
+            valid: false,
+            settings: {
+              input: {},
+              pieceName: "@activepieces/piece-discord",
+              pieceType: PieceType.OFFICIAL,
+              packageType: PackageType.REGISTRY,
+              actionName: "send_message_webhook",
+              inputUiInfo: {
+                customizedInputs: {}
+              },
+              pieceVersion: "~0.3.0",
+            },
+            displayName: "Send Discord Message"
+          },
+        },
+      },
+      () => { },
+    );
+    setMessages([...messages, { type: 'feedback', message: 'I added three actions in sequence - Gmail, Slack and Discord. What do you think?' }]);
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -54,24 +139,15 @@ export const CopilotSidebar = () => {
         {t('Ask Lotfi')}
       </SidebarHeader>
       <ChatMessageList className="flex-grow space-y-6">
-        {messages.map((msg, index) => {
-          switch (msg.type) {
-            case 'welcome':
-              return <WelcomeMessage key={index} />;
-            case 'user':
-              return <UserMessage key={index} message={msg.message} />;
-            case 'feedback':
-              return <FeedbackMessage key={index} />;
-            case 'loading':
-              return <LoadingMessage key={index} message={msg.message} />;
-            case 'pieces':
-              return <PiecesMessage key={index} pieces={msg.pieces || []} />;
-            default:
-              return null;
-          }
-        })}
+        <CopilotMessageList messages={messages} />
       </ChatMessageList>
       <div className="p-4">
+        {selectedStep && (
+          <div className="mb-2 text-sm text-muted-foreground flex items-center gap-2">
+            <Workflow className="w-4 h-4" />
+            <span>Selected step: {selectedStep.displayName}</span>
+          </div>
+        )}
         <form onSubmit={onSubmit}>
           <ChatInput
             autoFocus
