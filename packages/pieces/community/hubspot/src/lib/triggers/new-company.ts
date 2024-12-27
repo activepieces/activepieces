@@ -1,48 +1,44 @@
-import { MarkdownVariant } from '@activepieces/shared';
-import { hubspotAuth } from '../../';
-import {
-	createTrigger,
-	PiecePropValueSchema,
-	Property,
-	TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+
+import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
+import dayjs from 'dayjs';
+import { MarkdownVariant } from '@activepieces/shared';
+import { OBJECT_TYPE } from '../common/constants';
+import { hubspotAuth } from '../..';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
-import dayjs from 'dayjs';
 
-const polling: Polling<
-	PiecePropValueSchema<typeof hubspotAuth>,
-	{ additionalPropertiesToRetrieve?: string[] | string }
-> = {
+type Props = {
+	additionalPropertiesToRetrieve?: string | string[];
+};
+
+const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const client = new Client({ accessToken: auth.access_token });
 
-		// Extract properties once to avoid recomputation
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
-		const defaultProductProperties = getDefaultPropertiesForObject(OBJECT_TYPE.PRODUCT);
-		const propertiesToRetrieve = [...defaultProductProperties, ...additionalProperties];
+		const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.COMPANY);
+		const propertiesToRetrieve = [...defaultCompanyProperties, ...additionalProperties];
 
 		const items = [];
 		let after;
 
 		do {
 			const isTest = lastFetchEpochMS === 0;
-			const response = await client.crm.products.searchApi.doSearch({
+			const response = await client.crm.companies.searchApi.doSearch({
 				limit: isTest ? 10 : 100,
-				after,
 				properties: propertiesToRetrieve,
-				sorts: ['-hs_lastmodifieddate'],
+				sorts: ['-createdate'],
 				filterGroups: isTest
 					? []
 					: [
 							{
 								filters: [
 									{
-										propertyName: 'hs_lastmodifieddate',
+										propertyName: 'createdate',
 										operator: FilterOperatorEnum.Gt,
 										value: lastFetchEpochMS.toString(),
 									},
@@ -58,28 +54,27 @@ const polling: Polling<
 		} while (after);
 
 		return items.map((item) => ({
-			epochMilliSeconds: dayjs(item.properties['hs_lastmodifieddate']).valueOf(),
+			epochMilliSeconds: dayjs(item.properties['createdate']).valueOf(),
 			data: item,
 		}));
 	},
 };
-
-export const newOrUpdatedProductTrigger = createTrigger({
+export const newCompanyTrigger = createTrigger({
 	auth: hubspotAuth,
-	name: 'new-or-updated-product',
-	displayName: 'Product Recently Created or Updated',
-	description: 'Triggers when a product recenty created or updated.',
+	name: 'new-company',
+	displayName: 'New Company',
+	description: 'Trigger when a new company is added.',
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
 			value: `### Properties to retrieve:
-                                    
-                    createdate, description, name, price, tax, hs_lastmodifieddate
-                                    
-                    **Specify here a list of additional properties to retrieve**`,
+                                
+                  name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies
+                                
+                  **Specify here a list of additional properties to retrieve**`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
-			objectType: OBJECT_TYPE.PRODUCT,
+			objectType: OBJECT_TYPE.COMPANY,
 			displayName: 'Additional properties to retrieve',
 			required: false,
 		}),
@@ -105,19 +100,18 @@ export const newOrUpdatedProductTrigger = createTrigger({
 	async run(context) {
 		return await pollingHelper.poll(polling, context);
 	},
+
 	sampleData: {
-		createdAt: '2024-12-18T16:10:27.710Z',
+		id: '123123123',
 		archived: false,
-		id: '17602013482',
+		createdAt: '2023-07-03T14:48:13.839Z',
+		updatedAt: '2023-07-03T14:48:14.769Z',
 		properties: {
-			createdate: '2024-12-18T16:10:27.710Z',
-			description: 'Chair',
-			hs_lastmodifieddate: '2024-12-23T08:13:30.314Z',
-			hs_object_id: '17602013482',
-			name: 'Chair',
-			price: '15.0',
-			tax: null,
+			name: 'Company Name',
+			domain: 'company.com',
+			createdate: '2023-07-03T14:48:13.839Z',
+			hs_object_id: '123123123',
+			hs_lastmodifieddate: '2023-07-03T14:48:14.769Z',
 		},
-		updatedAt: '2024-12-23T08:13:30.314Z',
 	},
 });

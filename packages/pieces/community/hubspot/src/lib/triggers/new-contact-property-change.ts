@@ -46,6 +46,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		do {
 			const response = await client.crm.contacts.searchApi.doSearch({
 				limit: 100,
+				after,
 				sorts: ['-lastmodifieddate'],
 				filterGroups: [
 					{

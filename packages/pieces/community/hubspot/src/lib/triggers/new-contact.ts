@@ -4,9 +4,9 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import dayjs from 'dayjs';
-import { hubspotAuth } from '../..';
 import { MarkdownVariant } from '@activepieces/shared';
 import { OBJECT_TYPE } from '../common/constants';
+import { hubspotAuth } from '../..';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 
@@ -20,19 +20,19 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		const client = new Client({ accessToken: auth.access_token });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
-		const defaultTicketProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TICKET);
-		const propertiesToRetrieve = [...defaultTicketProperties, ...additionalProperties];
+		const defaultContactProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT);
+		const propertiesToRetrieve = [...defaultContactProperties, ...additionalProperties];
 
 		const items = [];
 		let after;
 
 		do {
 			const isTest = lastFetchEpochMS === 0;
-			const response = await client.crm.tickets.searchApi.doSearch({
+			const response = await client.crm.contacts.searchApi.doSearch({
 				limit: isTest ? 10 : 100,
 				properties: propertiesToRetrieve,
-				after,
 				sorts: ['-createdate'],
+				after,
 				filterGroups: isTest
 					? []
 					: [
@@ -61,22 +61,22 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 	},
 };
 
-export const newTicketTrigger = createTrigger({
+export const newContactTrigger = createTrigger({
 	auth: hubspotAuth,
-	name: 'new-ticket',
-	displayName: 'New Ticket',
-	description: 'Trigger when new deal is available.',
+	name: 'new-contact',
+	displayName: 'New Contact',
+	description: 'Trigger when new contact is available.',
 	props: {
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
 			value: `### Properties to retrieve:
-                                                        
-              subject, content, source_type, createdate, hs_pipeline, hs_pipeline_stage, hs_resolution, hs_ticket_category, hs_ticket_id, hs_ticket_priority, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
-
+                                        
+              firstname, lastname, email, company, website, mobilephone, phone, fax, address, city, state, zip, salutation, country, jobtitle, hs_createdate, hs_email_domain, hs_object_id, lastmodifieddate, hs_persona, hs_language, lifecyclestage, createdate, numemployees, annualrevenue, industry			
+                                        
               **Specify here a list of additional properties to retrieve**`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
-			objectType: OBJECT_TYPE.TICKET,
+			objectType: OBJECT_TYPE.CONTACT,
 			displayName: 'Additional properties to retrieve',
 			required: false,
 		}),
@@ -104,25 +104,37 @@ export const newTicketTrigger = createTrigger({
 	},
 
 	sampleData: {
-		createdAt: '2024-12-26T08:40:12.881Z',
+		createdAt: '2024-12-06T10:52:58.322Z',
 		archived: false,
-		id: '18166565782',
+		id: '82665997707',
 		properties: {
-			content: null,
-			createdate: '2024-12-26T08:40:12.881Z',
-			hs_lastmodifieddate: '2024-12-26T08:40:14.245Z',
-			hs_object_id: '18166565782',
-			hs_pipeline: '0',
-			hs_pipeline_stage: '1',
-			hs_resolution: null,
-			hs_ticket_category: null,
-			hs_ticket_id: '18166565782',
-			hs_ticket_priority: null,
-			hubspot_owner_id: '1594636734',
-			hubspot_team_id: '55094099',
-			source_type: null,
-			subject: 'test',
+			address: null,
+			annualrevenue: null,
+			city: 'Brisbane',
+			company: 'HubSpot',
+			country: null,
+			createdate: '2024-12-06T10:52:58.322Z',
+			email: 'emailmaria@hubspot.com',
+			fax: null,
+			firstname: 'Maria',
+			hs_createdate: null,
+			hs_email_domain: 'hubspot.com',
+			hs_language: null,
+			hs_object_id: '82665997707',
+			hs_persona: null,
+			industry: null,
+			jobtitle: 'Salesperson',
+			lastmodifieddate: '2024-12-20T12:50:35.201Z',
+			lastname: 'Johnson (Sample Contact)',
+			lifecyclestage: 'lead',
+			mobilephone: null,
+			numemployees: null,
+			phone: null,
+			salutation: null,
+			state: null,
+			website: 'http://www.HubSpot.com',
+			zip: null,
 		},
-		updatedAt: '2024-12-26T08:40:14.245Z',
+		updatedAt: '2024-12-20T12:50:35.201Z',
 	},
 });

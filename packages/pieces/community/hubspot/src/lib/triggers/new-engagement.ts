@@ -69,7 +69,7 @@ export const newEngagementTrigger = createTrigger({
 	type: TriggerStrategy.POLLING,
 	props: {
 		eventType: Property.StaticDropdown({
-			displayName: 'Event Type',
+			displayName: 'Type',
 			required: false,
 			options: {
 				disabled: false,

@@ -62,6 +62,9 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			});
 
 			after = response.body.paging?.next?.after;
+			if(response.body.paging?.next?.after){
+				qs.after = response.body.paging?.next?.after;
+			}
 			items.push(...response.body.results);
 			if (isTestMode) {
 				break;

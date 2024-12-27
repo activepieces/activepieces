@@ -33,6 +33,7 @@ const polling: Polling<
 			const isTest = lastFetchEpochMS === 0;
 			const response = await client.crm.contacts.searchApi.doSearch({
 				limit: isTest ? 10 : 100,
+				after,
 				properties: propertiesToRetrieve,
 				sorts: ['-lastmodifieddate'],
 				filterGroups: isTest

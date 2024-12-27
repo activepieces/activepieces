@@ -30,6 +30,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			const isTest = lastFetchEpochMS === 0;
 			const response = await client.crm.deals.searchApi.doSearch({
 				limit: isTest ? 10 : 100,
+				after,
 				properties: propertiesToRetrieve,
 				sorts: ['-createdate'],
 				filterGroups: isTest

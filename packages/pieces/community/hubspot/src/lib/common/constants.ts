@@ -5,6 +5,7 @@ export const enum OBJECT_TYPE {
 	TICKET = 'ticket',
 	PRODUCT = 'product',
 	LINE_ITEM = 'line_item',
+	TASK = 'task',
 }
 
 export const DEFAULT_CONTACT_PROPERTIES = [
@@ -134,24 +135,42 @@ export const DEFAULT_LINE_ITEM_PROPERTIES = [
 
 export const STANDARD_OBJECT_TYPES = [
 	{
-	  label: "Contacts",
-	  value: OBJECT_TYPE.CONTACT,
+		label: 'Contacts',
+		value: OBJECT_TYPE.CONTACT,
 	},
 	{
-	  label: "Companies",
-	  value: OBJECT_TYPE.COMPANY,
+		label: 'Companies',
+		value: OBJECT_TYPE.COMPANY,
 	},
 	{
-	  label: "Deals",
-	  value: OBJECT_TYPE.DEAL,
+		label: 'Deals',
+		value: OBJECT_TYPE.DEAL,
 	},
 	{
-	  label: "Tickets",
-	  value: OBJECT_TYPE.TICKET,
+		label: 'Tickets',
+		value: OBJECT_TYPE.TICKET,
 	},
 	{
-	  label: "Line Items",
-	  value: OBJECT_TYPE.LINE_ITEM,
+		label: 'Line Items',
+		value: OBJECT_TYPE.LINE_ITEM,
 	},
-	
-  ];
+];
+
+
+
+export const DEFAULT_TASK_PROPERTIES = [
+	'hs_task_body',
+	'hubspot_owner_id',
+	'hs_task_subject',
+	'hs_task_status',
+	'hs_task_priority',
+	'hs_task_type',
+	'hs_created_by',
+	'hs_repeat_status',
+	'hs_task_completion_date',
+	'hs_task_is_completed',
+	'hs_timestamp',
+	'hs_queue_membership_ids',
+	'hs_lastmodifieddate',
+	'hs_createdate',
+];

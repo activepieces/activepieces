@@ -21,6 +21,7 @@ import {
 	DEFAULT_LINE_ITEM_PROPERTIES,
 	DEFAULT_PRODUCT_PROPERTIES,
 	DEFAULT_TICKET_PROPERTIES,
+	DEFAULT_TASK_PROPERTIES,
 	OBJECT_TYPE,
 	STANDARD_OBJECT_TYPES,
 } from './constants';
@@ -98,6 +99,8 @@ export function getDefaultPropertiesForObject(objectType: OBJECT_TYPE): string[]
 			return DEFAULT_PRODUCT_PROPERTIES;
 		case OBJECT_TYPE.LINE_ITEM:
 			return DEFAULT_LINE_ITEM_PROPERTIES;
+		case OBJECT_TYPE.TASK:
+			return DEFAULT_TASK_PROPERTIES;
 		default:
 			return [];
 	}

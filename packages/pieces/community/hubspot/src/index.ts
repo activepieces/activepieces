@@ -2,10 +2,10 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { hubSpotListsAddContactAction } from './lib/actions/add-contact-to-list-action';
-import { newCompanyAdded } from './lib/triggers/new-company-added';
-import { newContactAdded } from './lib/triggers/new-contact-added';
+import { newCompanyTrigger } from './lib/triggers/new-company';
+import { newContactTrigger } from './lib/triggers/new-contact';
 import { newDealTrigger } from './lib/triggers/new-deal';
-import { newTaskAdded } from './lib/triggers/new-task-added';
+import { newTaskTrigger } from './lib/triggers/new-task';
 import { newTicketTrigger } from './lib/triggers/new-ticket';
 import { createDealAction } from './lib/actions/create-deal';
 import { updateDealAction } from './lib/actions/update-deal';
@@ -166,9 +166,9 @@ export const hubspot = createPiece({
 		newDealPropertyChangeTrigger,
 		newEmailSubscriptionsTimelineTrigger,
 		newOrUpdatedLineItemTrigger,
-		newCompanyAdded,
+		newCompanyTrigger,
 		newCompanyPropertyChangeTrigger,
-		newContactAdded,
+		newContactTrigger,
 		newContactInListTrigger,
 		newContactPropertyChangeTrigger,
 		newBlogArticleTrigger,
@@ -183,7 +183,7 @@ export const hubspot = createPiece({
 		newTicketTrigger,
 		newTicketPropertyChangeTrigger,
 		newOrUpdatedProductTrigger,
-		newTaskAdded,
+		newTaskTrigger,
 		dealStageUpdatedTrigger,
 	],
 });

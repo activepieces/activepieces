@@ -33,6 +33,7 @@ const polling: Polling<
 			const isTest = lastFetchEpochMS === 0;
 			const response = await client.crm.companies.searchApi.doSearch({
 				limit: isTest ? 10 : 100,
+				after,
 				properties: propertiesToRetrieve,
 				sorts: ['-hs_lastmodifieddate'],
 				filterGroups: isTest

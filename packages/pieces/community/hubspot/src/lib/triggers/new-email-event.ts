@@ -16,7 +16,7 @@ import {
 } from '@activepieces/pieces-framework';
 
 type Props = {
-	eventType: string;
+	eventType?: string;
 };
 
 type EmailEventResponse = {
@@ -75,7 +75,7 @@ export const newEmailEventTrigger = createTrigger({
 	props: {
 		eventType: Property.StaticDropdown({
 			displayName: 'Event Type',
-			required: true,
+			required: false,
 			options: {
 				disabled: false,
 				options: [
