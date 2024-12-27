@@ -201,3 +201,10 @@ export declare enum AssociationSpecAssociationCategoryEnum {
     UserDefined = "USER_DEFINED",
     IntegratorDefined = "INTEGRATOR_DEFINED"
 }
+
+export type ListBlogsResponse = {
+	objects:Array<{absolute_url:string,id:number}>;
+	offset:number,
+	total:number,
+	limit:number
+}

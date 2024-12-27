@@ -13,7 +13,7 @@ import {
 	HttpMethod,
 	HttpRequest,
 } from '@activepieces/pieces-common';
-import { WorkflowResponse, HubspotProperty, HubspotFieldType } from './types';
+import { WorkflowResponse, HubspotProperty, HubspotFieldType, ListBlogsResponse } from './types';
 import {
 	DEFAULT_COMPANY_PROPERTIES,
 	DEFAULT_CONTACT_PROPERTIES,
@@ -910,6 +910,84 @@ export const formDropdown = Property.Dropdown({
 			disabled: false,
 			options,
 		};
+	},
+});
+
+export const blogUrlDropdown = Property.Dropdown({
+	displayName: 'Blog URL',
+	refreshers: [],
+	required: true,
+	options: async ({ auth }) => {
+		if (!auth) {
+			return { disabled: true, options: [], placeholder: 'Please connect your account.' };
+		}
+
+		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+
+		const response = await httpClient.sendRequest<ListBlogsResponse>({
+			method: HttpMethod.GET,
+			url: 'https://api.hubapi.com/content/api/v2/blogs',
+			authentication: { type: AuthenticationType.BEARER_TOKEN, token: authValue.access_token },
+			queryParams: {
+				limit: '100',
+			},
+		});
+
+		return {
+			disabled: false,
+			options: response.body.objects.map((blog) => {
+				return {
+					label: blog.absolute_url,
+					value: blog.id.toString(),
+				};
+			}),
+		};
+	},
+});
+
+export const blogAuthorDropdown = Property.Dropdown({
+	displayName: 'Blog Author',
+	refreshers: [],
+	required: true,
+	options: async ({ auth }) => {
+		if (!auth) {
+			return { disabled: true, options: [], placeholder: 'Please connect your account.' };
+		}
+
+		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+
+		const client = new Client({ accessToken: authValue.access_token });
+
+		const options: DropdownOption<string>[] = [];
+
+		let after: string | undefined;
+		do {
+			const response = await client.cms.blogs.authors.blogAuthorsApi.getPage(
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				after,
+				100,
+			);
+			for (const author of response.results)
+			{
+				options.push({
+					label: author.name,
+					value: author.id,
+				})
+			}
+				
+			after = response.paging?.next?.after;
+		} while (after);
+
+		return {
+			disabled: false,
+			options,
+		}
 	},
 });
 
