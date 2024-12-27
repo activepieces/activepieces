@@ -40,7 +40,6 @@ afterAll(async () => {
     await app?.close()
 })
 
-
 describe('Project API', () => {
     describe('Create Project', () => {
         it('it should create project by user', async () => {

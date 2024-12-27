@@ -166,8 +166,10 @@ import { AddGlobalConnectionsAndRbacForPlatform1731532843905 } from './migration
 import { AddAuditLogIndicies1731711188507 } from './migration/postgres/1731711188507-AddAuditLogIndicies'
 import { AddIndiciesToRunAndTriggerData1732324567513 } from './migration/postgres/1732324567513-AddIndiciesToRunAndTriggerData'
 import { AddProjectRelationInUserInvitation1732790412900 } from './migration/postgres/1732790673766-AddProjectRelationInUserInvitation'
+import { CreateProjectReleaseTable1734418823028 } from './migration/postgres/1734418823028-CreateProjectReleaseTable'
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
 import { AddCopilotSettings1734479886363 } from './migration/postgres/1734479886363-AddCopilotSettings'
+import { AddExternalIdForFlow1735262417593 } from './migration/postgres/1735262417593-AddExternalIdForFlow'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -281,6 +283,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddProjectRelationInUserInvitation1732790412900,
         RemoveWorkerType1734439097357,
         AddCopilotSettings1734479886363,
+        AddExternalIdForFlow1735262417593,
     ]
 
     const edition = system.getEdition()
@@ -356,6 +359,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MigrateAuditEventSchema1723489038729,
                 AddAiTokensForProjectPlan1726446092010,
                 AddAuditLogIndicies1731711188507,
+                CreateProjectReleaseTable1734418823028,
 
             )
             break

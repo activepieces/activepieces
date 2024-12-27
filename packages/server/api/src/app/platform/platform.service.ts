@@ -57,7 +57,7 @@ export const platformService = {
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
             flowIssuesEnabled: false,
-            gitSyncEnabled: false,
+            environmentEnabled: false,
             managePiecesEnabled: false,
             manageTemplatesEnabled: false,
             manageProjectsEnabled: false,
@@ -111,7 +111,7 @@ export const platformService = {
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
-            ...spreadIfDefined('gitSyncEnabled', params.gitSyncEnabled),
+            ...spreadIfDefined('environmentEnabled', params.environmentEnabled),
             ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
             ...spreadIfDefined('globalConnectionsEnabled', params.globalConnectionsEnabled),
             ...spreadIfDefined('customRolesEnabled', params.customRolesEnabled),
@@ -181,7 +181,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     auditLogEnabled?: boolean
     showPoweredBy?: boolean
     ssoEnabled?: boolean
-    gitSyncEnabled?: boolean
+    environmentEnabled?: boolean
     embeddingEnabled?: boolean
     globalConnectionsEnabled?: boolean
     customRolesEnabled?: boolean
