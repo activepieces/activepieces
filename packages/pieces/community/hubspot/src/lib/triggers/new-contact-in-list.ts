@@ -157,5 +157,18 @@ export const newContactInListTrigger = createTrigger({
 	async run(context) {
 		return await pollingHelper.poll(polling, context);
 	},
-	sampleData: {},
+	sampleData: {
+		id: '123',
+		archived: false,
+		createdAt: '2023-06-13T10:24:42.392Z',
+		updatedAt: '2023-06-30T06:16:51.869Z',
+		properties: {
+			email: 'contact@email.com',
+			lastname: 'Last',
+			firstname: 'First',
+			createdate: '2023-06-13T10:24:42.392Z',
+			hs_object_id: '123',
+			lastmodifieddate: '2023-06-30T06:16:51.869Z',
+		},
+	},
 });
