@@ -1,12 +1,17 @@
-import { Scenario } from './scenario';
-import { FlowType } from '../types/flow-outline';
+import { Flow } from '../types/flow-outline';
 import { Agent } from '../agents/agent';
 import { isNil } from '@activepieces/shared';
 import { WebsocketCopilotUpdate, WebsocketEventTypes } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
-import { websocketUtils } from '../util/websocket';
+import { websocketUtils } from './websocket';
 
-export const scenarios: Scenario<FlowType>[] = [
+export interface Scenario {
+  title: string;
+  prompt: string;
+}
+
+
+export const scenarios: Scenario[] = [
   {
     title: 'New Row Google Sheets Send Slack Message',
     prompt: 'When a new row is added to a Google Sheets spreadsheet, send a message to a Slack channel.',
@@ -45,7 +50,7 @@ export const scenarios: Scenario<FlowType>[] = [
   },
 ];
 
-export async function runScenarios(agent: Agent<FlowType>, targetScenario: string[] | null, socket: Socket | null) {
+export async function runScenarios(agent: Agent<Flow>, targetScenario: string[] | null, socket: Socket | null) {
   const scenariosToRun = scenarios.filter((scenario) =>
     targetScenario?.includes(scenario.title) || isNil(targetScenario)
   );

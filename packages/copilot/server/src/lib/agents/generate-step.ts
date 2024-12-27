@@ -1,19 +1,19 @@
-import { FlowStepType, PieceSettingsType } from '../types/flow-outline';
 import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import axios from 'axios';
-import { stepGenerationSchema } from '../types/schemas';
 import {
   PieceMetadata,
   ActionBase,
   TriggerBase,
 } from '@activepieces/pieces-framework';
+import { FlowStep } from '../types/flow-outline';
+import { z } from 'zod';
 
 interface StepContext {
   stepType: 'PIECE_TRIGGER' | 'PIECE' | 'ROUTER';
   pieceName: string;
   actionOrTriggerName?: string;
-  previousSteps?: FlowStepType[];
+  previousSteps?: FlowStep[];
   condition?: string;
 }
 
@@ -91,13 +91,36 @@ function getRouterContext(): string {
     - EXECUTE_FIRST_MATCH: Execute only the first branch where conditions match
   `;
 }
+const stepGenerationSchema = z.object({
+  name: z.string(),
+  type: z.enum(['PIECE_TRIGGER', 'PIECE', 'ROUTER']),
+  piece: z.object({
+    pieceName: z.string(),
+    triggerName: z.string().optional(),
+    actionName: z.string().optional(),
+  }),
+  input: z.record(z.any()).optional(),
+  children: z
+    .array(
+      z.object({
+        name: z.string(),
+        condition: z.string(),
+        piece: z.object({
+          pieceName: z.string(),
+          actionName: z.string().optional(),
+        }),
+        input: z.record(z.any()).optional(),
+      })
+    ).optional(),
+});
+
 
 interface StepAgent {
-  createStep(context: StepContext): Promise<FlowStepType>;
+  createStep(context: StepContext): Promise<FlowStep>;
 }
 
 export const stepAgent: StepAgent = {
-  async createStep(context: StepContext): Promise<FlowStepType> {
+  async createStep(context: StepContext): Promise<FlowStep> {
 
     let stepContext: string;
 
@@ -196,6 +219,6 @@ export const stepAgent: StepAgent = {
       `,
     });
 
-    return object as FlowStepType;
+    return object as FlowStep;
   },
 };

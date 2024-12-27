@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { runScenarios, scenarios } from "../scenario/scenario-runner";
+import { runScenarios, scenarios } from "./scenario-runner";
 import { State, WebsocketCopilotResult, WebsocketEventTypes } from "@activepieces/copilot-shared";
 import { plannerAgent } from "../agents/planner";
 

@@ -1,58 +1,35 @@
 import { z } from 'zod';
 
-export interface PieceSettingsType {
-  pieceName: string;
-  triggerName?: string;
-  actionName?: string;
-}
-
-export const PieceSettings: z.ZodType<PieceSettingsType> = z.object({
+export const PieceSettings = z.object({
   pieceName: z.string(),
   triggerName: z.string().optional(),
   actionName: z.string().optional(),
 });
+export type PieceSettings = z.infer<typeof PieceSettings>;
 
-export type FlowInputType = Record<string, any>;
 export const FlowInput = z.record(z.any());
+export type FlowInput = z.infer<typeof FlowInput>;
 
-export interface RouterChildType {
-  name: string;
-  condition: string;
-  piece: PieceSettingsType;
-  input?: FlowInputType;
-}
-
-export const RouterChild: z.ZodType<RouterChildType> = z.object({
+export const RouterChild = z.object({
   name: z.string(),
-  condition: z.string(),
+  condition: z.string(), 
   piece: PieceSettings,
   input: FlowInput.optional(),
 });
+export type RouterChild = z.infer<typeof RouterChild>;
 
-export interface FlowStepType {
-  name: string;
-  type: 'PIECE_TRIGGER' | 'PIECE' | 'ROUTER';
-  piece?: PieceSettingsType;
-  input?: FlowInputType;
-  children?: RouterChildType[];
-}
-
-export const FlowStep: z.ZodType<FlowStepType> = z.object({
+export const FlowStep = z.object({
   name: z.string(),
   type: z.enum(['PIECE_TRIGGER', 'PIECE', 'ROUTER']),
   piece: PieceSettings.optional(),
   input: FlowInput.optional(),
   children: z.array(RouterChild).optional(),
 });
+export type FlowStep = z.infer<typeof FlowStep>;
 
-export interface FlowType {
-  name: string;
-  description: string;
-  steps: FlowStepType[];
-}
-
-export const Flow: z.ZodType<FlowType> = z.object({
+export const Flow = z.object({
   name: z.string(),
   description: z.string(),
   steps: z.array(FlowStep),
 });
+export type Flow = z.infer<typeof Flow>;

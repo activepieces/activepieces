@@ -1,17 +1,30 @@
-import { FlowType } from '../types/flow-outline';
+import { Flow } from '../types/flow-outline';
 import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { findRelevantPieces } from '../tools/embeddings';
-import { planSchema } from '../types/schemas';
 import { Agent } from './agent';
 import { stepAgent } from './generate-step';
 import { WebsocketCopilotUpdate } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
 import { websocketUtils } from '../util/websocket';
+import { z } from 'zod';
 
-export const plannerAgent: Agent<FlowType> = {
+export const planSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  steps: z.array(z.object({
+    type: z.enum(['PIECE_TRIGGER', 'PIECE', 'ROUTER']),
+      pieceName: z.string(),
+      actionOrTriggerName: z.string().optional(),
+      condition: z.string().optional(),
+    })
+  ),
+});
 
-  async plan(prompt: string, socket: Socket | null): Promise<FlowType> {
+
+export const plannerAgent: Agent<Flow> = {
+
+  async plan(prompt: string, socket: Socket | null): Promise<Flow> {
     // Step 1: Find relevant pieces
     const relevantPieces = await findRelevantPieces(prompt);
     
