@@ -4,7 +4,7 @@ import { ControllerPanel } from './components/controllers';
 import { TestResults } from './components/test-results';
 import { Scenarios } from './components/scenarios';
 import { AgentDrawerProvider } from './AgentDrawerContext';
-import { AgentDrawer } from './components/agents/_components';
+import { AgentDrawer } from './components/agents/components';
 import { WebSocketProvider } from './providers/websocket-provider';
 import { useState } from 'react';
 
