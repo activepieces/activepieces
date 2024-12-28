@@ -1,25 +1,11 @@
 import { Info } from 'lucide-react';
 
-interface CustomPromptEditorProps {
+interface StepPromptEditorProps {
   value: string;
   onChange: (value: string) => void;
-  type: 'planner' | 'step';
 }
 
-const PLANNER_VARIABLES = [
-  {
-    name: 'available_pieces',
-    description: 'List of available pieces with their descriptions',
-    example: '- Piece1: Description\n- Piece2: Description'
-  },
-  {
-    name: 'user_prompt',
-    description: 'The original user request',
-    example: 'Create a flow that sends emails'
-  }
-];
-
-const STEP_VARIABLES = [
+const AVAILABLE_VARIABLES = [
   {
     name: 'step_context',
     description: 'The context for step generation including piece metadata, previous steps, and conditions',
@@ -27,11 +13,9 @@ const STEP_VARIABLES = [
   }
 ];
 
-export const CustomPromptEditor = ({ value, onChange, type }: CustomPromptEditorProps) => {
-  const variables = type === 'planner' ? PLANNER_VARIABLES : STEP_VARIABLES;
-
+export const StepPromptEditor = ({ value, onChange }: StepPromptEditorProps) => {
   const insertVariable = (variable: string) => {
-    const textArea = document.getElementById('customPrompt') as HTMLTextAreaElement;
+    const textArea = document.getElementById('stepPrompt') as HTMLTextAreaElement;
     if (textArea) {
       const start = textArea.selectionStart;
       const end = textArea.selectionEnd;
@@ -54,8 +38,8 @@ export const CustomPromptEditor = ({ value, onChange, type }: CustomPromptEditor
     <div className="space-y-1.5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <label htmlFor="customPrompt" className="block text-sm font-medium text-gray-700">
-          {type === 'planner' ? 'Custom Planner Prompt' : 'Custom Step Generation Prompt'}
+        <label htmlFor="stepPrompt" className="block text-sm font-medium text-gray-700">
+          Custom Step Generation Prompt
         </label>
         <span className="text-xs text-gray-500">
           {value ? `${value.length} chars` : 'Optional'}
@@ -64,10 +48,10 @@ export const CustomPromptEditor = ({ value, onChange, type }: CustomPromptEditor
 
       {/* Prompt Textarea */}
       <textarea
-        id="customPrompt"
+        id="stepPrompt"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={`Enter a custom prompt for ${type === 'planner' ? 'the planner' : 'step generation'}...`}
+        placeholder="Enter a custom prompt for step generation..."
         className="w-full h-32 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-gray-50 placeholder-gray-400"
       />
 
@@ -78,7 +62,7 @@ export const CustomPromptEditor = ({ value, onChange, type }: CustomPromptEditor
           <span className="text-xs font-medium text-gray-600">Available Variables</span>
         </div>
         <div className="p-1.5 grid grid-cols-2 gap-1">
-          {variables.map((variable) => (
+          {AVAILABLE_VARIABLES.map((variable) => (
             <button
               key={variable.name}
               type="button"

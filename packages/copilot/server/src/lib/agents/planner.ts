@@ -13,6 +13,7 @@ import { PromptTemplate } from '../util/prompt-template';
 export interface PlanOptions {
   relevanceThreshold?: number;
   customPrompt?: string;
+  stepPrompt?: string;
 }
 
 export const plannerAgent: Agent<FlowType> = {
@@ -44,7 +45,8 @@ export const plannerAgent: Agent<FlowType> = {
       user_prompt: prompt
     };
 
-    console.log(options?.customPrompt)
+
+
     const finalPrompt = options?.customPrompt ? 
       PromptTemplate.getPlannerPrompt(promptVariables, options.customPrompt) : 
       PromptTemplate.getPlannerPrompt(promptVariables);
@@ -77,6 +79,7 @@ export const plannerAgent: Agent<FlowType> = {
         actionOrTriggerName: stepPlan.actionOrTriggerName,
         previousSteps: steps,
         condition: stepPlan.condition,
+        customPrompt: options?.stepPrompt
       });
 
       // Emit step created event

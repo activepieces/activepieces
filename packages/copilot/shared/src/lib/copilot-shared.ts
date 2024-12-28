@@ -9,7 +9,7 @@ export interface RunTestsParams {
   scenarioTitle: string;
   relevanceThreshold?: number;
   customPrompt?: string;
-  stepConfig?: StepConfig;
+  stepPrompt?: string;
 }
 
 export type State = {

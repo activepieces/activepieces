@@ -1,16 +1,15 @@
-import { cn } from '../../lib/utils';
-import { ThresholdControl } from '../components/test-results/components/threshold-control';
-import { CustomPromptEditor } from '../components/test-results/components/custom-prompt-editor';
-import { useTestConfig } from '../TestConfigContext';
+import { cn } from '../../../lib/utils';
+import { ThresholdControl } from '../test-results/components/threshold-control';
+import { PromptEditors } from '../test-results/components/prompt-editors';
+import { useTestConfig } from '../../TestConfigContext';
 
 interface ControllerSidebarProps {
   className?: string;
 }
 
-export const ControllerSidebar = ({ className }: ControllerSidebarProps) => {
-  console.debug('Rendering ControllerSidebar component');
+export const ControllerPanel = ({ className }: ControllerSidebarProps) => {
 
-  const { config, setThreshold, setCustomPrompt } = useTestConfig();
+  const { config, setThreshold, setPlannerPrompt, setStepPrompt } = useTestConfig();
 
   return (
     <div className={cn('w-96 bg-white border-r border-gray-200 flex flex-col h-full', className)}>
@@ -41,10 +40,12 @@ export const ControllerSidebar = ({ className }: ControllerSidebarProps) => {
               </div>
             </div>
 
-            {/* Custom Prompt Section */}
-            <CustomPromptEditor
-              value={config.customPrompt}
-              onChange={setCustomPrompt}
+            {/* Prompt Editors Section */}
+            <PromptEditors
+              plannerPrompt={config.plannerPrompt}
+              stepPrompt={config.stepPrompt}
+              onPlannerPromptChange={setPlannerPrompt}
+              onStepPromptChange={setStepPrompt}
             />
           </div>
         </div>

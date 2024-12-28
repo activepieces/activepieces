@@ -60,7 +60,8 @@ export async function runScenarios(agent: Agent<FlowType>, targetScenario: RunTe
 
     const output = await agent.plan(scenario.prompt, socket, {
       relevanceThreshold: testParams?.relevanceThreshold,
-      customPrompt: testParams?.customPrompt
+      customPrompt: testParams?.customPrompt,
+      stepPrompt: testParams?.stepPrompt
     });
 
     const result = {

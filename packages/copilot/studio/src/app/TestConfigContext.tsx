@@ -2,18 +2,21 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface TestConfig {
   threshold: number;
-  customPrompt: string;
+  plannerPrompt: string;
+  stepPrompt: string;
 }
 
 interface TestConfigContextType {
   config: TestConfig;
   setThreshold: (threshold: number) => void;
-  setCustomPrompt: (prompt: string) => void;
+  setPlannerPrompt: (prompt: string) => void;
+  setStepPrompt: (prompt: string) => void;
 }
 
 const defaultConfig: TestConfig = {
   threshold: 0.35,
-  customPrompt: '',
+  plannerPrompt: '',
+  stepPrompt: '',
 };
 
 const TestConfigContext = createContext<TestConfigContextType | undefined>(undefined);
@@ -27,12 +30,16 @@ export function TestConfigProvider({ children }: { children: ReactNode }) {
     setConfig(prev => ({ ...prev, threshold }));
   };
 
-  const setCustomPrompt = (customPrompt: string) => {
-    setConfig(prev => ({ ...prev, customPrompt }));
+  const setPlannerPrompt = (plannerPrompt: string) => {
+    setConfig(prev => ({ ...prev, plannerPrompt }));
+  };
+
+  const setStepPrompt = (stepPrompt: string) => {
+    setConfig(prev => ({ ...prev, stepPrompt }));
   };
 
   return (
-    <TestConfigContext.Provider value={{ config, setThreshold, setCustomPrompt }}>
+    <TestConfigContext.Provider value={{ config, setThreshold, setPlannerPrompt, setStepPrompt }}>
       {children}
     </TestConfigContext.Provider>
   );

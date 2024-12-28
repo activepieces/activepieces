@@ -15,6 +15,7 @@ interface StepContext {
   actionOrTriggerName?: string;
   previousSteps?: FlowStepType[];
   condition?: string;
+  customPrompt?: string;
 }
 
 async function fetchPieceMetadata(
@@ -98,6 +99,7 @@ interface StepAgent {
 
 export const stepAgent: StepAgent = {
   async createStep(context: StepContext): Promise<FlowStepType> {
+    console.debug('[StepAgent] Creating step with context:', JSON.stringify(context, null, 2));
 
     let stepContext: string;
 
@@ -149,51 +151,59 @@ export const stepAgent: StepAgent = {
       }
     `;
 
+    const defaultPrompt = `
+      You are a step creation agent that generates a single step for an automation flow.
+      
+      Current Context:
+      ${stepContext}
+
+      Create a step that:
+      - Has a clear, descriptive name explaining what it does
+      ${
+        context.stepType === 'ROUTER'
+          ? `
+      - Implements the condition logic using the appropriate operators
+      - Uses EXECUTE_FIRST_MATCH by default unless multiple matches are needed
+      - Each condition should reference previous step outputs correctly
+      `
+          : `
+      - Uses the correct piece settings (${context.pieceName})
+      - ${
+        context.stepType === 'PIECE_TRIGGER'
+          ? 'Uses the correct trigger name (not display name) from the available triggers'
+          : ''
+      }
+      - ${
+        context.stepType === 'PIECE'
+          ? 'Uses the correct action name (not display name) from the available actions'
+          : ''
+      }
+      `
+      }
+      - Includes necessary input parameters using connection placeholders
+
+      IMPORTANT:
+      - The step type must be: ${context.stepType}
+      ${
+        context.stepType !== 'ROUTER'
+          ? '- For triggers and actions, use the internal name (not display name)'
+          : ''
+      }
+      - Use proper variable references (e.g., {{trigger.data}}, {{steps.step_name.output}})
+      - Put all configuration in the input object
+      - Keep the step focused and simple
+    `;
+
+    const finalPrompt = context.customPrompt?.trim() 
+      ? context.customPrompt.replace('{{step_context}}', stepContext)
+      : defaultPrompt;
+
+    console.debug('[StepAgent] Using prompt:', finalPrompt);
+
     const { object } = await generateObject({
       model: openai('gpt-4o'),
       schema: stepGenerationSchema,
-      prompt: `
-        You are a step creation agent that generates a single step for an automation flow.
-        
-        Current Context:
-        ${stepContext}
-
-        Create a step that:
-        - Has a clear, descriptive name explaining what it does
-        ${
-          context.stepType === 'ROUTER'
-            ? `
-        - Implements the condition logic using the appropriate operators
-        - Uses EXECUTE_FIRST_MATCH by default unless multiple matches are needed
-        - Each condition should reference previous step outputs correctly
-        `
-            : `
-        - Uses the correct piece settings (${context.pieceName})
-        - ${
-          context.stepType === 'PIECE_TRIGGER'
-            ? 'Uses the correct trigger name (not display name) from the available triggers'
-            : ''
-        }
-        - ${
-          context.stepType === 'PIECE'
-            ? 'Uses the correct action name (not display name) from the available actions'
-            : ''
-        }
-        `
-        }
-        - Includes necessary input parameters using connection placeholders
-
-        IMPORTANT:
-        - The step type must be: ${context.stepType}
-        ${
-          context.stepType !== 'ROUTER'
-            ? '- For triggers and actions, use the internal name (not display name)'
-            : ''
-        }
-        - Use proper variable references (e.g., {{trigger.data}}, {{steps.step_name.output}})
-        - Put all configuration in the input object
-        - Keep the step focused and simple
-      `,
+      prompt: finalPrompt,
     });
 
     return object as FlowStepType;
