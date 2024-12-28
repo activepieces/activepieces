@@ -1,14 +1,16 @@
-import { useWebSocket } from '../../WebSocketContext';
+import { useTestConfigStore } from '../../stores/use-test-config-store'
+import { useWebSocketStore } from '../../stores/use-websocket-store'
+import { websocketService } from '../../services/websocket-service'
 import { isNil } from '@activepieces/shared';
 import { WebsocketEventTypes } from '@activepieces/copilot-shared';
-import { useTestConfig } from '../../TestConfigContext';
 import { cn } from '../../../lib/utils';
 
 export function Scenarios() {
-  console.debug('Rendering Scenarios component');
-
-  const { state, socket } = useWebSocket();
-  const { config } = useTestConfig();
+  console.debug('Rendering Scenarios')
+  
+  const { config } = useTestConfigStore()
+  const { state } = useWebSocketStore()
+  const socket = websocketService.getSocket()
 
   function runTest(scenarioTitle: string) {
     socket?.emit(WebsocketEventTypes.RUN_TESTS, {

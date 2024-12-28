@@ -1,15 +1,16 @@
 import { cn } from '../../../lib/utils';
 import { ThresholdControl } from '../test-results/components/threshold-control';
 import { PromptEditors } from '../test-results/components/prompt-editors';
-import { useTestConfig } from '../../TestConfigContext';
+import { useTestConfigStore } from '../../stores/use-test-config-store';
 
 interface ControllerSidebarProps {
   className?: string;
 }
 
-export const ControllerPanel = ({ className }: ControllerSidebarProps) => {
-
-  const { config, setThreshold, setPlannerPrompt, setStepPrompt } = useTestConfig();
+export function ControllerPanel({ className }: ControllerSidebarProps) {
+  console.debug('Rendering ControllerPanel')
+  
+  const { config, setThreshold, setPlannerPrompt, setStepPrompt } = useTestConfigStore()
 
   return (
     <div className={cn('w-96 bg-white border-r border-gray-200 flex flex-col h-full', className)}>
@@ -52,4 +53,4 @@ export const ControllerPanel = ({ className }: ControllerSidebarProps) => {
       </div>
     </div>
   );
-}; 
+} 

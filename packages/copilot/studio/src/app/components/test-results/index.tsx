@@ -1,4 +1,5 @@
-import { useWebSocket } from '../../WebSocketContext';
+import { useWebSocketStore } from '../../stores/use-websocket-store'
+import { websocketService } from '../../services/websocket-service'
 import {
   WebsocketCopilotResult,
   WebsocketCopilotUpdate,
@@ -13,8 +14,11 @@ import {
 } from './components';
 import { cn } from '../../../lib/utils';
 
-export const TestResults: React.FC = () => {
-  const { socket, results, clearResults } = useWebSocket();
+export function TestResults() {
+  console.debug('Rendering TestResults')
+  
+  const { results, clearResults } = useWebSocketStore()
+  const socket = websocketService.getSocket()
 
   const renderStepContent = (result: WebsocketCopilotResult) => {
     switch (result.type) {
@@ -149,4 +153,4 @@ export const TestResults: React.FC = () => {
       </div>
     </div>
   );
-};
+}

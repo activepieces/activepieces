@@ -1,11 +1,10 @@
-import { WebSocketProvider } from './WebSocketContext';
 import { Header } from './components/ui/header';
 import { ControllerPanel } from './components/controllers';
-import { TestConfigProvider } from './TestConfigContext';
 import { TestResults } from './components/test-results';
 import { Scenarios } from './components/scenarios';
 import { AgentDrawerProvider } from './AgentDrawerContext';
 import { AgentDrawer } from './components/agents/_components';
+import { WebSocketProvider } from './providers/websocket-provider';
 
 function AppContent() {
   console.debug('Rendering AppContent');
@@ -27,11 +26,9 @@ function AppContent() {
 export function App() {
   return (
     <WebSocketProvider>
-      <TestConfigProvider>
-        <AgentDrawerProvider>
-          <AppContent />
-        </AgentDrawerProvider>
-      </TestConfigProvider>
+      <AgentDrawerProvider>
+        <AppContent />
+      </AgentDrawerProvider>
     </WebSocketProvider>
   );
 }
