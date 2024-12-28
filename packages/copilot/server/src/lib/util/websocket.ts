@@ -1,7 +1,9 @@
 import { Server, Socket } from "socket.io";
 import { runScenarios, scenarios } from "../scenario/scenario-runner";
-import { State, WebsocketCopilotResult, WebsocketEventTypes, RunTestsParams, WebsocketCopilotUpdate } from "@activepieces/copilot-shared";
+import { State, WebsocketCopilotResult, WebsocketEventTypes, RunTestsParams, WebsocketCopilotUpdate, WebsocketCopilotCommand } from "@activepieces/copilot-shared";
 import { plannerAgent } from "../agents/planner";
+import { EmbeddedPiece, findRelevantPieces } from "../tools/embeddings";
+
 
 let currentState: State = {
     scenarios: scenarios.map((scenario) => {
@@ -30,6 +32,10 @@ export function startWebSocketServer() {
 
         socket.on(WebsocketEventTypes.GET_STATE, async (message) => {
             socket.emit(WebsocketEventTypes.RESPONSE_GET_STATE, currentState);
+        });
+
+        socket.on('message', async (message: any) => {
+            await websocketUtils.handleMessage(socket, message);
         });
 
     });
@@ -73,4 +79,35 @@ function addResult(socket: Socket | null, result: WebsocketCopilotResult) {
 export const websocketUtils = {
     updateTestState,
     addResult,
+    async handleMessage(socket: Socket, message: any) {
+        console.log('Received message:', message);
+
+        if (message.command === WebsocketCopilotCommand.SEARCH_PIECES) {
+            try {
+                const pieces = await findRelevantPieces(message.data.query);
+                const results = pieces.map((p: EmbeddedPiece) => ({
+                    pieceName: p.metadata.pieceName,
+                    content: p.content,
+                    logoUrl: p.metadata.logoUrl || '',
+                    relevanceScore: p.similarity || 0,
+                }));
+
+                websocketUtils.addResult(socket, {
+                    type: WebsocketCopilotUpdate.PIECES_FOUND,
+                    data: {
+                        timestamp: new Date().toISOString(),
+                        relevantPieces: results
+                    }
+                });
+            } catch (error) {
+                console.error('Error searching pieces:', error);
+                socket.emit('message', {
+                    type: 'ERROR',
+                    data: {
+                        message: 'Failed to search pieces'
+                    }
+                });
+            }
+        }
+    },
 }

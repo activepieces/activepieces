@@ -1,7 +1,6 @@
 import { FlowType } from '../types/flow-outline';
 import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { findRelevantPieces } from '../tools/embeddings';
 import { planSchema } from '../types/schemas';
 import { Agent } from './agent';
 import { stepAgent } from './generate-step';
@@ -9,6 +8,7 @@ import { WebsocketCopilotUpdate } from '@activepieces/copilot-shared';
 import { Socket } from 'socket.io';
 import { websocketUtils } from '../util/websocket';
 import { PromptTemplate } from '../util/prompt-template';
+import { findRelevantPieces } from '../tools/embeddings';
 
 export interface PlanOptions {
   relevanceThreshold?: number;
