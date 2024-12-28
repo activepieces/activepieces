@@ -5,7 +5,6 @@ interface StepCreatedProps {
 }
 
 export const StepCreated: React.FC<StepCreatedProps> = ({ data }) => {
-  console.debug('Rendering StepCreated component with data:', data);
 
   return (
     <div className="space-y-2">

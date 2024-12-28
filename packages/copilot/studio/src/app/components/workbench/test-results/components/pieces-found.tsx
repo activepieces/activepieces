@@ -1,21 +1,22 @@
-import { PiecesFoundData } from "@activepieces/copilot-shared";
-import { useState } from "react";
+import { PiecesFoundData } from '@activepieces/copilot-shared';
+import { useState } from 'react';
 
 interface PiecesFoundProps {
   data: PiecesFoundData;
 }
 
 export const PiecesFound: React.FC<PiecesFoundProps> = ({ data }) => {
-  console.debug('Rendering PiecesFound component with data:', data);
-
-
-  const sortedPieces = [...data.relevantPieces].sort((a, b) => b.relevanceScore - a.relevanceScore);
+  const sortedPieces = [...data.relevantPieces].sort(
+    (a, b) => b.relevanceScore - a.relevanceScore
+  );
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className="text-sm font-medium text-gray-700">Found Relevant Pieces</div>
+          <div className="text-sm font-medium text-gray-700">
+            Found Relevant Pieces
+          </div>
           <div className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
             {data.relevantPieces.length} pieces
           </div>
@@ -23,13 +24,25 @@ export const PiecesFound: React.FC<PiecesFoundProps> = ({ data }) => {
         <div className="flex items-center gap-2">
           <div className="text-xs text-gray-500">Min. Relevance:</div>
           <div className="text-xs text-gray-900 bg-gray-100 px-2 py-0.5 rounded">
-            {Math.round(Math.min(...data.relevantPieces.map(p => p.relevanceScore)) * 100)}%
+            {Math.round(
+              Math.min(...data.relevantPieces.map((p) => p.relevanceScore)) *
+                100
+            )}
+            %
           </div>
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {sortedPieces.map(
-          (piece: { pieceName: string; content: string; logoUrl?: string; relevanceScore: number }, i: number) => (
+          (
+            piece: {
+              pieceName: string;
+              content: string;
+              logoUrl?: string;
+              relevanceScore: number;
+            },
+            i: number
+          ) => (
             <div
               key={i}
               className="group relative bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
@@ -38,15 +51,19 @@ export const PiecesFound: React.FC<PiecesFoundProps> = ({ data }) => {
                 <div className="flex items-center gap-3 mb-2">
                   <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-purple-50 border border-purple-100 flex items-center justify-center overflow-hidden">
                     {piece.logoUrl ? (
-                      <img 
-                        src={piece.logoUrl} 
-                        alt={`${piece.pieceName} logo`} 
+                      <img
+                        src={piece.logoUrl}
+                        alt={`${piece.pieceName} logo`}
                         className="w-6 h-6 object-contain"
                         onError={(e) => {
-                          console.debug(`Failed to load logo for ${piece.pieceName}:`, e);
+                          console.debug(
+                            `Failed to load logo for ${piece.pieceName}:`,
+                            e
+                          );
                           e.currentTarget.style.display = 'none';
                           // Show first letter of piece name as fallback
-                          e.currentTarget.parentElement!.innerHTML = piece.pieceName.charAt(0).toUpperCase();
+                          e.currentTarget.parentElement!.innerHTML =
+                            piece.pieceName.charAt(0).toUpperCase();
                         }}
                       />
                     ) : (
@@ -77,4 +94,4 @@ export const PiecesFound: React.FC<PiecesFoundProps> = ({ data }) => {
       </div>
     </div>
   );
-}; 
+};

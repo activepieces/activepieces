@@ -100,11 +100,6 @@ const PlanHeader: FC<{ name: string; description: string; stepsCount: number }> 
 );
 
 export const PlanGenerated: FC<PlanGeneratedProps> = ({ data }) => {
-  console.debug('[PlanGenerated] Rendering with data:', {
-    planName: data.plan.name,
-    stepsCount: data.plan.steps.length,
-    data
-  });
 
   return (
     <div className="space-y-2">

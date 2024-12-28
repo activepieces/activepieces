@@ -7,8 +7,6 @@ interface ActiveScenarioCardProps {
 export const ActiveScenarioCard: React.FC<ActiveScenarioCardProps> = ({
   data,
 }) => {
-  console.debug('Rendering ActiveScenarioCard:', { data });
-
   // If the scenario is not running, don't render anything
   if (!data.isRunning) {
     return null;

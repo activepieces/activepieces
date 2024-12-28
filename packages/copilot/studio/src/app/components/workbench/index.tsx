@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Header } from './components/sub-header';
-import { ControllerPanel } from './controllers';
+import { PromptPanel } from './prompt';
 import { TestResults } from './test-results';
 import { Scenarios } from './scenarios';
 
@@ -38,7 +38,7 @@ export const Workbench = ({ isOpen }: WorkbenchProps) => {
       />
       {activeTab === 'prompt' ? (
         <div className="flex-1 flex overflow-hidden">
-          <ControllerPanel />
+          <PromptPanel />
           <TestResults />
         </div>
       ) : (

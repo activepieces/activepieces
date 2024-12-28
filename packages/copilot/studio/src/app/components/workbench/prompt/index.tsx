@@ -1,14 +1,13 @@
 import { cn } from '../../../../lib/utils';
-import { ThresholdControl } from '../test-results/components/threshold-control';
-import { PromptEditors } from '../test-results/components/prompt-editors';
+import { ThresholdControl } from './components/threshold-control';
+import { PromptEditors } from './components/prompt-editors';
 import { useTestConfigStore } from '../../../stores/use-test-config-store';
 
-interface ControllerSidebarProps {
+interface PromptPanelProps {
   className?: string;
 }
 
-export function ControllerPanel({ className }: ControllerSidebarProps) {
-  console.debug('Rendering ControllerPanel')
+export function PromptPanel({ className }: PromptPanelProps) {
   
   const { config, setThreshold, setPlannerPrompt, setStepPrompt } = useTestConfigStore()
 

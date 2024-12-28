@@ -5,8 +5,6 @@ interface ScenarioCompletedProps {
 }
 
 export const ScenarioCompleted: React.FC<ScenarioCompletedProps> = ({ data }) => {
-  console.debug('Rendering ScenarioCompleted component with data:', data);
-
   return (
     <div className="space-y-2">
       <div className="text-xs text-gray-500">Final Output:</div>
