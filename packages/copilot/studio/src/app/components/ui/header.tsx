@@ -3,8 +3,12 @@
 import { Menu, Settings } from 'lucide-react';
 import { useAgentDrawer } from '../../AgentDrawerContext';
 
+interface HeaderProps {
+  onWorkbenchToggle: (isOpen: boolean) => void;
+}
 
-export const Header = () => {
+export function Header({ onWorkbenchToggle }: HeaderProps) {
+  console.debug('Rendering Header');
   const { openDrawer } = useAgentDrawer();
 
   return (
@@ -24,18 +28,17 @@ export const Header = () => {
         </div>
         
         <nav className="flex items-center gap-6">
-          <a 
-            href="#dashboard" 
+          <button 
+            onClick={() => onWorkbenchToggle(true)}
             className="text-sm font-medium hover:text-gray-900 transition-colors"
           >
             Workbench
-          </a>
-          <a 
-            href="#workbench" 
+          </button>
+          <button 
             className="text-sm font-medium hover:text-gray-900 transition-colors"
           >
-            Settings
-          </a>
+            Studio
+          </button>
         </nav>
       </div>
       
@@ -55,4 +58,4 @@ export const Header = () => {
       </div>
     </header>
   );
-}; 
+} 
