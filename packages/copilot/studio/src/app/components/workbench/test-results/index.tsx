@@ -1,5 +1,5 @@
-import { useWebSocketStore } from '../../stores/use-websocket-store'
-import { websocketService } from '../../services/websocket-service'
+import { useWebSocketStore } from '../../../stores/use-websocket-store'
+import { websocketService } from '../../../services/websocket-service'
 import {
   WebsocketCopilotResult,
   WebsocketCopilotUpdate,
@@ -12,7 +12,7 @@ import {
   TestError,
   ActiveScenarioCard,
 } from './components';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../../lib/utils';
 
 export function TestResults() {
   console.debug('Rendering TestResults')

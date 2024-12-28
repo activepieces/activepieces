@@ -1,9 +1,9 @@
-import { useTestConfigStore } from '../../stores/use-test-config-store'
-import { useWebSocketStore } from '../../stores/use-websocket-store'
-import { websocketService } from '../../services/websocket-service'
+import { useTestConfigStore } from '../../../stores/use-test-config-store'
+import { useWebSocketStore } from '../../../stores/use-websocket-store'
+import { websocketService } from '../../../services/websocket-service'
 import { isNil } from '@activepieces/shared';
 import { WebsocketEventTypes } from '@activepieces/copilot-shared';
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../../lib/utils';
 
 export function Scenarios() {
   console.debug('Rendering Scenarios')

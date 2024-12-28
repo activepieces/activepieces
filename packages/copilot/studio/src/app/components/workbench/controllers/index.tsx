@@ -1,7 +1,7 @@
-import { cn } from '../../../lib/utils';
+import { cn } from '../../../../lib/utils';
 import { ThresholdControl } from '../test-results/components/threshold-control';
 import { PromptEditors } from '../test-results/components/prompt-editors';
-import { useTestConfigStore } from '../../stores/use-test-config-store';
+import { useTestConfigStore } from '../../../stores/use-test-config-store';
 
 interface ControllerSidebarProps {
   className?: string;

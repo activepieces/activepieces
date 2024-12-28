@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
-import { useAgentDrawer } from '../../../AgentDrawerContext';
+import { useAgentDrawer } from '../../../../AgentDrawerContext';
 import { AgentsList } from './agents-list';
-import { cn } from '../../../../lib/utils';
+import { cn } from '../../../../../lib/utils';
 
 export const AgentDrawer = () => {
   console.debug('Rendering AgentDrawer');

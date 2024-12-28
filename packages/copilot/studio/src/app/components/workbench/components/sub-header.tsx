@@ -1,18 +1,18 @@
-import { cn } from "../../../lib/utils";
+import { cn } from "../../../../lib/utils";
 
-interface SubHeaderProps {
+interface HeaderProps {
   isWorkbenchOpen?: boolean;
   onPromptClick?: () => void;
   onEvaluateClick?: () => void;
   activeTab: 'prompt' | 'evaluate';
 }
 
-export function SubHeader({ 
+export function Header({ 
   isWorkbenchOpen = false,
   onPromptClick,
   onEvaluateClick,
   activeTab
-}: SubHeaderProps) {
+}: HeaderProps) {
   console.debug('Rendering SubHeader, isWorkbenchOpen:', isWorkbenchOpen);
 
   if (!isWorkbenchOpen) return null;
