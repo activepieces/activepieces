@@ -81,30 +81,12 @@ export enum WebsocketCopilotUpdate {
   PLAN_GENERATED = 'PLAN_GENERATED',
   STEP_CREATED = 'STEP_CREATED',
   SCENARIO_COMPLETED = 'SCENARIO_COMPLETED',
-  TEST_ERROR = 'TEST_ERROR',
-  TEST_STOPPED = 'TEST_STOPPED',
-  TEST_SUMMARY = 'TEST_SUMMARY',
-  TEST_STATE = 'TEST_STATE',
+  ERROR = 'ERROR'
 }
 
 export type WebsocketCopilotResult = {
-  type: WebsocketCopilotUpdate.PIECES_FOUND;
-  data: PiecesFoundData;
-} | {
-  type: WebsocketCopilotUpdate.PLAN_GENERATED;
-  data: PlanGeneratedData;
-} | {
-  type: WebsocketCopilotUpdate.STEP_CREATED;
-  data: StepCreatedData;
-} | {
-  type: WebsocketCopilotUpdate.SCENARIO_COMPLETED;
-  data: ScenarioCompletedData;
-} | {
-  type: WebsocketCopilotUpdate.TEST_ERROR;
-  data: TestErrorData;
-} | {
-  type: WebsocketCopilotUpdate.TEST_STATE;
-  data: TestStateData;
+  type: WebsocketCopilotUpdate;
+  data: any;
 }
 
 export interface PlanStep {
@@ -115,6 +97,15 @@ export interface PlanStep {
 
 export interface StepConfig {
   steps: PlanStep[];
+}
+
+export interface PlannerPromptTemplate {
+  system: string;
+  context: string;
+  request: string;
+  defaultGuidelines: string[];
+  requirements: string[];
+  important: string[];
 }
 
 

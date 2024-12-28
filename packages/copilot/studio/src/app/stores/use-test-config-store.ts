@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { prompts } from '../../lib/prompts'
+import { formatPlannerPromptTemplate } from '@activepieces/copilot-shared'
 
 interface TestConfig {
   threshold: number
@@ -13,24 +15,31 @@ interface TestConfigStore {
   setStepPrompt: (prompt: string) => void
 }
 
-const defaultConfig: TestConfig = {
-  threshold: 0.35,
-  plannerPrompt: '',
-  stepPrompt: '',
-}
-
 export const useTestConfigStore = create<TestConfigStore>((set) => ({
-  config: defaultConfig,
-  setThreshold: (threshold) =>
+  config: {
+    threshold: 0.7,
+    plannerPrompt: formatPlannerPromptTemplate(prompts.planner.default),
+    stepPrompt: '',
+  },
+  setThreshold: (threshold: number) =>
     set((state) => ({
-      config: { ...state.config, threshold },
+      config: {
+        ...state.config,
+        threshold,
+      },
     })),
-  setPlannerPrompt: (plannerPrompt) =>
+  setPlannerPrompt: (plannerPrompt: string) =>
     set((state) => ({
-      config: { ...state.config, plannerPrompt },
+      config: {
+        ...state.config,
+        plannerPrompt,
+      },
     })),
-  setStepPrompt: (stepPrompt) =>
+  setStepPrompt: (stepPrompt: string) =>
     set((state) => ({
-      config: { ...state.config, stepPrompt },
+      config: {
+        ...state.config,
+        stepPrompt,
+      },
     })),
 })) 

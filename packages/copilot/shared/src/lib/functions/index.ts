@@ -1,4 +1,4 @@
-
+import { PlannerPromptTemplate } from "../copilot-shared";
 
 
 export interface SearchPiecesRequest {
@@ -22,11 +22,22 @@ export interface PieceSearchResult {
   relevanceScore: number;
 }
 
-
-
 export enum WebsocketCopilotCommand {
     SEARCH_PIECES = 'SEARCH_PIECES',
-  }
+}
+
+export const formatPlannerPromptTemplate = (template: PlannerPromptTemplate): string => {
+  const sections = [
+    template.system,
+    template.context,
+    template.request,
+    ...template.defaultGuidelines,
+    ...template.requirements,
+    ...template.important
+  ];
+
+  return sections.filter(Boolean).join('\n\n');
+};
 
   
   
