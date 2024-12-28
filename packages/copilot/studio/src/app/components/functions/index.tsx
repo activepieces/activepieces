@@ -20,7 +20,7 @@ export const Functions = () => {
         
         {/* Right panel for function testing */}
         <div className="flex-1 p-4">
-          <FunctionTester selectedFunction={selectedFunction} selectedPiece={null} />
+          <FunctionTester selectedFunction={selectedFunction} />
         </div>
       </div>
     </div>
