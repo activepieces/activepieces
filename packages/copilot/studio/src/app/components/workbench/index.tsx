@@ -4,12 +4,7 @@ import { PromptPanel } from './prompt';
 import { TestResults } from './test-results';
 import { Scenarios } from './scenarios';
 
-interface WorkbenchProps {
-  isOpen: boolean;
-}
-
-export const Workbench = ({ isOpen }: WorkbenchProps) => {
-  console.debug('Rendering Workbench');
+export const Workbench = () => {
   const [activeTab, setActiveTab] = useState<'prompt' | 'evaluate'>('prompt');
 
   const handlePromptClick = () => {
@@ -20,18 +15,10 @@ export const Workbench = ({ isOpen }: WorkbenchProps) => {
     setActiveTab('evaluate');
   };
 
-  if (!isOpen) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-gray-500">
-        <p>Select Workbench or Studio to get started</p>
-      </div>
-    );
-  }
-
   return (
     <>
       <Header 
-        isWorkbenchOpen={isOpen}
+        isWorkbenchOpen={true}
         onPromptClick={handlePromptClick}
         onEvaluateClick={handleEvaluateClick}
         activeTab={activeTab}

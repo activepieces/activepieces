@@ -1,0 +1,1 @@
+export type ActivePage = 'workbench' | 'functions' | null; 

@@ -2,18 +2,22 @@ import { Header } from './components/ui/header';
 import { AgentDrawerProvider } from './AgentDrawerContext';
 import { AgentDrawer } from './components/workbench/agents/components';
 import { WebSocketProvider } from './providers/websocket-provider';
-import { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Workbench } from './components/workbench';
+import { Functions } from './components/functions';
 
 function AppContent() {
   console.debug('Rendering AppContent');
-  const [isWorkbenchOpen, setIsWorkbenchOpen] = useState(false);
 
   return (
     <div className="h-screen flex flex-col">
-      <Header onWorkbenchToggle={setIsWorkbenchOpen} />
+      <Header />
       <AgentDrawer />
-      <Workbench isOpen={isWorkbenchOpen} />
+      <Routes>
+        <Route path="/" element={<Navigate to="/workbench" replace />} />
+        <Route path="/workbench" element={<Workbench />} />
+        <Route path="/functions" element={<Functions />} />
+      </Routes>
     </div>
   );
 }
