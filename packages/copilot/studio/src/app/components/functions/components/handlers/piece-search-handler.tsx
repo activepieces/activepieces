@@ -8,32 +8,34 @@ export const PieceSearchHandler = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<PieceSearchResult[] | null>(null);
+  const [rawResponse, setRawResponse] = useState<any | null>(null);
   const results = useWebSocketStore((state) => state.results);
 
   useEffect(() => {
     // Listen for search results in the WebSocket store
     const latestResult = results[results.length - 1];
-    console.debug('Latest WebSocket result:', latestResult);
-    
     if (latestResult?.type === WebsocketCopilotUpdate.PIECES_FOUND) {
-      console.debug('Received PIECES_FOUND event:', latestResult);
+
+      // Store raw response
+      setRawResponse(latestResult);
+
+      // Process and store formatted results
       const pieces = latestResult.data.relevantPieces.map(piece => ({
         pieceName: piece.pieceName,
         content: piece.content,
         logoUrl: piece.logoUrl || '',
         relevanceScore: piece.relevanceScore
       }));
-      console.debug('Processed pieces:', pieces);
       setSearchResults(pieces);
       setIsLoading(false);
     }
   }, [results]);
 
   const handleSearch = async (query: string) => {
-    console.debug('Searching for pieces with query:', query);
     setIsLoading(true);
     setError(null);
     setSearchResults(null);
+    setRawResponse(null);
 
     try {
       const socket = websocketService.getSocket();
@@ -46,9 +48,7 @@ export const PieceSearchHandler = () => {
         command: WebsocketCopilotCommand.SEARCH_PIECES,
         data: { query }
       });
-      console.debug('Piece search request sent via WebSocket');
     } catch (err) {
-      console.error('Search failed:', err);
       setError('Failed to search for pieces. Please try again.');
       setIsLoading(false);
     }
@@ -59,6 +59,7 @@ export const PieceSearchHandler = () => {
       onSearch={handleSearch}
       isLoading={isLoading}
       results={searchResults}
+      rawResponse={rawResponse}
       error={error}
     />
   );

@@ -1,17 +1,17 @@
-import { useState, useEffect } from 'react';
-import { WebsocketCopilotCommand, WebsocketCopilotUpdate, PieceSearchResult } from '@activepieces/copilot-shared';
-import { useWebSocketStore } from '../../../../stores/use-websocket-store';
-import { websocketService } from '../../../../services/websocket-service';
+import { useState } from 'react';
+import { PieceSearchResult } from '@activepieces/copilot-shared';
 
 interface PieceSearchTesterProps {
   onSearch: (query: string) => void;
   isLoading: boolean;
   results: PieceSearchResult[] | null;
+  rawResponse: any | null;
   error: string | null;
 }
 
-export const PieceSearchTester = ({ onSearch, isLoading, results, error }: PieceSearchTesterProps) => {
+export const PieceSearchTester = ({ onSearch, isLoading, results, rawResponse, error }: PieceSearchTesterProps) => {
   const [query, setQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'formatted' | 'raw'>('formatted');
 
   const handleSearch = () => {
     if (!query.trim()) return;
@@ -79,39 +79,74 @@ export const PieceSearchTester = ({ onSearch, isLoading, results, error }: Piece
       )}
 
       {/* Results */}
-      {results && results.length > 0 && (
+      {(results || rawResponse) && (
         <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-            <h3 className="text-base font-semibold text-gray-900">Results</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-gray-900">Results</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab('formatted')}
+                  className={`px-3 py-1 text-sm rounded-md ${
+                    activeTab === 'formatted'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Formatted
+                </button>
+                <button
+                  onClick={() => setActiveTab('raw')}
+                  className={`px-3 py-1 text-sm rounded-md ${
+                    activeTab === 'raw'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Raw JSON
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="divide-y divide-gray-200">
-            {results.map((piece, index) => (
-              <div
-                key={`${piece.pieceName}-${index}`}
-                className="p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  {piece.logoUrl && (
-                    <img
-                      src={piece.logoUrl}
-                      alt={piece.pieceName}
-                      className="w-10 h-10 rounded-lg object-cover bg-gray-100"
-                    />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-gray-900 truncate">{piece.pieceName}</h4>
-                    <p className="mt-1 text-sm text-gray-500 line-clamp-2">{piece.content}</p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <div className="flex-shrink-0 rounded-full h-2 w-2 bg-green-400"></div>
-                      <span className="text-xs text-gray-500">
-                        Relevance: {(piece.relevanceScore * 100).toFixed(1)}%
-                      </span>
+
+          {activeTab === 'formatted' && results && (
+            <div className="divide-y divide-gray-200">
+              {results.map((piece, index) => (
+                <div
+                  key={`${piece.pieceName}-${index}`}
+                  className="p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    {piece.logoUrl && (
+                      <img
+                        src={piece.logoUrl}
+                        alt={piece.pieceName}
+                        className="w-10 h-10 rounded-lg object-cover bg-gray-100"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-gray-900 truncate">{piece.pieceName}</h4>
+                      <p className="mt-1 text-sm text-gray-500 line-clamp-2">{piece.content}</p>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="flex-shrink-0 rounded-full h-2 w-2 bg-green-400"></div>
+                        <span className="text-xs text-gray-500">
+                          Relevance: {(piece.relevanceScore * 100).toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'raw' && rawResponse && (
+            <div className="p-4">
+              <pre className="whitespace-pre-wrap break-all bg-gray-50 p-4 rounded-md text-sm text-gray-800 font-mono">
+                {JSON.stringify(rawResponse, null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
       )}
     </div>
