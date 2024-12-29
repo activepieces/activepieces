@@ -1,15 +1,19 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Trash, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
+import {
+  BulkAction,
+  DataTable,
+  RowDataWithActions,
+} from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Dialog,
@@ -68,6 +72,7 @@ function TablesPage() {
   const columns: ColumnDef<RowDataWithActions<Table>, unknown>[] = [
     {
       id: 'select',
+      accessorKey: 'select',
       header: ({ table }) => (
         <Checkbox
           checked={
@@ -106,6 +111,7 @@ function TablesPage() {
                 );
               }
               setSelectedRows(newSelectedRows);
+              row.toggleSelected(!!value);
             }}
           />
         );
@@ -157,11 +163,73 @@ function TablesPage() {
     },
   ];
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => tablesApi.delete(id)));
+    },
+    onSuccess: () => {
+      refetch();
+    },
+    onError: () => {
+      toast({
+        title: t('Error deleting connections'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const bulkActions: BulkAction<Table>[] = useMemo(
+    () => [
+      {
+        render: (_, resetSelection) => {
+          return (
+            <div onClick={(e) => e.stopPropagation()}>
+              <ConfirmationDeleteDialog
+                title={t('Confirm Deletion')}
+                message={t(
+                  'Are you sure you want to delete the selected tables? This action cannot be undone.',
+                )}
+                entityName="tables"
+                mutationFn={async () => {
+                  try {
+                    await bulkDeleteMutation.mutateAsync(
+                      selectedRows.map((row) => row.id),
+                    );
+                    resetSelection();
+                    setSelectedRows([]);
+                  } catch (error) {
+                    console.error('Error deleting tables:', error);
+                  }
+                }}
+              >
+                {selectedRows.length > 0 && (
+                  <Button
+                    className="w-full mr-2"
+                    size="sm"
+                    variant="destructive"
+                  >
+                    <Trash className="mr-2 w-4" />
+                    {`${t('Delete')} (${selectedRows.length})`}
+                  </Button>
+                )}
+              </ConfirmationDeleteDialog>
+            </div>
+          );
+        },
+      },
+    ],
+    [bulkDeleteMutation, selectedRows],
+  );
+
   return (
     <div className="flex-col w-full">
       <div className="flex items-center justify-between">
         <TableTitle>Tables</TableTitle>
-        <Button onClick={() => setShowNewTableDialog(true)} size="sm">
+        <Button
+          onClick={() => setShowNewTableDialog(true)}
+          variant="default"
+          className="flex gap-2 items-center"
+        >
           {t('New Table')}
         </Button>
       </div>
@@ -178,6 +246,7 @@ function TablesPage() {
             navigate(`/tables/${row.id}`);
           }
         }}
+        bulkActions={bulkActions}
       />
 
       <Dialog open={showNewTableDialog} onOpenChange={setShowNewTableDialog}>
