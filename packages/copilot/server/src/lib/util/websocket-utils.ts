@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { WebsocketCopilotResult, WebsocketEventTypes } from "@activepieces/copilot-shared";
+import { WebsocketCopilotResult, WebsocketChannelTypes } from "@activepieces/copilot-shared";
 
 
 
@@ -7,7 +7,7 @@ export function addResult(socket: Socket | null, result: WebsocketCopilotResult)
   if (!socket) return;
   
   try {
-    socket.emit(WebsocketEventTypes.UPDATE_RESULTS, result);
+    socket.emit(WebsocketChannelTypes.UPDATE_RESULTS, result);
   } catch (error) {
     handleError(socket, error, 'Adding result');
   }

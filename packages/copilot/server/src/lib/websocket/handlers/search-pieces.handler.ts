@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { WebsocketCopilotCommand, WebsocketCopilotUpdate } from "@activepieces/copilot-shared";
+import { PieceCommand, PieceCommandUpdate } from "@activepieces/copilot-shared";
 import { createCommandHandler } from "./command-handler";
 import { findRelevantPieces } from "../../tools/embeddings";
 import { addResult, handleError } from "../../util/websocket-utils";
@@ -17,7 +17,7 @@ const handleSearchPieces = async (socket: Socket, data: { query: string }): Prom
     }));
 
     addResult(socket, {
-      type: WebsocketCopilotUpdate.PIECES_FOUND,
+      type: PieceCommandUpdate.PIECES_FOUND,
       data: {
         timestamp: new Date().toISOString(),
         relevantPieces: results
@@ -31,6 +31,6 @@ const handleSearchPieces = async (socket: Socket, data: { query: string }): Prom
 };
 
 export const searchPiecesHandler = createCommandHandler(
-  WebsocketCopilotCommand.SEARCH_PIECES,
+  PieceCommand.SEARCH_PIECES,
   handleSearchPieces
 ); 

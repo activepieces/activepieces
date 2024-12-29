@@ -2,7 +2,10 @@ import { useWebSocketStore } from '../../../stores/use-websocket-store'
 import { websocketService } from '../../../services/websocket-service'
 import {
   WebsocketCopilotResult,
-  WebsocketCopilotUpdate,
+  PieceCommandUpdate,
+  TestCommandUpdate,
+  AgentCommandUpdate,
+  SystemUpdate,
 } from '@activepieces/copilot-shared';
 import {
   PiecesFound,
@@ -18,20 +21,34 @@ export function TestResults() {
 
   const renderStepContent = (result: WebsocketCopilotResult) => {
     switch (result.type) {
-      case WebsocketCopilotUpdate.PIECES_FOUND:
+      case PieceCommandUpdate.PIECES_FOUND:
         return <PiecesFound data={result.data} />;
 
-      case WebsocketCopilotUpdate.TEST_ERROR:
+      case TestCommandUpdate.TEST_ERROR:
         return <TestError data={result.data} />;
 
+      case SystemUpdate.ERROR: {
+        const message = result.data?.message;
+        if (message) {
+          return <div className="text-sm text-gray-600">{message}</div>;
+        }
+        return null;
+      }
+
       default: {
-        const message = (result as { data: { message?: string } }).data.message;
+        const message = result.data?.message;
         if (message) {
           return <div className="text-sm text-gray-600">{message}</div>;
         }
         return null;
       }
     }
+  };
+
+  const getStatusColor = (type: WebsocketCopilotResult['type']) => {
+    if (type === TestCommandUpdate.TEST_ERROR || type === SystemUpdate.ERROR) return 'text-red-600';
+    if (type === PieceCommandUpdate.PIECES_FOUND) return 'text-purple-600';
+    return 'text-gray-900';
   };
 
   return (
@@ -71,16 +88,7 @@ export function TestResults() {
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <span
-                          className={`font-medium text-sm ${
-                            result.type === WebsocketCopilotUpdate.TEST_ERROR
-                              ? 'text-red-600'
-                              : result.type ===
-                                WebsocketCopilotUpdate.PIECES_FOUND
-                              ? 'text-purple-600'
-                              : 'text-gray-900'
-                          }`}
-                        >
+                        <span className={`font-medium text-sm ${getStatusColor(result.type)}`}>
                           {result.type
                             .split('_')
                             .map(
@@ -90,34 +98,19 @@ export function TestResults() {
                             .join(' ')}
                         </span>
 
-                        {((result.data as any).scenarioTitle ||
-                          (result.data as any).title) && (
+                        {(result.data?.scenarioTitle ||
+                          result.data?.title) && (
                           <div className="text-xs text-gray-600 mt-1">
                             Scenario:{' '}
-                            {(result.data as any).scenarioTitle ||
-                              (result.data as any).title}
+                            {result.data?.scenarioTitle ||
+                              result.data?.title}
                           </div>
                         )}
                       </div>
-                      <span className="text-xs text-gray-500 whitespace-nowrap ml-3">
-                        {new Date(
-                          (result.data as any).timestamp
-                        ).toLocaleTimeString()}
-                      </span>
                     </div>
-                    <div className="overflow-x-auto">
-                      {renderStepContent(result)}
-                    </div>
+                    {renderStepContent(result)}
                   </div>
                 ))}
-                {results.length === 0 && (
-                  <div className="text-center text-gray-600 py-12">
-                    <p className="text-sm">No test results yet.</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Run a scenario to see results here.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </div>

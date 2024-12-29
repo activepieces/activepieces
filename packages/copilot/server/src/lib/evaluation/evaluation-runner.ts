@@ -2,8 +2,10 @@ import { Socket } from "socket.io";
 import { 
   BaseAgentConfig, 
   WebsocketCopilotResult, 
-  WebsocketEventTypes, 
+  WebsocketChannelTypes, 
   WebsocketCopilotUpdate,
+  SystemUpdate,
+  TestCommandUpdate,
 
 } from "@activepieces/copilot-shared";
 import { createAgentFromConfig } from "../agents/agent-factory";
@@ -84,7 +86,7 @@ export async function runEvaluation(
 
         // Emit test result
         addResult(socket, {
-          type: WebsocketCopilotUpdate.TEST_DONE,
+          type: TestCommandUpdate.TEST_DONE,
           data: {
             title: testCase.title,
             ...result,
@@ -98,7 +100,7 @@ export async function runEvaluation(
         await updateTestState(socket, testCase.title, 'stopped');
         
         addResult(socket, {
-          type: WebsocketCopilotUpdate.ERROR,
+            type: SystemUpdate.ERROR,
           data: {
             title: testCase.title,
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -127,13 +129,13 @@ async function updateTestState(socket: Socket | null, testTitle: string, status:
       })),
     };
     currentState = updatedState;
-    socket.emit(WebsocketEventTypes.RESPONSE_GET_STATE, updatedState);
+    socket.emit(WebsocketChannelTypes.RESPONSE_GET_STATE, updatedState);
 
     // Emit test state event
     const testCase = currentState.testCases.find(tc => tc.title === testTitle);
     if (testCase) {
       addResult(socket, {
-        type: WebsocketCopilotUpdate.TEST_DONE,
+        type: TestCommandUpdate.TEST_DONE,
         data: {
           title: testCase.title,
           prompt: testCase.prompt,
@@ -150,5 +152,5 @@ async function updateTestState(socket: Socket | null, testTitle: string, status:
 
 function addResult(socket: Socket | null, result: WebsocketCopilotResult) {
   if (!socket) return;
-  socket.emit(WebsocketEventTypes.UPDATE_RESULTS, result);
+  socket.emit(WebsocketChannelTypes.UPDATE_RESULTS, result);
 }

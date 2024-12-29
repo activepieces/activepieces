@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { WebsocketCopilotCommand, WebsocketCopilotUpdate, PieceSearchResult } from '@activepieces/copilot-shared';
+import { WebsocketCopilotCommand, WebsocketCopilotUpdate, PieceSearchResult, PieceCommandUpdate, PieceCommand } from '@activepieces/copilot-shared';
 import { useWebSocketStore } from '../../../../stores/use-websocket-store';
 import { websocketService } from '../../../../services/websocket-service';
 import { PieceSearchTester } from '../testers/piece-search-tester';
@@ -14,7 +14,7 @@ export const PieceSearchHandler = () => {
   useEffect(() => {
     // Listen for search results in the WebSocket store
     const latestResult = results[results.length - 1];
-    if (latestResult?.type === WebsocketCopilotUpdate.PIECES_FOUND) {
+    if (latestResult?.type === PieceCommandUpdate.PIECES_FOUND) {
 
       // Store raw response
       setRawResponse(latestResult);
@@ -45,7 +45,7 @@ export const PieceSearchHandler = () => {
       }
 
       socket.emit('message', {
-        command: WebsocketCopilotCommand.SEARCH_PIECES,
+        command: PieceCommand.SEARCH_PIECES,
         data: { query }
       });
     } catch (err) {

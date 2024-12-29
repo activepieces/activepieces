@@ -1,4 +1,4 @@
-import { WebsocketEventTypes } from '@activepieces/copilot-shared'
+import { WebsocketChannelTypes } from '@activepieces/copilot-shared'
 import { Socket, io } from 'socket.io-client'
 import { useWebSocketStore } from '../stores/use-websocket-store'
 
@@ -27,7 +27,7 @@ class WebSocketService {
 
     if (!this.socket.connected) {
       this.socket.connect()
-      this.socket.emit(WebsocketEventTypes.GET_STATE)
+      this.socket.emit(WebsocketChannelTypes.GET_STATE)
     }
   }
 
@@ -42,11 +42,11 @@ class WebSocketService {
   private setupEventListeners() {
     if (!this.socket) return
 
-      this.socket.on(WebsocketEventTypes.RESPONSE_GET_STATE, (data) => {
+      this.socket.on(WebsocketChannelTypes.RESPONSE_GET_STATE, (data) => {
         useWebSocketStore.getState().setResults(data)
       })
 
-    this.socket.on(WebsocketEventTypes.UPDATE_RESULTS, (result) => {
+    this.socket.on(WebsocketChannelTypes.UPDATE_RESULTS, (result) => {
       useWebSocketStore.getState().addResult(result)
     })
   }

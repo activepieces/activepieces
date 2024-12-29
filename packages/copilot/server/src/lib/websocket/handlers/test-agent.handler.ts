@@ -1,8 +1,7 @@
 import { Socket } from "socket.io";
-import { WebsocketCopilotCommand, WebsocketCopilotUpdate } from "@activepieces/copilot-shared";
+import { TestCommand, TestCommandUpdate } from "@activepieces/copilot-shared";
 import { createCommandHandler } from "./command-handler";
 import { addResult, handleError } from "../../util/websocket-utils";
-import { createAgent } from "../../agents/agent";
 import { agentRegistry } from "../../agents/agent-registry";
 import { createAgentFromConfig } from "../../agents/agent-factory";
 
@@ -26,7 +25,7 @@ const handleTestAgent = async (socket: Socket, data: TestAgentParams): Promise<v
     const result = await agent?.execute(data.prompt, socket);
 
     addResult(socket, {
-      type: WebsocketCopilotUpdate.AGENT_TEST_COMPLETED,
+      type: TestCommandUpdate.TEST_DONE,
       data: {
         timestamp: new Date().toISOString(),
         agentName: data.agentName,
@@ -41,6 +40,6 @@ const handleTestAgent = async (socket: Socket, data: TestAgentParams): Promise<v
 };
 
 export const testAgentHandler = createCommandHandler(
-  WebsocketCopilotCommand.TEST_AGENT,
+  TestCommand.RUN_TESTS,
   handleTestAgent
 ); 

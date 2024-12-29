@@ -1,8 +1,39 @@
-export enum WebsocketEventTypes {
-  RUN_TESTS = 'RUN_TESTS',
+export enum WebsocketChannelTypes {
   UPDATE_RESULTS = 'UPDATE_RESULTS',
   RESPONSE_GET_STATE = 'RESPONSE_GET_STATE',
   GET_STATE = 'GET_STATE'
+}
+
+// Command-specific updates
+export enum PieceCommandUpdate {
+  PIECES_FOUND = 'PIECES_FOUND'
+}
+
+export enum TestCommandUpdate {
+  TEST_STARTED = 'TEST_STARTED',
+  TEST_DONE = 'TEST_DONE',
+  TEST_ERROR = 'TEST_ERROR'
+}
+
+export enum AgentCommandUpdate {
+  AGENT_TEST_COMPLETED = 'AGENT_TEST_COMPLETED'
+}
+
+export enum SystemUpdate {
+  ERROR = 'ERROR'
+}
+
+// Combined type for all possible updates
+export type WebsocketCopilotUpdate = 
+  | PieceCommandUpdate
+  | TestCommandUpdate
+  | AgentCommandUpdate
+  | SystemUpdate;
+
+// Type-safe result interface
+export type WebsocketCopilotResult<T = any> = {
+  type: WebsocketCopilotUpdate;
+  data: T;
 }
 
 export interface BaseAgentConfig {
@@ -88,21 +119,6 @@ export interface TestStateData extends TestResultBase {
   isRunning: boolean;
   message?: string;
 }
-
-export enum WebsocketCopilotUpdate {
-  TEST_DONE = 'TEST_DONE',
-  TEST_ERROR = 'TEST_ERROR',
-  TEST_STARTED = 'TEST_STARTED',
-  PIECES_FOUND = 'PIECES_FOUND',
-  ERROR = 'ERROR',
-  AGENT_TEST_COMPLETED = 'AGENT_TEST_COMPLETED'
-}
-
-export type WebsocketCopilotResult = {
-  type: WebsocketCopilotUpdate;
-  data: any;
-}
-
 
 export interface PlannerPromptTemplate {
   system: string;

@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { WebsocketEventTypes } from "@activepieces/copilot-shared";
+import { WebsocketChannelTypes, WebsocketCopilotCommand } from "@activepieces/copilot-shared";
 import { handleError } from './websocket-utils';
 import { commandRegistry } from "../websocket/command-registry";
 import { WebSocketCommandData } from "../websocket/handlers/command-handler";
@@ -15,12 +15,12 @@ export function startWebSocketServer() {
     console.debug('[WebSocket] New connection established');
 
     // Handle all incoming messages using the command registry
-    socket.on('message', async (message: WebSocketCommandData) => {
+    socket.on('message', async (message: { command: WebsocketCopilotCommand; data: any }) => {
       try {
         const handler = commandRegistry.getHandler(message.command);
         
         if (handler) {
-          await handler.handle(socket, message.data as any);
+          await handler.handle(socket, message.data);
         } else {
           console.warn('[WebSocket] No handler found for command:', message.command);
         }
