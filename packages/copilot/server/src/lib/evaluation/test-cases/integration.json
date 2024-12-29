@@ -1,0 +1,136 @@
+{
+  "testCases": [
+    {
+      "title": "Google Sheets to Slack Integration",
+      "prompt": "When a new row is added to a Google Sheets spreadsheet, send a message to a Slack channel.",
+      "idealOutput": {
+        "trigger": {
+          "type": "PIECE_TRIGGER",
+          "name": "New Row Added",
+          "piece": "google_sheets"
+        },
+        "action": {
+          "type": "PIECE",
+          "name": "Send Message",
+          "piece": "slack"
+        }
+      }
+    },
+    {
+      "title": "Conditional Data Transfer",
+      "prompt": "Read from a Google Sheet and insert values larger than 100 to Airtable, otherwise send a failure email.",
+      "idealOutput": {
+        "trigger": {
+          "type": "PIECE_TRIGGER",
+          "name": "Read Row",
+          "piece": "google_sheets"
+        },
+        "branch": {
+          "type": "BRANCH",
+          "condition": "value > 100",
+          "onTrue": {
+            "type": "PIECE",
+            "name": "Insert Record",
+            "piece": "airtable"
+          },
+          "onFalse": {
+            "type": "PIECE",
+            "name": "Send Email",
+            "piece": "email"
+          }
+        }
+      }
+    },
+    {
+      "title": "Alternating Messaging Schedule",
+      "prompt": "Every 10 hours, send a discord message or a slack message alternatively.",
+      "idealOutput": {
+        "trigger": {
+          "type": "SCHEDULE",
+          "interval": "10 hours"
+        },
+        "variable": {
+          "type": "VARIABLE",
+          "name": "messageCounter",
+          "operation": "increment"
+        },
+        "branch": {
+          "type": "BRANCH",
+          "condition": "messageCounter % 2 === 0",
+          "onTrue": {
+            "type": "PIECE",
+            "name": "Send Message",
+            "piece": "discord"
+          },
+          "onFalse": {
+            "type": "PIECE",
+            "name": "Send Message",
+            "piece": "slack"
+          }
+        }
+      }
+    },
+    {
+      "title": "Stripe Customer Management",
+      "prompt": "When a new shopify customer comes, send a welcome email to the customer. If customer name contains 'test', then add 'test' tag to the customer, else add 'vip' tag to the customer",
+      "idealOutput": {
+        "trigger": {
+          "type": "PIECE_TRIGGER",
+          "name": "New Customer",
+          "piece": "shopify"
+        },
+        "actions": [
+          {
+            "type": "PIECE",
+            "name": "Send Email",
+            "piece": "email",
+            "input": {
+              "template": "welcome_email"
+            }
+          },
+          {
+            "type": "BRANCH",
+            "condition": "customer.name.includes('test')",
+            "onTrue": {
+              "type": "PIECE",
+              "name": "Add Tag",
+              "piece": "shopify",
+              "input": {
+                "tag": "test"
+              }
+            },
+            "onFalse": {
+              "type": "PIECE",
+              "name": "Add Tag",
+              "piece": "shopify",
+              "input": {
+                "tag": "vip"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "title": "HubSpot to Mailchimp Sync",
+      "prompt": "Sync new HubSpot contacts to Mailchimp.",
+      "idealOutput": {
+        "trigger": {
+          "type": "PIECE_TRIGGER",
+          "name": "New Contact",
+          "piece": "hubspot"
+        },
+        "action": {
+          "type": "PIECE",
+          "name": "Add/Update Subscriber",
+          "piece": "mailchimp",
+          "input": {
+            "email": "{{trigger.contact.email}}",
+            "firstName": "{{trigger.contact.firstName}}",
+            "lastName": "{{trigger.contact.lastName}}"
+          }
+        }
+      }
+    }
+  ]
+} 

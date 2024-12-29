@@ -1,23 +1,37 @@
 export enum WebsocketEventTypes {
   RUN_TESTS = 'RUN_TESTS',
-  GET_STATE = 'GET_STATE',
   UPDATE_RESULTS = 'UPDATE_RESULTS',
   RESPONSE_GET_STATE = 'RESPONSE_GET_STATE'
 }
 
-export interface RunTestsParams {
-  scenarioTitle: string;
-  relevanceThreshold?: number;
-  customPrompt?: string;
-  stepPrompt?: string;
+export interface BaseAgentConfig {
+  enabled: boolean;
+  model: string;
+  temperature: number;
+  maxSteps: number;
+  tools: Array<{
+    name: string;
+    function: string;
+    description: string;
+    parameters: {
+      type: string;
+      properties: Record<string, unknown>;
+      required: string[];
+    };
+  }>;
+  systemPrompt: string;
+  guidelines: string[];
+  requirements: string[];
+  outputSchema: {
+    type: string;
+    properties: Record<string, unknown>;
+    required: string[];
+  };
 }
 
-export type State = {
-  scenarios: {
-    title: string;
-    prompt: string;
-    status: 'running' | 'stopped' | 'idle';
-  }[];
+export interface RunTestsParams {
+  scenarioTitle: string;
+  agentConfig?: BaseAgentConfig;
 }
 
 export interface TestResultBase {
@@ -77,10 +91,10 @@ export interface TestStateData extends TestResultBase {
 }
 
 export enum WebsocketCopilotUpdate {
+  TEST_DONE = 'TEST_DONE',
+  TEST_ERROR = 'TEST_ERROR',
+  TEST_STARTED = 'TEST_STARTED',
   PIECES_FOUND = 'PIECES_FOUND',
-  PLAN_GENERATED = 'PLAN_GENERATED',
-  STEP_CREATED = 'STEP_CREATED',
-  SCENARIO_COMPLETED = 'SCENARIO_COMPLETED',
   ERROR = 'ERROR'
 }
 

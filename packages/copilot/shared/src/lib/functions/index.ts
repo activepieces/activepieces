@@ -24,6 +24,7 @@ export interface PieceSearchResult {
 
 export enum WebsocketCopilotCommand {
     SEARCH_PIECES = 'SEARCH_PIECES',
+    RUN_TESTS = 'RUN_TESTS',
 }
 
 export const formatPlannerPromptTemplate = (template: PlannerPromptTemplate): string => {

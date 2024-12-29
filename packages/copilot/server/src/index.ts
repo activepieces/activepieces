@@ -11,4 +11,3 @@ async function boot(){
 
 boot()
 
-export { prompts } from './lib/config/prompts';

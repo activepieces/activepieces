@@ -1,0 +1,88 @@
+{
+  "enabled": true,
+  "model": "gpt-4o",
+  "temperature": 0.7,
+  "maxSteps": 10,
+  "relevanceThreshold": 0.35,
+  "tools": [
+    {
+      "name": "findRelevantPieces",
+      "function": "findRelevantPieces",
+      "description": "Find pieces that are relevant to the user's request. Use this first to find available pieces.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "The user's request"
+          },
+          "threshold": {
+            "type": "number",
+            "description": "Relevance threshold for finding pieces",
+            "default": 0.35
+          }
+        },
+        "required": ["prompt"]
+      }
+    }
+  ],
+  "systemPrompt": "You are an automation flow planner. First, analyze the user's request carefully. Then, use the findRelevantPieces tool to discover available pieces and their capabilities. Based on the relevant pieces found, create a logical plan that achieves the user's goal. Each step should use appropriate pieces, actions, and triggers. Ensure the steps flow logically and handle edge cases. Provide clear explanations for why each step is needed.",
+  "answerDescription": "Create a structured flow plan based on the user's request and available pieces.",
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "A descriptive name for the flow"
+      },
+      "description": {
+        "type": "string",
+        "description": "A clear description of what the flow does"
+      },
+      "steps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the step"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["PIECE_TRIGGER", "PIECE", "ROUTER"],
+              "description": "Type of the step"
+            },
+            "piece": {
+              "type": "object",
+              "properties": {
+                "pieceName": {
+                  "type": "string",
+                  "description": "Name of the piece to use"
+                },
+                "actionName": {
+                  "type": "string",
+                  "description": "Name of the action to perform"
+                }
+              },
+              "required": ["pieceName"]
+            }
+          },
+          "required": ["name", "type"]
+        }
+      }
+    },
+    "required": ["name", "description", "steps"]
+  },
+  "guidelines": [
+    "Always start with a trigger when building automation flows",
+    "Use clear and descriptive names for steps",
+    "Ensure proper error handling in the flow",
+    "Keep the flow simple and focused on the main task"
+  ],
+  "requirements": [
+    "Each step must have a clear explanation",
+    "Flow must handle common edge cases",
+    "Use appropriate triggers and actions"
+  ]
+} 
