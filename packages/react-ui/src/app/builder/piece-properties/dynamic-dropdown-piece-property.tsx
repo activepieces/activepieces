@@ -7,11 +7,14 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
+import {
+  DropdownState,
+  PropertyType,
+  ExecutePropsResult,
+} from '@activepieces/pieces-framework';
 import { Action, isNil, Trigger } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
-import { ExecutePropsResult } from '../../../../../pieces/community/framework/src/lib/property/input/dropdown/common';
 
 type SelectPiecePropertyProps = {
   refreshers: string[];
@@ -39,7 +42,9 @@ const DynamicDropdownPieceProperty = React.memo(
       options: [],
     });
     const { mutate, isPending } = useMutation<
-      ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN>,
+      ExecutePropsResult<
+        PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN
+      >,
       Error,
       { input: Record<string, unknown> }
     >({

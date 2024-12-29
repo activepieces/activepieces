@@ -1,13 +1,12 @@
 import {
     DropdownProperty,
-    DropdownState,
     DynamicProperties,
-    DynamicPropsValue,
     MultiSelectDropdownProperty,
     PieceMetadata,
     PiecePropertyMap,
     PropertyType,
     StaticPropsValue,
+    ExecutePropsResult
 } from '@activepieces/pieces-framework'
 import {
     BasicAuthConnectionValue,
@@ -24,7 +23,6 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
-import { ExecutePropsResult } from 'packages/pieces/community/framework/src/lib/property/input/dropdown/common'
 
 export const pieceHelper = {
     async executeProps({ params, piecesSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
@@ -32,7 +30,9 @@ export const pieceHelper = {
             params,
             piecesSource,
         })
-
+        if(property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
+            throw new Error(`Property type is not excutable: ${property.type} for ${property.displayName}`)
+        }
         try {
             const { resolvedInput } = await createPropsResolver({
                 apiUrl: constants.internalApiUrl,
@@ -58,38 +58,40 @@ export const pieceHelper = {
                 flows: createFlowsContext(constants),
             }
 
-            if (property.type === PropertyType.DYNAMIC) {
-                const dynamicProperty = property as DynamicProperties<boolean>
-                const props = await dynamicProperty.props(resolvedInput, ctx)
-                return {
+            switch(property.type) {
+                case PropertyType.DYNAMIC: {
+                    const dynamicProperty = property as DynamicProperties<boolean>
+                    const props = await dynamicProperty.props(resolvedInput, ctx)
+                    return {
                     type: PropertyType.DYNAMIC,
                     options: props,
                 }
-            }
-
-            if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
-                const multiSelectProperty = property as MultiSelectDropdownProperty<
-                unknown,
-                boolean
-                >
-                const options = await multiSelectProperty.options(resolvedInput, ctx)
-                return {
-                    type: PropertyType.MULTI_SELECT_DROPDOWN,
-                    options,
                 }
-            }
-
-            const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            const options = await dropdownProperty.options(resolvedInput, ctx)
-            return {
-                type: PropertyType.DROPDOWN,
-                options,
-            }
+                case PropertyType.MULTI_SELECT_DROPDOWN: {
+                    const multiSelectProperty = property as MultiSelectDropdownProperty<
+                    unknown,
+                    boolean
+                    >
+                    const options = await multiSelectProperty.options(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.MULTI_SELECT_DROPDOWN,
+                        options,
+                    }
+                }
+                case PropertyType.DROPDOWN: {
+                    const dropdownProperty = property as DropdownProperty<unknown, boolean>
+                    const options = await dropdownProperty.options(resolvedInput, ctx)
+                    return {
+                        type: PropertyType.DROPDOWN,
+                        options,
+                    }
+                }
+            }                 
         }
         catch (e) {
             console.error(e)
             return {
-                type: PropertyType.DROPDOWN,
+                type: property.type,
                 options: {
                     disabled: true,
                     options: [],

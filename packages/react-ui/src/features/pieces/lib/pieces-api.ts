@@ -2,11 +2,10 @@ import { t } from 'i18next';
 
 import { api } from '@/lib/api';
 import {
-  DropdownState,
   PieceMetadataModel,
   PieceMetadataModelSummary,
-  PiecePropertyMap,
   PropertyType,
+  ExecutePropsResult,
 } from '@activepieces/pieces-framework';
 import {
   Action,
@@ -23,7 +22,6 @@ import {
 } from '@activepieces/shared';
 
 import { PieceStepMetadata, StepMetadata } from './types';
-import { ExecutePropsResult } from '../../../../../pieces/community/framework/src/lib/property/input/dropdown/common';
 
 export const CORE_STEP_METADATA: Record<
   Exclude<ActionType, ActionType.PIECE> | TriggerType.EMPTY,
@@ -66,9 +64,12 @@ export const piecesApi = {
       version: request.version ?? undefined,
     });
   },
-  options<T extends PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>(
-    request: PieceOptionRequest,
-  ): Promise<ExecutePropsResult<T>> {
+  options<
+    T extends
+      | PropertyType.DROPDOWN
+      | PropertyType.MULTI_SELECT_DROPDOWN
+      | PropertyType.DYNAMIC,
+  >(request: PieceOptionRequest): Promise<ExecutePropsResult<T>> {
     return api.post<ExecutePropsResult<T>>(`/v1/pieces/options`, request);
   },
   mapToMetadata(

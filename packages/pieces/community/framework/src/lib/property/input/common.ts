@@ -1,6 +1,8 @@
 import { Static, TObject, TSchema, Type } from "@sinclair/typebox";
 import { ApFile } from "./file-property";
 import { PropertyType } from "./property-type";
+import { DropdownState } from "./dropdown/common";
+import { InputPropertyMap } from "..";
 
 
 export const BasePropertySchema = Type.Object({
@@ -51,3 +53,7 @@ export type TPropertyValue<
     ? ApFile
     : unknown;
 };
+export type ExecutePropsResult<T extends PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC> = {
+  type: T
+  options: T extends PropertyType.DROPDOWN ? DropdownState<unknown> : T extends PropertyType.MULTI_SELECT_DROPDOWN ? DropdownState<unknown> : InputPropertyMap
+}

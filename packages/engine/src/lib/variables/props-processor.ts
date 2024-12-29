@@ -16,7 +16,7 @@ export const propsProcessor = {
         props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
         requireAuth: boolean,
-        dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined,
+        dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined | null,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: PropsValidationError }> => {
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}

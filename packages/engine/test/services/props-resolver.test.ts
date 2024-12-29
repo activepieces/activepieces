@@ -332,7 +332,7 @@ describe('Props resolver', () => {
                 required: true,
             }),
         }
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, undefined)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
         expect(processedInput).toEqual({
             base64: null,
             base64WithMime: new ApFile('unknown.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z', 'base64'), 'png'),
@@ -365,7 +365,7 @@ describe('Props resolver', () => {
             }),
         }
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, undefined)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
         expect(processedInput.documents[0].file).toBeDefined()
         expect(processedInput.documents[0].file.extension).toBe('svg')
         expect(processedInput.documents[0].file.filename).toBe('logo.svg')
@@ -395,7 +395,7 @@ describe('Props resolver', () => {
             }),
         }
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, undefined)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
         expect(processedInput.documents[0].file).toBeNull()
         expect(errors).toEqual({
             'documents': {
@@ -418,7 +418,7 @@ describe('Props resolver', () => {
             }),
 
         }
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, undefined)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
         expect(processedInput.file).toBeDefined()
         expect(processedInput.file.extension).toBe('svg')
         expect(processedInput.file.filename).toBe('logo.svg')
@@ -446,7 +446,7 @@ describe('Props resolver', () => {
                 required: false,
             }),
         }
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, undefined)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
 
         expect(processedInput.file).toBeDefined()
         expect(processedInput.file.extension).toBe('html')
@@ -590,7 +590,7 @@ describe('Array Flatter Processor', () => {
             }),
         }
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, undefined)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
 
         expect(processedInput.items).toEqual([
             { id: 1, name: 'Item 1' },
@@ -623,7 +623,7 @@ describe('Array Flatter Processor', () => {
             }),
         }
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, undefined)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
 
         expect(processedInput.items).toEqual([
             { id: 1, name: 'Single Item' },
@@ -656,7 +656,7 @@ describe('Array Flatter Processor', () => {
             }),
         }
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, undefined)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
 
         expect(processedInput.items).toEqual([
             { id: 1, name: 'Item 1' },
@@ -690,7 +690,7 @@ describe('Array Flatter Processor', () => {
             }),
         }
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, undefined)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
 
         expect(processedInput.items).toEqual([
             { id: '1', name: 'item1' },

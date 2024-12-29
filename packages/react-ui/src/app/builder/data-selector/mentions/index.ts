@@ -16,6 +16,7 @@ import {
 type PathSegment = string | number;
 
 const MAX_CHUNK_LENGTH = 10;
+const JOINED_VALUES_MAX_LENGTH = 32;
 
 function buildTestStepNode(
   displayName: string,
@@ -82,19 +83,19 @@ function mergeUniqueKeys(
 function extractUniqueKeys(obj: unknown): Record<string, Node> {
   let result: Record<string, Node> = {};
   if (isObject(obj)) {
-    for (const [key, value] of Object.entries(obj)) {
-      const values = result[key]?.values || [];
-      if (Array.isArray(value)) {
-        const filteredValues = value.filter(
+    for (const [entryKey, entryValue] of Object.entries(obj)) {
+      const resultValue = result[entryKey]?.values || [];
+      if (Array.isArray(entryValue)) {
+        const filteredValues = entryValue.filter(
           (v) => !isObject(v) && !Array.isArray(v),
         );
-        values.push(...filteredValues);
-      } else if (!isObject(value)) {
-        values.push(value);
+        resultValue.push(...filteredValues);
+      } else if (!isObject(entryValue)) {
+        resultValue.push(entryValue);
       }
-      const properties = extractUniqueKeys(value);
-      result[key] = {
-        values,
+      const properties = extractUniqueKeys(entryValue);
+      result[entryKey] = {
+        values: resultValue,
         properties,
       };
     }
@@ -115,16 +116,20 @@ function convertArrayToZippedView(
   for (const [key, node] of Object.entries(obj)) {
     const stepName = propertyPath[0];
     const subPath = [...propertyPath.slice(1), key];
-    const propertyPathWithFlatternArray = `flattenNestedKeys(${stepName}, ['${subPath
+    const propertyPathWithFlattenArray = `flattenNestedKeys(${stepName}, ['${subPath
       .map((s) => String(s))
       .join("', '")}'])`;
+    const joinedValues = node.values.join(', ');
     result.push({
       key: key,
       data: {
         type: 'value',
-        value: node.values.join(', ').slice(0, 32),
+        value:
+          joinedValues.length > JOINED_VALUES_MAX_LENGTH
+            ? `${joinedValues.slice(0, JOINED_VALUES_MAX_LENGTH)}...`
+            : joinedValues,
         displayName: key,
-        propertyPath: propertyPathWithFlatternArray,
+        propertyPath: propertyPathWithFlattenArray,
         insertable: true,
       },
       children:
@@ -173,13 +178,16 @@ function breakArrayIntoChunks<T>(
   array: T[],
   chunkSize: number,
 ): { items: T[]; range: { start: number; end: number } }[] {
-  return Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => ({
-    items: array.slice(i * chunkSize, i * chunkSize + chunkSize),
-    range: {
-      start: i * chunkSize + 1,
-      end: Math.min((i + 1) * chunkSize, array.length),
-    },
-  }));
+  return Array.from(
+    { length: Math.ceil(array.length / chunkSize) },
+    (_, i) => ({
+      items: array.slice(i * chunkSize, i * chunkSize + chunkSize),
+      range: {
+        start: i * chunkSize + 1,
+        end: Math.min((i + 1) * chunkSize, array.length),
+      },
+    }),
+  );
 }
 
 function traverseOutput(
@@ -190,8 +198,7 @@ function traverseOutput(
   insertable = true,
 ): MentionTreeNode<MentionTreeNodeDataUnion> {
   if (Array.isArray(node)) {
-    if(!zipArraysOfProperties)
-    {
+    if (!zipArraysOfProperties) {
       const mentionNodes = node.map((value, idx) =>
         traverseOutput(
           `${displayName} [${idx + 1}]`,
@@ -224,8 +231,7 @@ function traverseOutput(
         ),
         insertable,
       );
-    }
-    else {
+    } else {
       return buildMentionNode(
         displayName,
         propertyPath,
@@ -234,7 +240,6 @@ function traverseOutput(
         insertable,
       );
     }
-    
   } else if (isObject(node)) {
     const children = Object.entries(node).map(([key, value]) => {
       if (Array.isArray(value) && zipArraysOfProperties) {
@@ -305,6 +310,7 @@ function filterBy(
   if (!query) {
     return mentions;
   }
+
   return mentions
     .map((item) => {
       const isTestNode = item.data.type === 'test';
@@ -320,11 +326,15 @@ function filterBy(
           children: filteredChildren,
         };
       }
-      const searchableValue = isNil(item) || item.data.type === 'test' || item.data.type === 'chunk'
-         ? ''
-        : JSON.stringify(item?.data?.value).toLowerCase();
+      const searchableValue =
+        isNil(item) || item.data.type === 'test' || item.data.type === 'chunk'
+          ? ''
+          : JSON.stringify(item?.data?.value).toLowerCase();
 
-      const displayName = item?.data?.type === 'value' ? item?.data?.displayName?.toLowerCase() : '';
+      const displayName =
+        item?.data?.type === 'value'
+          ? item?.data?.displayName?.toLowerCase()
+          : '';
       const matchDisplayNameOrValue =
         displayName?.includes(query.toLowerCase()) ||
         searchableValue.includes(query.toLowerCase());

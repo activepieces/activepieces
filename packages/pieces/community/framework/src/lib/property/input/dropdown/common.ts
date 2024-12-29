@@ -1,7 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import { PropertyType } from "../property-type";
-import { DynamicPropsValue } from "../dynamic-prop";
-import { PiecePropertyMap } from "../..";
+
 
 export const DropdownOption = Type.Object({
     label: Type.String(),
@@ -26,7 +24,3 @@ export type DropdownState<T> = {
 }
 
 
-export type ExecutePropsResult<T extends PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC> = {
-    type: T
-    options: T extends PropertyType.DROPDOWN ? DropdownState<unknown> : T extends PropertyType.MULTI_SELECT_DROPDOWN ? DropdownState<unknown> : PiecePropertyMap
-}

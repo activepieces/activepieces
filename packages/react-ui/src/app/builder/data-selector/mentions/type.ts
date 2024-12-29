@@ -20,7 +20,7 @@ export type MentionTreeNodeDataUnion =
   | MentionTreeNodeData
   | MentionTreeChunkNodeData
   | MentionTestNodeData;
-  export type MentionTreeNode<
+export type MentionTreeNode<
   T extends MentionTreeNodeDataUnion = MentionTreeNodeDataUnion,
 > = {
   key: string;

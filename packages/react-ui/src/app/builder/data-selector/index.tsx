@@ -29,9 +29,24 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
     flowVersion.trigger,
     selectedStep,
   );
-  return pathToTargetStep.map((step) =>
-    dataSelectorMentions.traverseStep(step, state.sampleData, state.isFocusInsideListMapperModeInput),
-  );
+  return pathToTargetStep.map((step) => {
+    try {
+      return dataSelectorMentions.traverseStep(
+        step,
+        state.sampleData,
+        state.isFocusInsideListMapperModeInput,
+      );
+    } catch (error) {
+      console.error('Failed to traverse step:', error);
+      return {
+        key: `error-${step.name}`,
+        data: {
+          type: 'chunk',
+          displayName: `Error loading ${step.name}`,
+        },
+      };
+    }
+  });
 };
 
 type DataSelectorProps = {

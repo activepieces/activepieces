@@ -8,13 +8,16 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
+import {
+  PiecePropertyMap,
+  PropertyType,
+  ExecutePropsResult,
+} from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
-import { ExecutePropsResult } from '../../../../../pieces/community/framework/src/lib/property/input/dropdown/common';
 
 type DynamicPropertiesProps = {
   refreshers: string[];
@@ -113,7 +116,10 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
             currentValue ?? {},
           );
           setPropertyMap(response.options);
-          updateFormSchema(`settings.input.${props.propertyName}`, response.options);
+          updateFormSchema(
+            `settings.input.${props.propertyName}`,
+            response.options,
+          );
           if (!readonly) {
             const schemaInput: Record<string, unknown> =
               form.getValues()?.settings?.inputUiInfo?.schema ?? {};

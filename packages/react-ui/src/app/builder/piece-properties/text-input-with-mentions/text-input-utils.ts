@@ -120,7 +120,7 @@ function parseFlattenArrayPath(input: string): {
 }
 
 const removeIntroplationBrackets = (text: string) => {
-  if(text.startsWith('{{') && text.endsWith('}}')){
+  if (text.startsWith('{{') && text.endsWith('}}')) {
     return text.slice(2, text.length - 2).trim();
   }
   return text;

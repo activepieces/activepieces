@@ -6,7 +6,7 @@ import { PropertyContext } from "../../context";
 import { PropertyType } from "./property-type";
 import { JsonProperty } from "./json-property";
 import { ArrayProperty } from "./array-property";
-import { PiecePropertyMap } from "..";
+import { InputPropertyMap, PiecePropertyMap } from "..";
 
 export const DynamicProp = Type.Union([
   ShortTextProperty,
@@ -40,7 +40,7 @@ export type DynamicProperties<R extends boolean> = BasePropertySchema &
   props: (
     propsValue: Record<string, DynamicPropsValue>,
     ctx: PropertyContext
-  ) => Promise<PiecePropertyMap>;
+  ) => Promise<InputPropertyMap>;
   refreshers: string[];
 } &
   TPropertyValue<

@@ -132,7 +132,9 @@ export type BuilderState = {
   pieceSelectorStep: string | null;
   setPieceSelectorStep: (step: string | null) => void;
   isFocusInsideListMapperModeInput: boolean;
-  setIsFocusInsideListMapperModeInput: (isFocusInsideListMapperModeInput: boolean) => void;
+  setIsFocusInsideListMapperModeInput: (
+    isFocusInsideListMapperModeInput: boolean,
+  ) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -482,7 +484,9 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         });
       },
       isFocusInsideListMapperModeInput: false,
-      setIsFocusInsideListMapperModeInput: (isFocusInsideListMapperModeInput: boolean) => {
+      setIsFocusInsideListMapperModeInput: (
+        isFocusInsideListMapperModeInput: boolean,
+      ) => {
         return set(() => ({
           isFocusInsideListMapperModeInput,
         }));
