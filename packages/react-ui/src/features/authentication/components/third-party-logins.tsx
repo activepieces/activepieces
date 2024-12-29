@@ -10,7 +10,6 @@ import {
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
 
-import Github from '../../../assets/img/custom/auth/github.svg';
 import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
 import SamlIcon from '../../../assets/img/custom/auth/saml.svg';
 import { flagsHooks } from '../../../hooks/flags-hooks';
@@ -83,20 +82,6 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
           {isSignUp
             ? `${t(`Sign up With`)} ${t('Google')}`
             : `${t(`Sign in With`)} ${t('Google')}`}
-        </Button>
-      )}
-      {thirdPartyAuthProviders?.github && (
-        <Button
-          variant="outline"
-          className="w-full rounded-sm"
-          onClick={(e) =>
-            handleProviderClick(e, ThirdPartyAuthnProviderEnum.GITHUB)
-          }
-        >
-          <ThirdPartyIcon icon={Github} />
-          {isSignUp
-            ? `${t(`Sign up With`)} ${t('Github')}`
-            : `${t(`Sign in With`)} ${t('Github')}`}
         </Button>
       )}
       {thirdPartyAuthProviders?.saml && (
