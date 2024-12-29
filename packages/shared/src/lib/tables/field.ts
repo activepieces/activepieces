@@ -12,6 +12,7 @@ export const Field = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
     type: Type.Enum(FieldType),
+    position: Type.Number(),
     tableId: Type.String(),
     projectId: Type.String(),
 })

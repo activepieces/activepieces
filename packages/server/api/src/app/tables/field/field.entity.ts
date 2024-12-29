@@ -19,6 +19,11 @@ export const FieldEntity = new EntitySchema<FieldSchema>({
             type: String,
             enum: FieldType,
         },
+        position: {
+            type: Number,
+            nullable: false,
+            unique: true,
+        },
         tableId: {
             ...ApIdSchema,
             nullable: false,
