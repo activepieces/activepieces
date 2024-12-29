@@ -1,5 +1,12 @@
 import { t } from 'i18next';
-import { AlertCircle, Link2, Logs, Package, Workflow, Wrench } from 'lucide-react';
+import {
+  AlertCircle,
+  Link2,
+  Logs,
+  Package,
+  Workflow,
+  Wrench,
+} from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
