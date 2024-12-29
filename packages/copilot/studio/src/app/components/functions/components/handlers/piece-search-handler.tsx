@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { WebsocketCopilotCommand, WebsocketCopilotUpdate, PieceSearchResult, PieceCommandUpdate, PieceCommand } from '@activepieces/copilot-shared';
+import { WebsocketCopilotCommand, WebsocketCopilotUpdate, PieceSearchResult, PieceCommandUpdate, PieceCommand, WebsocketChannelTypes } from '@activepieces/copilot-shared';
 import { useWebSocketStore } from '../../../../stores/use-websocket-store';
 import { websocketService } from '../../../../services/websocket-service';
 import { PieceSearchTester } from '../testers/piece-search-tester';
@@ -44,7 +44,7 @@ export const PieceSearchHandler = () => {
         throw new Error('WebSocket connection not available');
       }
 
-      socket.emit('message', {
+      socket.emit(WebsocketChannelTypes.COMMAND, {
         command: PieceCommand.SEARCH_PIECES,
         data: { query }
       });

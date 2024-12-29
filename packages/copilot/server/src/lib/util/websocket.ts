@@ -1,8 +1,7 @@
 import { Server, Socket } from "socket.io";
-import { WebsocketChannelTypes, WebsocketCopilotCommand } from "@activepieces/copilot-shared";
+import { SystemUpdate, WebsocketChannelTypes, WebsocketCopilotCommand } from "@activepieces/copilot-shared";
 import { handleError } from './websocket-utils';
 import { commandRegistry } from "../websocket/command-registry";
-import { WebSocketCommandData } from "../websocket/handlers/command-handler";
 
 export function startWebSocketServer() {
   const io = new Server(3002, {
@@ -11,11 +10,11 @@ export function startWebSocketServer() {
     }
   });
 
-  io.on('connection', (socket: Socket) => {
-    console.debug('[WebSocket] New connection established');
+  io.on(WebsocketChannelTypes.CONNECT, (socket: Socket) => {
+    console.log('[WebSocket] New connection established');
 
     // Handle all incoming messages using the command registry
-    socket.on('message', async (message: { command: WebsocketCopilotCommand; data: any }) => {
+    socket.on(WebsocketChannelTypes.COMMAND, async (message: { command: WebsocketCopilotCommand; data: any }) => {
       try {
         const handler = commandRegistry.getHandler(message.command);
         
@@ -29,7 +28,17 @@ export function startWebSocketServer() {
       }
     });
 
-    socket.on('disconnect', () => {
+    socket.on(WebsocketChannelTypes.GET_STATE, () => {
+      console.debug('[WebSocket] Getting state');
+      socket.emit(WebsocketChannelTypes.SET_RESULT, {
+        type: SystemUpdate.STATE,
+        data: {
+          state: 'connected'
+        }
+      });
+    });
+
+    socket.on(WebsocketChannelTypes.DISCONNECT, () => {
       console.debug('[WebSocket] Connection closed');
     });
   });

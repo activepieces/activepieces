@@ -1,4 +1,5 @@
 {
+  "agentName": "planner",
   "testCases": [
     {
       "title": "Google Sheets to Slack Integration",

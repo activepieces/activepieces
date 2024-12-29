@@ -1,21 +1,19 @@
-// Command categories
-export enum PieceCommand {
-  SEARCH_PIECES = 'SEARCH_PIECES'
-}
 
-export enum TestCommand {
-  RUN_TESTS = 'RUN_TESTS'
-}
 
-export enum AgentCommand {
-  TEST_AGENT = 'TEST_AGENT',
-  GET_AGENT_REGISTRY = 'GET_AGENT_REGISTRY'
-}
+
+
+
+import { SystemCommand } from "../copilot-shared";
+import { AgentCommand } from "./agents";
+import { PieceCommand } from "./search-pieces";
+import { TestRegistryCommand } from "./tester";
+
 
 export type WebsocketCopilotCommand = 
   | PieceCommand
-  | TestCommand
-  | AgentCommand;
+  | AgentCommand
+  | SystemCommand
+  | TestRegistryCommand;
 
 export interface SearchPiecesRequest {
   command: PieceCommand.SEARCH_PIECES;
@@ -37,18 +35,10 @@ export interface GetAgentRegistryRequest {
   data: Record<string, never>;
 }
 
-export interface RunTestsRequest {
-  command: TestCommand.RUN_TESTS;
-  data: {
-    scenarioTitle: string;
-    agentConfig?: any;
-  };
-}
 
 export type WebsocketRequest = 
   | SearchPiecesRequest
   | TestAgentRequest
-  | RunTestsRequest
   | GetAgentRegistryRequest;
 
 export interface PieceSearchResult {
@@ -60,3 +50,6 @@ export interface PieceSearchResult {
 
   
   
+export * from "./search-pieces";
+export * from "./tester";
+export * from "./agents";

@@ -1,7 +1,7 @@
 import { Socket } from "socket.io";
-import { AgentCommand, WebsocketChannelTypes } from "@activepieces/copilot-shared";
+import { AgentCommand, AgentCommandUpdate, WebsocketChannelTypes } from "@activepieces/copilot-shared";
 import { createCommandHandler } from "./command-handler";
-import { handleError } from "../../util/websocket-utils";
+import { addResult, handleError } from "../../util/websocket-utils";
 import { agentRegistry } from "../../agents/agent-registry";
 
 const handleGetAgentRegistry = async (socket: Socket): Promise<void> => {
@@ -14,8 +14,11 @@ const handleGetAgentRegistry = async (socket: Socket): Promise<void> => {
       }
       return acc;
     }, {} as Record<string, any>);
+    addResult(socket, {
+      type: AgentCommandUpdate.AGENT_REGISTRY_UPDATED,
+      data: agents,
+    });
 
-    socket.emit(WebsocketChannelTypes.RESPONSE_GET_AGENT_REGISTRY, agents);
   } catch (error) {
     handleError(socket, error, 'Getting agent registry');
   }

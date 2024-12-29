@@ -1,64 +1,33 @@
 import { useWebSocketStore } from '../../../stores/use-websocket-store'
 import { websocketService } from '../../../services/websocket-service'
-import {
-  WebsocketCopilotResult,
-  PieceCommandUpdate,
-  AgentCommandUpdate,
-  SystemUpdate,
-} from '@activepieces/copilot-shared';
-import {
-  PiecesFound,
-  TestError,
-  AgentStarted,
-  AgentCompleted,
-} from './components';
+import { AgentCommandUpdate } from '@activepieces/copilot-shared'
+import { TestScenarios } from './components/test-scenarios';
 import { cn } from '../../../../lib/utils';
+import { useEffect } from 'react'
+import { useTestRegistryStore } from '../../../stores/use-test-registry-store'
 
 export function TestResults() {
   console.debug('Rendering TestResults')
   
   const { results, clearResults } = useWebSocketStore()
   const socket = websocketService.getSocket()
+  const { clearTestRegistry } = useTestRegistryStore()
 
-  const renderStepContent = (result: WebsocketCopilotResult) => {
-    switch (result.type) {
-      case PieceCommandUpdate.PIECES_FOUND:
-        return <PiecesFound data={result.data} />;
-
-      case AgentCommandUpdate.AGENT_TEST_ERROR:
-        return <TestError data={result.data} />;
-
-      case AgentCommandUpdate.AGENT_TEST_STARTED:
-        return <AgentStarted data={result.data} />;
-
-      case AgentCommandUpdate.AGENT_TEST_COMPLETED:
-        return <AgentCompleted data={result.data} />;
-
-      case SystemUpdate.ERROR: {
-        const message = result.data?.message;
-        if (message) {
-          return <div className="text-sm text-gray-600">{message}</div>;
-        }
-        return null;
-      }
-
-      default: {
-        const message = result.data?.message;
-        if (message) {
-          return <div className="text-sm text-gray-600">{message}</div>;
-        }
-        return null;
+  useEffect(() => {
+    const latestResult = results[results.length - 1]
+    if (latestResult?.type === AgentCommandUpdate.AGENT_TEST_STARTED) {
+      const agentName = latestResult.data?.agentName
+      if (agentName) {
+        websocketService.getTestRegistry(agentName)
       }
     }
-  };
+  }, [results])
 
-  const getStatusColor = (type: WebsocketCopilotResult['type']) => {
-    if (type === AgentCommandUpdate.AGENT_TEST_ERROR || type === SystemUpdate.ERROR) return 'text-red-600';
-    if (type === PieceCommandUpdate.PIECES_FOUND) return 'text-purple-600';
-    if (type === AgentCommandUpdate.AGENT_TEST_COMPLETED) return 'text-green-600';
-    if (type === AgentCommandUpdate.AGENT_TEST_STARTED) return 'text-blue-600';
-    return 'text-gray-900';
-  };
+  useEffect(() => {
+    return () => {
+      clearTestRegistry()
+    }
+  }, [])
 
   return (
     <div className={cn('flex-1 bg-gray-100 overflow-hidden')}>
@@ -88,38 +57,12 @@ export function TestResults() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto min-h-0 px-6">
-              <div className="space-y-3 py-4">
-                {results.map((result, index) => (
-                  <div
-                    key={index}
-                    className="bg-gray-50 rounded-lg shadow-sm ring-1 ring-gray-200 border-gray-100 p-4"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <span className={`font-medium text-sm ${getStatusColor(result.type)}`}>
-                          {result.type
-                            .split('_')
-                            .map(
-                              (word: string) =>
-                                word.charAt(0) + word.slice(1).toLowerCase()
-                            )
-                            .join(' ')}
-                        </span>
-
-                        {(result.data?.scenarioTitle ||
-                          result.data?.title) && (
-                          <div className="text-xs text-gray-600 mt-1">
-                            Scenario:{' '}
-                            {result.data?.scenarioTitle ||
-                              result.data?.title}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    {renderStepContent(result)}
-                  </div>
-                ))}
+            <div className="flex-1 overflow-hidden">
+              <div className="h-full flex divide-x divide-gray-100">
+                {/* Test Scenarios Panel */}
+                <div className="w-96 overflow-y-auto min-h-0 px-6 py-4">
+                  <TestScenarios />
+                </div>
               </div>
             </div>
           </div>

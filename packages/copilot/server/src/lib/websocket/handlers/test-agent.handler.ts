@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { AgentCommandUpdate, TestCommand } from "@activepieces/copilot-shared";
+import { AgentCommand, AgentCommandUpdate } from "@activepieces/copilot-shared";
 import { createCommandHandler } from "./command-handler";
 import { addResult, handleError } from "../../util/websocket-utils";
 import { agentRegistry } from "../../agents/agent-registry";
@@ -49,6 +49,6 @@ const handleTestAgent = async (socket: Socket, data: TestAgentParams): Promise<v
 };
 
 export const testAgentHandler = createCommandHandler(
-  TestCommand.RUN_TESTS,
+  AgentCommand.TEST_AGENT,
   handleTestAgent
 ); 
