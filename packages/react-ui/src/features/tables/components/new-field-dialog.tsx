@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -67,8 +68,8 @@ export function NewFieldDialog({
       form.reset();
       onFieldCreated();
       toast({
-        title: 'Success',
-        description: 'Field has been created',
+        title: t('Success'),
+        description: t('Field has been created.'),
         duration: 3000,
       });
     },
@@ -80,7 +81,7 @@ export function NewFieldDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Field</DialogTitle>
+          <DialogTitle>{t('Create New Field')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -94,7 +95,7 @@ export function NewFieldDialog({
               name="name"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name">{t('Name')}</Label>
                   <Input {...field} id="name" />
                   <FormMessage />
                 </FormItem>
@@ -105,7 +106,7 @@ export function NewFieldDialog({
               name="type"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label>Type</Label>
+                  <Label>{t('Type')}</Label>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
                       <SelectValue />
@@ -129,14 +130,14 @@ export function NewFieldDialog({
                 onClick={() => setOpen(false)}
                 disabled={createFieldMutation.isPending}
               >
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button
                 type="submit"
                 loading={createFieldMutation.isPending}
                 disabled={!form.formState.isValid}
               >
-                Create
+                {t('Create')}
               </Button>
             </DialogFooter>
           </form>

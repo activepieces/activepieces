@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { RenderEditCellProps } from 'react-data-grid';
@@ -60,7 +61,7 @@ function DateEditor({
             )}
           >
             <span className="flex-1 text-left truncate">
-              {date ? formatUtils.formatDateOnly(date) : 'Pick a date'}
+              {date ? formatUtils.formatDateOnly(date) : t('Pick a date')}
             </span>
             <div className="flex-none bg-primary/10 p-1">
               <CalendarIcon className="h-4 w-4 text-primary" />

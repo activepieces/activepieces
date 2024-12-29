@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -69,8 +70,8 @@ function TablePage() {
     onSuccess: () => {
       refetchRecords();
       toast({
-        title: 'Success',
-        description: 'Record has been updated',
+        title: t('Success'),
+        description: t('Record has been updated.'),
         duration: 3000,
       });
     },

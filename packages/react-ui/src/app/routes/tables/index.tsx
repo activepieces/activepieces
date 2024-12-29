@@ -224,7 +224,7 @@ function TablesPage() {
   return (
     <div className="flex-col w-full">
       <div className="flex items-center justify-between">
-        <TableTitle>Tables</TableTitle>
+        <TableTitle>{t('Tables')}</TableTitle>
         <Button
           onClick={() => setShowNewTableDialog(true)}
           variant="default"

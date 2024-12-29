@@ -1,6 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -84,8 +85,8 @@ export function NewRecordDialog({
       form.reset();
       onRecordCreated();
       toast({
-        title: 'Success',
-        description: 'Record has been created',
+        title: t('Success'),
+        description: t('Record has been created.'),
         duration: 3000,
       });
     },
@@ -97,7 +98,7 @@ export function NewRecordDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Record</DialogTitle>
+          <DialogTitle>{t('Create New Record')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -132,7 +133,7 @@ export function NewRecordDialog({
                                     new Date(formField.value),
                                   )
                                 ) : (
-                                  <span>Pick a date</span>
+                                  <span>{t('Pick a date')}</span>
                                 )}
                               </Button>
                             </PopoverTrigger>
@@ -168,14 +169,14 @@ export function NewRecordDialog({
                 onClick={() => setOpen(false)}
                 disabled={createRecordMutation.isPending}
               >
-                Cancel
+                {t('Cancel')}
               </Button>
               <Button
                 type="submit"
                 loading={createRecordMutation.isPending}
                 disabled={!form.formState.isValid}
               >
-                Create
+                {t('Create')}
               </Button>
             </DialogFooter>
           </form>
