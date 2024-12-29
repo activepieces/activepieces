@@ -54,18 +54,18 @@ type DataSelectorProps = {
   parentWidth: number;
 };
 
-const doesHaveInputThatUsesMentionClass = (
+const doesElementHaveAnInputThatUsesMentions = (
   element: Element | null,
 ): boolean => {
   if (isNil(element)) {
     return false;
   }
-  if (element.classList.contains(textMentionUtils.inputThatUsesMentionClass)) {
+  if (element.classList.contains(textMentionUtils.inputWithMentionsCssClass)) {
     return true;
   }
   const parent = element.parentElement;
   if (parent) {
-    return doesHaveInputThatUsesMentionClass(parent);
+    return parent && doesElementHaveAnInputThatUsesMentions(parent);
   }
   return false;
 };
@@ -83,8 +83,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
     const isTextMentionInputFocused =
       (!isNil(containerRef.current) &&
         containerRef.current.contains(document.activeElement)) ||
-      doesHaveInputThatUsesMentionClass(document.activeElement);
-
+      doesElementHaveAnInputThatUsesMentions(document.activeElement);
     setShowDataSelector(isTextMentionInputFocused);
   }, []);
 
@@ -107,6 +106,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },
+        textMentionUtils.dataSelectorCssClassSelector
       )}
     >
       <div className="text-lg items-center font-semibold px-5 py-2 flex gap-2">

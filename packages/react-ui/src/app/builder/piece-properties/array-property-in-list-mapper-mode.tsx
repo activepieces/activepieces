@@ -6,6 +6,7 @@ import { isNil } from '@activepieces/shared';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { AutoPropertiesFormComponent } from './auto-properties-form';
+import { textMentionUtils } from './text-input-with-mentions/text-input-utils';
 
 type ArrayPiecePropertyInListMapperModeProps = {
   inputName: string;
@@ -20,21 +21,24 @@ const ArrayPiecePropertyInListMapperMode = React.memo(
     arrayProperty,
   }: ArrayPiecePropertyInListMapperModeProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const setIsFocusInsideListMapperModeInput = useBuilderStateContext(
-      (state) => state.setIsFocusInsideListMapperModeInput,
+    const [isFocusInsideListMapperModeInput, setIsFocusInsideListMapperModeInput] = useBuilderStateContext(
+      (state) => [state.isFocusInsideListMapperModeInput, state.setIsFocusInsideListMapperModeInput]
     );
     useEffect(() => {
       const focusInListener = () => {
         const focusedElement = document.activeElement;
         const isFocusedInside =
           !!containerRef.current?.contains(focusedElement);
-        setIsFocusInsideListMapperModeInput(isFocusedInside);
+      const isFocusedInsideDataSelector = !isNil(document.activeElement) && 
+                                          document.activeElement instanceof HTMLElement &&
+                                          textMentionUtils.isDataSelectorOrChildOfDataSelector(document.activeElement);
+      setIsFocusInsideListMapperModeInput(isFocusedInside || (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput ));
       };
       document.addEventListener('focusin', focusInListener);
       return () => {
         document.removeEventListener('focusin', focusInListener);
       };
-    }, [setIsFocusInsideListMapperModeInput]);
+    }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
     if (isNil(arrayProperty.properties)) return <></>;
     return (
       <div className="flex w-full flex-col gap-4" ref={containerRef}>

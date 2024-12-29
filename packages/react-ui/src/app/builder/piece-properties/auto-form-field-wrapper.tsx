@@ -138,7 +138,7 @@ const AutoFormFieldWrapper = ({
                     </Toggle>
                   </TooltipTrigger>
                   <TooltipContent side="top" className="bg-background">
-                    {t('List Mapper')}
+                    {t('List Converter')}
                   </TooltipContent>
                 </Tooltip>
               )}

@@ -31,7 +31,7 @@ const BuilderJsonEditorWrapper = ({
           });
         });
       }}
-      className={textMentionUtils.inputThatUsesMentionClass}
+      className={textMentionUtils.inputWithMentionsCssClass}
     />
   );
 };

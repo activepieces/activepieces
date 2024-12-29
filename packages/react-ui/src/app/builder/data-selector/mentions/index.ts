@@ -7,9 +7,9 @@ import {
 } from '@activepieces/shared';
 
 import {
-  MentionTreeNode,
+  MentionTreeNode as DataSelectorTreeNode,
   MentionTestNodeData,
-  MentionTreeNodeDataUnion,
+  MentionTreeNodeDataUnion as DataSelectorTreeNodeDataUnion,
   MentionTreeNodeData,
 } from './type';
 
@@ -21,7 +21,7 @@ const JOINED_VALUES_MAX_LENGTH = 32;
 function buildTestStepNode(
   displayName: string,
   stepName: string,
-): MentionTreeNode<MentionTreeNodeData> {
+): DataSelectorTreeNode<MentionTreeNodeData> {
   return {
     key: stepName,
     data: {
@@ -45,8 +45,8 @@ function buildTestStepNode(
 
 function buildChunkNode(
   displayName: string,
-  children: MentionTreeNode<MentionTreeNodeDataUnion>[] | undefined,
-): MentionTreeNode<MentionTreeNodeDataUnion> {
+  children: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] | undefined,
+): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   return {
     key: displayName,
     data: {
@@ -111,11 +111,12 @@ function extractUniqueKeys(obj: unknown): Record<string, Node> {
 function convertArrayToZippedView(
   obj: Record<string, Node>,
   propertyPath: PathSegment[],
-): MentionTreeNode<MentionTreeNodeDataUnion>[] {
-  const result: MentionTreeNode<MentionTreeNodeDataUnion>[] = [];
+): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] {
+  const result: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] = [];
   for (const [key, node] of Object.entries(obj)) {
     const stepName = propertyPath[0];
     const subPath = [...propertyPath.slice(1), key];
+    console.log(stepName, subPath);
     const propertyPathWithFlattenArray = `flattenNestedKeys(${stepName}, ['${subPath
       .map((s) => String(s))
       .join("', '")}'])`;
@@ -134,7 +135,7 @@ function convertArrayToZippedView(
       },
       children:
         Object.keys(node.properties).length > 0
-          ? convertArrayToZippedView(node.properties, subPath)
+          ? convertArrayToZippedView(node.properties, [...propertyPath, key])
           : undefined,
     });
   }
@@ -149,13 +150,13 @@ function buildJsonPath(propertyPath: PathSegment[]): string {
   return jsonPath;
 }
 
-function buildMentionNode(
+function buildDataSelectorNode(
   displayName: string,
   propertyPath: PathSegment[],
   value: unknown,
-  children: MentionTreeNode<MentionTreeNodeDataUnion>[] | undefined,
+  children: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] | undefined,
   insertable = true,
-): MentionTreeNode<MentionTreeNodeDataUnion> {
+): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const isEmptyArrayOrObject =
     (Array.isArray(value) && value.length === 0) ||
     (isObject(value) && Object.keys(value).length === 0);
@@ -196,9 +197,10 @@ function traverseOutput(
   node: unknown,
   zipArraysOfProperties: boolean,
   insertable = true,
-): MentionTreeNode<MentionTreeNodeDataUnion> {
+): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   if (Array.isArray(node)) {
-    if (!zipArraysOfProperties) {
+    const isArrayOfObjects = node.some((value) => isObject(value));
+    if (!zipArraysOfProperties || !isArrayOfObjects) {
       const mentionNodes = node.map((value, idx) =>
         traverseOutput(
           `${displayName} [${idx + 1}]`,
@@ -211,7 +213,7 @@ function traverseOutput(
       const chunks = breakArrayIntoChunks(mentionNodes, MAX_CHUNK_LENGTH);
       const isSingleChunk = chunks.length === 1;
       if (isSingleChunk) {
-        return buildMentionNode(
+        return buildDataSelectorNode(
           displayName,
           propertyPath,
           node,
@@ -219,7 +221,7 @@ function traverseOutput(
           insertable,
         );
       }
-      return buildMentionNode(
+      return buildDataSelectorNode(
         displayName,
         propertyPath,
         undefined,
@@ -232,7 +234,7 @@ function traverseOutput(
         insertable,
       );
     } else {
-      return buildMentionNode(
+      return buildDataSelectorNode(
         displayName,
         propertyPath,
         node,
@@ -242,8 +244,8 @@ function traverseOutput(
     }
   } else if (isObject(node)) {
     const children = Object.entries(node).map(([key, value]) => {
-      if (Array.isArray(value) && zipArraysOfProperties) {
-        return buildMentionNode(
+      if (zipArraysOfProperties) {
+        return buildDataSelectorNode(
           key,
           [...propertyPath, key],
           value,
@@ -262,7 +264,8 @@ function traverseOutput(
         insertable,
       );
     });
-    return buildMentionNode(
+    console.log(children);
+    return buildDataSelectorNode(
       displayName,
       propertyPath,
       node,
@@ -270,7 +273,8 @@ function traverseOutput(
       insertable,
     );
   } else {
-    return buildMentionNode(
+
+    return buildDataSelectorNode(
       displayName,
       propertyPath,
       node,
@@ -288,7 +292,7 @@ function traverseStep(
   step: (Action | Trigger) & { dfsIndex: number },
   sampleData: Record<string, unknown>,
   zipArraysOfProperties: boolean,
-): MentionTreeNode<MentionTreeNodeDataUnion> {
+): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
   const stepNeedsTesting = isNil(step.settings.inputUiInfo?.lastTestDate);
   if (stepNeedsTesting) {
@@ -304,9 +308,9 @@ function traverseStep(
 }
 
 function filterBy(
-  mentions: MentionTreeNode[],
+  mentions: DataSelectorTreeNode[],
   query: string | undefined,
-): MentionTreeNode<MentionTreeNodeDataUnion>[] {
+): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] {
   if (!query) {
     return mentions;
   }
@@ -346,13 +350,13 @@ function filterBy(
       }
       return null;
     })
-    .filter((f) => !isNil(f)) as MentionTreeNode<MentionTreeNodeDataUnion>[];
+    .filter((f) => !isNil(f)) as DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[];
 }
 
 export const dataSelectorMentions = {
   isTestStepNode: (
-    node: MentionTreeNode,
-  ): node is MentionTreeNode<MentionTestNodeData> => node.data.type === 'test',
+    node: DataSelectorTreeNode,
+  ): node is DataSelectorTreeNode<MentionTestNodeData> => node.data.type === 'test',
   traverseStep,
   filterBy,
 };
