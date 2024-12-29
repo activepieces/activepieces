@@ -1,11 +1,19 @@
-import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, FileType, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
+import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { fileService } from '../../file/file.service'
 import { platformService } from '../../platform/platform.service'
 import { projectReleaseService } from './project-release.service'
 
 export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) => {
+
+    app.get('/:id', GetProjectReleaseRequest, async (req) => {
+        const release = await projectReleaseService.getOneOrThrow({
+            id: req.params.id,
+            projectId: req.principal.projectId,
+        })
+        return projectReleaseService.enrich(release)
+    })
+
     app.get('/', ListProjectReleasesRequestParams, async (req) => {
         return projectReleaseService.list({
             projectId: req.principal.projectId,
@@ -24,21 +32,18 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
         const ownerId = platform.ownerId
         return projectReleaseService.releasePlan(req.principal.projectId, ownerId, req.body, req.log)
     })
-
-    app.post('/:id/export', ExportProjectReleaseRequest, async (req) => {
-        const projectRelease = await projectReleaseService.getOneOrThrow({
-            id: req.params.id,
-            projectId: req.principal.projectId,
-        })
-        const file = await fileService(req.log).getDataOrThrow({
-            fileId: projectRelease.fileId,
-            projectId: projectRelease.projectId,
-            type: FileType.PROJECT_RELEASE,
-        })
-        return JSON.parse(file.data.toString())
-    })
 }
 
+const GetProjectReleaseRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+    },
+}
 
 const ListProjectReleasesRequestParams = {
     config: {
@@ -70,16 +75,5 @@ const CreateProjectReleaseRequest = {
         response: {
             [StatusCodes.CREATED]: ProjectRelease,
         },
-    },
-}
-
-const ExportProjectReleaseRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER],
-    },
-    schema: {
-        params: Type.Object({
-            id: ApId,
-        }),
     },
 }
