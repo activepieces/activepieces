@@ -1,8 +1,4 @@
 
-
-
-
-
 import { SystemCommand } from "../copilot-shared";
 import { AgentCommand } from "./agents";
 import { PieceCommand } from "./search-pieces";

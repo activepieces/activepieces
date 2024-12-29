@@ -1,5 +1,4 @@
-
-
+import { BaseAgentConfig } from '../../copilot-shared';
 
 export enum AgentCommandUpdate {
     AGENT_TEST_STARTED = 'AGENT_TEST_STARTED',
@@ -13,3 +12,13 @@ export enum AgentCommand {
     TEST_AGENT = 'TEST_AGENT',
     GET_AGENT_REGISTRY = 'GET_AGENT_REGISTRY'
   }
+
+export interface AgentRegistryEntry {
+  name: string;
+  config: BaseAgentConfig;
+}
+
+export interface GetAgentRegistryResponse {
+  type: AgentCommandUpdate.AGENT_REGISTRY_UPDATED;
+  data: Record<string, BaseAgentConfig>;
+}

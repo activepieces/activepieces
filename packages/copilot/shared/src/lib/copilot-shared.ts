@@ -59,10 +59,6 @@ export interface RunTestsParams {
   agentConfig?: BaseAgentConfig;
 }
 
-
-
-
-
 export enum SystemCommand {
   ERROR = 'ERROR',
 }

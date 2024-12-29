@@ -1,81 +1,91 @@
-import { WebsocketChannelTypes, BaseAgentConfig, AgentCommand, TestRegistryCommand, GetTestRegistryResponse, WebsocketCopilotCommand, SystemUpdate, AgentCommandUpdate } from '@activepieces/copilot-shared'
+import { WebsocketChannelTypes, BaseAgentConfig, AgentCommand, TestRegistryCommand, GetTestRegistryResponse, WebsocketCopilotCommand, WebsocketCopilotResult, AgentCommandUpdate } from '@activepieces/copilot-shared'
 import { Socket, io } from 'socket.io-client'
 import { useWebSocketStore } from '../stores/use-websocket-store'
 import { useAgentRegistryStore } from '../stores/use-agent-registry-store'
 import { useTestRegistryStore } from '../stores/use-test-registry-store'
 
-// Singleton socket instance
+// Socket instance
 let socket: Socket | null = null
 
-const setupEventListeners = (socketInstance: Socket) => {
-  console.debug('Setting up WebSocket event listeners')
-
-  socketInstance.on(WebsocketChannelTypes.UPDATE_RESULT, (data) => {
-    console.debug('Received WebSocket result:', data)
-    useWebSocketStore.getState().setResults(data)
-  })
-
-  socketInstance.on(WebsocketChannelTypes.SET_RESULT, (result) => {
-    console.debug('Adding WebSocket result:', result)
-    useWebSocketStore.getState().addResult(result)
-    if (result.type === AgentCommandUpdate.AGENT_REGISTRY_UPDATED) {
-      useAgentRegistryStore.getState().setAgents(result)
-    }
-  })
+// Event handlers
+const handleAgentRegistryUpdate = (result: WebsocketCopilotResult): void => {
+  if (result.type === AgentCommandUpdate.AGENT_REGISTRY_UPDATED) {
+    const agentsMap = new Map(
+      Object.entries(result.data).map(([name, config]) => [name, config as BaseAgentConfig])
+    )
+    useAgentRegistryStore.getState().setAgents(agentsMap)
+  }
 }
 
-const connect = () => {
-  if (!socket) {
-    socket = io('http://localhost:3002', {
-      transports: ['websocket'],
-    })
+const handleWebSocketResult = (result: WebsocketCopilotResult): void => {
+  useWebSocketStore.getState().addResult(result)
+  handleAgentRegistryUpdate(result)
+}
 
-    setupEventListeners(socket)
+const setupEventListeners = (socketInstance: Socket): void => {
+  socketInstance.on(WebsocketChannelTypes.UPDATE_RESULT, (data: WebsocketCopilotResult) => {
+    useWebSocketStore.getState().setResults([data])
+  })
+
+  socketInstance.on(WebsocketChannelTypes.SET_RESULT, handleWebSocketResult)
+}
+
+// Socket management
+const createSocket = (): Socket => {
+  console.debug('[WebSocket] Creating new connection')
+  const newSocket = io('http://localhost:3002', {
+    transports: ['websocket'],
+  })
+  setupEventListeners(newSocket)
+  return newSocket
+}
+
+const connect = (): void => {
+  if (!socket) {
+    socket = createSocket()
   }
 
   if (!socket.connected) {
+    console.debug('[WebSocket] Connecting')
     socket.connect()
-    console.log('socket', !socket.connected)
-    console.log('socket.type',WebsocketChannelTypes.GET_STATE)
     socket.emit(WebsocketChannelTypes.GET_STATE)
     requestAgentRegistry()
   }
 }
 
-const disconnect = () => {
-  console.debug('Disconnecting from WebSocket')
+const disconnect = (): void => {
+  console.debug('[WebSocket] Disconnecting')
   if (socket) {
     socket.disconnect()
     socket = null
   }
 }
 
-const requestAgentRegistry = () => {
-  console.debug('Requesting agent registry state')
-  if (socket) {
-    socket.emit(WebsocketChannelTypes.COMMAND, {
-      command: AgentCommand.GET_AGENT_REGISTRY,
-      data: {}
-    })
-  } else {
-    console.warn('Cannot request agent registry: WebSocket not connected')
-  }
-}
+const getSocket = (): Socket | null => socket
 
-const getSocket = (): Socket | null => {
-  return socket
-}
-
+// Command handlers
 const sendCommand = async <T>(command: { type: WebsocketCopilotCommand; [key: string]: any }): Promise<T> => {
-  return new Promise((resolve, reject) => {
-    if (!socket) {
-      reject(new Error('Socket not connected'))
-      return
-    }
+  if (!socket) {
+    throw new Error('[WebSocket] Socket not connected')
+  }
 
-    socket.emit(WebsocketChannelTypes.COMMAND, command, (response: T) => {
+  return new Promise((resolve) => {
+    socket!.emit(WebsocketChannelTypes.COMMAND, command, (response: T) => {
       resolve(response)
     })
+  })
+}
+
+const requestAgentRegistry = (): void => {
+  console.debug('[WebSocket] Requesting agent registry')
+  if (!socket) {
+    console.warn('[WebSocket] Cannot request agent registry: Socket not connected')
+    return
+  }
+
+  socket.emit(WebsocketChannelTypes.COMMAND, {
+    command: AgentCommand.GET_AGENT_REGISTRY,
+    data: {}
   })
 }
 
@@ -89,10 +99,12 @@ const getTestRegistry = async (agentName: string) => {
   return response.data
 }
 
+// Public API
 export const websocketService = {
   connect,
   disconnect,
   requestAgentRegistry,
   getSocket,
   getTestRegistry,
+  sendCommand,
 } 

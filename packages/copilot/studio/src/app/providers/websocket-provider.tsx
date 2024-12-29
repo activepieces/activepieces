@@ -5,8 +5,7 @@ interface WebSocketProviderProps {
   children: ReactNode
 }
 
-export function WebSocketProvider({ children }: WebSocketProviderProps) {
-
+export const WebSocketProvider = ({ children }: WebSocketProviderProps): JSX.Element => {
   useEffect(() => {
     websocketService.connect()
 
