@@ -35,7 +35,7 @@ export const createDatabaseItem = createAction({
     const { properties } = await notion.databases.retrieve({
       database_id: database_id as unknown as string,
     });
-   
+
     Object.keys(databaseFields).forEach((key) => {
       if (databaseFields[key] !== '') {
         const fieldType: string = properties[key]?.type;
