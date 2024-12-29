@@ -7,12 +7,12 @@ import {
 } from '../../../components/ui/collapsible';
 
 import { DataSelectorNodeContent } from './data-selector-node-content';
-import { dataSelectorMentions } from './mentions';
-import { MentionTreeNode } from './mentions/type';
 import { TestStepSection } from './test-step-section';
+import { DataSelectorTreeNode } from './type';
+import { dataSelectorUtils } from './utils';
 
 type DataSelectoNodeProps = {
-  node: MentionTreeNode;
+  node: DataSelectorTreeNode;
   depth: number;
   searchTerm: string;
 };
@@ -32,7 +32,7 @@ const DataSelectorNode = ({
     }
   }, [searchTerm, depth]);
 
-  const isTestStepNode = dataSelectorMentions.isTestStepNode(node);
+  const isTestStepNode = dataSelectorUtils.isTestStepNode(node);
   if (isTestStepNode) {
     return <TestStepSection stepName={node.data.stepName}></TestStepSection>;
   }

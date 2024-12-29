@@ -7,10 +7,10 @@ import {
 } from '@activepieces/shared';
 
 import {
-  MentionTreeNode as DataSelectorTreeNode,
-  MentionTestNodeData,
-  MentionTreeNodeDataUnion as DataSelectorTreeNodeDataUnion,
-  MentionTreeNodeData,
+  DataSelectorTreeNode,
+  DataSelectorTestNodeData,
+  DataSelectorTreeNodeDataUnion,
+  DataSelectorTreeNodeData,
 } from './type';
 
 type PathSegment = string | number;
@@ -21,7 +21,7 @@ const JOINED_VALUES_MAX_LENGTH = 32;
 function buildTestStepNode(
   displayName: string,
   stepName: string,
-): DataSelectorTreeNode<MentionTreeNodeData> {
+): DataSelectorTreeNode<DataSelectorTreeNodeData> {
   return {
     key: stepName,
     data: {
@@ -264,7 +264,6 @@ function traverseOutput(
         insertable,
       );
     });
-    console.log(children);
     return buildDataSelectorNode(
       displayName,
       propertyPath,
@@ -273,7 +272,6 @@ function traverseOutput(
       insertable,
     );
   } else {
-
     return buildDataSelectorNode(
       displayName,
       propertyPath,
@@ -350,13 +348,16 @@ function filterBy(
       }
       return null;
     })
-    .filter((f) => !isNil(f)) as DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[];
+    .filter(
+      (f) => !isNil(f),
+    ) as DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[];
 }
 
-export const dataSelectorMentions = {
+export const dataSelectorUtils = {
   isTestStepNode: (
     node: DataSelectorTreeNode,
-  ): node is DataSelectorTreeNode<MentionTestNodeData> => node.data.type === 'test',
+  ): node is DataSelectorTreeNode<DataSelectorTestNodeData> =>
+    node.data.type === 'test',
   traverseStep,
   filterBy,
 };

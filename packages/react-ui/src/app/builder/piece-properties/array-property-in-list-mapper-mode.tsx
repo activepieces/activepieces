@@ -21,18 +21,28 @@ const ArrayPiecePropertyInListMapperMode = React.memo(
     arrayProperty,
   }: ArrayPiecePropertyInListMapperModeProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isFocusInsideListMapperModeInput, setIsFocusInsideListMapperModeInput] = useBuilderStateContext(
-      (state) => [state.isFocusInsideListMapperModeInput, state.setIsFocusInsideListMapperModeInput]
-    );
+    const [
+      isFocusInsideListMapperModeInput,
+      setIsFocusInsideListMapperModeInput,
+    ] = useBuilderStateContext((state) => [
+      state.isFocusInsideListMapperModeInput,
+      state.setIsFocusInsideListMapperModeInput,
+    ]);
     useEffect(() => {
       const focusInListener = () => {
         const focusedElement = document.activeElement;
         const isFocusedInside =
           !!containerRef.current?.contains(focusedElement);
-      const isFocusedInsideDataSelector = !isNil(document.activeElement) && 
-                                          document.activeElement instanceof HTMLElement &&
-                                          textMentionUtils.isDataSelectorOrChildOfDataSelector(document.activeElement);
-      setIsFocusInsideListMapperModeInput(isFocusedInside || (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput ));
+        const isFocusedInsideDataSelector =
+          !isNil(document.activeElement) &&
+          document.activeElement instanceof HTMLElement &&
+          textMentionUtils.isDataSelectorOrChildOfDataSelector(
+            document.activeElement,
+          );
+        setIsFocusInsideListMapperModeInput(
+          isFocusedInside ||
+            (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
+        );
       };
       document.addEventListener('focusin', focusInListener);
       return () => {

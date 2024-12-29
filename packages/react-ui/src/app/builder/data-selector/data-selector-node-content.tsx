@@ -9,7 +9,7 @@ import { PieceIcon } from '../../../features/pieces/components/piece-icon';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { MentionTreeNode } from './mentions/type';
+import { DataSelectorTreeNode } from './type';
 
 const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
   const toggleIconSize = 15;
@@ -24,7 +24,7 @@ type DataSelectorNodeContentProps = {
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
   depth: number;
-  node: MentionTreeNode;
+  node: DataSelectorTreeNode;
 };
 const handleKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
   if (event.key === 'Enter' || event.key === ' ') {

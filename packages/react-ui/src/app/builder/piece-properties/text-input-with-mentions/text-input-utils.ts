@@ -251,13 +251,16 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
 
   mentionElement.appendChild(mentiontextDiv);
   return mentionElement;
-}; 
+};
 
 const inputWithMentionsCssClass = 'ap-text-with-mentions';
 const dataSelectorCssClassSelector = 'ap-data-selector';
 const isDataSelectorOrChildOfDataSelector = (element: HTMLElement) => {
-  return element.classList.contains(dataSelectorCssClassSelector) || !isNil(element.closest(`.${dataSelectorCssClassSelector}`));
-}
+  return (
+    element.classList.contains(dataSelectorCssClassSelector) ||
+    !isNil(element.closest(`.${dataSelectorCssClassSelector}`))
+  );
+};
 export const textMentionUtils = {
   convertTextToTipTapJsonContent,
   convertTiptapJsonToText: ({ content }: JSONContent) => {
@@ -272,5 +275,5 @@ export const textMentionUtils = {
   createMentionNodeFromText,
   inputWithMentionsCssClass,
   dataSelectorCssClassSelector,
-  isDataSelectorOrChildOfDataSelector
+  isDataSelectorOrChildOfDataSelector,
 };

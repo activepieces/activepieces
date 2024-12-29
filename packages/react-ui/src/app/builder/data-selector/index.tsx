@@ -15,12 +15,12 @@ import {
   DataSelectorSizeState,
   DataSelectorSizeTogglers,
 } from './data-selector-size-togglers';
-import { dataSelectorMentions } from './mentions';
-import { MentionTreeNode } from './mentions/type';
+import { DataSelectorTreeNode } from './type';
+import { dataSelectorUtils } from './utils';
 
-const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
-  state,
-) => {
+const getDataSelectorStructure: (
+  state: BuilderState,
+) => DataSelectorTreeNode[] = (state) => {
   const { selectedStep, flowVersion } = state;
   if (!selectedStep || !flowVersion || !flowVersion.trigger) {
     return [];
@@ -31,7 +31,7 @@ const getAllStepsMentions: (state: BuilderState) => MentionTreeNode[] = (
   );
   return pathToTargetStep.map((step) => {
     try {
-      return dataSelectorMentions.traverseStep(
+      return dataSelectorUtils.traverseStep(
         step,
         state.sampleData,
         state.isFocusInsideListMapperModeInput,
@@ -75,8 +75,13 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
   const [DataSelectorSize, setDataSelectorSize] =
     useState<DataSelectorSizeState>(DataSelectorSizeState.DOCKED);
   const [searchTerm, setSearchTerm] = useState('');
-  const mentions = useBuilderStateContext(getAllStepsMentions);
-  const filteredMentions = dataSelectorMentions.filterBy(mentions, searchTerm);
+  const dataSelectorStructure = useBuilderStateContext(
+    getDataSelectorStructure,
+  );
+  const filteredNodes = dataSelectorUtils.filterBy(
+    dataSelectorStructure,
+    searchTerm,
+  );
   const [showDataSelector, setShowDataSelector] = useState(false);
 
   const checkFocus = useCallback(() => {
@@ -106,7 +111,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },
-        textMentionUtils.dataSelectorCssClassSelector
+        textMentionUtils.dataSelectorCssClassSelector,
       )}
     >
       <div className="text-lg items-center font-semibold px-5 py-2 flex gap-2">
@@ -140,8 +145,8 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
         </div>
 
         <ScrollArea className="transition-all h-[calc(100%-56px)] w-full ">
-          {filteredMentions &&
-            filteredMentions.map((node) => (
+          {filteredNodes &&
+            filteredNodes.map((node) => (
               <DataSelectorNode
                 depth={0}
                 key={node.key}
@@ -149,7 +154,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
                 searchTerm={searchTerm}
               ></DataSelectorNode>
             ))}
-          {filteredMentions.length === 0 && (
+          {filteredNodes.length === 0 && (
             <div className="flex items-center justify-center gap-2 mt-5  flex-col">
               <SearchXIcon className="w-[35px] h-[35px]"></SearchXIcon>
               <div className="text-center font-semibold text-md">
