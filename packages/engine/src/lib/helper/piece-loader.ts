@@ -101,7 +101,7 @@ const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOp
         })
     }
 
-    const prop = (actionOrTrigger.props  as PiecePropertyMap)[propertyName];
+    const prop = (actionOrTrigger.props  as PiecePropertyMap)[propertyName]
 
     if (isNil(prop)) {
         throw new ActivepiecesError({

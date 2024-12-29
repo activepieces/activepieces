@@ -1,12 +1,12 @@
 import {
     DropdownProperty,
     DynamicProperties,
+    ExecutePropsResult,
     MultiSelectDropdownProperty,
     PieceMetadata,
     PiecePropertyMap,
     PropertyType,
     StaticPropsValue,
-    ExecutePropsResult
 } from '@activepieces/pieces-framework'
 import {
     BasicAuthConnectionValue,
@@ -30,7 +30,7 @@ export const pieceHelper = {
             params,
             piecesSource,
         })
-        if(property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
+        if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
             throw new Error(`Property type is not excutable: ${property.type} for ${property.displayName}`)
         }
         try {
@@ -58,14 +58,14 @@ export const pieceHelper = {
                 flows: createFlowsContext(constants),
             }
 
-            switch(property.type) {
+            switch (property.type) {
                 case PropertyType.DYNAMIC: {
                     const dynamicProperty = property as DynamicProperties<boolean>
                     const props = await dynamicProperty.props(resolvedInput, ctx)
                     return {
-                    type: PropertyType.DYNAMIC,
-                    options: props,
-                }
+                        type: PropertyType.DYNAMIC,
+                        options: props,
+                    }
                 }
                 case PropertyType.MULTI_SELECT_DROPDOWN: {
                     const multiSelectProperty = property as MultiSelectDropdownProperty<
