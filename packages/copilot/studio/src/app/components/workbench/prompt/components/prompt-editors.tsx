@@ -1,68 +1,32 @@
-import { useState } from 'react';
-import { CustomPromptEditor } from './custom-prompt-editor';
-
-interface PromptEditorsProps {
-  plannerPrompt: string;
-  stepPrompt: string;
-  onPlannerPromptChange: (value: string) => void;
-  onStepPromptChange: (value: string) => void;
+interface PromptEditorProps {
+  systemPrompt: string;
+  onSystemPromptChange: (value: string) => void;
 }
 
-type TabType = 'planner' | 'step';
-
-export const PromptEditors = ({ 
-  plannerPrompt, 
-  stepPrompt, 
-  onPlannerPromptChange, 
-  onStepPromptChange 
-}: PromptEditorsProps) => {
-  const [activeTab, setActiveTab] = useState<TabType>('planner');
-
-  const getTabClasses = (tab: TabType) => {
-    const baseClasses = "whitespace-nowrap border-b-2 py-2 px-1 text-sm font-medium";
-    return tab === activeTab
-      ? `border-blue-500 text-blue-600 ${baseClasses}`
-      : `border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 ${baseClasses}`;
-  };
-
+export const PromptEditor = ({ 
+  systemPrompt, 
+  onSystemPromptChange 
+}: PromptEditorProps) => {
   return (
-    <div className="space-y-4">
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-          <button
-            type="button"
-            onClick={() => setActiveTab('planner')}
-            className={getTabClasses('planner')}
-          >
-            Planner Prompt
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('step')}
-            className={getTabClasses('step')}
-          >
-            Step Generation Prompt
-          </button>
-        </nav>
+    <div className="space-y-1.5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <label htmlFor="systemPrompt" className="block text-sm font-medium text-gray-700">
+          System Prompt
+        </label>
+        <span className="text-xs text-gray-500">
+          {systemPrompt ? `${systemPrompt.length} chars` : 'Optional'}
+        </span>
       </div>
 
-      {/* Editors */}
-      <div>
-        {activeTab === 'planner' ? (
-          <CustomPromptEditor
-            type="planner"
-            value={plannerPrompt}
-            onChange={onPlannerPromptChange}
-          />
-        ) : (
-          <CustomPromptEditor
-            type="step"
-            value={stepPrompt}
-            onChange={onStepPromptChange}
-          />
-        )}
-      </div>
+      {/* Prompt Textarea */}
+      <textarea
+        id="systemPrompt"
+        value={systemPrompt}
+        onChange={(e) => onSystemPromptChange(e.target.value)}
+        placeholder="Enter the system prompt..."
+        className="w-full h-32 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-gray-50 placeholder-gray-400"
+      />
     </div>
   );
 }; 

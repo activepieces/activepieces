@@ -7,7 +7,6 @@ class WebSocketService {
   private static instance: WebSocketService | null = null
 
   private constructor() {
-    console.debug('Initializing WebSocketService')
   }
 
   public static getInstance(): WebSocketService {
@@ -18,7 +17,6 @@ class WebSocketService {
   }
 
   public connect() {
-    console.debug('Connecting to WebSocket')
     if (!this.socket) {
       this.socket = io('http://localhost:3002', {
         transports: ['websocket'],
@@ -44,9 +42,9 @@ class WebSocketService {
   private setupEventListeners() {
     if (!this.socket) return
 
-    this.socket.on(WebsocketEventTypes.RESPONSE_GET_STATE, (data) => {
-      useWebSocketStore.getState().setState(data)
-    })
+      this.socket.on(WebsocketEventTypes.RESPONSE_GET_STATE, (data) => {
+        useWebSocketStore.getState().setResults(data)
+      })
 
     this.socket.on(WebsocketEventTypes.UPDATE_RESULTS, (result) => {
       useWebSocketStore.getState().addResult(result)

@@ -6,7 +6,6 @@ interface WebSocketProviderProps {
 }
 
 export function WebSocketProvider({ children }: WebSocketProviderProps) {
-  console.debug('Rendering WebSocketProvider')
 
   useEffect(() => {
     websocketService.connect()

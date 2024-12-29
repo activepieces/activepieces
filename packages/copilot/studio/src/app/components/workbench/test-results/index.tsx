@@ -6,11 +6,7 @@ import {
 } from '@activepieces/copilot-shared';
 import {
   PiecesFound,
-  PlanGenerated,
-  StepCreated,
-  ScenarioCompleted,
   TestError,
-  ActiveScenarioCard,
 } from './components';
 import { cn } from '../../../../lib/utils';
 
@@ -25,20 +21,8 @@ export function TestResults() {
       case WebsocketCopilotUpdate.PIECES_FOUND:
         return <PiecesFound data={result.data} />;
 
-      case WebsocketCopilotUpdate.PLAN_GENERATED:
-        return <PlanGenerated data={result.data} />;
-
-      case WebsocketCopilotUpdate.STEP_CREATED:
-        return <StepCreated data={result.data} />;
-
-      case WebsocketCopilotUpdate.SCENARIO_COMPLETED:
-        return <ScenarioCompleted data={result.data} />;
-
       case WebsocketCopilotUpdate.TEST_ERROR:
         return <TestError data={result.data} />;
-
-      case WebsocketCopilotUpdate.TEST_STATE:
-        return <ActiveScenarioCard data={result.data} />;
 
       default: {
         const message = (result as { data: { message?: string } }).data.message;
@@ -92,20 +76,8 @@ export function TestResults() {
                             result.type === WebsocketCopilotUpdate.TEST_ERROR
                               ? 'text-red-600'
                               : result.type ===
-                                WebsocketCopilotUpdate.SCENARIO_COMPLETED
-                              ? 'text-green-600'
-                              : result.type ===
                                 WebsocketCopilotUpdate.PIECES_FOUND
                               ? 'text-purple-600'
-                              : result.type ===
-                                WebsocketCopilotUpdate.PLAN_GENERATED
-                              ? 'text-blue-600'
-                              : result.type ===
-                                WebsocketCopilotUpdate.STEP_CREATED
-                              ? 'text-indigo-600'
-                              : result.type ===
-                                WebsocketCopilotUpdate.TEST_STATE
-                              ? 'text-blue-600'
                               : 'text-gray-900'
                           }`}
                         >

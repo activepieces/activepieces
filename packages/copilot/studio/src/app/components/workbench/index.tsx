@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Header } from './components/sub-header';
 import { PromptPanel } from './prompt';
 import { TestResults } from './test-results';
-import { Scenarios } from './scenarios';
 
 export const Workbench = () => {
   const [activeTab, setActiveTab] = useState<'prompt' | 'evaluate'>('prompt');
@@ -30,7 +29,7 @@ export const Workbench = () => {
         </div>
       ) : (
         <div className="flex-1 flex overflow-hidden">
-          <Scenarios />
+
           <TestResults />
         </div>
       )}

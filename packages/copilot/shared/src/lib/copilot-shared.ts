@@ -1,7 +1,8 @@
 export enum WebsocketEventTypes {
   RUN_TESTS = 'RUN_TESTS',
   UPDATE_RESULTS = 'UPDATE_RESULTS',
-  RESPONSE_GET_STATE = 'RESPONSE_GET_STATE'
+  RESPONSE_GET_STATE = 'RESPONSE_GET_STATE',
+  GET_STATE = 'GET_STATE'
 }
 
 export interface BaseAgentConfig {
@@ -102,15 +103,6 @@ export type WebsocketCopilotResult = {
   data: any;
 }
 
-export interface PlanStep {
-  type: 'PIECE_TRIGGER' | 'PIECE' | 'ROUTER';
-  description: string;
-  required: boolean;
-}
-
-export interface StepConfig {
-  steps: PlanStep[];
-}
 
 export interface PlannerPromptTemplate {
   system: string;

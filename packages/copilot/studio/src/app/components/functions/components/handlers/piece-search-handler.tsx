@@ -20,7 +20,7 @@ export const PieceSearchHandler = () => {
       setRawResponse(latestResult);
 
       // Process and store formatted results
-      const pieces = latestResult.data.relevantPieces.map(piece => ({
+      const pieces = latestResult.data.relevantPieces.map((piece: PieceSearchResult) => ({
         pieceName: piece.pieceName,
         content: piece.content,
         logoUrl: piece.logoUrl || '',
