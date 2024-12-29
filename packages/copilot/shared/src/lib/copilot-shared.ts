@@ -9,14 +9,11 @@ export enum PieceCommandUpdate {
   PIECES_FOUND = 'PIECES_FOUND'
 }
 
-export enum TestCommandUpdate {
-  TEST_STARTED = 'TEST_STARTED',
-  TEST_DONE = 'TEST_DONE',
-  TEST_ERROR = 'TEST_ERROR'
-}
 
 export enum AgentCommandUpdate {
-  AGENT_TEST_COMPLETED = 'AGENT_TEST_COMPLETED'
+  AGENT_TEST_STARTED = 'AGENT_TEST_STARTED',
+  AGENT_TEST_COMPLETED = 'AGENT_TEST_COMPLETED',
+  AGENT_TEST_ERROR = 'AGENT_TEST_ERROR'
 }
 
 export enum SystemUpdate {
@@ -26,7 +23,6 @@ export enum SystemUpdate {
 // Combined type for all possible updates
 export type WebsocketCopilotUpdate = 
   | PieceCommandUpdate
-  | TestCommandUpdate
   | AgentCommandUpdate
   | SystemUpdate;
 

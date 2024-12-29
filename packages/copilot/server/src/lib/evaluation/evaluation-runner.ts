@@ -5,7 +5,7 @@ import {
   WebsocketChannelTypes, 
   WebsocketCopilotUpdate,
   SystemUpdate,
-  TestCommandUpdate,
+  AgentCommandUpdate,
 
 } from "@activepieces/copilot-shared";
 import { createAgentFromConfig } from "../agents/agent-factory";
@@ -86,7 +86,7 @@ export async function runEvaluation(
 
         // Emit test result
         addResult(socket, {
-          type: TestCommandUpdate.TEST_DONE,
+          type: AgentCommandUpdate.AGENT_TEST_COMPLETED,
           data: {
             title: testCase.title,
             ...result,
@@ -135,7 +135,7 @@ async function updateTestState(socket: Socket | null, testTitle: string, status:
     const testCase = currentState.testCases.find(tc => tc.title === testTitle);
     if (testCase) {
       addResult(socket, {
-        type: TestCommandUpdate.TEST_DONE,
+        type: AgentCommandUpdate.AGENT_TEST_COMPLETED,
         data: {
           title: testCase.title,
           prompt: testCase.prompt,

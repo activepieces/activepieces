@@ -1,5 +1,5 @@
 import { Socket } from "socket.io";
-import { TestCommand, TestCommandUpdate } from "@activepieces/copilot-shared";
+import { AgentCommandUpdate, TestCommand } from "@activepieces/copilot-shared";
 import { createCommandHandler } from "./command-handler";
 import { addResult, handleError } from "../../util/websocket-utils";
 import { agentRegistry } from "../../agents/agent-registry";
@@ -13,7 +13,16 @@ interface TestAgentParams {
 const handleTestAgent = async (socket: Socket, data: TestAgentParams): Promise<void> => {
   try {
     console.debug('[TestAgentHandler] Testing agent:', data.agentName, 'with prompt:', data.prompt);
-    
+
+    addResult(socket, {
+      type: AgentCommandUpdate.AGENT_TEST_STARTED,
+      data: {
+        timestamp: new Date().toISOString(),
+        agentName: data.agentName,
+        prompt: data.prompt,
+      }
+    });
+
     // Get agent config from registry
     const baseConfig = agentRegistry.getConfig(data.agentName);
     if (!baseConfig) {
@@ -25,7 +34,7 @@ const handleTestAgent = async (socket: Socket, data: TestAgentParams): Promise<v
     const result = await agent?.execute(data.prompt, socket);
 
     addResult(socket, {
-      type: TestCommandUpdate.TEST_DONE,
+      type: AgentCommandUpdate.AGENT_TEST_COMPLETED,
       data: {
         timestamp: new Date().toISOString(),
         agentName: data.agentName,

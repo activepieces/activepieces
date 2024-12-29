@@ -1,4 +1,4 @@
-import { PieceCommand, TestCommand, WebsocketCopilotCommand } from "@activepieces/copilot-shared";
+import { AgentCommand, PieceCommand, TestCommand, WebsocketCopilotCommand } from "@activepieces/copilot-shared";
 import { WebSocketCommandHandler } from "./handlers/command-handler";
 import { searchPiecesHandler } from "./handlers/search-pieces.handler";
 import { testAgentHandler } from "./handlers/test-agent.handler";
@@ -10,7 +10,7 @@ type AnyCommandHandler =
 
 const handlers = new Map<WebsocketCopilotCommand, AnyCommandHandler>([
   [PieceCommand.SEARCH_PIECES, searchPiecesHandler],
-  [TestCommand.RUN_TESTS, testAgentHandler],
+  [AgentCommand.TEST_AGENT, testAgentHandler],
 ]);
 
 export const getHandler = (command: WebsocketCopilotCommand) => handlers.get(command);

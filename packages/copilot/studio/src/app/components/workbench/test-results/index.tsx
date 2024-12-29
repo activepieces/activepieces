@@ -3,13 +3,14 @@ import { websocketService } from '../../../services/websocket-service'
 import {
   WebsocketCopilotResult,
   PieceCommandUpdate,
-  TestCommandUpdate,
   AgentCommandUpdate,
   SystemUpdate,
 } from '@activepieces/copilot-shared';
 import {
   PiecesFound,
   TestError,
+  AgentStarted,
+  AgentCompleted,
 } from './components';
 import { cn } from '../../../../lib/utils';
 
@@ -24,8 +25,14 @@ export function TestResults() {
       case PieceCommandUpdate.PIECES_FOUND:
         return <PiecesFound data={result.data} />;
 
-      case TestCommandUpdate.TEST_ERROR:
+      case AgentCommandUpdate.AGENT_TEST_ERROR:
         return <TestError data={result.data} />;
+
+      case AgentCommandUpdate.AGENT_TEST_STARTED:
+        return <AgentStarted data={result.data} />;
+
+      case AgentCommandUpdate.AGENT_TEST_COMPLETED:
+        return <AgentCompleted data={result.data} />;
 
       case SystemUpdate.ERROR: {
         const message = result.data?.message;
@@ -46,8 +53,10 @@ export function TestResults() {
   };
 
   const getStatusColor = (type: WebsocketCopilotResult['type']) => {
-    if (type === TestCommandUpdate.TEST_ERROR || type === SystemUpdate.ERROR) return 'text-red-600';
+    if (type === AgentCommandUpdate.AGENT_TEST_ERROR || type === SystemUpdate.ERROR) return 'text-red-600';
     if (type === PieceCommandUpdate.PIECES_FOUND) return 'text-purple-600';
+    if (type === AgentCommandUpdate.AGENT_TEST_COMPLETED) return 'text-green-600';
+    if (type === AgentCommandUpdate.AGENT_TEST_STARTED) return 'text-blue-600';
     return 'text-gray-900';
   };
 
