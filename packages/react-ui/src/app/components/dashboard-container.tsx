@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { AlertCircle, Box, Link2, Logs, Workflow, Wrench } from 'lucide-react';
+import { AlertCircle, Link2, Logs, Package, Workflow, Wrench } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -69,7 +69,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     {
       to: authenticationSession.appendProjectRoutePrefix('/releases'),
       label: t('Releases'),
-      icon: Box,
+      icon: Package,
       hasPermission: project.releasesEnabled,
     },
     {
