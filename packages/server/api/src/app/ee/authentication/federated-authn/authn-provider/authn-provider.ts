@@ -1,5 +1,4 @@
 import { Platform, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
-import { gitHubAuthnProvider } from './github-authn-provider'
 import { googleAuthnProvider } from './google-authn-provider'
 
 export type AuthnProvider = {
@@ -22,7 +21,6 @@ const emptyProvider: AuthnProvider = {
 
 export const providers: Record<ThirdPartyAuthnProviderEnum, AuthnProvider> = {
     [ThirdPartyAuthnProviderEnum.GOOGLE]: googleAuthnProvider,
-    [ThirdPartyAuthnProviderEnum.GITHUB]: gitHubAuthnProvider,
     [ThirdPartyAuthnProviderEnum.SAML]: emptyProvider,
 }
 
