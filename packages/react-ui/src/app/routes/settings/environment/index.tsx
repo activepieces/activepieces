@@ -7,19 +7,20 @@ import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog';
-import { ReviewChangeDialog } from '@/features/git-sync/components/review-change-dialog';
 import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 
-const GitSyncPage = () => {
+import { ReleaseCard } from './release-card';
+
+const EnvironmentPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { gitSync, isLoading, refetch } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.gitSyncEnabled,
+    platform.environmentsEnabled,
   );
 
   const { mutate } = useMutation({
@@ -30,8 +31,8 @@ const GitSyncPage = () => {
     onSuccess: () => {
       refetch();
       toast({
-        title: t('Git Sync Disconnected'),
-        description: t('You have successfully disconnected your Git Sync'),
+        title: t('Git Connection Removed'),
+        description: t('Your Git repository has been successfully disconnected'),
         duration: 3000,
       });
     },
@@ -42,19 +43,19 @@ const GitSyncPage = () => {
 
   return (
     <LockedFeatureGuard
-      featureKey="GIT_SYNC"
-      locked={!platform.gitSyncEnabled}
-      lockTitle={t('Unlock Git Sync')}
+      featureKey="ENVIRONMENT"
+      locked={!platform.environmentsEnabled}
+      lockTitle={t('Enable Environments')}
       lockDescription={t(
-        "Streamline your team's workflow for a seamless experience to build and deploy flows across your environments",
+        'Deploy flows across development, staging and production environments with version control and team collaboration',
       )}
     >
       <div className="flex w-full flex-col items-start justify-center gap-4">
         <div className="flex flex-col justify-start items-start w-full">
-          <h1 className="text-2xl font-bold flex-grow">{t('Git Sync')}</h1>
+          <h1 className="text-2xl font-bold flex-grow">{t('Environments')}</h1>
           <span className="text-muted-foreground text-md">
             {t(
-              'This feature allows for the creation of an external backup, environments, and maintaining a version history',
+              'Connect to Git to enable version control, backup your flows, and manage multiple environments',
             )}
           </span>
         </div>
@@ -64,27 +65,31 @@ const GitSyncPage = () => {
               <>
                 <div className="flex flex-grow flex-col gap-2">
                   <p>
-                    {t('Remote URL')}:{' '}
-                    {gitSync?.remoteUrl ?? t('Not Connected')}
+                    {t('Repository URL')}:{' '}
+                    {gitSync?.remoteUrl ?? t('Not connected')}
                   </p>
                   <p>
-                    {t('Branch')}: {gitSync?.branch ?? t('Not Connected')}
+                    {t('Branch')}: {gitSync?.branch ?? t('Not connected')}
                   </p>
                   <p>
-                    {t('Folder')}: {gitSync?.slug ?? t('Not Connected')}
+                    {t('Project Folder')}: {gitSync?.slug ?? t('Not connected')}
                   </p>
                 </div>
                 <div className="flex flex-col justify-center items-center gap-2">
-                  {!gitSync && <ConnectGitDialog></ConnectGitDialog>}
+                  {!gitSync && (
+                    <ConnectGitDialog showButton={true}></ConnectGitDialog>
+                  )}
                   {gitSync && (
-                    <Button
-                      size={'sm'}
-                      onClick={() => mutate()}
-                      className="w-32 text-destructive"
-                      variant={'basic'}
-                    >
-                      {t('Disconnect')}
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        size={'sm'}
+                        onClick={() => mutate()}
+                        className="w-32 text-destructive"
+                        variant={'basic'}
+                      >
+                        {t('Disconnect')}
+                      </Button>
+                    </div>
                   )}
                 </div>
               </>
@@ -96,14 +101,10 @@ const GitSyncPage = () => {
             )}
           </div>
         </Card>
-        <div className="flex w-full">
-          {gitSync && (
-            <ReviewChangeDialog gitSync={gitSync}></ReviewChangeDialog>
-          )}
-        </div>
+        <ReleaseCard />
       </div>
     </LockedFeatureGuard>
   );
 };
 
-export { GitSyncPage };
+export { EnvironmentPage };

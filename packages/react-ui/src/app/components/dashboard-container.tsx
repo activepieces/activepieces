@@ -1,11 +1,12 @@
 import { t } from 'i18next';
-import { AlertCircle, Link2, Logs, Workflow, Wrench } from 'lucide-react';
+import { AlertCircle, Link2, Logs, Package, Workflow, Wrench } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
@@ -22,6 +23,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,
   );
+  const { project } = projectHooks.useCurrentProject();
 
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
@@ -63,6 +65,12 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       icon: Link2,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/releases'),
+      label: t('Releases'),
+      icon: Package,
+      hasPermission: project.releasesEnabled,
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/settings/general'),

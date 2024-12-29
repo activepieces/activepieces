@@ -18,12 +18,13 @@ import { ProjectBillingEntity } from '../ee/billing/project-billing/project-bill
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
-import { GitRepoEntity } from '../ee/git-sync/git-sync.entity'
 import { IssueEntity } from '../ee/issues/issues-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
+import { GitRepoEntity } from '../ee/project-release/git-sync/git-sync.entity'
+import { ProjectReleaseEntity } from '../ee/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { FileEntity } from '../file/file.entity'
@@ -93,6 +94,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 FlowTemplateEntity,
                 GitRepoEntity,
                 AuditEventEntity,
+                ProjectReleaseEntity,
 
                 // CLOUD
                 AppSumoEntity,

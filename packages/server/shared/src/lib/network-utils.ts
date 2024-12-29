@@ -52,7 +52,7 @@ const getPublicIp = async (): Promise<IpMetadata> => {
             }
             return ipMetadata
         }
-        throw error;
+        throw error
     }
 }
 

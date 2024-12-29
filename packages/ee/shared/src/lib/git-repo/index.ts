@@ -12,14 +12,6 @@ export enum GitBranchType {
     DEVELOPMENT = 'DEVELOPMENT',
 }
 
-export const GitProjectMappingState = Type.Object({
-    flows: Type.Record(Type.String(), Type.Object({
-        sourceId: Type.String(),
-    })),
-})
-
-export type GitProjectMappingState = Static<typeof GitProjectMappingState>
-
 export const GitRepo = Type.Object({
     ...BaseModelSchema,
     remoteUrl: Type.String(),
@@ -28,7 +20,6 @@ export const GitRepo = Type.Object({
     projectId: Type.String(),
     sshPrivateKey: Type.String(),
     slug: Type.String(),
-    mapping: Type.Optional(GitProjectMappingState),
 })
 
 export type GitRepo = Static<typeof GitRepo>
@@ -50,16 +41,6 @@ export const PushGitRepoRequest = Type.Object({
 })
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
-
-export const PullGitRepoFromProjectRequest = Type.Object({
-    projectId: Type.String(),
-})
-export type PullGitRepoFromProjectRequest = Static<typeof PullGitRepoFromProjectRequest>
-
-export const PullGitRepoRequest = Type.Object({
-    dryRun: Type.Optional(Type.Boolean()),
-})
-export type PullGitRepoRequest = Static<typeof PullGitRepoRequest>
 
 export const ConfigureRepoRequest = Type.Object({
     projectId: Type.String({
