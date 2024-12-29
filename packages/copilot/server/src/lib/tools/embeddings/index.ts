@@ -90,7 +90,7 @@ export async function findRelevantPieces(
       return acc;
     }, []);
 
-    console.debug(`Found ${relevantPieces.length} relevant pieces with threshold ${threshold}`);
+    console.log(`Found ${relevantPieces.length} relevant pieces with threshold ${threshold}`);
     return relevantPieces;
   } catch (error) {
     console.error('Error finding relevant pieces:', error);

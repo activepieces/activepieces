@@ -2,10 +2,11 @@ import { BaseAgentConfig } from "@activepieces/copilot-shared";
 import { AgentConfig, ToolDefinition } from "./agent";
 import { findRelevantPieces } from "../tools/embeddings";
 import { z } from "zod";
+import { toolFunctions } from "../tools";
 
 // Map of function names to their implementations
 const toolImplementations: Record<string, (params: any) => Promise<any>> = {
-  "findRelevantPieces": findRelevantPieces,
+  "findRelevantPieces": toolFunctions.findRelevantPieces,
   // Add more tool implementations here
 };
 
