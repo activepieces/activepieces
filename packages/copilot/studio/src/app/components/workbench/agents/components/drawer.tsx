@@ -4,8 +4,7 @@ import { AgentsList } from './agents-list';
 import { cn } from '../../../../../lib/utils';
 
 export const AgentDrawer = () => {
-  console.debug('Rendering AgentDrawer');
-  
+
   const { isOpen, closeDrawer } = useAgentDrawer();
 
   return (

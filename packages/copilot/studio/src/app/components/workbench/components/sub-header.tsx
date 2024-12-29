@@ -13,7 +13,6 @@ export function Header({
   onEvaluateClick,
   activeTab
 }: HeaderProps) {
-  console.debug('Rendering SubHeader, isWorkbenchOpen:', isWorkbenchOpen);
 
   if (!isWorkbenchOpen) return null;
 

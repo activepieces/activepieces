@@ -4,7 +4,6 @@ import { FunctionTester } from './components/function-tester';
 import { Function } from './types';
 
 export const Functions = () => {
-  console.debug('Rendering Functions');
   const [selectedFunction, setSelectedFunction] = useState<Function | null>(null);
 
   return (

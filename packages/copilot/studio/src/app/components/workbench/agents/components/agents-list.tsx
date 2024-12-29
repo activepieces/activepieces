@@ -26,7 +26,6 @@ const mockAgents: Agent[] = [
 ];
 
 export const AgentsList = () => {
-  console.debug('Rendering AgentsList');
 
   return (
     <div className="flex flex-col h-full">

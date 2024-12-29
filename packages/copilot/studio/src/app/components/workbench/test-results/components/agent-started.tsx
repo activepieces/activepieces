@@ -9,8 +9,6 @@ interface AgentStartedProps {
 }
 
 export const AgentStarted = ({ data }: AgentStartedProps) => {
-  console.debug('Rendering AgentStarted', data);
-
   return (
     <div className="space-y-2">
       <div className="flex items-start gap-2">

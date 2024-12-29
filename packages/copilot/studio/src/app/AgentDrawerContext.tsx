@@ -8,9 +8,7 @@ interface AgentDrawerContextType {
 
 const AgentDrawerContext = createContext<AgentDrawerContextType | undefined>(undefined);
 
-export function AgentDrawerProvider({ children }: { children: ReactNode }) {
-  console.debug('Rendering AgentDrawerProvider');
-  
+export function AgentDrawerProvider({ children }: { children: ReactNode }) {  
   const [isOpen, setIsOpen] = useState(false);
 
   const openDrawer = () => {

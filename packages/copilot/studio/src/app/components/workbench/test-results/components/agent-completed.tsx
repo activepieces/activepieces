@@ -10,8 +10,6 @@ interface AgentCompletedProps {
 }
 
 export const AgentCompleted = ({ data }: AgentCompletedProps) => {
-  console.debug('Rendering AgentCompleted', data);
-
   const formattedJson = useMemo(() => {
     try {
       return JSON.stringify(data.result, null, 2);

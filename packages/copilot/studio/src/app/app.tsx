@@ -7,8 +7,6 @@ import { Workbench } from './components/workbench';
 import { Functions } from './components/functions';
 
 function AppContent() {
-  console.debug('Rendering AppContent');
-
   return (
     <div className="h-screen flex flex-col">
       <Header />
