@@ -23,25 +23,6 @@ export class AddPositionToFieldSqlite1735485411416 implements MigrationInterface
             )
         `)
         await queryRunner.query(`
-            INSERT INTO "temporary_field"(
-                    "id",
-                    "created",
-                    "updated",
-                    "name",
-                    "type",
-                    "tableId",
-                    "projectId"
-                )
-            SELECT "id",
-                "created",
-                "updated",
-                "name",
-                "type",
-                "tableId",
-                "projectId"
-            FROM "field"
-        `)
-        await queryRunner.query(`
             DROP TABLE "field"
         `)
         await queryRunner.query(`
