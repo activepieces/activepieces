@@ -1,6 +1,7 @@
-import { WebsocketChannelTypes } from '@activepieces/copilot-shared'
+import { WebsocketChannelTypes, BaseAgentConfig, AgentCommand } from '@activepieces/copilot-shared'
 import { Socket, io } from 'socket.io-client'
 import { useWebSocketStore } from '../stores/use-websocket-store'
+import { useAgentRegistryStore } from '../stores/use-agent-registry-store'
 
 class WebSocketService {
   private socket: Socket | null = null
@@ -28,6 +29,8 @@ class WebSocketService {
     if (!this.socket.connected) {
       this.socket.connect()
       this.socket.emit(WebsocketChannelTypes.GET_STATE)
+      // Request agent registry state on initial connection
+      this.requestAgentRegistry()
     }
   }
 
@@ -39,15 +42,39 @@ class WebSocketService {
     }
   }
 
+  public requestAgentRegistry() {
+    console.debug('Requesting agent registry state')
+    if (this.socket) {
+      this.socket.emit('message', {
+        command: AgentCommand.GET_AGENT_REGISTRY,
+        data: {}
+      })
+    } else {
+      console.warn('Cannot request agent registry: WebSocket not connected')
+    }
+  }
+
   private setupEventListeners() {
     if (!this.socket) return
 
-      this.socket.on(WebsocketChannelTypes.RESPONSE_GET_STATE, (data) => {
-        useWebSocketStore.getState().setResults(data)
-      })
+    this.socket.on(WebsocketChannelTypes.RESPONSE_GET_STATE, (data) => {
+      useWebSocketStore.getState().setResults(data)
+    })
 
     this.socket.on(WebsocketChannelTypes.UPDATE_RESULTS, (result) => {
       useWebSocketStore.getState().addResult(result)
+    })
+
+    this.socket.on(WebsocketChannelTypes.RESPONSE_GET_AGENT_REGISTRY, (data: Record<string, BaseAgentConfig>) => {
+      console.debug('Received agent registry state:', data)
+      const agentsMap = new Map(Object.entries(data))
+      useAgentRegistryStore.getState().setAgents(agentsMap)
+    })
+
+    this.socket.on(WebsocketChannelTypes.UPDATE_AGENT_REGISTRY, (data: Record<string, BaseAgentConfig>) => {
+      console.debug('Received agent registry update:', data)
+      const agentsMap = new Map(Object.entries(data))
+      useAgentRegistryStore.getState().setAgents(agentsMap)
     })
   }
 

@@ -6,11 +6,7 @@ interface Tool {
   description: string;
   parameters: {
     type: string;
-    properties: Record<string, {
-      type: string;
-      description: string;
-      default?: any;
-    }>;
+    properties: Record<string, unknown>;
     required: string[];
   };
 }
@@ -56,7 +52,7 @@ export const ToolsDisplay = ({
                   {Object.entries(tool.parameters.properties).map(([paramName, param]) => (
                     <div key={paramName} className="flex items-start gap-2 text-xs">
                       <span className="font-medium text-gray-700">{paramName}</span>
-                      <span className="text-gray-500">({param.type})</span>
+                      <span className="text-gray-500">({(param as any).type})</span>
                       {tool.parameters.required?.includes(paramName) && (
                         <span className="text-red-500">*</span>
                       )}

@@ -1,10 +1,14 @@
 import { X } from 'lucide-react';
 import { useAgentDrawer } from '../../../../AgentDrawerContext';
-import { AgentsList } from './agents-list';
+import { AgentRegistry } from './agent-registry';
 import { cn } from '../../../../../lib/utils';
 
-export const AgentDrawer = () => {
+interface AgentDrawerProps {
+  onSelectAgent?: (agentName: string) => void;
+  selectedAgent?: string;
+}
 
+export const AgentDrawer = ({ onSelectAgent, selectedAgent }: AgentDrawerProps) => {
   const { isOpen, closeDrawer } = useAgentDrawer();
 
   return (
@@ -37,7 +41,7 @@ export const AgentDrawer = () => {
 
         {/* Content */}
         <div className="h-full">
-          <AgentsList />
+          <AgentRegistry onSelectAgent={onSelectAgent} selectedAgent={selectedAgent} />
         </div>
       </div>
     </>

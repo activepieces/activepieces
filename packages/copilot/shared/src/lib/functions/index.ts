@@ -8,7 +8,8 @@ export enum TestCommand {
 }
 
 export enum AgentCommand {
-  TEST_AGENT = 'TEST_AGENT'
+  TEST_AGENT = 'TEST_AGENT',
+  GET_AGENT_REGISTRY = 'GET_AGENT_REGISTRY'
 }
 
 export type WebsocketCopilotCommand = 
@@ -31,6 +32,11 @@ export interface TestAgentRequest {
   };
 }
 
+export interface GetAgentRegistryRequest {
+  command: AgentCommand.GET_AGENT_REGISTRY;
+  data: Record<string, never>;
+}
+
 export interface RunTestsRequest {
   command: TestCommand.RUN_TESTS;
   data: {
@@ -42,10 +48,9 @@ export interface RunTestsRequest {
 export type WebsocketRequest = 
   | SearchPiecesRequest
   | TestAgentRequest
-  | RunTestsRequest;
+  | RunTestsRequest
+  | GetAgentRegistryRequest;
 
-
-  
 export interface PieceSearchResult {
   pieceName: string;
   content: string;
