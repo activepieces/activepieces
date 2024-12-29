@@ -5,23 +5,25 @@ import { websocketService } from '../../../../services/websocket-service'
 import { useWorkbenchStore } from '../../../../stores/use-workbench-store'
 import { AgentCommand, AgentCommandUpdate } from '@activepieces/copilot-shared'
 
+const generateTestId = () => `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
 export function TestScenarios() {
   const { testRegistry } = useTestRegistryStore()
   const { selectedAgentName } = useWorkbenchStore()
 
-  const handleRunTest = async (testIndex: number) => {
+  const handleRunTest = async (testCase: { prompt: string, title: string }, index: number) => {
     if (!selectedAgentName || !testRegistry) return
 
-    const testCase = testRegistry.testCases[testIndex]
-    if (!testCase) return
-
-    console.debug('[TestScenarios] Running test:', testIndex, 'for agent:', selectedAgentName, 'with prompt:', testCase.prompt)
+    const testId = generateTestId()
+    console.debug('[TestScenarios] Running test:', testId, 'for agent:', selectedAgentName, 'with prompt:', testCase.prompt)
+    
     await websocketService.sendCommand({
       type: AgentCommand.TEST_AGENT,
       command: AgentCommand.TEST_AGENT,
       data: {
         agentName: selectedAgentName,
-        prompt: testCase.prompt
+        prompt: testCase.prompt,
+        testId
       }
     })
   }
@@ -72,7 +74,7 @@ export function TestScenarios() {
                 </div>
               </td>
               <td className="py-4 px-4 text-sm text-gray-600 border-b border-gray-100 align-top">
-                <ModelOutput testIndex={index} onRun={() => handleRunTest(index)} />
+                <ModelOutput testCase={testCase} onRun={() => handleRunTest(testCase, index)} />
               </td>
               <td className="py-4 px-4 text-sm text-gray-600 border-b border-gray-100 align-top">
                 <button

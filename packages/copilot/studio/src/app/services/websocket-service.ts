@@ -23,10 +23,22 @@ const handleTestRegistryUpdate = (result: WebsocketCopilotResult): void => {
   }
 }
 
+const handleTestUpdate = (result: WebsocketCopilotResult): void => {
+  if (
+    result.type === AgentCommandUpdate.AGENT_TEST_STARTED ||
+    result.type === AgentCommandUpdate.AGENT_TEST_COMPLETED ||
+    result.type === AgentCommandUpdate.AGENT_TEST_ERROR
+  ) {
+    console.debug('[WebSocket] Test update received:', result.type, result.data)
+    useWebSocketStore.getState().addResult(result)
+  }
+}
+
 const handleWebSocketResult = (result: WebsocketCopilotResult): void => {
   useWebSocketStore.getState().addResult(result)
   handleAgentRegistryUpdate(result)
   handleTestRegistryUpdate(result)
+  handleTestUpdate(result)
 }
 
 const setupEventListeners = (socketInstance: Socket): void => {
@@ -39,6 +51,7 @@ const setupEventListeners = (socketInstance: Socket): void => {
 
 // Socket management
 const createSocket = (): Socket => {
+  console.debug('[WebSocket] Creating new connection')
   const newSocket = io('http://localhost:3002', {
     transports: ['websocket'],
   })
@@ -52,6 +65,7 @@ const connect = (): void => {
   }
 
   if (!socket.connected) {
+    console.debug('[WebSocket] Connecting')
     socket.connect()
     socket.emit(WebsocketChannelTypes.GET_STATE)
     requestAgentRegistry()
@@ -59,6 +73,7 @@ const connect = (): void => {
 }
 
 const disconnect = (): void => {
+  console.debug('[WebSocket] Disconnecting')
   if (socket) {
     socket.disconnect()
     socket = null

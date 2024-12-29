@@ -15,7 +15,6 @@ export function startWebSocketServer() {
     // Handle all incoming messages using the command registry
     socket.on(WebsocketChannelTypes.COMMAND, async (message: { command: WebsocketCopilotCommand; data: any }) => {
       try {
-        console.debug('[WebSocket] Handling command:', message.command);
         const handler = commandRegistry.getHandler(message.command);
         
         if (handler) {
@@ -29,7 +28,6 @@ export function startWebSocketServer() {
     });
 
     socket.on(WebsocketChannelTypes.GET_STATE, () => {
-      console.debug('[WebSocket] Getting state');
       socket.emit(WebsocketChannelTypes.SET_RESULT, {
         type: SystemUpdate.STATE,
         data: {

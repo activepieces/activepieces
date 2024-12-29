@@ -7,7 +7,7 @@ import { getTestRegistryHandler } from './handlers/get-test-registry.handler'
 
 type AnyCommandHandler = 
   | WebSocketCommandHandler<{ query: string }>
-  | WebSocketCommandHandler<{ agentName: string, prompt: string }>
+  | WebSocketCommandHandler<{ agentName: string, prompt: string, testId: string }>
   | WebSocketCommandHandler<Record<string, never>>
   | WebSocketCommandHandler<GetTestRegistryRequest>
 
