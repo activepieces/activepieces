@@ -1,0 +1,47 @@
+import { Socket } from "socket.io";
+import { WebsocketCopilotCommand, WebsocketCopilotUpdate } from "@activepieces/copilot-shared";
+import { createCommandHandler } from "./command-handler";
+import { addResult, handleError } from "../../util/websocket-utils";
+import { createAgent } from "../../agents/agent";
+import { agentRegistry } from "../../agents/agent-registry";
+import { createAgentConfig } from "../../agents/agent-factory";
+
+interface TestAgentParams {
+  agentName: string;
+  prompt: string;
+}
+
+const handleTestAgent = async (socket: Socket, data: TestAgentParams): Promise<void> => {
+  try {
+    console.debug('[TestAgentHandler] Testing agent:', data.agentName, 'with prompt:', data.prompt);
+    
+    // Get agent config from registry
+    const baseConfig = agentRegistry.getConfig(data.agentName);
+    if (!baseConfig) {
+      throw new Error(`Agent not found: ${data.agentName}. Available agents: ${agentRegistry.getAllAgents().join(", ")}`);
+    }
+
+    // Convert base config to agent config and create agent
+    const config = createAgentConfig(baseConfig);
+    const agent = createAgent(config);
+    const result = await agent.execute(data.prompt, socket);
+
+    addResult(socket, {
+      type: WebsocketCopilotUpdate.AGENT_TEST_COMPLETED,
+      data: {
+        timestamp: new Date().toISOString(),
+        agentName: data.agentName,
+        result
+      }
+    });
+
+    console.debug('[TestAgentHandler] Test completed for agent:', data.agentName);
+  } catch (error) {
+    handleError(socket, error, `Testing agent: ${data.agentName}`);
+  }
+};
+
+export const testAgentHandler = createCommandHandler(
+  WebsocketCopilotCommand.TEST_AGENT,
+  handleTestAgent
+); 

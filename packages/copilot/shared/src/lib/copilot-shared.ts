@@ -95,7 +95,8 @@ export enum WebsocketCopilotUpdate {
   TEST_ERROR = 'TEST_ERROR',
   TEST_STARTED = 'TEST_STARTED',
   PIECES_FOUND = 'PIECES_FOUND',
-  ERROR = 'ERROR'
+  ERROR = 'ERROR',
+  AGENT_TEST_COMPLETED = 'AGENT_TEST_COMPLETED'
 }
 
 export type WebsocketCopilotResult = {

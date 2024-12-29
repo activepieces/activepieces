@@ -1,6 +1,6 @@
 import { Agent, AgentConfig, ToolDefinition, createAgent } from '../agents/agent';
 import { toolFunctions } from '../tools';
-import { createSystemPrompt, createOutputSchema, createParameterSchema } from './agent-config';
+import { createSystemPrompt, createOutputSchema, createParameterSchema } from '../agents/agent-config';
 
 // =================== Types ===================
 export interface ToolConfig {
