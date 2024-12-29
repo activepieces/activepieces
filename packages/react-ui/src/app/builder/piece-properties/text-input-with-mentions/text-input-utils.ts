@@ -18,11 +18,19 @@ const removeQuotes = (text: string) => {
   }
   return text;
 };
+const incrementArrayIndexes = (text: string) => {
+  const numberText = Number(text);
+  if (Number.isNaN(numberText)) {
+    return text;
+  }
+  return `${numberText + 1}`;
+};
 
 const keysWithinPath = (path: string) => {
   return path
     .split(/\.|\[|\]/)
     .filter((key) => key && key.trim().length > 0)
+    .map(incrementArrayIndexes)
     .map(removeQuotes);
 };
 
@@ -44,6 +52,7 @@ const isMentionNodeText = (item: string) => {
   if (match) {
     const content = match[1].trim();
     const { stepName } = parseStepAndNameFromMention(content);
+
     return stepName !== null;
   }
   return false;
@@ -127,15 +136,18 @@ const removeIntroplationBrackets = (text: string) => {
 };
 
 function parseStepAndNameFromMention(mention: string) {
-  const mentionedJS = removeIntroplationBrackets(mention);
-  const { isValid, stepName, arrayPath } = parseFlattenArrayPath(mentionedJS);
+  const mentionWithoutInterpolationBrackets =
+    removeIntroplationBrackets(mention);
+  const { isValid, stepName, arrayPath } = parseFlattenArrayPath(
+    mentionWithoutInterpolationBrackets,
+  );
   if (isValid) {
     return {
       stepName,
       path: arrayPath ?? [],
     };
   }
-  const keys = keysWithinPath(mentionedJS);
+  const keys = keysWithinPath(mentionWithoutInterpolationBrackets);
   if (keys.length === 0) {
     return {
       stepName: null,

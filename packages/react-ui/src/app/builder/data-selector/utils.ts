@@ -116,7 +116,7 @@ function convertArrayToZippedView(
   for (const [key, node] of Object.entries(obj)) {
     const stepName = propertyPath[0];
     const subPath = [...propertyPath.slice(1), key];
-    console.log(stepName, subPath);
+
     const propertyPathWithFlattenArray = `flattenNestedKeys(${stepName}, ['${subPath
       .map((s) => String(s))
       .join("', '")}'])`;
@@ -143,11 +143,15 @@ function convertArrayToZippedView(
 }
 
 function buildJsonPath(propertyPath: PathSegment[]): string {
-  let jsonPath = String(propertyPath[0]);
-  for (const segment of propertyPath.slice(1)) {
-    jsonPath += `['${escapeMentionKey(String(segment))}']`;
-  }
-  return jsonPath;
+  const propertyPathWithoutStepName = propertyPath.slice(1);
+  //need array indexes to not be quoted so we can add 1 to them when displaying the path in mention
+  return propertyPathWithoutStepName.reduce((acc, segment) => {
+    return `${acc}[${
+      typeof segment === 'string'
+        ? `'${escapeMentionKey(String(segment))}'`
+        : segment
+    }]`;
+  }, `${propertyPath[0]}`) as string;
 }
 
 function buildDataSelectorNode(
