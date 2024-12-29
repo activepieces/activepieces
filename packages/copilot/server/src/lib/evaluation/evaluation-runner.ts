@@ -6,7 +6,8 @@ import {
   WebsocketCopilotUpdate,
 
 } from "@activepieces/copilot-shared";
-import { createAgentFromConfig } from '../util/agent-factory';
+import { createAgentFromConfig } from "../agents/agent-factory";
+
 
 // =================== Types ===================
 export interface TestCase {

@@ -1,62 +1,75 @@
 import { BaseAgentConfig } from "@activepieces/copilot-shared";
-import { AgentConfig, ToolDefinition } from "./agent";
-import { findRelevantPieces } from "../tools/embeddings";
-import { z } from "zod";
+import { Agent, AgentConfig, ToolDefinition, createAgent } from "./agent";
 import { toolFunctions } from "../tools";
+import { z } from "zod";
 
-// Map of function names to their implementations
-const toolImplementations: Record<string, (params: any) => Promise<any>> = {
-  "findRelevantPieces": toolFunctions.findRelevantPieces,
-  // Add more tool implementations here
-};
+// =================== Types ===================
+type ToolConfig = BaseAgentConfig['tools'][0];
+export type { BaseAgentConfig };
 
-// Convert JSON Schema to Zod Schema
+// =================== Schema Conversion ===================
 function jsonSchemaToZod(schema: any): z.ZodType<any> {
-  if (schema.type === 'object') {
-    const shape: Record<string, z.ZodType<any>> = {};
-    for (const [key, value] of Object.entries(schema.properties || {})) {
-      shape[key] = jsonSchemaToZod(value as any);
+  if (!schema) return z.any();
+  
+  switch (schema.type) {
+    case 'object': {
+      const shape: Record<string, z.ZodType<any>> = {};
+      for (const [key, value] of Object.entries(schema.properties || {})) {
+        shape[key] = jsonSchemaToZod(value as any);
+      }
+      let zodObject = z.object(shape);
+      if (schema.required) {
+        zodObject = zodObject.required();
+      }
+      return zodObject;
     }
-    let zodObject = z.object(shape);
-    if (schema.required) {
-      zodObject = zodObject.required();
-    }
-    return zodObject;
-  } else if (schema.type === 'string') {
-    return z.string();
-  } else if (schema.type === 'number') {
-    return z.number();
-  } else if (schema.type === 'boolean') {
-    return z.boolean();
-  } else if (schema.type === 'array') {
-    return z.array(jsonSchemaToZod(schema.items));
+    case 'string': return z.string();
+    case 'number': return z.number();
+    case 'boolean': return z.boolean();
+    case 'array': return z.array(jsonSchemaToZod(schema.items));
+    default: return z.any();
   }
-  return z.any();
 }
 
-export function createAgentConfig(baseConfig: BaseAgentConfig): AgentConfig<unknown> {
-  // Convert tool definitions
-  const tools: ToolDefinition[] = baseConfig.tools.map(tool => ({
-    name: tool.name,
-    description: tool.description,
-    parameters: jsonSchemaToZod(tool.parameters) as z.ZodObject<any>,
-    execute: async (params: any) => {
-      const implementation = toolImplementations[tool.function];
-      if (!implementation) {
-        throw new Error(`No implementation found for tool function: ${tool.function}`);
-      }
-      return implementation(params);
-    }
-  }));
+// =================== Tool Factory ===================
+function createToolFromConfig(toolConfig: ToolConfig): ToolDefinition {
+  const toolFunction = toolFunctions[toolConfig.function as keyof typeof toolFunctions];
+  if (!toolFunction) {
+    throw new Error(`Tool function ${toolConfig.function} not found`);
+  }
+
+  const parameters = jsonSchemaToZod(toolConfig.parameters);
+  if (!(parameters instanceof z.ZodObject)) {
+    throw new Error(`Tool parameters must be an object schema`);
+  }
 
   return {
-    tools,
-    defaultOptions: {
-      model: baseConfig.model,
-      temperature: baseConfig.temperature,
-      maxSteps: baseConfig.maxSteps,
-      systemPrompt: baseConfig.systemPrompt
-    },
-    outputSchema: jsonSchemaToZod(baseConfig.outputSchema)
+    name: toolConfig.name,
+    description: toolConfig.description,
+    parameters,
+    execute: toolFunction,
   };
+}
+
+// =================== Agent Factory ===================
+export function createAgentFromConfig<T>(config: BaseAgentConfig): Agent<T> | null {
+  if (!config.enabled) {
+    console.debug('[Agent] Agent is disabled');
+    return null;
+  }
+
+  const outputSchema = jsonSchemaToZod(config.outputSchema);
+
+  const agentConfig: AgentConfig<T> = {
+    tools: config.tools.map(createToolFromConfig),
+    defaultOptions: {
+      model: config.model,
+      maxSteps: config.maxSteps,
+      systemPrompt: config.systemPrompt,
+      temperature: config.temperature,
+    },
+    outputSchema,
+  };
+
+  return createAgent<T>(agentConfig);
 } 

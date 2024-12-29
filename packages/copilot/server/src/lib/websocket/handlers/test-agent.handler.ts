@@ -4,7 +4,7 @@ import { createCommandHandler } from "./command-handler";
 import { addResult, handleError } from "../../util/websocket-utils";
 import { createAgent } from "../../agents/agent";
 import { agentRegistry } from "../../agents/agent-registry";
-import { createAgentConfig } from "../../agents/agent-factory";
+import { createAgentFromConfig } from "../../agents/agent-factory";
 
 interface TestAgentParams {
   agentName: string;
@@ -22,9 +22,8 @@ const handleTestAgent = async (socket: Socket, data: TestAgentParams): Promise<v
     }
 
     // Convert base config to agent config and create agent
-    const config = createAgentConfig(baseConfig);
-    const agent = createAgent(config);
-    const result = await agent.execute(data.prompt, socket);
+    const agent = createAgentFromConfig(baseConfig);
+    const result = await agent?.execute(data.prompt, socket);
 
     addResult(socket, {
       type: WebsocketCopilotUpdate.AGENT_TEST_COMPLETED,
