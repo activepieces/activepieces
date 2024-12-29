@@ -19,6 +19,10 @@ export const FieldEntity = new EntitySchema<FieldSchema>({
             type: String,
             enum: FieldType,
         },
+        position: {
+            type: Number,
+            nullable: false,
+        },
         tableId: {
             ...ApIdSchema,
             nullable: false,
@@ -32,6 +36,11 @@ export const FieldEntity = new EntitySchema<FieldSchema>({
         {
             name: 'idx_field_project_id_table_id_name_unique',
             columns: ['projectId', 'tableId', 'name'],
+            unique: true,
+        },
+        {
+            name: 'idx_field_project_id_table_id_position',
+            columns: ['projectId', 'tableId', 'position'],
             unique: true,
         },
     ],
