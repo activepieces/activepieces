@@ -1,4 +1,4 @@
-import { WebsocketChannelTypes, BaseAgentConfig, AgentCommand, TestRegistryCommand, GetTestRegistryResponse, WebsocketCopilotCommand, WebsocketCopilotResult, AgentCommandUpdate } from '@activepieces/copilot-shared'
+import { WebsocketChannelTypes, BaseAgentConfig, AgentCommand, TestRegistryCommand, GetTestRegistryResponse, WebsocketCopilotCommand, WebsocketCopilotResult, AgentCommandUpdate, TestRegistryCommandUpdate } from '@activepieces/copilot-shared'
 import { Socket, io } from 'socket.io-client'
 import { useWebSocketStore } from '../stores/use-websocket-store'
 import { useAgentRegistryStore } from '../stores/use-agent-registry-store'
@@ -17,9 +17,16 @@ const handleAgentRegistryUpdate = (result: WebsocketCopilotResult): void => {
   }
 }
 
+const handleTestRegistryUpdate = (result: WebsocketCopilotResult): void => {
+  if (result.type === TestRegistryCommandUpdate.TEST_REGISTRY_UPDATED) {
+    useTestRegistryStore.getState().setTestRegistry(result.data.data)
+  }
+}
+
 const handleWebSocketResult = (result: WebsocketCopilotResult): void => {
   useWebSocketStore.getState().addResult(result)
   handleAgentRegistryUpdate(result)
+  handleTestRegistryUpdate(result)
 }
 
 const setupEventListeners = (socketInstance: Socket): void => {
@@ -32,7 +39,6 @@ const setupEventListeners = (socketInstance: Socket): void => {
 
 // Socket management
 const createSocket = (): Socket => {
-  console.debug('[WebSocket] Creating new connection')
   const newSocket = io('http://localhost:3002', {
     transports: ['websocket'],
   })
@@ -46,7 +52,6 @@ const connect = (): void => {
   }
 
   if (!socket.connected) {
-    console.debug('[WebSocket] Connecting')
     socket.connect()
     socket.emit(WebsocketChannelTypes.GET_STATE)
     requestAgentRegistry()
@@ -54,7 +59,6 @@ const connect = (): void => {
 }
 
 const disconnect = (): void => {
-  console.debug('[WebSocket] Disconnecting')
   if (socket) {
     socket.disconnect()
     socket = null
@@ -77,9 +81,7 @@ const sendCommand = async <T>(command: { type: WebsocketCopilotCommand; [key: st
 }
 
 const requestAgentRegistry = (): void => {
-  console.debug('[WebSocket] Requesting agent registry')
   if (!socket) {
-    console.warn('[WebSocket] Cannot request agent registry: Socket not connected')
     return
   }
 
@@ -90,11 +92,16 @@ const requestAgentRegistry = (): void => {
 }
 
 const getTestRegistry = async (agentName: string) => {
+  console.debug('[WebSocket] Requesting test registry for agent:', agentName)
   const response = await sendCommand<GetTestRegistryResponse>({
     type: TestRegistryCommand.GET_TEST_REGISTRY,
-    agentName,
+    command: TestRegistryCommand.GET_TEST_REGISTRY,
+    data: {
+      agentName
+    }
   })
 
+  console.debug('[WebSocket] Received test registry response:', response)
   useTestRegistryStore.getState().setTestRegistry(response.data)
   return response.data
 }

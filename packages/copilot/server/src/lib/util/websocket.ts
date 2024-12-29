@@ -11,11 +11,11 @@ export function startWebSocketServer() {
   });
 
   io.on(WebsocketChannelTypes.CONNECT, (socket: Socket) => {
-    console.log('[WebSocket] New connection established');
 
     // Handle all incoming messages using the command registry
     socket.on(WebsocketChannelTypes.COMMAND, async (message: { command: WebsocketCopilotCommand; data: any }) => {
       try {
+        console.debug('[WebSocket] Handling command:', message.command);
         const handler = commandRegistry.getHandler(message.command);
         
         if (handler) {
