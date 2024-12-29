@@ -28,7 +28,6 @@ export const createDatabaseItem = createAction({
     const databaseFields = context.propsValue.databaseFields!;
     const content = context.propsValue.content;
     const notionFields: DynamicPropsValue = {};
-
     const notion = new Client({
       auth: (context.auth as OAuth2PropertyValue).access_token,
       notionVersion: '2022-02-22',
@@ -36,13 +35,15 @@ export const createDatabaseItem = createAction({
     const { properties } = await notion.databases.retrieve({
       database_id: database_id as unknown as string,
     });
-
+   
     Object.keys(databaseFields).forEach((key) => {
       if (databaseFields[key] !== '') {
-        const fieldType: string = properties[key].type;
-        notionFields[key] = NotionFieldMapping[fieldType].buildNotionType(
-          databaseFields[key]
-        );
+        const fieldType: string = properties[key]?.type;
+        if (fieldType) {
+          notionFields[key] = NotionFieldMapping[fieldType].buildNotionType(
+            databaseFields[key]
+          );
+        }
       }
     });
 
