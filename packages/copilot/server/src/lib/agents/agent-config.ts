@@ -3,8 +3,6 @@ import { z } from 'zod';
 // =================== Types ===================
 export interface BaseAgentConfig {
   systemPrompt: string;
-  guidelines?: string[];
-  requirements?: string[];
   outputSchema: {
     type: string;
     properties: Record<string, any>;
@@ -14,19 +12,7 @@ export interface BaseAgentConfig {
 
 // =================== System Prompt Factory ===================
 export function createSystemPrompt(config: BaseAgentConfig): string {
-  const parts = [config.systemPrompt];
-
-  if (config.guidelines?.length) {
-    parts.push('\nGuidelines:');
-    parts.push(...config.guidelines.map(g => `- ${g}`));
-  }
-
-  if (config.requirements?.length) {
-    parts.push('\nRequirements:');
-    parts.push(...config.requirements.map(r => `- ${r}`));
-  }
-
-  return parts.join('\n');
+  return config.systemPrompt;
 }
 
 // =================== Schema Factory ===================

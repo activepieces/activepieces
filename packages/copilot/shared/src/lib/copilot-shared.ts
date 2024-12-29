@@ -20,8 +20,6 @@ export interface BaseAgentConfig {
     };
   }>;
   systemPrompt: string;
-  guidelines: string[];
-  requirements: string[];
   outputSchema: {
     type: string;
     properties: Record<string, unknown>;

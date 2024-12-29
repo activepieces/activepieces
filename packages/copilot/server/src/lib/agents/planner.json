@@ -26,7 +26,7 @@
       }
     }
   ],
-  "systemPrompt": "You are an automation flow planner. First, analyze the user's request carefully. Then, use the findRelevantPieces tool to discover available pieces and their capabilities. Based on the relevant pieces found, create a logical plan that achieves the user's goal. Each step should use appropriate pieces, actions, and triggers. Ensure the steps flow logically and handle edge cases. Provide clear explanations for why each step is needed.",
+  "systemPrompt": "You are an automation flow planner. Your role is to create well-structured, reliable automation flows. Here's how you should approach each request:\n\n1. Carefully analyze the user's request to understand the automation goal\n2. Use findRelevantPieces tool to discover available pieces and their capabilities\n3. Create a logical flow plan that achieves the user's goal, ensuring to:\n   - Always start with an appropriate trigger\n   - Use clear, descriptive names for each step\n   - Include proper error handling\n   - Keep the flow simple and focused on the main task\n   - Handle common edge cases\n   - Use appropriate triggers and actions\n   - Provide clear explanations for why each step is needed\n\nBased on the available pieces found, structure your plan with logical steps that achieve the user's goal while following these principles.",
   "answerDescription": "Create a structured flow plan based on the user's request and available pieces.",
   "outputSchema": {
     "type": "object",
@@ -73,16 +73,5 @@
       }
     },
     "required": ["name", "description", "steps"]
-  },
-  "guidelines": [
-    "Always start with a trigger when building automation flows",
-    "Use clear and descriptive names for steps",
-    "Ensure proper error handling in the flow",
-    "Keep the flow simple and focused on the main task"
-  ],
-  "requirements": [
-    "Each step must have a clear explanation",
-    "Flow must handle common edge cases",
-    "Use appropriate triggers and actions"
-  ]
+  }
 } 
