@@ -170,6 +170,7 @@ import { TablesProduct1734355488179 } from './migration/postgres/1734355488179-T
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
 import { FieldAndRecordAndCellProjectId1734969829406 } from './migration/postgres/1734969829406-FieldAndRecordAndCell_ProjectId'
 import { AddPositionToField1735485872836 } from './migration/postgres/1735485872836-AddPositionToField'
+import { FieldPositionIndex1735494267431 } from './migration/postgres/1735494267431-Field_PositionIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -285,6 +286,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveWorkerType1734439097357,
         FieldAndRecordAndCellProjectId1734969829406,
         AddPositionToField1735485872836,
+        FieldPositionIndex1735494267431,
     ]
 
     const edition = system.getEdition()

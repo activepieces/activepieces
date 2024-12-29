@@ -80,6 +80,7 @@ import { TablesProductSqlite1734354249984 } from './migration/sqlite/17343542499
 import { RemoveWorkerTypeSqlite1734439194575 } from './migration/sqlite/1734439194575-RemoveWorkerTypeSqlite'
 import { FieldAndRecordAndCellProjectId1734967659746 } from './migration/sqlite/1734967659746-FieldAndRecordAndCell_ProjectIdSqlite'
 import { AddPositionToFieldSqlite1735485411416 } from './migration/sqlite/1735485411416-AddPositionToFieldSqlite'
+import { FieldPositionIndexSqlite1735494079687 } from './migration/sqlite/1735494079687-Field_PositionISqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -177,6 +178,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveWorkerTypeSqlite1734439194575,
         FieldAndRecordAndCellProjectId1734967659746,
         AddPositionToFieldSqlite1735485411416,
+        FieldPositionIndexSqlite1735494079687,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
