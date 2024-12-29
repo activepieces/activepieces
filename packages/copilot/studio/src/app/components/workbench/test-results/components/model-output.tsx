@@ -1,5 +1,6 @@
 import { useWebSocketStore } from '../../../../stores/use-websocket-store'
 import { AgentCommandUpdate } from '@activepieces/copilot-shared'
+import { Play, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 interface TestCase {
   title: string
@@ -30,12 +31,14 @@ export function ModelOutput({ testCase, onRun }: ModelOutputProps) {
 
   if (!latestUpdate) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-start">
         <button
           onClick={onRun}
-          className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 rounded-md border border-gray-200 transition-colors duration-200"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md border border-blue-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
+          aria-label="Run test"
         >
-          Run
+          <Play className="w-4 h-4" />
+          <span>Run Test</span>
         </button>
       </div>
     )
@@ -43,35 +46,31 @@ export function ModelOutput({ testCase, onRun }: ModelOutputProps) {
 
   if (latestUpdate.type === AgentCommandUpdate.AGENT_TEST_STARTED) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="flex items-center gap-2 text-gray-600">
-          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-          <span>Running test...</span>
-        </div>
+      <div className="flex items-center gap-2 text-blue-600 font-medium" role="status" aria-label="Test running">
+        <RefreshCw className="w-4 h-4 animate-spin" />
+        <span>Running test...</span>
       </div>
     )
   }
 
   if (latestUpdate.type === AgentCommandUpdate.AGENT_TEST_ERROR) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3" role="alert" aria-label="Test failed">
         <div className="flex items-center justify-between">
-          <div className="text-red-600 font-medium">Error</div>
+          <div className="flex items-center gap-1.5 text-red-600 font-medium">
+            <AlertCircle className="w-4 h-4" />
+            <span>Error</span>
+          </div>
           <button
             onClick={onRun}
-            className="px-2 py-1 text-xs font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 rounded-md border border-gray-200 transition-colors duration-200"
+            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md border border-blue-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
+            aria-label="Retry test"
           >
-            Retry
+            <RefreshCw className="w-3 h-3" />
+            <span>Retry</span>
           </button>
         </div>
-        <div className="font-mono text-xs text-red-600 whitespace-pre-wrap bg-red-50 p-3 rounded-md">
+        <div className="font-mono text-xs text-red-700 whitespace-pre-wrap bg-red-50 p-3 rounded-md border border-red-200 shadow-sm">
           {latestUpdate.data?.error?.message || 'Unknown error'}
         </div>
       </div>
@@ -80,17 +79,22 @@ export function ModelOutput({ testCase, onRun }: ModelOutputProps) {
 
   if (latestUpdate.type === AgentCommandUpdate.AGENT_TEST_COMPLETED) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3" role="status" aria-label="Test completed">
         <div className="flex items-center justify-between">
-          <div className="text-green-600 font-medium">Completed</div>
+          <div className="flex items-center gap-1.5 text-emerald-600 font-medium">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>Completed</span>
+          </div>
           <button
             onClick={onRun}
-            className="px-2 py-1 text-xs font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 rounded-md border border-gray-200 transition-colors duration-200"
+            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md border border-blue-500 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm"
+            aria-label="Run test again"
           >
-            Run Again
+            <RefreshCw className="w-3 h-3" />
+            <span>Run Again</span>
           </button>
         </div>
-        <div className="font-mono whitespace-pre-wrap bg-gray-50 p-3 rounded-md">
+        <div className="font-mono text-sm text-gray-800 whitespace-pre-wrap bg-white p-3 rounded-md border border-blue-200 shadow-sm">
           {JSON.stringify(latestUpdate.data?.result, null, 2)}
         </div>
       </div>
