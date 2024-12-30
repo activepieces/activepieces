@@ -119,17 +119,19 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return this.removeSensitiveData(updatedConnection)
     },
 
-    async getOne({
-        projectId,
-        platformId,
-        externalId,
-    }: GetOneByName): Promise<AppConnection | null> {
+    async getOne(params: GetOneByExternalId): Promise<AppConnection | null> {
+        const { externalId, platformId, scope } = params
+        const where: FindOptionsWhere<AppConnectionSchema> = {
+            externalId,
+            platformId,
+            scope,
+        }
+        if (scope === AppConnectionScope.PROJECT) {
+            where.projectIds = APArrayContains('projectIds', [params.projectId])
+        }
+
         const encryptedAppConnection = await repo().findOne({
-            where: {
-                projectIds: APArrayContains('projectIds', [projectId]),
-                externalId,
-                platformId,
-            },
+            where,
             relations: ['owner'],
         })
 
@@ -137,7 +139,18 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             return encryptedAppConnection
         }
 
-        return this.decryptAndRefreshConnection(encryptedAppConnection, projectId, log)
+        return scope === AppConnectionScope.PROJECT ? this.decryptAndRefreshConnection({
+            encryptedAppConnection,
+            log,
+            scope: AppConnectionScope.PROJECT,
+            platformId,
+            projectId: params.projectId,
+        }) : this.decryptAndRefreshConnection({
+            encryptedAppConnection,
+            log,
+            scope: AppConnectionScope.PLATFORM,
+            platformId,
+        })
     },
 
     async getOneOrThrowWithoutValue(params: GetOneParams): Promise<AppConnectionWithoutSensitiveData> {
@@ -240,16 +253,39 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async decryptAndRefreshConnection(
-        encryptedAppConnection: AppConnectionSchema,
-        projectId: ProjectId,
-        log: FastifyBaseLogger,
+        params:
+        { 
+            encryptedAppConnection: AppConnectionSchema
+            projectId: ProjectId
+            log: FastifyBaseLogger
+            scope: AppConnectionScope.PROJECT
+            platformId: string
+        } 
+        | {
+            encryptedAppConnection: AppConnectionSchema
+            log: FastifyBaseLogger
+            scope: AppConnectionScope.PLATFORM
+            platformId: string
+        },
     ): Promise<AppConnection | null> {
+        const { encryptedAppConnection, log, scope, platformId } = params
         const appConnection = decryptConnection(encryptedAppConnection)
         if (!needRefresh(appConnection, log)) {
             return oauth2Util(log).removeRefreshTokenAndClientSecret(appConnection)
         }
-
-        const refreshedConnection = await lockAndRefreshConnection({ projectId, externalId: appConnection.externalId, log })
+        const lockAndRefreshParams = {
+            externalId: appConnection.externalId,
+            log,
+            platformId,
+        }
+        const refreshedConnection =  scope === AppConnectionScope.PLATFORM ? await lockAndRefreshConnection({
+            ...lockAndRefreshParams,
+            scope: AppConnectionScope.PLATFORM,
+        }) : await lockAndRefreshConnection({
+            ...lockAndRefreshParams,
+            scope: AppConnectionScope.PROJECT,
+            projectId: params.projectId,
+        })
         if (isNil(refreshedConnection)) {
             return null
         }
@@ -445,17 +481,22 @@ const engineValidateAuth = async (
  * We should make sure this is accessed only once, as a race condition could occur where the token needs to be
  * refreshed and it gets accessed at the same time, which could result in the wrong request saving incorrect data.
  */
-async function lockAndRefreshConnection({
-    projectId,
-    externalId,
-    log,
-}: {
+async function lockAndRefreshConnection(params: {
     projectId: ProjectId
     externalId: string
     log: FastifyBaseLogger
+    platformId: string
+    scope: AppConnectionScope.PROJECT
+} | {
+    externalId: string
+    scope: AppConnectionScope.PLATFORM
+    platformId: string
+    log: FastifyBaseLogger
 }) {
+    const { externalId, log, scope } = params
+
     const refreshLock = await distributedLock.acquireLock({
-        key: `${projectId}_${externalId}`,
+        key: `${scope === AppConnectionScope.PROJECT ? params.projectId : params.platformId}_${externalId}`,
         timeout: 20000,
         log,
     })
@@ -463,10 +504,12 @@ async function lockAndRefreshConnection({
     let appConnection: AppConnection | null = null
 
     try {
-        const encryptedAppConnection = await repo().findOneBy({
-            projectIds: APArrayContains('projectIds', [projectId]),
+        const where: FindOptionsWhere<AppConnectionSchema> = {
             externalId,
-        })
+            ...(scope === AppConnectionScope.PROJECT ? { projectIds: APArrayContains('projectIds', [params.projectId]), platformId: params.platformId } : {}),
+            ...(scope === AppConnectionScope.PLATFORM ? { platformId: params.platformId } : {}),
+        }
+        const encryptedAppConnection = await repo().findOneBy(where)
         if (isNil(encryptedAppConnection)) {
             return encryptedAppConnection
         }
@@ -474,7 +517,12 @@ async function lockAndRefreshConnection({
         if (!needRefresh(appConnection, log)) {
             return appConnection
         }
-        const refreshedAppConnection = await refresh(appConnection, projectId, log)
+        const refreshedAppConnection = await refresh({
+            connection: appConnection,
+            log,
+            platformId: params.platformId,
+            projectId: scope === AppConnectionScope.PROJECT ? params.projectId : undefined,
+        })
 
         await repo().update(refreshedAppConnection.id, {
             status: AppConnectionStatus.ACTIVE,
@@ -512,12 +560,18 @@ function needRefresh(connection: AppConnection, log: FastifyBaseLogger): boolean
     }
 }
 
-async function refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
+async function refresh(params: {
+    connection: AppConnection
+    log: FastifyBaseLogger
+    platformId: string
+    projectId: ProjectId | undefined
+}): Promise<AppConnection> {
+    const { connection, log, platformId, projectId } = params
     switch (connection.value.type) {
         case AppConnectionType.PLATFORM_OAUTH2:
             connection.value = await oauth2Handler[connection.value.type](log).refresh({
                 pieceName: connection.pieceName,
-                platformId: connection.platformId,
+                platformId,
                 projectId,
                 connectionValue: connection.value,
             })
@@ -525,7 +579,7 @@ async function refresh(connection: AppConnection, projectId: ProjectId, log: Fas
         case AppConnectionType.CLOUD_OAUTH2:
             connection.value = await oauth2Handler[connection.value.type](log).refresh({
                 pieceName: connection.pieceName,
-                platformId: connection.platformId,
+                platformId,
                 projectId,
                 connectionValue: connection.value,
             })
@@ -533,7 +587,7 @@ async function refresh(connection: AppConnection, projectId: ProjectId, log: Fas
         case AppConnectionType.OAUTH2:
             connection.value = await oauth2Handler[connection.value.type](log).refresh({
                 pieceName: connection.pieceName,
-                platformId: connection.platformId,
+                platformId,
                 projectId,
                 connectionValue: connection.value,
             })
@@ -556,10 +610,15 @@ type UpsertParams = {
     pieceName: string
 }
 
-type GetOneByName = {
+type GetOneByExternalId = {
     projectId: ProjectId
     platformId: string
     externalId: string
+    scope: AppConnectionScope.PROJECT
+} | {
+    platformId: string
+    externalId: string
+    scope: AppConnectionScope.PLATFORM
 }
 
 type GetOneParams = {

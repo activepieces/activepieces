@@ -1,6 +1,7 @@
 import {
     ActivepiecesError,
     AppConnection,
+    AppConnectionScope,
     assertNotNullOrUndefined,
     EnginePrincipal,
     ErrorCode,
@@ -22,19 +23,27 @@ export const appConnectionWorkerController: FastifyPluginAsyncTypebox = async (a
             projectId: enginePrincipal.projectId,
             platformId: enginePrincipal.platform.id,
             externalId: request.params.externalId,
+            scope: AppConnectionScope.PROJECT,
+        })
+        const globalAppConnection = await appConnectionService(request.log).getOne({
+            externalId: request.params.externalId,
+            scope: AppConnectionScope.PLATFORM,
+            platformId: enginePrincipal.platform.id,
         })
 
-        if (isNil(appConnection)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityId: `externalId=${request.params.externalId}`,
-                    entityType: 'AppConnection',
-                },
-            })
+        if (!isNil(appConnection)) {
+            return appConnection
         }
-
-        return appConnection
+        if (!isNil(globalAppConnection)) {
+            return globalAppConnection
+        }
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityId: `externalId=${request.params.externalId}`,
+                entityType: 'AppConnection',
+            },
+        })
     },
     )
 

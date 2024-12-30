@@ -55,6 +55,7 @@ export const connectionKeyService = (log: FastifyBaseLogger) => ({
             projectId,
             platformId: project.platformId,
             externalId: `${finalAppName}_${connectionName}`,
+            scope: AppConnectionScope.PROJECT,
         })
         return isNil(connection) ? null : appConnectionService(log).removeSensitiveData(connection)
     },
