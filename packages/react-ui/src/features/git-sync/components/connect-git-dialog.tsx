@@ -94,21 +94,20 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
   });
 
   return (
-
-        <Dialog open={open} onOpenChange={setOpen} modal={true}>
-          {showButton && (
-            <DialogTrigger asChild>
-              <Button size={'sm'} className="w-32">
-                {t('Connect Git')}
-              </Button>
-            </DialogTrigger>
-          )}
-          <DialogContent className="sm:max-w-[500px]">
-          <Form {...form}>
-            <form
-              className="grid space-y-4"
-              onSubmit={form.handleSubmit((data) => mutate(data))}
-            >
+    <Dialog open={open} onOpenChange={setOpen} modal={true}>
+      {showButton && (
+        <DialogTrigger asChild>
+          <Button size={'sm'} className="w-32">
+            {t('Connect Git')}
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="sm:max-w-[500px]">
+        <Form {...form}>
+          <form
+            className="grid space-y-4"
+            onSubmit={form.handleSubmit((data) => mutate(data))}
+          >
             <DialogHeader>
               <DialogTitle>{t('Connect Git')}</DialogTitle>
               <DialogDescription>

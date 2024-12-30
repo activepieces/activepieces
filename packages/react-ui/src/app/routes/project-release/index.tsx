@@ -105,7 +105,10 @@ const ProjectReleasesPage = () => {
       ),
       cell: ({ row }) => {
         return (
-          <div className="flex items-center justify-center z-10" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex items-center justify-center z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Tooltip>
               <TooltipTrigger asChild>
                 <ApplyButton

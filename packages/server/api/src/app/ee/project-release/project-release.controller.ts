@@ -1,10 +1,10 @@
+import { ApplicationEventName } from '@activepieces/ee-shared'
 import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { eventsHooks } from '../../helper/application-events'
 import { platformService } from '../../platform/platform.service'
 import { projectReleaseService } from './project-release.service'
-import { ApplicationEventName } from '@activepieces/ee-shared'
-import { eventsHooks } from '../../helper/application-events'
 
 export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) => {
 
