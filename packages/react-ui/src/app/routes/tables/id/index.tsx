@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Calendar, Plus, Trash, Type } from 'lucide-react';
+import { Calendar, Hash, Plus, Trash, Type } from 'lucide-react';
 import { useState } from 'react';
 import DataGrid, {
   SelectColumn,
@@ -108,6 +108,8 @@ function TablePage() {
         return <Type className="h-4 w-4 text-muted-foreground" />;
       case FieldType.DATE:
         return <Calendar className="h-4 w-4 text-muted-foreground" />;
+      case FieldType.NUMBER:
+        return <Hash className="h-4 w-4 text-muted-foreground" />;
       default:
         return null;
     }

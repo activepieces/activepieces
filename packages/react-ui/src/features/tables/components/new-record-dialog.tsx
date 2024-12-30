@@ -153,7 +153,19 @@ export function NewRecordDialog({
                             </PopoverContent>
                           </Popover>
                         ) : (
-                          <Input {...formField} id={field.id} />
+                          <Input
+                            {...formField}
+                            id={field.id}
+                            type={
+                              field.type === FieldType.NUMBER
+                                ? 'number'
+                                : 'text'
+                            }
+                            placeholder={
+                              FieldType[field.type][0] +
+                              FieldType[field.type].slice(1).toLowerCase()
+                            }
+                          />
                         )}
                         <FormMessage />
                       </FormItem>

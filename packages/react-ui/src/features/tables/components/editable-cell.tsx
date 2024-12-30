@@ -66,6 +66,7 @@ export function EditableCell({
         row={row}
         rowIdx={rowIdx}
         column={column}
+        type={type}
         onRowChange={(newRow, commitChanges) => {
           if (commitChanges) {
             onRowChange(newRow, commitChanges);

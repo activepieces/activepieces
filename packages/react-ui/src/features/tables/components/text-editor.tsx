@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { RenderEditCellProps } from 'react-data-grid';
 
 import { cn } from '@/lib/utils';
+import { FieldType } from '@activepieces/shared';
 
 type Row = {
   id: string;
@@ -14,7 +15,8 @@ function TextEditor({
   column,
   onRowChange,
   onClose,
-}: RenderEditCellProps<Row, { id: string }>) {
+  type,
+}: RenderEditCellProps<Row, { id: string }> & { type: FieldType }) {
   const [value, setValue] = useState(row[column.key]);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -47,6 +49,7 @@ function TextEditor({
         <input
           ref={inputRef}
           value={value ?? ''}
+          type={type === FieldType.NUMBER ? 'number' : 'text'}
           onChange={handleChange}
           onBlur={commitChanges}
           onKeyDown={(e) => {
