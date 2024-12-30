@@ -41,6 +41,7 @@ import {
 
 import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
+import TaskLimitAlert from '../flows/task-limit-alert';
 
 type SelectedRow = {
   id: string;
@@ -389,7 +390,9 @@ const FlowRunsPage = () => {
   );
 
   return (
-    <div className="flex-col w-full">
+    <div className='flex flex-col gap-4 grow'>
+      <TaskLimitAlert />
+      <div className="flex-col w-full">
       <TableTitle>{t('Flow Runs')}</TableTitle>
       <DataTable
         columns={columns}
@@ -400,6 +403,8 @@ const FlowRunsPage = () => {
         onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
       />
     </div>
+    </div>
+  
   );
 };
 

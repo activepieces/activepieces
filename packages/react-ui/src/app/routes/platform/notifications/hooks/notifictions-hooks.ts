@@ -6,6 +6,7 @@ import { useSocket } from '@/components/socket-provider';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId } from '@activepieces/shared';
+import { t } from 'i18next';
 
 export interface Message {
   title: string;
@@ -36,11 +37,11 @@ export const notificationHooks = {
         setMessages((prevMessages) => [
           ...prevMessages,
           {
-            title: 'Websocket Connection Error',
-            description: `We encountered an error trying to connect to the websocket: ${
+            title: t('Websocket Connection Error'),
+            description: t(`We encountered an error trying to connect to the websocket: ${
               err.message || 'Unknown error'
-            }. Please check your network or server.`,
-            actionText: 'Retry Connection',
+            }. Please check your network or server.`),
+            actionText: t('Retry Connection'),
             actionLink: '/platform/infrastructure/health',
             type: 'destructive',
           },
@@ -59,19 +60,19 @@ export const notificationHooks = {
 
       if (!isVersionUpToDate) {
         allMessages.push({
-          title: 'Update Available',
+          title: t('Update Available'),
           description: `Version ${latestVersion} is now available. Update to get the latest features and security improvements.`,
-          actionText: 'Update Now',
+          actionText: t('Update Now'),
           actionLink: '/platform/infrastructure/health',
         });
       }
 
       if (!(providers && providers.data.length > 0) && !isLoading) {
         allMessages.push({
-          title: 'Your Universal AI needs a quick setup',
+          title: t('Your Universal AI needs a quick setup'),
           description:
-            "I noticed you haven't set up any AI providers yet. To unlock Universal AI pieces for your team, you'll need to configure some provider credentials first.",
-          actionText: 'Configure',
+            t("We noticed you haven't set up any AI providers yet. To unlock Universal AI pieces for your team, you'll need to configure some provider credentials first."),
+          actionText: t('Configure'),
           actionLink: '/platform/setup/ai',
         });
       }

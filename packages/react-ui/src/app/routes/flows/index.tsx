@@ -59,6 +59,7 @@ import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
 import { TableTitle } from '../../../components/ui/table-title';
+import TaskLimitAlert from './task-limit-alert';
 
 const filters = [
   {
@@ -526,7 +527,9 @@ const FlowsPage = () => {
   );
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className='flex flex-col gap-4 grow'>
+      <TaskLimitAlert />
+      <div className="flex flex-col gap-4 w-full grow">
       <div className="flex">
         <TableTitle>{t('Flows')}</TableTitle>
         <div className="ml-auto flex flex-row gap-2">
@@ -624,6 +627,7 @@ const FlowsPage = () => {
           />
         </div>
       </div>
+    </div>
     </div>
   );
 };
