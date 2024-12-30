@@ -63,13 +63,18 @@ export const projectReleaseService = {
                 projectId,
             })
             .orderBy('created', 'DESC'))
-        const enrichedData = await Promise.all(data.map(async (projectRelease) => ({
+        const enrichedData = await Promise.all(data.map(
+            async (projectRelease) => this.enrich(projectRelease),
+        ))
+        return paginationHelper.createPage<ProjectRelease>(enrichedData, cursor)
+    },
+    async enrich(projectRelease: ProjectRelease): Promise<ProjectRelease> {
+        return {
             ...projectRelease,
             importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService.getMetaInfo({
                 id: projectRelease.importedBy,
             }) ?? undefined,
-        })))
-        return paginationHelper.createPage<ProjectRelease>(enrichedData, cursor)
+        }
     },
     async getOneOrThrow(params: GetOneProjectReleaseParams): Promise<ProjectRelease> {
         const projectRelease = await projectReleaseRepo().findOneBy({
