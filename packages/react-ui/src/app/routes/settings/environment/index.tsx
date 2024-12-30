@@ -32,7 +32,9 @@ const EnvironmentPage = () => {
       refetch();
       toast({
         title: t('Git Connection Removed'),
-        description: t('Your Git repository has been successfully disconnected'),
+        description: t(
+          'Your Git repository has been successfully disconnected',
+        ),
         duration: 3000,
       });
     },
