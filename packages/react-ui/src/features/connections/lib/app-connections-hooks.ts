@@ -21,7 +21,7 @@ export const appConnectionsHooks = {
           projectId: authenticationSession.getProjectId() ?? '',
         });
         const globalConnections = await globalConnectionsApi.list({
-          ...request
+          ...request,
         });
         return [...localConnections.data, ...globalConnections.data];
       },
