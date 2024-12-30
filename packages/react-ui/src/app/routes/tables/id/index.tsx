@@ -1,6 +1,6 @@
-import { t } from 'i18next';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Plus } from 'lucide-react';
+import { t } from 'i18next';
+import { Calendar, Plus, Trash, Type } from 'lucide-react';
 import { useState } from 'react';
 import DataGrid, {
   SelectColumn,
@@ -11,8 +11,11 @@ import DataGrid, {
 import 'react-data-grid/lib/styles.css';
 import { useParams } from 'react-router-dom';
 
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TableTitle } from '@/components/ui/table-title';
 import { toast } from '@/components/ui/use-toast';
+import { ColumnHeader } from '@/features/tables/components/column-header';
 import { EditableCell } from '@/features/tables/components/editable-cell';
 import { NewFieldDialog } from '@/features/tables/components/new-field-dialog';
 import { NewRecordDialog } from '@/features/tables/components/new-record-dialog';
@@ -21,6 +24,7 @@ import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import {
   Field,
+  FieldType,
   PopulatedRecord,
   UpdateRecordRequest,
 } from '@activepieces/shared';
@@ -77,6 +81,38 @@ function TablePage() {
     },
   });
 
+  const deleteFieldMutation = useMutation({
+    mutationFn: (fieldId: string) => {
+      return fieldsApi.delete(fieldId);
+    },
+    onSuccess: () => {
+      refetchFields();
+      toast({
+        title: t('Success'),
+        description: t('Field has been deleted.'),
+        duration: 3000,
+      });
+    },
+    onError: () => {
+      toast({
+        title: t('Error'),
+        description: t('Failed to delete field.'),
+        duration: 3000,
+      });
+    },
+  });
+
+  const getFieldIcon = (type: FieldType) => {
+    switch (type) {
+      case FieldType.TEXT:
+        return <Type className="h-4 w-4 text-muted-foreground" />;
+      case FieldType.DATE:
+        return <Calendar className="h-4 w-4 text-muted-foreground" />;
+      default:
+        return null;
+    }
+  };
+
   const columns: readonly Column<Row, { id: string }>[] = [
     {
       ...SelectColumn,
@@ -94,7 +130,41 @@ function TablePage() {
     },
     ...(fieldsData?.map((field) => ({
       key: field.name,
-      name: field.name,
+      minWidth: 207,
+      minHeight: 37,
+      name: (
+        <ColumnHeader
+          label={field.name}
+          icon={getFieldIcon(field.type)}
+          actions={[
+            {
+              label: t('Delete Field'),
+              content: (
+                <ConfirmationDeleteDialog
+                  title={t('Delete Field')}
+                  message={t(
+                    'Are you sure you want to delete this field? This action cannot be undone.',
+                  )}
+                  mutationFn={async () => {
+                    await deleteFieldMutation.mutateAsync(field.id);
+                  }}
+                  entityName={t('field')}
+                >
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                    }}
+                    className="flex items-center gap-2 text-destructive cursor-pointer"
+                  >
+                    <Trash className="h-4 w-4 text-destructive" />
+                    <span className="text-destructive">{t('Delete')}</span>
+                  </DropdownMenuItem>
+                </ConfirmationDeleteDialog>
+              ),
+            },
+          ]}
+        />
+      ),
       renderCell: ({
         row,
         column,
@@ -127,15 +197,16 @@ function TablePage() {
     })) ?? []),
     {
       key: 'new-field',
+      minWidth: 67,
+      maxWidth: 67,
       name: (
         <NewFieldDialog
           tableId={tableId!}
           onFieldCreated={() => {
-            refetchRecords();
             refetchFields();
           }}
         >
-          <div className="flex items-center justify-center cursor-pointer">
+          <div className="flex items-center justify-center cursor-pointer new-field">
             <Plus className="h-4 w-4" />
           </div>
         </NewFieldDialog>
