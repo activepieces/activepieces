@@ -131,6 +131,10 @@ export type BuilderState = {
   setPanningMode: (mode: 'grab' | 'pan') => void;
   pieceSelectorStep: string | null;
   setPieceSelectorStep: (step: string | null) => void;
+  isFocusInsideListMapperModeInput: boolean;
+  setIsFocusInsideListMapperModeInput: (
+    isFocusInsideListMapperModeInput: boolean,
+  ) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -478,6 +482,14 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                 : state.rightSidebar,
           };
         });
+      },
+      isFocusInsideListMapperModeInput: false,
+      setIsFocusInsideListMapperModeInput: (
+        isFocusInsideListMapperModeInput: boolean,
+      ) => {
+        return set(() => ({
+          isFocusInsideListMapperModeInput,
+        }));
       },
     };
   });

@@ -1,4 +1,4 @@
-import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
+import { applyFunctionToValues, isNil, isObject, isString } from '@activepieces/shared'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -87,7 +87,7 @@ async function resolveSingleToken(params: ResolveSingleTokenParams): Promise<unk
     if (isConnection) {
         return handleConnection(params)
     }
-    return evalInScope(variableName, currentState)
+    return evalInScope(variableName, { ...currentState, flattenNestedKeys })
 }
 
 async function handleConnection(params: ResolveSingleTokenParams): Promise<unknown> {
@@ -104,7 +104,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection
     }
-    return evalInScope(pathAfterConnectionName, { connection })
+    return evalInScope(pathAfterConnectionName, { connection, flattenNestedKeys })
 }
 
 function parsePathAfterConnectionName(variableName: string, connectionName: string): string | null {
@@ -155,6 +155,22 @@ async function evalInScope(js: string, contextAsScope: Record<string, unknown>):
     }
 }
 
+function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {
+    if (isObject(data)) {
+        for (const [key, value] of Object.entries(data)) {
+            if (key === pathToMatch[0]) {
+                return flattenNestedKeys(value, pathToMatch.slice(1))
+            }
+        }
+    }
+    else if (Array.isArray(data)) {
+        return data.flatMap((d) => flattenNestedKeys(d, pathToMatch))
+    }
+    else if (pathToMatch.length === 0) {
+        return [data]
+    }
+    return []
+}
 
 type ResolveSingleTokenParams = {
     variableName: string
