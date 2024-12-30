@@ -26,19 +26,19 @@ const getReleaseSummaryType = (type: ProjectReleaseType) => {
   switch (type) {
     case ProjectReleaseType.GIT:
       return (
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-1">
           <GitBranch className="size-4" /> {t('Git')}
         </span>
       );
     case ProjectReleaseType.PROJECT:
       return (
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-1">
           <FolderOpenDot className="size-4" /> {t('Project')}
         </span>
       );
     case ProjectReleaseType.ROLLBACK:
       return (
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-1">
           <RotateCcw className="size-4" /> {t('Rollback')}
         </span>
       );
@@ -122,9 +122,9 @@ const ViewRelease = () => {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="flex items-center flex-row gap-2">
+                    <span className="flex items-center flex-row gap-1">
                       {t('Imported by')}
-                      <span className="font-semibold text-primary underline text-md">
+                      <span className="font-semibold text-md">
                         {release?.importedByUser?.firstName}{' '}
                         {release?.importedByUser?.lastName}
                       </span>
