@@ -40,7 +40,7 @@ export function EditableCell({
       if (
         isSelected &&
         !(event.target as HTMLElement).closest(
-          `#editable-cell-${rowIdx}-${column.key}`,
+          `#editable-cell-${rowIdx}-${column.idx}`,
         )
       ) {
         setIsSelected(false);
@@ -83,7 +83,7 @@ export function EditableCell({
 
   return (
     <div
-      id={`editable-cell-${rowIdx}-${column.key}`}
+      id={`editable-cell-${rowIdx}-${column.idx}`}
       className={cn(
         'h-full flex items-center justify-between gap-2 pl-2 py-2',
         'group cursor-pointer border',
