@@ -10,7 +10,6 @@ import {
   Import,
   Plus,
   Trash2,
-  UploadCloud,
   Workflow,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -47,7 +46,6 @@ import {
   folderIdParamName,
 } from '@/features/folders/component/folder-filter-list';
 import { foldersApi } from '@/features/folders/lib/folders-api';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -98,8 +96,6 @@ const FlowsPage = () => {
     platform.environmentsEnabled,
   );
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
-
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
 
@@ -398,26 +394,6 @@ const FlowsPage = () => {
                 ) : null}
 
                 <DropdownMenuContent>
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToPushToGit}
-                  >
-                    <PushToGitDialog
-                      flowIds={selectedRows.map((flow) => flow.version.id)}
-                    >
-                      <DropdownMenuItem
-                        disabled={!userHasPermissionToPushToGit}
-                        onSelect={(e) => {
-                          e.preventDefault();
-                          setIsDropdownOpen(false);
-                        }}
-                      >
-                        <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                          <UploadCloud className="h-4 w-4" />
-                          <span>{t('Push to Git')}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    </PushToGitDialog>
-                  </PermissionNeededTooltip>
                   {!embedState.hideFolders && (
                     <PermissionNeededTooltip
                       hasPermission={userHasPermissionToUpdateFlow}
