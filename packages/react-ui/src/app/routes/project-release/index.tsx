@@ -97,7 +97,6 @@ const ProjectReleasesPage = () => {
         <div className="text-left">{row.original.importedByUser?.email}</div>
       ),
     },
-
     {
       accessorKey: 'actions',
       id: 'select',
@@ -106,7 +105,7 @@ const ProjectReleasesPage = () => {
       ),
       cell: ({ row }) => {
         return (
-          <div className="flex items-center justify-center z-10">
+          <div className="flex items-center justify-center z-10" onClick={(e) => e.stopPropagation()}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <ApplyButton
