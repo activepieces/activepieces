@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 
 import { appConnectionsApi } from './app-connections-api';
+import { globalConnectionsApi } from './global-connections-api';
 
 export const appConnectionsHooks = {
   useConnections: (
@@ -19,7 +20,10 @@ export const appConnectionsHooks = {
           ...request,
           projectId: authenticationSession.getProjectId() ?? '',
         });
-        return [...localConnections.data];
+        const globalConnections = await globalConnectionsApi.list({
+          ...request
+        });
+        return [...localConnections.data, ...globalConnections.data];
       },
       staleTime: 0,
     });
