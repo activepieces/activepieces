@@ -390,21 +390,20 @@ const FlowRunsPage = () => {
   );
 
   return (
-    <div className='flex flex-col gap-4 grow'>
+    <div className="flex flex-col gap-4 grow">
       <TaskLimitAlert />
       <div className="flex-col w-full">
-      <TableTitle>{t('Flow Runs')}</TableTitle>
-      <DataTable
-        columns={columns}
-        page={data}
-        isLoading={isLoading || isFetchingFlows}
-        filters={filters}
-        bulkActions={bulkActions}
-        onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
-      />
+        <TableTitle>{t('Flow Runs')}</TableTitle>
+        <DataTable
+          columns={columns}
+          page={data}
+          isLoading={isLoading || isFetchingFlows}
+          filters={filters}
+          bulkActions={bulkActions}
+          onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
+        />
+      </div>
     </div>
-    </div>
-  
   );
 };
 

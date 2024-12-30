@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useEffect, useMemo, useState } from 'react';
 import semver from 'semver';
 
@@ -6,7 +7,6 @@ import { useSocket } from '@/components/socket-provider';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId } from '@activepieces/shared';
-import { t } from 'i18next';
 
 export interface Message {
   title: string;
@@ -38,9 +38,11 @@ export const notificationHooks = {
           ...prevMessages,
           {
             title: t('Websocket Connection Error'),
-            description: t(`We encountered an error trying to connect to the websocket: ${
-              err.message || 'Unknown error'
-            }. Please check your network or server.`),
+            description: t(
+              `We encountered an error trying to connect to the websocket: ${
+                err.message || 'Unknown error'
+              }. Please check your network or server.`,
+            ),
             actionText: t('Retry Connection'),
             actionLink: '/platform/infrastructure/health',
             type: 'destructive',
@@ -70,8 +72,9 @@ export const notificationHooks = {
       if (!(providers && providers.data.length > 0) && !isLoading) {
         allMessages.push({
           title: t('Your Universal AI needs a quick setup'),
-          description:
-            t("We noticed you haven't set up any AI providers yet. To unlock Universal AI pieces for your team, you'll need to configure some provider credentials first."),
+          description: t(
+            "We noticed you haven't set up any AI providers yet. To unlock Universal AI pieces for your team, you'll need to configure some provider credentials first.",
+          ),
           actionText: t('Configure'),
           actionLink: '/platform/setup/ai',
         });

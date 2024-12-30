@@ -25,16 +25,11 @@ export const PlatformAlert: React.FC<PlatformAlertProps> = ({
   const navigate = useNavigate();
 
   return (
-    <Alert
-      variant={type}
-      className="flex items-start"
-    >
+    <Alert variant={type} className="flex items-start">
       {type === 'destructive' ? <AlertCircle className="h-4 w-4" /> : icon}
       <div className="flex-grow">
         <AlertTitle>{title}</AlertTitle>
-        <AlertDescription> 
-          {description}
-        </AlertDescription>
+        <AlertDescription>{description}</AlertDescription>
       </div>
       {actionText && actionLink && (
         <Button

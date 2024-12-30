@@ -8,14 +8,14 @@ import { ProjectSwitcher } from '@/features/projects/components/project-switcher
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import {  PlatformRole } from '@activepieces/shared';
+import { PlatformRole } from '@activepieces/shared';
 
 import { useEmbedding } from '../../components/embed-provider';
 import { Separator } from '../../components/ui/separator';
-import  UsageLimitsButton  from './usage-limits-button';
 import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks';
 import { PlatformDialog } from '../routes/platform/notifications/paltform-dialog';
 
+import UsageLimitsButton from './usage-limits-button';
 
 export const Header = () => {
   const history = useLocation();
@@ -39,7 +39,7 @@ export const Header = () => {
           )}
           <div className="grow"></div>
           <div className="flex items-center justify-center gap-4">
-            <InviteUserDialog/>
+            <InviteUserDialog />
             <UsageLimitsButton />
             {showPlatformAdminDashboard && (
               <Link to={isInPlatformAdmin ? '/' : '/platform'}>
