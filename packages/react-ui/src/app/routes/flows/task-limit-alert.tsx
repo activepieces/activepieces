@@ -10,7 +10,10 @@ import { ApFlagId, isNil } from '@activepieces/shared';
 
 export const TaskLimitAlert = () => {
   const { project } = projectHooks.useCurrentProject();
-  if (isNil(project)) return null;
+  //for ce edition, we don't have plan and usage
+  if (isNil(project?.plan?.tasks) || isNil(project?.usage?.tasks)) {
+    return null;
+  }
   const taskUsagePercentage = project.usage.tasks / project.plan.tasks;
   const type =
     taskUsagePercentage > 0.85

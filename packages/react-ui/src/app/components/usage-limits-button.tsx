@@ -24,6 +24,7 @@ const UsageLimitsButton = React.memo(() => {
       refetch();
     };
   }, [refetch]);
+  //for ce edition, we don't have plan and usage
   if (isNil(project?.plan?.tasks) || isNil(project?.usage?.tasks)) {
     return null;
   }
@@ -63,6 +64,7 @@ const UsageLimitsButton = React.memo(() => {
               max={project.plan.aiTokens}
             />
           </div>
+          <div className="flex justify-end text-muted">{} </div>
         </div>
         <FlagGuard flag={ApFlagId.SHOW_BILLING}>
           <Separator className="my-4" />
