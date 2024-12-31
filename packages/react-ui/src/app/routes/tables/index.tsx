@@ -234,8 +234,7 @@ function TablesPage() {
         </Button>
       </div>
 
-      <Data
-      Table
+      <DataTable
         columns={columns}
         page={data}
         hidePagination={true}

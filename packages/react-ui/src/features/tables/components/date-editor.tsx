@@ -11,10 +11,7 @@ import {
 } from '@/components/ui/popover';
 import { cn, formatUtils } from '@/lib/utils';
 
-type Row = {
-  id: string;
-  [key: string]: any;
-};
+import { Row } from '../lib/types';
 
 function DateEditor({
   row,

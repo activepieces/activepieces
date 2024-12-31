@@ -6,13 +6,10 @@ import { Button } from '@/components/ui/button';
 import { cn, formatUtils } from '@/lib/utils';
 import { FieldType } from '@activepieces/shared';
 
+import { Row } from '../lib/types';
+
 import { DateEditor } from './date-editor';
 import { TextEditor } from './text-editor';
-
-type Row = {
-  id: string;
-  [key: string]: any;
-};
 
 type EditableCellProps = {
   type: FieldType;

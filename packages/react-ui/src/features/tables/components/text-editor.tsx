@@ -5,10 +5,7 @@ import type { RenderEditCellProps } from 'react-data-grid';
 import { cn } from '@/lib/utils';
 import { FieldType } from '@activepieces/shared';
 
-type Row = {
-  id: string;
-  [key: string]: any;
-};
+import { Row } from '../lib/types';
 
 function TextEditor({
   row,

@@ -22,6 +22,7 @@ import { NewRecordDialog } from '@/features/tables/components/new-record-dialog'
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
+import { Row } from '@/features/tables/lib/types';
 import {
   Field,
   FieldType,
@@ -29,11 +30,6 @@ import {
   UpdateRecordRequest,
 } from '@activepieces/shared';
 import './react-data-grid.css';
-
-type Row = {
-  id: string;
-  [key: string]: any;
-};
 
 function rowKeyGetter(record: Row) {
   return record.id;
