@@ -118,7 +118,6 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     projectId: gitRepo.projectId,
                 })
                 const externalId = flow.externalId
-                // THE EXTERNAL ID IS NULL WHEN I DELETE A FLOW 
                 if (isNil(externalId)) {
                     break
                 }
