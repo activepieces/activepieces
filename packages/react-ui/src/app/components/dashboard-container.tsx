@@ -41,6 +41,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
+  const [isAlertClosed, setIsAlertClosed] = useState(false);
 
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
@@ -93,7 +94,6 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   ]
     .filter(embedFilter)
     .filter(permissionFilter);
-  const [isAlertClosed, setIsAlertClosed] = useState(false);
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <CloseTaskLimitAlertContext.Provider
