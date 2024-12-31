@@ -7,6 +7,7 @@ import {
   Workflow,
   Wrench,
 } from 'lucide-react';
+import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -24,6 +25,11 @@ import { Sidebar, SidebarLink } from './sidebar';
 type DashboardContainerProps = {
   children: React.ReactNode;
 };
+
+export const CloseTaskLimitAlertContext = createContext({
+  isAlertClosed: false,
+  setIsAlertClosed: (isAlertClosed: boolean) => {},
+});
 
 export function DashboardContainer({ children }: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -87,15 +93,23 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   ]
     .filter(embedFilter)
     .filter(permissionFilter);
+  const [isAlertClosed, setIsAlertClosed] = useState(false);
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      <Sidebar
-        isHomeDashboard={true}
-        links={links}
-        hideSideNav={embedState.hideSideNav}
+      <CloseTaskLimitAlertContext.Provider
+        value={{
+          isAlertClosed,
+          setIsAlertClosed,
+        }}
       >
-        {children}
-      </Sidebar>
+        <Sidebar
+          isHomeDashboard={true}
+          links={links}
+          hideSideNav={embedState.hideSideNav}
+        >
+          {children}
+        </Sidebar>
+      </CloseTaskLimitAlertContext.Provider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

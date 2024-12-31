@@ -26,6 +26,7 @@ export const projectUsageService = (log: FastifyBaseLogger) => ({
             tasks: flowTasks,
             teamMembers,
             aiTokens,
+            nextLimitResetDate: getCurrentingEndPeriod(startBillingPeriod),
         }
     },
     increaseUsage,

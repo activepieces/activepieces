@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -16,6 +17,25 @@ import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
 import { FlagGuard } from './flag-guard';
+
+const getTimeUntilNextReset = (nextResetDate: string) => {
+  const now = dayjs();
+  const nextReset = dayjs(nextResetDate);
+  const diffInDays = nextReset.diff(now, 'days');
+  if (diffInDays > 0) {
+    return `${diffInDays} ${t('days')}`;
+  }
+  const diffInHours = nextReset.diff(now, 'hours');
+  if (diffInHours > 0) {
+    return `${diffInHours} ${t('hours')}`;
+  }
+  const diffInMinutes = nextReset.diff(now, 'minutes');
+  if (diffInMinutes > 0) {
+    return `${diffInMinutes} ${t('minutes')}`;
+  }
+
+  return t('Today');
+};
 
 const UsageLimitsButton = React.memo(() => {
   const { project, refetch } = projectHooks.useCurrentProject();
@@ -64,8 +84,14 @@ const UsageLimitsButton = React.memo(() => {
               max={project.plan.aiTokens}
             />
           </div>
-          <div className="flex justify-end text-muted">{} </div>
         </div>
+        {project.usage.nextLimitResetDate && (
+          <div className="flex justify-end mt-4">
+            {t('Resets in')}{' '}
+            {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
+          </div>
+        )}
+
         <FlagGuard flag={ApFlagId.SHOW_BILLING}>
           <Separator className="my-4" />
           <div className="flex justify-end ">
