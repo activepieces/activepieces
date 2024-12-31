@@ -1,4 +1,4 @@
-import { PrincipalType, ProjectRole, UpdateProjectRoleRequestBody } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, ProjectRole, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -6,7 +6,7 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockProjectRole, createMockUser, mockBasicSetup } from '../../../helpers/mocks'
+import { createMockProjectRole, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -23,14 +23,14 @@ afterAll(async () => {
 describe('Project Role API', () => {
     describe('Create Project Role', () => {
         it('should create a new project role', async () => {
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
             })
             
-            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            const projectRole = createMockProjectRole({ platformId: mockPlatform.id })
 
             const response = await app?.inject({
                 method: 'POST',
@@ -44,22 +44,26 @@ describe('Project Role API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json() as ProjectRole
             expect(responseBody.id).toBeDefined()
-            expect(responseBody.platformId).toBe(mockPlatformOne.id)
+            expect(responseBody.platformId).toBe(mockPlatform.id)
             expect(responseBody.name).toBe(projectRole.name)
             expect(responseBody.permissions).toEqual(projectRole.permissions)
         })
 
         it('should fail to create a new project role if user is not platform owner', async () => {
-            const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const nonOwnerUserId = createMockUser()
-            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: nonOwnerUserId.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
             })
 
-            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            const projectRole = createMockProjectRole({ platformId: mockPlatform.id })
 
             const response = await app?.inject({
                 method: 'POST',
@@ -77,11 +81,11 @@ describe('Project Role API', () => {
 
     describe('Get Project Role', () => {
         it('should get all project roles', async () => {
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
             })
 
             const response = await app?.inject({
@@ -96,13 +100,17 @@ describe('Project Role API', () => {
         })
 
         it('should able to get all project roles if user is not platform owner', async () => {
-            const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const nonOwnerUserId = createMockUser()
-            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: nonOwnerUserId.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
             })
 
             const response = await app?.inject({
@@ -119,14 +127,14 @@ describe('Project Role API', () => {
 
     describe('Update Project Role', () => {
         it('should update a project role', async () => {
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
             })
 
-            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            const projectRole = createMockProjectRole({ platformId: mockPlatform.id })
             await databaseConnection().getRepository('project_role').save(projectRole)
 
             const request: UpdateProjectRoleRequestBody = {
@@ -147,16 +155,20 @@ describe('Project Role API', () => {
         })
 
         it('should fail to update if user is not platform owner', async () => {
-            const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const nonOwnerUserId = createMockUser()
-            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: nonOwnerUserId.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
             })
 
-            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            const projectRole = createMockProjectRole({ platformId: mockPlatform.id })
             await databaseConnection().getRepository('project_role').save(projectRole)
 
             const request: UpdateProjectRoleRequestBody = {
@@ -179,14 +191,14 @@ describe('Project Role API', () => {
 
     describe('Delete Project Role', () => {
         it('should delete a project role', async () => {
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
             })
 
-            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            const projectRole = createMockProjectRole({ platformId: mockPlatform.id })
             await databaseConnection().getRepository('project_role').save(projectRole)
 
             const response = await app?.inject({
@@ -201,16 +213,20 @@ describe('Project Role API', () => {
         })
 
         it('should fail to delete a project role if user is not platform owner', async () => {
-            const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const nonOwnerUserId = createMockUser()
-            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: nonOwnerUserId.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
             })
 
-            const projectRole = createMockProjectRole({ platformId: mockPlatformOne.id })
+            const projectRole = createMockProjectRole({ platformId: mockPlatform.id })
             await databaseConnection().getRepository('project_role').save(projectRole)
 
             const response = await app?.inject({
@@ -225,11 +241,11 @@ describe('Project Role API', () => {
         })
 
         it('should fail to delete a project role if project role does not exist', async () => {
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: mockUserOne.id,
-                platform: { id: mockPlatformOne.id },
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
             })
 
             const response = await app?.inject({

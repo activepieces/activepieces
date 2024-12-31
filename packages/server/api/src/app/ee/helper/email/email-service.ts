@@ -1,5 +1,5 @@
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
@@ -111,19 +111,19 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async sendOtp({ platformId, user, otp, type }: SendOtpArgs): Promise<void> {
+    async sendOtp({ platformId, userIdentity, otp, type }: SendOtpArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
         }
 
-        if (user.verified && type === OtpType.EMAIL_VERIFICATION) {
+        if (userIdentity.verified && type === OtpType.EMAIL_VERIFICATION) {
             return
         }
 
         log.info('Sending OTP email', {
-            email: user.email,
+            email: userIdentity.email,
             otp,
-            userId: user.id,
+            identityId: userIdentity.id,
             type,
         })
 
@@ -134,7 +134,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         const setupLink = await platformDomainHelper.constructUrlFrom({
             platformId,
-            path: frontendPath[type] + `?otpcode=${otp}&userId=${user.id}`,
+            path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
 
         const otpToTemplate: Record<string, EmailTemplateData> = {
@@ -153,7 +153,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         }
 
         await emailSender(log).send({
-            emails: [user.email],
+            emails: [userIdentity.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
         })
@@ -262,7 +262,7 @@ type SendOtpArgs = {
     type: OtpType
     platformId: string | null
     otp: string
-    user: User
+    userIdentity: UserIdentity
 }
 
 type IssueCreatedArgs = {

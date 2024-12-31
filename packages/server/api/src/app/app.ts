@@ -11,7 +11,6 @@ import { aiProviderModule } from './ai/ai-provider.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
-import { authenticationServiceHooks } from './authentication/authentication-service/hooks'
 import { authenticationModule } from './authentication/authentication.module'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
 import { copilotModule } from './copilot/copilot.module'
@@ -25,8 +24,6 @@ import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-serv
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { auditLogService } from './ee/audit-logs/audit-event-service'
-import { cloudAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/cloud-authentication-service-hooks'
-import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/enterprise-authentication-service-hooks'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
@@ -220,7 +217,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
     await app.register(issuesModule)
-    await app.register(authnSsoSamlModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
     await app.register(workerModule)
@@ -267,6 +263,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(adminPieceModule)
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
+            await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
@@ -290,7 +287,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flowRunHooks.set(platformRunHooks)
             flagHooks.set(enterpriseFlagsHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
-            authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             domainHelper.set(platformDomainHelper)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
@@ -300,6 +296,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
             await app.register(signingKeyModule)
+            await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(platformPieceModule)
@@ -320,7 +317,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             projectHooks.set(projectEnterpriseHooks)
             eventsHooks.set(auditLogService)
             flowRunHooks.set(platformRunHooks)
-            authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
             domainHelper.set(platformDomainHelper)

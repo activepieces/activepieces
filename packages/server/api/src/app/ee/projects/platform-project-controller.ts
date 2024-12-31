@@ -48,13 +48,14 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.get('/', ListProjectRequestForApiKey, async (request) => {
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
-        return platformProjectService(request.log).getAll({
-            externalId: request.query.externalId,
-            principalType: request.principal.type,
-            principalId: request.principal.id,
+        
+        const userId = await getUserId(request.principal)
+        return platformProjectService(request.log).getAllForPlatform({
             platformId: request.principal.platform.id,
+            externalId: request.query.externalId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
+            userId,
         })
     })
 
@@ -91,6 +92,17 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     })
 }
 
+async function getUserId(principal: Principal): Promise<string> {
+    if (principal.type === PrincipalType.SERVICE) {
+        const platform = await platformService.getOneOrThrow(principal.platform.id)
+        const user = await userService.getOneOrFail({
+            id: platform.ownerId,
+        })
+        return user.id
+    }
+    return principal.id
+}
+
 async function isPlatformAdmin(principal: Principal, platformId: string): Promise<boolean> {
     if (principal.platform.id !== platformId) {
         return false
@@ -98,10 +110,9 @@ async function isPlatformAdmin(principal: Principal, platformId: string): Promis
     if (principal.type === PrincipalType.SERVICE) {
         return true
     }
-    const user = await userService.getMetaInfo({
+    const user = await userService.getOneOrFail({
         id: principal.id,
     })
-    assertNotNullOrUndefined(user, 'user can not be null')
     return user.platformRole === PlatformRole.ADMIN
 }
 

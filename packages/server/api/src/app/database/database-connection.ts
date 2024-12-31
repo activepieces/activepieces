@@ -9,6 +9,7 @@ import {
 import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
+import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
@@ -78,6 +79,7 @@ function getEntities(): EntitySchema<unknown>[] {
         WorkerMachineEntity,
         AiProviderEntity,
         ProjectRoleEntity,
+        UserIdentityEntity,
     ]
 
     switch (edition) {
@@ -163,4 +165,4 @@ export function APArrayContains<T>(
 }
 
 // Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
-// export const exportedConnection = databaseConnection()
+export const exportedConnection = databaseConnection()

@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common'
-import { UserMeta } from '../user'
+import { UserWithMetaInformation } from '../user'
 import { ProjectReleaseType } from './project-release.request'
 
 export const ProjectRelease = Type.Object({
@@ -11,7 +11,7 @@ export const ProjectRelease = Type.Object({
     importedBy: Nullable(Type.String()),
     fileId: Type.String(),
     type: Type.Enum(ProjectReleaseType),
-    importedByUser: Type.Optional(UserMeta),
+    importedByUser: Type.Optional(UserWithMetaInformation),
 })
 
 export type ProjectRelease = Static<typeof ProjectRelease>

@@ -1,25 +1,26 @@
 import {
     ActivepiecesError,
     ErrorCode,
+    isNil,
     ListProjectRequestForUserQueryParams,
     PrincipalType,
     ProjectWithLimits,
     SeekPage,
 } from '@activepieces/shared'
 import {
-    FastifyPluginCallbackTypebox,
+    FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { platformService } from '../../platform/platform.service'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { platformProjectService } from './platform-project-service'
 
-export const usersProjectController: FastifyPluginCallbackTypebox = (
+export const usersProjectController: FastifyPluginAsyncTypebox = async (
     fastify,
-    _opts,
-    done,
 ) => {
 
     fastify.get('/:id', async (request) => {
@@ -27,13 +28,11 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
     })
 
     fastify.get('/', ListProjectRequestForUser, async (request) => {
-        return platformProjectService(request.log).getAll({
-            principalType: request.principal.type,
-            principalId: request.principal.id,
+        return platformProjectService(request.log).getAllForPlatform({
             platformId: request.principal.platform.id,
+            userId: request.principal.id,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? 10,
-            displayName: request.query.displayName,
         })
     })
 
@@ -41,18 +40,10 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
         '/:projectId/token',
         SwitchTokenRequestForUser,
         async (request) => {
-            const allProjects = await platformProjectService(request.log).getAll({
-                principalType: request.principal.type,
-                principalId: request.principal.id,
-                platformId: request.principal.platform.id,
-                cursorRequest: null,
-                limit: 1000000,
-            })
-            const project = allProjects.data.find(
-                (project) => project.id === request.params.projectId,
-            )
-
-            if (!project) {
+            const user = await userService.getOneOrFail({ id: request.principal.id })
+            const projects = await projectService.getAllForUser(user)
+            const project = projects.find(p => p.id === request.params.projectId)
+            if (isNil(project)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
@@ -78,8 +69,7 @@ export const usersProjectController: FastifyPluginCallbackTypebox = (
             }
         },
     )
-
-    done()
+    
 }
 
 const SwitchTokenRequestForUser = {

@@ -5,7 +5,7 @@ import {
     PrincipalType,
     SeekPage,
     UpdateUserRequestBody,
-    UserResponse,
+    UserWithMetaInformation,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -55,8 +55,11 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
 const ListUsersRequest = {
     schema: {
         response: {
-            [StatusCodes.OK]: SeekPage(UserResponse),
+            [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
         },
+    },
+    response: {
+        [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
     },
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
@@ -71,7 +74,7 @@ const UpdateUserRequest = {
         }),
         body: UpdateUserRequestBody,
         response: {
-            [StatusCodes.OK]: UserResponse,
+            [StatusCodes.OK]: UserWithMetaInformation,
         },
     },
     config: {

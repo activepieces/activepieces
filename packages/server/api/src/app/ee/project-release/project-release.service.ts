@@ -65,7 +65,7 @@ export const projectReleaseService = {
             .orderBy('created', 'DESC'))
         const enrichedData = await Promise.all(data.map(async (projectRelease) => ({
             ...projectRelease,
-            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService.getMetaInfo({
+            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService.getMetaInformation({
                 id: projectRelease.importedBy,
             }) ?? undefined,
         })))

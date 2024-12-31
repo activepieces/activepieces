@@ -17,7 +17,7 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const otp = searchParams.get('otpcode');
-  const userId = searchParams.get('userId');
+  const identityId = searchParams.get('identityId');
   useLayoutEffect(() => {
     mutate();
   }, []);
@@ -25,7 +25,7 @@ const VerifyEmail = () => {
     mutationFn: async () => {
       return await authenticationApi.verifyEmail({
         otp: otp!,
-        userId: userId!,
+        identityId: identityId!,
       });
     },
     onSuccess: () => {
@@ -46,7 +46,7 @@ const VerifyEmail = () => {
     },
   });
 
-  if (!otp || !userId) {
+  if (!otp || !identityId) {
     return <Navigate to="/sign-in" replace />;
   }
   return (

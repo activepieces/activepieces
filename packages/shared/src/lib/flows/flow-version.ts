@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
-import { UserMeta } from '../user'
+import { UserWithMetaInformation } from '../user'
 import { Trigger } from './triggers/trigger'
 
 export type FlowVersionId = ApId
@@ -34,7 +34,7 @@ export const FlowVersionMetadata = Type.Object({
     state: Type.Enum(FlowVersionState),
     updatedBy: Nullable(Type.String()),
     schemaVersion: Nullable(Type.String()),
-    updatedByUser: Nullable(UserMeta),
+    updatedByUser: Nullable(UserWithMetaInformation),
 })
 
 export type FlowVersionMetadata = Static<typeof FlowVersionMetadata>

@@ -3,7 +3,7 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { platformProjectService } from '../../../../src/app/ee/projects/platform-project-service'
 import { setupServer } from '../../../../src/app/server'
-import { createMockFile, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockPieceMetadata, mockBasicSetup } from '../../../helpers/mocks'
+import { createMockFile, createMockFlow, createMockFlowRun, createMockFlowVersion, createMockPieceMetadata, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -23,7 +23,7 @@ describe('Platform Project Service', () => {
     describe('Hard delete Project', () => {
         it('Hard deletes associated flows', async () => {
             // arrange
-            const { mockProject } = await mockBasicSetup()
+            const { mockProject } = await mockAndSaveBasicSetup()
 
             const mockFlow = createMockFlow({ projectId: mockProject.id })
             await databaseConnection().getRepository('flow').save([mockFlow])
@@ -59,7 +59,7 @@ describe('Platform Project Service', () => {
 
         it('Hard deletes associated piece metadata', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockBasicSetup()
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
             const mockPieceArchive = createMockFile({ platformId: mockPlatform.id, projectId: mockProject.id })
             await databaseConnection().getRepository('file').save([mockPieceArchive])

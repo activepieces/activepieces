@@ -8,8 +8,8 @@ import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockApiKey,
-    createMockUser,
-    mockBasicSetup,
+    mockAndSaveBasicSetup,
+    mockBasicUser,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -27,7 +27,7 @@ afterAll(async () => {
 describe('API Key API', () => {
     describe('Create API Key API', () => {
         it('should create a new API Key', async () => {
-            const { mockOwner, mockPlatform } = await mockBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -64,12 +64,13 @@ describe('API Key API', () => {
 
     describe('Delete API Key endpoint', () => {
         it('Fail if non owner', async () => {
-            const { mockPlatform } = await mockBasicSetup()
-            const mockUser = createMockUser({
-                platformId: mockPlatform.id,
-                platformRole: PlatformRole.MEMBER,
+            const { mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('user').save([mockUser])
             const mockApiKey = createMockApiKey({
                 platformId: mockPlatform.id,
             })
@@ -97,8 +98,8 @@ describe('API Key API', () => {
     describe('List API Keys endpoint', () => {
         it('Filters Signing Keys by platform', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const { mockPlatform: mockPlatformTwo } = await mockBasicSetup()
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
+            const { mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
 
 
             const mockKeyOne = createMockApiKey({

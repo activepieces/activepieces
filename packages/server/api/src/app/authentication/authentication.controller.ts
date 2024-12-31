@@ -2,36 +2,33 @@ import { ApplicationEventName } from '@activepieces/ee-shared'
 import { networkUtls } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
-    ApEdition,
+    assertNotNullOrUndefined,
     SignInRequest,
     SignUpRequest,
+    UserIdentityProvider,
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../helper/application-events'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-prop'
-import { resolvePlatformIdForAuthnRequest } from '../platform/platform-utils'
-import { authenticationService } from './authentication-service'
-import { Provider } from './authentication-service/hooks/authentication-service-hooks'
-
-const edition = system.getEdition()
+import { platformUtils } from '../platform/platform.utils'
+import { authenticationService } from './authentication.service'
 
 export const authenticationController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
     app.post('/sign-up', SignUpRequestOptions, async (request) => {
-        const platformId = await resolvePlatformIdForAuthnRequest(request.body.email, request)
 
+        const platformId = await platformUtils.getPlatformIdForRequest(request)
         const signUpResponse = await authenticationService(request.log).signUp({
             ...request.body,
-            verified: edition === ApEdition.COMMUNITY,
-            platformId,
-            provider: Provider.EMAIL,
+            provider: UserIdentityProvider.EMAIL,
+            platformId: platformId ?? null,
         })
 
         eventsHooks.get(request.log).sendUserEvent({
-            platformId: platformId!,
+            platformId: signUpResponse.platformId!,
             userId: signUpResponse.id,
             projectId: signUpResponse.projectId,
             ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
@@ -46,18 +43,18 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/sign-in', SignInRequestOptions, async (request) => {
-        const platformId = await resolvePlatformIdForAuthnRequest(request.body.email, request)
 
-
-        const response = await authenticationService(request.log).signIn({
+        const platformId = await platformUtils.getPlatformIdForRequest(request)
+        const response = await authenticationService(request.log).signInWithPassword({
             email: request.body.email,
             password: request.body.password,
-            platformId,
-            provider: Provider.EMAIL,
+            platformId: platformId ?? null,
         })
 
+        const responsePlatformId = response.platformId
+        assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')
         eventsHooks.get(request.log).sendUserEvent({
-            platformId: platformId!,
+            platformId: responsePlatformId,
             userId: response.id,
             projectId: response.projectId,
             ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),

@@ -9,7 +9,6 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 
-
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
 const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: string) => {
@@ -96,7 +95,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             id: platformId,
             ...turnedOffFeatures,
         })
-        await deactivatePlatformUsersOtherThanAdmin(platformId, log)
+        await deactivatePlatformUsersOtherThanAdmin(platformId)
         await deletePrivatePieces(platformId, log)
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
@@ -123,12 +122,11 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
     },
 })
 
-const deactivatePlatformUsersOtherThanAdmin: (platformId: string, log: FastifyBaseLogger) => Promise<void> = async (platformId: string, log: FastifyBaseLogger) => {
+const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<void> = async (platformId: string) => {
     const { data } = await userService.list({
         platformId,
     })
     const users = data.filter(f => f.platformRole !== PlatformRole.ADMIN).map(u => {
-        log.debug(`Deactivating user ${u.email}`)
         return userService.update({
             id: u.id,
             status: UserStatus.INACTIVE,
