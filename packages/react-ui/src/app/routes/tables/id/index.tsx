@@ -75,6 +75,13 @@ function TablePage() {
         duration: 3000,
       });
     },
+    onError: () => {
+      toast({
+        title: t('Error'),
+        description: t('Failed to update record.'),
+        duration: 3000,
+      });
+    },
   });
 
   const deleteFieldMutation = useMutation({
