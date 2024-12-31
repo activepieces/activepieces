@@ -126,11 +126,12 @@ const CreateReleaseDialog = ({
 
   return (
     <Dialog
+      modal={true}
       open={open}
       onOpenChange={(newOpenState: boolean) => {
         if (newOpenState) {
           form.reset({
-            name: '',
+            name: defaultName,
             description: '',
           });
         }
