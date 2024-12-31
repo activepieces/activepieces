@@ -63,6 +63,12 @@ function TablesPage() {
     onSuccess: () => {
       refetch();
     },
+    onError: () => {
+      toast({
+        title: t('Error deleting table.'),
+        variant: 'destructive',
+      });
+    },
   });
 
   const handleCreateTable = () => {
@@ -189,7 +195,7 @@ function TablesPage() {
                 message={t(
                   'Are you sure you want to delete the selected tables? This action cannot be undone.',
                 )}
-                entityName="tables"
+                entityName="table"
                 mutationFn={async () => {
                   try {
                     await bulkDeleteMutation.mutateAsync(

@@ -111,6 +111,7 @@ function TablePage() {
     ...(fieldsData?.map((field) => ({
       key: field.name,
       minWidth: 207,
+      maxWidth: 207,
       minHeight: 37,
       name: (
         <ColumnHeader
@@ -119,9 +120,7 @@ function TablePage() {
           actions={[
             {
               type: ColumnActionType.DELETE,
-              onClick: async () => {
-                await deleteFieldMutation.mutateAsync(field.id);
-              },
+              onClick: () => deleteFieldMutation.mutateAsync(field.id),
             },
           ]}
         />
