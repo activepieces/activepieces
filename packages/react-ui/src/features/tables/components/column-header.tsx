@@ -1,6 +1,8 @@
-import { ChevronDown } from 'lucide-react';
+import { t } from 'i18next';
+import { ChevronDown, Trash, Type, Calendar, Hash } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,22 +10,66 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { FieldType } from '@activepieces/shared';
+
+export enum ColumnActionType {
+  DELETE,
+}
 
 export type ColumnAction = {
-  label: string;
-  onClick?: () => void;
-  content?: ReactNode;
-  icon?: ReactNode;
+  type: ColumnActionType;
+  onClick: () => Promise<void>;
 };
 
 type ColumnHeaderProps = {
   label: string;
-  icon?: ReactNode;
+  type: FieldType;
   actions?: ColumnAction[];
 };
 
-export function ColumnHeader({ label, icon, actions }: ColumnHeaderProps) {
+const getColumnIcon = (type: FieldType): ReactNode => {
+  switch (type) {
+    case FieldType.TEXT:
+      return <Type className="h-4 w-4 text-muted-foreground" />;
+    case FieldType.DATE:
+      return <Calendar className="h-4 w-4 text-muted-foreground" />;
+    case FieldType.NUMBER:
+      return <Hash className="h-4 w-4 text-muted-foreground" />;
+    default:
+      return null;
+  }
+};
+
+export function ColumnHeader({ label, type, actions }: ColumnHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const renderAction = (action: ColumnAction) => {
+    switch (action.type) {
+      case ColumnActionType.DELETE:
+        return (
+          <ConfirmationDeleteDialog
+            title={t('Delete Field')}
+            message={t(
+              'Are you sure you want to delete this field? This action cannot be undone.',
+            )}
+            mutationFn={() => action.onClick()}
+            entityName={t('field')}
+          >
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+              }}
+              className="flex items-center gap-2 text-destructive cursor-pointer"
+            >
+              <Trash className="h-4 w-4 text-destructive" />
+              <span className="text-destructive">{t('Delete')}</span>
+            </DropdownMenuItem>
+          </ConfirmationDeleteDialog>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -36,7 +82,7 @@ export function ColumnHeader({ label, icon, actions }: ColumnHeaderProps) {
           )}
         >
           <div className="flex items-center gap-2">
-            {icon}
+            {getColumnIcon(type)}
             {label}
           </div>
           {actions && actions.length > 0 && (
@@ -47,23 +93,7 @@ export function ColumnHeader({ label, icon, actions }: ColumnHeaderProps) {
       {actions && actions.length > 0 && (
         <DropdownMenuContent align="start" className="w-56 rounded-sm">
           {actions.map((action, index) => (
-            <div key={index}>
-              {action.content ? (
-                action.content
-              ) : (
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.stopPropagation();
-                    action.onClick?.();
-                    setIsOpen(false);
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  {action.icon}
-                  {action.label}
-                </DropdownMenuItem>
-              )}
-            </div>
+            <div key={index}>{renderAction(action)}</div>
           ))}
         </DropdownMenuContent>
       )}

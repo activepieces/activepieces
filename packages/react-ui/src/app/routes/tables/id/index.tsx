@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Calendar, Hash, Plus, Trash, Type } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import DataGrid, {
   SelectColumn,
@@ -11,11 +11,12 @@ import DataGrid, {
 import 'react-data-grid/lib/styles.css';
 import { useParams } from 'react-router-dom';
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TableTitle } from '@/components/ui/table-title';
 import { toast } from '@/components/ui/use-toast';
-import { ColumnHeader } from '@/features/tables/components/column-header';
+import {
+  ColumnHeader,
+  ColumnActionType,
+} from '@/features/tables/components/column-header';
 import { EditableCell } from '@/features/tables/components/editable-cell';
 import { NewFieldDialog } from '@/features/tables/components/new-field-dialog';
 import { NewRecordDialog } from '@/features/tables/components/new-record-dialog';
@@ -25,7 +26,6 @@ import { tablesApi } from '@/features/tables/lib/tables-api';
 import { Row } from '@/features/tables/lib/types';
 import {
   Field,
-  FieldType,
   PopulatedRecord,
   UpdateRecordRequest,
 } from '@activepieces/shared';
@@ -83,11 +83,6 @@ function TablePage() {
     },
     onSuccess: () => {
       refetchFields();
-      toast({
-        title: t('Success'),
-        description: t('Field has been deleted.'),
-        duration: 3000,
-      });
     },
     onError: () => {
       toast({
@@ -97,19 +92,6 @@ function TablePage() {
       });
     },
   });
-
-  const getFieldIcon = (type: FieldType) => {
-    switch (type) {
-      case FieldType.TEXT:
-        return <Type className="h-4 w-4 text-muted-foreground" />;
-      case FieldType.DATE:
-        return <Calendar className="h-4 w-4 text-muted-foreground" />;
-      case FieldType.NUMBER:
-        return <Hash className="h-4 w-4 text-muted-foreground" />;
-      default:
-        return null;
-    }
-  };
 
   const columns: readonly Column<Row, { id: string }>[] = [
     {
@@ -133,32 +115,13 @@ function TablePage() {
       name: (
         <ColumnHeader
           label={field.name}
-          icon={getFieldIcon(field.type)}
+          type={field.type}
           actions={[
             {
-              label: t('Delete Field'),
-              content: (
-                <ConfirmationDeleteDialog
-                  title={t('Delete Field')}
-                  message={t(
-                    'Are you sure you want to delete this field? This action cannot be undone.',
-                  )}
-                  mutationFn={async () => {
-                    await deleteFieldMutation.mutateAsync(field.id);
-                  }}
-                  entityName={t('field')}
-                >
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                    }}
-                    className="flex items-center gap-2 text-destructive cursor-pointer"
-                  >
-                    <Trash className="h-4 w-4 text-destructive" />
-                    <span className="text-destructive">{t('Delete')}</span>
-                  </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
-              ),
+              type: ColumnActionType.DELETE,
+              onClick: async () => {
+                await deleteFieldMutation.mutateAsync(field.id);
+              },
             },
           ]}
         />
