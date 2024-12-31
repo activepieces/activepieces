@@ -10,6 +10,7 @@ import {
   Import,
   Plus,
   Trash2,
+  UploadCloud,
   Workflow,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -56,6 +57,7 @@ import { GitBranchType } from '@activepieces/ee-shared';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
+import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { TableTitle } from '../../../components/ui/table-title';
 
 const filters = [
@@ -96,6 +98,7 @@ const FlowsPage = () => {
     platform.environmentsEnabled,
   );
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
+  const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
 
@@ -394,6 +397,25 @@ const FlowsPage = () => {
                 ) : null}
 
                 <DropdownMenuContent>
+                <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToPushToGit}
+                  >
+                    <PushToGitDialog
+                      flowIds={selectedRows.map((flow) => flow.id)}
+                    >
+                      <DropdownMenuItem
+                        disabled={!userHasPermissionToPushToGit}
+                        onSelect={(e) => {
+                          e.preventDefault();
+                        }}
+                      >
+                        <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                          <UploadCloud className="h-4 w-4" />
+                          <span>{t('Push to Git')}</span>
+                        </div>
+                      </DropdownMenuItem>
+                    </PushToGitDialog>
+                  </PermissionNeededTooltip>
                   {!embedState.hideFolders && (
                     <PermissionNeededTooltip
                       hasPermission={userHasPermissionToUpdateFlow}

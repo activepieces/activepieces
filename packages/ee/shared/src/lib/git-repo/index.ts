@@ -37,7 +37,7 @@ export const PushGitRepoRequest = Type.Object({
     commitMessage: Type.String({
         minLength: 1,
     }),
-    flowId: Type.String()
+    flowIds: Type.Array(Type.String())
 })
 
 export type PushGitRepoRequest = Static<typeof PushGitRepoRequest>
