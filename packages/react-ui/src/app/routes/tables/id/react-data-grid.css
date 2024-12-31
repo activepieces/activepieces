@@ -1,8 +1,11 @@
-.rdg-cell {
+* {
+    --rdg-row-selected-background-color: none !important;
+    --rdg-row-selected-hover-background-color: none !important;
     --rdg-selection-color: none !important;
+    --rdg-summary-row-top: 0px !important;
+}
+
+.rdg-cell {
     padding-inline: 0px !important;
 }
 
-.rdg-summary-row {
-    --rdg-summary-row-top: 0px !important;
-}

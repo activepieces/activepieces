@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import DataGrid, {
-  SelectColumn,
   Column,
   RowsChangeData,
   RenderCellProps,
@@ -20,6 +19,7 @@ import {
 import { EditableCell } from '@/features/tables/components/editable-cell';
 import { NewFieldDialog } from '@/features/tables/components/new-field-dialog';
 import { NewRecordDialog } from '@/features/tables/components/new-record-dialog';
+import { SelectColumn } from '@/features/tables/components/select-column';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
@@ -109,7 +109,7 @@ function TablePage() {
           tableId={tableId!}
           onRecordCreated={() => refetchRecords()}
         >
-          <div className="flex items-center justify-center cursor-pointer">
+          <div className="flex items-center justify-start cursor-pointer pl-4">
             <Plus className="h-4 w-4" />
           </div>
         </NewRecordDialog>
