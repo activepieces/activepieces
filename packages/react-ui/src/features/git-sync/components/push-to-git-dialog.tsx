@@ -36,11 +36,11 @@ import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
 
 type PushToGitDialogProps = {
-  flowId: string;
+  flowIds: string[];
   children?: React.ReactNode;
 };
 
-const PushToGitDialog = ({ children, flowId }: PushToGitDialogProps) => {
+const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
   const [open, setOpen] = React.useState(false);
 
   const { platform } = platformHooks.useCurrentPlatform();
@@ -52,7 +52,7 @@ const PushToGitDialog = ({ children, flowId }: PushToGitDialogProps) => {
     defaultValues: {
       type: GitPushOperationType.PUSH_FLOW,
       commitMessage: '',
-      flowId: '',
+      flowIds: [],
     },
     resolver: typeboxResolver(PushGitRepoRequest),
   });
@@ -60,7 +60,7 @@ const PushToGitDialog = ({ children, flowId }: PushToGitDialogProps) => {
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: PushGitRepoRequest) => {
       assertNotNullOrUndefined(gitSync, 'gitSync');
-      await gitSyncApi.push(gitSync.id, { ...request, flowId });
+      await gitSyncApi.push(gitSync.id, { ...request, flowIds });
     },
     onSuccess: () => {
       toast({
