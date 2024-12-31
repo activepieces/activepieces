@@ -100,6 +100,7 @@ const ConfigureRepoRequestSchema = {
         permission: Permission.WRITE_GIT_REPO,
     },
     schema: {
+        tags: ['git-repos'],
         description: 'Upsert a git repository information for a project.',
         body: ConfigureRepoRequest,
         response: {
