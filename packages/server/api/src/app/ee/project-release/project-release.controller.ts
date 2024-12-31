@@ -81,6 +81,7 @@ const CreateProjectReleaseRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
+        tags: ['project-releases'],
         body: CreateProjectReleaseRequestBody,
         response: {
             [StatusCodes.CREATED]: ProjectRelease,
