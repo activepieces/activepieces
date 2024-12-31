@@ -47,6 +47,7 @@ import {
   folderIdParamName,
 } from '@/features/folders/component/folder-filter-list';
 import { foldersApi } from '@/features/folders/lib/folders-api';
+import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -57,7 +58,6 @@ import { GitBranchType } from '@activepieces/ee-shared';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { TableTitle } from '../../../components/ui/table-title';
 
 const filters = [
@@ -397,7 +397,7 @@ const FlowsPage = () => {
                 ) : null}
 
                 <DropdownMenuContent>
-                <PermissionNeededTooltip
+                  <PermissionNeededTooltip
                     hasPermission={userHasPermissionToPushToGit}
                   >
                     <PushToGitDialog
