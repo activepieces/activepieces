@@ -4,7 +4,12 @@ import React, { useMemo } from 'react';
 
 import { BuilderState } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
-import { FlowVersion, flowStructureUtil } from '@activepieces/shared';
+import {
+  Action,
+  FlowVersion,
+  Step,
+  flowStructureUtil,
+} from '@activepieces/shared';
 
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 
@@ -12,7 +17,11 @@ type IncompleteSettingsButtonProps = {
   flowVersion: FlowVersion;
   selectStepByName: BuilderState['selectStepByName'];
 };
-
+const filterValidOrSkippedSteps = (step: Step) =>
+  (flowStructureUtil.isTrigger(step.type) && !step.valid) ||
+  (flowStructureUtil.isAction(step.type) &&
+    !(step as Action).skip &&
+    !step.valid);
 const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
   flowVersion,
   selectStepByName,
@@ -21,14 +30,14 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
     () =>
       flowStructureUtil
         .getAllSteps(flowVersion.trigger)
-        .filter((step) => !step.valid).length,
+        .filter(filterValidOrSkippedSteps).length,
     [flowVersion],
   );
   const { fitView } = useReactFlow();
   function onClick() {
     const invalidSteps = flowStructureUtil
       .getAllSteps(flowVersion.trigger)
-      .filter((step) => !step.valid);
+      .filter(filterValidOrSkippedSteps);
     if (invalidSteps.length > 0) {
       selectStepByName(invalidSteps[0].name);
       fitView(

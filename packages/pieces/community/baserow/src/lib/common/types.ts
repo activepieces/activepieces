@@ -24,6 +24,15 @@ interface LastModiedByField extends BaserowCommonField {
 interface CreatedByField extends BaserowCommonField {
   type: BaserowFieldType.CREATED_BY;
 }
+
+interface DurationField extends BaserowCommonField {
+  type: BaserowFieldType.DURATION;
+  duration_format:string
+}
+
+interface EmailField extends BaserowCommonField {
+  type: BaserowFieldType.EMAIL;
+}
 interface URLField extends BaserowCommonField {
   type: BaserowFieldType.URL;
 }
@@ -118,6 +127,8 @@ export type BaserowField =
   | LongTextField
   | LastModiedByField
   | CreatedByField
+  | DurationField
+  | EmailField
   | URLField
   | FileField
   | LinkToTableField
