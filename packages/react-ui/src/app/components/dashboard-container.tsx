@@ -7,6 +7,7 @@ import {
   Workflow,
   Wrench,
 } from 'lucide-react';
+import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -25,6 +26,11 @@ type DashboardContainerProps = {
   children: React.ReactNode;
 };
 
+export const CloseTaskLimitAlertContext = createContext({
+  isAlertClosed: false,
+  setIsAlertClosed: (isAlertClosed: boolean) => {},
+});
+
 export function DashboardContainer({ children }: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
@@ -35,6 +41,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
+  const [isAlertClosed, setIsAlertClosed] = useState(false);
 
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
@@ -89,13 +96,20 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     .filter(permissionFilter);
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      <Sidebar
-        isHomeDashboard={true}
-        links={links}
-        hideSideNav={embedState.hideSideNav}
+      <CloseTaskLimitAlertContext.Provider
+        value={{
+          isAlertClosed,
+          setIsAlertClosed,
+        }}
       >
-        {children}
-      </Sidebar>
+        <Sidebar
+          isHomeDashboard={true}
+          links={links}
+          hideSideNav={embedState.hideSideNav}
+        >
+          {children}
+        </Sidebar>
+      </CloseTaskLimitAlertContext.Provider>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }
