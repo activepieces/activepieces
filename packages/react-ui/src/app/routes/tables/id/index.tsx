@@ -119,6 +119,7 @@ function TablePage() {
       key: field.name,
       minWidth: 207,
       maxWidth: 207,
+      width: 207,
       minHeight: 37,
       name: '',
       renderHeaderCell: () => (
@@ -167,7 +168,9 @@ function TablePage() {
       key: 'new-field',
       minWidth: 67,
       maxWidth: 67,
-      name: (
+      width: 67,
+      name: '',
+      renderHeaderCell: () => (
         <NewFieldDialog
           tableId={tableId!}
           onFieldCreated={() => {
@@ -179,7 +182,7 @@ function TablePage() {
           </div>
         </NewFieldDialog>
       ),
-      width: 40,
+      renderCell: () => <div className="empty-cell"></div>,
     },
   ];
 
