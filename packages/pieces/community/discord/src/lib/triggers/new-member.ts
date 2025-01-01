@@ -58,7 +58,7 @@ export const newMember = createTrigger({
   props: {
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'The number of members to fetch ()',
+      description: 'The number of members to fetch (max 1000)',
       required: false,
       defaultValue: 50,
     }),
