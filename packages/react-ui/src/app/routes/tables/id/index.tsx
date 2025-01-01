@@ -120,7 +120,8 @@ function TablePage() {
       minWidth: 207,
       maxWidth: 207,
       minHeight: 37,
-      name: (
+      name: '',
+      renderHeaderCell: () => (
         <ColumnHeader
           label={field.name}
           type={field.type}
