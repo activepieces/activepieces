@@ -74,6 +74,18 @@ export const customDomainService = {
         })
 
     },
+    async getPlatformUrlFromEmail(userEmail: string): Promise<string | null> {
+        const rootDomain = userEmail.split('@')[1]
+        const allDomains: CustomDomain[] = await customDomainRepo().find({
+            where: {
+                status: CustomDomainStatus.ACTIVE,
+            },
+        })
+        return allDomains.find(cd => {
+            const domainOrSubdomain = cd.domain
+            return domainOrSubdomain.endsWith(`.${rootDomain}`)
+        })?.domain ?? null
+    },
     async list({
         request,
         platformId,

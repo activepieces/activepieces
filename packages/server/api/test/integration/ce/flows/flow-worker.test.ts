@@ -12,7 +12,7 @@ import {
     createMockFlow,
     createMockFlowVersion,
     createMockProject,
-    mockBasicSetup,
+    mockAndSaveBasicSetup,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -31,7 +31,7 @@ describe('Flow API for Worker', () => {
     describe('Get Flow from Worker', () => {
         it('List other flow for another project', async () => {
             // arrange
-            const { mockPlatform, mockOwner, mockProject } = await mockBasicSetup()
+            const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
 
             const mockProject2 = createMockProject({
                 platformId: mockPlatform.id,

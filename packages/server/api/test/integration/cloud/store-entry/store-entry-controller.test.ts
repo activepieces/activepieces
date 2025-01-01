@@ -1,10 +1,10 @@
-import { apId, PrincipalType, User } from '@activepieces/shared'
+import { apId, PlatformRole, PrincipalType, User } from '@activepieces/shared'
 import { FastifyInstance, LightMyRequestResponse } from 'fastify'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
-import { createMockPlatform, createMockProject, createMockUser } from '../../../helpers/mocks'
+import { mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -26,24 +26,15 @@ describe('Store-entries API', () => {
     let mockUser: User
 
     beforeEach(async () => {
-        mockUser = createMockUser()
-        await databaseConnection().getRepository('user').save(mockUser)
+        const { mockPlatform } = await mockAndSaveBasicSetup()
 
-        const mockPlatform = createMockPlatform({
-            ownerId: mockUser.id,
+        const { mockUser: user } = await mockBasicUser({
+            user: {
+                platformId: mockPlatform.id,
+                platformRole: PlatformRole.MEMBER,
+            },
         })
-        await databaseConnection().getRepository('platform').save(mockPlatform)
-
-        const mockProject = createMockProject({
-            id: projectId,
-            platformId: mockPlatform.id,
-            ownerId: mockUser.id,
-        })
-        await databaseConnection().getRepository('project').save(mockProject)
-
-        await databaseConnection().getRepository('user').update(mockUser.id, {
-            platformId: mockPlatform.id,
-        })
+        mockUser = user
 
         engineToken = await generateMockToken({
             type: PrincipalType.ENGINE,

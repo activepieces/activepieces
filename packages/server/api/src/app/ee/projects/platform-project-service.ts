@@ -7,14 +7,11 @@ import {
 import {
     ActivepiecesError,
     ApEdition,
-    assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
     FlowStatus,
     isNil,
     PlatformId,
-    PlatformRole,
-    PrincipalType,
     Project,
     ProjectId,
     ProjectWithLimits,
@@ -23,7 +20,7 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
+import { EntityManager, Equal, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -35,7 +32,7 @@ import { system } from '../../helper/system/system'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { projectUsageService } from '../../project/usage/project-usage-service'
-import {  userService } from '../../user/user-service'
+import { userService } from '../../user/user-service'
 import { projectBillingService } from '../billing/project-billing/project-billing.service'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { projectLimitsService } from '../project-plan/project-plan.service'
@@ -43,39 +40,18 @@ import { platformProjectSideEffects } from './platform-project-side-effects'
 
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
+
 export const platformProjectService = (log: FastifyBaseLogger) => ({
-    async getAll(params: GetAllParams): Promise<SeekPage<ProjectWithLimits>> {
-        const { cursorRequest, limit } = params
-        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
-        const paginator = buildPaginator({
-            entity: ProjectEntity,
-            query: {
-                limit,
-                order: 'ASC',
-                afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor,
-            },
+    async getAllForPlatform(params: GetAllForParamsAndUser): Promise<SeekPage<ProjectWithLimits>> {
+        const user = await userService.getOneOrFail({
+            id: params.userId,
         })
-        const filters = await createFilters(params)
-        const queryBuilder = projectRepo()
-            .createQueryBuilder('project')
-            .leftJoinAndMapOne(
-                'project.plan',
-                'project_plan',
-                'project_plan',
-                'project.id = "project_plan"."projectId"',
-            )
-            .where(filters)
-            .groupBy('project.id') 
-            .addGroupBy('"project_plan"."id"') 
-
-        const { data, cursor } = await paginator.paginate(queryBuilder)
-        const projects: ProjectWithLimits[] = await Promise.all(
-            data.map((project) => enrichProject(project, log)),
-        )
-        return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
+        const projects = await projectService.getAllForUser(user)
+        return getProjects({
+            ...params,
+            projectIds: projects.map((project) => project.id),
+        }, log)
     },
-
     async update({
         projectId,
         request,
@@ -139,12 +115,53 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function getProjects(params: GetAllParams & { projectIds?: string[] }, log: FastifyBaseLogger): Promise<SeekPage<ProjectWithLimits>> {
+    const { cursorRequest, limit, platformId, displayName, externalId, projectIds } = params
+    const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+    const paginator = buildPaginator({
+        entity: ProjectEntity,
+        query: {
+            limit,
+            order: 'ASC',
+            afterCursor: decodedCursor.nextCursor,
+            beforeCursor: decodedCursor.previousCursor,
+        },
+    })
+    const filters = {
+        platformId: Equal(platformId),
+        deleted: IsNull(),
+        ...spreadIfDefined('externalId', externalId),
+        ...spreadIfDefined('displayName', displayName),
+        ...(projectIds ? { id: In(projectIds) } : {}),
+    }
+   
+    const queryBuilder = projectRepo()
+        .createQueryBuilder('project')
+        .leftJoinAndMapOne(
+            'project.plan',
+            'project_plan',
+            'project_plan',
+            'project.id = "project_plan"."projectId"',
+        )
+        .where(filters)
+        .groupBy('project.id') 
+        .addGroupBy('"project_plan"."id"') 
+
+    const { data, cursor } = await paginator.paginate(queryBuilder)
+    const projects: ProjectWithLimits[] = await Promise.all(
+        data.map((project) => enrichProject(project, log)),
+    )
+    return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
+}
+
+type GetAllForParamsAndUser = {
+    userId: string
+} & GetAllParams
+
 type GetAllParams = {
-    principalType: PrincipalType
-    principalId: string
     platformId: string
-    externalId?: string
     displayName?: string
+    externalId?: string
     cursorRequest: Cursor | null
     limit: number
 }
@@ -166,61 +183,6 @@ function isCustomerPlatform(platformId: string | undefined): boolean {
         return true
     }
     return !flagService.isCloudPlatform(platformId)
-}
-async function createFilters({ platformId, principalType, principalId, externalId, displayName }: GetAllParams) {
-    const displayNameFilter = displayName ? {
-        displayName: ILike(`%${displayName}%`),
-    } : {}
-    const commonFilter = {
-        deleted: IsNull(),
-        ...spreadIfDefined('platformId', platformId),
-        ...spreadIfDefined('externalId', externalId),
-        ...displayNameFilter,
-    }
-    switch (principalType) {
-        case PrincipalType.SERVICE: {
-            return commonFilter
-        }
-        case PrincipalType.USER: {
-            const user = await userService.getMetaInfo({ id: principalId })
-            assertNotNullOrUndefined(user, 'User not found')
-            if (user.platformRole === PlatformRole.ADMIN) {
-                return commonFilter
-            }
-            else {
-                const ids = await getIdsOfProjects({
-                    platformId,
-                    userId: user.id,
-                })
-                return [
-                    {
-                        ...commonFilter,
-                        id: In(ids),
-                    },
-                    {
-                        ...commonFilter,
-                        ownerId: Equal(user.id),
-                    },
-                ]
-            }
-        }
-        default: {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'INVALID_PRINCIPAL_TYPE',
-                },
-            })
-        }
-    }
-}
-
-async function getIdsOfProjects({ platformId, userId }: { platformId: string, userId: string }): Promise<string[]> {
-    const members = await projectMemberRepo().findBy({
-        userId,
-        platformId: Equal(platformId),
-    })
-    return members.map((member) => member.projectId)
 }
 
 async function enrichProject(

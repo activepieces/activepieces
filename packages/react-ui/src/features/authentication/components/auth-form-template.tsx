@@ -56,7 +56,6 @@ const AuthSeparator = ({
     );
 
   return (thirdPartyAuthProviders?.google ||
-    thirdPartyAuthProviders?.github ||
     thirdPartyAuthProviders?.saml) &&
     isEmailAuthEnabled ? (
     <HorizontalSeparatorWithText className="my-4">

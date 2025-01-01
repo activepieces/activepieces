@@ -15,7 +15,7 @@ import {
 import { eventsHooks } from '../../../helper/application-events'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-prop'
-import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
+import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
 
 export const federatedAuthModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -26,7 +26,7 @@ export const federatedAuthModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/login', LoginRequestSchema, async (req) => {
-        const platformId = await resolvePlatformIdForRequest(req)
+        const platformId = await platformUtils.getPlatformIdForRequest(req)
         assertNotNullOrUndefined(platformId, 'Platform id is not defined')
         return federatedAuthnService(req.log).login({
             providerName: req.query.providerName,
@@ -36,7 +36,7 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/claim', ClaimTokenRequestSchema, async (req) => {
-        const platformId = await resolvePlatformIdForRequest(req)
+        const platformId = await platformUtils.getPlatformIdForRequest(req)
         assertNotNullOrUndefined(platformId, 'Platform id is not defined')
         const response = await federatedAuthnService(req.log).claim({
             platformId,
@@ -45,7 +45,7 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
             code: req.body.code,
         })
         eventsHooks.get(req.log).sendUserEvent({
-            platformId: platformId!,
+            platformId: response.platformId!,
             userId: response.id,
             projectId: response.projectId,
             ip: networkUtls.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),

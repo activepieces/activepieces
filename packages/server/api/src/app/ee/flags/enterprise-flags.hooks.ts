@@ -3,15 +3,15 @@ import { ApEdition, ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@active
 import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { system } from '../../helper/system/system'
-import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
+import { platformUtils } from '../../platform/platform.utils'
 import { appearanceHelper } from '../helper/appearance-helper'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags = { ...flags }
         const hostUrl = resolveHostUrl(request.hostname)
-        const platformId = await resolvePlatformIdForRequest(request)
+        const platformId = await platformUtils.getPlatformIdForRequest(request)
         if (isNil(platformId)) {
             return modifiedFlags
         }

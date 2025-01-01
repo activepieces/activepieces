@@ -32,12 +32,12 @@ const ChangePasswordForm = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const form = useForm<{
     otp: string;
-    userId: string;
+    identityId: string;
     newPassword: string;
   }>({
     defaultValues: {
       otp: queryParams.get('otpcode') || '',
-      userId: queryParams.get('userId') || '',
+      identityId: queryParams.get('identityId') || '',
       newPassword: '',
     },
   });

@@ -1,5 +1,5 @@
 import { AddDomainRequest, CustomDomainStatus } from '@activepieces/ee-shared'
-import { PrincipalType } from '@activepieces/shared'
+import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -9,8 +9,8 @@ import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockCustomDomain,
-    createMockUser,
-    mockBasicSetup } from '../../../helpers/mocks'
+    mockAndSaveBasicSetup, 
+    mockBasicUser } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 
@@ -28,7 +28,7 @@ describe('Custom Domain API', () => {
     describe('Add Custom Domain API', () => {
         it('should create a new custom domain', async () => {
             // arrange
-            const { mockOwner, mockPlatform } = await mockBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
@@ -57,14 +57,18 @@ describe('Custom Domain API', () => {
 
         it('should fail if user is not platform owner', async () => {
             // arrange
-            const { mockPlatform } = await mockBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
 
-            const nonOwnerUserId = createMockUser()
-            await databaseConnection().getRepository('user').save(nonOwnerUserId)
+            const { mockUser: nonOwnerUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: nonOwnerUserId.id,
+                id: nonOwnerUser.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -88,8 +92,8 @@ describe('Custom Domain API', () => {
     describe('List Custom Domain API', () => {
         it('should list custom domains', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
-            const {  mockPlatform: mockPlatformTwo } = await mockBasicSetup()
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
+            const {  mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
 
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,
@@ -147,7 +151,7 @@ describe('Custom Domain API', () => {
     describe('Delete Custom Domain API', () => {
         it('should delete a custom domain', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
@@ -176,14 +180,18 @@ describe('Custom Domain API', () => {
         })
 
         it('should fail to delete a custom domain if user is not platform owner', async () => {
-            const { mockPlatform: mockPlatformOne } = await mockBasicSetup()
+            const { mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
 
-            const nonOwnerUserId = createMockUser()
-            await databaseConnection().getRepository('user').save(nonOwnerUserId)
-            
+            const { mockUser: nonOwnerUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatformOne.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
+            })
+  
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                id: nonOwnerUserId.id,
+                id: nonOwnerUser.id,
                 platform: { id: mockPlatformOne.id },
             })
 
