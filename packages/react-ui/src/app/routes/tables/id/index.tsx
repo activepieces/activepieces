@@ -118,9 +118,9 @@ function TablePage() {
     ...(fieldsData?.map((field) => ({
       key: field.name,
       minWidth: 207,
-      maxWidth: 207,
       width: 207,
       minHeight: 37,
+      resizable: true,
       name: '',
       renderHeaderCell: () => (
         <ColumnHeader
