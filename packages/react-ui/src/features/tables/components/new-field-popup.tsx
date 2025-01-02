@@ -6,17 +6,14 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -29,7 +26,7 @@ import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { Field, FieldType } from '@activepieces/shared';
 
 const NewFieldSchema = Type.Object({
-  name: Type.String(),
+  name: Type.String({ minLength: 1 }),
   type: Type.Enum(FieldType),
 });
 
@@ -40,12 +37,15 @@ type NewFieldDialogProps = {
   tableId: string;
 };
 
-export function NewFieldDialog({ children, tableId }: NewFieldDialogProps) {
+export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const form = useForm<NewFieldSchema>({
     resolver: typeboxResolver(NewFieldSchema),
+    defaultValues: {
+      type: FieldType.TEXT,
+    },
   });
 
   const createFieldMutation = useMutation({
@@ -106,12 +106,10 @@ export function NewFieldDialog({ children, tableId }: NewFieldDialogProps) {
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('Create New Field')}</DialogTitle>
-        </DialogHeader>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent className="w-[400px] p-4" align="start">
+        <div className="text-lg font-semibold mb-4">{t('New Field')}</div>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit((data) =>
@@ -143,7 +141,7 @@ export function NewFieldDialog({ children, tableId }: NewFieldDialogProps) {
                     <SelectContent>
                       {Object.values(FieldType).map((type) => (
                         <SelectItem key={type} value={type}>
-                          {type}
+                          {type.charAt(0) + type.slice(1).toLowerCase()}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -152,7 +150,7 @@ export function NewFieldDialog({ children, tableId }: NewFieldDialogProps) {
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -168,10 +166,10 @@ export function NewFieldDialog({ children, tableId }: NewFieldDialogProps) {
               >
                 {t('Create')}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </PopoverContent>
+    </Popover>
   );
 }

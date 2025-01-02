@@ -13,7 +13,7 @@ import {
   ColumnActionType,
 } from '@/features/tables/components/column-header';
 import { EditableCell } from '@/features/tables/components/editable-cell';
-import { NewFieldDialog } from '@/features/tables/components/new-field-dialog';
+import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
 import { NewRecordDialog } from '@/features/tables/components/new-record-dialog';
 import { SelectColumn } from '@/features/tables/components/select-column';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
@@ -61,7 +61,6 @@ function TablePage() {
       return recordsApi.update(recordId, request);
     },
     onSuccess: () => {
-      // refetchRecords();
       toast({
         title: t('Success'),
         description: t('Record has been updated.'),
@@ -70,8 +69,8 @@ function TablePage() {
     },
     onError: () => {
       toast({
-        title: t('Success'),
-        description: t('Record has been updated.'),
+        title: t('Error'),
+        description: t('Failed to update record.'),
         duration: 3000,
       });
     },
@@ -181,11 +180,11 @@ function TablePage() {
       width: 67,
       name: '',
       renderHeaderCell: () => (
-        <NewFieldDialog tableId={tableId!}>
+        <NewFieldPopup tableId={tableId!}>
           <div className="w-full h-full flex items-center justify-center cursor-pointer new-field">
             <Plus className="h-4 w-4" />
           </div>
-        </NewFieldDialog>
+        </NewFieldPopup>
       ),
       renderCell: () => <div className="empty-cell"></div>,
     },

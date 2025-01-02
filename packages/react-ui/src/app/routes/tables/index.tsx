@@ -258,7 +258,7 @@ function TablesPage() {
       <Dialog open={showNewTableDialog} onOpenChange={setShowNewTableDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('Create New Table')}</DialogTitle>
+            <DialogTitle>{t('New Table')}</DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <Input

@@ -145,7 +145,7 @@ export function NewRecordDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Create New Record')}</DialogTitle>
+          <DialogTitle>{t('New Record')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
