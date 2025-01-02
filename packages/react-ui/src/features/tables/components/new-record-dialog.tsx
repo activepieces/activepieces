@@ -40,7 +40,17 @@ type NewRecordDialogProps = {
 const createNewRecordSchema = (fields: Field[]) => {
   const properties: Record<string, any> = {};
   fields.forEach((field) => {
-    properties[field.id] = Type.String();
+    switch (field.type) {
+      case FieldType.DATE:
+        properties[field.name] = Type.Optional(Type.Date());
+        break;
+      case FieldType.NUMBER:
+        properties[field.name] = Type.Optional(Type.Number());
+        break;
+      default:
+        properties[field.name] = Type.Optional(Type.String());
+        break;
+    }
   });
   return Type.Object(properties);
 };
@@ -58,13 +68,6 @@ export function NewRecordDialog({
 
   const form = useForm<NewRecordSchema>({
     resolver: typeboxResolver(NewRecordSchema),
-    defaultValues: fields.reduce(
-      (acc, field) => ({
-        ...acc,
-        [field.id]: '',
-      }),
-      {},
-    ),
   });
 
   const createRecordMutation = useMutation({
