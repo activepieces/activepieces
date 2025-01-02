@@ -1415,6 +1415,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "AshotZaqoyan",
+      "name": "Ashot",
+      "avatar_url": "https://avatars.githubusercontent.com/u/72438085?v=4",
+      "profile": "https://codesign.rf.gd",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
