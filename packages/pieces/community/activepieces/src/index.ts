@@ -37,7 +37,8 @@ export const activepieces = createPiece({
   description: 'Open source no-code business automation',
   auth: activePieceAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/activepieces.png',
+  logoUrl:
+    'https://drive.usercontent.google.com/download?id=1sI3dURQQLbL861AmExPW-sCuR-16I3WP',
   authors: ['doskyft', 'abuaboud', 'AdamSelene'],
   actions: [
     createProject,
