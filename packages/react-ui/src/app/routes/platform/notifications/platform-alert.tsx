@@ -4,11 +4,10 @@ import { useNavigate } from 'react-router-dom';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 interface PlatformAlertProps {
   title: string;
-  description: string;
+  description: React.ReactNode;
   actionText?: string;
   actionLink?: string;
   icon?: React.ReactNode;
@@ -26,16 +25,11 @@ export const PlatformAlert: React.FC<PlatformAlertProps> = ({
   const navigate = useNavigate();
 
   return (
-    <Alert
-      variant={type}
-      className={cn('flex items-start', {
-        'text-destructive-300': type === 'destructive',
-      })}
-    >
+    <Alert variant={type} className="flex items-start">
       {type === 'destructive' ? <AlertCircle className="h-4 w-4" /> : icon}
       <div className="flex-grow">
         <AlertTitle>{title}</AlertTitle>
-        <AlertDescription dangerouslySetInnerHTML={{ __html: description }} />
+        <AlertDescription>{description}</AlertDescription>
       </div>
       {actionText && actionLink && (
         <Button
