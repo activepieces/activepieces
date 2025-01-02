@@ -1756,6 +1756,146 @@
           "data"
         ]
       },
+      "project.release.created": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          },
+          "platformId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "projectDisplayName": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "userEmail": {
+            "type": "string"
+          },
+          "ip": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "project.release.created"
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "release": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "type": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "GIT"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PROJECT"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ROLLBACK"
+                        ]
+                      }
+                    ]
+                  },
+                  "projectId": {
+                    "type": "string"
+                  },
+                  "importedByUser": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      },
+                      "firstName": {
+                        "type": "string"
+                      },
+                      "platformId": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "platformRole": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "ADMIN"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "MEMBER"
+                            ]
+                          }
+                        ]
+                      },
+                      "lastName": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "email",
+                      "firstName",
+                      "platformRole",
+                      "lastName"
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "type",
+                  "projectId"
+                ]
+              }
+            },
+            "required": [
+              "release"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "platformId",
+          "action",
+          "data"
+        ]
+      },
       "flow-template": {
         "type": "object",
         "properties": {
@@ -2218,6 +2358,9 @@
           "externalId": {
             "type": "string"
           },
+          "releasesEnabled": {
+            "type": "boolean"
+          },
           "usage": {
             "type": "object",
             "properties": {
@@ -2229,12 +2372,16 @@
               },
               "aiTokens": {
                 "type": "number"
+              },
+              "nextLimitResetDate": {
+                "type": "string"
               }
             },
             "required": [
               "tasks",
               "teamMembers",
-              "aiTokens"
+              "aiTokens",
+              "nextLimitResetDate"
             ]
           },
           "plan": {
@@ -2340,6 +2487,7 @@
           "displayName",
           "notifyStatus",
           "platformId",
+          "releasesEnabled",
           "usage",
           "plan",
           "analytics"
@@ -2359,6 +2507,10 @@
           },
           "projectId": {
             "type": "string"
+          },
+          "externalId": {
+            "type": "string",
+            "nullable": true
           },
           "folderId": {
             "type": "string",
@@ -6221,28 +6373,6 @@
           },
           "slug": {
             "type": "string"
-          },
-          "mapping": {
-            "type": "object",
-            "properties": {
-              "flows": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object",
-                  "properties": {
-                    "sourceId": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "sourceId"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "flows"
-            ]
           }
         },
         "required": [
@@ -6254,6 +6384,112 @@
           "branchType",
           "projectId",
           "slug"
+        ]
+      },
+      "project-release": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "importedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileId": {
+            "type": "string"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "GIT"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "PROJECT"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "ROLLBACK"
+                ]
+              }
+            ]
+          },
+          "importedByUser": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "platformId": {
+                "type": "string",
+                "nullable": true
+              },
+              "platformRole": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ADMIN"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "MEMBER"
+                    ]
+                  }
+                ]
+              },
+              "lastName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "email",
+              "firstName",
+              "platformRole",
+              "lastName"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "projectId",
+          "name",
+          "fileId",
+          "type"
         ]
       }
     }
@@ -6494,6 +6730,10 @@
                     },
                     "projectId": {
                       "type": "string"
+                    },
+                    "externalId": {
+                      "type": "string",
+                      "nullable": true
                     },
                     "folderId": {
                       "type": "string",
@@ -6854,6 +7094,10 @@
                           },
                           "projectId": {
                             "type": "string"
+                          },
+                          "externalId": {
+                            "type": "string",
+                            "nullable": true
                           },
                           "folderId": {
                             "type": "string",
@@ -7514,12 +7758,15 @@
                       "request": {
                         "type": "object",
                         "properties": {
-                          "name": {
-                            "type": "string"
+                          "names": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
                           }
                         },
                         "required": [
-                          "name"
+                          "names"
                         ]
                       }
                     },
@@ -7554,6 +7801,9 @@
                               },
                               "skip": {
                                 "type": "boolean"
+                              },
+                              "customLogoUrl": {
+                                "type": "string"
                               },
                               "type": {
                                 "type": "string",
@@ -7657,6 +7907,9 @@
                               "skip": {
                                 "type": "boolean"
                               },
+                              "customLogoUrl": {
+                                "type": "string"
+                              },
                               "type": {
                                 "type": "string",
                                 "enum": [
@@ -7715,6 +7968,9 @@
                               },
                               "skip": {
                                 "type": "boolean"
+                              },
+                              "customLogoUrl": {
+                                "type": "string"
                               },
                               "type": {
                                 "type": "string",
@@ -7848,6 +8104,9 @@
                               },
                               "skip": {
                                 "type": "boolean"
+                              },
+                              "customLogoUrl": {
+                                "type": "string"
                               },
                               "type": {
                                 "type": "string",
@@ -8234,6 +8493,9 @@
                                   "skip": {
                                     "type": "boolean"
                                   },
+                                  "customLogoUrl": {
+                                    "type": "string"
+                                  },
                                   "type": {
                                     "type": "string",
                                     "enum": [
@@ -8336,6 +8598,9 @@
                                   "skip": {
                                     "type": "boolean"
                                   },
+                                  "customLogoUrl": {
+                                    "type": "string"
+                                  },
                                   "type": {
                                     "type": "string",
                                     "enum": [
@@ -8394,6 +8659,9 @@
                                   },
                                   "skip": {
                                     "type": "boolean"
+                                  },
+                                  "customLogoUrl": {
+                                    "type": "string"
                                   },
                                   "type": {
                                     "type": "string",
@@ -8527,6 +8795,9 @@
                                   },
                                   "skip": {
                                     "type": "boolean"
+                                  },
+                                  "customLogoUrl": {
+                                    "type": "string"
                                   },
                                   "type": {
                                     "type": "string",
@@ -9393,15 +9664,18 @@
                       "request": {
                         "type": "object",
                         "properties": {
-                          "name": {
-                            "type": "string"
+                          "names": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
                           },
                           "skip": {
                             "type": "boolean"
                           }
                         },
                         "required": [
-                          "name",
+                          "names",
                           "skip"
                         ]
                       }
@@ -9486,6 +9760,10 @@
                     },
                     "projectId": {
                       "type": "string"
+                    },
+                    "externalId": {
+                      "type": "string",
+                      "nullable": true
                     },
                     "folderId": {
                       "type": "string",
@@ -11412,6 +11690,27 @@
                       "type": "string",
                       "nullable": true
                     },
+                    "copilotSettings": {
+                      "type": "object",
+                      "properties": {
+                        "providers": {
+                          "type": "object",
+                          "properties": {
+                            "openai": {
+                              "type": "object",
+                              "properties": {}
+                            },
+                            "azureOpenai": {
+                              "type": "object",
+                              "properties": {}
+                            }
+                          }
+                        }
+                      },
+                      "required": [
+                        "providers"
+                      ]
+                    },
                     "smtp": {
                       "type": "object",
                       "properties": {}
@@ -11469,13 +11768,13 @@
                     "cloudAuthEnabled": {
                       "type": "boolean"
                     },
-                    "gitSyncEnabled": {
-                      "type": "boolean"
-                    },
                     "analyticsEnabled": {
                       "type": "boolean"
                     },
                     "showPoweredBy": {
+                      "type": "boolean"
+                    },
+                    "environmentsEnabled": {
                       "type": "boolean"
                     },
                     "auditLogEnabled": {
@@ -11532,9 +11831,6 @@
                     "emailAuthEnabled": {
                       "type": "boolean"
                     },
-                    "licenseKey": {
-                      "type": "string"
-                    },
                     "pinnedPieces": {
                       "type": "array",
                       "items": {
@@ -11556,9 +11852,9 @@
                     "filteredPieceNames",
                     "filteredPieceBehavior",
                     "cloudAuthEnabled",
-                    "gitSyncEnabled",
                     "analyticsEnabled",
                     "showPoweredBy",
+                    "environmentsEnabled",
                     "auditLogEnabled",
                     "embeddingEnabled",
                     "managePiecesEnabled",
@@ -11878,7 +12174,150 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response"
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PENDING"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ACCEPTED"
+                                ]
+                              }
+                            ]
+                          },
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PLATFORM"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PROJECT"
+                                ]
+                              }
+                            ]
+                          },
+                          "platformId": {
+                            "type": "string"
+                          },
+                          "platformRole": {
+                            "type": "string",
+                            "enum": [
+                              "ADMIN",
+                              "MEMBER"
+                            ],
+                            "nullable": true
+                          },
+                          "projectId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "projectRoleId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "projectRole": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "permissions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "platformId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "userCount": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "name",
+                              "permissions",
+                              "type"
+                            ],
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "email",
+                          "status",
+                          "type",
+                          "platformId"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -12004,6 +12443,9 @@
                     "externalId": {
                       "type": "string"
                     },
+                    "releasesEnabled": {
+                      "type": "boolean"
+                    },
                     "usage": {
                       "type": "object",
                       "properties": {
@@ -12015,12 +12457,16 @@
                         },
                         "aiTokens": {
                           "type": "number"
+                        },
+                        "nextLimitResetDate": {
+                          "type": "string"
                         }
                       },
                       "required": [
                         "tasks",
                         "teamMembers",
-                        "aiTokens"
+                        "aiTokens",
+                        "nextLimitResetDate"
                       ]
                     },
                     "plan": {
@@ -12126,6 +12572,7 @@
                     "displayName",
                     "notifyStatus",
                     "platformId",
+                    "releasesEnabled",
                     "usage",
                     "plan",
                     "analytics"
@@ -12228,6 +12675,9 @@
                           "externalId": {
                             "type": "string"
                           },
+                          "releasesEnabled": {
+                            "type": "boolean"
+                          },
                           "usage": {
                             "type": "object",
                             "properties": {
@@ -12239,12 +12689,16 @@
                               },
                               "aiTokens": {
                                 "type": "number"
+                              },
+                              "nextLimitResetDate": {
+                                "type": "string"
                               }
                             },
                             "required": [
                               "tasks",
                               "teamMembers",
-                              "aiTokens"
+                              "aiTokens",
+                              "nextLimitResetDate"
                             ]
                           },
                           "plan": {
@@ -12350,6 +12804,7 @@
                           "displayName",
                           "notifyStatus",
                           "platformId",
+                          "releasesEnabled",
                           "usage",
                           "plan",
                           "analytics"
@@ -12410,8 +12865,14 @@
                       }
                     ]
                   },
+                  "releasesEnabled": {
+                    "type": "boolean"
+                  },
                   "displayName": {
                     "pattern": "^[^./]+$",
+                    "type": "string"
+                  },
+                  "externalId": {
                     "type": "string"
                   },
                   "plan": {
@@ -12519,6 +12980,9 @@
                     "externalId": {
                       "type": "string"
                     },
+                    "releasesEnabled": {
+                      "type": "boolean"
+                    },
                     "usage": {
                       "type": "object",
                       "properties": {
@@ -12530,12 +12994,16 @@
                         },
                         "aiTokens": {
                           "type": "number"
+                        },
+                        "nextLimitResetDate": {
+                          "type": "string"
                         }
                       },
                       "required": [
                         "tasks",
                         "teamMembers",
-                        "aiTokens"
+                        "aiTokens",
+                        "nextLimitResetDate"
                       ]
                     },
                     "plan": {
@@ -12641,6 +13109,7 @@
                     "displayName",
                     "notifyStatus",
                     "platformId",
+                    "releasesEnabled",
                     "usage",
                     "plan",
                     "analytics"
@@ -12696,6 +13165,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "projectRoleId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "cursor",
             "required": false
           },
@@ -12715,7 +13192,156 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response"
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "platformId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "userId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "projectRoleId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "user": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "platformId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformRole": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ADMIN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEMBER"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "lastName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "email",
+                              "firstName",
+                              "platformRole",
+                              "lastName"
+                            ]
+                          },
+                          "projectRole": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "permissions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "platformId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "userCount": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "name",
+                              "permissions",
+                              "type"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "platformId",
+                          "userId",
+                          "projectId",
+                          "projectRoleId",
+                          "user",
+                          "projectRole"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -13223,12 +13849,12 @@
         }
       }
     },
-    "/v1/git-repos/pull": {
+    "/v1/git-repos": {
       "post": {
         "tags": [
-          "git-repo"
+          "git-repos"
         ],
-        "description": "Pull all changes from the git repository and overwrite any conflicting changes in the project.",
+        "description": "Upsert a git repository information for a project.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -13236,30 +13862,342 @@
                 "type": "object",
                 "properties": {
                   "projectId": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "remoteUrl": {
+                    "pattern": "^git@",
+                    "type": "string"
+                  },
+                  "branch": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "branchType": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PRODUCTION"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "DEVELOPMENT"
+                        ]
+                      }
+                    ]
+                  },
+                  "sshPrivateKey": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "slug": {
+                    "minLength": 1,
                     "type": "string"
                   }
                 },
                 "required": [
-                  "projectId"
+                  "projectId",
+                  "remoteUrl",
+                  "branch",
+                  "branchType",
+                  "sshPrivateKey",
+                  "slug"
                 ]
               }
             }
           },
           "required": true
         },
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
         "responses": {
-          "200": {
+          "201": {
             "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": {}
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "remoteUrl": {
+                      "type": "string"
+                    },
+                    "branch": {
+                      "type": "string"
+                    },
+                    "branchType": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PRODUCTION"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "DEVELOPMENT"
+                          ]
+                        }
+                      ]
+                    },
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "slug": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "remoteUrl",
+                    "branch",
+                    "branchType",
+                    "projectId",
+                    "slug"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/project-releases": {
+      "post": {
+        "tags": [
+          "project-releases"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "selectedFlowsIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "repoId": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "GIT"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "selectedFlowsIds",
+                      "repoId",
+                      "type"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "selectedFlowsIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "ROLLBACK"
+                        ]
+                      },
+                      "projectReleaseId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "selectedFlowsIds",
+                      "type",
+                      "projectReleaseId"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "selectedFlowsIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "PROJECT"
+                        ]
+                      },
+                      "targetProjectId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "selectedFlowsIds",
+                      "type",
+                      "targetProjectId"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "importedBy": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "fileId": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "GIT"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PROJECT"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ROLLBACK"
+                          ]
+                        }
+                      ]
+                    },
+                    "importedByUser": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "platformId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "platformRole": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ADMIN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MEMBER"
+                              ]
+                            }
+                          ]
+                        },
+                        "lastName": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "firstName",
+                        "platformRole",
+                        "lastName"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "projectId",
+                    "name",
+                    "fileId",
+                    "type"
+                  ]
                 }
               }
             }
