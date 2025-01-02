@@ -1,53 +1,86 @@
 ---
-title: "Environments & Git Sync"
+title: "Environments & Releases"
 description: ""
 icon: "git-alt"
 ---
 
 <Snippet file="enterprise-feature.mdx" />
 
-The Git Sync feature allows for the creation of an **external backup**, **environments**, and maintaining a **version history**.
+The Project Releases feature allows for the creation of an **external backup**, **environments**, and maintaining a **version history** from the Git Repository or an existing project.
 
 
-### How It Works:
+### How It Works
 
-This example explains a simple setup for creating development and production environments. The setup can be extended to include multiple environments and multiple Git branches.
+This example explains how to set up development and production environments using either Git repositories or existing projects as sources. The setup can be extended to include multiple environments, Git branches, or projects based on your needs.
 
-**Requirements:**
+### Requirements
+
+You have to enable the project releases feature in the Settings -> Environments.
+
+## Git-Sync
+
+**Requirements**
 - Empty Git Repository
-- Two Projects in Activepieces: one for Development and one for Production.
+- Two Projects in Activepieces: one for Development and one for Production
 
-#### 1. Push Flow to the repository
+### 1. Push Flow to Repository
+After making changes in the flow:
+1. Click the 3-dot menu near the flow name
+2. Select "Push to Git"
+3. Add commit message and push
 
-After making changes in the flow, You click on arrow near the flow name and select "Push to Git", Add commit and push.
+### 2. Deleting Flows
+When you delete a flow from a project configured with Git sync (Release from Git), it will automatically delete the flow from the repository.
 
-#### 2. Deleting a Flow from the Repository
+## Project-Sync
 
-When you delete a flow from a project that has the project configured on the development branch, it will also automatically delete the flows from Git.
+### 1. **Initialize Projects**
+   - Create a source project (e.g., Development)
+   - Create a target project (e.g., Production)
 
+### 2. **Develop**
+   - Build and test your flows in the source project
+   - When ready, sync changes to the target project using releases
 
-#### 3. Pull from the Repository
+## Creating a Release
 
 <Note>
-Please note that the credentials will not be synced automatically. You should manually create identical credentials with the same names in both environments.
+Credentials are not synced automatically. Create identical credentials with the same names in both environments manually.
 </Note>
 
-You can trigger a pull from the Git Repository button in Activepieces. This action will replace all flows in the project with those from the git repository.
+You can create a release in two ways:
 
-- All flows that are enabled in production will be updated and republished, If a flow fails to republish, a new version will be created as a draft.
-- All flows that are **not** in the git repository will be deleted.
-- New flows created in production will be disabled by default.
+1. **From Git Repository**: 
+   - Click "Create Release" and select "From Git"
 
-#### Approval Workflow (Optional)
+2. **From Existing Project**: 
+   - Click "Create Release" and select "From Project"
+   - Choose the source project to sync from
+
+For both methods:
+- Review the changes between environments
+- Choose the operations you want to perform:
+  - **Update Existing Flows**: Synchronize flows that exist in both environments
+  - **Delete Missing Flows**: Remove flows that are no longer present in the source
+  - **Create New Flows**: Add new flows found in the source
+- Confirm to create the release
+
+### Important Notes
+- Enabled flows will be updated and republished (failed republishes become drafts)
+- New flows start in a disabled state
+
+### Approval Workflow (Optional)
 
 To manage your approval workflow, you can use Git by creating two branches: development and production. Then, you can use standard pull requests as the approval step.
 
-#### GitHub action
+### GitHub action
 This GitHub action can be used to automatically pull changes upon merging.
 
 <Tip>
 Don't forget to replace `INSTANCE_URL` and `PROJECT_ID`, and add `ACTIVEPIECES_API_KEY` to the secrets.
 </Tip>
+
+
 
 ```yml
 name: Auto Deploy
