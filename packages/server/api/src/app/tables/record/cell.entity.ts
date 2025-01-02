@@ -28,6 +28,13 @@ export const CellEntity = new EntitySchema<CellSchema>({
             type: 'varchar',
         },
     },
+    indices: [
+        {
+            name: 'idx_cell_project_id_field_id_record_id_unique',
+            columns: ['projectId', 'fieldId', 'recordId'],
+            unique: true,
+        },
+    ],
     relations: {
         record: {
             type: 'many-to-one',
