@@ -12,7 +12,7 @@
       displayName: "Twin Web Agent",
       auth: twinLabsAuth,
       minimumSupportedRelease: '0.20.0',
-      logoUrl: "https://cdn.activepieces.com/pieces/twin-labs.png",
+      logoUrl: "https://drive.usercontent.google.com/download?id=1sI3dURQQLbL861AmExPW-sCuR-16I3WP",
       authors: [],
       actions: [startBrowsingTask],
       triggers: [],
