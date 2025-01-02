@@ -22,7 +22,7 @@ type EditableCellProps = {
 
 export function EditableCell({
   type,
-  value,
+  value: initialValue,
   row,
   column,
   onRowChange,
@@ -31,6 +31,11 @@ export function EditableCell({
   const [isEditing, setIsEditing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
+  const [value, setValue] = useState(initialValue);
+
+  useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -66,6 +71,7 @@ export function EditableCell({
         type={type}
         onRowChange={(newRow, commitChanges) => {
           if (commitChanges) {
+            setValue(newRow[column.key]);
             onRowChange(newRow, commitChanges);
             setIsEditing(false);
           }

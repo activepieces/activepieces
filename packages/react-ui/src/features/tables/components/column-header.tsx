@@ -52,7 +52,7 @@ export function ColumnHeader({ label, type, actions }: ColumnHeaderProps) {
             message={t(
               'Are you sure you want to delete this field? This action cannot be undone.',
             )}
-            mutationFn={() => action.onClick()}
+            mutationFn={action.onClick}
             entityName={t('field')}
           >
             <DropdownMenuItem

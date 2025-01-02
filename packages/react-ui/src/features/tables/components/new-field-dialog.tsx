@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/select';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
-import { FieldType } from '@activepieces/shared';
+import { Field, FieldType } from '@activepieces/shared';
 
 const NewFieldSchema = Type.Object({
   name: Type.String(),
@@ -38,42 +38,71 @@ type NewFieldSchema = Static<typeof NewFieldSchema>;
 type NewFieldDialogProps = {
   children: React.ReactNode;
   tableId: string;
-  onFieldCreated: () => void;
 };
 
-export function NewFieldDialog({
-  children,
-  tableId,
-  onFieldCreated,
-}: NewFieldDialogProps) {
+export function NewFieldDialog({ children, tableId }: NewFieldDialogProps) {
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const form = useForm<NewFieldSchema>({
     resolver: typeboxResolver(NewFieldSchema),
-    defaultValues: {
-      name: '',
-      type: FieldType.TEXT,
-    },
   });
 
   const createFieldMutation = useMutation({
     mutationFn: async (data: NewFieldSchema) => {
       return fieldsApi.create({
-        ...data,
         tableId,
+        name: data.name,
+        type: data.type,
       });
+    },
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: ['fields', tableId] });
+      const previousFields = queryClient.getQueryData(['fields', tableId]);
+
+      // Create an optimistic field
+      const optimisticField: Field = {
+        id: 'temp-' + Date.now(),
+        name: data.name,
+        type: data.type,
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        tableId,
+        projectId: '',
+      };
+
+      queryClient.setQueryData(['fields', tableId], (old: Field[]) => [
+        ...(old || []),
+        optimisticField,
+      ]);
+
+      return { previousFields, optimisticField };
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousFields) {
+        queryClient.setQueryData(['fields', tableId], context.previousFields);
+      }
+      toast(INTERNAL_ERROR_TOAST);
     },
     onSuccess: () => {
       setOpen(false);
       form.reset();
-      onFieldCreated();
       toast({
         title: t('Success'),
         description: t('Field has been created.'),
         duration: 3000,
       });
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
+    onSettled: (data, error, variables, context) => {
+      if (data && context?.optimisticField) {
+        // Replace the optimistic field with the real one
+        queryClient.setQueryData(['fields', tableId], (old: Field[]) =>
+          old.map((field: Field) =>
+            field.id === context.optimisticField.id ? data : field,
+          ),
+        );
+      }
+    },
   });
 
   return (
@@ -134,8 +163,8 @@ export function NewFieldDialog({
               </Button>
               <Button
                 type="submit"
-                loading={createFieldMutation.isPending}
                 disabled={!form.formState.isValid}
+                onClick={() => setOpen(false)}
               >
                 {t('Create')}
               </Button>

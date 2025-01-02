@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -28,13 +28,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { cn, formatUtils } from '@/lib/utils';
-import { Field, FieldType } from '@activepieces/shared';
+import { Field, FieldType, PopulatedRecord } from '@activepieces/shared';
 
 type NewRecordDialogProps = {
   children: React.ReactNode;
   fields: Field[];
   tableId: string;
-  onRecordCreated: () => void;
 };
 
 // Dynamically create schema based on fields
@@ -50,9 +49,9 @@ export function NewRecordDialog({
   children,
   fields,
   tableId,
-  onRecordCreated,
 }: NewRecordDialogProps) {
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const NewRecordSchema = createNewRecordSchema(fields);
   type NewRecordSchema = Static<typeof NewRecordSchema>;
@@ -80,17 +79,65 @@ export function NewRecordDialog({
         tableId,
       });
     },
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: ['records', tableId] });
+      const previousRecords = queryClient.getQueryData(['records', tableId]);
+
+      // Create an optimistic record
+      const optimisticRecord = {
+        id: 'temp-' + Date.now(),
+        cells: fields.map((field) => ({
+          id: 'temp-cell-' + Date.now() + '-' + field.id,
+          fieldId: field.id,
+          value: data[field.id] || '',
+          recordId: 'temp-' + Date.now(),
+          created: new Date().toISOString(),
+          updated: new Date().toISOString(),
+          projectId: '',
+        })),
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+      };
+
+      queryClient.setQueryData(
+        ['records', tableId],
+        (old: { data: PopulatedRecord[] }) => ({
+          ...old,
+          data: [...(old?.data || []), optimisticRecord],
+        }),
+      );
+
+      return { previousRecords, optimisticRecord };
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousRecords) {
+        queryClient.setQueryData(['records', tableId], context.previousRecords);
+      }
+      toast(INTERNAL_ERROR_TOAST);
+    },
     onSuccess: () => {
       setOpen(false);
       form.reset();
-      onRecordCreated();
       toast({
         title: t('Success'),
         description: t('Record has been created.'),
         duration: 3000,
       });
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
+    onSettled: (data, error, variables, context) => {
+      if (data && context?.optimisticRecord) {
+        // Replace the optimistic record with the real one
+        queryClient.setQueryData(
+          ['records', tableId],
+          (old: { data: PopulatedRecord[] }) => ({
+            ...old,
+            data: old.data.map((record: PopulatedRecord) =>
+              record.id === context.optimisticRecord.id ? data[0] : record,
+            ),
+          }),
+        );
+      }
+    },
   });
 
   return (
@@ -185,8 +232,8 @@ export function NewRecordDialog({
               </Button>
               <Button
                 type="submit"
-                loading={createRecordMutation.isPending}
                 disabled={!form.formState.isValid}
+                onClick={() => setOpen(false)}
               >
                 {t('Create')}
               </Button>

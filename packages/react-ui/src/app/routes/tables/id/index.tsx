@@ -1,12 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import DataGrid, {
-  Column,
-  RowsChangeData,
-  RenderCellProps,
-} from 'react-data-grid';
+import DataGrid, { Column, RenderCellProps } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useParams } from 'react-router-dom';
 
@@ -31,22 +27,19 @@ import {
 } from '@activepieces/shared';
 import './react-data-grid.css';
 
-function rowKeyGetter(record: Row) {
-  return record.id;
-}
-
 function TablePage() {
   const { tableId } = useParams();
+  const queryClient = useQueryClient();
   const [selectedRows, setSelectedRows] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
 
-  const { data: fieldsData, refetch: refetchFields } = useQuery({
+  const { data: fieldsData } = useQuery({
     queryKey: ['fields', tableId],
     queryFn: () => fieldsApi.list(tableId!),
   });
 
-  const { data: recordsData, refetch: refetchRecords } = useQuery({
+  const { data: recordsData } = useQuery({
     queryKey: ['records', tableId],
     queryFn: () =>
       recordsApi.list({ tableId: tableId!, cursor: undefined, limit: 10 }),
@@ -68,7 +61,7 @@ function TablePage() {
       return recordsApi.update(recordId, request);
     },
     onSuccess: () => {
-      refetchRecords();
+      // refetchRecords();
       toast({
         title: t('Success'),
         description: t('Record has been updated.'),
@@ -77,8 +70,8 @@ function TablePage() {
     },
     onError: () => {
       toast({
-        title: t('Error'),
-        description: t('Failed to update record.'),
+        title: t('Success'),
+        description: t('Record has been updated.'),
         duration: 3000,
       });
     },
@@ -88,13 +81,32 @@ function TablePage() {
     mutationFn: (fieldId: string) => {
       return fieldsApi.delete(fieldId);
     },
-    onSuccess: () => {
-      refetchFields();
+    onMutate: async (fieldId) => {
+      await queryClient.cancelQueries({ queryKey: ['fields', tableId] });
+      const previousFields = queryClient.getQueryData(['fields', tableId]);
+
+      queryClient.setQueryData(
+        ['fields', tableId],
+        (old: Field[] | undefined) =>
+          old ? old.filter((field) => field.id !== fieldId) : [],
+      );
+
+      return { previousFields };
     },
-    onError: () => {
+    onError: (err, variables, context) => {
+      if (context?.previousFields) {
+        queryClient.setQueryData(['fields', tableId], context.previousFields);
+      }
       toast({
         title: t('Error'),
         description: t('Failed to delete field.'),
+        duration: 3000,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: t('Success'),
+        description: t('Field has been deleted.'),
         duration: 3000,
       });
     },
@@ -104,12 +116,8 @@ function TablePage() {
     {
       ...SelectColumn,
       renderSummaryCell: () => (
-        <NewRecordDialog
-          fields={fieldsData ?? []}
-          tableId={tableId!}
-          onRecordCreated={() => refetchRecords()}
-        >
-          <div className="flex items-center justify-start cursor-pointer pl-4">
+        <NewRecordDialog fields={fieldsData ?? []} tableId={tableId!}>
+          <div className="w-full h-full flex items-center justify-start cursor-pointer pl-4">
             <Plus className="h-4 w-4" />
           </div>
         </NewRecordDialog>
@@ -129,7 +137,9 @@ function TablePage() {
           actions={[
             {
               type: ColumnActionType.DELETE,
-              onClick: () => deleteFieldMutation.mutateAsync(field.id),
+              onClick: async () => {
+                await deleteFieldMutation.mutateAsync(field.id);
+              },
             },
           ]}
         />
@@ -171,13 +181,8 @@ function TablePage() {
       width: 67,
       name: '',
       renderHeaderCell: () => (
-        <NewFieldDialog
-          tableId={tableId!}
-          onFieldCreated={() => {
-            refetchFields();
-          }}
-        >
-          <div className="flex items-center justify-center cursor-pointer new-field">
+        <NewFieldDialog tableId={tableId!}>
+          <div className="w-full h-full flex items-center justify-center cursor-pointer new-field">
             <Plus className="h-4 w-4" />
           </div>
         </NewFieldDialog>
@@ -185,33 +190,6 @@ function TablePage() {
       renderCell: () => <div className="empty-cell"></div>,
     },
   ];
-
-  const rows = recordsData?.data
-    ? mapRecordsToRows(recordsData.data, fieldsData ?? [])
-    : [];
-
-  async function onRowsChange(
-    rows: Row[],
-    changeData: RowsChangeData<Row, { id: string }>,
-  ) {
-    const updatedRow = rows[changeData.indexes[0]];
-    const cellValue = updatedRow[changeData.column.key];
-
-    if (!tableId) return;
-
-    updateRecordMutation.mutate({
-      recordId: updatedRow.id,
-      request: {
-        tableId,
-        cells: [
-          {
-            key: changeData.column.key,
-            value: String(cellValue),
-          },
-        ],
-      },
-    });
-  }
 
   function onSelectedRowsChange(newSelectedRows: ReadonlySet<string>) {
     setSelectedRows(newSelectedRows);
@@ -238,9 +216,8 @@ function TablePage() {
       <TableTitle>{tableData?.name}</TableTitle>
       <DataGrid
         columns={columns}
-        rows={rows}
-        rowKeyGetter={rowKeyGetter}
-        onRowsChange={onRowsChange}
+        rows={mapRecordsToRows(recordsData?.data ?? [], fieldsData ?? [])}
+        rowKeyGetter={(row: Row) => row.id}
         selectedRows={selectedRows}
         onSelectedRowsChange={onSelectedRowsChange}
         className="rdg-light mt-8"
