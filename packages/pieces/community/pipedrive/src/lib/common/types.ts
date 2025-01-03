@@ -19,10 +19,11 @@ export type FieldsResponse = {
 	additional_data: AdditionalData;
 };
 
-type StageWithPipelineInfo = {
+export type StageWithPipelineInfo = {
 	id: number;
 	name: string;
 	pipeline_id: number;
+	pipeline_name: string;
 };
 
 export type GetStagesResponse = {
