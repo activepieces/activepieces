@@ -79,7 +79,7 @@ export const newOrganizationTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new-organization',
 	displayName: 'New Organization',
-	description: 'Triggers when a new organization is created',
+	description: 'Triggers when a new organization is created.',
 	props: {},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {

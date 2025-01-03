@@ -79,7 +79,7 @@ export const newLeadTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new-lead',
 	displayName: 'New Lead',
-	description: 'Triggers when a new lead is created',
+	description: 'Triggers when a new lead is created.',
 	props: {},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
