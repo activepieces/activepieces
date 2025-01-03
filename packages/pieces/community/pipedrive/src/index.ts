@@ -11,13 +11,14 @@ import { newDeal } from './lib/trigger/new-deal';
 import { newPerson } from './lib/trigger/new-person';
 import { updatedDeal } from './lib/trigger/updated-deal';
 import { updatedPerson } from './lib/trigger/updated-person';
+import { newLeadTrigger } from './lib/trigger/new-lead';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
   description: '',
   authUrl: 'https://oauth.pipedrive.com/oauth/authorize',
   tokenUrl: 'https://oauth.pipedrive.com/oauth/token',
   required: true,
-  scope: ['admin', 'contacts:full', 'users:read','deals:full','activities:full'],
+  scope: ['admin', 'contacts:full', 'users:read','deals:full','activities:full','leads:full'],
 });
 
 export const pipedrive = createPiece({
@@ -39,5 +40,5 @@ export const pipedrive = createPiece({
     }),
   ],
   authors: ["ashrafsamhouri","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
-  triggers: [newPerson, newDeal, newActivity, updatedPerson, updatedDeal],
+  triggers: [newPerson, newDeal, newActivity, updatedPerson, updatedDeal,newLeadTrigger],
 });

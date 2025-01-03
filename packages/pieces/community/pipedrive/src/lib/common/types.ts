@@ -74,3 +74,15 @@ export type PaginatedResponse<T> =
 
 export type RequestParams = Record<string, string | number | string[] | undefined>;
 
+export type WebhookCreateResonse = {
+	status:string,
+	success:boolean,
+	data:{
+		id:number
+	}
+}
+
+export type LeadListResponse = {
+	success: boolean;
+	data: Record<string, unknown>[];
+}
