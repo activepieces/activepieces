@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ImportFlowRequest } from '../flows/operations';
 
 const ActionStep = z.object({
   title: z.string(),
@@ -20,10 +21,12 @@ const RouterStep = z.object({
 
 type RouterStep = z.infer<typeof RouterStep>;
 
-const Step = z.discriminatedUnion('type', [
+export const CopilotStepPlan = z.discriminatedUnion('type', [
   ActionStep,
   RouterStep
 ]);
+
+export type CopilotStepPlan = z.infer<typeof CopilotStepPlan>;
 
 export const CopilotFlowOutline = z.object({
   name: z.string(),
@@ -32,20 +35,19 @@ export const CopilotFlowOutline = z.object({
     title: z.string(),
     description: z.string(),
   }),
-  steps: z.array(Step),
+  steps: z.array(CopilotStepPlan),
 });
 
 export type CopilotFlowOutline = z.infer<typeof CopilotFlowOutline>;
 
 export const AskCopilotRequest = z.object({
-    id: z.string(),
-    prompts: z.array(z.string().min(4)),
-  });
-  export type AskCopilotRequest = z.infer<typeof AskCopilotRequest>;
+  id: z.string(),
+  prompts: z.array(z.string().min(4)),
+});
+export type AskCopilotRequest = z.infer<typeof AskCopilotRequest>;
 
-  
+
 export const CopilotFlowPlanResponse = z.object({
-  id: z.string().optional(),
   workflow: CopilotFlowOutline.optional(),
   errorMessage: z.string().optional(),
 });
@@ -53,16 +55,27 @@ export const CopilotFlowPlanResponse = z.object({
 export type CopilotFlowPlanResponse = z.infer<typeof CopilotFlowPlanResponse>;
 
 export const CopilotTriggerResponse = z.object({
-   pieceName: z.string(),
-   pieceVersion: z.string(),
-   triggerName: z.string(),
+  pieceName: z.string(),
+  pieceVersion: z.string(),
+  triggerName: z.string(),
 });
 
 export type CopilotTriggerResponse = z.infer<typeof CopilotTriggerResponse>;
 
 export const CopilotStepCodeResponse = z.object({
-   code: z.string(),
+  code: z.string(),
 });
 
 export type CopilotStepCodeResponse = z.infer<typeof CopilotStepCodeResponse>;
 
+export type AskCopilotResponse = 
+{
+  id: string,
+  type: 'flow',
+  plan: CopilotFlowOutline,
+  operation: ImportFlowRequest,
+} | {
+  id: string,
+  type: 'error',
+  errorMessage: string,
+}

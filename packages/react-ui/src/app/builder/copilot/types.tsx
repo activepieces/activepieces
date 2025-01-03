@@ -1,4 +1,4 @@
-import { CopilotFlowOutline } from "@activepieces/shared";
+import { CopilotFlowOutline, ImportFlowRequest } from "@activepieces/shared";
 
 export type AiMessageContent = {
     type: 'assistant_message';
@@ -12,7 +12,10 @@ export type UserMessageContent = {
 
 export type FlowPlanMessageContnt = {
     type: 'flow_plan';
-    content: CopilotFlowOutline;
+    content: {
+        plan: CopilotFlowOutline;
+        operation: ImportFlowRequest;
+    };
 }
 
 export type StepCodeMessageContent = {

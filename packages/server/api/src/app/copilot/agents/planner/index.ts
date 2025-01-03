@@ -1,9 +1,10 @@
 import { generateObject } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
-import { CopilotFlowPlanResponse } from '@activepieces/shared';
+import { AskCopilotResponse, CopilotFlowPlanResponse, isNil } from '@activepieces/shared';
+import { plannerUtils } from './planner-utils';
 
 export const plannerAgent = {
-    run: async (prompts: string[]) => {
+    run: async (id: string, prompts: string[]): Promise<AskCopilotResponse> => {
         const { object } = await generateObject({
             model: anthropic('claude-3-5-sonnet-20241022'),
             schema: CopilotFlowPlanResponse,
@@ -35,7 +36,20 @@ export const plannerAgent = {
             `,
         });
 
-        return object;
+        const workflow = object.workflow;
+        if(isNil(workflow)) {
+            return {
+                id,
+                type: 'error',
+                errorMessage: object.errorMessage ?? 'I could not generate the workflow, please try again',
+            }
+        }
+        return {
+            id,
+            type: 'flow',
+            plan: workflow,
+            operation: plannerUtils.buildWorkflow(workflow),
+        }
     }
 }
 

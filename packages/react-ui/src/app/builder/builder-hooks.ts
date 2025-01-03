@@ -36,7 +36,7 @@ import {
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
-import { INITIAL_COPILOT_MESSAGE, INITIAL_COPILOT_MESSAGE, MessageContent } from './copilot/types';
+import { INITIAL_COPILOT_MESSAGE, MessageContent } from './copilot/types';
 
 const flowUpdatesQueue = new PromiseQueue();
 

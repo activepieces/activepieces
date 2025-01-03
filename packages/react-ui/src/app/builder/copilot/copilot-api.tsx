@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io-client';
 import {
-  CopilotFlowPlanResponse,
+  AskCopilotResponse,
   WebsocketClientEvent,
   WebsocketServerEvent,
 } from '@activepieces/shared';
@@ -10,7 +10,7 @@ export const copilotApi = {
   planFlow: async (
     socket: Socket,
     prompts: string[],
-  ): Promise<CopilotFlowPlanResponse> => {
+  ): Promise<AskCopilotResponse> => {
     const id = nanoid();
 
     socket.emit(WebsocketServerEvent.ASK_COPILOT, {
@@ -18,10 +18,10 @@ export const copilotApi = {
       id,
     });
 
-    return new Promise<CopilotFlowPlanResponse>((resolve, reject) => {
+    return new Promise<AskCopilotResponse>((resolve, reject) => {
       socket.on(
         WebsocketClientEvent.ASK_COPILOT_RESPONSE,
-        (response: CopilotFlowPlanResponse) => {
+        (response: AskCopilotResponse) => {
           if (response.id === id) {
             resolve(response);
           }

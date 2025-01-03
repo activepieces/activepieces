@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { LeftSideBarType, useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SidebarHeader } from '../sidebar-header';
-import { MessageContent, UserMessageContent } from './types';
+import { MessageContent } from './types';
 import { copilotApi } from './copilot-api';
 import { useMutation } from '@tanstack/react-query';
 import { useSocket } from '@/components/socket-provider';
@@ -23,16 +23,19 @@ export const CopilotSidebar = () => {
   const mutation = useMutation({
     mutationFn: (prompts: string[]) => copilotApi.planFlow(socket, prompts),
     onSuccess: (response) => {
-      if (response.workflow) {
-        addMessage({
-          type: 'flow_plan',
-          content: response.workflow
-        });
-      } else {
-        addMessage({
-          type: 'assistant_message',
-          content: response.errorMessage ?? 'I don\'t know how to do that.'
-        });
+      switch (response.type) {
+        case 'flow':
+          addMessage({
+            type: 'flow_plan',
+            content: response 
+          });
+          break;
+        case 'error':
+          addMessage({
+            type: 'assistant_message',
+            content: response.errorMessage ?? 'I don\'t know how to do that.'
+          });
+          break;
       }
     },
     onError: () => {

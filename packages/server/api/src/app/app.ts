@@ -363,7 +363,6 @@ async function getAdapter() {
 
 
 export async function appPostBoot(app: FastifyInstance): Promise<void> {
-    await pieceEmbeddingService(app.log).checkAndGenerateEmbeddings()
     app.log.info(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
