@@ -143,7 +143,6 @@ const deactivatePlatformUsersOtherThanAdmin: (platformId: string, log: FastifyBa
 const deletePrivatePieces = async (platformId: string, log: FastifyBaseLogger): Promise<void> => {
     const latestRelease = await flagService.getCurrentRelease()
     const pieces = await pieceMetadataService(log).list({
-        edition: ApEdition.ENTERPRISE,
         includeHidden: true,
         release: latestRelease,
         platformId,

@@ -36,6 +36,7 @@ import {
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
+import { INITIAL_COPILOT_MESSAGE, INITIAL_COPILOT_MESSAGE, MessageContent } from './copilot/types';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -54,7 +55,7 @@ export enum LeftSideBarType {
   RUNS = 'runs',
   VERSIONS = 'versions',
   RUN_DETAILS = 'run-details',
-  AI_COPILOT = 'chat',
+  AI_COPILOT = 'copilot',
   NONE = 'none',
 }
 
@@ -78,10 +79,7 @@ export type BuilderState = {
   activeDraggingStep: string | null;
   allowCanvasPanning: boolean;
   saving: boolean;
-  /** change this value to trigger the step form to set its values from the step */
-  refreshStepFormSettingsToggle: boolean;
   selectedBranchIndex: number | null;
-  refreshSettings: () => void;
   setSelectedBranchIndex: (index: number | null) => void;
   exitRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
@@ -128,6 +126,8 @@ export type BuilderState = {
   setPanningMode: (mode: 'grab' | 'pan') => void;
   pieceSelectorStep: string | null;
   setPieceSelectorStep: (step: string | null) => void;
+  messages: MessageContent[];
+  addMessage: (message: MessageContent) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -167,10 +167,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
-              initialState.flowVersion,
-              initialState.run,
-              {},
-            )
+            initialState.flowVersion,
+            initialState.run,
+            {},
+          )
           : {},
       sampleData: initialState.sampleData,
       flow: initialState.flow,
@@ -185,13 +185,14 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       allowCanvasPanning: true,
+      messages: [INITIAL_COPILOT_MESSAGE],
+      addMessage: (message: MessageContent) => set((state) => ({ messages: [...state.messages, message] })),
       rightSidebar:
         initiallySelectedStep &&
-        (initiallySelectedStep !== 'trigger' ||
-          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
+          (initiallySelectedStep !== 'trigger' ||
+            initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
-      refreshStepFormSettingsToggle: false,
 
       removeStepSelection: () =>
         set({
@@ -234,13 +235,13 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
 
           const rightSidebar =
             selectedStep === 'trigger' &&
-            state.flowVersion.trigger.type === TriggerType.EMPTY
+              state.flowVersion.trigger.type === TriggerType.EMPTY
               ? RightSideBarType.NONE
               : RightSideBarType.PIECE_SETTINGS;
 
           const leftSidebar = !isNil(state.run)
             ? LeftSideBarType.RUN_DETAILS
-            : LeftSideBarType.NONE;
+            : state.leftSidebar;
 
           return {
             selectedStep,
@@ -282,12 +283,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           selectedBranchIndex: null,
         }),
       exitStepSettings: () =>
-        set((state) => ({
+        set(() => ({
           rightSidebar: RightSideBarType.NONE,
-          leftSidebar:
-            state.leftSidebar === LeftSideBarType.AI_COPILOT
-              ? LeftSideBarType.NONE
-              : state.leftSidebar,
           selectedStep: null,
           selectedBranchIndex: null,
           askAiButtonProps: null,
@@ -315,8 +312,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             rightSidebar: RightSideBarType.PIECE_SETTINGS,
             selectedStep: run.steps
               ? flowRunUtils.findFailedStepInOutput(run.steps) ??
-                state.selectedStep ??
-                'trigger'
+              state.selectedStep ??
+              'trigger'
               : 'trigger',
             readonly: true,
           };
@@ -390,10 +387,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
         set({ insertMention });
       },
-      refreshSettings: () =>
-        set((state) => ({
-          refreshStepFormSettingsToggle: !state.refreshStepFormSettingsToggle,
-        })),
 
       selectedBranchIndex: null,
       operationListeners: [],
@@ -438,7 +431,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             selectedStep: step ? step : state.selectedStep,
             rightSidebar:
               (step && step !== 'trigger') ||
-              state.flowVersion.trigger.type !== TriggerType.EMPTY
+                state.flowVersion.trigger.type !== TriggerType.EMPTY
                 ? RightSideBarType.PIECE_SETTINGS
                 : state.rightSidebar,
           };

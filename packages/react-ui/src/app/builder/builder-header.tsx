@@ -1,6 +1,6 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { ChevronDown, History, Logs } from 'lucide-react';
+import { Bot, ChevronDown, History, Logs } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   createSearchParams,
@@ -45,6 +45,8 @@ export const BuilderHeader = () => {
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
+  // TODO URGENT
+  const showCopilot = true;
   const branding = flagsHooks.useWebsiteBranding();
   const isInRunsPage = useMemo(
     () => location.pathname.includes('/runs'),
@@ -165,6 +167,20 @@ export const BuilderHeader = () => {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t('Support')}</TooltipContent>
+            </Tooltip>
+          )}
+          {showCopilot && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="gap-2 px-2"
+                  onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
+                >
+                  <Bot className="w-4 h-4" />
+                  {t('Copilot')}
+                </Button>
+              </TooltipTrigger>
             </Tooltip>
           )}
           {hasPermissionToReadRuns && (

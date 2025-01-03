@@ -39,8 +39,10 @@ import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { CopilotSidebar } from './copilot';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
+const minWidthOfLeftSidebar = 'min-w-[max(30vw,50px)]';
 const animateResizeClassName = `transition-all duration-200`;
 
 const useAnimateSidebar = (
@@ -189,7 +191,7 @@ const BuilderPage = () => {
           order={1}
           ref={leftHandleRef}
           className={cn('min-w-0 bg-background z-20', {
-            [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
+            [minWidthOfLeftSidebar]: leftSidebar !== LeftSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}
         >
@@ -197,7 +199,7 @@ const BuilderPage = () => {
             {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
             {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
-            {leftSidebar === LeftSideBarType.AI_COPILOT && <></>}
+            {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
           </div>
         </ResizablePanel>
         <ResizableHandle

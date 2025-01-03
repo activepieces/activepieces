@@ -75,6 +75,7 @@ export * from './lib/flow-run/log-serializer'
 export * from './lib/project-release/project-release'
 export * from './lib/project-release/project-release.request'
 export * from './lib/project-release/project-state'
+export * from './lib/copilot/index'
 
 export * from './lib/flows/operations/paste-operations'
 // Look at https://github.com/sinclairzx81/typebox/issues/350

@@ -20,7 +20,6 @@ type ListParams = {
     projectId?: string
     platformId?: string
     includeHidden: boolean
-    edition: ApEdition
     categories?: PieceCategory[]
     includeTags?: boolean
     tags?: string[]

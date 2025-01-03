@@ -59,7 +59,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const latestRelease = await flagService.getCurrentRelease()
             const includeTags = req.query.includeTags ?? false
             const release = req.query.release ?? latestRelease
-            const edition = req.query.edition ?? ApEdition.COMMUNITY
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
             const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
             const pieceMetadataSummary = await pieceMetadataService(req.log).list({
@@ -67,7 +66,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 includeHidden: req.query.includeHidden ?? false,
                 projectId,
                 platformId,
-                edition,
                 includeTags,
                 categories: req.query.categories,
                 searchQuery: req.query.searchQuery,

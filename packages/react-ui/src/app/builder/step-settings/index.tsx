@@ -46,7 +46,6 @@ const StepSettingsContainer = () => {
     applyOperation,
     saving,
     flowVersion,
-    refreshPieceFormSettings,
     selectedBranchIndex,
     setSelectedBranchIndex,
   ] = useBuilderStateContext((state) => [
@@ -55,7 +54,6 @@ const StepSettingsContainer = () => {
     state.applyOperation,
     state.saving,
     state.flowVersion,
-    state.refreshStepFormSettingsToggle,
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
   ]);
@@ -106,11 +104,6 @@ const StepSettingsContainer = () => {
     form.trigger();
   }, [formSchema, defaultValues]);
 
-  useEffect(() => {
-    form.reset(defaultValues);
-    form.trigger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshPieceFormSettings]);
 
   const actionOrTriggerDisplayName = selectedStep.settings.actionName
     ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName

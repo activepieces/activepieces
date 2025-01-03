@@ -37,9 +37,7 @@ type CodeSettingsProps = {
 
 const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const form = useFormContext<CodeAction>();
-  const [selectedStep, refreshStepFormSettingsToggle] = useBuilderStateContext(
-    (state) => [state.selectedStep || '', state.refreshStepFormSettingsToggle],
-  );
+
   return (
     <div className="flex flex-col gap-4">
       <FormField
@@ -77,7 +75,6 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         render={({ field }) => (
           <FormItem>
             <CodeEditor
-              animateBorderColorToggle={refreshStepFormSettingsToggle}
               sourceCode={field.value}
               onChange={field.onChange}
               readonly={readonly}
