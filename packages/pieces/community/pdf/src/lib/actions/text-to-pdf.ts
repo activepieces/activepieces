@@ -23,13 +23,13 @@ export const textToPdf = createAction({
   async run(context) {
     const text = context.propsValue.text;
 
-    let pageSize: [number, number] = [595, 842]; // Standard A4 size
-    let margin: number = 50;
-    let topMargin: number = 70;
-    let fontSize: number = 12;
-    let lineSpacing: number = 5;
-    let paragraphSpacing: number = 8;
-    let fontType: StandardFonts = StandardFonts.Helvetica;
+    const pageSize: [number, number] = [595, 842]; // Standard A4 size
+    const margin = 50;
+    const topMargin = 70;
+    const fontSize = 12;
+    const lineSpacing = 5;
+    const paragraphSpacing = 8;
+    const fontType: StandardFonts = StandardFonts.Helvetica;
 
     try {
       const pdfDoc = await PDFDocument.create();
