@@ -12,6 +12,7 @@ import { newPerson } from './lib/trigger/new-person';
 import { updatedDeal } from './lib/trigger/updated-deal';
 import { updatedPerson } from './lib/trigger/updated-person';
 import { newLeadTrigger } from './lib/trigger/new-lead';
+import { newOrganizationTrigger } from './lib/trigger/new-organization';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
   description: '',
@@ -40,5 +41,5 @@ export const pipedrive = createPiece({
     }),
   ],
   authors: ["ashrafsamhouri","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
-  triggers: [newPerson, newDeal, newActivity, updatedPerson, updatedDeal,newLeadTrigger],
+  triggers: [newPerson, newDeal, newActivity, updatedPerson, updatedDeal,newLeadTrigger,newOrganizationTrigger],
 });
