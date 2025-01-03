@@ -5,7 +5,7 @@ import { CopilotFlowPlanResponse } from '@activepieces/shared';
 export const plannerAgent = {
     run: async (prompts: string[]) => {
         const { object } = await generateObject({
-            model: anthropic('claude-3-5-sonnet-20240620'),
+            model: anthropic('claude-3-5-sonnet-20241022'),
             schema: CopilotFlowPlanResponse,
             prompt: `
             You are Activepieces, an expert AI Assistant and exceptional workflow automation builder.

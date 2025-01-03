@@ -94,6 +94,7 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
+import { pieceEmbeddingService } from './copilot/embedding/piece-embedding-service'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -362,7 +363,7 @@ async function getAdapter() {
 
 
 export async function appPostBoot(app: FastifyInstance): Promise<void> {
-
+    await pieceEmbeddingService(app.log).checkAndGenerateEmbeddings()
     app.log.info(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
