@@ -18,7 +18,6 @@ import {
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
-import { AskAiButton } from '../../pieces-selector/ask-ai';
 
 import { CodeEditor } from './code-editor';
 
@@ -41,7 +40,6 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const [selectedStep, refreshStepFormSettingsToggle] = useBuilderStateContext(
     (state) => [state.selectedStep || '', state.refreshStepFormSettingsToggle],
   );
-  const isCopilotEnabled = platformHooks.isCopilotEnabled();
   return (
     <div className="flex flex-col gap-4">
       <FormField
@@ -54,16 +52,6 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
             </div>
             <div className="flex items-center justify-between">
               <FormLabel>{t('Inputs')}</FormLabel>
-              {isCopilotEnabled && !readonly && (
-                <AskAiButton
-                  onClick={() => {}}
-                  varitant={'ghost'}
-                  operation={{
-                    type: FlowOperationType.UPDATE_ACTION,
-                    stepName: selectedStep,
-                  }}
-                ></AskAiButton>
-              )}
             </div>
 
             <DictionaryProperty

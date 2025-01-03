@@ -79,8 +79,6 @@ const systemPropValidators: {
     [AppSystemProp.JWT_SECRET]: stringValidator,
     [AppSystemProp.LICENSE_KEY]: stringValidator,
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: numberValidator,
-    [AppSystemProp.OPENAI_API_BASE_URL]: urlValidator,
-    [AppSystemProp.OPENAI_API_KEY]: stringValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),
     [AppSystemProp.POSTGRES_DATABASE]: stringValidator,
     [AppSystemProp.POSTGRES_HOST]: stringValidator,
@@ -135,10 +133,6 @@ const systemPropValidators: {
     [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
     [AppSystemProp.CLOUDFLARE_API_KEY]: stringValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
-
-    // Copilot
-    [AppSystemProp.PERPLEXITY_API_KEY]: stringValidator,
-    [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 
     // AppSystemProp
     [AppSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,

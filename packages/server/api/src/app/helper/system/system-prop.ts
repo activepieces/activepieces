@@ -21,22 +21,7 @@ export enum AppSystemProp {
      */
     LICENSE_KEY = 'LICENSE_KEY',
     MAX_CONCURRENT_JOBS_PER_PROJECT = 'MAX_CONCURRENT_JOBS_PER_PROJECT',
-    /**
-     * @deprecated this now can be done from the platform admin page.
-     */
-    OPENAI_API_BASE_URL = 'OPENAI_API_BASE_URL',
-    /**
-     * @deprecated this now can be done from the platform admin page.
-     */
-    OPENAI_API_KEY = 'OPENAI_API_KEY',
-    /**
-     * @deprecated this now can be done from the platform admin page.
-     */
-    PERPLEXITY_API_KEY = 'PERPLEXITY_API_KEY',
-    /**
-     * @deprecated this now can be done from the platform admin page.
-     */
-    PERPLEXITY_BASE_URL = 'PERPLEXITY_BASE_URL',
+
     PIECES_SYNC_MODE = 'PIECES_SYNC_MODE',
     POSTGRES_DATABASE = 'POSTGRES_DATABASE',
     POSTGRES_HOST = 'POSTGRES_HOST',
