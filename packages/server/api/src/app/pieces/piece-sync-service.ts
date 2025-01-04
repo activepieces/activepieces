@@ -13,6 +13,7 @@ import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { PieceMetadataEntity } from './piece-metadata-entity'
 import { pieceMetadataService } from './piece-metadata-service'
+import { pieceEmbeddingService } from '../copilot/embedding/piece-embedding-service'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
@@ -38,6 +39,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                 cron: '0 */1 * * *',
             },
         })
+        await pieceEmbeddingService(log).init()
     },
     async sync(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {

@@ -1,4 +1,4 @@
-import { CopilotFlowOutline, ImportFlowRequest } from "@activepieces/shared";
+import { CopilotFlowOutline, ImportFlowRequest, UpdateActionRequest } from "@activepieces/shared";
 
 export type AiMessageContent = {
     type: 'assistant_message';
@@ -18,13 +18,16 @@ export type FlowPlanMessageContnt = {
     };
 }
 
-export type StepCodeMessageContent = {
-    type: 'step_code';
-    content: string;
-    stepIndex: number;
+export type CodeBlockMessageContent = {
+    type: 'code_block';
+    content: {
+        code: string;
+        operation: UpdateActionRequest;
+        inputs: Record<string,string>
+    };
 }
 
-export type MessageContent = AiMessageContent | UserMessageContent | FlowPlanMessageContnt;
+export type MessageContent = AiMessageContent | UserMessageContent | FlowPlanMessageContnt | CodeBlockMessageContent;
 
 export const INITIAL_COPILOT_MESSAGE: MessageContent = {
     type: 'assistant_message',

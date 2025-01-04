@@ -1,5 +1,6 @@
 import { Socket } from 'socket.io-client';
 import {
+  AskCopilotRequest,
   AskCopilotResponse,
   WebsocketClientEvent,
   WebsocketServerEvent,
@@ -7,14 +8,14 @@ import {
 import { nanoid } from 'nanoid';
 
 export const copilotApi = {
-  planFlow: async (
+  ask: async (
     socket: Socket,
-    prompts: string[],
+    request: Omit<AskCopilotRequest, 'id'>,
   ): Promise<AskCopilotResponse> => {
     const id = nanoid();
 
     socket.emit(WebsocketServerEvent.ASK_COPILOT, {
-      prompts,
+      ...request,
       id,
     });
 

@@ -11,23 +11,39 @@ import { ChatInput } from '@/components/ui/chat/chat-input';
 import MessageLoading from '@/components/ui/chat/message-loading';
 import { PreviewPlanMessage } from './messages/preview-plan-message';
 import { TextMessage } from './messages/text-message';
+import { AskCopilotRequest, CopilotSkill, flowStructureUtil, isNil } from '@activepieces/shared';
+import { Workflow } from 'lucide-react';
+import { PreviewCodeMessage } from './messages/preview-code-message';
 
 export const CopilotSidebar = () => {
   const socket = useSocket();
-  const [setLeftSidebar, messages, addMessage] = useBuilderStateContext((state) => [
+  const [setLeftSidebar, messages, addMessage, selectedStep, flowId] = useBuilderStateContext((state) => [
     state.setLeftSidebar,
     state.messages,
-    state.addMessage
+    state.addMessage,
+    isNil(state.selectedStep) ? null : flowStructureUtil.getStep(state.selectedStep, state.flow.version.trigger),
+    state.flow.id
   ]);
 
   const mutation = useMutation({
-    mutationFn: (prompts: string[]) => copilotApi.planFlow(socket, prompts),
+    mutationFn: (request: Omit<AskCopilotRequest, 'id'>) => copilotApi.ask(socket, request),
     onSuccess: (response) => {
+      console.log(response);
       switch (response.type) {
         case 'flow':
           addMessage({
             type: 'flow_plan',
-            content: response 
+            content: response
+          });
+          break;
+        case 'action':
+          addMessage({
+            type: 'code_block',
+            content: {
+              code: response.code,
+              inputs: response.inputs,
+              operation: response.operation
+            }
           });
           break;
         case 'error':
@@ -54,7 +70,20 @@ export const CopilotSidebar = () => {
       .filter(message => message.type === 'user_message')
       .map(message => message.content);
 
-    mutation.mutate([trimmedContent, ...userMessages]);
+    if (selectedStep) {
+      mutation.mutate({
+        flowId,
+        skill: CopilotSkill.ACTION,
+        prompts: [trimmedContent, ...userMessages],
+        selectedStep: selectedStep.name,
+      });
+    } else {
+      mutation.mutate({
+        flowId,
+        skill: CopilotSkill.PLANNER,
+        prompts: [trimmedContent, ...userMessages],
+      });
+    }
 
     addMessage({
       type: 'user_message',
@@ -73,6 +102,9 @@ export const CopilotSidebar = () => {
   const renderMessage = (message: MessageContent, index: number) => {
     if (message.type === 'flow_plan') {
       return <PreviewPlanMessage key={index} message={message} />;
+    }
+    if (message.type === 'code_block') {
+      return <PreviewCodeMessage key={index} message={message} />;
     }
     return <TextMessage key={index} content={message} />;
   };
@@ -99,6 +131,12 @@ export const CopilotSidebar = () => {
       </ScrollArea>
 
       <div className="p-4">
+        {selectedStep && (
+          <div className="mb-2 text-sm text-muted-foreground flex items-center gap-2">
+            <Workflow className="w-4 h-4" />
+            <span>Selected step: {selectedStep.displayName}</span>
+          </div>
+        )}
         <ChatInput
           placeholder="Type a message..."
           onKeyDown={handleKeyDown}

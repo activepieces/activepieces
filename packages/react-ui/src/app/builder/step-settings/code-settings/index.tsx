@@ -9,14 +9,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { platformHooks } from '@/hooks/platform-hooks';
 import {
   CodeAction,
-  FlowOperationType,
   MarkdownVariant,
 } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
 import { CodeEditor } from './code-editor';

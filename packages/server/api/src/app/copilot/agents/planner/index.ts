@@ -48,7 +48,7 @@ export const plannerAgent = {
             id,
             type: 'flow',
             plan: workflow,
-            operation: plannerUtils.buildWorkflow(workflow),
+            operation: await plannerUtils.buildWorkflow(workflow),
         }
     }
 }

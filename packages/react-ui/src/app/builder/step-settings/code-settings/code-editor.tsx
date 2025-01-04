@@ -25,6 +25,7 @@ type CodeEditorProps = {
   sourceCode: SourceCode;
   onChange: (sourceCode: SourceCode) => void;
   readonly: boolean;
+  hidePackageJson?: boolean;
   applyCodeToCurrentStep?: () => void;
   minHeight?: string;
 };
@@ -35,6 +36,7 @@ const CodeEditor = ({
   onChange,
   applyCodeToCurrentStep,
   minHeight,
+  hidePackageJson
 }: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
@@ -102,7 +104,7 @@ const CodeEditor = ({
           >
             {t('Code')}
           </div>
-          {allowNpmPackagesInCodeStep && (
+          {!hidePackageJson && allowNpmPackagesInCodeStep && (
             <div
               className={cn('text-sm cursor-pointer', {
                 'font-bold': activeTab === 'packageJson',
@@ -125,7 +127,7 @@ const CodeEditor = ({
             {t('Use code')}
           </Button>
         ) : (
-          allowNpmPackagesInCodeStep && (
+          !hidePackageJson && allowNpmPackagesInCodeStep && (
             <AddNpmDialog onAdd={handleAddPackages}>
               <Button
                 variant="outline"
