@@ -22,9 +22,13 @@ import { Sidebar, SidebarLink } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
+  hideHeader?: boolean;
 };
 
-export function DashboardContainer({ children }: DashboardContainerProps) {
+export function DashboardContainer({
+  children,
+  hideHeader,
+}: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,
@@ -98,6 +102,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
         isHomeDashboard={true}
         links={links}
         hideSideNav={embedState.hideSideNav}
+        hideHeader={hideHeader}
       >
         {children}
       </Sidebar>

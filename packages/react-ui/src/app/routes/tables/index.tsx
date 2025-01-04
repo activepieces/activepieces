@@ -145,10 +145,7 @@ function TablesPage() {
       id: 'actions',
       cell: ({ row }) => {
         return (
-          <div
-            className="flex items-center justify-end"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="flex items-center justify-end">
             <ConfirmationDeleteDialog
               title={t('Delete Table')}
               message={t(
@@ -159,7 +156,11 @@ function TablesPage() {
               }
               entityName={t('table')}
             >
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             </ConfirmationDeleteDialog>

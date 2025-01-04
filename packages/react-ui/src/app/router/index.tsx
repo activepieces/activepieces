@@ -194,7 +194,7 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/tables/:tableId',
     element: (
-      <DashboardContainer>
+      <DashboardContainer hideHeader={true}>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Table">
             <TablePage />

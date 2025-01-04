@@ -94,12 +94,14 @@ type SidebarProps = {
   links: SidebarLink[];
   isHomeDashboard?: boolean;
   hideSideNav?: boolean;
+  hideHeader?: boolean;
 };
 export function Sidebar({
   children,
   links,
   isHomeDashboard = false,
   hideSideNav = false,
+  hideHeader = false,
 }: SidebarProps) {
   const branding = flagsHooks.useWebsiteBranding();
   const { data: showSupportAndDocs } = flagsHooks.useFlag<boolean>(
@@ -168,12 +170,16 @@ export function Sidebar({
             </ScrollArea>
           </aside>
         )}
-        <div className="flex-1 p-4">
-          <div className="flex flex-col">
-            <Header />
-            <div className="container mx-auto flex py-10">{children}</div>
+        {!hideHeader ? (
+          <div className="flex-1 p-4">
+            <div className="flex flex-col">
+              <Header />
+              <div className="container mx-auto flex py-10">{children}</div>
+            </div>
           </div>
-        </div>
+        ) : (
+          children
+        )}
       </div>
       <ShowPoweredBy show={platform?.showPoweredBy && isHomeDashboard} />
     </div>

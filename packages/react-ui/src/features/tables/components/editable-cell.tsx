@@ -89,7 +89,7 @@ export function EditableCell({
       id={`editable-cell-${rowIdx}-${column.idx}`}
       className={cn(
         'h-full flex items-center justify-between gap-2 pl-2 py-2',
-        'group cursor-pointer border',
+        'group cursor-pointer border bg-muted/50',
         isSelected ? 'border-primary' : 'border-transparent',
       )}
       onMouseEnter={() => setIsHovered(true)}

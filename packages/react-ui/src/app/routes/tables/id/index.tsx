@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
+import { ChevronLeft, Plus, Rows4, Rows3, Rows2 } from 'lucide-react';
 import { useState } from 'react';
 import DataGrid, { Column, RenderCellProps } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import { TableTitle } from '@/components/ui/table-title';
+import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/components/ui/use-toast';
 import {
   ColumnHeader,
@@ -20,6 +21,7 @@ import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { Row } from '@/features/tables/lib/types';
+import { cn } from '@/lib/utils';
 import {
   Field,
   PopulatedRecord,
@@ -27,12 +29,31 @@ import {
 } from '@activepieces/shared';
 import './react-data-grid.css';
 
+enum RowHeight {
+  COMPACT = 'compact',
+  DEFAULT = 'default',
+  RELAXED = 'relaxed',
+}
+
+const getRowHeight = (type: RowHeight = RowHeight.DEFAULT): number => {
+  switch (type) {
+    case RowHeight.COMPACT:
+      return 28;
+    case RowHeight.RELAXED:
+      return 52;
+    default:
+      return 37;
+  }
+};
+
 function TablePage() {
   const { tableId } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedRows, setSelectedRows] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
+  const [rowHeight, setRowHeight] = useState<RowHeight>(RowHeight.DEFAULT);
 
   const { data: fieldsData } = useQuery({
     queryKey: ['fields', tableId],
@@ -211,16 +232,111 @@ function TablePage() {
   }
 
   return (
-    <div className="flex-col w-full">
-      <TableTitle>{tableData?.name}</TableTitle>
+    <div className="mt-4">
+      <div className="flex flex-col gap-4 ml-3">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="p-2"
+            onClick={() => navigate('/tables')}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-xl">{tableData?.name}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground ml-2">
+            {t('Row Height')}
+          </span>
+          <RadioGroup
+            value={rowHeight}
+            onValueChange={(value) => setRowHeight(value as RowHeight)}
+            className="flex items-center gap-1 bg-muted p-1 rounded-md"
+          >
+            <div className="flex items-center">
+              <RadioGroupItem
+                value={RowHeight.COMPACT}
+                id={RowHeight.COMPACT}
+                className="peer sr-only"
+              />
+              <label
+                htmlFor={RowHeight.COMPACT}
+                className={cn(
+                  'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
+                  rowHeight === RowHeight.COMPACT ? 'bg-background' : '',
+                )}
+              >
+                <Rows4
+                  className={cn(
+                    'h-4 w-4',
+                    rowHeight === RowHeight.COMPACT
+                      ? 'text-primary'
+                      : 'text-muted-foreground',
+                  )}
+                />
+              </label>
+            </div>
+            <div className="flex items-center">
+              <RadioGroupItem
+                value={RowHeight.DEFAULT}
+                id={RowHeight.DEFAULT}
+                className="peer sr-only"
+              />
+              <label
+                htmlFor={RowHeight.DEFAULT}
+                className={cn(
+                  'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
+                  rowHeight === RowHeight.DEFAULT ? 'bg-background' : '',
+                )}
+              >
+                <Rows3
+                  className={cn(
+                    'h-4 w-4',
+                    rowHeight === RowHeight.DEFAULT
+                      ? 'text-primary'
+                      : 'text-muted-foreground',
+                  )}
+                />
+              </label>
+            </div>
+            <div className="flex items-center">
+              <RadioGroupItem
+                value={RowHeight.RELAXED}
+                id={RowHeight.RELAXED}
+                className="peer sr-only"
+              />
+              <label
+                htmlFor={RowHeight.RELAXED}
+                className={cn(
+                  'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
+                  rowHeight === RowHeight.RELAXED ? 'bg-background' : '',
+                )}
+              >
+                <Rows2
+                  className={cn(
+                    'h-4 w-4',
+                    rowHeight === RowHeight.RELAXED
+                      ? 'text-primary'
+                      : 'text-muted-foreground',
+                  )}
+                />
+              </label>
+            </div>
+          </RadioGroup>
+        </div>
+      </div>
       <DataGrid
         columns={columns}
         rows={mapRecordsToRows(recordsData?.data ?? [], fieldsData ?? [])}
         rowKeyGetter={(row: Row) => row.id}
         selectedRows={selectedRows}
         onSelectedRowsChange={onSelectedRowsChange}
-        className="rdg-light mt-8"
+        className="rdg-light mt-4"
         bottomSummaryRows={[{ id: 'new-record' }]}
+        rowHeight={getRowHeight(rowHeight)}
+        headerRowHeight={getRowHeight()}
+        summaryRowHeight={getRowHeight()}
       />
     </div>
   );
