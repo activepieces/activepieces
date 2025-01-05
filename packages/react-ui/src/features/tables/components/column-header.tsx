@@ -1,6 +1,6 @@
 import { t } from 'i18next';
-import { ChevronDown, Trash, Type, Calendar, Hash } from 'lucide-react';
-import { ReactNode, useState } from 'react';
+import { ChevronDown, Trash } from 'lucide-react';
+import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { FieldType } from '@activepieces/shared';
+
+import { getColumnIcon } from '../lib/utils';
 
 export enum ColumnActionType {
   DELETE,
@@ -25,19 +27,6 @@ type ColumnHeaderProps = {
   label: string;
   type: FieldType;
   actions?: ColumnAction[];
-};
-
-const getColumnIcon = (type: FieldType): ReactNode => {
-  switch (type) {
-    case FieldType.TEXT:
-      return <Type className="h-4 w-4" />;
-    case FieldType.DATE:
-      return <Calendar className="h-4 w-4" />;
-    case FieldType.NUMBER:
-      return <Hash className="h-4 w-4" />;
-    default:
-      return null;
-  }
 };
 
 export function ColumnHeader({ label, type, actions }: ColumnHeaderProps) {

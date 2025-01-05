@@ -14,15 +14,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
+import { getColumnIcon } from '@/features/tables/lib/utils';
+import { cn } from '@/lib/utils';
 import { Field, FieldType } from '@activepieces/shared';
 
 const NewFieldSchema = Type.Object({
@@ -135,18 +132,34 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label>{t('Type')}</Label>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <ScrollArea className="max-h-[200px] rounded-md border">
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="p-1"
+                    >
                       {Object.values(FieldType).map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type.charAt(0) + type.slice(1).toLowerCase()}
-                        </SelectItem>
+                        <div key={type} className="flex items-center">
+                          <RadioGroupItem
+                            value={type}
+                            id={type}
+                            className="sr-only"
+                          />
+                          <Label
+                            htmlFor={type}
+                            className={cn(
+                              'flex items-center gap-2 w-full px-3 py-2 rounded-sm',
+                              'text-left text-accent-foreground cursor-pointer hover:bg-muted',
+                              field.value === type && 'bg-muted text-primary',
+                            )}
+                          >
+                            {getColumnIcon(type)}
+                            {type.charAt(0) + type.slice(1).toLowerCase()}
+                          </Label>
+                        </div>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </RadioGroup>
+                  </ScrollArea>
                   <FormMessage />
                 </FormItem>
               )}

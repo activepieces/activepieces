@@ -5,7 +5,6 @@ export enum FieldType {
     TEXT = 'TEXT',
     NUMBER = 'NUMBER',
     DATE = 'DATE',
-    JSON = 'JSON',
 }
 
 export const Field = Type.Object({
