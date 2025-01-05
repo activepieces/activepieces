@@ -20,7 +20,10 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
 import { appConnectionsApi } from '../lib/app-connections-api';
-import { ConnectionNameAlreadyExists, isConnectionNameUnique } from '../lib/utils';
+import {
+  ConnectionNameAlreadyExists,
+  isConnectionNameUnique,
+} from '../lib/utils';
 
 const RenameConnectionSchema = Type.Object({
   displayName: Type.String(),
@@ -56,8 +59,11 @@ const RenameConnectionDialog = forwardRef<
     }
   >({
     mutationFn: async ({ connectionId, displayName }) => {
-      const existingConnection = await isConnectionNameUnique(false,displayName);
-      if(!existingConnection && displayName !== currentName){
+      const existingConnection = await isConnectionNameUnique(
+        false,
+        displayName,
+      );
+      if (!existingConnection && displayName !== currentName) {
         throw new ConnectionNameAlreadyExists();
       }
       return appConnectionsApi.update(connectionId, { displayName });
@@ -72,13 +78,12 @@ const RenameConnectionDialog = forwardRef<
       });
     },
     onError: (error) => {
-      if(error instanceof ConnectionNameAlreadyExists){
+      if (error instanceof ConnectionNameAlreadyExists) {
         renameConnectionForm.setError('displayName', {
           message: error.message,
         });
-      }
-      else{
-        toast(INTERNAL_ERROR_TOAST)
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
       }
     },
   });

@@ -20,9 +20,13 @@ import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
-import { globalConnectionsApi } from '../lib/global-connections-api';
-import { ConnectionNameAlreadyExists, isConnectionNameUnique, NoProjectSelected } from '../lib/utils';
 import { AssignConnectionToProjectsControl } from '../../../components/ui/assign-global-connection-to-projects';
+import { globalConnectionsApi } from '../lib/global-connections-api';
+import {
+  ConnectionNameAlreadyExists,
+  isConnectionNameUnique,
+  NoProjectSelected,
+} from '../lib/utils';
 
 const EditGlobalConnectionSchema = Type.Object({
   displayName: Type.String(),
@@ -37,7 +41,6 @@ type EditGlobalConnectionDialogProps = {
   currentName: string;
   projectIds: string[];
   onEdit: () => void;
-
 };
 
 const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
@@ -46,7 +49,6 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
   currentName,
   projectIds,
   onEdit,
-
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -68,10 +70,13 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
     }
   >({
     mutationFn: async ({ connectionId, displayName, projectIds }) => {
-      if(!(await isConnectionNameUnique(true,displayName)) && displayName !== currentName){
+      if (
+        !(await isConnectionNameUnique(true, displayName)) &&
+        displayName !== currentName
+      ) {
         throw new ConnectionNameAlreadyExists();
       }
-      if(projectIds.length === 0){
+      if (projectIds.length === 0) {
         throw new NoProjectSelected();
       }
       return globalConnectionsApi.update(connectionId, {
@@ -89,18 +94,16 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
       setIsOpen(false);
     },
     onError: (error) => {
-      if(error instanceof ConnectionNameAlreadyExists){
+      if (error instanceof ConnectionNameAlreadyExists) {
         editConnectionForm.setError('displayName', {
           message: error.message,
         });
-      }
-      else if(error instanceof NoProjectSelected){
+      } else if (error instanceof NoProjectSelected) {
         editConnectionForm.setError('projectIds', {
           message: error.message,
         });
-      }
-      else{
-        toast(INTERNAL_ERROR_TOAST)
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
       }
     },
   });

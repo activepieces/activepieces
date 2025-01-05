@@ -38,24 +38,24 @@ export const CopyButton = ({
     },
   });
 
-  if(withoutTooltip) {
-    return  <Button
-    variant="outline"
-    size="icon"
-    className={className}
-    onClick={() => copyToClipboard()}
-    {...props}
-  >
-    {isCopied ? (
-      <Check className="h-4 w-4" />
-    ) : (
-      <Copy className="h-4 w-4" />
-    )}
-  </Button>
+  if (withoutTooltip) {
+    return (
+      <Button
+        variant="outline"
+        size="icon"
+        className={className}
+        onClick={() => copyToClipboard()}
+        {...props}
+      >
+        {isCopied ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <Copy className="h-4 w-4" />
+        )}
+      </Button>
+    );
   }
   return (
-
-    
     <Tooltip>
       <TooltipTrigger asChild>
         <Button

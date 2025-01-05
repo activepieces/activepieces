@@ -10,6 +10,7 @@ import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CopyButton } from '@/components/ui/copy-button';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -42,7 +43,6 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
-import { CopyButton } from '@/components/ui/copy-button';
 
 const filters = [
   {
@@ -166,7 +166,7 @@ function AppConnectionsPage() {
         return (
           <div className="flex items-center gap-2">
             {isPlatformConnection && (
-              <Tooltip >
+              <Tooltip>
                 <TooltipTrigger asChild>
                   <Globe className="w-4 h-4" />
                 </TooltipTrigger>
@@ -184,8 +184,13 @@ function AppConnectionsPage() {
                 <div className="text-left">{row.original.displayName}</div>
               </TooltipTrigger>
               <TooltipContent>
-                <div className='flex gap-2 items-center'>
-                  {t('External ID')}: {row.original.externalId || '-'}  <CopyButton withoutTooltip={true} variant='ghost'  textToCopy={row.original.externalId || ''}></CopyButton>
+                <div className="flex gap-2 items-center">
+                  {t('External ID')}: {row.original.externalId || '-'}{' '}
+                  <CopyButton
+                    withoutTooltip={true}
+                    variant="ghost"
+                    textToCopy={row.original.externalId || ''}
+                  ></CopyButton>
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -252,38 +257,41 @@ function AppConnectionsPage() {
         const isPlatformConnection = row.original.scope === 'PLATFORM';
         return (
           <div className="flex items-center gap-2 justify-end">
-         
-            
-                  <RenameConnectionDialog
-                    connectionId={row.original.id}
-                    currentName={row.original.displayName}
-                    onRename={() => {
-                      refetch();
-                    }}
+            <RenameConnectionDialog
+              connectionId={row.original.id}
+              currentName={row.original.displayName}
+              onRename={() => {
+                refetch();
+              }}
+            >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={
+                      isPlatformConnection
+                        ? userPlatformRole !== PlatformRole.ADMIN
+                        : !userHasPermissionToWriteAppConnection
+                    }
                   >
-                      <Tooltip>
-                      <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={
-                       isPlatformConnection? userPlatformRole !== PlatformRole.ADMIN : !userHasPermissionToWriteAppConnection
-                      }
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    </TooltipTrigger>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
                 <TooltipContent>
-                {
-                userPlatformRole !== PlatformRole.ADMIN && !userHasPermissionToWriteAppConnection ? t('Permission needed') : t('Rename')
-                }
+                  {userPlatformRole !== PlatformRole.ADMIN &&
+                  !userHasPermissionToWriteAppConnection
+                    ? t('Permission needed')
+                    : t('Rename')}
                 </TooltipContent>
               </Tooltip>
-                  </RenameConnectionDialog>
-              
+            </RenameConnectionDialog>
+
             <ReconnectButtonDialog
               hasPermission={
-               !isPlatformConnection? userHasPermissionToWriteAppConnection : userPlatformRole === PlatformRole.ADMIN
+                !isPlatformConnection
+                  ? userHasPermissionToWriteAppConnection
+                  : userPlatformRole === PlatformRole.ADMIN
               }
               connection={row.original}
               onConnectionCreated={() => {

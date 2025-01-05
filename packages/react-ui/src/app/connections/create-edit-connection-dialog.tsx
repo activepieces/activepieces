@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { useEffectOnce } from 'react-use';
 
 import { ApMarkdown } from '@/components/custom/markdown';
+import { AssignConnectionToProjectsControl } from '@/components/ui/assign-global-connection-to-projects';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -46,20 +47,21 @@ import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
   ErrorCode,
-  isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
-import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
-import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
+
 import {
   newConnectionUtils,
   ConnectionNameAlreadyExists,
   isConnectionNameUnique,
   NoProjectSelected,
 } from '../../features/connections/lib/utils';
+import { formUtils } from '../builder/piece-properties/form-utils';
+
+import { BasicAuthConnectionSettings } from './basic-secret-connection-settings';
+import { CustomAuthConnectionSettings } from './custom-auth-connection-settings';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
-import { AssignConnectionToProjectsControl } from '@/components/ui/assign-global-connection-to-projects';
 
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
@@ -85,7 +87,7 @@ const CreateOrEditConnectionDialog = React.memo(
   }: ConnectionDialogProps) => {
     const { auth } = piece;
 
-    const formSchema = newConnectionUtils.buildConnectionSchema(piece);
+    const formSchema = formUtils.buildConnectionSchema(piece);
     const { externalId, displayName } = newConnectionUtils.getConnectionName(
       piece,
       reconnectConnection,
@@ -97,13 +99,14 @@ const CreateOrEditConnectionDialog = React.memo(
       };
     }>({
       defaultValues: {
-        request: {...newConnectionUtils.createDefaultValues(
-          piece,
-          externalId,
-          displayName,
-        ),
-        projectIds: reconnectConnection?.projectIds ?? [],
-      },
+        request: {
+          ...newConnectionUtils.createDefaultValues(
+            piece,
+            externalId,
+            displayName,
+          ),
+          projectIds: reconnectConnection?.projectIds ?? [],
+        },
       },
       mode: 'onChange',
       reValidateMode: 'onChange',
@@ -119,12 +122,18 @@ const CreateOrEditConnectionDialog = React.memo(
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
-        const isConenctionNameUnique = await isConnectionNameUnique(isGlobalConnection,formValues.displayName);
-        if (!isConenctionNameUnique && reconnectConnection?.displayName !== formValues.displayName) {
+        const isConenctionNameUnique = await isConnectionNameUnique(
+          isGlobalConnection,
+          formValues.displayName,
+        );
+        if (
+          !isConenctionNameUnique &&
+          reconnectConnection?.displayName !== formValues.displayName
+        ) {
           throw new ConnectionNameAlreadyExists();
         }
         if (isGlobalConnection) {
-          if(formValues.projectIds.length === 0){
+          if (formValues.projectIds.length === 0) {
             throw new NoProjectSelected();
           }
           return globalConnectionsApi.upsert({
@@ -238,7 +247,7 @@ const CreateOrEditConnectionDialog = React.memo(
                     </FormItem>
                   )}
                 ></FormField>
-               {isGlobalConnection && (
+                {isGlobalConnection && (
                   <AssignConnectionToProjectsControl
                     control={form.control}
                     name="request.projectIds"
@@ -259,19 +268,17 @@ const CreateOrEditConnectionDialog = React.memo(
                     authProperty={piece.auth as CustomAuthProperty<any>}
                   />
                 )}
-              
-                {auth?.type === PropertyType.OAUTH2 && (
-                    <div className='mt-3.5'>
-                  <OAuth2ConnectionSettings
-                    authProperty={piece.auth as OAuth2Property<OAuth2Props>}
-                    piece={piece}
-                    reconnectConnection={reconnectConnection}
-                  />
-                </div>
 
+                {auth?.type === PropertyType.OAUTH2 && (
+                  <div className="mt-3.5">
+                    <OAuth2ConnectionSettings
+                      authProperty={piece.auth as OAuth2Property<OAuth2Props>}
+                      piece={piece}
+                      reconnectConnection={reconnectConnection}
+                    />
+                  </div>
                 )}
-               
-         
+
                 <DialogFooter>
                   <Button
                     onClick={(e) => form.handleSubmit(() => mutate())(e)}

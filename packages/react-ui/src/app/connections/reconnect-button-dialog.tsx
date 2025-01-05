@@ -44,12 +44,11 @@ const ReconnectButtonDialog = ({
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          {
-            !hasPermission?
+          {!hasPermission ? (
             <p>{t('Permission needed')}</p>
-            :
+          ) : (
             <p>{t('Reconnect')}</p>
-          }
+          )}
         </TooltipContent>
       </Tooltip>
       {open && !isLoading && pieceModel && (
