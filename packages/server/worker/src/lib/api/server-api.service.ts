@@ -1,9 +1,8 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { LRUCache } from 'lru-cache'
 import { appNetworkUtils } from '../utils/app-network-utils'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
@@ -12,10 +11,7 @@ const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
 
-const flowCache = new LRUCache<string, PopulatedFlow>({
-    max: 100,
-    ttl: 1000 * 60 * 5,
-})
+
 
 export const workerApiService = (workerToken: string) => {
     const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
