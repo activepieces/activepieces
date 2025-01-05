@@ -3,6 +3,7 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  useInfiniteQuery,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -13,7 +14,7 @@ import {
   Rows2,
   RefreshCw,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import DataGrid, { Column, RenderCellProps } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -39,6 +40,7 @@ import {
   Field,
   PopulatedRecord,
   UpdateRecordRequest,
+  SeekPage,
 } from '@activepieces/shared';
 import './react-data-grid.css';
 
@@ -73,10 +75,22 @@ function TablePage() {
     queryFn: () => fieldsApi.list(tableId!),
   });
 
-  const { data: recordsData, isLoading: isRecordsLoading } = useQuery({
+  const {
+    data: recordsPages,
+    isLoading: isRecordsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<SeekPage<PopulatedRecord>>({
     queryKey: ['records', tableId],
-    queryFn: () =>
-      recordsApi.list({ tableId: tableId!, cursor: undefined, limit: 100 }),
+    queryFn: async ({ pageParam }) =>
+      recordsApi.list({
+        tableId: tableId!,
+        cursor: pageParam as string | undefined,
+        limit: 100,
+      }),
+    getNextPageParam: (lastPage) => lastPage.next,
+    initialPageParam: undefined as string | undefined,
   });
 
   const { data: tableData, isLoading: isTableLoading } = useQuery({
@@ -230,20 +244,40 @@ function TablePage() {
     setSelectedRows(newSelectedRows);
   }
 
+  const handleScroll = useCallback(
+    ({ currentTarget }: React.UIEvent<HTMLDivElement>) => {
+      const target = currentTarget;
+      const scrollPosition = target.scrollTop + target.clientHeight;
+      const scrollThreshold = target.scrollHeight - 500; // Load more when 500px from bottom
+
+      if (
+        scrollPosition > scrollThreshold &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage],
+  );
+
   function mapRecordsToRows(
-    records: PopulatedRecord[],
+    pages: typeof recordsPages,
     fields: Field[],
   ): Row[] {
-    return records.map((record) => {
-      const row: Row = { id: record.id };
-      record.cells.forEach((cell) => {
-        const field = fields.find((f) => f.id === cell.fieldId);
-        if (field) {
-          row[field.name] = cell.value;
-        }
-      });
-      return row;
-    });
+    if (!pages) return [];
+    return pages.pages.flatMap((page) =>
+      page.data.map((record: PopulatedRecord) => {
+        const row: Row = { id: record.id };
+        record.cells.forEach((cell) => {
+          const field = fields.find((f) => f.id === cell.fieldId);
+          if (field) {
+            row[field.name] = cell.value;
+          }
+        });
+        return row;
+      }),
+    );
   }
 
   const isLoading = isFieldsLoading || isRecordsLoading || isTableLoading;
@@ -297,6 +331,12 @@ function TablePage() {
             <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
               <RefreshCw className="h-4 w-4 animate-spin" />
               <span className="text-sm">{t('Saving...')}</span>
+            </div>
+          )}
+          {isFetchingNextPage && (
+            <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <span className="text-sm">{t('Loading more...')}</span>
             </div>
           )}
         </div>
@@ -384,7 +424,7 @@ function TablePage() {
       <div className="flex-1 min-h-0 mt-4 grid-wrapper">
         <DataGrid
           columns={columns}
-          rows={mapRecordsToRows(recordsData?.data ?? [], fieldsData ?? [])}
+          rows={mapRecordsToRows(recordsPages, fieldsData ?? [])}
           rowKeyGetter={(row: Row) => row.id}
           selectedRows={selectedRows}
           onSelectedRowsChange={onSelectedRowsChange}
@@ -393,6 +433,7 @@ function TablePage() {
           rowHeight={getRowHeight(rowHeight)}
           headerRowHeight={getRowHeight()}
           summaryRowHeight={getRowHeight()}
+          onScroll={handleScroll}
         />
       </div>
     </div>
