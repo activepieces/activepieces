@@ -1,10 +1,7 @@
-import { Type } from '@sinclair/typebox';
 import { t } from 'i18next';
 
-import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  CustomAuthProperty,
   CustomAuthProps,
   OAuth2Props,
   PieceMetadataModel,
@@ -16,103 +13,28 @@ import {
   AppConnectionWithoutSensitiveData,
   UpsertAppConnectionRequestBody,
   assertNotNullOrUndefined,
-  UpsertBasicAuthRequest,
-  UpsertCloudOAuth2Request,
-  UpsertCustomAuthRequest,
-  UpsertOAuth2Request,
-  UpsertPlatformOAuth2Request,
-  UpsertSecretTextRequest,
   isNil,
   apId,
 } from '@activepieces/shared';
 
+import { appConnectionsApi } from './app-connections-api';
+import { globalConnectionsApi } from './global-connections-api';
+
 export class ConnectionNameAlreadyExists extends Error {
   constructor() {
-    super('Connection name already exists');
+    super(t('Connection name already used'));
     this.name = 'ConnectionNameAlreadyExists';
   }
 }
 
+export class NoProjectSelected extends Error {
+  constructor() {
+    super(t('Please select at least one project'));
+    this.name = 'NoProjectSelected';
+  }
+}
+
 export const newConnectionUtils = {
-  buildConnectionSchema(piece: PieceMetadataModelSummary | PieceMetadataModel) {
-    const auth = piece.auth;
-    if (isNil(auth)) {
-      return Type.Object({
-        request: Type.Composite([
-          Type.Omit(UpsertAppConnectionRequestBody, ['externalId']),
-        ]),
-      });
-    }
-    const connectionSchema = Type.Object({
-      externalId: Type.String({
-        pattern: '^[A-Za-z0-9_\\-@\\+\\.]*$',
-        minLength: 1,
-        errorMessage: t(
-          'Name can only contain letters, numbers and underscores',
-        ),
-      }),
-    });
-
-    switch (auth.type) {
-      case PropertyType.SECRET_TEXT:
-        return Type.Object({
-          request: Type.Composite([
-            Type.Omit(UpsertSecretTextRequest, ['externalId', 'displayName']),
-            connectionSchema,
-          ]),
-        });
-      case PropertyType.BASIC_AUTH:
-        return Type.Object({
-          request: Type.Composite([
-            Type.Omit(UpsertBasicAuthRequest, ['externalId', 'displayName']),
-            connectionSchema,
-          ]),
-        });
-      case PropertyType.CUSTOM_AUTH:
-        return Type.Object({
-          request: Type.Composite([
-            Type.Omit(UpsertCustomAuthRequest, [
-              'externalId',
-              'value',
-              'displayName',
-            ]),
-            connectionSchema,
-            Type.Object({
-              value: Type.Object({
-                props: formUtils.buildSchema(
-                  (piece.auth as CustomAuthProperty<any>).props,
-                ),
-              }),
-            }),
-          ]),
-        });
-      case PropertyType.OAUTH2:
-        return Type.Object({
-          request: Type.Composite([
-            Type.Omit(
-              Type.Union([
-                UpsertOAuth2Request,
-                UpsertCloudOAuth2Request,
-                UpsertPlatformOAuth2Request,
-              ]),
-              ['externalId', 'displayName'],
-            ),
-            connectionSchema,
-          ]),
-        });
-      default:
-        return Type.Object({
-          request: Type.Composite([
-            Type.Omit(UpsertAppConnectionRequestBody, [
-              'externalId',
-              'displayName',
-            ]),
-            connectionSchema,
-          ]),
-        });
-    }
-  },
-
   getConnectionName(
     piece: PieceMetadataModelSummary | PieceMetadataModel,
     reconnectConnection: AppConnectionWithoutSensitiveData | null,
@@ -233,4 +155,22 @@ export const newConnectionUtils = {
       return acc;
     }, {});
   },
+};
+
+export const isConnectionNameUnique = async (
+  isGlobalConnection: boolean,
+  displayName: string,
+) => {
+  const connections = isGlobalConnection
+    ? await globalConnectionsApi.list({
+        limit: 10000,
+      })
+    : await appConnectionsApi.list({
+        projectId: authenticationSession.getProjectId()!,
+        limit: 10000,
+      });
+  const existingConnection = connections.data.find(
+    (connection) => connection.displayName === displayName,
+  );
+  return isNil(existingConnection);
 };
