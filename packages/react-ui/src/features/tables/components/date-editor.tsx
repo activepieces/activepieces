@@ -18,9 +18,12 @@ function DateEditor({
   column,
   onRowChange,
   onClose,
-}: RenderEditCellProps<Row, { id: string }>) {
+  value: initialValue,
+}: RenderEditCellProps<Row, { id: string }> & {
+  value: string;
+}) {
   const [date, setDate] = useState<Date | undefined>(
-    row[column.key] ? new Date(row[column.key]) : undefined,
+    initialValue ? new Date(initialValue) : undefined,
   );
   const [isOpen, setIsOpen] = useState(true);
 

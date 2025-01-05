@@ -60,7 +60,7 @@ export function EditableCell({
         Editor = DateEditor;
         break;
       default:
-        Editor = TextEditor;
+        Editor = TextEditor; // TextEditor is used for numbers too
     }
 
     return (
@@ -69,6 +69,7 @@ export function EditableCell({
         rowIdx={rowIdx}
         column={column}
         type={type}
+        value={value}
         onRowChange={(newRow, commitChanges) => {
           if (commitChanges) {
             setValue(newRow[column.key]);

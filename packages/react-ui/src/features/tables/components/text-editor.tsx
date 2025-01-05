@@ -13,8 +13,12 @@ function TextEditor({
   onRowChange,
   onClose,
   type,
-}: RenderEditCellProps<Row, { id: string }> & { type: FieldType }) {
-  const [value, setValue] = useState(row[column.key]);
+  value: initialValue,
+}: RenderEditCellProps<Row, { id: string }> & {
+  type: FieldType;
+  value: string;
+}) {
+  const [value, setValue] = useState(initialValue);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
