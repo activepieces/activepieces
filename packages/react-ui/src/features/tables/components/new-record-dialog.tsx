@@ -71,6 +71,7 @@ export function NewRecordDialog({
   });
 
   const createRecordMutation = useMutation({
+    mutationKey: ['createRecord'],
     mutationFn: async (data: NewRecordSchema) => {
       const cells = fields.map((field) => ({
         key: field.name,

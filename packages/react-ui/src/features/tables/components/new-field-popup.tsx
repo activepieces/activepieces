@@ -49,6 +49,7 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
   });
 
   const createFieldMutation = useMutation({
+    mutationKey: ['createField'],
     mutationFn: async (data: NewFieldSchema) => {
       return fieldsApi.create({
         tableId,

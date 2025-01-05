@@ -1,6 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useIsMutating,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronLeft, Plus, Rows4, Rows3, Rows2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  Plus,
+  Rows4,
+  Rows3,
+  Rows2,
+  RefreshCw,
+} from 'lucide-react';
 import { useState } from 'react';
 import DataGrid, { Column, RenderCellProps } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
@@ -73,6 +85,7 @@ function TablePage() {
   });
 
   const updateRecordMutation = useMutation({
+    mutationKey: ['updateRecord'],
     mutationFn: async ({
       recordId,
       request,
@@ -99,6 +112,7 @@ function TablePage() {
   });
 
   const deleteFieldMutation = useMutation({
+    mutationKey: ['deleteField'],
     mutationFn: (fieldId: string) => {
       return fieldsApi.delete(fieldId);
     },
@@ -234,6 +248,14 @@ function TablePage() {
 
   const isLoading = isFieldsLoading || isRecordsLoading || isTableLoading;
 
+  const isMutating = useIsMutating({
+    predicate: (mutation) =>
+      mutation.options.mutationKey?.[0] === 'updateRecord' ||
+      mutation.options.mutationKey?.[0] === 'deleteField' ||
+      mutation.options.mutationKey?.[0] === 'createRecord' ||
+      mutation.options.mutationKey?.[0] === 'createField',
+  });
+
   if (isLoading) {
     return (
       <div className="mt-4">
@@ -270,6 +292,13 @@ function TablePage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-xl">{tableData?.name}</span>
+
+          {isMutating > 0 && (
+            <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <span className="text-sm">{t('Saving...')}</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground ml-2">
