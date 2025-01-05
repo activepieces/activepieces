@@ -1,13 +1,29 @@
-import { generateObject } from 'ai';
+import { generateText, tool } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
-import { AskCopilotResponse, CopilotFlowPlanResponse, isNil } from '@activepieces/shared';
+import { AskCopilotResponse, CopilotFlowOutline, CopilotFlowPlanResponse, isNil } from '@activepieces/shared';
 import { plannerUtils } from './planner-utils';
+import { z } from 'zod';
+
 
 export const plannerAgent = {
     run: async (id: string, prompts: string[]): Promise<AskCopilotResponse> => {
-        const { object } = await generateObject({
-            model: anthropic('claude-3-5-sonnet-20241022'),
-            schema: CopilotFlowPlanResponse,
+        console.log({ prompts });
+
+        const { toolCalls } = await generateText({
+            model: anthropic('claude-3-5-sonnet-20241022', {
+                cacheControl: true,
+            }),
+            
+            tools: {
+                generateWorkflow: tool({
+                    description: 'Generate a workflow plan based on user requirements',
+                    parameters: z.object({
+                        workflow: CopilotFlowOutline,
+                        errorMessage: z.string().optional()
+                    }),
+                }),
+            },
+            toolChoice: 'required',
             prompt: `
             You are Activepieces, an expert AI Assistant and exceptional workflow automation builder.
 
@@ -31,24 +47,27 @@ export const plannerAgent = {
             </examples>
 
             <user_prompt>
-                ${prompts.join('\n')}
+                ${prompts.reverse().join('\n')}
             </user_prompt>
-            `,
+            `
         });
 
-        const workflow = object.workflow;
-        if(isNil(workflow)) {
+        const lastToolCall = toolCalls[toolCalls.length - 1];
+        const result = lastToolCall.args;
+
+        if (isNil(result.workflow)) {
             return {
                 id,
                 type: 'error',
-                errorMessage: object.errorMessage ?? 'I could not generate the workflow, please try again',
+                errorMessage: result.errorMessage ?? 'I could not generate the workflow, please try again',
             }
         }
+
         return {
             id,
             type: 'flow',
-            plan: workflow,
-            operation: plannerUtils.buildWorkflow(workflow),
+            plan: result.workflow,
+            operation: plannerUtils.buildWorkflow(result.workflow),
         }
     }
 }

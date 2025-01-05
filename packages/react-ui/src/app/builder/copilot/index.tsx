@@ -50,11 +50,11 @@ export const CopilotSidebar = () => {
     const trimmedContent = content.trim();
     if (!trimmedContent) return;
 
-    const userMessages = messages
-      .filter(message => message.type === 'user_message')
+    const messageContents = messages
+      .filter(message => message.type === 'assistant_message' || message.type === 'user_message')
       .map(message => message.content);
 
-    mutation.mutate([trimmedContent, ...userMessages]);
+    mutation.mutate([trimmedContent, ...messageContents]);
 
     addMessage({
       type: 'user_message',
@@ -74,7 +74,10 @@ export const CopilotSidebar = () => {
     if (message.type === 'flow_plan') {
       return <PreviewPlanMessage key={index} message={message} />;
     }
-    return <TextMessage key={index} content={message} />;
+    if (message.type === 'assistant_message' || message.type === 'user_message') {
+      return <TextMessage key={index} content={message} />;
+    }
+    return null;
   };
 
   return (
