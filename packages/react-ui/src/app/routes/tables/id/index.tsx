@@ -64,7 +64,7 @@ function TablePage() {
   const { data: recordsData, isLoading: isRecordsLoading } = useQuery({
     queryKey: ['records', tableId],
     queryFn: () =>
-      recordsApi.list({ tableId: tableId!, cursor: undefined, limit: 10 }),
+      recordsApi.list({ tableId: tableId!, cursor: undefined, limit: 100 }),
   });
 
   const { data: tableData, isLoading: isTableLoading } = useQuery({
@@ -258,8 +258,8 @@ function TablePage() {
   }
 
   return (
-    <div className="mt-4">
-      <div className="flex flex-col gap-4 ml-3">
+    <div className="h-screen overflow-hidden flex flex-col">
+      <div className="flex flex-col gap-4 ml-3 pt-4 flex-none">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -284,7 +284,7 @@ function TablePage() {
               <RadioGroupItem
                 value={RowHeight.COMPACT}
                 id={RowHeight.COMPACT}
-                className="peer sr-only"
+                className="sr-only"
               />
               <label
                 htmlFor={RowHeight.COMPACT}
@@ -307,7 +307,7 @@ function TablePage() {
               <RadioGroupItem
                 value={RowHeight.DEFAULT}
                 id={RowHeight.DEFAULT}
-                className="peer sr-only"
+                className="sr-only"
               />
               <label
                 htmlFor={RowHeight.DEFAULT}
@@ -330,7 +330,7 @@ function TablePage() {
               <RadioGroupItem
                 value={RowHeight.RELAXED}
                 id={RowHeight.RELAXED}
-                className="peer sr-only"
+                className="sr-only"
               />
               <label
                 htmlFor={RowHeight.RELAXED}
@@ -352,18 +352,20 @@ function TablePage() {
           </RadioGroup>
         </div>
       </div>
-      <DataGrid
-        columns={columns}
-        rows={mapRecordsToRows(recordsData?.data ?? [], fieldsData ?? [])}
-        rowKeyGetter={(row: Row) => row.id}
-        selectedRows={selectedRows}
-        onSelectedRowsChange={onSelectedRowsChange}
-        className="rdg-light mt-4"
-        bottomSummaryRows={[{ id: 'new-record' }]}
-        rowHeight={getRowHeight(rowHeight)}
-        headerRowHeight={getRowHeight()}
-        summaryRowHeight={getRowHeight()}
-      />
+      <div className="flex-1 min-h-0 mt-4 grid-wrapper">
+        <DataGrid
+          columns={columns}
+          rows={mapRecordsToRows(recordsData?.data ?? [], fieldsData ?? [])}
+          rowKeyGetter={(row: Row) => row.id}
+          selectedRows={selectedRows}
+          onSelectedRowsChange={onSelectedRowsChange}
+          className="rdg-light h-full"
+          bottomSummaryRows={[{ id: 'new-record' }]}
+          rowHeight={getRowHeight(rowHeight)}
+          headerRowHeight={getRowHeight()}
+          summaryRowHeight={getRowHeight()}
+        />
+      </div>
     </div>
   );
 }

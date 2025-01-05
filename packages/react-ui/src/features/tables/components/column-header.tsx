@@ -30,11 +30,11 @@ type ColumnHeaderProps = {
 const getColumnIcon = (type: FieldType): ReactNode => {
   switch (type) {
     case FieldType.TEXT:
-      return <Type className="h-4 w-4 text-muted-foreground" />;
+      return <Type className="h-4 w-4" />;
     case FieldType.DATE:
-      return <Calendar className="h-4 w-4 text-muted-foreground" />;
+      return <Calendar className="h-4 w-4" />;
     case FieldType.NUMBER:
-      return <Hash className="h-4 w-4 text-muted-foreground" />;
+      return <Hash className="h-4 w-4" />;
     default:
       return null;
   }
@@ -76,14 +76,14 @@ export function ColumnHeader({ label, type, actions }: ColumnHeaderProps) {
       <DropdownMenuTrigger asChild>
         <div
           className={cn(
-            'h-full w-full flex items-center justify-between gap-2 py-2.5 px-3 bg-muted/50 text-muted-foreground',
+            'h-full w-full flex items-center justify-between gap-2 py-2.5 px-3 bg-muted/50 text-muted-foreground font-normal',
             'hover:bg-muted cursor-pointer',
             'data-[state=open]:bg-muted',
           )}
         >
           <div className="flex items-center gap-2">
             {getColumnIcon(type)}
-            {label}
+            <span className="text-sm">{label}</span>
           </div>
           {actions && actions.length > 0 && (
             <ChevronDown className="h-4 w-4 text-muted-foreground" />

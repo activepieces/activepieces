@@ -37,3 +37,32 @@
         border-right-width: 1px;
     }
 }
+
+
+.grid-wrapper {
+  /* Base scrollbar styles */
+  ::-webkit-scrollbar {
+    @apply w-2.5 h-2.5;
+  }
+
+  /* Track */
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  /* Vertical scrollbar */
+  ::-webkit-scrollbar-track:vertical {
+    @apply border-l border-l-transparent p-[1px];
+  }
+
+  /* Horizontal scrollbar */
+  ::-webkit-scrollbar-track:horizontal {
+    @apply border-t border-t-transparent p-[1px];
+  }
+
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    @apply relative flex-1 rounded-full bg-border;
+    @apply touch-none select-none transition-colors;
+  }
+}
