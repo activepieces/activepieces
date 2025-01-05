@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Calendar, SquareFunction, File, LayoutList } from 'lucide-react';
+import { Calendar, SquareFunction, File } from 'lucide-react';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 
 import { FormItem, FormLabel } from '@/components/ui/form';
@@ -15,7 +15,6 @@ import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import {
   Action,
   isNil,
-  ListMapperModeLiteral,
   Trigger,
 } from '@activepieces/shared';
 
@@ -57,11 +56,9 @@ const AutoFormFieldWrapper = ({
   const dynamicInputModeToggled =
     form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName] ===
     true;
-  const listMapperModeToggled =
-    form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName] ===
-    ListMapperModeLiteral;
+ 
 
-  function handleChange(mode: boolean | typeof ListMapperModeLiteral) {
+  function handleChange(mode: boolean) {
     const newCustomizedInputs = {
       ...form.getValues().settings?.inputUiInfo?.customizedInputs,
       [propertyName]: mode,
@@ -83,6 +80,7 @@ const AutoFormFieldWrapper = ({
       );
     }
   }
+  const isArrayProperty = property.type === PropertyType.ARRAY;
 
   return (
     <FormItem className="flex flex-col gap-1">
@@ -116,33 +114,6 @@ const AutoFormFieldWrapper = ({
         <span className="grow"></span>
         {allowDynamicValues && (
           <div className="flex gap-2 items-center">
-            {property.type === PropertyType.ARRAY &&
-              !isNil(property.properties) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Toggle
-                      pressed={listMapperModeToggled}
-                      onPressedChange={() =>
-                        handleChange(
-                          listMapperModeToggled ? false : 'ListMapperMode',
-                        )
-                      }
-                      disabled={disabled}
-                    >
-                      <LayoutList
-                        className={cn('size-5', {
-                          'text-foreground': listMapperModeToggled,
-                          'text-muted-foreground': !listMapperModeToggled,
-                        })}
-                      />
-                    </Toggle>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="bg-background">
-                    {t('List Converter')}
-                  </TooltipContent>
-                </Tooltip>
-              )}
-
             <Tooltip>
               <TooltipTrigger asChild>
                 <Toggle
@@ -166,28 +137,44 @@ const AutoFormFieldWrapper = ({
         )}
       </FormLabel>
 
-      {dynamicInputModeToggled && (
+      {dynamicInputModeToggled && !isArrayProperty && 
         <TextInputWithMentions
           disabled={disabled}
           onChange={field.onChange}
           initialValue={field.value ?? property.defaultValue ?? null}
         />
-      )}
-      {listMapperModeToggled &&
-        property.type === PropertyType.ARRAY &&
-        property.properties !== undefined && (
+       }
+    
+    {
+        isArrayProperty && isNil(property.properties) && dynamicInputModeToggled && (
           <ArrayPiecePropertyInListMapperMode
             disabled={disabled}
-            arrayProperty={property}
+            arrayProperties={property.properties}
+            inputName={inputName}
+            onChange={field.onChange}
+            value={field.value ?? property.defaultValue ?? null}
+          />
+        )
+      }
+      {
+        isArrayProperty && !isNil(property.properties) && dynamicInputModeToggled && (
+          <ArrayPiecePropertyInListMapperMode
+            disabled={disabled}
+            arrayProperties={property.properties}
             inputName={inputName}
           />
-        )}
+        )
+      }
+
       {!placeBeforeLabelText &&
-        !dynamicInputModeToggled &&
-        !listMapperModeToggled && <div>{children}</div>}
+        !dynamicInputModeToggled && <div>{children}</div>}
       {property.description && !hideDescription && (
         <ReadMoreDescription text={t(property.description)} />
       )}
+
+
+      
+    
     </FormItem>
   );
 };

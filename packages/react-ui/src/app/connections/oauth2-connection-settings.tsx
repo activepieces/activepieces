@@ -210,10 +210,7 @@ const OAuth2ConnectionSettings = ({
 
   return (
     <Form {...form}>
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => e.preventDefault()}
-      >
+     
         {currentOAuth2Type === AppConnectionType.OAUTH2 &&
           authProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
             <div className="flex flex-col gap-2">
@@ -344,7 +341,6 @@ const OAuth2ConnectionSettings = ({
               </Button>
             </div>
           )}
-      </form>
     </Form>
   );
 };
