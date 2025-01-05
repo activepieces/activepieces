@@ -1,6 +1,6 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { LRUCache } from 'lru-cache'
@@ -115,25 +115,17 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
         async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest): Promise<PopulatedFlow | null> {
             const startTime = performance.now()
             log.debug({ request }, '[EngineApiService#getFlowWithExactPieces] start')
-            const cacheKey = JSON.stringify(request)
-            const cachedFlow = flowCache.get(cacheKey)
-            if (cachedFlow !== undefined) {
-                log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache hit')
-                return cachedFlow
-            }
+            //TODO: Add caching logic
 
             try {
                 const flow = await client.get<PopulatedFlow | null>('/v1/engine/flows', {
                     params: request,
                 })
-                if (flow !== null) {
-                    flowCache.set(cacheKey, flow)
-                }
+              
                 return flow
             }
             catch (e) {
                 if (ApAxiosClient.isApAxiosError(e) && e.error.response && e.error.response.status === 404) {
-                    flowCache.set(cacheKey, undefined)
                     return null
                 }
                 throw e
