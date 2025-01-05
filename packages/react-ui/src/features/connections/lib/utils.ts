@@ -25,10 +25,13 @@ import {
   isNil,
   apId,
 } from '@activepieces/shared';
+import { globalConnectionsApi } from './global-connections-api';
+import { appConnectionsApi } from './app-connections-api';
+
 
 export class ConnectionNameAlreadyExists extends Error {
   constructor() {
-    super('Connection name already exists');
+    super('Connection name already used');
     this.name = 'ConnectionNameAlreadyExists';
   }
 }
@@ -234,3 +237,16 @@ export const newConnectionUtils = {
     }, {});
   },
 };
+
+export const isConnectionNameUnique = async (isGlobalConnection:boolean,displayName: string) =>{
+ const connections = isGlobalConnection ? await globalConnectionsApi.list({
+    limit: 10000,
+  }) : await appConnectionsApi.list({
+    projectId: authenticationSession.getProjectId()!,
+    limit: 10000,
+  });
+  const existingConnection = connections.data.find(
+    (connection) => connection.displayName === displayName,
+  );
+  return isNil(existingConnection);
+}
