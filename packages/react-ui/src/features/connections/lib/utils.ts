@@ -31,8 +31,15 @@ import { appConnectionsApi } from './app-connections-api';
 
 export class ConnectionNameAlreadyExists extends Error {
   constructor() {
-    super('Connection name already used');
+    super(t('Connection name already used'));
     this.name = 'ConnectionNameAlreadyExists';
+  }
+}
+
+export class NoProjectSelected extends Error {
+  constructor() {
+    super(t('Please select at least one project'));
+    this.name = 'NoProjectSelected';
   }
 }
 

@@ -21,7 +21,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
 import { globalConnectionsApi } from '../lib/global-connections-api';
-import { ConnectionNameAlreadyExists, isConnectionNameUnique } from '../lib/utils';
+import { ConnectionNameAlreadyExists, isConnectionNameUnique, NoProjectSelected } from '../lib/utils';
 import { AssignConnectionToProjectsControl } from '../../../components/ui/assign-global-connection-to-projects';
 
 const EditGlobalConnectionSchema = Type.Object({
@@ -71,6 +71,9 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
       if(!(await isConnectionNameUnique(true,displayName)) && displayName !== currentName){
         throw new ConnectionNameAlreadyExists();
       }
+      if(projectIds.length === 0){
+        throw new NoProjectSelected();
+      }
       return globalConnectionsApi.update(connectionId, {
         displayName,
         projectIds,
@@ -88,6 +91,11 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
     onError: (error) => {
       if(error instanceof ConnectionNameAlreadyExists){
         editConnectionForm.setError('displayName', {
+          message: error.message,
+        });
+      }
+      else if(error instanceof NoProjectSelected){
+        editConnectionForm.setError('projectIds', {
           message: error.message,
         });
       }

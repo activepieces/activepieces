@@ -1,7 +1,7 @@
 import { isNil } from "@activepieces/shared";
 import { t } from "i18next";
 import { Control } from "react-hook-form";
-import { FormField, FormItem } from "./form";
+import { FormField, FormItem, FormMessage } from "./form";
 import { projectHooks } from "@/hooks/project-hooks";
 import { Label } from "./label";
 import { MultiSelectPieceProperty } from "../custom/multi-select-piece-property";
@@ -38,6 +38,8 @@ export const AssignConnectionToProjectsControl = (
                       initialValues={field.value}
                       showDeselect={field.value.length > 0}
                     />
+
+                    <FormMessage  className="!mt-4" />
                   </FormItem>
                 )}
               />

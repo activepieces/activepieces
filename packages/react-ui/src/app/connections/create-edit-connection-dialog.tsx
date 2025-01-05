@@ -55,6 +55,7 @@ import {
   newConnectionUtils,
   ConnectionNameAlreadyExists,
   isConnectionNameUnique,
+  NoProjectSelected,
 } from '../../features/connections/lib/utils';
 import { OAuth2ConnectionSettings } from './oauth2-connection-settings';
 import { SecretTextConnectionSettings } from './secret-text-connection-settings';
@@ -118,21 +119,19 @@ const CreateOrEditConnectionDialog = React.memo(
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
+        const isConenctionNameUnique = await isConnectionNameUnique(isGlobalConnection,formValues.displayName);
+        if (!isConenctionNameUnique && reconnectConnection?.displayName !== formValues.displayName) {
+          throw new ConnectionNameAlreadyExists();
+        }
         if (isGlobalConnection) {
-          const isConenctionNameUnique = await isConnectionNameUnique(true,formValues.displayName);
-          if (!isConenctionNameUnique && (isNil(reconnectConnection) || reconnectConnection.displayName === formValues.displayName)) {
-            throw new ConnectionNameAlreadyExists();
+          if(formValues.projectIds.length === 0){
+            throw new NoProjectSelected();
           }
           return globalConnectionsApi.upsert({
             ...formValues,
             projectIds: formValues.projectIds,
             scope: AppConnectionScope.PLATFORM,
           });
-        }
-
-        const isConenctionNameUnique = await isConnectionNameUnique(false,formValues.displayName);
-        if (!isConenctionNameUnique && (isNil(reconnectConnection) || reconnectConnection.displayName === formValues.displayName)) {
-          throw new ConnectionNameAlreadyExists();
         }
         return appConnectionsApi.upsert(formValues);
       },
@@ -147,7 +146,11 @@ const CreateOrEditConnectionDialog = React.memo(
       onError: (err) => {
         if (err instanceof ConnectionNameAlreadyExists) {
           form.setError('request.displayName', {
-            message: t('Name is already used'),
+            message: err.message,
+          });
+        } else if (err instanceof NoProjectSelected) {
+          form.setError('request.projectIds', {
+            message: err.message,
           });
         } else if (api.isError(err)) {
           const apError = err.response?.data as ApErrorParams;
