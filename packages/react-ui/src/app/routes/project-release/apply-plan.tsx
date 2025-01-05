@@ -71,7 +71,9 @@ export const ApplyButton = ({
       <Button
         {...props}
         loading={isLoading}
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
           if (showGitDialog) {
             setGitDialogOpen(true);
           } else {

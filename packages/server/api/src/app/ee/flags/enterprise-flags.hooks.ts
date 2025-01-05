@@ -20,9 +20,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             [ThirdPartyAuthnProviderEnum.GOOGLE]: !isNil(
                 platform.federatedAuthProviders.google,
             ),
-            [ThirdPartyAuthnProviderEnum.GITHUB]: !isNil(
-                platform.federatedAuthProviders.github,
-            ),
             [ThirdPartyAuthnProviderEnum.SAML]: !isNil(
                 platform.federatedAuthProviders.saml,
             ),

@@ -178,11 +178,19 @@
           ]
         },
         {
+          "group": "Project Releases",
+          "icon": "cube",
+          "pages": [
+            "endpoints/project-releases/schema",
+            "endpoints/project-releases/create"
+          ]
+        },
+        {
           "group": "Git Sync",
           "icon": "git",
           "pages": [
             "endpoints/git-repos/schema",
-            "endpoints/git-repos/pull"
+            "endpoints/git-repos/configure"
           ]
         },
         {

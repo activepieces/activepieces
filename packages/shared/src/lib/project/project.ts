@@ -28,6 +28,7 @@ export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
     teamMembers: Type.Number(),
     aiTokens: Type.Number(),
+    nextLimitResetDate: Type.String(),
 })
 
 export const SwitchProjectResponse = Type.Object({
