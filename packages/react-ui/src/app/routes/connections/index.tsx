@@ -40,7 +40,9 @@ import {
   AppConnectionStatus,
   AppConnectionWithoutSensitiveData,
   Permission,
+  PlatformRole,
 } from '@activepieces/shared';
+import { CopyButton } from '@/components/ui/copy-button';
 
 const filters = [
   {
@@ -65,6 +67,7 @@ function AppConnectionsPage() {
   >([]);
   const { toast } = useToast();
   const { checkAccess } = useAuthorization();
+  const userPlatformRole = authenticationSession.getUserPlatformRole();
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown
@@ -163,8 +166,8 @@ function AppConnectionsPage() {
         return (
           <div className="flex items-center gap-2">
             {isPlatformConnection && (
-              <Tooltip>
-                <TooltipTrigger>
+              <Tooltip >
+                <TooltipTrigger asChild>
                   <Globe className="w-4 h-4" />
                 </TooltipTrigger>
                 <TooltipContent>
@@ -181,9 +184,9 @@ function AppConnectionsPage() {
                 <div className="text-left">{row.original.displayName}</div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>
-                  {t('External ID')}: {row.original.externalId || '-'}
-                </p>
+                <div className='flex gap-2 items-center'>
+                  {t('External ID')}: {row.original.externalId || '-'}  <CopyButton withoutTooltip={true} variant='ghost'  textToCopy={row.original.externalId || ''}></CopyButton>
+                </div>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -249,13 +252,8 @@ function AppConnectionsPage() {
         const isPlatformConnection = row.original.scope === 'PLATFORM';
         return (
           <div className="flex items-center gap-2 justify-end">
-            <PermissionNeededTooltip
-              hasPermission={
-                userHasPermissionToWriteAppConnection && !isPlatformConnection
-              }
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>
+         
+            
                   <RenameConnectionDialog
                     connectionId={row.original.id}
                     currentName={row.original.displayName}
@@ -263,30 +261,29 @@ function AppConnectionsPage() {
                       refetch();
                     }}
                   >
+                      <Tooltip>
+                      <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
                       disabled={
-                        !userHasPermissionToWriteAppConnection ||
-                        isPlatformConnection
+                       isPlatformConnection? userPlatformRole !== PlatformRole.ADMIN : !userHasPermissionToWriteAppConnection
                       }
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                  </RenameConnectionDialog>
-                </TooltipTrigger>
+                    </TooltipTrigger>
                 <TooltipContent>
-                  <p>
-                    {isPlatformConnection
-                      ? t('Platform connections cannot be renamed')
-                      : t('Rename Connection')}
-                  </p>
+                {
+                userPlatformRole !== PlatformRole.ADMIN && !userHasPermissionToWriteAppConnection ? t('Permission needed') : t('Rename')
+                }
                 </TooltipContent>
               </Tooltip>
-            </PermissionNeededTooltip>
+                  </RenameConnectionDialog>
+              
             <ReconnectButtonDialog
               hasPermission={
-                userHasPermissionToWriteAppConnection && !isPlatformConnection
+               !isPlatformConnection? userHasPermissionToWriteAppConnection : userPlatformRole === PlatformRole.ADMIN
               }
               connection={row.original}
               onConnectionCreated={() => {
