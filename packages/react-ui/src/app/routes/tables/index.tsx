@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash, Trash2 } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -188,41 +188,47 @@ function TablesPage() {
   const bulkActions: BulkAction<Table>[] = useMemo(
     () => [
       {
-        render: (_, resetSelection) => {
-          return (
-            <div onClick={(e) => e.stopPropagation()}>
-              <ConfirmationDeleteDialog
-                title={t('Confirm Deletion')}
-                message={t(
-                  'Are you sure you want to delete the selected tables? This action cannot be undone.',
-                )}
-                entityName="table"
-                mutationFn={async () => {
-                  try {
-                    await bulkDeleteMutation.mutateAsync(
-                      selectedRows.map((row) => row.id),
-                    );
-                    resetSelection();
-                    setSelectedRows([]);
-                  } catch (error) {
-                    console.error('Error deleting tables:', error);
-                  }
-                }}
-              >
-                {selectedRows.length > 0 && (
-                  <Button
-                    className="w-full mr-2"
-                    size="sm"
-                    variant="destructive"
-                  >
-                    <Trash className="mr-2 w-4" />
-                    {`${t('Delete')} (${selectedRows.length})`}
-                  </Button>
-                )}
-              </ConfirmationDeleteDialog>
-            </div>
-          );
-        },
+        render: (_, resetSelection) => (
+          <div onClick={(e) => e.stopPropagation()}>
+            <ConfirmationDeleteDialog
+              title={t('Delete Tables')}
+              message={t(
+                'Are you sure you want to delete the selected tables? This action cannot be undone.',
+              )}
+              entityName={t('table')}
+              mutationFn={async () => {
+                try {
+                  await bulkDeleteMutation.mutateAsync(
+                    selectedRows.map((row) => row.id),
+                  );
+                  resetSelection();
+                  setSelectedRows([]);
+                } catch (error) {
+                  console.error('Error deleting tables:', error);
+                }
+              }}
+            >
+              {selectedRows.length > 0 && (
+                <Button className="w-full mr-2" size="sm" variant="destructive">
+                  <Trash2 className="mr-2 w-4" />
+                  {`${t('Delete')} (${selectedRows.length})`}
+                </Button>
+              )}
+            </ConfirmationDeleteDialog>
+          </div>
+        ),
+      },
+      {
+        render: () => (
+          <Button
+            size="sm"
+            onClick={() => setShowNewTableDialog(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {t('New Table')}
+          </Button>
+        ),
       },
     ],
     [bulkDeleteMutation, selectedRows],
@@ -230,16 +236,7 @@ function TablesPage() {
 
   return (
     <div className="flex-col w-full">
-      <div className="flex items-center justify-between">
-        <TableTitle>{t('Tables')}</TableTitle>
-        <Button
-          onClick={() => setShowNewTableDialog(true)}
-          variant="default"
-          className="flex gap-2 items-center"
-        >
-          {t('New Table')}
-        </Button>
-      </div>
+      <TableTitle>{t('Tables')}</TableTitle>
 
       <DataTable
         columns={columns}

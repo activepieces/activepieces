@@ -8,6 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { toast } from '@/components/ui/use-toast';
 import {
   ColumnHeader,
@@ -55,18 +56,18 @@ function TablePage() {
   );
   const [rowHeight, setRowHeight] = useState<RowHeight>(RowHeight.DEFAULT);
 
-  const { data: fieldsData } = useQuery({
+  const { data: fieldsData, isLoading: isFieldsLoading } = useQuery({
     queryKey: ['fields', tableId],
     queryFn: () => fieldsApi.list(tableId!),
   });
 
-  const { data: recordsData } = useQuery({
+  const { data: recordsData, isLoading: isRecordsLoading } = useQuery({
     queryKey: ['records', tableId],
     queryFn: () =>
       recordsApi.list({ tableId: tableId!, cursor: undefined, limit: 10 }),
   });
 
-  const { data: tableData } = useQuery({
+  const { data: tableData, isLoading: isTableLoading } = useQuery({
     queryKey: ['table', tableId],
     queryFn: () => tablesApi.getById(tableId!),
   });
@@ -229,6 +230,31 @@ function TablePage() {
       });
       return row;
     });
+  }
+
+  const isLoading = isFieldsLoading || isRecordsLoading || isTableLoading;
+
+  if (isLoading) {
+    return (
+      <div className="mt-4">
+        <div className="flex flex-col gap-4 ml-3">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="p-2"
+              onClick={() => navigate('/tables')}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <LoadingSpinner />
+              <span className="text-muted-foreground">{t('Loading...')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
