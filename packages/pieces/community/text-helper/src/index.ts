@@ -23,7 +23,7 @@ export const textHelper = createPiece({
     'AbdulTheActivePiecer',
     'abuaboud',
     'AdamSelene',
-    'Surya',
+    'Anmol-Gup',
   ],
   categories: [PieceCategory.CORE],
   actions: [
