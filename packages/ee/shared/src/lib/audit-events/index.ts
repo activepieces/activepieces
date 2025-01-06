@@ -9,6 +9,7 @@ import {
   FlowVersion,
   Folder,
   Project,
+  ProjectRelease,
   ProjectRole,
   User,
 } from '@activepieces/shared';
@@ -46,6 +47,7 @@ export enum ApplicationEventName {
   PROJECT_ROLE_CREATED = 'project.role.created',
   PROJECT_ROLE_DELETED = 'project.role.deleted',
   PROJECT_ROLE_UPDATED = 'project.role.updated',
+  PROJECT_RELEASE_CREATED = 'project.release.created',
 }
 
 const BaseAuditEventProps = {
@@ -229,6 +231,16 @@ export const ProjectRoleEvent = Type.Object({
 
 export type ProjectRoleEvent = Static<typeof ProjectRoleEvent>;
 
+export const ProjectReleaseEvent = Type.Object({
+  ...BaseAuditEventProps,
+  action: Type.Literal(ApplicationEventName.PROJECT_RELEASE_CREATED),
+  data: Type.Object({
+    release: Type.Pick(ProjectRelease, ['name', 'description', 'type', 'projectId', 'importedByUser']),
+  }),
+});
+
+export type ProjectReleaseEvent = Static<typeof ProjectReleaseEvent>;
+
 export const ApplicationEvent = Type.Union([
   ConnectionEvent,
   FlowCreatedEvent,
@@ -240,6 +252,7 @@ export const ApplicationEvent = Type.Union([
   SignUpEvent,
   SigningKeyEvent,
   ProjectRoleEvent,
+  ProjectReleaseEvent,
 ]);
 
 export type ApplicationEvent = Static<typeof ApplicationEvent>;
@@ -284,6 +297,8 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
       return `${event.data.projectRole.name} is updated`;
     case ApplicationEventName.PROJECT_ROLE_DELETED:
       return `${event.data.projectRole.name} is deleted`;
+    case ApplicationEventName.PROJECT_RELEASE_CREATED:
+      return `${event.data.release.name} is created`;
   }
 }
 

@@ -276,6 +276,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                 <Button
                   variant="ghost"
                   disabled={!userHasPermissionToUpdateFolders}
+                  size="icon"
+                  className="mr-1"
                 >
                   <PlusIcon size={18} />
                 </Button>

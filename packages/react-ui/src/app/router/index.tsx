@@ -57,6 +57,7 @@ import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
 import { ProjectReleasesPage } from '../routes/project-release';
+import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import AppearancePage from '../routes/settings/appearance';
@@ -165,6 +166,16 @@ const routes = [
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
+  ...ProjectRouterWrapper({
+    path: '/releases/:releaseId',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Releases">
+          <ViewRelease />
+        </PageTitle>
+      </DashboardContainer>
+    ),
+  }),
   ...ProjectRouterWrapper({
     path: '/runs',
     element: (

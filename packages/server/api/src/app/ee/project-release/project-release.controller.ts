@@ -1,11 +1,21 @@
-import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, FileType, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
+import { ApplicationEventName } from '@activepieces/ee-shared'
+import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { fileService } from '../../file/file.service'
+import { eventsHooks } from '../../helper/application-events'
 import { platformService } from '../../platform/platform.service'
 import { projectReleaseService } from './project-release.service'
 
 export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) => {
+
+    app.get('/:id', GetProjectReleaseRequest, async (req) => {
+        const release = await projectReleaseService.getOneOrThrow({
+            id: req.params.id,
+            projectId: req.principal.projectId,
+        })
+        return projectReleaseService.enrich(release)
+    })
+
     app.get('/', ListProjectReleasesRequestParams, async (req) => {
         return projectReleaseService.list({
             projectId: req.principal.projectId,
@@ -16,7 +26,15 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     app.post('/', CreateProjectReleaseRequest, async (req) => {
         const platform = await platformService.getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
-        return projectReleaseService.create(req.principal.projectId, ownerId, req.principal.id, req.body, req.log)
+        const release = await projectReleaseService.create(req.principal.projectId, ownerId, req.principal.id, req.body, req.log)
+
+        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+            action: ApplicationEventName.PROJECT_RELEASE_CREATED,
+            data: {
+                release,
+            },
+        })
+        return release
     })
 
     app.post('/diff', DiffProjectReleaseRequest, async (req) => {
@@ -24,21 +42,18 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
         const ownerId = platform.ownerId
         return projectReleaseService.releasePlan(req.principal.projectId, ownerId, req.body, req.log)
     })
-
-    app.post('/:id/export', ExportProjectReleaseRequest, async (req) => {
-        const projectRelease = await projectReleaseService.getOneOrThrow({
-            id: req.params.id,
-            projectId: req.principal.projectId,
-        })
-        const file = await fileService(req.log).getDataOrThrow({
-            fileId: projectRelease.fileId,
-            projectId: projectRelease.projectId,
-            type: FileType.PROJECT_RELEASE,
-        })
-        return JSON.parse(file.data.toString())
-    })
 }
 
+const GetProjectReleaseRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+    },
+}
 
 const ListProjectReleasesRequestParams = {
     config: {
@@ -66,20 +81,10 @@ const CreateProjectReleaseRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
+        tags: ['project-releases'],
         body: CreateProjectReleaseRequestBody,
         response: {
             [StatusCodes.CREATED]: ProjectRelease,
         },
-    },
-}
-
-const ExportProjectReleaseRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER],
-    },
-    schema: {
-        params: Type.Object({
-            id: ApId,
-        }),
     },
 }

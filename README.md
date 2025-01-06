@@ -354,6 +354,8 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ChineseHamberger"><img src="https://avatars.githubusercontent.com/u/101547635?v=4?s=100" width="100px;" alt="张晟杰"/><br /><sub><b>张晟杰</b></sub></a><br /><a href="#plugin-ChineseHamberger" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://codesign.rf.gd"><img src="https://avatars.githubusercontent.com/u/72438085?v=4?s=100" width="100px;" alt="Ashot"/><br /><sub><b>Ashot</b></sub></a><br /><a href="#plugin-AshotZaqoyan" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/amrabuaza"><img src="https://avatars.githubusercontent.com/u/30035105?v=4?s=100" width="100px;" alt="Amr Abu Aza"/><br /><sub><b>Amr Abu Aza</b></sub></a><br /><a href="#plugin-amrabuaza" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
