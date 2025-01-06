@@ -85,11 +85,6 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
     onSuccess: () => {
       setOpen(false);
       form.reset();
-      toast({
-        title: t('Success'),
-        description: t('Field has been created.'),
-        duration: 3000,
-      });
     },
     onSettled: (data, error, variables, context) => {
       if (data && context?.optimisticField) {

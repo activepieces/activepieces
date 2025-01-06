@@ -174,11 +174,6 @@ function TablePage() {
           })),
         }),
       );
-      toast({
-        title: t('Success'),
-        description: t('Record has been updated.'),
-        duration: 3000,
-      });
     },
   });
 
@@ -206,13 +201,6 @@ function TablePage() {
       toast({
         title: t('Error'),
         description: t('Failed to delete field.'),
-        duration: 3000,
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Field has been deleted.'),
         duration: 3000,
       });
     },
@@ -253,11 +241,6 @@ function TablePage() {
     },
     onSuccess: () => {
       setSelectedRows(new Set());
-      toast({
-        title: t('Success'),
-        description: t('Records have been deleted.'),
-        duration: 3000,
-      });
     },
   });
 
@@ -530,7 +513,9 @@ function TablePage() {
                   message={t(
                     'Are you sure you want to delete the selected records? This action cannot be undone.',
                   )}
-                  entityName={t('record')}
+                  entityName={
+                    selectedRows.size === 1 ? t('record') : t('records')
+                  }
                   mutationFn={async () => {
                     try {
                       await deleteRecordsMutation.mutateAsync(

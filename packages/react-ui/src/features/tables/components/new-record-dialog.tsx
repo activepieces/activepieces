@@ -129,11 +129,6 @@ export function NewRecordDialog({
     onSuccess: () => {
       setOpen(false);
       form.reset();
-      toast({
-        title: t('Success'),
-        description: t('Record has been created.'),
-        duration: 3000,
-      });
     },
     onSettled: (data, error, variables, context) => {
       if (data && context?.optimisticRecord) {
