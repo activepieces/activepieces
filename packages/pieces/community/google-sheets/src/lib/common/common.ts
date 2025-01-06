@@ -247,10 +247,11 @@ export const googleSheetsCommon = {
 export async function findSheetName(
   access_token: string,
   spreadsheetId: string,
-  sheetId: number
+  sheetId: string | number
 ) {
   const sheets = await listSheetsName(access_token, spreadsheetId);
-  const sheetName = sheets.find((f) => f.properties.sheetId === sheetId)
+  // don't use === because sheetId can be a string when dynamic values are used
+  const sheetName = sheets.find((f) => f.properties.sheetId == sheetId)
     ?.properties.title;
   if (!sheetName) {
     throw Error(
