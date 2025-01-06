@@ -13,12 +13,14 @@ import {
   Rows3,
   Rows2,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import DataGrid, { Column, RenderCellProps } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -216,6 +218,49 @@ function TablePage() {
     },
   });
 
+  const deleteRecordsMutation = useMutation({
+    mutationKey: ['deleteRecords'],
+    mutationFn: async (recordIds: string[]) => {
+      await Promise.all(recordIds.map((id) => recordsApi.delete(id)));
+    },
+    onMutate: async (recordIds) => {
+      await queryClient.cancelQueries({ queryKey: ['records', tableId] });
+      const previousRecords = queryClient.getQueryData(['records', tableId]);
+
+      // Update the cache optimistically
+      queryClient.setQueryData(
+        ['records', tableId],
+        (old: { pages: { data: PopulatedRecord[] }[] }) => ({
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.filter((record) => !recordIds.includes(record.id)),
+          })),
+        }),
+      );
+
+      return { previousRecords };
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousRecords) {
+        queryClient.setQueryData(['records', tableId], context.previousRecords);
+      }
+      toast({
+        title: t('Error'),
+        description: t('Failed to delete records.'),
+        duration: 3000,
+      });
+    },
+    onSuccess: () => {
+      setSelectedRows(new Set());
+      toast({
+        title: t('Success'),
+        description: t('Records have been deleted.'),
+        duration: 3000,
+      });
+    },
+  });
+
   const columns: readonly Column<Row, { id: string }>[] = [
     {
       ...SelectColumn,
@@ -340,8 +385,9 @@ function TablePage() {
   const isMutating = useIsMutating({
     predicate: (mutation) =>
       mutation.options.mutationKey?.[0] === 'updateRecord' ||
-      mutation.options.mutationKey?.[0] === 'deleteField' ||
       mutation.options.mutationKey?.[0] === 'createRecord' ||
+      mutation.options.mutationKey?.[0] === 'deleteRecords' ||
+      mutation.options.mutationKey?.[0] === 'deleteField' ||
       mutation.options.mutationKey?.[0] === 'createField',
   });
 
@@ -395,85 +441,120 @@ function TablePage() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground ml-2">
-            {t('Row Height')}
-          </span>
-          <RadioGroup
-            value={rowHeight}
-            onValueChange={(value) => setRowHeight(value as RowHeight)}
-            className="flex items-center gap-1 bg-muted p-1 rounded-md"
-          >
-            <div className="flex items-center">
-              <RadioGroupItem
-                value={RowHeight.COMPACT}
-                id={RowHeight.COMPACT}
-                className="sr-only"
-              />
-              <label
-                htmlFor={RowHeight.COMPACT}
-                className={cn(
-                  'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
-                  rowHeight === RowHeight.COMPACT ? 'bg-background' : '',
-                )}
-              >
-                <Rows4
-                  className={cn(
-                    'h-4 w-4',
-                    rowHeight === RowHeight.COMPACT
-                      ? 'text-primary'
-                      : 'text-muted-foreground',
-                  )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground ml-2">
+              {t('Row Height')}
+            </span>
+            <RadioGroup
+              value={rowHeight}
+              onValueChange={(value) => setRowHeight(value as RowHeight)}
+              className="flex items-center gap-1 bg-muted p-1 rounded-md"
+            >
+              <div className="flex items-center">
+                <RadioGroupItem
+                  value={RowHeight.COMPACT}
+                  id={RowHeight.COMPACT}
+                  className="sr-only"
                 />
-              </label>
-            </div>
-            <div className="flex items-center">
-              <RadioGroupItem
-                value={RowHeight.DEFAULT}
-                id={RowHeight.DEFAULT}
-                className="sr-only"
-              />
-              <label
-                htmlFor={RowHeight.DEFAULT}
-                className={cn(
-                  'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
-                  rowHeight === RowHeight.DEFAULT ? 'bg-background' : '',
-                )}
-              >
-                <Rows3
+                <label
+                  htmlFor={RowHeight.COMPACT}
                   className={cn(
-                    'h-4 w-4',
-                    rowHeight === RowHeight.DEFAULT
-                      ? 'text-primary'
-                      : 'text-muted-foreground',
+                    'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
+                    rowHeight === RowHeight.COMPACT ? 'bg-background' : '',
                   )}
+                >
+                  <Rows4
+                    className={cn(
+                      'h-4 w-4',
+                      rowHeight === RowHeight.COMPACT
+                        ? 'text-primary'
+                        : 'text-muted-foreground',
+                    )}
+                  />
+                </label>
+              </div>
+              <div className="flex items-center">
+                <RadioGroupItem
+                  value={RowHeight.DEFAULT}
+                  id={RowHeight.DEFAULT}
+                  className="sr-only"
                 />
-              </label>
-            </div>
-            <div className="flex items-center">
-              <RadioGroupItem
-                value={RowHeight.RELAXED}
-                id={RowHeight.RELAXED}
-                className="sr-only"
-              />
-              <label
-                htmlFor={RowHeight.RELAXED}
-                className={cn(
-                  'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
-                  rowHeight === RowHeight.RELAXED ? 'bg-background' : '',
-                )}
-              >
-                <Rows2
+                <label
+                  htmlFor={RowHeight.DEFAULT}
                   className={cn(
-                    'h-4 w-4',
-                    rowHeight === RowHeight.RELAXED
-                      ? 'text-primary'
-                      : 'text-muted-foreground',
+                    'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
+                    rowHeight === RowHeight.DEFAULT ? 'bg-background' : '',
                   )}
+                >
+                  <Rows3
+                    className={cn(
+                      'h-4 w-4',
+                      rowHeight === RowHeight.DEFAULT
+                        ? 'text-primary'
+                        : 'text-muted-foreground',
+                    )}
+                  />
+                </label>
+              </div>
+              <div className="flex items-center">
+                <RadioGroupItem
+                  value={RowHeight.RELAXED}
+                  id={RowHeight.RELAXED}
+                  className="sr-only"
                 />
-              </label>
-            </div>
-          </RadioGroup>
+                <label
+                  htmlFor={RowHeight.RELAXED}
+                  className={cn(
+                    'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
+                    rowHeight === RowHeight.RELAXED ? 'bg-background' : '',
+                  )}
+                >
+                  <Rows2
+                    className={cn(
+                      'h-4 w-4',
+                      rowHeight === RowHeight.RELAXED
+                        ? 'text-primary'
+                        : 'text-muted-foreground',
+                    )}
+                  />
+                </label>
+              </div>
+            </RadioGroup>
+          </div>
+          <div className="flex items-center gap-2 mr-2">
+            {selectedRows.size > 0 && (
+              <div onClick={(e) => e.stopPropagation()}>
+                <ConfirmationDeleteDialog
+                  title={t('Delete Records')}
+                  message={t(
+                    'Are you sure you want to delete the selected records? This action cannot be undone.',
+                  )}
+                  entityName={t('record')}
+                  mutationFn={async () => {
+                    try {
+                      await deleteRecordsMutation.mutateAsync(
+                        Array.from(selectedRows),
+                      );
+                      setSelectedRows(new Set());
+                    } catch (error) {
+                      console.error('Error deleting records:', error);
+                    }
+                  }}
+                >
+                  <Button
+                    className="w-full mr-2"
+                    size="sm"
+                    variant="destructive"
+                    loading={false}
+                  >
+                    <Trash2 className="mr-2 w-4" />
+                    {`${t('Delete')} (${selectedRows.size})`}
+                  </Button>
+                </ConfirmationDeleteDialog>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex-1 min-h-0 mt-4 grid-wrapper">
