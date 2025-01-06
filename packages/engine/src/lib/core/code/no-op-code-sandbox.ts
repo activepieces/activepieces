@@ -1,10 +1,14 @@
-import { CodeSandbox } from '../../core/code/code-sandbox-common'
+import { CodeSandbox, isCodeV2Module } from '../../core/code/code-sandbox-common'
+import { CodeV2Context } from './code-v2'
 
 /**
  * Runs code without a sandbox.
  */
 export const noOpCodeSandbox: CodeSandbox = {
     async runCodeModule({ codeModule, inputs }) {
+        if (isCodeV2Module(codeModule)) {
+            return codeModule.code.run({ inputs } as unknown as CodeV2Context)
+        }
         return codeModule.code(inputs)
     },
 

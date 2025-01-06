@@ -1,6 +1,6 @@
 import { PiecePropertyMap } from "./property";
-import { WebhookRenewConfiguration, TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
-import { ErrorHandlingOptionsParam } from "./action/action";
+import { WebhookRenewConfiguration, TriggerStrategy, WebhookHandshakeConfiguration } from "./piece/trigger";
+import { ErrorHandlingOptionsParam } from "./piece/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { Static, Type } from "@sinclair/typebox";
 import { PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy } from "@activepieces/shared";

@@ -8,7 +8,7 @@ import {
   SeekPage,
   TriggerPayload,
 } from '@activepieces/shared';
-import { TriggerStrategy } from './trigger/trigger';
+import { TriggerStrategy } from './piece/trigger';
 import {
   InputPropertyMap,
   PiecePropValueSchema,

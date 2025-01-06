@@ -1,3 +1,5 @@
+import { CodeV2Module } from './code-v2'
+
 export type CodeModule = {
     code(input: unknown): Promise<unknown>
 }
@@ -6,7 +8,7 @@ export type CodeSandbox = {
     /**
      * Executes a {@link CodeModule}.
      */
-    runCodeModule(params: RunCodeModuleParams): Promise<unknown>
+    runCodeModule<T extends CodeModule | CodeV2Module>(params: RunCodeModuleParams<T>): Promise<unknown>
 
     /**
      * Executes a script.
@@ -14,11 +16,15 @@ export type CodeSandbox = {
     runScript(params: RunScriptParams): Promise<unknown>
 }
 
-type RunCodeModuleParams = {
+export function isCodeV2Module(module: CodeModule | CodeV2Module): module is CodeV2Module {
+    return 'code' in module && 'run' in module.code
+}
+
+type RunCodeModuleParams<T extends CodeModule | CodeV2Module> = {
     /**
      * The {@link CodeModule} to execute.
      */
-    codeModule: CodeModule
+    codeModule: T
 
     /**
      * The inputs that are passed to the {@link CodeModule}.

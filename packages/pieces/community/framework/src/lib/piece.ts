@@ -1,5 +1,5 @@
-import { Trigger } from './trigger/trigger';
-import { Action } from './action/action';
+import { Trigger } from './piece/trigger';
+import { Action } from './piece/action';
 import {
   EventPayload,
   ParseEventResponse,

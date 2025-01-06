@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { CodeModule, CodeSandbox } from '../../core/code/code-sandbox-common'
+import { CodeModule, CodeSandbox, isCodeV2Module } from '../../core/code/code-sandbox-common'
+import { CodeV2Module } from './code-v2'
 
 const ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES = 128
 
@@ -86,8 +87,8 @@ const executeIsolate = async ({ isolate, isolateContext, code }: ExecuteIsolateP
     return outRef.copy()
 }
 
-const serializeCodeModule = (codeModule: CodeModule): string => {
-    const serializedCodeFunction = codeModule.code.toString()
+const serializeCodeModule = (codeModule: CodeModule | CodeV2Module): string => {
+    const serializedCodeFunction = isCodeV2Module(codeModule) ? codeModule.code.run.toString() : codeModule.code.toString()
     return `const code = ${serializedCodeFunction}; code(inputs);`
 }
 

@@ -8,11 +8,7 @@ import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
 
 export const codeExecutor: BaseExecutor<CodeAction> = {
-    async handle({
-        action,
-        executionState,
-        constants,
-    }) {
+    async handle({ action, executionState, constants }) {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
         }
