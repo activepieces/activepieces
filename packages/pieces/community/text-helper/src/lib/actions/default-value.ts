@@ -12,9 +12,9 @@ export const defaultValue = createAction({
       hide: true,
     },
   },
-  displayName: 'Default Value',
+  displayName: 'Use Default Value if Input is Empty',
   description:
-    'Returns the input string or a default string if the input is null.',
+    'Checks your input and returns the default value, if the input is an empty text or list',
   props: {
     value: Property.ShortText({
       displayName: 'Enter value',
@@ -22,8 +22,7 @@ export const defaultValue = createAction({
       required: false,
     }),
     defaultString: Property.ShortText({
-      displayName: 'Enter default value',
-      description: 'Enter default value',
+      displayName: 'Default Value',
       required: true,
     }),
   },
