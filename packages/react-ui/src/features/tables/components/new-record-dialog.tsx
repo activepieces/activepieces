@@ -105,9 +105,16 @@ export function NewRecordDialog({
 
       queryClient.setQueryData(
         ['records', tableId],
-        (old: { data: PopulatedRecord[] }) => ({
+        (old: { pages: { data: PopulatedRecord[] }[] }) => ({
           ...old,
-          data: [...(old?.data || []), optimisticRecord],
+          pages: old.pages.map((page, index) =>
+            index === 0
+              ? {
+                  ...page,
+                  data: [optimisticRecord, ...page.data],
+                }
+              : page,
+          ),
         }),
       );
 
@@ -133,11 +140,14 @@ export function NewRecordDialog({
         // Replace the optimistic record with the real one
         queryClient.setQueryData(
           ['records', tableId],
-          (old: { data: PopulatedRecord[] }) => ({
+          (old: { pages: { data: PopulatedRecord[] }[] }) => ({
             ...old,
-            data: old.data.map((record: PopulatedRecord) =>
-              record.id === context.optimisticRecord.id ? data[0] : record,
-            ),
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.map((record: PopulatedRecord) =>
+                record.id === context.optimisticRecord.id ? data[0] : record,
+              ),
+            })),
           }),
         );
       }

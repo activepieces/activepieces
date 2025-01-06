@@ -111,17 +111,70 @@ function TablePage() {
     }) => {
       return recordsApi.update(recordId, request);
     },
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Record has been updated.'),
-        duration: 3000,
-      });
+    onMutate: async ({ recordId, request }) => {
+      await queryClient.cancelQueries({ queryKey: ['records', tableId] });
+      const previousRecords = queryClient.getQueryData(['records', tableId]);
+
+      // Update the cache optimistically
+      queryClient.setQueryData(
+        ['records', tableId],
+        (old: { pages: { data: PopulatedRecord[] }[] }) => ({
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.map((record) => {
+              if (record.id === recordId) {
+                return {
+                  ...record,
+                  cells: record.cells.map((cell) => {
+                    const updatedCell = request.cells?.find(
+                      (c) => c.key === cell.fieldId,
+                    );
+                    if (updatedCell) {
+                      return {
+                        ...cell,
+                        value: updatedCell.value,
+                      };
+                    }
+                    return cell;
+                  }),
+                };
+              }
+              return record;
+            }),
+          })),
+        }),
+      );
+
+      return { previousRecords };
     },
-    onError: () => {
+    onError: (error, variables, context) => {
+      if (context?.previousRecords) {
+        queryClient.setQueryData(['records', tableId], context.previousRecords);
+      }
       toast({
         title: t('Error'),
         description: t('Failed to update record.'),
+        duration: 3000,
+      });
+    },
+    onSuccess: (data, { recordId }) => {
+      // Update the cache with the server response
+      queryClient.setQueryData(
+        ['records', tableId],
+        (old: { pages: { data: PopulatedRecord[] }[] }) => ({
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.map((record) =>
+              record.id === recordId ? data : record,
+            ),
+          })),
+        }),
+      );
+      toast({
+        title: t('Success'),
+        description: t('Record has been updated.'),
         duration: 3000,
       });
     },
