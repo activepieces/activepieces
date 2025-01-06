@@ -19,6 +19,7 @@ import DataGrid, { Column, RenderCellProps } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { LoadingSpinner } from '@/components/ui/spinner';
@@ -69,6 +70,7 @@ function TablePage() {
     () => new Set(),
   );
   const [rowHeight, setRowHeight] = useState<RowHeight>(RowHeight.DEFAULT);
+  const { theme } = useTheme();
 
   const { data: fieldsData, isLoading: isFieldsLoading } = useQuery({
     queryKey: ['fields', tableId],
@@ -428,7 +430,7 @@ function TablePage() {
           rowKeyGetter={(row: Row) => row.id}
           selectedRows={selectedRows}
           onSelectedRowsChange={onSelectedRowsChange}
-          className="rdg-light h-full"
+          className={cn('h-full', theme === 'dark' ? 'rdg-dark' : 'rdg-light')}
           bottomSummaryRows={[{ id: 'new-record' }]}
           rowHeight={getRowHeight(rowHeight)}
           headerRowHeight={getRowHeight()}
