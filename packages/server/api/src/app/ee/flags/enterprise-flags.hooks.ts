@@ -6,6 +6,7 @@ import { system } from '../../helper/system/system'
 import { resolvePlatformIdForRequest } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
 import { appearanceHelper } from '../helper/appearance-helper'
+import { AppSystemProp } from '../../helper/system/system-prop'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
@@ -24,6 +25,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
                 platform.federatedAuthProviders.saml,
             ),
         }
+        const webhookPrefixUrl = system.get(AppSystemProp.WEBHOOK_PREFIX_URL_FOR_UI) ? `${system.get(AppSystemProp.WEBHOOK_PREFIX_URL_FOR_UI)}/v1/webhooks` : `${hostUrl}/api/v1/webhooks`
         modifiedFlags[ApFlagId.EMAIL_AUTH_ENABLED] = platform.emailAuthEnabled
         const isCustomerPlatform = !flagService.isCloudPlatform(platformId)
         modifiedFlags[ApFlagId.IS_CLOUD_PLATFORM] = !isCustomerPlatform
@@ -46,7 +48,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = `${hostUrl}/api/v1/authn/saml/acs`
             modifiedFlags[
                 ApFlagId.WEBHOOK_URL_PREFIX
-            ] = `${hostUrl}/api/v1/webhooks`
+            ] = webhookPrefixUrl
             modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] =
                 flagService.getThirdPartyRedirectUrl(platform.id, request.hostname)
             modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false

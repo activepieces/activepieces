@@ -15,7 +15,7 @@ export enum AppSystemProp {
     ENCRYPTION_KEY = 'ENCRYPTION_KEY',
     EXECUTION_DATA_RETENTION_DAYS = 'EXECUTION_DATA_RETENTION_DAYS',
     JWT_SECRET = 'JWT_SECRET',
-    
+    WEBHOOK_PREFIX_URL_FOR_UI = 'WEBHOOK_PREFIX_URL_FOR_UI',
     /**
      * @deprecated this now can be done from the platform admin page.
      */
@@ -119,6 +119,7 @@ export enum AppSystemProp {
     LOKI_PASSWORD = 'LOKI_PASSWORD',
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
+    
 }
 
 

@@ -330,6 +330,10 @@ export const flagService = {
 
 
 async function getWebhookPrefix(): Promise<string> {
+    const webhookPrefixUrl = system.get(AppSystemProp.WEBHOOK_PREFIX_URL_FOR_UI)
+    if (webhookPrefixUrl) {
+        return `${webhookPrefixUrl}/v1/webhooks`
+    }
     return `${await networkUtls.getPublicUrl(system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT), system.getOrThrow(WorkerSystemProp.FRONTEND_URL))}v1/webhooks`
 }
 

@@ -143,6 +143,7 @@ const systemPropValidators: {
     // AppSystemProp
     [AppSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
     [AppSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
+    [AppSystemProp.WEBHOOK_PREFIX_URL_FOR_UI]: urlValidator,
 
 
 }
