@@ -32,15 +32,33 @@ export const temporaryMigration = {
                     }
                     return null;
                 }));
-                
-                const matchingFlow = flowResults.find(f => f !== null);
 
-                if (matchingFlow) {
-                    logger.info(`Updating flow with ID: ${matchingFlow.id} to have external ID: ${flow.externalId}`)
-                    await flowRepo().update(matchingFlow.id, { externalId: flow.externalId })
-                }
-                else {
-                    logger.warn(`No matching flow found for external flow with display name: ${flow.version.displayName}`)
+                const matchingFlows = flowResults.filter(f => f !== null);
+
+                if (matchingFlows.length === 0) {
+                    logger.warn(`No matching flow found for external flow with display name: ${flow.version.displayName}`);
+                } else if (matchingFlows.length === 1) {
+                    const matchingFlow = matchingFlows[0];
+                    logger.info(`Updating flow with ID: ${matchingFlow.id} to have external ID: ${flow.externalId}`);
+                    await flowRepo().update(matchingFlow.id, { externalId: flow.externalId });
+                } else {
+                    // Filter further by displayName and trigger name
+                    const furtherFilteredFlows = await Promise.all(matchingFlows.map(async (f) => {
+                        const latestLockedVersion = await flowVersionService(logger).getLatestLockedVersionOrThrow(f.id);
+                        if (latestLockedVersion.trigger.settings.pieceName === flow.version.trigger.settings.pieceName) {
+                            return f;
+                        }
+                        return null;
+                    }));
+
+                    const matchingFlow = furtherFilteredFlows.find(f => f !== null);
+
+                    if (matchingFlow) {
+                        logger.info(`Updating flow with ID: ${matchingFlow.id} to have external ID: ${flow.externalId}`);
+                        await flowRepo().update(matchingFlow.id, { externalId: flow.externalId });
+                    } else {
+                        logger.warn(`No flows match after additional filtering for display name: ${flow.version.displayName}`);
+                    }
                 }
             }
         }
