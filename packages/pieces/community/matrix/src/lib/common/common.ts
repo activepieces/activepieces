@@ -4,6 +4,7 @@ import {
   AuthenticationType,
   HttpResponse,
 } from '@activepieces/pieces-common';
+import { marked } from 'marked';
 
 export async function getRoomId(
   baseUrl: string,
@@ -41,6 +42,8 @@ export async function sendMessage(
     body: {
       msgtype: 'm.text',
       body: message,
+      format: 'org.matrix.custom.html',
+      formatted_body: marked(message),
     },
   });
 

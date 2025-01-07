@@ -16,7 +16,7 @@ export const sendMessage = createAction({
     }),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'The message to send',
+      description: 'The message to send (markdown)',
       required: true,
     }),
   },
