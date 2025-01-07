@@ -50,6 +50,7 @@ import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterpr
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { platformBillingModule } from './ee/platform-billing/platform-billing.module'
+import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { gitRepoModule } from './ee/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/project-release/project-release.module'
@@ -265,6 +266,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
             await app.register(platformBillingModule)
+            await app.register(projectBillingModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
             await app.register(adminPieceModule)
