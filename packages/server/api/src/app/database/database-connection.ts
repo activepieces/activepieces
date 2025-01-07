@@ -21,6 +21,7 @@ import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { IssueEntity } from '../ee/issues/issues-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { OtpEntity } from '../ee/otp/otp-entity'
+import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
 import { GitRepoEntity } from '../ee/project-release/git-sync/git-sync.entity'
@@ -48,7 +49,6 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 

@@ -40,7 +40,7 @@ export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
     },
 })
 
-async function sendQuotaAlertIfNeeded({ projectId, createdAt, consumedTasks, previousConsumedTasks, log }: SendQuotaAlertIfNeededParams): Promise<void> {
+async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsumedTasks, log }: SendQuotaAlertIfNeededParams): Promise<void> {
     const quotaAlerts: { limit: number, templateName: 'quota-50' | 'quota-90' | 'quota-100' }[] = [
         { limit: 1.0, templateName: 'quota-100' },
         { limit: 0.9, templateName: 'quota-90' },

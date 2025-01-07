@@ -1,8 +1,9 @@
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT, PlatformBilling } from '@activepieces/ee-shared'
-import { apId, isNil, spreadIfDefined } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { repoFactory } from '../../core/db/repo-factory'
+import { isEnterpriseCustomerOnCloud } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { PlatformBillingEntity } from './platform-billing.entity'
@@ -49,11 +50,25 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         user,
         platformId,
     )
+    const isEnterpriseCustomer = isEnterpriseCustomerOnCloud(platform)
+    if (isEnterpriseCustomer) {
+        return platformBillingRepo().save({
+            id: apId(),
+            platformId,
+            tasksLimit: undefined,
+            aiCreditsLimit: undefined,
+            includedTasks: 50000,
+            includedAiCredits: 0,
+            stripeCustomerId,
+        })
+    }
     return platformBillingRepo().save({
         id: apId(),
         platformId,
-        includedAiCredits: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
+        tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks,
+        aiCreditsLimit: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
         includedTasks: DEFAULT_FREE_PLAN_LIMIT.tasks,
+        includedAiCredits: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
         stripeCustomerId,
     })
 }
