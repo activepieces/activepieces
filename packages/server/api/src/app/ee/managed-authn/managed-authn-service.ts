@@ -93,7 +93,6 @@ const getOrCreateUser = async (
     const {
         platformId,
         externalUserId,
-        externalEmail,
         externalFirstName,
         externalLastName,
     } = params
@@ -108,7 +107,7 @@ const getOrCreateUser = async (
     }
 
     const { password: _, ...newUser } = await userService.create({
-        email: externalEmail,
+        email: `managed_${platformId}_${externalUserId}`,
         password: await cryptoUtils.generateRandomPassword(),
         firstName: externalFirstName,
         lastName: externalLastName,
@@ -173,7 +172,6 @@ type GetOrCreateUserParams = {
     platformId: string
     externalUserId: string
     externalProjectId: string
-    externalEmail: string
     externalFirstName: string
     externalLastName: string
 }
