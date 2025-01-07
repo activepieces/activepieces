@@ -7,7 +7,7 @@
   "dependencies": {
     "@activepieces/pieces-framework": "0.7.42",
     "@activepieces/server-shared": "0.0.1",
-    "@activepieces/shared": "0.10.135",
+    "@activepieces/shared": "0.10.137",
     "async-mutex": "0.4.0",
     "axios": "1.7.8",
     "axios-retry": "4.4.1",

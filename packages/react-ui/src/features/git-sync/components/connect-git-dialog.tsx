@@ -38,7 +38,13 @@ import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
 
-const ConnectGitDialog = () => {
+type ConnectGitProps = {
+  open?: boolean;
+  setOpen?: (open: boolean) => void;
+  showButton?: boolean;
+};
+
+const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
   const projectId = authenticationSession.getProjectId()!;
   const { platform } = platformHooks.useCurrentPlatform();
 
@@ -56,7 +62,7 @@ const ConnectGitDialog = () => {
 
   const { refetch } = gitSyncHooks.useGitSync(
     projectId,
-    platform.gitSyncEnabled,
+    platform.environmentsEnabled,
   );
 
   const { mutate, isPending } = useMutation({
@@ -88,18 +94,20 @@ const ConnectGitDialog = () => {
   });
 
   return (
-    <Form {...form}>
-      <form
-        className="grid space-y-4"
-        onSubmit={form.handleSubmit((data) => mutate(data))}
-      >
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button size={'sm'} className="w-32">
-              {t('Connect Git')}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={open} onOpenChange={setOpen} modal={true}>
+      {showButton && (
+        <DialogTrigger asChild>
+          <Button size={'sm'} className="w-32">
+            {t('Connect Git')}
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="sm:max-w-[500px]">
+        <Form {...form}>
+          <form
+            className="grid space-y-4"
+            onSubmit={form.handleSubmit((data) => mutate(data))}
+          >
             <DialogHeader>
               <DialogTitle>{t('Connect Git')}</DialogTitle>
               <DialogDescription>
@@ -187,10 +195,10 @@ const ConnectGitDialog = () => {
                 {t('Connect')}
               </Button>
             </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </form>
-    </Form>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

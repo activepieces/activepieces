@@ -12,12 +12,14 @@ import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 interface CopyButtonProps extends ButtonProps {
   textToCopy: string;
   tooltipSide?: TooltipContentProps['side'];
+  withoutTooltip?: boolean;
 }
 
 export const CopyButton = ({
   textToCopy,
   className,
   tooltipSide,
+  withoutTooltip = false,
   ...props
 }: CopyButtonProps) => {
   const [isCopied, setIsCopied] = useState(false);
@@ -36,6 +38,23 @@ export const CopyButton = ({
     },
   });
 
+  if (withoutTooltip) {
+    return (
+      <Button
+        variant="outline"
+        size="icon"
+        className={className}
+        onClick={() => copyToClipboard()}
+        {...props}
+      >
+        {isCopied ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <Copy className="h-4 w-4" />
+        )}
+      </Button>
+    );
+  }
   return (
     <Tooltip>
       <TooltipTrigger asChild>

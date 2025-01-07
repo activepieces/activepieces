@@ -98,7 +98,6 @@ export const notionCommon = {
         const { properties } = await notion.databases.retrieve({
           database_id: database_id as unknown as string,
         });
-
         for (const key in properties) {
           const property = properties[key];
           if (

@@ -9,11 +9,16 @@ import {
   useKeyPress,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { usePrevious } from 'react-use';
 
 import {
-  Action,
   ActionType,
   flowStructureUtil,
   FlowVersion,
@@ -24,14 +29,17 @@ import {
 
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import {
-  isNodeSelectionActive,
+  doesSelectionRectangleExist,
   NODE_SELECTION_RECT_CLASS_NAME,
   useBuilderStateContext,
   useHandleKeyPressOnCanvas,
   usePasteActionsInClipboard,
 } from '../builder-hooks';
 
-import { CanvasContextMenu } from './context-menu/canvas-context-menu';
+import {
+  CanvasContextMenu,
+  ContextMenuType,
+} from './context-menu/canvas-context-menu';
 import { FlowDragLayer } from './flow-drag-layer';
 import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
@@ -94,6 +102,7 @@ export const FlowCanvas = React.memo(
       exitStepSettings,
       panningMode,
       setPieceSelectorStep,
+      selectStepByName,
     ] = useBuilderStateContext((state) => {
       return [
         state.allowCanvasPanning,
@@ -107,6 +116,7 @@ export const FlowCanvas = React.memo(
         state.exitStepSettings,
         state.panningMode,
         state.setPieceSelectorStep,
+        state.selectStepByName,
       ];
     });
     const { actionsToPaste, fetchClipboardOperations } =
@@ -162,17 +172,23 @@ export const FlowCanvas = React.memo(
         resizeObserver.disconnect();
       };
     }, [setViewport, getViewport]);
-
     const onSelectionChange = useCallback(
       (ev: OnSelectionChangeParams) => {
-        setSelectedNodes(ev.nodes.map((n) => n.id));
+        const selectedNodes = ev.nodes.map((n) => n.id);
+        if (selectedNodes.length === 0 && selectedStep) {
+          selectedNodes.push(selectedStep);
+        }
+        setSelectedNodes(selectedNodes);
       },
-      [setSelectedNodes],
+      [setSelectedNodes, selectedStep],
     );
     const graphKey = createGraphKey(flowVersion);
     const graph = useMemo(() => {
       return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
     }, [graphKey]);
+    const [contextMenuType, setContextMenuType] = useState<ContextMenuType>(
+      ContextMenuType.CANVAS,
+    );
     const onContextMenu = useCallback(
       (ev: React.MouseEvent<HTMLDivElement>) => {
         fetchClipboardOperations();
@@ -186,21 +202,31 @@ export const FlowCanvas = React.memo(
           const stepName = stepElement?.getAttribute(
             `data-${STEP_CONTEXT_MENU_ATTRIBUTE}`,
           );
-          setSelectedNodes(
-            isNodeSelectionActive() && !stepElement
-              ? selectedNodes
-              : stepName
-              ? [stepName]
-              : [],
-          );
-          if (isNodeSelectionActive() && stepElement) {
+
+          if (stepElement && stepName) {
+            selectStepByName(stepName);
+            storeApi.getState().addSelectedNodes([stepName]);
+          }
+          if (
+            stepElement ||
+            ev.target.classList.contains(NODE_SELECTION_RECT_CLASS_NAME)
+          ) {
+            setContextMenuType(ContextMenuType.STEP);
+          } else {
+            setContextMenuType(ContextMenuType.CANVAS);
+          }
+
+          if (
+            doesSelectionRectangleExist() &&
+            !ev.target.classList.contains(NODE_SELECTION_RECT_CLASS_NAME)
+          ) {
             document
               .querySelector(`.${NODE_SELECTION_RECT_CLASS_NAME}`)
               ?.remove();
           }
         }
       },
-      [setSelectedNodes, selectedNodes],
+      [setSelectedNodes, selectedNodes, doesSelectionRectangleExist],
     );
 
     const handleKeyDown = useHandleKeyPressOnCanvas();
@@ -213,9 +239,15 @@ export const FlowCanvas = React.memo(
     const inGrabPanningMode = !isShiftKeyPressed && panningMode === 'grab';
 
     const onSelectionEnd = useCallback(() => {
+      if (
+        !storeApi.getState().userSelectionActive ||
+        doesSelectionRectangleExist()
+      ) {
+        return;
+      }
       const selectedSteps = selectedNodes.map((node) =>
         flowStructureUtil.getStepOrThrow(node, flowVersion.trigger),
-      ) as Action[];
+      );
       selectedSteps.forEach((step) => {
         if (
           step.type === ActionType.LOOP_ON_ITEMS ||
@@ -223,18 +255,20 @@ export const FlowCanvas = React.memo(
         ) {
           const childrenNotSelected = flowStructureUtil
             .getAllChildSteps(step)
-            .filter((c) =>
-              isNil(selectedNodes.find((n) => n === c.name)),
-            ) as Action[];
+            .filter((c) => isNil(selectedNodes.find((n) => n === c.name)));
           selectedSteps.push(...childrenNotSelected);
         }
       });
+      const step = selectedStep
+        ? flowStructureUtil.getStep(selectedStep, flowVersion.trigger)
+        : null;
+      if (selectedNodes.length === 0 && step) {
+        selectedSteps.push(step);
+      }
       storeApi
         .getState()
         .addSelectedNodes(selectedSteps.map((step) => step.name));
-      setSelectedNodes(selectedSteps.map((step) => step.name));
-    }, [selectedNodes, storeApi, setSelectedNodes]);
-
+    }, [selectedNodes, storeApi, selectedStep]);
     return (
       <div
         ref={containerRef}
@@ -250,6 +284,7 @@ export const FlowCanvas = React.memo(
             readonly={readonly}
             setPieceSelectorStep={setPieceSelectorStep}
             actionsToPaste={actionsToPaste}
+            contextMenuType={contextMenuType}
           >
             <ReactFlow
               onContextMenu={onContextMenu}

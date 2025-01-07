@@ -29,7 +29,7 @@ const FlowBuilderPage = () => {
 
   if (isError) {
     console.error('Error fetching flow', flowId);
-    return <Navigate to="/404" />;
+    return <Navigate to="/" />;
   }
 
   if (isLoading || isSampleDataLoading) {

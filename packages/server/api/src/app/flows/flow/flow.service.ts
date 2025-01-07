@@ -42,7 +42,7 @@ const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER
 
 
 export const flowService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
+    async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
 
         const folderId = isNil(request.folderName) ? null : (await flowFolderService(log).upsert({
             projectId,
@@ -58,6 +58,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             status: FlowStatus.DISABLED,
             publishedVersionId: null,
             schedule: null,
+            externalId,
         }
 
         const savedFlow = await flowRepo().save(newFlow)
@@ -529,6 +530,7 @@ const assertFlowIsNotNull: <T extends Flow>(
 type CreateParams = {
     projectId: ProjectId
     request: CreateFlowRequest
+    externalId?: string
 }
 
 type ListParams = {

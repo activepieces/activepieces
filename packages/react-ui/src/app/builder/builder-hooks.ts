@@ -36,6 +36,7 @@ import {
   CanvasShortcuts,
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
+import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -224,23 +225,33 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
-      selectStepByName: (stepName: string) => {
+      selectStepByName: (selectedStep: string) => {
         set((state) => {
-          if (stepName === state.selectedStep) {
+          if (selectedStep === state.selectedStep) {
             return state;
           }
+          const selectedNodes =
+            isNil(selectedStep) || selectedStep === 'trigger'
+              ? []
+              : [selectedStep];
+
+          const rightSidebar =
+            selectedStep === 'trigger' &&
+            state.flowVersion.trigger.type === TriggerType.EMPTY
+              ? RightSideBarType.NONE
+              : RightSideBarType.PIECE_SETTINGS;
+
+          const leftSidebar = !isNil(state.run)
+            ? LeftSideBarType.RUN_DETAILS
+            : LeftSideBarType.NONE;
+
           return {
-            selectedStep: stepName,
-            rightSidebar:
-              stepName === 'trigger' &&
-              state.flowVersion.trigger.type === TriggerType.EMPTY
-                ? RightSideBarType.NONE
-                : RightSideBarType.PIECE_SETTINGS,
-            leftSidebar: !isNil(state.run)
-              ? LeftSideBarType.RUN_DETAILS
-              : LeftSideBarType.NONE,
+            selectedStep,
+            rightSidebar,
+            leftSidebar,
             selectedBranchIndex: null,
             askAiButtonProps: null,
+            selectedNodes,
           };
         });
       },
@@ -485,19 +496,22 @@ const shortcutHandler = (
   const shortcutActivated = Object.entries(CanvasShortcuts).find(
     ([_, shortcut]) =>
       shortcut.shortcutKey?.toLowerCase() === event.key.toLowerCase() &&
-      !!shortcut.withCtrl === event.ctrlKey &&
+      !!(
+        shortcut.withCtrl === event.ctrlKey ||
+        shortcut.withCtrl === event.metaKey
+      ) &&
       !!shortcut.withShift === event.shiftKey,
   );
-
   if (shortcutActivated) {
     event.preventDefault();
     event.stopPropagation();
+
     handlers[shortcutActivated[0] as keyof CanvasShortcutsProps]();
   }
 };
 
 export const NODE_SELECTION_RECT_CLASS_NAME = 'react-flow__nodesselection-rect';
-export const isNodeSelectionActive = () => {
+export const doesSelectionRectangleExist = () => {
   return document.querySelector(`.${NODE_SELECTION_RECT_CLASS_NAME}`) !== null;
 };
 export const useHandleKeyPressOnCanvas = () => {
@@ -522,24 +536,24 @@ export const useHandleKeyPressOnCanvas = () => {
       if (
         e.target instanceof HTMLElement &&
         (e.target === document.body ||
-          e.target.classList.contains('react-flow__nodesselection-rect')) &&
+          e.target.classList.contains('react-flow__nodesselection-rect') ||
+          e.target.closest(`[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`)) &&
         !readonly
       ) {
-        const doesNotContainTrigger = !selectedNodes.some(
-          (node) => node === flowVersion.trigger.name,
+        const selectedNodesWithoutTrigger = selectedNodes.filter(
+          (node) => node !== flowVersion.trigger.name,
         );
         shortcutHandler(e, {
           Copy: () => {
-            if (doesNotContainTrigger && selectedNodes.length > 0) {
-              copySelectedNodes({ selectedNodes, flowVersion });
+            if (selectedNodesWithoutTrigger.length > 0) {
+              copySelectedNodes({
+                selectedNodes: selectedNodesWithoutTrigger,
+                flowVersion,
+              });
             }
           },
           Delete: () => {
-            if (
-              isNodeSelectionActive() &&
-              doesNotContainTrigger &&
-              selectedNodes.length > 0
-            ) {
+            if (selectedNodes.length > 0) {
               deleteSelectedNodes({
                 exitStepSettings,
                 selectedStep,
@@ -549,9 +563,9 @@ export const useHandleKeyPressOnCanvas = () => {
             }
           },
           Skip: () => {
-            if (doesNotContainTrigger && selectedNodes.length > 0) {
+            if (selectedNodesWithoutTrigger.length > 0) {
               toggleSkipSelectedNodes({
-                selectedNodes,
+                selectedNodes: selectedNodesWithoutTrigger,
                 flowVersion,
                 applyOperation,
               });
@@ -560,13 +574,19 @@ export const useHandleKeyPressOnCanvas = () => {
           Paste: () => {
             getActionsInClipboard().then((actions) => {
               if (actions.length > 0) {
+                const lastStep = [
+                  flowVersion.trigger,
+                  ...flowStructureUtil.getAllNextActionsWithoutChildren(
+                    flowVersion.trigger,
+                  ),
+                ].at(-1)!.name;
+                const lastSelectedNode =
+                  selectedNodes.length === 1 ? selectedNodes[0] : null;
                 pasteNodes(
                   actions,
                   flowVersion,
                   {
-                    parentStepName: flowStructureUtil
-                      .getAllNextActionsWithoutChildren(flowVersion.trigger)
-                      .at(-1)!.name,
+                    parentStepName: lastSelectedNode ?? lastStep,
                     stepLocationRelativeToParent:
                       StepLocationRelativeToParent.AFTER,
                   },

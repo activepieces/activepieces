@@ -247,10 +247,11 @@ export const googleSheetsCommon = {
 export async function findSheetName(
   access_token: string,
   spreadsheetId: string,
-  sheetId: number
+  sheetId: string | number
 ) {
   const sheets = await listSheetsName(access_token, spreadsheetId);
-  const sheetName = sheets.find((f) => f.properties.sheetId === sheetId)
+  // don't use === because sheetId can be a string when dynamic values are used
+  const sheetName = sheets.find((f) => f.properties.sheetId == sheetId)
     ?.properties.title;
   if (!sheetName) {
     throw Error(
@@ -330,7 +331,9 @@ async function getGoogleSheetRows({
   const headers = headerResponse.body.values[0]??[];
   const headerCount = headers.length;
 
-  const labeledRowValues = transformWorkSheetValues(rowsResponse.body.values,0,headerCount);
+  const startingRow = rowIndex_s? rowIndex_s-1:0;
+
+  const labeledRowValues = transformWorkSheetValues(rowsResponse.body.values,startingRow,headerCount);
 
   return labeledRowValues;
 }

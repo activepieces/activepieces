@@ -46,14 +46,13 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.gitSyncEnabled,
+    platform.environmentsEnabled,
   );
-
   const form = useForm<PushGitRepoRequest>({
     defaultValues: {
       type: GitPushOperationType.PUSH_FLOW,
       commitMessage: '',
-      flowId: '',
+      flowIds: [],
     },
     resolver: typeboxResolver(PushGitRepoRequest),
   });
@@ -61,11 +60,7 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: PushGitRepoRequest) => {
       assertNotNullOrUndefined(gitSync, 'gitSync');
-      await Promise.all(
-        flowIds.map((flowId) =>
-          gitSyncApi.push(gitSync.id, { ...request, flowId }),
-        ),
-      );
+      await gitSyncApi.push(gitSync.id, { ...request, flowIds });
     },
     onSuccess: () => {
       toast({

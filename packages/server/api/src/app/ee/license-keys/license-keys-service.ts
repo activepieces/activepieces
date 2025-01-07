@@ -103,7 +103,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         await platformService.update({
             id: platformId,
             ssoEnabled: key.ssoEnabled,
-            gitSyncEnabled: key.gitSyncEnabled,
+            environmentsEnabled: key.environmentsEnabled,
             showPoweredBy: key.showPoweredBy,
             embeddingEnabled: key.embeddingEnabled,
             auditLogEnabled: key.auditLogEnabled,
@@ -161,7 +161,7 @@ const deletePrivatePieces = async (platformId: string, log: FastifyBaseLogger): 
 const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {
     ssoEnabled: false,
     analyticsEnabled: false,
-    gitSyncEnabled: false,
+    environmentsEnabled: false,
     showPoweredBy: false,
     embeddingEnabled: false,
     auditLogEnabled: false,
