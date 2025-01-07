@@ -22,6 +22,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 newsLetter: false,
                 trackEvents: true,
                 provider: UserIdentityProvider.SAML,
+                predefinedPlatformId: platformId,
             })
         },
     }

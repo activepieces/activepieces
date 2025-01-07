@@ -731,9 +731,9 @@ describe('Authentication API', () => {
                 body: mockSignInRequest,
             })
 
+            const responseBody = response?.json()
             // assert
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-            const responseBody = response?.json()
 
             expect(responseBody?.code).toBe('USER_IS_INACTIVE')
             expect(responseBody?.params?.email).toBe(mockUserIdentity.email)

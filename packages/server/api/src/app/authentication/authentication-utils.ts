@@ -45,6 +45,14 @@ export const authenticationUtils = {
             })
         }
         const identity = await userIdentityService(system.globalLogger()).getOneOrFail({ id: user.identityId })
+        if (!identity.verified) {
+            throw new ActivepiecesError({
+                code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
+                params: {
+                    email: identity.email,
+                },
+            })
+        }
         if (user.status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
                 code: ErrorCode.USER_IS_INACTIVE,

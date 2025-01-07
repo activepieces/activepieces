@@ -48,6 +48,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
             trackEvents: true,
             newsLetter: true,
             provider: UserIdentityProvider.GOOGLE,
+            predefinedPlatformId: platformId ?? null,
         })
     },
 })

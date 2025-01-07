@@ -62,7 +62,7 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         platformId,
     )
     // TODO(@amrabuaza) remove this once we have migrated all platform on the cloud
-    const isEnterpriseCustomer = await platformUtils.isEnterpriseCustomerOnCloud(platformId)
+    const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
     if (isEnterpriseCustomer) {
         return platformBillingRepo().save({
             id: apId(),

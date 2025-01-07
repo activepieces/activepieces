@@ -1,4 +1,3 @@
-import { cryptoUtils } from '@activepieces/server-shared'
 import { ActivepiecesError, apId, ErrorCode, isNil, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -75,24 +74,6 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
     },
     async getOneOrFail(params: GetOneOrFailParams): Promise<UserIdentity> {
         const userIdentity = await userIdentityRepository().findOneByOrFail({ id: params.id })
-        return userIdentity
-    },
-    async verifyFederatedAuthn(params: FederatedAuthnParams): Promise<UserIdentity> {
-        const userIdentity = await getIdentityByEmail(params.email)
-        if (!isNil(userIdentity) && !userIdentity.verified) {
-            throw new ActivepiecesError({
-                code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
-                params: {
-                    email: userIdentity.email,
-                },
-            })
-        }
-        if (isNil(userIdentity)) {
-            return userIdentityService(log).create({
-                ...params,
-                password: await cryptoUtils.generateRandomPassword(),
-            })
-        }
         return userIdentity
     },
     async getBasicInformation(id: string): Promise<Pick<UserIdentity, 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter'>> {
