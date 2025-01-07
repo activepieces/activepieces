@@ -300,7 +300,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
-            await app.register(platformBillingModule)
             await app.register(projectMemberModule)
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)

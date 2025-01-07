@@ -96,6 +96,9 @@ async function checkProjectTokensExceeded(projectId: string, tokensToConsume: nu
 }
 
 async function checkPlatformTokensExceeded(log: FastifyBaseLogger, platformId: string, tokensToConsume: number): Promise<boolean> {
+    if (edition !== ApEdition.CLOUD) {
+        return false
+    }
     const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
     const consumedPlatformTokens = await increaseProjectAndPlatformUsage(platformId, tokensToConsume, BillingUsageType.AI_TOKENS)
     if (isNil(platformBilling.aiCreditsLimit)) {
@@ -110,6 +113,9 @@ async function checkProjectTasksExceeded(projectId: string, taskLimit: number): 
 }
 
 async function checkPlatformTasksExceeded(log: FastifyBaseLogger, platformId: string): Promise<boolean> {
+    if (edition !== ApEdition.CLOUD) {
+        return false
+    }
     const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
     const consumedPlatformTasks = await increaseProjectAndPlatformUsage(platformId, 0, BillingUsageType.TASKS)
     if (isNil(platformBilling.tasksLimit)) {
