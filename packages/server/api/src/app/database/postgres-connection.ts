@@ -23,6 +23,7 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-prop'
 import { commonProperties } from './database-connection'
+import { AddPlatformBilling1734971881345 } from './migration/1734971881345-AddPlatformBilling'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -361,8 +362,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MigrateAuditEventSchema1723489038729,
                 AddAiTokensForProjectPlan1726446092010,
                 AddAuditLogIndicies1731711188507,
+                AddPlatformBilling1734971881345,
                 CreateProjectReleaseTable1734418823028,
-
             )
             break
         case ApEdition.COMMUNITY:

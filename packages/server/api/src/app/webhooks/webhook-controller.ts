@@ -20,7 +20,7 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { tasksLimit } from '../ee/project-plan/tasks-limit'
+import { usageService } from '../ee/platform-billing/usage/usage-service'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { system } from '../helper/system/system'
@@ -251,9 +251,7 @@ const convertBody = async (
 }
 
 async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<void> {
-    const exceededLimit = await tasksLimit(log).exceededLimit({
-        projectId: flow.projectId,
-    })
+    const exceededLimit = await usageService(log).tasksExceededLimit(flow.projectId)
     if (!exceededLimit) {
         return
     }

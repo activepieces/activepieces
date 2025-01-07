@@ -1,4 +1,4 @@
-import { ApEdition, isNil, Principal, PrincipalType } from '@activepieces/shared'
+import { ApEdition, isNil, Platform, Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { system } from '../helper/system/system'
@@ -48,6 +48,12 @@ const extractPlatformIdFromAuthenticatedPrincipal = async (
         return null
     }
     return principal.platform.id ?? getDefaultPlatformId()
+}
+
+// TODO cleanup(@amrabuaza) once we added credit card of the enterprise customers to their platform billing.
+export function isEnterpriseCustomerOnCloud(platform: Platform): boolean {
+    const edition = system.getEdition()
+    return edition === ApEdition.CLOUD && (platform.ssoEnabled || platform.embeddingEnabled)
 }
 
 const getPlatformIdForHostname = async (

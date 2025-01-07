@@ -6,13 +6,14 @@ import {
   Shield,
   Users,
   Wrench,
+  Receipt,
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
@@ -29,6 +30,8 @@ export function PlatformAdminContainer({
   const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PLATFORM_DEMO,
   );
+
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
@@ -65,6 +68,15 @@ export function PlatformAdminContainer({
       label: t('Infra'),
       icon: Server,
     },
+    ...(edition === ApEdition.CLOUD
+      ? [
+          {
+            to: '/platform/billing',
+            label: t('Billing'),
+            icon: Receipt,
+          },
+        ]
+      : []),
   ];
 
   return (

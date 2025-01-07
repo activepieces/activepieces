@@ -111,8 +111,12 @@ export const CanvasContextMenuContent = ({
     !doSelectedNodesIncludeTrigger &&
     contextMenuType === ContextMenuType.STEP &&
     !readonly;
-  const isTriggerTheOnlySelectedNode = selectedNodes.length === 1 && doSelectedNodesIncludeTrigger;
-  const showDelete = !readonly && contextMenuType === ContextMenuType.STEP && !isTriggerTheOnlySelectedNode;
+  const isTriggerTheOnlySelectedNode =
+    selectedNodes.length === 1 && doSelectedNodesIncludeTrigger;
+  const showDelete =
+    !readonly &&
+    contextMenuType === ContextMenuType.STEP &&
+    !isTriggerTheOnlySelectedNode;
 
   const duplicateStep = () => {
     applyOperation(
