@@ -1,7 +1,7 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Download, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,11 +29,15 @@ import { formatUtils } from '@/lib/utils';
 import { Table } from '@activepieces/shared';
 
 function TablesPage() {
+  const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [showNewTableDialog, setShowNewTableDialog] = useState(false);
   const [newTableName, setNewTableName] = useState('');
   const [selectedRows, setSelectedRows] = useState<Array<{ id: string }>>([]);
+  const [exportingTableIds, setExportingTableIds] = useState<Set<string>>(
+    new Set(),
+  );
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['tables'],
@@ -70,6 +74,62 @@ function TablesPage() {
       });
     },
   });
+
+  const handleExportTable = async (id: string, name: string) => {
+    try {
+      setExportingTableIds((prev) => new Set(prev).add(id));
+      await queryClient.fetchQuery({
+        queryKey: ['table-export', id],
+        queryFn: async () => {
+          const data = await tablesApi.export(id);
+          const csvRows: string[][] = [];
+          // Add header row
+          csvRows.push(data.fields.map((f) => f.name));
+          // Add data rows
+          data.rows.forEach((row) => {
+            csvRows.push(data.fields.map((field) => row[field.name] ?? ''));
+          });
+
+          // Convert to CSV string
+          const csvContent = csvRows
+            .map((row) =>
+              row
+                .map((cell) =>
+                  typeof cell === 'string'
+                    ? `"${cell.replace(/"/g, '""')}"`
+                    : cell,
+                )
+                .join(','),
+            )
+            .join('\n');
+
+          // Create and download file
+          const blob = new Blob([csvContent], { type: 'text/csv' });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.style.display = 'none';
+          link.href = url;
+          link.download = `table-${name}.csv`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: t('Error exporting table.'),
+        variant: 'destructive',
+      });
+    } finally {
+      setExportingTableIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
 
   const handleCreateTable = () => {
     createTableMutation.mutate();
@@ -146,6 +206,21 @@ function TablesPage() {
       cell: ({ row }) => {
         return (
           <div className="flex items-center justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={exportingTableIds.has(row.original.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleExportTable(row.original.id, row.original.name);
+              }}
+            >
+              {exportingTableIds.has(row.original.id) ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+            </Button>
             <ConfirmationDeleteDialog
               title={t('Delete Table')}
               message={t(

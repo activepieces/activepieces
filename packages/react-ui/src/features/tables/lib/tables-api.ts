@@ -1,5 +1,10 @@
 import { api } from '@/lib/api';
-import { CreateTableRequest, SeekPage, Table } from '@activepieces/shared';
+import {
+  CreateTableRequest,
+  ExportTableResponse,
+  SeekPage,
+  Table,
+} from '@activepieces/shared';
 
 export const tablesApi = {
   async list(): Promise<SeekPage<Table>> {
@@ -21,5 +26,9 @@ export const tablesApi = {
 
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/tables/${id}`);
+  },
+
+  export(id: string): Promise<ExportTableResponse> {
+    return api.get<ExportTableResponse>(`/v1/tables/${id}/export`);
   },
 };
