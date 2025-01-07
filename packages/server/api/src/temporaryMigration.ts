@@ -25,13 +25,15 @@ export const temporaryMigration = {
             logger.info(`Retrieved repository state for project ID: ${project.id}`)
 
             for (const flow of repoState.flows) {
-                const matchingFlow = await Promise.all(flows.map(async (f) => {
-                    const latestLockedVersion = await flowVersionService(logger).getLatestLockedVersionOrThrow(f.id)
+                const flowResults = await Promise.all(flows.map(async (f) => {
+                    const latestLockedVersion = await flowVersionService(logger).getLatestLockedVersionOrThrow(f.id);
                     if (latestLockedVersion.displayName === flow.version.displayName) {
-                        return f
+                        return f;
                     }
-                    return null
-                })).then(results => results.find(f => f !== null))
+                    return null;
+                }));
+                
+                const matchingFlow = flowResults.find(f => f !== null);
 
                 if (matchingFlow) {
                     logger.info(`Updating flow with ID: ${matchingFlow.id} to have external ID: ${flow.externalId}`)
