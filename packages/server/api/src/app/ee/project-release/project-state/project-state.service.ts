@@ -40,7 +40,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        const connectionStates = await this.getFlowConnections(operations)
+        const connectionStates = await this.getFlowConnections(operations, projectId, platformId)
 
         for (const connection of connectionStates) {
             await appConnectionService(log).createPlaceholder({
@@ -95,7 +95,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             flows: allPopulatedFlows,
         }
     },
-    async getFlowConnections(operations: ProjectOperation[]): Promise<ConnectionState[]> {
+    async getFlowConnections(operations: ProjectOperation[], projectId: ProjectId, platformId: string): Promise<ConnectionState[]> {
         const connectionStates = await Promise.all(operations.map(async (operation) => {
             switch (operation.type) {
                 case ProjectOperationType.CREATE_FLOW:
@@ -112,7 +112,19 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             uniqueConnections.set(connection.externalId, connection)
         })
 
-        return Array.from(uniqueConnections.values())
+        const connections = await Promise.all(Array.from(uniqueConnections.values()).map(async (connection) => {
+            const appConnection = await appConnectionService(log).getOne({
+                projectId,
+                externalId: connection.externalId,
+                platformId,
+            })
+            if (isNil(appConnection)) {
+                return connection
+            }
+            return null
+        }))
+        
+        return connections.filter((connection): connection is ConnectionState => connection !== null)
     },
 
 })

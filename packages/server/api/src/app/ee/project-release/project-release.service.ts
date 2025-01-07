@@ -43,12 +43,14 @@ export const projectReleaseService = {
             await lock.release()
         }
     },
-    async releasePlan(projectId: ProjectId, userId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectSyncPlan> {
+    async releasePlan(projectId: ProjectId, platformId: PlatformId, userId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectSyncPlan> {
         const diffs = await findDiffOperations(projectId, userId, params, log)
         return toResponse({
             operations: diffs,
             log,
             errors: [],
+            projectId,
+            platformId,
         })
     },
     async list({ projectId, request }: ListParams): Promise<SeekPage<ProjectRelease>> {
@@ -109,7 +111,7 @@ async function findDiffOperations(projectId: ProjectId, ownerId: ApId, params: D
 }
 
 async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
-    const { operations, errors, log } = params
+    const { operations, errors, log, projectId, platformId } = params
     const responsePlans: ProjectSyncPlanOperation[] = operations.map((operation) => {
         switch (operation.type) {
             case ProjectOperationType.DELETE_FLOW:
@@ -142,7 +144,7 @@ async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
                 }
         }
     })
-    const connectionStates = await projectStateService(log).getFlowConnections(operations)
+    const connectionStates = await projectStateService(log).getFlowConnections(operations, projectId, platformId)
 
     return {
         errors,
@@ -173,6 +175,8 @@ type toResponseParams = {
     operations: ProjectOperation[]
     log: FastifyBaseLogger
     errors: ProjectSyncError[]
+    projectId: ProjectId
+    platformId: PlatformId
 }
 
 type ListParams = {

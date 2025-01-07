@@ -1,10 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
@@ -27,7 +28,6 @@ import { ProjectSyncPlan } from '@activepieces/ee-shared';
 import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
 
 import { OperationChange } from './operation-change';
-import { LoadingSpinner } from '@/components/ui/spinner';
 
 type CreateReleaseDialogProps = {
   open: boolean;
@@ -129,6 +129,14 @@ const CreateReleaseDialog = ({
     );
   };
 
+  useEffect(() => {
+    if (!loading) {
+      setSelectedChanges(
+        new Set(plan?.operations.map((op) => op.flow.id) || []),
+      );
+    }
+  }, [loading, plan]);
+
   return (
     <Dialog
       modal={true}
@@ -154,102 +162,115 @@ const CreateReleaseDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        {loading && <div className="flex items-center justify-center h-24">
-          <LoadingSpinner />
-        </div>}
+        {loading && (
+          <div className="flex items-center justify-center h-24">
+            <LoadingSpinner />
+          </div>
+        )}
 
         {!loading && (
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
               <Label className="text-sm" htmlFor="name">
-              {t('Name')}
-            </Label>
-            <Input
-              id="name"
-              {...form.register('name')}
-              onChange={(e) => {
-                setShowValidationError(false);
-              }}
-              placeholder={t('Meeting Summary Flow')}
-            />
-            {form.formState.errors.name && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.name.message}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label className="text-sm" htmlFor="description">
-              {t('Description')}
-            </Label>
-            <Textarea
-              id="description"
-              {...form.register('description')}
-              placeholder={t('Added new features and fixed bugs')}
-            />
-            {form.formState.errors.description && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.description.message}
-              </p>
-            )}
-          </div>
-
-          <div className="max-h-[50vh] overflow-y-auto space-y-2">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 py-2 border-b">
-                <Checkbox
-                  checked={selectedChanges.size === plan?.operations.length}
-                  onCheckedChange={handleSelectAll}
-                />
-                <Label className="text-sm font-medium">
-                  {t('Changes')} ({selectedChanges.size}/
-                  {plan?.operations.length || 0})
-                </Label>
-              </div>
+                {t('Name')}
+              </Label>
+              <Input
+                id="name"
+                {...form.register('name')}
+                onChange={(e) => {
+                  setShowValidationError(false);
+                }}
+                placeholder={t('Meeting Summary Flow')}
+              />
+              {form.formState.errors.name && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.name.message}
+                </p>
+              )}
             </div>
-            {plan?.operations.length ? (
-              plan.operations.map((operation) => (
-                <OperationChange
-                  key={operation.flow.id}
-                  change={operation}
-                  selected={selectedChanges.has(operation.flow.id)}
-                  onSelect={(checked) => {
-                    setShowValidationError(false);
-                    setSelectedChanges(
-                      new Set(
-                        checked
-                          ? [...selectedChanges, operation.flow.id]
-                          : [...selectedChanges].filter(
-                              (id) => id !== operation.flow.id,
-                            ),
-                      ),
-                    );
-                  }}
-                />
-              ))
-            ) : (
-              <div className="text-sm text-muted-foreground py-2">
-                {t('No changes to apply')}
+            <div className="flex flex-col gap-2">
+              <Label className="text-sm" htmlFor="description">
+                {t('Description')}
+              </Label>
+              <Textarea
+                id="description"
+                {...form.register('description')}
+                placeholder={t('Added new features and fixed bugs')}
+              />
+              {form.formState.errors.description && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.description.message}
+                </p>
+              )}
+            </div>
+
+            <div className="max-h-[50vh] overflow-y-auto space-y-2">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 py-2 border-b">
+                  <Checkbox
+                    checked={selectedChanges.size === plan?.operations.length}
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <Label className="text-sm font-medium">
+                    {t('Changes')} ({selectedChanges.size}/
+                    {plan?.operations.length || 0})
+                  </Label>
+                </div>
               </div>
-            )}
-          </div>
+              {plan?.operations.length ? (
+                plan.operations.map((operation) => (
+                  <OperationChange
+                    key={operation.flow.id}
+                    change={operation}
+                    selected={selectedChanges.has(operation.flow.id)}
+                    onSelect={(checked) => {
+                      setShowValidationError(false);
+                      setSelectedChanges(
+                        new Set(
+                          checked
+                            ? [...selectedChanges, operation.flow.id]
+                            : [...selectedChanges].filter(
+                                (id) => id !== operation.flow.id,
+                              ),
+                        ),
+                      );
+                    }}
+                  />
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground py-2">
+                  {t('No changes to apply')}
+                </div>
+              )}
+            </div>
             {plan?.connectionStates && plan?.connectionStates.length > 0 && (
               <div className="mt-4 p-3 rounded-lg text-sm border flex gap-2">
                 <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                 <div className="space-y-2">
-                  <div className="font-semibold">{t('Warning: Missing Connections')}</div>
+                  <div className="font-semibold">
+                    {t('Warning: Missing Connections')}
+                  </div>
                   <div>
-                    {t('The following connections need to be reconfigured in the')} 
-                    <span className="font-medium"> {t('Connections')}</span> 
+                    {t(
+                      'The following connections need to be reconfigured in the',
+                    )}
+                    <span className="font-medium"> {t('Connections')}</span>
                     {t(' page after applying changes:')}
                   </div>
                   <div className="space-y-1.5">
-                    {plan?.connectionStates?.sort((a, b) => a.displayName.localeCompare(b.displayName)).map((connection, index) => (
-                      <div key={connection.externalId} className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-black shrink-0" />
-                        <span>{connection.displayName}</span>
-                      </div>
-                    ))}
+                    {plan?.connectionStates
+                      ?.sort((a, b) =>
+                        a.displayName.localeCompare(b.displayName),
+                      )
+                      .map((connection, index) => (
+                        <div
+                          key={connection.externalId}
+                          className="flex items-center gap-2"
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-black shrink-0" />
+                          <span>{connection.displayName}</span>
+                        </div>
+                      ))}
                   </div>
                 </div>
               </div>
@@ -258,7 +279,9 @@ const CreateReleaseDialog = ({
               <p className="text-sm text-destructive">
                 {!form.getValues('name')
                   ? t('Release name is required')
-                  : t('Please select at least one change to include in the release')}
+                  : t(
+                      'Please select at least one change to include in the release',
+                    )}
               </p>
             )}
           </div>
