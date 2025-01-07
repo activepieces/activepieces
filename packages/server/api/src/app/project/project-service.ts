@@ -33,6 +33,13 @@ export const projectService = {
         await projectHooks.get(system.globalLogger()).postCreate(savedProject)
         return savedProject
     },
+    async getOneByOwnerAndPlatform(params: GetOneByOwnerAndPlatformParams): Promise<Project | null> {
+        return projectRepo().findOneBy({
+            ownerId: params.ownerId,
+            platformId: params.platformId,
+            deleted: IsNull(),
+        })
+    },
 
     async getOne(projectId: ProjectId | undefined): Promise<Project | null> {
         if (isNil(projectId)) {
@@ -184,6 +191,11 @@ async function assertExternalIdIsUnique(externalId: string | undefined, projectI
 type GetAllForUserParams = {
     platformId: string
     userId: string
+}
+
+type GetOneByOwnerAndPlatformParams = {
+    ownerId: UserId
+    platformId: string
 }
 
 

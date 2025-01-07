@@ -10,17 +10,6 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
             name: this.name,
             message: 'Starting migration',
         })
-        // Check for duplicate emails in user table
-        const duplicateEmails = await queryRunner.query(`
-            SELECT email, COUNT(*) 
-            FROM "user"
-            GROUP BY email 
-            HAVING COUNT(*) > 1
-        `)
-
-        if (duplicateEmails.length > 0) {
-            throw new Error('Migration failed: Duplicate emails found in user table. Please resolve duplicate emails before running migration.')
-        }
 
         // Drop existing constraints and indexes
         await queryRunner.query(`
@@ -83,24 +72,37 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
         for (const user of users) {
             const identityId = apId()
 
-            // Insert into user_identity
-            await queryRunner.query(`
-                INSERT INTO "user_identity" (
-                    "id", "email", "password", "trackEvents", "newsLetter", 
-                    "verified", "firstName", "lastName", "tokenVersion", "provider"
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            `, [
-                identityId, user.email, user.password, user.trackEvents, user.newsLetter,
-                user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL',
-            ])
+            // Check if email already exists in user_identity
+            const existingIdentity = await queryRunner.query(`
+                SELECT "id" FROM "user_identity" WHERE "email" = $1
+            `, [user.email])
+
+            let finalIdentityId = identityId
+
+            if (existingIdentity.length > 0) {
+                // If email exists, use the existing identity ID
+                finalIdentityId = existingIdentity[0].id
+            }
+            else {
+                // Insert into user_identity
+                await queryRunner.query(`
+                    INSERT INTO "user_identity" (
+                        "id", "email", "password", "trackEvents", "newsLetter", 
+                        "verified", "firstName", "lastName", "tokenVersion", "provider"
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                `, [
+                    finalIdentityId, user.email, user.password, user.trackEvents, user.newsLetter,
+                    user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL',
+                ])
+            }
 
             // Link identity to user
             await queryRunner.query(`
                 UPDATE "user" 
                 SET "identityId" = $1
                 WHERE id = $2
-            `, [identityId, user.id])
+            `, [finalIdentityId, user.id])
         }
 
         // Make identityId not null after linking

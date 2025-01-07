@@ -1,9 +1,11 @@
 import { OtpType } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, Platform, PlatformRole, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { cryptoUtils } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { projectService } from '../project/project-service'
@@ -11,7 +13,8 @@ import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
 import { userIdentityService } from './user-identity/user-identity-service'
-import { cryptoUtils } from '@activepieces/server-shared'
+
+const edition = system.getEdition()
 
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
@@ -53,7 +56,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).verifyIdenityPassword(params)
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatforIdForSignWithPassword(identity.id) : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
@@ -82,13 +85,16 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
     },
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForEmail(params.email, log) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForFederatedAuthn(params.email, log) : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getIdentityByEmail(params.email)
 
         if (isNil(platformId)) {
-
-            if(!isNil(userIdentity)){
-                // User already exists, create platform and return token
+            if (!isNil(userIdentity)) {
+                const cloudProjectAndToken = await getCloudProjectAndToken(userIdentity)
+                if (cloudProjectAndToken) {
+                    return cloudProjectAndToken
+                }
+                // User already exists, create a new personal platform and return token
                 return createUserAndPlatform(userIdentity, log)
             }
             // Create New Identity and Platform
@@ -202,12 +208,25 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
     })
 }
 
-async function getPersonalPlatformIdForEmail(email: string, log: FastifyBaseLogger): Promise<string | null> {
+async function getPersonalPlatformIdForFederatedAuthn(email: string, log: FastifyBaseLogger): Promise<string | null> {
     const identity = await userIdentityService(log).getIdentityByEmail(email)
     if (isNil(identity)) {
         return null
     }
     return getPersonalPlatformIdForIdentity(identity.id)
+}
+
+async function getPersonalPlatforIdForSignWithPassword(identityId: string): Promise<string | null> {
+    const edition = system.getEdition()
+    if (edition === ApEdition.CLOUD) {
+        const platform = getPersonalPlatformIdForIdentity(identityId)
+        // TODO (@abuaboud) clean up this once everyone is moved to their own platform
+        if (isNil(platform)) {
+            return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+        }
+        return platform
+    }
+    return null
 }
 
 async function getPersonalPlatformIdForIdentity(identityId: string): Promise<string | null> {
@@ -216,6 +235,31 @@ async function getPersonalPlatformIdForIdentity(identityId: string): Promise<str
         const platforms = await platformService.listPlatformsForIdentity({ identityId })
         const platform = platforms.find((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
         return platform?.id ?? null
+    }
+    return null
+}
+
+// TODO (@abuaboud) clean up this once everyone is moved to their own platform
+async function getCloudProjectAndToken(userIdentity: UserIdentity): Promise<AuthenticationResponse | null> {
+    if (edition === ApEdition.CLOUD) {
+        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+        const cloudPlatformUser = await userService.getOneByIdentityAndPlatform({
+            identityId: userIdentity.id,
+            platformId: cloudPlatformId,
+        })
+        if (!isNil(cloudPlatformUser)) {
+            const cloudProject = await projectService.getOneByOwnerAndPlatform({
+                ownerId: cloudPlatformUser.id,
+                platformId: cloudPlatformId,
+            })
+            if (!isNil(cloudProject)) {
+                return authenticationUtils.getProjectAndToken({
+                    userId: cloudPlatformUser.id,
+                    platformId: cloudPlatformId,
+                    projectId: cloudProject.id,
+                })
+            }
+        }
     }
     return null
 }
