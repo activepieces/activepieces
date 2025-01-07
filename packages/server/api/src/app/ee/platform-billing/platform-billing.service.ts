@@ -1,5 +1,5 @@
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT, PlatformBilling } from '@activepieces/ee-shared'
-import { apId, isNil } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -23,7 +23,14 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
     async update(platformId: string, tasksLimit: number | undefined, aiCreditsLimit: number | undefined): Promise<PlatformBilling> {
         const platformBilling = await platformBillingRepo().findOneBy({ platformId })
         if (isNil(platformBilling)) {
-            throw new Error('Platform billing not found')
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: platformId,
+                    entityType: 'PlatformBilling',
+                    message: 'Platform billing not found by platform id',
+                },
+            })
         }
         platformBilling.tasksLimit = tasksLimit
         platformBilling.aiCreditsLimit = aiCreditsLimit
@@ -33,7 +40,11 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
     async updateSubscriptionIdByCustomerId(subscription: Stripe.Subscription): Promise<PlatformBilling> {
         const stripeCustomerId = subscription.customer as string
         const platformBilling = await platformBillingRepo().findOneByOrFail({ stripeCustomerId })
-        log.info(`Updating subscription id for platform billing ${platformBilling.id}`)
+        log.info({
+            platformBillingId: platformBilling.id,
+            subscriptionId: subscription.id,
+            subscriptionStatus: subscription.status,
+        }, 'Updating subscription id for platform billing')
         await platformBillingRepo().update(platformBilling.id, {
             stripeSubscriptionId: subscription.id,
             stripeSubscriptionStatus: subscription.status as ApSubscriptionStatus,
@@ -50,6 +61,7 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         user,
         platformId,
     )
+    // TODO(@amrabuaza) remove this once we have migrated all platform on the cloud
     const isEnterpriseCustomer = isEnterpriseCustomerOnCloud(platform)
     if (isEnterpriseCustomer) {
         return platformBillingRepo().save({
