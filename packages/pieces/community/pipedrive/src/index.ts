@@ -11,6 +11,7 @@ import { newLeadTrigger } from './lib/trigger/new-lead';
 import { newOrganizationTrigger } from './lib/trigger/new-organization';
 import { updatedOrganizationTrigger } from './lib/trigger/updated-organization';
 import { updatedDealStageTrigger } from './lib/trigger/updated-deal-stage';
+import { createPersonAction } from './lib/actions/create-person';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -30,6 +31,7 @@ export const pipedrive = createPiece({
 	auth: pipedriveAuth,
 	actions: [
 		addPerson,
+		createPersonAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.pipedrive.com/v1',
 			auth: pipedriveAuth,

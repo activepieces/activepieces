@@ -59,6 +59,13 @@ export type PersonListResponse =
 	additional_data: AdditionalData;
 }
 
+export type PersonCreateResponse =
+{
+	success: boolean;
+	data: Record<string, unknown>;
+	additional_data: AdditionalData;
+}
+
 export type PaginatedResponse<T> =
 {
 	success: boolean;
