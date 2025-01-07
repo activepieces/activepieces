@@ -12,11 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
-import {
-  Action,
-  isNil,
-  Trigger,
-} from '@activepieces/shared';
+import { Action, isNil, Trigger } from '@activepieces/shared';
 
 import { ArrayPiecePropertyInListMapperMode } from './array-property-in-list-mapper-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -56,7 +52,6 @@ const AutoFormFieldWrapper = ({
   const dynamicInputModeToggled =
     form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName] ===
     true;
- 
 
   function handleChange(mode: boolean) {
     const newCustomizedInputs = {
@@ -137,16 +132,17 @@ const AutoFormFieldWrapper = ({
         )}
       </FormLabel>
 
-      {dynamicInputModeToggled && !isArrayProperty && 
+      {dynamicInputModeToggled && !isArrayProperty && (
         <TextInputWithMentions
           disabled={disabled}
           onChange={field.onChange}
           initialValue={field.value ?? property.defaultValue ?? null}
         />
-       }
-    
-    {
-        isArrayProperty && isNil(property.properties) && dynamicInputModeToggled && (
+      )}
+
+      {isArrayProperty &&
+        isNil(property.properties) &&
+        dynamicInputModeToggled && (
           <ArrayPiecePropertyInListMapperMode
             disabled={disabled}
             arrayProperties={property.properties}
@@ -154,27 +150,23 @@ const AutoFormFieldWrapper = ({
             onChange={field.onChange}
             value={field.value ?? property.defaultValue ?? null}
           />
-        )
-      }
-      {
-        isArrayProperty && !isNil(property.properties) && dynamicInputModeToggled && (
+        )}
+      {isArrayProperty &&
+        !isNil(property.properties) &&
+        dynamicInputModeToggled && (
           <ArrayPiecePropertyInListMapperMode
             disabled={disabled}
             arrayProperties={property.properties}
             inputName={inputName}
           />
-        )
-      }
+        )}
 
-      {!placeBeforeLabelText &&
-        !dynamicInputModeToggled && <div>{children}</div>}
+      {!placeBeforeLabelText && !dynamicInputModeToggled && (
+        <div>{children}</div>
+      )}
       {property.description && !hideDescription && (
         <ReadMoreDescription text={t(property.description)} />
       )}
-
-
-      
-    
     </FormItem>
   );
 };

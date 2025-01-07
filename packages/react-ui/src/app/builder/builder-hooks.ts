@@ -1,5 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useState,
+  useEffect,
+} from 'react';
 import { create, useStore } from 'zustand';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -669,16 +675,17 @@ export const useIsFocusInsideListMapperModeInput = ({
   containerRef,
   setIsFocusInsideListMapperModeInput,
   isFocusInsideListMapperModeInput,
-}:{
+}: {
   containerRef: React.RefObject<HTMLDivElement>;
-  setIsFocusInsideListMapperModeInput: (isFocusInsideListMapperModeInput: boolean) => void;
+  setIsFocusInsideListMapperModeInput: (
+    isFocusInsideListMapperModeInput: boolean,
+  ) => void;
   isFocusInsideListMapperModeInput: boolean;
 }) => {
   useEffect(() => {
     const focusInListener = () => {
       const focusedElement = document.activeElement;
-      const isFocusedInside =
-        !!containerRef.current?.contains(focusedElement);
+      const isFocusedInside = !!containerRef.current?.contains(focusedElement);
       const isFocusedInsideDataSelector =
         !isNil(document.activeElement) &&
         document.activeElement instanceof HTMLElement &&
@@ -695,5 +702,4 @@ export const useIsFocusInsideListMapperModeInput = ({
       document.removeEventListener('focusin', focusInListener);
     };
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
-
-}
+};
