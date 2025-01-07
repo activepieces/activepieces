@@ -70,7 +70,7 @@ export default function PlatformSecondSidebarLayout({
           href: '/platform/setup/templates',
           icon: <Workflow size={iconSize} />,
         },
-        ...(edition === ApEdition.CLOUD
+        ...(edition === ApEdition.CLOUD && !showPlatformDemo
           ? [
               {
                 title: t('Billing'),

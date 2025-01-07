@@ -12,10 +12,13 @@ import { platformBillingController } from './platform-billing.controller'
 import { platformBillingService } from './platform-billing.service'
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from './stripe-helper'
 import { BillingEntityType, usageService } from './usage/usage-service'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 
 const EVERY_4_HOURS = '59 */4 * * *'
 
 export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
+    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
+
     systemJobHandlers.registerJobHandler(SystemJobName.PLATFORM_USAGE_REPORT, async () => {
         const log = app.log
         log.info('Running platform-daily-report')
