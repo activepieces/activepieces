@@ -52,7 +52,7 @@ export type ListActivitiesResponse =
 	additional_data: AdditionalData;
 }
 
-export type ListPersonsResponse =
+export type PersonListResponse =
 {
 	success: boolean;
 	data: Record<string, unknown>[];

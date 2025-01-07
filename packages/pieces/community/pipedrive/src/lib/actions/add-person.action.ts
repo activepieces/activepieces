@@ -9,7 +9,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
-import { pipedriveAuth } from '../../..';
+import { pipedriveAuth } from '../..';
 
 export const addPerson = createAction({
   auth: pipedriveAuth,

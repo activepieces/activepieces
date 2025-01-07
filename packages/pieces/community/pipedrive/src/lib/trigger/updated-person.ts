@@ -7,7 +7,7 @@ import {
 	pipedriveTransformCustomFields,
 } from '../common';
 import { pipedriveAuth } from '../..';
-import { GetField, ListPersonsResponse } from '../common/types';
+import { GetField, PersonListResponse } from '../common/types';
 import {  HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 
@@ -42,7 +42,7 @@ export const updatedPerson = createTrigger({
 		}
 	},
 	async test(context) {
-		const personsResponse = await pipedriveApiCall<ListPersonsResponse>({
+		const personsResponse = await pipedriveApiCall<PersonListResponse>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
@@ -73,7 +73,7 @@ export const updatedPerson = createTrigger({
 	async run(context) {
 		// Pipedrive will always return a list of Persons even if we are looking up a specific person
 		const payloadBody = context.payload.body as PayloadBody;
-		const personResponse = await pipedriveApiCall<ListPersonsResponse>({
+		const personResponse = await pipedriveApiCall<PersonListResponse>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.GET,
