@@ -6,6 +6,7 @@ import { initializeLock } from './app/helper/lock'
 import { system } from './app/helper/system/system'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
+import { temporaryMigration } from './temporaryMigration'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -19,6 +20,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
         if (system.isApp()) {
             await appPostBoot(app)
         }
+        await temporaryMigration.backfill()
     }
     catch (err) {
         app.log.error(err)
