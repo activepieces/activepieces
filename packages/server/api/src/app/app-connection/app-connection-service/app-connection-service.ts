@@ -119,6 +119,37 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return this.removeSensitiveData(updatedConnection)
     },
 
+    async createPlaceholder(params: AddPlaceholderParams): Promise<void> {
+        const { projectId, platformId, externalId, pieceName } = params
+        
+        const existingConnection = await repo().findOne({
+            where: {
+                projectIds: APArrayContains('projectIds', [projectId]),
+                externalId,
+                platformId,
+            },
+        })
+
+        if (existingConnection) {
+            return 
+        }
+
+        const connection = {
+            displayName: externalId,
+            status: AppConnectionStatus.ERROR,
+            externalId,
+            pieceName,
+            value: encryptUtils.encryptObject({}),
+            type: AppConnectionType.CUSTOM_AUTH,
+            id: apId(),
+            scope: AppConnectionScope.PROJECT,
+            projectIds: [projectId],
+            platformId,
+        }
+
+        await repo().upsert(connection, ['id'])
+    },
+
     async getOne({
         projectId,
         platformId,
@@ -553,6 +584,13 @@ type UpsertParams = {
     value: UpsertAppConnectionRequestBody['value']
     displayName: string
     type: AppConnectionType
+    pieceName: string
+}
+
+type AddPlaceholderParams = {
+    projectId: ProjectId
+    platformId: string
+    externalId: string
     pieceName: string
 }
 

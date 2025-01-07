@@ -106,7 +106,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                         removeConnectionsName: false,
                         removeSampleData: true,
                     })
-                    const flowName = flowId
+                    const flowName = flow.externalId || flowId
                     await gitSyncHelper(log).upsertFlowToGit(flowName, flow, flowFolderPath)
                 }
                 await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flows ${request.flowIds.join(', ')}`)

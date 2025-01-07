@@ -9,3 +9,10 @@ export const ProjectState = Type.Object({
 })
 
 export type ProjectState = Static<typeof ProjectState>
+
+export const ConnectionState = Type.Object({
+    externalId: Type.String(),
+    pieceName: Type.String(),
+})
+
+export type ConnectionState = Static<typeof ConnectionState>

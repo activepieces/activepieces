@@ -26,7 +26,7 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     app.post('/', CreateProjectReleaseRequest, async (req) => {
         const platform = await platformService.getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
-        const release = await projectReleaseService.create(req.principal.projectId, ownerId, req.principal.id, req.body, req.log)
+        const release = await projectReleaseService.create(req.principal.platform.id, req.principal.projectId, ownerId, req.principal.id, req.body, req.log)
 
         eventsHooks.get(req.log).sendUserEventFromRequest(req, {
             action: ApplicationEventName.PROJECT_RELEASE_CREATED,

@@ -1,6 +1,6 @@
 import { ProjectOperationType, ProjectSyncError, ProjectSyncPlan, ProjectSyncPlanOperation } from '@activepieces/ee-shared'
 import { memoryLock } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, apId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ErrorCode, isNil, ListProjectReleasesRequest, ProjectId, ProjectRelease, ProjectReleaseType, ProjectState, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ErrorCode, isNil, ListProjectReleasesRequest, PlatformId, ProjectId, ProjectRelease, ProjectReleaseType, ProjectState, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -13,7 +13,7 @@ import { projectStateService } from './project-state/project-state.service'
 const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
 export const projectReleaseService = {
-    async create(projectId: ProjectId, ownerId: ApId, importedBy: ApId, params: CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectRelease> {
+    async create(platformId: PlatformId, projectId: ProjectId, ownerId: ApId, importedBy: ApId, params: CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectRelease> {
         const lockKey = `project-release:${projectId}`
         const lock = await memoryLock.acquire(lockKey)
         try {
@@ -23,6 +23,7 @@ export const projectReleaseService = {
                 operations: diffs,
                 selectedFlowsIds: params.selectedFlowsIds,
                 log,
+                platformId,
             })
             const fileId = await projectStateService(log).save(projectId, params.name, log)
             const projectRelease: ProjectRelease = {
@@ -44,7 +45,11 @@ export const projectReleaseService = {
     },
     async releasePlan(projectId: ProjectId, userId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectSyncPlan> {
         const diffs = await findDiffOperations(projectId, userId, params, log)
-        return toResponse(diffs)
+        return toResponse({
+            operations: diffs,
+            log,
+            errors: [],
+        })
     },
     async list({ projectId, request }: ListParams): Promise<SeekPage<ProjectRelease>> {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
@@ -103,7 +108,11 @@ async function findDiffOperations(projectId: ProjectId, ownerId: ApId, params: D
     return diffs
 }
 
-function toResponse(operations: ProjectOperation[], errors: ProjectSyncError[] = []): ProjectSyncPlan {
+
+
+
+async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
+    const { operations, errors, log } = params
     const responsePlans: ProjectSyncPlanOperation[] = operations.map((operation) => {
         switch (operation.type) {
             case ProjectOperationType.DELETE_FLOW:
@@ -136,9 +145,12 @@ function toResponse(operations: ProjectOperation[], errors: ProjectSyncError[] =
                 }
         }
     })
+    const connectionStates = await projectStateService(log).getFlowConnections(operations)
+
     return {
         errors,
         operations: responsePlans,
+        connectionStates,
     }
 }
 async function getStateFromCreateRequest(projectId: string, ownerId: ApId, request: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectState> {
@@ -158,6 +170,12 @@ async function getStateFromCreateRequest(projectId: string, ownerId: ApId, reque
             return projectStateService(log).getStateFromRelease(projectId, projectRelease.fileId, log)
         }
     }
+}
+
+type toResponseParams = {
+    operations: ProjectOperation[]
+    log: FastifyBaseLogger
+    errors: ProjectSyncError[]
 }
 
 type ListParams = {

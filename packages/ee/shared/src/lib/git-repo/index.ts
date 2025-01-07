@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { BaseModelSchema } from "@activepieces/shared";
+import { BaseModelSchema, ConnectionState } from "@activepieces/shared";
 
 export enum ProjectOperationType {
     UPDATE_FLOW = 'UPDATE_FLOW',
@@ -101,6 +101,7 @@ export type ProjectSyncPlanOperation = Static<typeof ProjectSyncPlanOperation>
 
 export const ProjectSyncPlan = Type.Object({
     operations: Type.Array(ProjectSyncPlanOperation),
+    connectionStates: Type.Array(ConnectionState),
     errors: Type.Array(ProjectSyncError),
 })
 
