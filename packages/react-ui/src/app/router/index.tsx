@@ -48,6 +48,7 @@ import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
+import SettingsBilling from '../routes/platform/billing';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
@@ -509,6 +510,16 @@ const routes = [
             <SettingsHealthPage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/billing',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <SettingsBilling />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },

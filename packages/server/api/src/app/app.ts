@@ -32,7 +32,6 @@ import { federatedAuthModule } from './ee/authentication/federated-authn/federat
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
-import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
@@ -55,6 +54,7 @@ import { projectMemberModule } from './ee/project-members/project-member.module'
 import { projectRoleModule } from './ee/project-role/project-role.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
+import { platformBillingModule } from './ee/platform-billing/platform-billing.module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { fileModule } from './file/file.module'
@@ -261,6 +261,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
+            await app.register(platformBillingModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
             await app.register(adminPieceModule)
@@ -279,7 +280,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(usageTrackerModule)
             await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
-            await app.register(projectBillingModule)
             await app.register(projectRoleModule)
             await app.register(globalConnectionModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
@@ -296,6 +296,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         case ApEdition.ENTERPRISE:
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
+            await app.register(platformBillingModule)
             await app.register(projectMemberModule)
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)

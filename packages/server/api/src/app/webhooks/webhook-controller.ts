@@ -20,7 +20,6 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { tasksLimit } from '../ee/project-plan/tasks-limit'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { system } from '../helper/system/system'
@@ -29,6 +28,7 @@ import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
+import { usageService } from '../ee/platform-billing/usage/usage-service'
 
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
@@ -251,9 +251,7 @@ const convertBody = async (
 }
 
 async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<void> {
-    const exceededLimit = await tasksLimit(log).exceededLimit({
-        projectId: flow.projectId,
-    })
+    const exceededLimit = await usageService(log).tasksExceededLimit(flow.projectId)
     if (!exceededLimit) {
         return
     }

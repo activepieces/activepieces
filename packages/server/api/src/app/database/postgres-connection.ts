@@ -168,6 +168,7 @@ import { AddIndiciesToRunAndTriggerData1732324567513 } from './migration/postgre
 import { AddProjectRelationInUserInvitation1732790412900 } from './migration/postgres/1732790673766-AddProjectRelationInUserInvitation'
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
 import { AddCopilotSettings1734479886363 } from './migration/postgres/1734479886363-AddCopilotSettings'
+import { AddPlatformBilling1734971881345 } from './migration/1734971881345-AddPlatformBilling'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -356,7 +357,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MigrateAuditEventSchema1723489038729,
                 AddAiTokensForProjectPlan1726446092010,
                 AddAuditLogIndicies1731711188507,
-
+                AddPlatformBilling1734971881345
             )
             break
         case ApEdition.COMMUNITY:

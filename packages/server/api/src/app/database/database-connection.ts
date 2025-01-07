@@ -47,6 +47,7 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -99,6 +100,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 ConnectionKeyEntity,
                 AppCredentialEntity,
                 ProjectBillingEntity,
+                PlatformBillingEntity,
             )
             break
         case ApEdition.COMMUNITY:
