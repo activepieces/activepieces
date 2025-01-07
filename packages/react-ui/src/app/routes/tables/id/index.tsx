@@ -15,8 +15,12 @@ import {
   RefreshCw,
   Trash2,
 } from 'lucide-react';
-import { useState, useCallback } from 'react';
-import DataGrid, { Column, RenderCellProps } from 'react-data-grid';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import DataGrid, {
+  Column,
+  RenderCellProps,
+  DataGridHandle,
+} from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -32,7 +36,6 @@ import {
 } from '@/features/tables/components/column-header';
 import { EditableCell } from '@/features/tables/components/editable-cell';
 import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
-import { NewRecordDialog } from '@/features/tables/components/new-record-dialog';
 import { SelectColumn } from '@/features/tables/components/select-column';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
@@ -72,6 +75,8 @@ function TablePage() {
     () => new Set(),
   );
   const [rowHeight, setRowHeight] = useState<RowHeight>(RowHeight.DEFAULT);
+  const [lastRowIdx, setLastRowIdx] = useState<number>(0);
+  const gridRef = useRef<DataGridHandle>(null);
   const { theme } = useTheme();
 
   const { data: fieldsData, isLoading: isFieldsLoading } = useQuery({
@@ -91,11 +96,21 @@ function TablePage() {
       recordsApi.list({
         tableId: tableId!,
         cursor: pageParam as string | undefined,
-        limit: 100,
+        limit: 1,
       }),
     getNextPageParam: (lastPage) => lastPage.next,
     initialPageParam: undefined as string | undefined,
   });
+
+  useEffect(() => {
+    if (recordsPages) {
+      const totalRows = recordsPages.pages.reduce(
+        (sum, page) => sum + page.data.length,
+        0,
+      );
+      setLastRowIdx(totalRows);
+    }
+  }, [recordsPages]);
 
   const { data: tableData, isLoading: isTableLoading } = useQuery({
     queryKey: ['table', tableId],
@@ -244,15 +259,118 @@ function TablePage() {
     },
   });
 
+  const createRecordMutation = useMutation({
+    mutationKey: ['createRecord'],
+    mutationFn: async ({
+      field,
+      value,
+      tempId,
+    }: {
+      field: Field;
+      value: string;
+      tempId: string;
+    }) => {
+      return recordsApi.create({
+        records: [
+          [
+            {
+              key: field.name,
+              value: value,
+            },
+          ],
+        ],
+        tableId: tableId!,
+      });
+    },
+    onMutate: async ({ field, value, tempId }) => {
+      await queryClient.cancelQueries({ queryKey: ['records', tableId] });
+      const previousRecords = queryClient.getQueryData(['records', tableId]);
+
+      return { previousRecords, tempId };
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousRecords) {
+        // Restore the previous records and remove the temporary record
+        queryClient.setQueryData(
+          ['records', tableId],
+          (old: { pages: { data: PopulatedRecord[] }[] }) => ({
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.filter((record) => record.id !== context.tempId),
+            })),
+          }),
+        );
+      }
+      toast({
+        title: t('Error'),
+        description: t('Failed to create record.'),
+        duration: 3000,
+      });
+    },
+    onSuccess: (data, { tempId }) => {
+      // Replace the temporary record with the real one
+      queryClient.setQueryData(
+        ['records', tableId],
+        (old: { pages: { data: PopulatedRecord[] }[] }) => ({
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: page.data.map((record) =>
+              record.id === tempId ? data[0] : record,
+            ),
+          })),
+        }),
+      );
+    },
+  });
+
   const columns: readonly Column<Row, { id: string }>[] = [
     {
       ...SelectColumn,
       renderSummaryCell: () => (
-        <NewRecordDialog fields={fieldsData ?? []} tableId={tableId!}>
-          <div className="w-full h-full flex items-center justify-start cursor-pointer pl-4">
-            <Plus className="h-4 w-4" />
-          </div>
-        </NewRecordDialog>
+        <div
+          className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
+          onClick={() => {
+            // Create an empty record in the grid
+            const emptyRecord: PopulatedRecord = {
+              id: 'temp-' + Date.now(),
+              cells: [],
+              created: new Date().toISOString(),
+              updated: new Date().toISOString(),
+              projectId: '',
+              tableId: tableId!,
+            };
+
+            queryClient.setQueryData(
+              ['records', tableId],
+              (old: { pages: { data: PopulatedRecord[] }[] }) => {
+                const updatedData = {
+                  ...old,
+                  pages: old.pages.map((page, index) =>
+                    index === old.pages.length - 1
+                      ? {
+                          ...page,
+                          data: [...page.data, emptyRecord],
+                        }
+                      : page,
+                  ),
+                };
+
+                return updatedData;
+              },
+            );
+
+            setTimeout(() => {
+              gridRef.current?.scrollToCell({
+                rowIdx: lastRowIdx,
+                idx: 0,
+              });
+            }, 0);
+          }}
+        >
+          <Plus className="h-4 w-4" />
+        </div>
       ),
     },
     ...(fieldsData?.map((field) => ({
@@ -289,18 +407,26 @@ function TablePage() {
           rowIdx={rowIdx}
           onRowChange={(newRow, commitChanges) => {
             if (commitChanges) {
-              updateRecordMutation.mutate({
-                recordId: row.id,
-                request: {
-                  tableId: tableId!,
-                  cells: [
-                    {
-                      key: field.name,
-                      value: String(newRow[field.name]),
-                    },
-                  ],
-                },
-              });
+              if (row.id.startsWith('temp-')) {
+                createRecordMutation.mutate({
+                  field,
+                  value: String(newRow[field.name]),
+                  tempId: row.id,
+                });
+              } else {
+                updateRecordMutation.mutate({
+                  recordId: row.id,
+                  request: {
+                    tableId: tableId!,
+                    cells: [
+                      {
+                        key: field.name,
+                        value: String(newRow[field.name]),
+                      },
+                    ],
+                  },
+                });
+              }
             }
           }}
         />
@@ -544,6 +670,7 @@ function TablePage() {
       </div>
       <div className="flex-1 min-h-0 mt-4 grid-wrapper">
         <DataGrid
+          ref={gridRef}
           columns={columns}
           rows={mapRecordsToRows(recordsPages, fieldsData ?? [])}
           rowKeyGetter={(row: Row) => row.id}
