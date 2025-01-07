@@ -51,6 +51,20 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
         })
         return platformBillingRepo().findOneByOrFail({ stripeCustomerId })
     },
+
+    async updateSubscription({platformBillingId, stripeCustomerId, stripeSubscriptionId, stripeSubscriptionStatus}: {
+        platformBillingId: string,
+        stripeCustomerId: string,
+        stripeSubscriptionId: string,
+        stripeSubscriptionStatus: ApSubscriptionStatus
+    }): Promise<PlatformBilling> {
+        await platformBillingRepo().update(platformBillingId, {
+            stripeCustomerId,
+            stripeSubscriptionId,
+            stripeSubscriptionStatus,
+        })
+        return platformBillingRepo().findOneByOrFail({ id: platformBillingId })
+    },
 })
 
 
