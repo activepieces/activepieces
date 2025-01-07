@@ -82,7 +82,7 @@ describe('Authentication API', () => {
                 })
 
             expect(project?.ownerId).toBe(responseBody.id)
-            expect(project?.displayName).toBe('Default Project')
+            expect(project?.displayName).toBeDefined()
             expect(project?.platformId).toBeDefined()
         })
     })

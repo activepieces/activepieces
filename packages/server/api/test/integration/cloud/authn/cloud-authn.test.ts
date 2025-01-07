@@ -155,15 +155,14 @@ describe('Authentication API', () => {
             expect(responseBody?.code).toBe('DOMAIN_NOT_ALLOWED')
         })
 
-        it('Adds new user', async () => {
-            const { mockCustomDomain } =
-                await createMockPlatformAndDomain({
-                    platform: {
-                        id: CLOUD_PLATFORM_ID,
-                        emailAuthEnabled: true,
-                        ssoEnabled: false,
-                    },
-                })
+        it('Create new user for the cloud user and then ask to verify email if email is not verified', async () => {
+            await createMockPlatformAndDomain({
+                platform: {
+                    id: CLOUD_PLATFORM_ID,
+                    emailAuthEnabled: true,
+                    ssoEnabled: false,
+                },
+            })
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
 
@@ -173,43 +172,32 @@ describe('Authentication API', () => {
                 url: '/v1/authentication/sign-up',
                 body: mockSignUpRequest,
                 headers: {
-                    Host: mockCustomDomain.domain,
                 },
             })
 
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(responseBody?.id).toHaveLength(21)
-            expect(responseBody?.created).toBeDefined()
-            expect(responseBody?.updated).toBeDefined()
-            expect(responseBody?.email).toBe(mockSignUpRequest.email.toLocaleLowerCase().trim())
-            expect(responseBody?.firstName).toBe(mockSignUpRequest.firstName)
-            expect(responseBody?.lastName).toBe(mockSignUpRequest.lastName)
-            expect(responseBody?.trackEvents).toBe(mockSignUpRequest.trackEvents)
-            expect(responseBody?.newsLetter).toBe(mockSignUpRequest.newsLetter)
-            expect(responseBody?.password).toBeUndefined()
-            expect(responseBody?.status).toBe('ACTIVE')
-            expect(responseBody?.verified).toBe(false)
-            expect(responseBody?.platformId).toBeDefined()
-            expect(responseBody?.externalId).toBe(null)
-            expect(responseBody?.projectId).toHaveLength(21)
-            expect(responseBody?.token).toBeDefined()
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(responseBody).toEqual({
+                code: 'EMAIL_IS_NOT_VERIFIED',
+                params: {
+                    email: mockSignUpRequest.email.toLocaleLowerCase().trim(),
+                },
+            })
         })
 
         it('Sends a verification email', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()
-            const { mockCustomDomain } =
-                await createMockPlatformAndDomain({
-                    platform: {
-                        id: CLOUD_PLATFORM_ID,
-                        emailAuthEnabled: true,
-                        ssoEnabled: false,
-                        enforceAllowedAuthDomains: false,
-                    },
-                })
+            await createMockPlatformAndDomain({
+                platform: {
+                    id: CLOUD_PLATFORM_ID,
+                    emailAuthEnabled: true,
+                    ssoEnabled: false,
+                    enforceAllowedAuthDomains: false,
+                },
+            })
 
 
             // act
@@ -218,13 +206,18 @@ describe('Authentication API', () => {
                 url: '/v1/authentication/sign-up',
                 body: mockSignUpRequest,
                 headers: {
-                    Host: mockCustomDomain.domain,
                 },
             })
+            const responseBody = response?.json()
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(responseBody).toEqual({
+                code: 'EMAIL_IS_NOT_VERIFIED',
+                params: {
+                    email: mockSignUpRequest.email.toLocaleLowerCase().trim(),
+                },
+            })
 
             expect(sendOtpSpy).toHaveBeenCalledTimes(1)
             expect(sendOtpSpy).toHaveBeenCalledWith({
@@ -232,7 +225,7 @@ describe('Authentication API', () => {
                 platformId: expect.any(String),
                 type: OtpType.EMAIL_VERIFICATION,
                 userIdentity: expect.objectContaining({
-                    email: responseBody?.email,
+                    email: mockSignUpRequest.email.trim().toLocaleLowerCase(),
                 }),
             })
         })
@@ -328,43 +321,7 @@ describe('Authentication API', () => {
 
             expect(responseBody?.code).toBe('INVITATION_ONLY_SIGN_UP')
         })
-        it('Creates new project & platform for cloud user', async () => {
-            const { mockCustomDomain } =
-                await createMockPlatformAndDomain({
-                    platform: {
-                        id: CLOUD_PLATFORM_ID,
-                        emailAuthEnabled: true,
-                        ssoEnabled: false,
-                        enforceAllowedAuthDomains: false,
-                    },
-                })
-            // arrange
-            const mockSignUpRequest = createMockSignUpRequest()
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/authentication/sign-up',
-                headers: {
-                    Host: mockCustomDomain.domain,
-                },
-                body: mockSignUpRequest,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
-
-            const project = await databaseConnection()
-                .getRepository('project')
-                .findOneBy({
-                    id: responseBody.projectId,
-                })
-
-            expect(project?.ownerId).toBe(responseBody.id)
-            expect(project?.displayName).toBe('Default Project')
-            expect(project?.platformId).toBeDefined()
-        })
+ 
     })
 
     describe('Sign in Endpoint', () => {
