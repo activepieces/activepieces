@@ -10,7 +10,7 @@ import Stripe from 'stripe'
 import { MoreThanOrEqual, LessThanOrEqual } from 'typeorm'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from './stripe-helper'
-import { usageService, ENTITY_TYPES } from './usage/usage-service'
+import { usageService, BillingEntityType } from './usage/usage-service'
 import { platformBillingService } from './platform-billing.service'
 
 const EVERY_4_HOURS = '59 */4 * * *'
@@ -49,7 +49,7 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
             const item = subscription.items.data.find((item) => item.price.id === TASKS_PAYG_PRICE_ID)
             assertNotNullOrUndefined(item, 'No item found for tasks')
 
-            const { tasks, aiTokens } = await usageService(log).getUsageForBillingPeriod(platformId, ENTITY_TYPES.PLATFORM)
+            const { tasks, aiTokens } = await usageService(log).getUsageForBillingPeriod(platformId, BillingEntityType.PLATFORM)
 
             log.info({ platformId, tasks, aiTokens, includedTasks: platformBilling.tasksLimit }, 'Sending usage record to stripe')
             

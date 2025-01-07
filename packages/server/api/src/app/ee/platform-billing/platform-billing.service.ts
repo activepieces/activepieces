@@ -1,5 +1,5 @@
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT, PlatformBilling } from '@activepieces/ee-shared'
-import { apId, isNil } from '@activepieces/shared'
+import { apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { platformService } from '../../platform/platform.service'
@@ -24,15 +24,8 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
         if (isNil(platformBilling)) {
             throw new Error('Platform billing not found')
         }
-
-        if (!isNil(tasksLimit)) {
-            platformBilling.tasksLimit = tasksLimit
-        }
-
-        if (!isNil(aiCreditsLimit)) {
-            platformBilling.aiCreditsLimit = aiCreditsLimit
-        }
-
+        platformBilling.tasksLimit = tasksLimit
+        platformBilling.aiCreditsLimit = aiCreditsLimit
         return platformBillingRepo().save(platformBilling)
     },
 
@@ -60,9 +53,7 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         id: apId(),
         platformId,
         includedAiCredits: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
-        aiCreditsLimit: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
         includedTasks: DEFAULT_FREE_PLAN_LIMIT.tasks,
-        tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks,
         stripeCustomerId,
     })
 }

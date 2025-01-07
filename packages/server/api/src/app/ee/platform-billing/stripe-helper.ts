@@ -17,7 +17,7 @@ export const TASKS_PAYG_PRICE_ID = getTasksPriceId(system.get(AppSystemProp.STRI
 export const stripeHelper = (log: FastifyBaseLogger) => ({
     getStripe: (): Stripe | undefined => {
         const edition = system.getEdition()
-        if (false && edition !== ApEdition.CLOUD) {
+        if (edition !== ApEdition.CLOUD) {
             return undefined
         }
         const stripeSecret = system.getOrThrow(AppSystemProp.STRIPE_SECRET_KEY)

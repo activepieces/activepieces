@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { system } from '../../helper/system/system'
-import { usageService, USAGE_TYPES } from '../platform-billing/usage/usage-service'
+import { usageService, BillingUsageType } from '../platform-billing/usage/usage-service'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
 import { issuesService } from '../issues/issues-service'
@@ -29,7 +29,7 @@ export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
         if (isNil(flowRun.tasks)) {
             return
         }
-        const consumedTasks = await usageService(log).increaseProjectAndPlatformUsage(flowRun.projectId, flowRun.tasks, USAGE_TYPES.TASKS)
+        const consumedTasks = await usageService(log).increaseProjectAndPlatformUsage(flowRun.projectId, flowRun.tasks, BillingUsageType.TASKS)
         await sendQuotaAlertIfNeeded({
             projectId: flowRun.projectId,
             consumedTasks,

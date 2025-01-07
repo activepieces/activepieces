@@ -8,7 +8,7 @@ import { platformService } from '../../platform/platform.service'
 import { platformBillingService } from './platform-billing.service'
  
 import { stripeHelper, stripeWebhookSecret } from './stripe-helper'
-import { usageService, ENTITY_TYPES } from './usage/usage-service'
+import { usageService, BillingEntityType } from './usage/usage-service'
 import Stripe from 'stripe'
 import { exceptionHandler } from '@activepieces/server-shared'
 
@@ -19,7 +19,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
         },
     }, async (request: FastifyRequest) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
-        const { tasks, aiTokens } = await usageService(request.log).getUsageForBillingPeriod(platform.id, ENTITY_TYPES.PLATFORM)
+        const { tasks, aiTokens } = await usageService(request.log).getUsageForBillingPeriod(platform.id, BillingEntityType.PLATFORM)
         return {
             subscription: await platformBillingService(request.log).getOrCreateForPlatform(platform.id),
             nextBillingDate: usageService(request.log).getCurrentBillingPeriodEnd(),
@@ -51,7 +51,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
                 })
                 return
             }
-            await platformBillingService(request.log).update(request.principal.platform.id, 0, 0)
+            await platformBillingService(request.log).update(request.principal.platform.id, undefined, undefined)
             return {
                 paymentLink: await stripeHelper(request.log).createCheckoutUrl(projectBilling.stripeCustomerId),
             }

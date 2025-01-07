@@ -20,12 +20,14 @@ export const PlatformBillingEntity = new EntitySchema<PlatformBillingSchema>({
         },
         tasksLimit: {
             type: Number,
+            nullable: true,
         },
         includedAiCredits: {
             type: Number,
         },
         aiCreditsLimit: {
             type: Number,
+            nullable: true,
         },
         stripeCustomerId: {
             type: String,

@@ -11,37 +11,39 @@ import { projectLimitsService } from '../../../ee/project-plan/project-plan.serv
 import { exceptionHandler } from '@activepieces/server-shared'
 import { platformBillingService } from '../platform-billing.service'
 
-export const USAGE_TYPES = {
-    TASKS: 'tasks',
-    AI_TOKENS: 'aiTokens',
-} as const;
+export enum BillingUsageType {
+    TASKS = 'tasks',
+    AI_TOKENS = 'aiTokens',
+}
 
-export const ENTITY_TYPES = {
-    PROJECT: 'project',
-    PLATFORM: 'platform',
-} as const;
-
-type UsageType = typeof USAGE_TYPES[keyof typeof USAGE_TYPES];
-type UsageEntityType = typeof ENTITY_TYPES[keyof typeof ENTITY_TYPES];
+export enum BillingEntityType {
+    PROJECT = 'project',
+    PLATFORM = 'platform',
+}
 
 const environment = system.get(AppSystemProp.ENVIRONMENT)
 const edition = system.getEdition()
 
-const redisKeyGenerator = (entityId: string, entityType: UsageEntityType, startBillingPeriod: string, usageType: UsageType): string => {
+const redisKeyGenerator = (entityId: string, entityType: BillingEntityType, startBillingPeriod: string, usageType: BillingUsageType): string => {
     return `${entityType}-${entityId}-usage-${usageType}:${startBillingPeriod}`;
 };
 
 export const usageService = (log: FastifyBaseLogger) => ({
-    async getUsageForBillingPeriod(entityId: string, entityType: UsageEntityType): Promise<ProjectUsage> {
+    async getUsageForBillingPeriod(entityId: string, entityType: BillingEntityType): Promise<ProjectUsage> {
         const startBillingPeriod = getCurrentBillingPeriodStart();
-        const tasks = await getUsage(entityId, entityType, startBillingPeriod, USAGE_TYPES.TASKS);
-        const aiTokens = await getUsage(entityId, entityType, startBillingPeriod, USAGE_TYPES.AI_TOKENS);
-        const teamMembers = entityType === ENTITY_TYPES.PROJECT ? 
+        const tasks = await getUsage(entityId, entityType, startBillingPeriod, BillingUsageType.TASKS);
+        const aiTokens = await getUsage(entityId, entityType, startBillingPeriod, BillingUsageType.AI_TOKENS);
+        const teamMembers = entityType === BillingEntityType.PROJECT ? 
             await projectMemberService(log).countTeamMembers(entityId) + 
             await userInvitationsService(log).countByProjectId(entityId) : 
             0;
 
-        return { tasks, aiTokens, teamMembers };
+        return { 
+            tasks, 
+            aiTokens, 
+            teamMembers,
+            nextLimitResetDate: getCurrentBillingPeriodEnd()
+        };
     },
 
     async aiTokensExceededLimit(projectId: string, tokensToConsume: number): Promise<boolean> {
@@ -56,9 +58,9 @@ export const usageService = (log: FastifyBaseLogger) => ({
             }
             const platformId = await projectService.getPlatformId(projectId)
             const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-            const consumedProjectTokens = await increaseProjectAndPlatformUsage(projectId, tokensToConsume, USAGE_TYPES.AI_TOKENS)
-            const consumedPlatformTokens = await increaseProjectAndPlatformUsage(platformId, tokensToConsume, USAGE_TYPES.AI_TOKENS)
-            return consumedProjectTokens >= projectPlan.aiTokens || consumedPlatformTokens >= platformBilling.aiCreditsLimit
+            const consumedProjectTokens = await increaseProjectAndPlatformUsage(projectId, tokensToConsume, BillingUsageType.AI_TOKENS)
+            const consumedPlatformTokens = await increaseProjectAndPlatformUsage(platformId, tokensToConsume, BillingUsageType.AI_TOKENS)
+            return consumedProjectTokens >= projectPlan.aiTokens || consumedPlatformTokens >= (platformBilling.aiCreditsLimit ?? 0)
         }
         catch(e) {
             exceptionHandler.handle(e, log);
@@ -79,9 +81,9 @@ export const usageService = (log: FastifyBaseLogger) => ({
 
             const platformId = await projectService.getPlatformId(projectId)
             const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-            const consumedProjectTasks = await increaseProjectAndPlatformUsage(projectId, 0, USAGE_TYPES.TASKS)
-            const consumedPlatformTasks = await increaseProjectAndPlatformUsage(platformId, 0, USAGE_TYPES.TASKS)
-            return consumedProjectTasks >= projectPlan.tasks || consumedPlatformTasks >= platformBilling.tasksLimit
+            const consumedProjectTasks = await increaseProjectAndPlatformUsage(projectId, 0, BillingUsageType.TASKS)
+            const consumedPlatformTasks = await increaseProjectAndPlatformUsage(platformId, 0, BillingUsageType.TASKS)
+            return consumedProjectTasks >= projectPlan.tasks || consumedPlatformTasks >= (platformBilling.tasksLimit ?? 0)
         }
         catch (e) {
             exceptionHandler.handle(e, log)
@@ -94,7 +96,7 @@ export const usageService = (log: FastifyBaseLogger) => ({
     getUsage
 });
 
-async function increaseProjectAndPlatformUsage(projectId: string, incrementBy: number, usageType: UsageType): Promise<number> {
+async function increaseProjectAndPlatformUsage(projectId: string, incrementBy: number, usageType: BillingUsageType): Promise<number> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
         return 0
@@ -103,17 +105,17 @@ async function increaseProjectAndPlatformUsage(projectId: string, incrementBy: n
     const redisConnection = getRedisConnection()
     const startBillingPeriod = getCurrentBillingPeriodStart()
     
-    const projectRedisKey = redisKeyGenerator(projectId, ENTITY_TYPES.PROJECT, startBillingPeriod, usageType)
+    const projectRedisKey = redisKeyGenerator(projectId, BillingEntityType.PROJECT, startBillingPeriod, usageType)
     const projectUsage = await redisConnection.incrby(projectRedisKey, incrementBy)
 
     const platformId = await projectService.getPlatformId(projectId)
-    const platformRedisKey = redisKeyGenerator(platformId, ENTITY_TYPES.PLATFORM, startBillingPeriod, usageType)
+    const platformRedisKey = redisKeyGenerator(platformId, BillingEntityType.PLATFORM, startBillingPeriod, usageType)
     await redisConnection.incrby(platformRedisKey, incrementBy)
 
     return projectUsage
 }
 
-async function getUsage(entityId: string, entityType: UsageEntityType, startBillingPeriod: string, usageType: UsageType): Promise<number> {
+async function getUsage(entityId: string, entityType: BillingEntityType, startBillingPeriod: string, usageType: BillingUsageType): Promise<number> {
     if (environment === ApEnvironment.TESTING) {
         return 0;
     }

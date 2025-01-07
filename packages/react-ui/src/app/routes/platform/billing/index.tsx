@@ -15,7 +15,7 @@ import { formatUtils } from '@/lib/utils';
 import { useNewWindow } from '@/components/embed-provider';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { calculateAICostHelper, calculateTaskCostHelper, calculateTotalCostHelper } from './helpers/platform-billing-helper';
-import { Progress } from "./components/progress"
+import { Progress } from '@/components/ui/progres-bar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const fetchSubscriptionInfo = async () => {
@@ -48,8 +48,8 @@ export default function Billing() {
 
   useEffect(() => {
     if (platformSubscription?.subscription) {
-      setTasksLimit(platformSubscription.subscription.tasksLimit);
-      setAiLimit(platformSubscription.subscription.aiCreditsLimit);
+      setTasksLimit(platformSubscription.subscription.tasksLimit ?? 0);
+      setAiLimit(platformSubscription.subscription.aiCreditsLimit ?? 0);
     }
   }, [platformSubscription]);
 
@@ -77,7 +77,7 @@ export default function Billing() {
   async function handleTasksLimitSubmit(limit: number): Promise<void> {
     setTasksLimit(limit);
     try {
-      await updateLimitsMutation.mutateAsync({ tasksLimit: limit });
+      await updateLimitsMutation.mutateAsync({ tasksLimit: limit, aiCreditsLimit: aiLimit });
     } catch (error) {
       console.error('Failed to update tasks limit:', error);
     }
@@ -86,7 +86,7 @@ export default function Billing() {
   async function handleAILimitSubmit(limit: number): Promise<void> {
     setAiLimit(limit);
     try {
-      await updateLimitsMutation.mutateAsync({ aiCreditsLimit: limit });
+      await updateLimitsMutation.mutateAsync({ tasksLimit: tasksLimit, aiCreditsLimit: limit });
     } catch (error) {
       console.error('Failed to update AI credits limit:', error);
     }
@@ -180,7 +180,7 @@ export default function Billing() {
                     </div>
                   </div>
                   <div className="basis-2/3">
-                    <Progress value={platformSubscription?.flowRunCount || 0} limit={tasksLimit} />
+                    <Progress value={platformSubscription?.flowRunCount || 0} limit={tasksLimit} label={t('Billing Limit')} />
                   </div>
                 </div>
                 {isSubscriptionActive ? (
@@ -245,7 +245,7 @@ export default function Billing() {
                     </div>
                   </div>
                   <div className="basis-2/3">
-                    <Progress value={platformSubscription?.aiCredits || 0} limit={aiLimit} />
+                    <Progress value={platformSubscription?.aiCredits || 0} limit={aiLimit} label={t('Billing Limit')} />
                   </div>
                 </div>
 

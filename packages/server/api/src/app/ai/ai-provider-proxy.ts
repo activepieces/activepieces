@@ -7,7 +7,7 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
-import { usageService, USAGE_TYPES } from '../ee/platform-billing/usage/usage-service'
+import { usageService, BillingUsageType } from '../ee/platform-billing/usage/usage-service'
 import { aiProviderService } from './ai-provider.service'
 
 export const proxyController: FastifyPluginCallbackTypebox = (
@@ -51,7 +51,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
 
             const data = await parseResponseData(response, responseContentType)
 
-            await usageService(request.log).increaseProjectAndPlatformUsage(projectId, 1, USAGE_TYPES.AI_TOKENS)
+            await usageService(request.log).increaseProjectAndPlatformUsage(projectId, 1, BillingUsageType.AI_TOKENS)
 
             rejectedPromiseHandler(telemetry(request.log).trackProject(projectId, {
                 name: TelemetryEventName.AI_PROVIDER_USED,

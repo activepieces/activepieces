@@ -39,7 +39,7 @@ import { projectBillingService } from '../billing/project-billing/project-billin
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
-import { usageService, ENTITY_TYPES } from '../platform-billing/usage/usage-service'
+import { usageService, BillingEntityType } from '../platform-billing/usage/usage-service'
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 export const platformProjectService = (log: FastifyBaseLogger) => ({
@@ -254,7 +254,7 @@ async function enrichProject(
         ),
         usage: await usageService(log).getUsageForBillingPeriod(
             project.id,
-            ENTITY_TYPES.PROJECT,
+            BillingEntityType.PROJECT,
         ),
         analytics: { 
             activeFlows,
