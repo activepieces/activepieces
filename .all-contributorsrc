@@ -1424,6 +1424,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "amrabuaza",
+      "name": "Amr Abu Aza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30035105?v=4",
+      "profile": "https://github.com/amrabuaza",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "jerboa88",
+      "name": "John Goodliff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9030780?v=4",
+      "profile": "http://johng.io",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
