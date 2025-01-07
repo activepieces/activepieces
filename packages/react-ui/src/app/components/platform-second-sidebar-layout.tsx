@@ -35,9 +35,6 @@ export default function PlatformSecondSidebarLayout({
   children,
   type,
 }: SecondSidebarProps) {
-  const { data: showPlatformDemo } = flagsHooks.useFlag(
-    ApFlagId.SHOW_PLATFORM_DEMO,
-  );
 
   const sidebarNavItems: Record<string, SidebarSection> = {
     setup: {
@@ -117,13 +114,11 @@ export default function PlatformSecondSidebarLayout({
     },
   };
 
-  if (!showPlatformDemo) {
-    sidebarNavItems['setup'].items.push({
-      title: 'License Key',
-      href: '/platform/setup/license-key',
-      icon: <CreditCard size={iconSize} />,
-    });
-  }
+  sidebarNavItems['setup'].items.push({
+    title: 'License Key',
+    href: '/platform/setup/license-key',
+    icon: <CreditCard size={iconSize} />,
+  });
 
   return (
     <SidebarLayout

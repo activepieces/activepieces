@@ -92,20 +92,7 @@ const UsageLimitsButton = React.memo(() => {
           </div>
         )}
 
-        <FlagGuard flag={ApFlagId.SHOW_BILLING}>
-          <Separator className="my-4" />
-          <div className="flex justify-end ">
-            <Link to={'/plans'}>
-              <Button
-                variant={'outline'}
-                size="sm"
-                className="w-full text-primary hover:!text-primary/80 h-8"
-              >
-                {t('Your Plan')}
-              </Button>
-            </Link>
-          </div>
-        </FlagGuard>
+
       </TooltipContent>
     </Tooltip>
   );

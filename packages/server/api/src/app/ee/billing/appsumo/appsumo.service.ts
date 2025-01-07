@@ -3,8 +3,6 @@ import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
@@ -100,9 +98,8 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
         const appSumoPlan = appsumoService(log).getPlanInformation(plan_id)
         const identity = await userIdentityService(log).getIdentityByEmail(activation_email)
         if (!isNil(identity)) {
-            const user = await userService.getOneByIdentityAndPlatform({
+            const user = await userService.getOneByIdentityIdOnly({
                 identityId: identity.id,
-                platformId: system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID),
             })
             if (!isNil(user)) {
                 const project = await projectService.getUserProjectOrThrow(user.id)

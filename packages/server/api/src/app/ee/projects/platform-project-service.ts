@@ -7,6 +7,7 @@ import {
 import {
     ActivepiecesError,
     ApEdition,
+    assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
     FlowStatus,
@@ -46,7 +47,11 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         const user = await userService.getOneOrFail({
             id: params.userId,
         })
-        const projects = await projectService.getAllForUser(user)
+        assertNotNullOrUndefined(user.platformId, 'platformId is undefined')
+        const projects = await projectService.getAllForUser({
+            platformId: user.platformId,
+            userId: params.userId,
+        })
         return getProjects({
             ...params,
             projectIds: projects.map((project) => project.id),

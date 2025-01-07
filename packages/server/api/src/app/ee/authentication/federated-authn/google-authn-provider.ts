@@ -1,12 +1,9 @@
 import {
     assertNotEqual,
-    assertNotNullOrUndefined,
-    Platform,
 } from '@activepieces/shared'
 import jwksClient from 'jwks-rsa'
-import { flagService } from '../../../../flags/flag.service'
-import { JwtSignAlgorithm, jwtUtils } from '../../../../helper/jwt-utils'
-import { AuthnProvider, FebderatedAuthnIdToken } from './authn-provider'
+import { flagService } from '../../../flags/flag.service'
+import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 
 const JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs'
 
@@ -16,29 +13,14 @@ const keyLoader = jwksClient({
     jwksUri: JWKS_URI,
 })
 
-function getClientIdAndSecret(platform: Platform): {
-    clientId: string
-    clientSecret: string
-} {
-    const clientInformation = platform.federatedAuthProviders.google
-    assertNotNullOrUndefined(
-        clientInformation,
-        'Google information is not configured for this platform',
-    )
-    return {
-        clientId: clientInformation.clientId,
-        clientSecret: clientInformation.clientSecret,
-    }
-}
-
-export const googleAuthnProvider: AuthnProvider = {
-    async getLoginUrl(hostname: string, platform: Platform): Promise<string> {
-        const { clientId } = getClientIdAndSecret(platform)
+export const googleAuthnProvider = {
+    async getLoginUrl(params: GetLoginUrlParams): Promise<string> {
+        const { clientId, hostname, platformId } = params
         const loginUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
         loginUrl.searchParams.set('client_id', clientId)
         loginUrl.searchParams.set(
             'redirect_uri',
-            flagService.getThirdPartyRedirectUrl(platform.id, hostname),
+            flagService.getThirdPartyRedirectUrl(hostname, platformId),
         )
         loginUrl.searchParams.set('scope', 'email profile')
         loginUrl.searchParams.set('response_type', 'code')
@@ -47,14 +29,12 @@ export const googleAuthnProvider: AuthnProvider = {
     },
 
     async authenticate(
-        hostname,
-        platform,
-        authorizationCode,
+        params: AuthenticateParams,
     ): Promise<FebderatedAuthnIdToken> {
-        const { clientId, clientSecret } = getClientIdAndSecret(platform)
+        const { clientId, clientSecret, authorizationCode, hostname, platformId } = params
         const idToken = await exchangeCodeForIdToken(
-            platform.id,
             hostname,
+            platformId,
             clientId,
             clientSecret,
             authorizationCode,
@@ -64,8 +44,8 @@ export const googleAuthnProvider: AuthnProvider = {
 }
 
 const exchangeCodeForIdToken = async (
-    platformId: string,
     hostName: string,
+    platformId: string | undefined,
     clientId: string,
     clientSecret: string,
     code: string,
@@ -79,7 +59,7 @@ const exchangeCodeForIdToken = async (
             code,
             client_id: clientId,
             client_secret: clientSecret,
-            redirect_uri: flagService.getThirdPartyRedirectUrl(platformId, hostName),
+            redirect_uri: flagService.getThirdPartyRedirectUrl(hostName, platformId),
             grant_type: 'authorization_code',
         }),
     })
@@ -120,4 +100,24 @@ type IdTokenPayloadRaw = {
     sub: string
     aud: string
     iss: string
+}
+
+type GetLoginUrlParams = {
+    hostname: string
+    clientId: string
+    platformId: string | undefined
+}
+
+type AuthenticateParams = {
+    hostname: string
+    platformId: string | undefined
+    clientId: string
+    clientSecret: string
+    authorizationCode: string
+}
+
+export type FebderatedAuthnIdToken = {
+    email: string
+    firstName: string
+    lastName: string
 }

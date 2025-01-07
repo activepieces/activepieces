@@ -4,7 +4,6 @@ import { ApEdition, isNil, PlatformId, PrincipalType } from '@activepieces/share
 import { FastifyRequest } from 'fastify'
 import { customDomainService } from '../ee/custom-domains/custom-domain.service'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
 import { platformService } from './platform.service'
 
 export const platformUtils = {
@@ -17,7 +16,7 @@ export const platformUtils = {
             return platformIdFromHostName
         }
         if (system.getEdition() === ApEdition.CLOUD) {
-            return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+            return null;
         }
         const oldestPlatform = await platformService.getOldestPlatform()
         return oldestPlatform?.id ?? null

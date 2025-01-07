@@ -1,14 +1,31 @@
-import { ActivepiecesError, AiProviderConfig, AiProviderWithoutSensitiveData, apId, ErrorCode, isNil, PlatformId, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, AiProviderConfig, AiProviderWithoutSensitiveData, ApEdition, apId, ErrorCode, isNil, PlatformId, SeekPage } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { encryptUtils } from '../helper/encryption'
 import { AiProviderEntity, AiProviderSchema } from './ai-provider-entity'
+import { flagService } from '../flags/flag.service'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 
 const repo = repoFactory(AiProviderEntity)
 
 export const aiProviderService = {
     async getOrThrow(params: GetParams): Promise<AiProviderConfig> {
-        const provider = await repo().findOneBy(params)
+        const provider = await repo().findOneBy({
+            platformId: params.platformId,
+            provider: params.provider,
+        })
         if (isNil(provider)) {
+            // TODO URGENT refactor soon
+            const isCloudEdition = await system.getEdition() === ApEdition.CLOUD;
+            if (isCloudEdition) {
+                const cloudPlatformId = await system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID);
+                if (cloudPlatformId !== params.platformId) {
+                    return this.getOrThrow({
+                        platformId: cloudPlatformId,
+                        provider: params.provider,
+                    })
+                }
+            }
             throw new ActivepiecesError({
                 code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
                 params: {

@@ -88,19 +88,13 @@ const LicenseKeyPage = () => {
     refetchOnWindowFocus: false,
   });
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_PLATFORM_DEMO,
-  );
+  
 
-  if (edition === ApEdition.COMMUNITY || showPlatformDemo) {
+  if (edition === ApEdition.COMMUNITY) {
     return (
       <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-bold w-full">{t('License Key')}</h1>
         <p className="text-md text-gray-500 w-full">
-          {showPlatformDemo &&
-            t(
-              'This feature is not self serve in the cloud yet, please contact sales@activepieces.com. ',
-            )}
           {edition === ApEdition.COMMUNITY && (
             <>
               {t('This feature is not available in your current edition. ')}

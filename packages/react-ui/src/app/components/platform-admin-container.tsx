@@ -26,12 +26,8 @@ export function PlatformAdminContainer({
 }: PlatformAdminContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_PLATFORM_DEMO,
-  );
-
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
-  const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
+  const isLocked = (locked: boolean) => locked;
   const links: SidebarLink[] = [
     {
       to: '/platform/analytics',

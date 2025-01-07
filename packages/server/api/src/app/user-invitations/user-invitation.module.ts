@@ -23,7 +23,6 @@ import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
-import { projectMembersLimit } from '../ee/project-plan/members-limit'
 import { projectRoleService } from '../ee/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userInvitationsService } from './user-invitation.service'
@@ -112,12 +111,6 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
         return null
     }
     const projectRoleName = request.projectRole
-    
-    await projectMembersLimit(log).limit({
-        projectId: request.projectId,
-        platformId,
-        projectRoleName,
-    })
 
     const projectRole = await projectRoleService.getOneOrThrow({
         name: projectRoleName,

@@ -5,7 +5,7 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
-import { CLOUD_PLATFORM_ID, mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 let sendOtpSpy: jest.Mock
@@ -78,7 +78,7 @@ describe('OTP API', () => {
             expect(sendOtpSpy).toHaveBeenCalledTimes(1)
             expect(sendOtpSpy).toHaveBeenCalledWith({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                platformId: CLOUD_PLATFORM_ID,
+                platformId: null,
                 type: OtpType.EMAIL_VERIFICATION,
                 userIdentity: expect.objectContaining({
                     email: mockUserIdentity.email,

@@ -89,7 +89,11 @@ export const projectService = {
     },
     async getUserProjectOrThrow(userId: UserId): Promise<Project> {
         const user = await userService.getOneOrFail({ id: userId })
-        const projects = await this.getAllForUser(user)
+        assertNotNullOrUndefined(user.platformId, 'platformId is undefined')
+        const projects = await this.getAllForUser({
+            platformId: user.platformId,
+            userId: userId,
+        })
         if (isNil(projects) || projects.length === 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -102,24 +106,25 @@ export const projectService = {
         return projects[0]
     },
 
-    async getAllForUser(user: User): Promise<Project[]> {
-        assertNotNullOrUndefined(user.platformId, 'platformId is undefined')
+    async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
+        assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
         const filters: FindOptionsWhere<Project>[] = []
         const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
-            platformId: user.platformId,
-            userId: user.id,
+            platformId: params.platformId,
+            userId: params.userId,
         })
+        const user = await userService.getOneOrFail({ id: params.userId })
         switch (user.platformRole) {
             case PlatformRole.ADMIN:
                 filters.push({
-                    platformId: user.platformId,
+                    platformId: params.platformId,
                     deleted: IsNull(),
                 })
                 break
             case PlatformRole.MEMBER:
                 filters.push({
-                    ownerId: user.id,
-                    platformId: user.platformId,
+                    ownerId: params.userId,
+                    platformId: params.platformId,
                     deleted: IsNull(),
                 })
                 break
@@ -177,10 +182,11 @@ async function assertExternalIdIsUnique(externalId: string | undefined, projectI
     }
 }
 
-type GetIdsOfProjectsParams = {
+type GetAllForUserParams = {
     platformId: string
     userId: string
 }
+
 
 type UpdateParams = {
     displayName?: string

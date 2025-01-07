@@ -144,7 +144,9 @@ const systemPropValidators: {
     [AppSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
     [AppSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
 
-
+    // Cloud
+    [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,
+    [AppSystemProp.GOOGLE_CLIENT_SECRET]: stringValidator,
 }
 
 

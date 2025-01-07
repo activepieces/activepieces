@@ -6,11 +6,11 @@ import {
 import { apId, PlatformId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
-import { repoFactory } from '../../core/db/repo-factory'
-import { emailService } from '../helper/email/email-service'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
+import { repoFactory } from '../../../core/db/repo-factory'
 import { otpGenerator } from './lib/otp-generator'
 import { OtpEntity } from './otp-entity'
+import { emailService } from '../../helper/email/email-service'
 
 const TEN_MINUTES = 10 * 60 * 1000
 

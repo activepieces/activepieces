@@ -31,35 +31,13 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
 
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
-        if (flagService.isCloudPlatform(platformId)) {
-            assertOneOfTheseScope(req.body.scope, [PieceScope.PROJECT])
-            const platformRole = await projectMemberService(req.log).getRole({
-                projectId: req.principal.projectId,
-                userId: req.principal.id,
-            })
-            if (platformRole?.name !== DefaultProjectRole.ADMIN) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.AUTHORIZATION,
-                    params: {
-                        message: 'Only admin role is allowed for cloud platform',
-                    },
-                })
-            }
-            await pieceService(req.log).installPiece(
-                platformId,
-                req.principal.projectId,
-                req.body,
-            )
-        }
-        else {
-            assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
-            await platformMustBeOwnedByCurrentUser.call(app, req, reply)
-            await pieceService(req.log).installPiece(
-                platformId,
-                undefined,
-                req.body,
-            )
-        }
+        assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
+        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
+        await pieceService(req.log).installPiece(
+            platformId,
+            undefined,
+            req.body,
+        )
         await reply.status(StatusCodes.CREATED).send({})
     },
     )

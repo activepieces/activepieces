@@ -1,9 +1,14 @@
 import { api } from '@/lib/api';
-import { SeekPage, UpdateUserRequestBody, User } from '@activepieces/shared';
+import {
+  SeekPage,
+  UpdateUserRequestBody,
+  User,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 
 export const platformUserApi = {
   list() {
-    return api.get<SeekPage<User>>('/v1/users');
+    return api.get<SeekPage<UserWithMetaInformation>>('/v1/users');
   },
   delete(id: string) {
     return api.delete(`/v1/users/${id}`);

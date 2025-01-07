@@ -10,17 +10,19 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
+import { platformHooks } from './platform-hooks';
 
 export const useAuthorization = () => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
-
+  const { platform } = platformHooks.useCurrentPlatform()
   const { data: projectRole, isLoading } = useQuery({
     queryKey: ['project-role', authenticationSession.getProjectId()],
     queryFn: async () => {
       const projectRole = await authenticationApi.me();
       return projectRole;
     },
-    enabled: !isNil(edition) && edition !== ApEdition.COMMUNITY,
+    retry: false,
+    enabled: !isNil(edition) && edition !== ApEdition.COMMUNITY && platform.projectRolesEnabled,
   });
 
   const checkAccess = (permission: Permission) => {
@@ -35,8 +37,5 @@ export const useAuthorization = () => {
 
 export const useShowPlatformAdminDashboard = () => {
   const platformRole = authenticationSession.getUserPlatformRole();
-  const { data: isPlatformDemo } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_PLATFORM_DEMO,
-  );
-  return isPlatformDemo || platformRole === PlatformRole.ADMIN;
+  return platformRole === PlatformRole.ADMIN;
 };

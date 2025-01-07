@@ -31,10 +31,14 @@ export const authenticationUtils = {
         }
     },
 
-    async getProjectAndToken(userId: string): Promise<AuthenticationResponse> {
-        const user = await userService.getOneOrFail({ id: userId })
-        const projects = await projectService.getAllForUser(user)
-        if (projects.length === 0) {
+    async getProjectAndToken(params: GetProjectAndTokenParams): Promise<AuthenticationResponse> {
+        const user = await userService.getOneOrFail({ id: params.userId })
+        const projects = await projectService.getAllForUser({
+            platformId: params.platformId,
+            userId: params.userId,
+        })
+        const project = isNil(params.projectId) ? projects?.[0] : projects.find((project) => project.id === params.projectId)
+        if (isNil(project)) {
             throw new ActivepiecesError({
                 code: ErrorCode.INVITATION_ONLY_SIGN_UP,
                 params: {
@@ -42,7 +46,6 @@ export const authenticationUtils = {
                 },
             })
         }
-        const platform = await platformService.getOneOrThrow(projects[0].platformId)
         const identity = await userIdentityService(system.globalLogger()).getOneOrFail({ id: user.identityId })
         if (user.status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
@@ -55,9 +58,9 @@ export const authenticationUtils = {
         const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: projects[0].id,
+            projectId: project.id,
             platform: {
-                id: platform.id,
+                id: params.platformId,
             },
             tokenVersion: identity.tokenVersion,
         })
@@ -70,7 +73,7 @@ export const authenticationUtils = {
             newsLetter: identity.newsLetter,
             verified: identity.verified,
             token,
-            projectId: projects[0].id,
+            projectId: project.id,
         }
     },
 
@@ -149,13 +152,13 @@ export const authenticationUtils = {
         }
     },
 
-    async saveNewsLetterSubscriber(user: User, identity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
-        const isPlatformUserOrNotSubscribed = (!isNil(user.platformId) && !flagService.isCloudPlatform(user.platformId)) || !identity.newsLetter
+    async saveNewsLetterSubscriber(user: User, platformId: string, identity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
+        const platform = await platformService.getOneOrThrow(platformId)
         const environment = system.get(AppSystemProp.ENVIRONMENT)
-        if (
-            isPlatformUserOrNotSubscribed ||
-            environment !== ApEnvironment.PRODUCTION
-        ) {
+        if (environment !== ApEnvironment.PRODUCTION) {
+            return
+        }
+        if (platform.embeddingEnabled) {
             return
         }
         try {
@@ -197,4 +200,10 @@ type AssertEmailAuthIsEnabledParams = {
 type AssertUserIsInvitedToPlatformOrProjectParams = {
     email: string
     platformId: string
+}
+
+type GetProjectAndTokenParams = {
+    userId: string
+    platformId: string
+    projectId: string | null
 }

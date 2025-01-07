@@ -473,8 +473,8 @@ describe('Authentication API', () => {
             const mockPassword = 'password'
             const { mockPlatform, mockProject } = await createMockPlatformAndDomain({
                 platform: {
-                    id: CLOUD_PLATFORM_ID,
-                    ssoEnabled: true,
+                    ssoEnabled: false,
+                    embeddingEnabled: false,
                     emailAuthEnabled: true,
                     enforceAllowedAuthDomains: false,
                 },
@@ -519,7 +519,7 @@ describe('Authentication API', () => {
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe(mockUser.status)
             expect(responseBody?.verified).toBe(mockUserIdentity.verified)
-            expect(responseBody?.platformId).toBe(CLOUD_PLATFORM_ID)
+            expect(responseBody?.platformId).toBe(mockPlatform.id)
             expect(responseBody?.externalId).toBe(null)
             expect(responseBody?.projectId).toBe(mockProject.id)
             expect(responseBody?.token).toBeDefined()
@@ -702,9 +702,9 @@ describe('Authentication API', () => {
             })
 
             const mockPlatform = createMockPlatform({
-                id: CLOUD_PLATFORM_ID,
                 ownerId: mockUser.id,
-                ssoEnabled: true,
+                ssoEnabled: false,
+                embeddingEnabled: false,
                 emailAuthEnabled: true,
                 enforceAllowedAuthDomains: false,
             })

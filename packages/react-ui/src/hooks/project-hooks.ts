@@ -21,14 +21,6 @@ export const projectHooks = {
       staleTime: Infinity,
     });
   },
-  prefetchProjectRole: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    usePrefetchQuery({
-      queryKey: ['project-role', authenticationSession.getProjectId()],
-      queryFn: async () => authenticationApi.me(),
-      staleTime: Infinity,
-    });
-  },
   useCurrentProject: () => {
     const query = useSuspenseQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project'],

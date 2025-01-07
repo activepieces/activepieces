@@ -14,8 +14,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { platformApi } from '@/lib/platforms-api';
 
 export function UserAvatar() {
   const { reset } = useTelemetry();
@@ -24,6 +29,19 @@ export function UserAvatar() {
   if (!user || embedState.isEmbedded) {
     return null;
   }
+  const { data: platforms } = useQuery({
+    queryKey: ['platforms', user.id],
+    queryFn: () => platformApi.listPlatforms(),
+  });
+
+  const switchPlatformMutation = useMutation({
+    mutationFn: async (platformId: string) => {
+      await authenticationSession.switchToPlatform(platformId);
+    },
+  });
+
+  const currentPlatformId = authenticationSession.getPlatformId();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -43,6 +61,27 @@ export function UserAvatar() {
             <div className="flex-grow flex-shrink truncate">{user.email}</div>
           </div>
         </DropdownMenuLabel>
+        {platforms && platforms.length > 1 && (
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="cursor-pointer">
+              {t('Switch Platform')}
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              {platforms.map((platform) => (
+                <DropdownMenuItem
+                  key={platform.id}
+                  onClick={() => {
+                      switchPlatformMutation.mutate(platform.id);
+                  }}
+                  className="cursor-pointer"
+                >
+                  {currentPlatformId === platform.id && '✓ '}
+                  {platform.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        )}
         <Link to="/settings/appearance">
           <DropdownMenuItem className="cursor-pointer">
             <TextWithIcon

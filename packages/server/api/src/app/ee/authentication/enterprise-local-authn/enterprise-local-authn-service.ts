@@ -6,7 +6,7 @@ import {
 import { ActivepiecesError, ErrorCode, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
-import { otpService } from '../../otp/otp-service'
+import { otpService } from '../otp/otp-service'
 
 export const enterpriseLocalAuthnService = (log: FastifyBaseLogger) => ({
     async verifyEmail({ identityId, otp }: VerifyEmailRequestBody): Promise<void> {
