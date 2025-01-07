@@ -536,7 +536,7 @@ const routes = [
     ),
   },
   {
-    path: '/platform/billing',
+    path: '/platform/setup/billing',
     element: (
       <PlatformAdminContainer>
         <PageTitle title="Billing">
