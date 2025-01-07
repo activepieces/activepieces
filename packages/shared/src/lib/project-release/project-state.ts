@@ -13,6 +13,7 @@ export type ProjectState = Static<typeof ProjectState>
 export const ConnectionState = Type.Object({
     externalId: Type.String(),
     pieceName: Type.String(),
+    displayName: Type.String(),
 })
 
 export type ConnectionState = Static<typeof ConnectionState>

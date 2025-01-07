@@ -108,9 +108,6 @@ async function findDiffOperations(projectId: ProjectId, ownerId: ApId, params: D
     return diffs
 }
 
-
-
-
 async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
     const { operations, errors, log } = params
     const responsePlans: ProjectSyncPlanOperation[] = operations.map((operation) => {

@@ -48,6 +48,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 platformId,
                 externalId: connection.externalId,
                 pieceName: connection.pieceName,
+                displayName: connection.displayName,
             })
         }
     
@@ -95,7 +96,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         }
     },
     async getFlowConnections(operations: ProjectOperation[]): Promise<ConnectionState[]> {
-        const connectionStates = [...new Set(await Promise.all(operations.map(async (operation) => {
+        const connectionStates = await Promise.all(operations.map(async (operation) => {
             switch (operation.type) {
                 case ProjectOperationType.CREATE_FLOW:
                     return getFlowConnections(operation.flowState.version.trigger)
@@ -104,8 +105,14 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 case ProjectOperationType.DELETE_FLOW:
                     return []
             }
-        })).then(arrays => arrays.flat()))]
-        return connectionStates
+        })).then(arrays => arrays.flat())
+
+        const uniqueConnections = new Map<string, ConnectionState>()
+        connectionStates.forEach(connection => {
+            uniqueConnections.set(connection.externalId, connection)
+        })
+
+        return Array.from(uniqueConnections.values())
     },
 
 })
@@ -147,6 +154,7 @@ async function getFlowConnections(step: Action | Trigger): Promise<ConnectionSta
                         connectionsIds.push({
                             externalId: match[1],
                             pieceName,
+                            displayName: step.displayName,
                         })
                     }
                 }
@@ -166,6 +174,7 @@ async function getFlowConnections(step: Action | Trigger): Promise<ConnectionSta
                         connectionsIds.push({
                             externalId: match[1],
                             pieceName: triggerPieceName,
+                            displayName: step.displayName,
                         })
                     }
                 }

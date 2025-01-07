@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,6 +27,7 @@ import { ProjectSyncPlan } from '@activepieces/ee-shared';
 import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
 
 import { OperationChange } from './operation-change';
+import { LoadingSpinner } from '@/components/ui/spinner';
 
 type CreateReleaseDialogProps = {
   open: boolean;
@@ -34,11 +36,12 @@ type CreateReleaseDialogProps = {
   diffRequest: DiffReleaseRequest;
   plan: ProjectSyncPlan | undefined;
   defaultName?: string;
+  loading: boolean;
 };
 
 const formSchema = z.object({
   name: z.string().min(1, t('Name is required')),
-  description: z.string(),
+  description: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -48,6 +51,7 @@ const CreateReleaseDialog = ({
   setOpen,
   refetch,
   plan,
+  loading,
   defaultName = '',
   diffRequest,
 }: CreateReleaseDialogProps) => {
@@ -116,6 +120,7 @@ const CreateReleaseDialog = ({
   const [selectedChanges, setSelectedChanges] = useState<Set<string>>(
     new Set(plan?.operations.map((op) => op.flow.id) || []),
   );
+  const [showValidationError, setShowValidationError] = useState(false);
 
   const handleSelectAll = (checked: boolean) => {
     if (!plan) return;
@@ -148,14 +153,23 @@ const CreateReleaseDialog = ({
               : t('Rollback Release')}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <Label className="text-sm" htmlFor="name">
+
+        {loading && <div className="flex items-center justify-center h-24">
+          <LoadingSpinner />
+        </div>}
+
+        {!loading && (
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2">
+              <Label className="text-sm" htmlFor="name">
               {t('Name')}
             </Label>
             <Input
               id="name"
               {...form.register('name')}
+              onChange={(e) => {
+                setShowValidationError(false);
+              }}
               placeholder={t('Meeting Summary Flow')}
             />
             {form.formState.errors.name && (
@@ -200,6 +214,7 @@ const CreateReleaseDialog = ({
                   change={operation}
                   selected={selectedChanges.has(operation.flow.id)}
                   onSelect={(checked) => {
+                    setShowValidationError(false);
                     setSelectedChanges(
                       new Set(
                         checked
@@ -218,7 +233,36 @@ const CreateReleaseDialog = ({
               </div>
             )}
           </div>
-        </div>
+            {plan?.connectionStates && plan?.connectionStates.length > 0 && (
+              <div className="mt-4 p-3 rounded-lg text-sm border flex gap-2">
+                <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+                <div className="space-y-2">
+                  <div className="font-semibold">{t('Warning: Missing Connections')}</div>
+                  <div>
+                    {t('The following connections need to be reconfigured in the')} 
+                    <span className="font-medium"> {t('Connections')}</span> 
+                    {t(' page after applying changes:')}
+                  </div>
+                  <div className="space-y-1.5">
+                    {plan?.connectionStates?.sort((a, b) => a.displayName.localeCompare(b.displayName)).map((connection, index) => (
+                      <div key={connection.externalId} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-black shrink-0" />
+                        <span>{connection.displayName}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            {showValidationError && (
+              <p className="text-sm text-destructive">
+                {!form.getValues('name')
+                  ? t('Release name is required')
+                  : t('Please select at least one change to include in the release')}
+              </p>
+            )}
+          </div>
+        )}
 
         <DialogFooter className="flex justify-end gap-1">
           <Button
@@ -231,8 +275,13 @@ const CreateReleaseDialog = ({
           <Button
             size={'sm'}
             loading={isPending}
-            disabled={!form.formState.isValid || selectedChanges.size === 0}
+            disabled={isPending}
             onClick={() => {
+              if (!form.formState.isValid || selectedChanges.size === 0) {
+                setShowValidationError(true);
+                return;
+              }
+              setShowValidationError(false);
               applyChanges();
             }}
           >

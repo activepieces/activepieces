@@ -120,7 +120,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async createPlaceholder(params: AddPlaceholderParams): Promise<void> {
-        const { projectId, platformId, externalId, pieceName } = params
+        const { projectId, platformId, externalId, pieceName, displayName } = params
         
         const existingConnection = await repo().findOne({
             where: {
@@ -135,7 +135,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }
 
         const connection = {
-            displayName: externalId,
+            displayName,
             status: AppConnectionStatus.ERROR,
             externalId,
             pieceName,
@@ -592,6 +592,7 @@ type AddPlaceholderParams = {
     platformId: string
     externalId: string
     pieceName: string
+    displayName: string
 }
 
 type GetOneByName = {

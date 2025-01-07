@@ -38,8 +38,10 @@ export const ApplyButton = ({
   const [loadingRequestId, setLoadingRequestId] = useState<string | null>(null);
 
   const { mutate: loadSyncPlan } = useMutation({
-    mutationFn: (request: DiffReleaseRequest) =>
-      projectReleaseApi.diff(request),
+    mutationFn: (request: DiffReleaseRequest) => {
+      setDialogOpen(true);
+      return projectReleaseApi.diff(request);
+    },
     onSuccess: (plan) => {
       if (!plan.operations || plan.operations.length === 0) {
         toast({
@@ -51,7 +53,6 @@ export const ApplyButton = ({
         return;
       }
       setSyncPlan(plan);
-      setDialogOpen(true);
       setLoadingRequestId(null);
     },
     onError: () => {
@@ -70,7 +71,6 @@ export const ApplyButton = ({
     <>
       <Button
         {...props}
-        loading={isLoading}
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
@@ -95,6 +95,7 @@ export const ApplyButton = ({
         dialogOpen && (
           <CreateReleaseDialog
             open={dialogOpen}
+            loading={isLoading}
             setOpen={setDialogOpen}
             refetch={onSuccess}
             plan={syncPlan}
