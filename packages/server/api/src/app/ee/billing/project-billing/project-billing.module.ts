@@ -12,10 +12,10 @@ import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
+import { BillingEntityType, usageService } from '../../platform-billing/usage/usage-service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { projectBillingService } from './project-billing.service'
 import { stripeHelper, stripeWebhookSecret, TASKS_PAYG_PRICE_ID } from './stripe-helper'
-import { usageService, BillingEntityType } from '../../platform-billing/usage/usage-service'
 
 const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 

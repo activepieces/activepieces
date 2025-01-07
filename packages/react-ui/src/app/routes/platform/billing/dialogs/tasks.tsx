@@ -1,4 +1,11 @@
-import { Button } from "@/components/ui/button";
+import { MAXIMUM_ALLOWED_TASKS } from '@activepieces/ee-shared';
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Static, Type } from '@sinclair/typebox';
+import { t } from 'i18next';
+import { useState, useEffect } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogClose,
@@ -6,23 +13,17 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog";
-import { t } from "i18next";
-import { useState, useEffect } from "react";
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { typeboxResolver } from "@hookform/resolvers/typebox";
-import { Static, Type } from "@sinclair/typebox";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { MAXIMUM_ALLOWED_TASKS } from "../../../../../../../ee/shared/src";
 
 type TasksLimitDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (limit: number) => void;
   initialLimit?: number;
-}
+};
 
 const TasksSchema = Type.Object({
   tasks: Type.Number(),
@@ -34,7 +35,7 @@ export const TasksLimitDialog = ({
   open,
   onOpenChange,
   onSubmit,
-  initialLimit = 0
+  initialLimit = 0,
 }: TasksLimitDialogProps) => {
   const form = useForm<TasksSchema>({
     resolver: typeboxResolver(TasksSchema),
@@ -59,7 +60,9 @@ export const TasksLimitDialog = ({
         <DialogHeader>
           <DialogTitle>{t('Tasks Usage Limit')}</DialogTitle>
           <DialogDescription>
-            {t('Specify a monthly limit for tasks to avoid excessive usage. Your flows will no longer execute if this limit was reached.')}
+            {t(
+              'Specify a monthly limit for tasks to avoid excessive usage. Your flows will no longer execute if this limit was reached.',
+            )}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -75,12 +78,15 @@ export const TasksLimitDialog = ({
                       required
                       id="credits"
                       type="number"
-                      placeholder={t("Number of monthly tasks")}
+                      placeholder={t('Number of monthly tasks')}
                       className="rounded-sm w-full pr-8"
                       min={0}
                       onChange={(e) => field.onChange(+e.target.value)}
                     />
-                    {!(form.watch('tasks').toString() === '' || form.watch('tasks') <= 0) && (
+                    {!(
+                      form.watch('tasks').toString() === '' ||
+                      form.watch('tasks') <= 0
+                    ) && (
                       <Button
                         type="button"
                         variant="transparent"
@@ -97,13 +103,19 @@ export const TasksLimitDialog = ({
             />
             <DialogFooter className="justify-end">
               <DialogClose asChild>
-                <Button className="text-[0.75rem]" variant="outline">{t('Cancel')}</Button>
+                <Button className="text-[0.75rem]" variant="outline">
+                  {t('Cancel')}
+                </Button>
               </DialogClose>
               <Button
                 className="w-24 text-[0.75rem]"
                 onClick={(e) => form.handleSubmit(updateLimits)(e)}
-                disabled={!form.formState.isDirty || form.watch('tasks').toString() === '' || form.watch('tasks') <= 0}
-                >
+                disabled={
+                  !form.formState.isDirty ||
+                  form.watch('tasks').toString() === '' ||
+                  form.watch('tasks') <= 0
+                }
+              >
                 {t('Save changes')}
               </Button>
             </DialogFooter>

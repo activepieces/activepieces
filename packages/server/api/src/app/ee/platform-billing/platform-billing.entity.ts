@@ -59,6 +59,6 @@ export const PlatformBillingEntity = new EntitySchema<PlatformBillingSchema>({
                 name: 'platformId',
                 foreignKeyConstraintName: 'fk_platform_billing_platform_id',
             },
-        }
+        },
     },
 })

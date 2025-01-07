@@ -1,14 +1,14 @@
+import { exceptionHandler } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, PlatformUsage, ProjectUsage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { getRedisConnection } from '../../../database/redis-connection'
+import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
+import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-prop'
-import { getRedisConnection } from '../../../database/redis-connection'
-import { apDayjs } from '../../../helper/dayjs-helper'
 import { projectService } from '../../../project/project-service'
-import { projectMemberService } from '../../project-members/project-member.service'
 import { userInvitationsService } from '../../../user-invitations/user-invitation.service'
-import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { projectMemberService } from '../../project-members/project-member.service'
 import { platformBillingService } from '../platform-billing.service'
 
 export enum BillingUsageType {
@@ -25,36 +25,36 @@ const environment = system.get(AppSystemProp.ENVIRONMENT)
 const edition = system.getEdition()
 
 const redisKeyGenerator = (entityId: string, entityType: BillingEntityType, startBillingPeriod: string, usageType: BillingUsageType): string => {
-    return `${entityType}-${entityId}-usage-${usageType}:${startBillingPeriod}`;
-};
+    return `${entityType}-${entityId}-usage-${usageType}:${startBillingPeriod}`
+}
 
 export const usageService = (log: FastifyBaseLogger) => ({
     async getUsageForBillingPeriod(entityId: string, entityType: BillingEntityType): Promise<ProjectUsage> {
-        const startBillingPeriod = getCurrentBillingPeriodStart();
-        const tasks = await getUsage(entityId, entityType, startBillingPeriod, BillingUsageType.TASKS);
-        const aiTokens = await getUsage(entityId, entityType, startBillingPeriod, BillingUsageType.AI_TOKENS);
+        const startBillingPeriod = getCurrentBillingPeriodStart()
+        const tasks = await getUsage(entityId, entityType, startBillingPeriod, BillingUsageType.TASKS)
+        const aiTokens = await getUsage(entityId, entityType, startBillingPeriod, BillingUsageType.AI_TOKENS)
         const teamMembers = entityType === BillingEntityType.PROJECT ? 
             await projectMemberService(log).countTeamMembers(entityId) + 
             await userInvitationsService(log).countByProjectId(entityId) : 
-            0;
+            0
 
         return { 
             tasks, 
             aiTokens, 
             teamMembers,
-            nextLimitResetDate: getCurrentBillingPeriodEnd()
-        };
+            nextLimitResetDate: getCurrentBillingPeriodEnd(),
+        }
     },
 
     async aiTokensExceededLimit(projectId: string, tokensToConsume: number): Promise<boolean> {
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-            return false;
+            return false
         }
 
         try {
-            const projectPlan = await projectLimitsService.getPlanByProjectId(projectId);
+            const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
             if (!projectPlan) {
-                return false;
+                return false
             }
             const platformId = await projectService.getPlatformId(projectId)
             const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
@@ -62,9 +62,9 @@ export const usageService = (log: FastifyBaseLogger) => ({
             const consumedPlatformTokens = await increaseProjectAndPlatformUsage(platformId, tokensToConsume, BillingUsageType.AI_TOKENS)
             return consumedProjectTokens >= projectPlan.aiTokens || consumedPlatformTokens >= (platformBilling.aiCreditsLimit ?? 0)
         }
-        catch(e) {
-            exceptionHandler.handle(e, log);
-            throw e;
+        catch (e) {
+            exceptionHandler.handle(e, log)
+            throw e
         }
     },
 
@@ -93,8 +93,8 @@ export const usageService = (log: FastifyBaseLogger) => ({
     increaseProjectAndPlatformUsage,
     getCurrentBillingPeriodStart,
     getCurrentBillingPeriodEnd,
-    getUsage
-});
+    getUsage,
+})
 
 async function increaseProjectAndPlatformUsage(projectId: string, incrementBy: number, usageType: BillingUsageType): Promise<number> {
     const edition = system.getEdition()
@@ -117,20 +117,20 @@ async function increaseProjectAndPlatformUsage(projectId: string, incrementBy: n
 
 async function getUsage(entityId: string, entityType: BillingEntityType, startBillingPeriod: string, usageType: BillingUsageType): Promise<number> {
     if (environment === ApEnvironment.TESTING) {
-        return 0;
+        return 0
     }
 
-    const redisKey = redisKeyGenerator(entityId, entityType, startBillingPeriod, usageType);
-    const redisConnection = getRedisConnection();
+    const redisKey = redisKeyGenerator(entityId, entityType, startBillingPeriod, usageType)
+    const redisConnection = getRedisConnection()
 
-    const value = await redisConnection.get(redisKey);
-    return Number(value) || 0;
+    const value = await redisConnection.get(redisKey)
+    return Number(value) || 0
 }
 
 function getCurrentBillingPeriodStart(): string {
-    return apDayjs().startOf('month').toISOString();
+    return apDayjs().startOf('month').toISOString()
 }
 
 function getCurrentBillingPeriodEnd(): string {
-    return apDayjs().endOf('month').toISOString();
+    return apDayjs().endOf('month').toISOString()
 }

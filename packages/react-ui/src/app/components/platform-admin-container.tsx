@@ -1,3 +1,4 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   LayoutGrid,
@@ -6,17 +7,16 @@ import {
   Shield,
   Users,
   Wrench,
-  Receipt
+  Receipt,
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
+
+import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
+import { Sidebar, SidebarLink } from './sidebar';
 
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
-
-import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
-import { Sidebar, SidebarLink } from './sidebar';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;
@@ -70,12 +70,12 @@ export function PlatformAdminContainer({
     },
     ...(edition === ApEdition.CLOUD
       ? [
-        {
-          to: '/platform/billing',
-          label: t('Billing'),
-          icon: Receipt,
-        },
-      ]
+          {
+            to: '/platform/billing',
+            label: t('Billing'),
+            icon: Receipt,
+          },
+        ]
       : []),
   ];
 

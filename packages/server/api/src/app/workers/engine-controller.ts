@@ -4,6 +4,7 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
+import { usageService } from '../ee/platform-billing/usage/usage-service'
 import { fileService } from '../file/file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -14,7 +15,6 @@ import { AppSystemProp } from '../helper/system/system-prop'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'
-import { usageService } from '../ee/platform-billing/usage/usage-service'
 
 export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 

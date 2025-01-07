@@ -1,12 +1,12 @@
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT, PlatformBilling } from '@activepieces/ee-shared'
 import { apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import Stripe from 'stripe'
 import { repoFactory } from '../../core/db/repo-factory'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 import { PlatformBillingEntity } from './platform-billing.entity'
 import { stripeHelper } from './stripe-helper'
-import Stripe from 'stripe'
 
 const platformBillingRepo = repoFactory(PlatformBillingEntity)
 
@@ -38,7 +38,7 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
             stripeSubscriptionStatus: subscription.status as ApSubscriptionStatus,
         })
         return platformBillingRepo().findOneByOrFail({ stripeCustomerId })
-    }
+    },
 })
 
 

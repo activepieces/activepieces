@@ -6,17 +6,26 @@ import { useState, useEffect, useMemo } from 'react';
 import { platformBillingApi } from './api/billing-api';
 import { AiLimitDialog } from './dialogs/ai';
 import { TasksLimitDialog } from './dialogs/tasks';
+import {
+  calculateAICostHelper,
+  calculateTaskCostHelper,
+  calculateTotalCostHelper,
+} from './helpers/platform-billing-helper';
 
+import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progres-bar';
 import { TableTitle } from '@/components/ui/table-title';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { useNewWindow } from '@/components/embed-provider';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { calculateAICostHelper, calculateTaskCostHelper, calculateTotalCostHelper } from './helpers/platform-billing-helper';
-import { Progress } from '@/components/ui/progres-bar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const fetchSubscriptionInfo = async () => {
   return await platformBillingApi.getSubscription();
@@ -77,7 +86,10 @@ export default function Billing() {
   async function handleTasksLimitSubmit(limit: number): Promise<void> {
     setTasksLimit(limit);
     try {
-      await updateLimitsMutation.mutateAsync({ tasksLimit: limit, aiCreditsLimit: aiLimit });
+      await updateLimitsMutation.mutateAsync({
+        tasksLimit: limit,
+        aiCreditsLimit: aiLimit,
+      });
     } catch (error) {
       console.error('Failed to update tasks limit:', error);
     }
@@ -86,7 +98,10 @@ export default function Billing() {
   async function handleAILimitSubmit(limit: number): Promise<void> {
     setAiLimit(limit);
     try {
-      await updateLimitsMutation.mutateAsync({ tasksLimit: tasksLimit, aiCreditsLimit: limit });
+      await updateLimitsMutation.mutateAsync({
+        tasksLimit: tasksLimit,
+        aiCreditsLimit: limit,
+      });
     } catch (error) {
       console.error('Failed to update AI credits limit:', error);
     }
@@ -95,15 +110,18 @@ export default function Billing() {
   const daysRemaining = useMemo(() => {
     if (!platformSubscription?.nextBillingDate) return 0;
     return Math.ceil(
-      (new Date(platformSubscription.nextBillingDate).getTime() - new Date().getTime()) / 
-      (1000 * 60 * 60 * 24)
+      (new Date(platformSubscription.nextBillingDate).getTime() -
+        new Date().getTime()) /
+        (1000 * 60 * 60 * 24),
     );
   }, [platformSubscription?.nextBillingDate]);
 
   const openNewWindow = useNewWindow();
   const { mutate: manageBilling, isPending: isBillingPending } = useMutation({
     mutationFn: async () => {
-      if (platformSubscription?.subscription.stripeSubscriptionStatus === 'active') {
+      if (
+        platformSubscription?.subscription.stripeSubscriptionStatus === 'active'
+      ) {
         const { portalLink } = await platformBillingApi.portalLink();
         openNewWindow(portalLink);
         return;
@@ -111,12 +129,15 @@ export default function Billing() {
       const { paymentLink } = await platformBillingApi.upgrade();
       openNewWindow(paymentLink);
     },
-    onSuccess: () => { },
+    onSuccess: () => {},
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
   const calculateTaskCost = useMemo(() => {
-    return calculateTaskCostHelper(platformSubscription?.flowRunCount || 0, tasksLimit);
+    return calculateTaskCostHelper(
+      platformSubscription?.flowRunCount || 0,
+      tasksLimit,
+    );
   }, [platformSubscription?.flowRunCount, tasksLimit]);
 
   const calculateAICost = useMemo(() => {
@@ -127,7 +148,8 @@ export default function Billing() {
     return calculateTotalCostHelper(calculateTaskCost, calculateAICost);
   }, [calculateTaskCost, calculateAICost]);
 
-  const isSubscriptionActive = platformSubscription?.subscription.stripeSubscriptionStatus === 'active';
+  const isSubscriptionActive =
+    platformSubscription?.subscription.stripeSubscriptionStatus === 'active';
 
   return (
     <article className="flex flex-col w-full p-6 gap-8">
@@ -138,14 +160,17 @@ export default function Billing() {
           <div className="text-[24px]">{t('Billing Amount')}</div>
           <div className="text-[64px] font-bold mt-2">{calculateTotalCost}</div>
           <div className="text-sm text-gray-500">
-            {platformSubscription ? `Next Billing: ${formatUtils.formatDate(new Date(platformSubscription?.nextBillingDate || ''))} (${daysRemaining} days remaining)` : ''}
+            {platformSubscription
+              ? `Next Billing: ${formatUtils.formatDate(
+                  new Date(platformSubscription?.nextBillingDate || ''),
+                )} (${daysRemaining} days remaining)`
+              : ''}
           </div>
         </div>
-        <Button
-          loading={isBillingPending}
-          onClick={() => manageBilling()}
-        >
-          {isSubscriptionActive ? t('Manage Payment Details') : t('Add Payment Details')}
+        <Button loading={isBillingPending} onClick={() => manageBilling()}>
+          {isSubscriptionActive
+            ? t('Manage Payment Details')
+            : t('Add Payment Details')}
         </Button>
       </section>
 
@@ -180,7 +205,11 @@ export default function Billing() {
                     </div>
                   </div>
                   <div className="basis-2/3">
-                    <Progress value={platformSubscription?.flowRunCount || 0} limit={tasksLimit} label={t('Billing Limit')} />
+                    <Progress
+                      value={platformSubscription?.flowRunCount || 0}
+                      limit={tasksLimit}
+                      label={t('Billing Limit')}
+                    />
                   </div>
                 </div>
                 {isSubscriptionActive ? (
@@ -245,7 +274,11 @@ export default function Billing() {
                     </div>
                   </div>
                   <div className="basis-2/3">
-                    <Progress value={platformSubscription?.aiCredits || 0} limit={aiLimit} label={t('Billing Limit')} />
+                    <Progress
+                      value={platformSubscription?.aiCredits || 0}
+                      limit={aiLimit}
+                      label={t('Billing Limit')}
+                    />
                   </div>
                 </div>
 
@@ -270,7 +303,9 @@ export default function Billing() {
                               <CircleHelp className="w-4 h-4" />
                             </TooltipTrigger>
                             <TooltipContent side="bottom">
-                              {t('You have no configured usage limit for credits.')}
+                              {t(
+                                'You have no configured usage limit for credits.',
+                              )}
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>

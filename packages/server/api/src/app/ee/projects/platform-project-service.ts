@@ -36,10 +36,10 @@ import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import {  userService } from '../../user/user-service'
 import { projectBillingService } from '../billing/project-billing/project-billing.service'
+import { BillingEntityType, usageService } from '../platform-billing/usage/usage-service'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
-import { usageService, BillingEntityType } from '../platform-billing/usage/usage-service'
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 export const platformProjectService = (log: FastifyBaseLogger) => ({

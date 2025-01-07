@@ -1,3 +1,9 @@
+import { ApFlagId, Permission } from '@activepieces/shared';
+import {
+  ActivepiecesClientEventName,
+  ActivepiecesVendorEventName,
+  ActivepiecesVendorRouteChanged,
+} from 'ee-embed-sdk';
 import { useEffect, useMemo } from 'react';
 import {
   Navigate,
@@ -6,31 +12,6 @@ import {
   createMemoryRouter,
   useLocation,
 } from 'react-router-dom';
-
-import { PageTitle } from '@/app/components/page-title';
-import PlatformSecondSidebarLayout from '@/app/components/platform-second-sidebar-layout';
-import ProjectSettingsLayout from '@/app/components/project-settings-layout';
-import { ChatPage } from '@/app/routes/chat';
-import { EmbedPage } from '@/app/routes/embed';
-import AnalyticsPage from '@/app/routes/platform/analytics';
-import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
-import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
-import { SSOPage } from '@/app/routes/platform/security/sso';
-import AIProvidersPage from '@/app/routes/platform/setup/ai';
-import { BrandingPage } from '@/app/routes/platform/setup/branding';
-import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
-import { RedirectPage } from '@/app/routes/redirect';
-import { FlowRunsPage } from '@/app/routes/runs';
-import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
-import { useEmbedding } from '@/components/embed-provider';
-import { VerifyEmail } from '@/features/authentication/components/verify-email';
-import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { ApFlagId, Permission } from '@activepieces/shared';
-import {
-  ActivepiecesClientEventName,
-  ActivepiecesVendorEventName,
-  ActivepiecesVendorRouteChanged,
-} from 'ee-embed-sdk';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { DashboardContainer } from '../components/dashboard-container';
@@ -46,9 +27,9 @@ import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
+import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
-import SettingsBilling from '../routes/platform/billing';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
@@ -74,6 +55,24 @@ import { DefaultRoute } from './default-route';
 import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
+import { PageTitle } from '@/app/components/page-title';
+import PlatformSecondSidebarLayout from '@/app/components/platform-second-sidebar-layout';
+import ProjectSettingsLayout from '@/app/components/project-settings-layout';
+import { ChatPage } from '@/app/routes/chat';
+import { EmbedPage } from '@/app/routes/embed';
+import AnalyticsPage from '@/app/routes/platform/analytics';
+import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
+import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
+import { SSOPage } from '@/app/routes/platform/security/sso';
+import AIProvidersPage from '@/app/routes/platform/setup/ai';
+import { BrandingPage } from '@/app/routes/platform/setup/branding';
+import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
+import { RedirectPage } from '@/app/routes/redirect';
+import { FlowRunsPage } from '@/app/routes/runs';
+import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
+import { useEmbedding } from '@/components/embed-provider';
+import { VerifyEmail } from '@/features/authentication/components/verify-email';
+import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();

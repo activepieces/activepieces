@@ -5,9 +5,9 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { BillingUsageType, usageService } from '../ee/platform-billing/usage/usage-service'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
-import { usageService, BillingUsageType } from '../ee/platform-billing/usage/usage-service'
 import { aiProviderService } from './ai-provider.service'
 
 export const proxyController: FastifyPluginCallbackTypebox = (
@@ -30,7 +30,7 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                 makeOpenAiResponse(
                     'You have exceeded your AI tokens limit for this project.',
                     'ai_tokens_limit_exceeded',
-                    {}
+                    {},
                 ),
             )
         }
