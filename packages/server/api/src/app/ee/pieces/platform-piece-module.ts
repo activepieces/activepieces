@@ -1,7 +1,6 @@
 import {
     ActivepiecesError,
     AddPieceRequestBody,
-    DefaultProjectRole,
     EndpointScope,
     ErrorCode,
     PieceScope,
@@ -14,10 +13,8 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { flagService } from '../../flags/flag.service'
 import { pieceService } from '../../pieces/piece-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { projectMemberService } from '../project-members/project-member.service'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })

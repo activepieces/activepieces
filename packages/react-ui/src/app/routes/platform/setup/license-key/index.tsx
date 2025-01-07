@@ -88,7 +88,6 @@ const LicenseKeyPage = () => {
     refetchOnWindowFocus: false,
   });
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  
 
   if (edition === ApEdition.COMMUNITY) {
     return (

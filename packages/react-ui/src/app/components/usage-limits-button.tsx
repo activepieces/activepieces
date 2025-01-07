@@ -1,12 +1,10 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress-circle';
 import {
   Tooltip,
   TooltipContent,
@@ -14,9 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ApFlagId, isNil } from '@activepieces/shared';
-
-import { FlagGuard } from './flag-guard';
+import { isNil } from '@activepieces/shared';
 
 const getTimeUntilNextReset = (nextResetDate: string) => {
   const now = dayjs();
@@ -91,8 +87,6 @@ const UsageLimitsButton = React.memo(() => {
             {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
           </div>
         )}
-
-
       </TooltipContent>
     </Tooltip>
   );

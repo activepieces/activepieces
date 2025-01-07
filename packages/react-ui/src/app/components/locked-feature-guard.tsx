@@ -19,8 +19,6 @@ export const LockedFeatureGuard = ({
   lockVideoUrl,
   featureKey,
 }: LockedFeatureGuardProps) => {
-  
-
   if (!locked) {
     return children;
   }

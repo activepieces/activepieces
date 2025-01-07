@@ -2,6 +2,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -9,12 +11,13 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { isNil, PieceType } from '@activepieces/shared';
-import { TableTitle } from '../../../../components/ui/table-title';
-import { ManagePiecesDialog } from './manage-pieces-dialog';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import { isNil, PieceType } from '@activepieces/shared';
+
+import { TableTitle } from '../../../../components/ui/table-title';
+
+import { ManagePiecesDialog } from './manage-pieces-dialog';
 
 const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {

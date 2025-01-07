@@ -1,16 +1,14 @@
-import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, PrincipalType, TelemetryEventName, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
+import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { accessTokenManager } from './lib/access-token-manager'
 import { userIdentityService } from './user-identity/user-identity-service'
-import { AppSystemProp } from '../helper/system/system-prop'
-import { Project, UserIdentity } from '@activepieces/shared'
-import { telemetry } from '../helper/telemetry.utils'
-import { flagService } from '../flags/flag.service'
 
 export const authenticationUtils = {
     async assertUserIsInvitedToPlatformOrProject(log: FastifyBaseLogger, {

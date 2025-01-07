@@ -53,9 +53,15 @@ export const authenticationApi = {
     return api.post<void>('/v1/authn/local/verify-email', request);
   },
   switchProject(request: SwitchProjectRequest) {
-    return api.post<AuthenticationResponse>(`/v1/authentication/switch-project`, request);
+    return api.post<AuthenticationResponse>(
+      `/v1/authentication/switch-project`,
+      request,
+    );
   },
   switchPlatform(request: SwitchPlatformRequest) {
-    return api.post<AuthenticationResponse>(`/v1/authentication/switch-platform`, request);
+    return api.post<AuthenticationResponse>(
+      `/v1/authentication/switch-platform`,
+      request,
+    );
   },
 };

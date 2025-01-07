@@ -1,3 +1,4 @@
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LogOut, SunMoon } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -5,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { authenticationSession } from '@/lib/authentication-session';
+import { platformApi } from '@/lib/platforms-api';
 
 import { Avatar, AvatarFallback } from './avatar';
 import { AvatarLetter } from './avatar-letter';
@@ -19,16 +21,12 @@ import {
   DropdownMenuSubContent,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { platformApi } from '@/lib/platforms-api';
 
 export function UserAvatar() {
   const { reset } = useTelemetry();
   const { embedState } = useEmbedding();
   const user = authenticationSession.getCurrentUser();
-  if (!user || embedState.isEmbedded) {
-    return null;
-  }
+
   const { data: platforms } = useQuery({
     queryKey: ['platforms', user.id],
     queryFn: () => platformApi.listPlatforms(),
@@ -39,6 +37,10 @@ export function UserAvatar() {
       await authenticationSession.switchToPlatform(platformId);
     },
   });
+
+  if (!user || embedState.isEmbedded) {
+    return null;
+  }
 
   const currentPlatformId = authenticationSession.getPlatformId();
 
@@ -71,7 +73,7 @@ export function UserAvatar() {
                 <DropdownMenuItem
                   key={platform.id}
                   onClick={() => {
-                      switchPlatformMutation.mutate(platform.id);
+                    switchPlatformMutation.mutate(platform.id);
                   }}
                   className="cursor-pointer"
                 >

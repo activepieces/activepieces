@@ -68,7 +68,6 @@ const SSOPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
 
   const googleConnected = !isNil(platform.federatedAuthProviders?.google);
-  const githubConnected = !isNil(platform.federatedAuthProviders?.github);
   const samlConnected = !isNil(platform.federatedAuthProviders?.saml);
   const emailAuthEnabled = platform.emailAuthEnabled;
 

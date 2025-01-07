@@ -37,6 +37,7 @@ import {
     pieceMetadataService,
 } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import {
     AppConnectionEntity,
@@ -44,7 +45,6 @@ import {
 } from '../app-connection.entity'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
-import { userService } from '../../user/user-service'
 
 const repo = repoFactory(AppConnectionEntity)
 
@@ -134,7 +134,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         })
 
         if (isNil(encryptedAppConnection)) {
-            return null;
+            return null
         }
         const connection = await this.decryptAndRefreshConnection(encryptedAppConnection, projectId, log)
 

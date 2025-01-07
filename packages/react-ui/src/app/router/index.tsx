@@ -45,6 +45,7 @@ import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
+import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
@@ -69,7 +70,6 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
-import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
 const SettingsRerouter = () => {
@@ -518,6 +518,16 @@ const routes = [
             <SettingsHealthPage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/setup/billing',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <SettingsBilling />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },

@@ -175,7 +175,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveWorkerTypeSqlite1734439194575,
         AddCopilotSettingsSqlite1734479435668,
         AddExternalIdForFlowSqlite1735262810939,
-        AddUserIdentitySqlite1735602676499
+        AddUserIdentitySqlite1735602676499,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

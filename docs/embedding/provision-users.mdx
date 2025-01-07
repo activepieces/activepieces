@@ -90,7 +90,7 @@ To achieve this, the backend will generate a signed token that contains all the 
         lastName: "Doe",
         role: "EDITOR",
         piecesFilterType: "NONE",
-        exp: currentTime + (5 * 60), // 5 minutes from now
+        exp: currentTime + (60 * 60), // 1 hour from now
       },
       process.env.ACTIVEPIECES_SIGNING_KEY,
       {

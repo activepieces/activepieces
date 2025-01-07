@@ -123,7 +123,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value:this.getThirdPartyRedirectUrl(undefined, undefined),
+                value: this.getThirdPartyRedirectUrl(undefined, undefined),
                 created,
                 updated,
             },

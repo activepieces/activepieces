@@ -14,8 +14,9 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
-import { platformService } from './platform.service'
 import { userService } from '../user/user-service'
+import { platformService } from './platform.service'
+import { platformUtils } from './platform.utils'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
@@ -35,7 +36,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListPlatformsForIdentityRequest, async (req) => {
         const userId = await userService.getOneOrFail({ id: req.principal.id })
         const platforms = await platformService.listPlatformsForIdentity({ identityId: userId.identityId })
-        return platforms.filter((platform) => !platform.ssoEnabled && !platform.embeddingEnabled)
+        return platforms.filter((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform.id))
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {

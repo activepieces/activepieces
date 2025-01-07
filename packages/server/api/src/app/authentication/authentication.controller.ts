@@ -15,8 +15,8 @@ import { eventsHooks } from '../helper/application-events'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-prop'
 import { platformUtils } from '../platform/platform.utils'
-import { authenticationService } from './authentication.service'
 import { userService } from '../user/user-service'
+import { authenticationService } from './authentication.service'
 
 export const authenticationController: FastifyPluginAsyncTypebox = async (
     app,

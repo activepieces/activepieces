@@ -32,13 +32,12 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
-import { projectUsageService } from '../../project/usage/project-usage-service'
 import { userService } from '../../user/user-service'
 import { projectBillingService } from '../billing/project-billing/project-billing.service'
+import { BillingEntityType, usageService } from '../platform-billing/usage/usage-service'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
-
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
 
@@ -220,9 +219,9 @@ async function enrichProject(
             project.id,
             DEFAULT_FREE_PLAN_LIMIT,
         ),
-        usage: await projectUsageService(log).getUsageForBillingPeriod(
+        usage: await usageService(log).getUsageForBillingPeriod(
             project.id,
-            projectUsageService(log).getCurrentingStartPeriod(project.created),
+            BillingEntityType.PROJECT,
         ),
         analytics: { 
             activeFlows,

@@ -12,11 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared';
-import { ApFlagId, DefaultProjectRole } from '@activepieces/shared';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { DefaultProjectRole } from '@activepieces/shared';
 
 type ProjectRoleSelectProps = {
   form: UseFormReturn<any>;
@@ -30,7 +27,6 @@ const RolesDisplayNames: { [k: string]: string } = {
 };
 
 const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
-
   const { platform } = platformHooks.useCurrentPlatform();
 
   const invitationRoles = Object.values(DefaultProjectRole)
@@ -38,7 +34,7 @@ const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
       if (f === DefaultProjectRole.ADMIN) {
         return true;
       }
-      const showNonAdmin = platform.projectRolesEnabled
+      const showNonAdmin = platform.projectRolesEnabled;
       return showNonAdmin;
     })
     .map((role) => {

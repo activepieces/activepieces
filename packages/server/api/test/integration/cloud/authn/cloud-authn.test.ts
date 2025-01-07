@@ -420,7 +420,7 @@ describe('Authentication API', () => {
             const mockPlatformId = faker.string.nanoid()
             const mockPlatformDomain = faker.internet.domainName()
 
-            const { mockPlatform, mockCustomDomain } = await createMockPlatformAndDomain({
+            await createMockPlatformAndDomain({
                 platform: {
                     id: mockPlatformId,
                     allowedAuthDomains: [mockPlatformDomain],

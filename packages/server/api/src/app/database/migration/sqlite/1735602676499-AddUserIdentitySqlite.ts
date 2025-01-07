@@ -1,6 +1,6 @@
 import { apId } from '@activepieces/shared'
-import { MigrationInterface, QueryRunner } from "typeorm";
-import { system } from '../../../helper/system/system';
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
     name = 'AddUserIdentitySqlite1735602676499'
@@ -25,7 +25,7 @@ export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
 
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "user_identity" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -42,14 +42,14 @@ export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
                 "provider" varchar NOT NULL,
                 CONSTRAINT "UQ_7ad44f9fcbfc95e0a8436bbb029" UNIQUE ("email")
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_identity_email" ON "user_identity" ("email")
-        `);
+        `)
 
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -62,7 +62,7 @@ export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
                 "identityId" varchar NOT NULL,
                 CONSTRAINT "FK_dea97e26c765a4cdb575957a146" FOREIGN KEY ("identityId") REFERENCES "user_identity" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
-        `);
+        `)
 
         // Get all existing users
         const users = await queryRunner.query(`
@@ -94,36 +94,36 @@ export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `, [
                 user.id, user.created, user.updated, user.status, user.externalId,
-                user.platformId, user.platformRole, identityId
+                user.platformId, user.platformRole, identityId,
             ])
         }
 
         await queryRunner.query(`
             DROP TABLE "user"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "identityId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -142,7 +142,7 @@ export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
                 "platformRole" varchar NOT NULL,
                 "tokenVersion" varchar
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
@@ -161,22 +161,22 @@ export class AddUserIdentitySqlite1735602676499 implements MigrationInterface {
                 "platformId",
                 "platformRole"
             FROM "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_user"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_user_identity_email"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "user_identity"
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
-        `);
+        `)
     }
 
 }

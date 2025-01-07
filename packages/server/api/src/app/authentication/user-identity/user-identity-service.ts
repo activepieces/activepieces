@@ -1,13 +1,10 @@
 import { cryptoUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEnvironment, apId, ErrorCode, isNil, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { repoFactory } from '../../core/db/repo-factory'
 import { passwordHasher } from '../lib/password-hasher'
 import { UserIdentityEntity } from './user-identity-entity'
-import { AppSystemProp } from '../../helper/system/system-prop'
-import { system } from '../../helper/system/system'
-import { flagService } from '../../flags/flag.service'
 
 
 const userIdentityRepository = repoFactory(UserIdentityEntity)

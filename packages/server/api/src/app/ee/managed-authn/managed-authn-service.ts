@@ -11,7 +11,6 @@ import {
     Project,
     User,
     UserIdentityProvider,
-    UserWithMetaInformation,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -119,7 +118,7 @@ const getOrCreateUser = async (
     }
 
     const identity = await userIdentityService(log).create({
-        email: `managed_${params.externalUserId}`,
+        email: `managed_${params.platformId}_${params.externalUserId}`,
         password: await cryptoUtils.generateRandomPassword(),
         firstName: params.externalFirstName,
         lastName: params.externalLastName,

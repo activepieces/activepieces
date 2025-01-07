@@ -12,11 +12,11 @@ import {
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId } from '@activepieces/shared'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { defaultTheme } from '../flags/theme'
 import { userRepo, userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
-import { In } from 'typeorm'
 
 const repo = repoFactory<Platform>(PlatformEntity)
 

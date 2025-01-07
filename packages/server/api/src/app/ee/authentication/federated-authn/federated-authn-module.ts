@@ -4,7 +4,6 @@ import {
 import { networkUtls } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
-    assertNotNullOrUndefined,
     ClaimTokenRequest,
     ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared'

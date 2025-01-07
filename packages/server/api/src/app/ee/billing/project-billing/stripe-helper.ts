@@ -14,10 +14,8 @@ import Stripe from 'stripe'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-prop'
-import { projectService } from '../../../project/project-service'
-import { projectUsageService } from '../../../project/usage/project-usage-service'
+import { usageService } from '../../platform-billing/usage/usage-service'
 import { projectBillingService } from './project-billing.service'
-
 export const stripeWebhookSecret = system.get(
     AppSystemProp.STRIPE_WEBHOOK_SECRET,
 )!
@@ -91,13 +89,11 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     },
 
     createCheckoutUrl: async (
-        projectId: string,
         customerId: string,
     ): Promise<string> => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-        const project = await projectService.getOneOrThrow(projectId)
-        const startBillingPeriod = projectUsageService(log).getCurrentingStartPeriod(project.created)
+        const startBillingPeriod = usageService(log).getCurrentBillingPeriodStart()
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [

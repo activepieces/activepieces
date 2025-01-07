@@ -1,15 +1,16 @@
 import { OtpType } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
+import { platformUtils } from '../platform/platform.utils'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
 import { userIdentityService } from './user-identity/user-identity-service'
-import { otpService } from '../ee/authentication/otp/otp-service'
 
 
 
@@ -68,7 +69,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             })
             await authenticationUtils.sendTelemetry({
                 identity: userIdentity,
-                user: user,
+                user,
                 project: defaultProject,
                 log,
             })
@@ -150,7 +151,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     async switchPlatform(params: SwitchPlatformParams): Promise<AuthenticationResponse> {
         const platforms = await platformService.listPlatformsForIdentity({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
-        const allowToSwitch = !isNil(platform) && !platform.ssoEnabled && !platform.embeddingEnabled
+        const allowToSwitch = !isNil(platform) && !platformUtils.isEnterpriseCustomerOnCloud(platform.id)
         if (!allowToSwitch) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
@@ -185,10 +186,10 @@ async function getPersonalPlatformIdForIdentity(identityId: string): Promise<str
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
         const platforms = await platformService.listPlatformsForIdentity({ identityId })
-        const platform = platforms.find((platform) => !platform.ssoEnabled && !platform.embeddingEnabled)
-        return platform?.id ?? null;
+        const platform = platforms.find((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform.id))
+        return platform?.id ?? null
     }
-    return null;
+    return null
 }
 
 type FederatedAuthnParams = {

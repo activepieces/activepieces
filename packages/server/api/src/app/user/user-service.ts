@@ -8,8 +8,8 @@ import {
     spreadIfDefined,
     User,
     UserId,
-    UserWithMetaInformation,
     UserStatus,
+    UserWithMetaInformation,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'

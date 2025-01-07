@@ -5,10 +5,10 @@ import { assertNotNullOrUndefined, AuthenticationResponse,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { authenticationService } from '../../../authentication/authentication.service'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
 import { platformService } from '../../../platform/platform.service'
 import { googleAuthnProvider } from './google-authn-provider'
-import { AppSystemProp } from '../../../helper/system/system-prop'
-import { system } from '../../../helper/system/system'
 
 export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     async login({
@@ -53,7 +53,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
 })
 
 async function getClientIdAndSecret(platformId: string | undefined) {
-    if(isNil(platformId)) {
+    if (isNil(platformId)) {
         return {
             clientId: system.getOrThrow(AppSystemProp.GOOGLE_CLIENT_ID),
             clientSecret: system.getOrThrow(AppSystemProp.GOOGLE_CLIENT_SECRET),

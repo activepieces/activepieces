@@ -5,10 +5,9 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { aiTokenLimit } from '../ee/project-plan/ai-token-limit'
+import { BillingUsageType, usageService } from '../ee/platform-billing/usage/usage-service'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
-import { projectUsageService } from '../project/usage/project-usage-service'
 import { aiProviderService } from './ai-provider.service'
 
 export const proxyController: FastifyPluginAsyncTypebox = async (
@@ -24,19 +23,13 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
             platformId,
             provider,
         })
-        const limitResponse = await aiTokenLimit(request.log).exceededLimit({
-            projectId,
-            tokensToConsume: 0,
-        })
-        if (limitResponse.exceeded) {
+        const exceededLimit = await usageService(request.log).aiTokensExceededLimit(projectId, 0)
+        if (exceededLimit) {
             return reply.code(StatusCodes.PAYMENT_REQUIRED).send(
                 makeOpenAiResponse(
                     'You have exceeded your AI tokens limit for this project.',
                     'ai_tokens_limit_exceeded',
-                    {
-                        usage: limitResponse.usage,
-                        limit: limitResponse.limit,
-                    },
+                    {},
                 ),
             )
         }
@@ -57,7 +50,7 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
 
             const data = await parseResponseData(response, responseContentType)
 
-            await projectUsageService(request.log).increaseUsage(projectId, 1, 'aiTokens')
+            await usageService(request.log).increaseProjectAndPlatformUsage(projectId, 1, BillingUsageType.AI_TOKENS)
 
             rejectedPromiseHandler(telemetry(request.log).trackProject(projectId, {
                 name: TelemetryEventName.AI_PROVIDER_USED,

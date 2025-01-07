@@ -10,11 +10,12 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
+
 import { platformHooks } from './platform-hooks';
 
 export const useAuthorization = () => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
-  const { platform } = platformHooks.useCurrentPlatform()
+  const { platform } = platformHooks.useCurrentPlatform();
   const { data: projectRole, isLoading } = useQuery({
     queryKey: ['project-role', authenticationSession.getProjectId()],
     queryFn: async () => {
@@ -22,7 +23,10 @@ export const useAuthorization = () => {
       return projectRole;
     },
     retry: false,
-    enabled: !isNil(edition) && edition !== ApEdition.COMMUNITY && platform.projectRolesEnabled,
+    enabled:
+      !isNil(edition) &&
+      edition !== ApEdition.COMMUNITY &&
+      platform.projectRolesEnabled,
   });
 
   const checkAccess = (permission: Permission) => {

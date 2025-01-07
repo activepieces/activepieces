@@ -16,12 +16,22 @@ export const platformUtils = {
             return platformIdFromHostName
         }
         if (system.getEdition() === ApEdition.CLOUD) {
-            return null;
+            return null
         }
         const oldestPlatform = await platformService.getOldestPlatform()
         return oldestPlatform?.id ?? null
     },
+    // TODO (@amrabuaza) this is a temporary function to check if the platform is an enterprise customer on cloud
+    async isEnterpriseCustomerOnCloud(platformId: PlatformId): Promise<boolean> {
+        const edition = system.getEdition()
+        if (edition !== ApEdition.CLOUD) {
+            return false
+        }
+        const platform = await platformService.getOneOrThrow(platformId)
+        return platform.ssoEnabled || platform.embeddingEnabled
+    },
 }
+
 const getPlatformIdForHostname = async (
     hostname: string,
 ): Promise<string | null> => {

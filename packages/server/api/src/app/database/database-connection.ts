@@ -14,6 +14,7 @@ import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
+import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
 import { ProjectBillingEntity } from '../ee/billing/project-billing/project-billing.entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
@@ -21,6 +22,7 @@ import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { IssueEntity } from '../ee/issues/issues-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
+import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
 import { GitRepoEntity } from '../ee/project-release/git-sync/git-sync.entity'
@@ -48,7 +50,6 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -103,6 +104,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 ConnectionKeyEntity,
                 AppCredentialEntity,
                 ProjectBillingEntity,
+                PlatformBillingEntity,
             )
             break
         case ApEdition.COMMUNITY:
@@ -165,4 +167,4 @@ export function APArrayContains<T>(
 }
 
 // Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
-export const exportedConnection = databaseConnection()
+// export const exportedConnection = databaseConnection()

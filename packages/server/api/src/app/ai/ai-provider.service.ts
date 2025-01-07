@@ -1,10 +1,9 @@
 import { ActivepiecesError, AiProviderConfig, AiProviderWithoutSensitiveData, ApEdition, apId, ErrorCode, isNil, PlatformId, SeekPage } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { encryptUtils } from '../helper/encryption'
-import { AiProviderEntity, AiProviderSchema } from './ai-provider-entity'
-import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-prop'
+import { AiProviderEntity, AiProviderSchema } from './ai-provider-entity'
 
 const repo = repoFactory(AiProviderEntity)
 
@@ -16,9 +15,9 @@ export const aiProviderService = {
         })
         if (isNil(provider)) {
             // TODO URGENT refactor soon
-            const isCloudEdition = await system.getEdition() === ApEdition.CLOUD;
+            const isCloudEdition = system.getEdition() === ApEdition.CLOUD
             if (isCloudEdition) {
-                const cloudPlatformId = await system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID);
+                const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
                 if (cloudPlatformId !== params.platformId) {
                     return this.getOrThrow({
                         platformId: cloudPlatformId,

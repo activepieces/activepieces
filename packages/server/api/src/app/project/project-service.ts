@@ -10,7 +10,6 @@ import {
     Project,
     ProjectId,
     spreadIfDefined,
-    User,
     UserId,
 } from '@activepieces/shared'
 import { FindOptionsWhere, In, IsNull, Not } from 'typeorm'
@@ -92,7 +91,7 @@ export const projectService = {
         assertNotNullOrUndefined(user.platformId, 'platformId is undefined')
         const projects = await this.getAllForUser({
             platformId: user.platformId,
-            userId: userId,
+            userId,
         })
         if (isNil(projects) || projects.length === 0) {
             throw new ActivepiecesError({

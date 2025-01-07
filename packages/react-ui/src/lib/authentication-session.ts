@@ -1,6 +1,7 @@
 import { jwtDecode } from 'jwt-decode';
 
 import { AuthenticationResponse, isNil } from '@activepieces/shared';
+
 import { authenticationApi } from './authentication-api';
 
 const tokenKey = 'token';
@@ -42,8 +43,7 @@ export const authenticationSession = {
     return this.getCurrentUser()?.platformRole ?? null;
   },
   async switchToPlatform(platformId: string) {
-    
-    if(authenticationSession.getPlatformId() === platformId) {
+    if (authenticationSession.getPlatformId() === platformId) {
       return;
     }
     const result = await authenticationApi.switchPlatform({
@@ -57,10 +57,10 @@ export const authenticationSession = {
         platformId,
       }),
     );
-    window.location.href = '/'
+    window.location.href = '/';
   },
   async switchToSession(projectId: string) {
-    if(authenticationSession.getProjectId() === projectId) {
+    if (authenticationSession.getProjectId() === projectId) {
       return;
     }
     const result = await authenticationApi.switchProject({ projectId });

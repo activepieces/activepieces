@@ -231,7 +231,7 @@ async function getOrCreateUser(identity: UserIdentity, platformId: string): Prom
         platformId,
     })
     if (isNil(user)) {
-        return await userService.create({
+        return userService.create({
             identityId: identity.id,
             platformId,
             platformRole: PlatformRole.MEMBER,

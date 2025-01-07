@@ -19,7 +19,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
-import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
@@ -44,7 +44,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
                 break
         }
         const status = request.principal.type === PrincipalType.SERVICE ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
-        const projectRole = await getProjectRoleAndAssertIfFound(request.principal.platform.id, request.body, request.log)
+        const projectRole = await getProjectRoleAndAssertIfFound(request.principal.platform.id, request.body)
         const platformId = request.principal.platform.id
         const invitation = await userInvitationsService(request.log).create({
             email,
@@ -105,7 +105,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 
-const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendUserInvitationRequest, log: FastifyBaseLogger): Promise<ProjectRole | null> => {
+const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendUserInvitationRequest): Promise<ProjectRole | null> => {
     const { type } = request
     if (type === InvitationType.PLATFORM) {
         return null

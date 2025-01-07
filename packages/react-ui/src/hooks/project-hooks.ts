@@ -5,7 +5,6 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 
-import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
