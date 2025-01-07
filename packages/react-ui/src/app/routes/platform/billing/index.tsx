@@ -258,16 +258,6 @@ export default function Billing() {
                   <div className="text-sm font-sm mt-1 flex items-center gap-2 basis-1/3 flex-wrap">
                     <div className="flex items-center gap-1 w-full">
                       {t('Current Credit Usage')}
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <CircleHelp className="w-4 h-4" />
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom">
-                            {t('Set a limit on task usage to control costs')}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
                     </div>
                     <div className="text-sm font-sm text-gray-500">
                       {t('First 200 credits free')}
