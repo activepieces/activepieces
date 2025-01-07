@@ -1,10 +1,13 @@
-import { AdminAddPlatformRequestBody, PrincipalType } from '@activepieces/shared'
+import { AdminAddPlatformRequestBody, isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { adminPlatformService } from './admin-platform.service'
 import { projectService } from '../../project/project-service'
 import { projectBillingService } from '../billing/project-billing/project-billing.service'
 import { platformBillingService } from '../platform-billing/platform-billing.service'
+import { stripeHelper, TASKS_PAYG_PRICE_ID } from '../platform-billing/stripe-helper'
+import { ApSubscriptionStatus } from '@activepieces/ee-shared'
+import { apDayjs } from '../../helper/dayjs-helper'
 
 export const adminPlatformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })
@@ -23,6 +26,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         const { projectIds } = req.body as { projectIds: string[] }
 
         const results = []
+        const stripe = stripeHelper(req.log).getStripe()
         for (const projectId of projectIds) {
             try {
                 const projectBilling = await projectBillingService(req.log).getOrCreateForProject(projectId)
@@ -40,6 +44,27 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                     success: true,
                     platformBillingId: platformBilling.id
                 })
+
+                if (stripe) {
+                    if (isNil(platformBilling.stripeSubscriptionId) || platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
+                        continue
+                    }
+
+                    await stripe.subscriptions.cancel(platformBilling.stripeSubscriptionId);
+                    const nextMonthStart = apDayjs().add(1, 'month').startOf('month').unix();
+
+                    await stripe.subscriptions.create({
+                        customer: platformBilling.stripeCustomerId,
+                        items: [
+                            {
+                                price: TASKS_PAYG_PRICE_ID, 
+                            },
+                        ],
+                        billing_cycle_anchor: nextMonthStart,  
+                        proration_behavior: 'none',
+                    });
+                }
+                
             }
             catch (e: any) {
                 results.push({
@@ -54,8 +79,6 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
             results
         })
     })
-
-   
 }
 
 const AdminAddPlatformRequest = {
