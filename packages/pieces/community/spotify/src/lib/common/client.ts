@@ -201,6 +201,30 @@ export class SpotifyWebApi {
     return items;
   }
 
+  async getSavedTracks(
+    request?: PaginationRequest
+  ): Promise<Pagination<PlaylistItem>> {
+    return await this.makeRequest<Pagination<PlaylistItem>>(
+      HttpMethod.GET,
+      '/me/tracks',
+      prepareQuery(request)
+    );
+  }
+
+  async getAllSavedTracks(): Promise<PlaylistItem[]> {
+    const items: PlaylistItem[] = [];
+    let total = 99999;
+    while (items.length < total) {
+      const res = await this.getSavedTracks({
+        limit: 50,
+        offset: items.length,
+      });
+      total = res.total;
+      res.items.forEach((item) => items.push(item));
+    }
+    return items;
+  }
+
   async addItemsToPlaylist(id: string, request: PlaylistAddItemsRequest) {
     await this.makeRequest(
       HttpMethod.POST,
