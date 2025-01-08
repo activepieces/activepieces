@@ -145,18 +145,6 @@ export const projectService = {
         }
         return projectRepo().findBy(filters)
     },
-    async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
-        const query = {
-            id: projectId,
-            deleted: IsNull(),
-        }
-
-        const update = {
-            platformId,
-        }
-
-        await projectRepo().update(query, update)
-    },
 
     async getByPlatformIdAndExternalId({
         platformId,
