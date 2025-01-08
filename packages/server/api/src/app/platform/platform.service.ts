@@ -69,7 +69,7 @@ export const platformService = {
             ssoEnabled: false,
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
-            flowIssuesEnabled: false,
+            flowIssuesEnabled: true,
             environmentsEnabled: false,
             managePiecesEnabled: false,
             manageTemplatesEnabled: false,
