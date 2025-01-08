@@ -59,6 +59,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             ownerId: userId,
             name: `${userMeta.firstName}'s Platform`,
         })
+
         await userRepo().update({
             id: userId,
         }, {
