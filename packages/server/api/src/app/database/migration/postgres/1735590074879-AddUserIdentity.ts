@@ -56,54 +56,67 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
 
 
         // Migrate user data to user_identity
-        // Get all users first
+        // Get all users, ensuring only one row per email
         const users = await queryRunner.query(`
-            SELECT "id", "email", "password", "trackEvents", "newsLetter", "verified", "firstName", "lastName", "tokenVersion"
+            SELECT DISTINCT ON ("email") "id", "email", "password", "trackEvents", "newsLetter", "verified", "firstName", "lastName", "tokenVersion"
             FROM "user"
+            ORDER BY "email", "id"
+        `);
+        const batchSize = 1000;
+        const userBatches = [];
+        for (let i = 0; i < users.length; i += batchSize) {
+            userBatches.push(users.slice(i, i + batchSize));
+        }
+
+        log.info({
+            message: `Found ${userBatches.length} batches of users`,
+        })
+        let total = 0;
+        for (let batchIndex = 0; batchIndex < userBatches.length; batchIndex++) {
+            const batchOfUsers = userBatches[batchIndex];
+
+        
+            // Prepare the values for all users in the batch
+            const values = batchOfUsers.map((user: Record<string, unknown>) => [
+                apId(), user.email, user.password, user.trackEvents, user.newsLetter,
+                user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL'
+            ]);
+        
+            // Create the insert query for the whole batch
+            const insertQuery = `
+                INSERT INTO "user_identity" (
+                    "id", "email", "password", "trackEvents", "newsLetter", 
+                    "verified", "firstName", "lastName", "tokenVersion", "provider"
+                ) VALUES 
+                ${values.map((_: Record<string, unknown>, index: number) => `($${index * 10 + 1}, $${index * 10 + 2}, $${index * 10 + 3}, $${index * 10 + 4}, $${index * 10 + 5}, $${index * 10 + 6}, $${index * 10 + 7}, $${index * 10 + 8}, $${index * 10 + 9}, $${index * 10 + 10})`).join(', ')}
+            `;
+        
+            // Flatten the values array for binding
+            const flattenedValues = values.flat();
+        
+            // Execute the batch insert
+            await queryRunner.query(insertQuery, flattenedValues);
+        
+            total += batchOfUsers.length;
+            log.info({
+                name: this.name,
+                message: `Processed ${total} users`,
+            });
+        }
+
+
+        await queryRunner.query(`
+            ALTER TABLE "user"
+            ADD "identityId" character varying
         `)
 
-        // Add identity reference to user table as nullable first
+        // Update identityId in user table based on matching email addresses
         await queryRunner.query(`
-                ALTER TABLE "user"
-                ADD "identityId" character varying
-            `)
-
-        // Insert each user with a new ID and update the reference
-        for (const user of users) {
-            const identityId = apId()
-
-            // Check if email already exists in user_identity
-            const existingIdentity = await queryRunner.query(`
-                SELECT "id" FROM "user_identity" WHERE "email" = $1
-            `, [user.email])
-
-            let finalIdentityId = identityId
-
-            if (existingIdentity.length > 0) {
-                // If email exists, use the existing identity ID
-                finalIdentityId = existingIdentity[0].id
-            }
-            else {
-                // Insert into user_identity
-                await queryRunner.query(`
-                    INSERT INTO "user_identity" (
-                        "id", "email", "password", "trackEvents", "newsLetter", 
-                        "verified", "firstName", "lastName", "tokenVersion", "provider"
-                    )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                `, [
-                    finalIdentityId, user.email, user.password, user.trackEvents, user.newsLetter,
-                    user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL',
-                ])
-            }
-
-            // Link identity to user
-            await queryRunner.query(`
-                UPDATE "user" 
-                SET "identityId" = $1
-                WHERE id = $2
-            `, [finalIdentityId, user.id])
-        }
+            UPDATE "user" AS u
+            SET "identityId" = ui.id
+            FROM "user_identity" AS ui
+            WHERE u.email = ui.email
+        `)
 
         // Make identityId not null after linking
         await queryRunner.query(`
@@ -160,6 +173,10 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        log.info({
+            name: this.name,
+            message: 'Starting down migration',
+        })
         // Drop foreign key constraints
         await queryRunner.query(`
             ALTER TABLE "otp" DROP CONSTRAINT "fk_otp_identity_id"
