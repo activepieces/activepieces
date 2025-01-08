@@ -3,6 +3,7 @@ import { flowRepo } from './app/flows/flow/flow.repo'
 import { flowVersionService } from './app/flows/flow-version/flow-version.service'
 import { system } from './app/helper/system/system'
 import { projectRepo } from './app/project/project-service'
+import { isNil } from 'packages/shared/src/lib/common/utils'
 
 export const temporaryMigration = {
     async backfill() {
@@ -15,8 +16,13 @@ export const temporaryMigration = {
         for (const project of projects) {
             logger.info(`Processing project with ID: ${project.id}`)
 
-            const gitRepo = await gitRepoService(logger).getOneByProjectOrThrow({ projectId: project.id })
+            const gitRepo = await gitRepoService(logger).getOneByProject({ projectId: project.id })
             logger.info(`Retrieved git repository for project ID: ${project.id}`)
+
+            if (isNil(gitRepo)) {
+                logger.info(`No git repository found for project ID: ${project.id}`)
+                continue
+            }
 
             const flows = await flowRepo().find({ where: { projectId: project.id } })
             logger.info(`Found ${flows.length} flows for project ID: ${project.id}`)
@@ -24,10 +30,18 @@ export const temporaryMigration = {
             const repoState = await gitRepoService(logger).getState({ gitRepo, userId: project.ownerId, log: logger })
             logger.info(`Retrieved repository state for project ID: ${project.id}`)
 
+            if (isNil(repoState)) {
+                logger.info(`No repository state found for project ID: ${project.id}`)
+                continue
+            }
+
             for (const flow of repoState.flows) {
                 const flowResults = await Promise.all(flows.map(async (f) => {
-                    const latestLockedVersion = await flowVersionService(logger).getLatestLockedVersionOrThrow(f.id);
-                    if (latestLockedVersion.displayName === flow.version.displayName && latestLockedVersion.trigger.settings.pieceName === flow.version.trigger.settings.pieceName) {
+                    const latestVersion = await flowVersionService(logger).getOne(f.id);
+                    if (isNil(latestVersion)) {
+                        return null;
+                    }
+                    if (latestVersion.displayName === flow.version.displayName && latestVersion.trigger.settings.pieceName === flow.version.trigger.settings.pieceName) {
                         return f;
                     }
                     return null;
@@ -37,8 +51,11 @@ export const temporaryMigration = {
 
                 if (matchingFlows.length === 0) {
                     const matchingFlowsByDisplayName = await Promise.all(matchingFlows.map(async (f) => {
-                        const latestLockedVersion = await flowVersionService(logger).getLatestLockedVersionOrThrow(f.id);
-                        if (latestLockedVersion.displayName === flow.version.displayName) {
+                        const latestVersion = await flowVersionService(logger).getOne(f.id);
+                        if (isNil(latestVersion)) {
+                            return null;
+                        }
+                        if (latestVersion.displayName === flow.version.displayName) {
                             return f;
                         }
                         return null;

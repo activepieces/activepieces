@@ -45,6 +45,13 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         )
         return repo().findOneByOrFail({ id })
     },
+    async getOneByProject({ projectId }: { projectId: string }): Promise<GitRepo | null> {
+        const gitRepo = await repo().findOneBy({ projectId })
+        if (isNil(gitRepo)) {
+            return null
+        }
+        return gitRepo
+    },
     async getOneByProjectOrThrow({ projectId }: { projectId: string }): Promise<GitRepo> {
         const gitRepo = await repo().findOneByOrFail({ projectId })
         if (isNil(gitRepo)) {
