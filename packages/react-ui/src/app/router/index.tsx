@@ -71,9 +71,9 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
+import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
-import { FlagRouteGuard } from './flag-route-guard';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -644,8 +644,8 @@ const ApRouter = () => {
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
-        initialEntries: [window.location.pathname],
-      })
+          initialEntries: [window.location.pathname],
+        })
       : createBrowserRouter(routes);
   }, [embedState.isEmbedded]);
 

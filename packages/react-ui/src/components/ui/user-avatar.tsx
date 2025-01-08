@@ -7,6 +7,7 @@ import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 import { platformApi } from '@/lib/platforms-api';
+import { isNil } from '@activepieces/shared';
 
 import { Avatar, AvatarFallback } from './avatar';
 import { AvatarLetter } from './avatar-letter';
@@ -21,7 +22,6 @@ import {
   DropdownMenuSubContent,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
-import { isNil } from '@activepieces/shared';
 
 export function UserAvatar() {
   const { reset } = useTelemetry();

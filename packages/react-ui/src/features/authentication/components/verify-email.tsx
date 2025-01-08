@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { MailCheck, MailX } from 'lucide-react';
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Card } from '@/components/ui/card';
@@ -18,9 +18,8 @@ const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const otp = searchParams.get('otpcode');
   const identityId = searchParams.get('identityId');
-  useLayoutEffect(() => {
-    mutate();
-  }, []);
+  const hasMutated = useRef(false);
+
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
       return await authenticationApi.verifyEmail({
@@ -45,6 +44,13 @@ const VerifyEmail = () => {
       }
     },
   });
+
+  useEffect(() => {
+    if (otp && identityId && !hasMutated.current) {
+      mutate();
+      hasMutated.current = true;
+    }
+  }, [otp, identityId, mutate]);
 
   if (!otp || !identityId) {
     return <Navigate to="/sign-in" replace />;

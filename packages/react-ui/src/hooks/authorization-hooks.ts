@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { platformApi } from '@/lib/platforms-api';
 import {
   ApEdition,
   ApFlagId,
@@ -11,22 +12,20 @@ import {
   PlatformRole,
 } from '@activepieces/shared';
 
-import { platformHooks } from './platform-hooks';
-
 export const useAuthorization = () => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
-  const { platform } = platformHooks.useCurrentPlatform();
   const { data: projectRole, isLoading } = useQuery({
     queryKey: ['project-role', authenticationSession.getProjectId()],
     queryFn: async () => {
-      const projectRole = await authenticationApi.me();
-      return projectRole;
+      const platform = await platformApi.getCurrentPlatform();
+      if (platform.projectRolesEnabled) {
+        const projectRole = await authenticationApi.me();
+        return projectRole;
+      }
+      return null;
     },
     retry: false,
-    enabled:
-      !isNil(edition) &&
-      edition !== ApEdition.COMMUNITY &&
-      platform.projectRolesEnabled,
+    enabled: !isNil(edition) && edition !== ApEdition.COMMUNITY,
   });
 
   const checkAccess = (permission: Permission) => {
