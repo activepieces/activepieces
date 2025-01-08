@@ -21,6 +21,7 @@ import {
   DropdownMenuSubContent,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
+import { isNil } from '@activepieces/shared';
 
 export function UserAvatar() {
   const { reset } = useTelemetry();
@@ -28,8 +29,9 @@ export function UserAvatar() {
   const user = authenticationSession.getCurrentUser();
 
   const { data: platforms } = useQuery({
-    queryKey: ['platforms', user.id],
+    queryKey: ['platforms', user?.id],
     queryFn: () => platformApi.listPlatforms(),
+    enabled: !isNil(user),
   });
 
   const switchPlatformMutation = useMutation({
