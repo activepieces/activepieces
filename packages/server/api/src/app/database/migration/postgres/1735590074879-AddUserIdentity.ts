@@ -61,26 +61,26 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
             SELECT DISTINCT ON ("email") "id", "email", "password", "trackEvents", "newsLetter", "verified", "firstName", "lastName", "tokenVersion"
             FROM "user"
             ORDER BY "email", "id"
-        `);
-        const batchSize = 1000;
-        const userBatches = [];
+        `)
+        const batchSize = 1000
+        const userBatches = []
         for (let i = 0; i < users.length; i += batchSize) {
-            userBatches.push(users.slice(i, i + batchSize));
+            userBatches.push(users.slice(i, i + batchSize))
         }
 
         log.info({
             message: `Found ${userBatches.length} batches of users`,
         })
-        let total = 0;
+        let total = 0
         for (let batchIndex = 0; batchIndex < userBatches.length; batchIndex++) {
-            const batchOfUsers = userBatches[batchIndex];
+            const batchOfUsers = userBatches[batchIndex]
 
         
             // Prepare the values for all users in the batch
             const values = batchOfUsers.map((user: Record<string, unknown>) => [
                 apId(), user.email, user.password, user.trackEvents, user.newsLetter,
-                user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL'
-            ]);
+                user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL',
+            ])
         
             // Create the insert query for the whole batch
             const insertQuery = `
@@ -89,19 +89,19 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
                     "verified", "firstName", "lastName", "tokenVersion", "provider"
                 ) VALUES 
                 ${values.map((_: Record<string, unknown>, index: number) => `($${index * 10 + 1}, $${index * 10 + 2}, $${index * 10 + 3}, $${index * 10 + 4}, $${index * 10 + 5}, $${index * 10 + 6}, $${index * 10 + 7}, $${index * 10 + 8}, $${index * 10 + 9}, $${index * 10 + 10})`).join(', ')}
-            `;
+            `
         
             // Flatten the values array for binding
-            const flattenedValues = values.flat();
+            const flattenedValues = values.flat()
         
             // Execute the batch insert
-            await queryRunner.query(insertQuery, flattenedValues);
+            await queryRunner.query(insertQuery, flattenedValues)
         
-            total += batchOfUsers.length;
+            total += batchOfUsers.length
             log.info({
                 name: this.name,
                 message: `Processed ${total} users`,
-            });
+            })
         }
 
 
