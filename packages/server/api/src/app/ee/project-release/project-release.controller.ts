@@ -40,7 +40,7 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     app.post('/diff', DiffProjectReleaseRequest, async (req) => {
         const platform = await platformService.getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
-        return projectReleaseService.releasePlan(req.principal.projectId, req.principal.platform.id, ownerId, req.body, req.log)
+        return projectReleaseService.releasePlan(req.principal.projectId, ownerId, req.body, req.log)
     })
 }
 

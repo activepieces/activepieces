@@ -1,12 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
 import { BaseModelSchema, ConnectionState } from "@activepieces/shared";
 
-export enum ProjectOperationType {
-    UPDATE_FLOW = 'UPDATE_FLOW',
-    CREATE_FLOW = 'CREATE_FLOW',
-    DELETE_FLOW = 'DELETE_FLOW',
-}
-
 export enum GitBranchType {
     PRODUCTION = 'PRODUCTION',
     DEVELOPMENT = 'DEVELOPMENT',
@@ -62,47 +56,3 @@ export const ConfigureRepoRequest = Type.Object({
 })
 
 export type ConfigureRepoRequest = Static<typeof ConfigureRepoRequest>
-
-export const ProjectSyncError = Type.Object({
-    flowId: Type.String(),
-    message: Type.String(),
-})
-export type ProjectSyncError = Static<typeof ProjectSyncError>
-
-export const ProjectSyncPlanOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.CREATE_FLOW),
-        flow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
-        }),
-    }),
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.UPDATE_FLOW),
-        flow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
-        }),
-        targetFlow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
-        }),
-    }),
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.DELETE_FLOW),
-        flow: Type.Object({
-            id: Type.String(),
-            displayName: Type.String(),
-        }),
-    }),
-])
-
-export type ProjectSyncPlanOperation = Static<typeof ProjectSyncPlanOperation>
-
-export const ProjectSyncPlan = Type.Object({
-    operations: Type.Array(ProjectSyncPlanOperation),
-    connectionStates: Type.Array(ConnectionState),
-    errors: Type.Array(ProjectSyncError),
-})
-
-export type ProjectSyncPlan = Static<typeof ProjectSyncPlan>

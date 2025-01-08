@@ -49,6 +49,7 @@ export const ApplyButton = ({
           description: t('There are no differences to apply'),
           variant: 'default',
         });
+        setDialogOpen(false);
         setLoadingRequestId(null);
         return;
       }

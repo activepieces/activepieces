@@ -28,7 +28,7 @@ async function commitAndPush(
 async function createGitRepoAndReturnPaths(
     gitRepo: GitRepo,
     userId: string,
-): Promise<{ flowFolderPath: string, git: SimpleGit, stateFolderPath: string }> {
+): Promise<{ flowFolderPath: string, git: SimpleGit, stateFolderPath: string, connectionsFolderPath: string }> {
     const tmpFolder = path.join('/', 'tmp', 'repo', gitRepo.projectId)
     try {
         await fs.rmdir(tmpFolder, { recursive: true })
@@ -42,7 +42,14 @@ async function createGitRepoAndReturnPaths(
         gitRepo.slug,
         'flows',
     )
+    const connectionsFolderPath = path.join(
+        tmpFolder,
+        'projects',
+        gitRepo.slug,
+        'connections',
+    )
     await fs.mkdir(flowFolderPath, { recursive: true })
+    await fs.mkdir(connectionsFolderPath, { recursive: true })
     const stateFolderPath = path.join(
         tmpFolder,
         'projects',
@@ -64,6 +71,7 @@ async function createGitRepoAndReturnPaths(
         git,
         flowFolderPath,
         stateFolderPath,
+        connectionsFolderPath,
     }
 }
 

@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { UpdateIcon } from '@radix-ui/react-icons';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -24,8 +25,12 @@ import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ProjectSyncPlan } from '@activepieces/ee-shared';
-import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
+import {
+  ConnectionOperationType,
+  DiffReleaseRequest,
+  ProjectReleaseType,
+  ProjectSyncPlan,
+} from '@activepieces/shared';
 
 import { OperationChange } from './operation-change';
 
@@ -34,7 +39,7 @@ type CreateReleaseDialogProps = {
   setOpen: (open: boolean) => void;
   refetch: () => void;
   diffRequest: DiffReleaseRequest;
-  plan: ProjectSyncPlan | undefined;
+  plan: ProjectSyncPlan;
   defaultName?: string;
   loading: boolean;
 };
@@ -120,7 +125,7 @@ const CreateReleaseDialog = ({
   const [selectedChanges, setSelectedChanges] = useState<Set<string>>(
     new Set(plan?.operations.map((op) => op.flow.id) || []),
   );
-  const [showValidationError, setShowValidationError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSelectAll = (checked: boolean) => {
     if (!plan) return;
@@ -130,9 +135,9 @@ const CreateReleaseDialog = ({
   };
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && plan) {
       setSelectedChanges(
-        new Set(plan?.operations.map((op) => op.flow.id) || []),
+        new Set(plan.operations.map((op) => op.flow.id) || []),
       );
     }
   }, [loading, plan]);
@@ -178,7 +183,9 @@ const CreateReleaseDialog = ({
                 id="name"
                 {...form.register('name')}
                 onChange={(e) => {
-                  setShowValidationError(false);
+                  if (e.target.value) {
+                    setErrorMessage('');
+                  }
                 }}
                 placeholder={t('Meeting Summary Flow')}
               />
@@ -224,16 +231,14 @@ const CreateReleaseDialog = ({
                     change={operation}
                     selected={selectedChanges.has(operation.flow.id)}
                     onSelect={(checked) => {
-                      setShowValidationError(false);
-                      setSelectedChanges(
-                        new Set(
-                          checked
-                            ? [...selectedChanges, operation.flow.id]
-                            : [...selectedChanges].filter(
-                                (id) => id !== operation.flow.id,
-                              ),
-                        ),
-                      );
+                      const newSelectedChanges = new Set(selectedChanges);
+                      if (checked) {
+                        newSelectedChanges.add(operation.flow.id);
+                      } else {
+                        newSelectedChanges.delete(operation.flow.id);
+                      }
+                      setErrorMessage('');
+                      setSelectedChanges(newSelectedChanges);
                     }}
                   />
                 ))
@@ -243,7 +248,7 @@ const CreateReleaseDialog = ({
                 </div>
               )}
             </div>
-            {plan?.connectionStates && plan?.connectionStates.length > 0 && (
+            {plan?.connections && plan?.connections.length > 0 && (
               <div className="mt-4 p-3 rounded-lg text-sm border flex gap-2">
                 <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                 <div className="space-y-2">
@@ -258,31 +263,49 @@ const CreateReleaseDialog = ({
                     {t(' page after applying changes:')}
                   </div>
                   <div className="space-y-1.5">
-                    {plan?.connectionStates
+                    {plan?.connections
                       ?.sort((a, b) =>
-                        a.displayName.localeCompare(b.displayName),
+                        a.connectionState.displayName.localeCompare(
+                          b.connectionState.displayName,
+                        ),
                       )
                       .map((connection, index) => (
                         <div
-                          key={connection.externalId}
+                          key={connection.connectionState.externalId}
                           className="flex items-center gap-2"
                         >
-                          <div className="w-1.5 h-1.5 rounded-full bg-black shrink-0" />
-                          <span>{connection.displayName}</span>
+                          {connection.type ===
+                            ConnectionOperationType.UPDATE_CONNECTION && (
+                            <div className="flex items-center gap-2">
+                              <UpdateIcon className="w-4 h-4 shrink-0" />
+                              <div className="flex items-center gap-1">
+                                <div>
+                                  {connection.connectionState.displayName}
+                                </div>
+                                <ArrowRight className="w-4 h-4 shrink-0" />
+                                <div>
+                                  {connection.newConnectionState.displayName}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          {connection.type ===
+                            ConnectionOperationType.CREATE_CONNECTION && (
+                            <>
+                              <Plus className="w-4 h-4 shrink-0 text-success" />
+                              <span className="text-success">
+                                {connection.connectionState.displayName}
+                              </span>
+                            </>
+                          )}
                         </div>
                       ))}
                   </div>
                 </div>
               </div>
             )}
-            {showValidationError && (
-              <p className="text-sm text-destructive">
-                {!form.getValues('name')
-                  ? t('Release name is required')
-                  : t(
-                      'Please select at least one change to include in the release',
-                    )}
-              </p>
+            {errorMessage && (
+              <p className="text-sm text-destructive">{errorMessage}</p>
             )}
           </div>
         )}
@@ -300,11 +323,16 @@ const CreateReleaseDialog = ({
             loading={isPending}
             disabled={isPending}
             onClick={() => {
-              if (!form.formState.isValid || selectedChanges.size === 0) {
-                setShowValidationError(true);
+              if (form.getValues('name').trim() === '') {
+                setErrorMessage('Release name is required');
                 return;
               }
-              setShowValidationError(false);
+              if (selectedChanges.size === 0) {
+                setErrorMessage(
+                  'Please select at least one change to include in the release',
+                );
+                return;
+              }
               applyChanges();
             }}
           >

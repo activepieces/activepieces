@@ -1,15 +1,14 @@
-import { ProjectOperationType, ProjectSyncError } from '@activepieces/ee-shared'
-import { Action, ActionType, ConnectionState, FileCompression, FileId, FileType, FlowStatus, isNil, LoopOnItemsAction, PieceActionSettings, PieceTriggerSettings, ProjectId, ProjectState, RouterAction, Trigger, TriggerType } from '@activepieces/shared'
+import { ConnectionOperationType, DiffState, FileCompression, FileId, FileType, FlowStatus, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { flowService } from '../../../flows/flow/flow.service'
-import { ProjectOperation } from './project-diff.service'
 import { projectStateHelper } from './project-state-helper'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
-    async apply({ projectId, operations, selectedFlowsIds, platformId }: ApplyProjectStateRequest): Promise<ApplyProjectStateResponse> {
+    async apply({ projectId, diffs, selectedFlowsIds, platformId }: ApplyProjectStateRequest): Promise<ApplyProjectStateResponse> {
+        const { operations, connections } = diffs
         const publishJobs: Promise<ProjectSyncError | null>[] = []
         for (const operation of operations) {
             switch (operation.type) {
@@ -40,16 +39,29 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        const connectionStates = await this.getFlowConnections(operations, projectId, platformId)
-
-        for (const connection of connectionStates) {
-            await appConnectionService(log).createPlaceholder({
-                projectId,
-                platformId,
-                externalId: connection.externalId,
-                pieceName: connection.pieceName,
-                displayName: connection.displayName,
-            })
+        for (const state of connections) {
+            switch (state.type) {
+                case ConnectionOperationType.CREATE_CONNECTION: {
+                    await appConnectionService(log).upsertPlaceholder({
+                        projectId,
+                        platformId,
+                        externalId: state.connectionState.externalId,
+                        pieceName: state.connectionState.pieceName,
+                        displayName: state.connectionState.displayName,
+                    })
+                    break
+                }
+                case ConnectionOperationType.UPDATE_CONNECTION: {
+                    await appConnectionService(log).upsertPlaceholder({
+                        projectId,
+                        platformId,
+                        externalId: state.newConnectionState.externalId,
+                        pieceName: state.newConnectionState.pieceName,
+                        displayName: state.newConnectionState.displayName,
+                    })
+                    break
+                }
+            }
         }
     
         return {
@@ -91,115 +103,15 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                 projectId,
             })
         }))
+        const connections = await appConnectionService(log).getManyConnectionStates({
+            projectId,
+        })
         return {
             flows: allPopulatedFlows,
+            connections,
         }
     },
-    async getFlowConnections(operations: ProjectOperation[], projectId: ProjectId, platformId: string): Promise<ConnectionState[]> {
-        const connectionStates = await Promise.all(operations.map(async (operation) => {
-            switch (operation.type) {
-                case ProjectOperationType.CREATE_FLOW:
-                    return getFlowConnections(operation.flowState.version.trigger)
-                case ProjectOperationType.UPDATE_FLOW:
-                    return getFlowConnections(operation.newFlowState.version.trigger)
-                case ProjectOperationType.DELETE_FLOW:
-                    return []
-            }
-        })).then(arrays => arrays.flat())
-
-        const uniqueConnections = new Map<string, ConnectionState>()
-        connectionStates.forEach(connection => {
-            uniqueConnections.set(connection.externalId, connection)
-        })
-
-        const connections = await Promise.all(Array.from(uniqueConnections.values()).map(async (connection) => {
-            const appConnection = await appConnectionService(log).getOne({
-                projectId,
-                externalId: connection.externalId,
-                platformId,
-            })
-            if (isNil(appConnection)) {
-                return connection
-            }
-            return null
-        }))
-        
-        return connections.filter((connection): connection is ConnectionState => connection !== null)
-    },
-
 })
-
-async function getFlowConnections(step: Action | Trigger): Promise<ConnectionState[]> {
-    if (step === null) {
-        return []
-    }
-    const connectionsIds: ConnectionState[] = []
-
-    switch (step.type) {
-        case ActionType.CODE: {
-            break
-        }
-        case ActionType.LOOP_ON_ITEMS: {
-            const firstLoopAction = (step as LoopOnItemsAction).firstLoopAction
-            if (firstLoopAction) {
-                connectionsIds.push(...(await getFlowConnections(firstLoopAction)))
-            }
-            break
-        }
-        case ActionType.ROUTER:{
-            const children = (step as RouterAction).children
-            for (const child of children) {
-                if (isNil(child)) {
-                    continue
-                }
-                connectionsIds.push(...(await getFlowConnections(child)))
-            }
-            break
-        }
-        case ActionType.PIECE:{
-            const input = (step.settings as PieceActionSettings).input as Record<string, unknown>
-            const pieceName = (step.settings as PieceActionSettings).pieceName
-            Object.values(input).forEach(value => {
-                if (typeof value === 'string') {
-                    const match = value.match(/{{connections\['([^']+)']}}/)
-                    if (match) {
-                        connectionsIds.push({
-                            externalId: match[1],
-                            pieceName,
-                            displayName: step.displayName,
-                        })
-                    }
-                }
-            })
-            break
-        }
-        case TriggerType.EMPTY:{
-            break
-        }
-        case TriggerType.PIECE: {
-            const triggerInput = (step.settings as PieceTriggerSettings).input as Record<string, unknown>
-            const triggerPieceName = (step.settings as PieceTriggerSettings).pieceName
-            Object.values(triggerInput).forEach(value => {
-                if (typeof value === 'string') {
-                    const match = value.match(/{{connections\['([^']+)']}}/)
-                    if (match) {
-                        connectionsIds.push({
-                            externalId: match[1],
-                            pieceName: triggerPieceName,
-                            displayName: step.displayName,
-                        })
-                    }
-                }
-            }) 
-            break
-        }
-    }
-    if (step.nextAction) {
-        connectionsIds.push(...(await getFlowConnections(step.nextAction)))
-    }
-
-    return connectionsIds
-}
 
 type ApplyProjectStateResponse = {
     errors: ProjectSyncError[]
@@ -207,7 +119,7 @@ type ApplyProjectStateResponse = {
 
 type ApplyProjectStateRequest = {
     projectId: string
-    operations: ProjectOperation[]
+    diffs: DiffState
     selectedFlowsIds: string[]
     log: FastifyBaseLogger
     platformId: string

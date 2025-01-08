@@ -15,6 +15,7 @@ import {
     SeekPage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { flowService } from '../../../flows/flow/flow.service'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
@@ -96,7 +97,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
     },
     async push({ id, userId, request, log }: PushParams): Promise<void> {
         const gitRepo = await gitRepoService(log).getOrThrow({ id })
-        const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+        const { git, flowFolderPath, connectionsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         switch (request.type) {
             case GitPushOperationType.PUSH_FLOW: {
                 for (const flowId of request.flowIds) {
@@ -107,7 +108,10 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                         removeSampleData: true,
                     })
                     const flowName = flow.externalId || flowId
-                    await gitSyncHelper(log).upsertFlowToGit(flowName, flow, flowFolderPath)
+                    const connections = await appConnectionService(log).getManyConnectionStates({
+                        projectId: gitRepo.projectId,
+                    })
+                    await gitSyncHelper(log).upsertFlowToGit(flowName, flow, flowFolderPath, connections, connectionsFolderPath)
                 }
                 await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flows ${request.flowIds.join(', ')}`)
                 break
@@ -130,8 +134,8 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         }
     },
     async getState({ gitRepo, userId, log }: PullGitRepoRequest): Promise<ProjectState> {
-        const { flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
-        return gitSyncHelper(log).getStateFromGit(flowFolderPath)
+        const { flowFolderPath, connectionsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+        return gitSyncHelper(log).getStateFromGit(flowFolderPath, connectionsFolderPath)
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
         const gitRepo = await repo().findOneBy({ id, projectId })

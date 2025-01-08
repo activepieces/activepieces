@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   ProjectOperationType,
   ProjectSyncPlanOperation,
-} from '@activepieces/ee-shared';
+} from '@activepieces/shared';
 
 const renderDiffInfo = (flowName: string, icon: React.ReactNode) => (
   <div className="flex items-center justify-between text-sm hover:bg-accent/20 rounded-md py-1">

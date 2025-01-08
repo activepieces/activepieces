@@ -1,11 +1,11 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileExists } from '@activepieces/server-shared'
-import { Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState } from '@activepieces/shared'
+import { ConnectionState, Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
     
 export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
-    async getStateFromGit(flowPath: string): Promise<ProjectState> {
+    async getStateFromGit(flowPath: string, connectionsFolderPath: string): Promise<ProjectState> {
         const flowFiles = await fs.readdir(flowPath)
         const flows: FlowState[] = []
         for (const file of flowFiles) {
@@ -18,16 +18,32 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
                 version: migratedFlowVersion,
             })
         }
+
+        const connections = await fs.readdir(connectionsFolderPath)
+        const connectionStates: ConnectionState[] = []
+        for (const connection of connections) {
+            const connectionState = JSON.parse(
+                await fs.readFile(path.join(connectionsFolderPath, connection), 'utf-8'),
+            )
+            connectionStates.push(connectionState)
+        }
         return {
             flows,
+            connections: connectionStates,
         }
     },
 
-    async upsertFlowToGit(fileName: string, flow: Flow, flowFolderPath: string): Promise<void> {
+    async upsertFlowToGit(fileName: string, flow: Flow, flowFolderPath: string, connections: ConnectionState[], connectionsFolderPath: string): Promise<void> {
         try {
             const flowJsonPath = path.join(flowFolderPath, `${fileName}.json`)
             await fs.mkdir(path.dirname(flowJsonPath), { recursive: true })
             await fs.writeFile(flowJsonPath, JSON.stringify(flow, null, 2))
+
+            for (const connection of connections) {
+                const connectionJsonPath = path.join(connectionsFolderPath, `${connection.externalId}.json`)
+                await fs.mkdir(path.dirname(connectionJsonPath), { recursive: true })
+                await fs.writeFile(connectionJsonPath, JSON.stringify(connection, null, 2))
+            }
         }
         catch (error) {
             _log.error(`Failed to write flow file ${fileName}: ${error}`)
