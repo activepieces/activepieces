@@ -57,7 +57,7 @@ export const usageService = (log: FastifyBaseLogger) => ({
                 return false
             }
             const platformId = await projectService.getPlatformId(projectId)
-            return await checkProjectTokensExceeded(projectId, tokensToConsume, projectPlan.aiTokens) || await checkPlatformTokensExceeded(log, platformId, tokensToConsume)
+            return await checkProjectTokensExceeded(projectId, tokensToConsume, projectPlan.aiTokens) || await checkPlatformTokensExceeded(log, platformId, projectId, tokensToConsume)
         }
         catch (e) {
             exceptionHandler.handle(e, log)
@@ -77,7 +77,7 @@ export const usageService = (log: FastifyBaseLogger) => ({
             }
 
             const platformId = await projectService.getPlatformId(projectId)
-            return await checkProjectTasksExceeded(projectId, projectPlan.tasks) || await checkPlatformTasksExceeded(log, platformId)
+            return await checkProjectTasksExceeded(projectId, projectPlan.tasks) || await checkPlatformTasksExceeded(log, platformId, projectId)
         }
         catch (e) {
             exceptionHandler.handle(e, log)
@@ -91,58 +91,56 @@ export const usageService = (log: FastifyBaseLogger) => ({
 })
 
 async function checkProjectTokensExceeded(projectId: string, tokensToConsume: number, tokenLimit: number): Promise<boolean> {
-    const consumedProjectTokens = await increaseProjectAndPlatformUsage(projectId, tokensToConsume, BillingUsageType.AI_TOKENS)
-    console.log('consumedProjectTokens', consumedProjectTokens + ' ' + tokenLimit)
+    const { consumedProjectUsage: consumedProjectTokens } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: tokensToConsume, usageType: BillingUsageType.AI_TOKENS })
     return consumedProjectTokens >= tokenLimit
 }
 
-async function checkPlatformTokensExceeded(log: FastifyBaseLogger, platformId: string, tokensToConsume: number): Promise<boolean> {
+async function checkPlatformTokensExceeded(log: FastifyBaseLogger, platformId: string, projectId: string, tokensToConsume: number): Promise<boolean> {
     if (edition !== ApEdition.CLOUD) {
         return false
     }
     const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-    const consumedPlatformTokens = await increaseProjectAndPlatformUsage(platformId, tokensToConsume, BillingUsageType.AI_TOKENS)
+    const { consumedPlatformUsage: consumedPlatformTokens } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: tokensToConsume, usageType: BillingUsageType.AI_TOKENS })
     if (isNil(platformBilling.aiCreditsLimit)) {
         return false
     }
-    console.log('consumedPlatformTokens', consumedPlatformTokens + ' ' + platformBilling.aiCreditsLimit)
     return consumedPlatformTokens >= platformBilling.aiCreditsLimit
 }
 
 async function checkProjectTasksExceeded(projectId: string, taskLimit: number): Promise<boolean> {
-    const consumedProjectTasks = await increaseProjectAndPlatformUsage(projectId, 0, BillingUsageType.TASKS)
+    const { consumedProjectUsage: consumedProjectTasks } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: 0, usageType: BillingUsageType.TASKS })
     return consumedProjectTasks >= taskLimit
 }
 
-async function checkPlatformTasksExceeded(log: FastifyBaseLogger, platformId: string): Promise<boolean> {
+async function checkPlatformTasksExceeded(log: FastifyBaseLogger, platformId: string, projectId: string): Promise<boolean> {
     if (edition !== ApEdition.CLOUD) {
         return false
     }
     const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-    const consumedPlatformTasks = await increaseProjectAndPlatformUsage(platformId, 0, BillingUsageType.TASKS)
+    const { consumedPlatformUsage: consumedPlatformTasks } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: 0, usageType: BillingUsageType.TASKS })
     if (isNil(platformBilling.tasksLimit)) {
         return false
     }
     return consumedPlatformTasks >= platformBilling.tasksLimit
 }
 
-async function increaseProjectAndPlatformUsage(projectId: string, incrementBy: number, usageType: BillingUsageType): Promise<number> {
+async function increaseProjectAndPlatformUsage({ projectId, incrementBy, usageType }: { projectId: string, incrementBy: number, usageType: BillingUsageType }): Promise<{ consumedProjectUsage: number, consumedPlatformUsage: number }> {
     const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY || environment === ApEnvironment.TESTING) {
-        return 0
+        return { consumedProjectUsage: 0, consumedPlatformUsage: 0 }
     }
 
     const redisConnection = getRedisConnection()
     const startBillingPeriod = getCurrentBillingPeriodStart()
 
     const projectRedisKey = redisKeyGenerator(projectId, BillingEntityType.PROJECT, startBillingPeriod, usageType)
-    const projectUsage = await redisConnection.incrby(projectRedisKey, incrementBy)
+    const consumedProjectUsage = await redisConnection.incrby(projectRedisKey, incrementBy)
 
     const platformId = await projectService.getPlatformId(projectId)
     const platformRedisKey = redisKeyGenerator(platformId, BillingEntityType.PLATFORM, startBillingPeriod, usageType)
-    await redisConnection.incrby(platformRedisKey, incrementBy)
+    const consumedPlatformUsage = await redisConnection.incrby(platformRedisKey, incrementBy)
 
-    return projectUsage
+    return { consumedProjectUsage, consumedPlatformUsage }
 }
 
 async function getUsage(entityId: string, entityType: BillingEntityType, startBillingPeriod: string, usageType: BillingUsageType): Promise<number> {
