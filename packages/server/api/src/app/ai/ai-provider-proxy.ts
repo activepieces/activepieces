@@ -18,6 +18,7 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
         const { provider } = request.params
         const { projectId } = request.principal as EnginePrincipal
 
+
         const platformId = await projectService.getPlatformId(projectId)
         const aiProvider = await aiProviderService.getOrThrow({
             platformId,
@@ -50,7 +51,7 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
 
             const data = await parseResponseData(response, responseContentType)
 
-            await usageService(request.log).increaseProjectAndPlatformUsage(projectId, 1, BillingUsageType.AI_TOKENS)
+            await usageService(request.log).increaseProjectAndPlatformUsage({ projectId, incrementBy: 1, usageType: BillingUsageType.AI_TOKENS })
 
             rejectedPromiseHandler(telemetry(request.log).trackProject(projectId, {
                 name: TelemetryEventName.AI_PROVIDER_USED,
