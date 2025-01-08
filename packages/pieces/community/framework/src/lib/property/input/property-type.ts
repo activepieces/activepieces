@@ -19,3 +19,7 @@ export enum PropertyType {
     DATE_TIME = 'DATE_TIME',
     FILE = 'FILE',
 }
+
+export enum CodeOnlyPropertyType {
+    AUTH = 'AUTH',
+}

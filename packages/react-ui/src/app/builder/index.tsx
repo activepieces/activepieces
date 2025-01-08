@@ -128,6 +128,7 @@ const BuilderPage = () => {
   const piecesNamesUsedInStep = memorizedSelectedStep
     ? formUtils.extractPiecesNamesUsedInStep(memorizedSelectedStep)
     : [];
+    
   const { data: piecesUsedInStep, refetch: refetchPiecesUsedInStep } =
     piecesHooks.useMultiplePieces({ names: piecesNamesUsedInStep });
   const { versions, refetch: refetchPiece } =

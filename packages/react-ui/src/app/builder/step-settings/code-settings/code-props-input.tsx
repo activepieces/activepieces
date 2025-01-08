@@ -97,7 +97,6 @@ const CodePropsInputForm = React.memo((params: CodePropsInputFormParams) => {
 
   const convertedProps = codePropsUtils.convertCodePropertyMapToPiecePropertyMap(props, piecesModels);
   const { authProps, nonAuthProps } = splitCodeProps(convertedProps);
-
   return (
     <div className="flex flex-col gap-4 w-full">
    
@@ -119,6 +118,7 @@ const CodePropsInputForm = React.memo((params: CodePropsInputFormParams) => {
          piece={piece}
          disabled={params.readonly}
          formControlName={propName}
+         property={authProps[propName]}
        ></ConnectionSelect>
 
       })

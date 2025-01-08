@@ -2,10 +2,12 @@
 import { CodeProperty, CodePropertyMap, PieceMetadataModel, PiecePropertyMap } from "@activepieces/pieces-framework";
 import { isEmpty, isNil } from "@activepieces/shared";
 import { Value } from '@sinclair/typebox/value'
+import { CodeOnlyPropertyType } from "@activepieces/pieces-framework";
 
 const removeNonFormProps = (obj: object): any => {
     const objectCopy: Record<string, unknown> = { ...obj };
     Object.keys(objectCopy).forEach((key) => {
+    
       if (
         typeof objectCopy[key] !== 'object' ||
         isNil(objectCopy[key]) ||
@@ -13,7 +15,7 @@ const removeNonFormProps = (obj: object): any => {
       ) {
         delete objectCopy[key];
       }
-      
+    
       if (!Value.Check(CodeProperty,objectCopy[key])) {
         delete objectCopy[key];
       }
@@ -21,23 +23,44 @@ const removeNonFormProps = (obj: object): any => {
     return objectCopy as CodePropertyMap;
   };
   
-  const extractPropsFromCode = (code: string) => {
+  const extractPropsFromCode = (codeString: string) => {
 
-    const propsFinderRegex =  /props:\s*({[\s\S]*?}(?=,|\s*\w|$))/;
-    const match = code.match(propsFinderRegex);
-    if (match) {
-      try {
-        const rawProps = Function(`return ${match[1]}`)();
-        console.log(rawProps)
-        if (typeof rawProps !== 'object' || isEmpty(rawProps)) return null;
-        const props = removeNonFormProps(rawProps);
-        return props as CodePropertyMap;
-      } catch (error) {
-        console.error(error);
-        return null;
-      }
-    }
-    return null;
+     // Find the start and end of props object
+     const startIndex = codeString.indexOf('props:');
+     if (startIndex === -1) {return null;}
+ 
+     let braceCount = 0;
+     let foundStart = false;
+     let propsString = '';
+     
+     // Iterate through the string character by character
+     for (let i = startIndex + 5; i < codeString.length; i++) {
+         const char = codeString[i];
+         
+         if (char === '{' && !foundStart) {
+             foundStart = true;
+         }
+         
+         if (foundStart) {
+             propsString += char;
+             if (char === '{') {braceCount++;}
+             if (char === '}') {braceCount--;}
+             
+             // When we've found the matching closing brace, we're done
+             if (braceCount === 0) break;
+         }
+     }
+     try {
+         // Use Function constructor instead of eval for better scoping
+         const rawProps = (new Function('return ' + propsString))();
+         if (typeof rawProps !== 'object' || isEmpty(rawProps)) return null;
+         const props = removeNonFormProps(rawProps);
+         return props as CodePropertyMap;
+     } catch (error) {
+         console.error('Failed to parse props:', error);
+         return null;
+     }
+
   };
   
   const convertCodePropertyMapToPiecePropertyMap = (
@@ -45,10 +68,10 @@ const removeNonFormProps = (obj: object): any => {
     piecesModels: Record<string, PieceMetadataModel | undefined>,
   ) => {
     return Object.keys(props).reduce((acc, key) => {
-      if (props[key].type === 'AUTH') {
+      if (props[key].type === CodeOnlyPropertyType.AUTH) {
         const piece = piecesModels[props[key].pieceName];
         if (piece && piece.auth) {
-          acc[key] = piece.auth;
+          acc[key] = {...piece.auth, displayName: props[key].displayName};
         }
       } else {
         acc[key] = props[key];
@@ -58,7 +81,7 @@ const removeNonFormProps = (obj: object): any => {
   };
   const extractPiecesNameFromCodeProps = (props: CodePropertyMap) => {
     return Object.values(props).reduce((acc, value) => {
-      if (value.type === 'AUTH') {
+      if (value.type === CodeOnlyPropertyType.AUTH) {
         acc.push(value.pieceName);
       }
       return acc;

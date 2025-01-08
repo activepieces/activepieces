@@ -6,19 +6,14 @@ import { ApMarkdown } from '@/components/custom/markdown';
 import {
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { platformHooks } from '@/hooks/platform-hooks';
 import {
   CodeAction,
-  FlowOperationType,
   MarkdownVariant,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { DictionaryProperty } from '../../piece-properties/dictionary-property';
-import { AskAiButton } from '../../pieces-selector/ask-ai';
 
 import { CodeEditor } from './code-editor';
 import { CodePropsInputForm } from './code-props-input';

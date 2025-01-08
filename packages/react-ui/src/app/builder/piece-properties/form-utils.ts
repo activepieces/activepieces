@@ -200,7 +200,8 @@ const extractPiecesNamesUsedInStep = (step: Action | Trigger) => {
     case ActionType.CODE: {
       const props = codePropsUtils.extractPropsFromCode(step.settings.sourceCode.code);
       if (props) {
-        return codePropsUtils.extractPiecesNameFromCodeProps(props);
+        const res= codePropsUtils.extractPiecesNameFromCodeProps(props);
+        return res;
       }
       return [];
     }

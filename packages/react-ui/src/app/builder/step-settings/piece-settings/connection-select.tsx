@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  PieceAuthProperty,
   PieceMetadataModel,
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
@@ -35,6 +36,7 @@ type ConnectionSelectProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   isTrigger: boolean;
   formControlName: string;
+  property?: PieceAuthProperty
 };
 const addBrackets = (str: string) => `{{connections['${str}']}}`;
 const removeBrackets = (str: string | undefined) => {
@@ -86,12 +88,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
           )}
           {!isLoading && (
             <AutoFormFieldWrapper
-              property={params.piece.auth!}
-              propertyName="auth"
+              property={params.property ?? params.piece.auth!}
+              propertyName={params.formControlName}
               field={field as unknown as ControllerRenderProps}
               disabled={params.disabled}
               hideDescription={true}
-              inputName="settings.input.auth"
+              inputName={`settings.input.${params.formControlName}`}
               allowDynamicValues={!params.isTrigger}
             >
               <CreateOrEditConnectionDialog

@@ -1,13 +1,12 @@
 import { CodeProperty, InputProperty } from './input';
 import { PieceAuthProperty } from './authentication';
 import { Type } from '@sinclair/typebox';
-import { CodePieceAuthProperty } from './authentication/code-piece-auth-prop';
 // EXPORTED
 export { ApFile } from './input/file-property';
 export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/dropdown-prop';
 export { DropdownState } from './input/dropdown/common';
 export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
-export { PropertyType } from './input/property-type';
+export { PropertyType, CodeOnlyPropertyType } from './input/property-type';
 export { Property,CodeProperty } from './input';
 export { PieceAuth } from './authentication';
 export { DynamicPropsValue } from './input/dynamic-prop';
