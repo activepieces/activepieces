@@ -20,20 +20,35 @@ export const CopilotSidebar = () => {
     state.addMessage
   ]);
 
+  // Get the last flow plan from messages
+  const getCurrentWorkflow = () => {
+    const lastFlowPlan = [...messages].reverse().find(m => m.type === 'flow_plan');
+    return lastFlowPlan?.type === 'flow_plan' ? lastFlowPlan.content.plan : undefined;
+  };
+
   const mutation = useMutation({
-    mutationFn: (prompts: string[]) => copilotApi.planFlow(socket, prompts),
+    mutationFn: (prompts: string[]) => copilotApi.planFlow(socket, prompts, getCurrentWorkflow()),
     onSuccess: (response) => {
       switch (response.type) {
         case 'flow':
           addMessage({
             type: 'flow_plan',
-            content: response 
+            content: {
+              plan: response.plan,
+              operation: response.operation
+            }
           });
           break;
         case 'error':
           addMessage({
             type: 'assistant_message',
             content: response.errorMessage ?? 'I don\'t know how to do that.'
+          });
+          break;
+        case 'modification':
+          addMessage({
+            type: 'assistant_message',
+            content: 'Here are the modifications needed: ' + response.modifications.map(m => m.description).join(', ')
           });
           break;
       }
@@ -50,16 +65,18 @@ export const CopilotSidebar = () => {
     const trimmedContent = content.trim();
     if (!trimmedContent) return;
 
-    const messageContents = messages
-      .filter(message => message.type === 'assistant_message' || message.type === 'user_message')
-      .map(message => message.content);
-
-    mutation.mutate([trimmedContent, ...messageContents]);
-
+    // Add user message first
     addMessage({
       type: 'user_message',
       content: trimmedContent
     });
+
+    // Then send to API with reversed message history
+    const messageHistory = [...messages].reverse().map(message => 
+      message.type === 'flow_plan' ? JSON.stringify(message.content) : message.content
+    );
+    
+    mutation.mutate([trimmedContent, ...messageHistory]);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

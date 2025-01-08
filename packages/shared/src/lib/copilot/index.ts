@@ -43,9 +43,31 @@ export type CopilotFlowOutline = z.infer<typeof CopilotFlowOutline>;
 export const AskCopilotRequest = z.object({
   id: z.string(),
   prompts: z.array(z.string().min(4)),
+  currentWorkflow: CopilotFlowOutline.optional(),
 });
 export type AskCopilotRequest = z.infer<typeof AskCopilotRequest>;
 
+export const ModificationType = z.enum([
+  'ADD_ACTION',
+  'UPDATE_ACTION',
+  'DELETE_ACTION',
+  'ADD_BRANCH',
+  'UPDATE_BRANCH',
+  'DELETE_BRANCH',
+  'UPDATE_TRIGGER'
+]);
+
+export type ModificationType = z.infer<typeof ModificationType>;
+
+export const WorkflowModification = z.object({
+  type: ModificationType,
+  path: z.string(),
+  oldValue: z.any().optional(),
+  newValue: z.any().optional(),
+  description: z.string()
+});
+
+export type WorkflowModification = z.infer<typeof WorkflowModification>;
 
 export const CopilotFlowPlanResponse = z.object({
   workflow: CopilotFlowOutline.optional(),
@@ -78,4 +100,8 @@ export type AskCopilotResponse =
   id: string,
   type: 'error',
   errorMessage: string,
+} | {
+  id: string,
+  type: 'modification',
+  modifications: WorkflowModification[]
 }
