@@ -2,6 +2,7 @@ import { AskCopilotResponse, CopilotFlowOutline } from '@activepieces/shared';
 import { taskManager } from './agents/task-manager';
 import { plannerAgent } from './agents/planner';
 import { diffAnalyzer } from './agents/diff-analyzer';
+import { operationBuilder } from './agents/diff-analyzer/operation-builder';
 
 export const workflow = {
     handleRequest: async (id: string, prompts: string[], currentWorkflow?: CopilotFlowOutline): Promise<AskCopilotResponse> => {
@@ -32,13 +33,24 @@ export const workflow = {
                 }
             }
 
-            // Analyze differences between old and new workflow
+            // Analyze differences and convert to operations
             try {
                 const diffResult = await diffAnalyzer.analyze(currentWorkflow, newWorkflowResponse.plan);
+                const operations = operationBuilder.buildOperations(diffResult);
+                
+                if (operations.length === 0) {
+                    return {
+                        id,
+                        type: 'error',
+                        errorMessage: 'No modifications needed.',
+                    }
+                }
+
                 return {
                     id,
-                    type: 'modification',
-                    modifications: diffResult.modifications
+                    type: 'modifications',
+                    plan: newWorkflowResponse.plan,
+                    operations
                 };
             } catch (error) {
                 return {

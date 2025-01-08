@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ImportFlowRequest } from '../flows/operations';
+import { FlowOperationRequest, ImportFlowRequest } from '../flows/operations';
 
 const ActionStep = z.object({
   title: z.string(),
@@ -102,6 +102,7 @@ export type AskCopilotResponse =
   errorMessage: string,
 } | {
   id: string,
-  type: 'modification',
-  modifications: WorkflowModification[]
+  type: 'modifications',
+  plan: CopilotFlowOutline,
+  operations: FlowOperationRequest[]
 }

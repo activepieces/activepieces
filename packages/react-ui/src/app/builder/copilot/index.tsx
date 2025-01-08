@@ -45,10 +45,13 @@ export const CopilotSidebar = () => {
             content: response.errorMessage ?? 'I don\'t know how to do that.'
           });
           break;
-        case 'modification':
+        case 'modifications':
           addMessage({
-            type: 'assistant_message',
-            content: 'Here are the modifications needed: ' + response.modifications.map(m => m.description).join(', ')
+            type: 'flow_plan',
+            content: {
+              plan: response.plan,
+              operations: response.operations
+            }
           });
           break;
       }

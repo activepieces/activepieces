@@ -1,4 +1,4 @@
-import { CopilotFlowOutline, ImportFlowRequest } from "@activepieces/shared";
+import { CopilotFlowOutline, ImportFlowRequest, FlowOperationRequest } from "@activepieces/shared";
 
 export type AiMessageContent = {
     type: 'assistant_message';
@@ -14,7 +14,8 @@ export type FlowPlanMessageContnt = {
     type: 'flow_plan';
     content: {
         plan: CopilotFlowOutline;
-        operation: ImportFlowRequest;
+        operation?: ImportFlowRequest;
+        operations?: FlowOperationRequest[];
     };
 }
 
@@ -29,4 +30,4 @@ export type MessageContent = AiMessageContent | UserMessageContent | FlowPlanMes
 export const INITIAL_COPILOT_MESSAGE: MessageContent = {
     type: 'assistant_message',
     content: 'Hi I am Flow Ninja, I can help you build your flow. What would you like to automate?',
-  }
+}
