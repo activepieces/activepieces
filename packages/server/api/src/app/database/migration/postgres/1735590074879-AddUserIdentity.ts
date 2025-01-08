@@ -58,7 +58,7 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
         // Migrate user data to user_identity
         // Get all users, ensuring only one row per email
         const users = await queryRunner.query(`
-            SELECT DISTINCT ON ("email") "id", "email", "password", "trackEvents", "newsLetter", "verified", "firstName", "lastName", "tokenVersion"
+            SELECT DISTINCT ON ("email") "id", "email", "password", "trackEvents", "newsLetter", "verified", "firstName", "lastName", "tokenVersion", "created"
             FROM "user"
             ORDER BY "email", "id"
         `)
@@ -79,16 +79,16 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
             // Prepare the values for all users in the batch
             const values = batchOfUsers.map((user: Record<string, unknown>) => [
                 apId(), user.email, user.password, user.trackEvents, user.newsLetter,
-                user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL',
+                user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL', user.created
             ])
         
             // Create the insert query for the whole batch
             const insertQuery = `
                 INSERT INTO "user_identity" (
                     "id", "email", "password", "trackEvents", "newsLetter", 
-                    "verified", "firstName", "lastName", "tokenVersion", "provider"
+                    "verified", "firstName", "lastName", "tokenVersion", "provider", "created"
                 ) VALUES 
-                ${values.map((_: Record<string, unknown>, index: number) => `($${index * 10 + 1}, $${index * 10 + 2}, $${index * 10 + 3}, $${index * 10 + 4}, $${index * 10 + 5}, $${index * 10 + 6}, $${index * 10 + 7}, $${index * 10 + 8}, $${index * 10 + 9}, $${index * 10 + 10})`).join(', ')}
+                ${values.map((_: Record<string, unknown>, index: number) => `($${index * 11 + 1}, $${index * 11 + 2}, $${index * 11 + 3}, $${index * 11 + 4}, $${index * 11 + 5}, $${index * 11 + 6}, $${index * 11 + 7}, $${index * 11 + 8}, $${index * 11 + 9}, $${index * 11 + 10}, $${index * 11 + 11})`).join(', ')}
             `
         
             // Flatten the values array for binding
