@@ -75,7 +75,9 @@ export const projectService = {
             id: projectId,
         }).getRawOne()
         const platformId = result?.platformId
-        assertNotNullOrUndefined(platformId, 'platformId for project is undefined in webhook')
+        if (isNil(platformId)) {
+            throw new Error(`Platform ID for project ${projectId} is undefined in webhook.`)
+        }
         return platformId
     },
     async getOneOrThrow(projectId: ProjectId): Promise<Project> {

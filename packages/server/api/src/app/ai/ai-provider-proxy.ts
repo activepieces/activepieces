@@ -1,5 +1,5 @@
 import { exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { PrincipalType, TelemetryEventName } from '@activepieces/shared'
+import { EnginePrincipal, PrincipalType, TelemetryEventName } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
     Type,
@@ -16,7 +16,7 @@ export const proxyController: FastifyPluginAsyncTypebox = async (
 ) => {
     fastify.all('/:provider/*', ProxyRequest, async (request, reply) => {
         const { provider } = request.params
-        const { projectId } = request.principal
+        const { projectId } = request.principal as EnginePrincipal
 
         const platformId = await projectService.getPlatformId(projectId)
         const aiProvider = await aiProviderService.getOrThrow({

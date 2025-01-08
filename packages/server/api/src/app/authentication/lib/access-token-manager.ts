@@ -94,7 +94,7 @@ async function assertUserSession(decoded: Principal): Promise<void> {
 }
 
 type GenerateEngineTokenParams = {
-    projectId: ProjectId | undefined
+    projectId: ProjectId
     queueToken?: string
     jobId?: string
     platformId: PlatformId

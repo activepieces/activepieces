@@ -92,6 +92,7 @@ export const usageService = (log: FastifyBaseLogger) => ({
 
 async function checkProjectTokensExceeded(projectId: string, tokensToConsume: number, tokenLimit: number): Promise<boolean> {
     const consumedProjectTokens = await increaseProjectAndPlatformUsage(projectId, tokensToConsume, BillingUsageType.AI_TOKENS)
+    console.log('consumedProjectTokens', consumedProjectTokens + ' ' + tokenLimit)
     return consumedProjectTokens >= tokenLimit
 }
 
@@ -104,6 +105,7 @@ async function checkPlatformTokensExceeded(log: FastifyBaseLogger, platformId: s
     if (isNil(platformBilling.aiCreditsLimit)) {
         return false
     }
+    console.log('consumedPlatformTokens', consumedPlatformTokens + ' ' + platformBilling.aiCreditsLimit)
     return consumedPlatformTokens >= platformBilling.aiCreditsLimit
 }
 
