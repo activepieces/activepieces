@@ -4,6 +4,7 @@ import { flowVersionService } from './app/flows/flow-version/flow-version.servic
 import { system } from './app/helper/system/system'
 import { projectRepo } from './app/project/project-service'
 import { isNil } from 'packages/shared/src/lib/common/utils'
+import { GitBranchType } from '@activepieces/ee-shared'
 
 export const temporaryMigration = {
     async backfill() {
@@ -21,6 +22,11 @@ export const temporaryMigration = {
 
             if (isNil(gitRepo)) {
                 logger.info(`No git repository found for project ID: ${project.id}`)
+                continue
+            }
+
+            if (gitRepo.branchType !== GitBranchType.PRODUCTION) {
+                logger.info(`Skipping project ID: ${project.id} because it is not on the production branch`)
                 continue
             }
 
