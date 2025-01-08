@@ -16,27 +16,7 @@ export const aiProviderService = {
             provider: params.provider,
         })
         if (isNil(provider)) {
-
-            // TODO (@abuaboud) Refactor this so the platform can use the default keys
-            const isCloudEdition = system.getEdition() === ApEdition.CLOUD
-            if (isCloudEdition) {
-                const platform = await platformService.getOneOrThrow(params.platformId)
-                const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
-                const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
-                if (!isEnterpriseCustomer && cloudPlatformId !== params.platformId) {
-                    return this.getOrThrow({
-                        platformId: cloudPlatformId,
-                        provider: params.provider,
-                    })
-                }
-            }
-
-            throw new ActivepiecesError({
-                code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
-                params: {
-                    provider: params.provider,
-                },
-            })
+            return fallbackToCloudPlatform(params)
         }
         const decryptedConfig = encryptUtils.decryptObject<AiProviderConfig['config']>(provider.config)
         return { ...provider, config: decryptedConfig }
@@ -62,7 +42,13 @@ export const aiProviderService = {
         await repo().delete(params)
     },
     async list(platformId: PlatformId): Promise<SeekPage<AiProviderWithoutSensitiveData>> {
-        const providers = await repo().findBy({ platformId })
+        let providers = await repo().findBy({ platformId })
+        if (providers.length === 0) {
+            const cloudProviders = await fallbackToCloudPlatformList(platformId)
+            if (!isNil(cloudProviders)) {
+                return cloudProviders
+            }
+        }
         const data = providers.map((p) => removeSensitiveData(p))
         return {
             data,
@@ -70,6 +56,43 @@ export const aiProviderService = {
             previous: null,
         }
     },
+}
+
+
+// TODO (@abuaboud) clean up this function
+async function fallbackToCloudPlatform(params: GetParams): Promise<AiProviderConfig> {
+    const isCloudEdition = system.getEdition() === ApEdition.CLOUD
+    if (isCloudEdition) {
+        const platform = await platformService.getOneOrThrow(params.platformId)
+        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+        const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
+        if (!isEnterpriseCustomer && cloudPlatformId !== params.platformId) {
+            return aiProviderService.getOrThrow({
+                platformId: cloudPlatformId,
+                provider: params.provider,
+            })
+        }
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.PROVIDER_PROXY_CONFIG_NOT_FOUND_FOR_PROVIDER,
+        params: {
+            provider: params.provider,
+        },
+    })
+}
+
+// TODO (@abuaboud) clean up this function
+async function fallbackToCloudPlatformList(platformId: PlatformId): Promise<SeekPage<AiProviderWithoutSensitiveData> | null> {
+    const isCloudEdition = system.getEdition() === ApEdition.CLOUD
+    if (isCloudEdition) {
+        const platform = await platformService.getOneOrThrow(platformId)
+        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+        const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
+        if (!isEnterpriseCustomer && cloudPlatformId !== platformId) {
+            return aiProviderService.list(cloudPlatformId)
+        }
+    }
+    return null
 }
 
 function removeSensitiveData(provider: AiProviderSchema | AiProviderConfig): AiProviderWithoutSensitiveData {
