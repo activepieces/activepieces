@@ -104,13 +104,20 @@ export const piecesHooks = {
     };
   },
   useMultiplePieces: ({ names }: UseMultiplePiecesProps) => {
-    return useQueries({
+    const queries = useQueries({
       queries: names.map((name) => ({
         queryKey: ['piece', name, undefined],
         queryFn: () => piecesApi.get({ name, version: undefined }),
         staleTime: Infinity,
       })),
     });
+    return {
+      data: queries.reduce((acc, query, index) => {
+        return { ...acc, [names[index]]: query.data };
+      }, {} as Record<string, PieceMetadataModel | undefined>),
+      isLoading: queries.some((query) => query.isLoading),
+      refetch: () => queries.forEach((query) => query.refetch()),
+    };
   },
   useStepMetadata: ({ step, enabled = true }: UseStepMetadata) => {
     const query = useQuery<StepMetadata, Error>({

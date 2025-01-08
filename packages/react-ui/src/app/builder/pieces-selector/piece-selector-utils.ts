@@ -170,7 +170,10 @@ const getDefaultStep = ({
     ? formUtils.getDefaultValueForStep(
         actionOrTrigger.requireAuth
           ? {
-              ...spreadIfDefined('auth', stepMetadata.auth),
+              ...spreadIfDefined(
+                formUtils.DEFAULT_AUTH_PROPERTY_NAME,
+                stepMetadata.auth,
+              ),
               ...actionOrTrigger.props,
             }
           : actionOrTrigger.props,
@@ -182,8 +185,9 @@ const getDefaultStep = ({
     name: stepName,
     valid: isPieceStep
       ? checkPieceInputValidity(input, actionOrTrigger.props) &&
-        (actionOrTrigger.requireAuth && !isNil(actionOrTrigger.props['auth'])
-          ? !isNil(input['auth'])
+        (actionOrTrigger.requireAuth &&
+        !isNil(actionOrTrigger.props[formUtils.DEFAULT_AUTH_PROPERTY_NAME])
+          ? !isNil(input[formUtils.DEFAULT_AUTH_PROPERTY_NAME])
           : true)
       : stepMetadata.type === ActionType.CODE
       ? true

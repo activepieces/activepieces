@@ -12,6 +12,8 @@ import { Action, isNil, Trigger } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
+import { formUtils } from './form-utils';
+
 type SelectPiecePropertyProps = {
   refreshers: string[];
   propertyName: string;
@@ -31,7 +33,10 @@ const DynamicDropdownPieceProperty = React.memo(
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);
 
-    const newRefreshers = [...props.refreshers, 'auth'];
+    const newRefreshers = [
+      ...props.refreshers,
+      formUtils.DEFAULT_AUTH_PROPERTY_NAME,
+    ];
     const [dropdownState, setDropdownState] = useState<DropdownState<unknown>>({
       disabled: false,
       placeholder: t('Select an option'),

@@ -55,7 +55,6 @@ export const storageGetAction = createAction({
     await propsValidation.validateZod(context.propsValue, {
       key: z.string().max(128),
     });
-
     const { key, scope } = getScopeAndKey({
       runId: context.run.id,
       key: context.propsValue['key'],

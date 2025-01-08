@@ -19,6 +19,7 @@ import { NumberProperty } from './number-property';
 import { ObjectProperty } from './object-property';
 import { PropertyType } from './property-type';
 import { LongTextProperty, ShortTextProperty } from './text-property';
+import { CodePieceAuthProperty } from '../authentication';
 
 export const InputProperty = Type.Union([
   ShortTextProperty,
@@ -54,6 +55,10 @@ export type InputProperty =
   | DynamicProperties<boolean>
   | DateTimeProperty<boolean>
   | FileProperty<boolean>;
+
+export const CodeProperty = Type.Union([InputProperty, CodePieceAuthProperty]);
+export type CodeProperty = InputProperty | CodePieceAuthProperty;
+
 
 type Properties<T> = Omit<
   T,

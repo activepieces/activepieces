@@ -5,6 +5,7 @@ import { CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
 import { SecretTextProperty } from "./secret-text-property";
 import { PropertyType } from "../input/property-type";
 import { OAuth2Property, OAuth2Props } from "./oauth2-prop";
+export { CodePieceAuthProperty } from "./code-piece-auth-prop";
 
 export const PieceAuthProperty = Type.Union([
   BasicAuthProperty,

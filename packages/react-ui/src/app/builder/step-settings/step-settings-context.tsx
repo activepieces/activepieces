@@ -12,7 +12,11 @@ import {
   PieceMetadataModel,
   PiecePropertyMap,
 } from '@activepieces/pieces-framework';
-import { Action, setAtPath, Trigger } from '@activepieces/shared';
+import {
+  Action,
+  setAtPath,
+  Trigger,
+} from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
 
@@ -35,14 +39,16 @@ const createUpdatedSchemaKey = (propertyKey: string) => {
 
 export type StepSettingsContextState = {
   selectedStep: Action | Trigger;
-  pieceModel: PieceMetadataModel | undefined;
+  piecesModels: Record<string, PieceMetadataModel | undefined>;
   formSchema: TObject<any>;
   updateFormSchema: (key: string, newFieldSchema: PiecePropertyMap) => void;
 };
 
 export type StepSettingsProviderProps = {
   selectedStep: Action | Trigger;
-  pieceModel: PieceMetadataModel | undefined;
+  /**If this is undefined it means that the piece is not loaded yet, so that's why we add the piece name to the key to force a re-render, 
+   it is pretty fast that's why we don't need to show a loading indicator, that would cause flickering */
+  piecesModels: Record<string, PieceMetadataModel | undefined>;
   children: ReactNode;
 };
 
@@ -52,7 +58,7 @@ const StepSettingsContext = createContext<StepSettingsContextState | undefined>(
 
 export const StepSettingsProvider = ({
   selectedStep,
-  pieceModel,
+  piecesModels,
   children,
 }: StepSettingsProviderProps) => {
   const [formSchema, setFormSchema] = useState<TObject<any>>(
@@ -61,11 +67,7 @@ export const StepSettingsProvider = ({
   const formSchemaRef = useRef<boolean>(false);
 
   if (!formSchemaRef.current && selectedStep) {
-    const schema = formUtils.buildPieceSchema(
-      selectedStep.type,
-      selectedStep.settings.actionName ?? selectedStep.settings.triggerName,
-      pieceModel ?? null,
-    );
+    const schema = formUtils.buildPieceSchema(selectedStep, piecesModels);
     formSchemaRef.current = true;
     setFormSchema(schema as TObject<any>);
   }
@@ -87,7 +89,7 @@ export const StepSettingsProvider = ({
     <StepSettingsContext.Provider
       value={{
         selectedStep,
-        pieceModel,
+        piecesModels,
         formSchema,
         updateFormSchema,
       }}

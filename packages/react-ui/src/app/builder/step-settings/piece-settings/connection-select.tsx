@@ -34,6 +34,7 @@ type ConnectionSelectProps = {
   disabled: boolean;
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   isTrigger: boolean;
+  formControlName: string;
 };
 const addBrackets = (str: string) => `{{connections['${str}']}}`;
 const removeBrackets = (str: string | undefined) => {
@@ -72,8 +73,8 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
   return (
     <FormField
       control={form.control}
-      key={form.getValues().settings.input.auth}
-      name={'settings.input.auth'}
+      key={form.getValues().settings.input[params.formControlName]}
+      name={`settings.input.${params.formControlName}`}
       render={({ field }) => (
         <>
           {isLoading && (

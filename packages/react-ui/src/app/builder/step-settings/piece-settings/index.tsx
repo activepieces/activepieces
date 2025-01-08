@@ -12,6 +12,7 @@ import {
 } from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
+import { formUtils } from '../../piece-properties/form-utils';
 import { useStepSettingsContext } from '../step-settings-context';
 
 import { ConnectionSelect } from './connection-select';
@@ -30,15 +31,15 @@ const removeAuthFromProps = (
 };
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
-  const { pieceModel } = useStepSettingsContext();
-
+  const { piecesModels } = useStepSettingsContext();
+  const stepPieceModel = piecesModels[props.step.settings.pieceName];
   const actionName = (props.step.settings as PieceActionSettings).actionName;
   const selectedAction = actionName
-    ? pieceModel?.actions[actionName]
+    ? stepPieceModel?.actions[actionName]
     : undefined;
   const triggerName = (props.step.settings as PieceTriggerSettings).triggerName;
   const selectedTrigger = triggerName
-    ? pieceModel?.triggers[triggerName]
+    ? stepPieceModel?.triggers[triggerName]
     : undefined;
 
   const actionPropsWithoutAuth = removeAuthFromProps(
@@ -77,7 +78,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     !isNil(selectedTrigger) && (selectedTrigger.requireAuth ?? true);
   return (
     <div className="flex flex-col gap-4 w-full">
-      {!pieceModel && (
+      {!stepPieceModel && (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, index) => (
             <Skeleton key={index} className="w-full h-8" />
@@ -85,13 +86,14 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
         </div>
       )}
 
-      {pieceModel && (
+      {stepPieceModel && (
         <>
-          {pieceModel.auth && (showAuthForAction || showAuthForTrigger) && (
+          {stepPieceModel.auth && (showAuthForAction || showAuthForTrigger) && (
             <ConnectionSelect
               isTrigger={!isNil(selectedTrigger)}
-              piece={pieceModel}
+              piece={stepPieceModel}
               disabled={props.readonly}
+              formControlName={formUtils.DEFAULT_AUTH_PROPERTY_NAME}
             ></ConnectionSelect>
           )}
           {selectedAction && (

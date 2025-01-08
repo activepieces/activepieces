@@ -14,6 +14,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { PieceMetadataModel } from '@activepieces/pieces-framework';
 import {
   Action,
   ActionType,
@@ -38,8 +39,42 @@ import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { useStepSettingsContext } from './step-settings-context';
 
+const extractActionOrTriggerDisplayName = (
+  step: Action | Trigger,
+  piecesModels: Record<string, PieceMetadataModel | undefined>,
+) => {
+  switch (step.type) {
+    case ActionType.PIECE: {
+      const piece = piecesModels[step.settings.pieceName];
+      if (
+        piece &&
+        step.settings.actionName &&
+        piece.actions[step.settings.actionName]
+      ) {
+        return piece.actions[step.settings.actionName].displayName;
+      }
+      return null;
+    }
+    case TriggerType.PIECE: {
+      const piece = piecesModels[step.settings.pieceName];
+      if (
+        piece &&
+        step.settings.triggerName &&
+        piece.triggers[step.settings.triggerName]
+      ) {
+        return piece.triggers[step.settings.triggerName].displayName;
+      }
+      return null;
+    }
+    case ActionType.CODE:
+    case TriggerType.EMPTY:
+    case ActionType.ROUTER:
+    case ActionType.LOOP_ON_ITEMS:
+      return null;
+  }
+};
 const StepSettingsContainer = () => {
-  const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
+  const { selectedStep, piecesModels, formSchema } = useStepSettingsContext();
   const [
     readonly,
     exitStepSettings,
@@ -61,8 +96,8 @@ const StepSettingsContainer = () => {
   ]);
 
   const defaultValues = useMemo(() => {
-    return formUtils.buildPieceDefaultValue(selectedStep, pieceModel, true);
-  }, [selectedStep, pieceModel]);
+    return formUtils.buildPieceDefaultValue(selectedStep, piecesModels, true);
+  }, [selectedStep, piecesModels]);
 
   const { stepMetadata } = piecesHooks.useStepMetadata({
     step: selectedStep,
@@ -112,11 +147,10 @@ const StepSettingsContainer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshPieceFormSettings]);
 
-  const actionOrTriggerDisplayName = selectedStep.settings.actionName
-    ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
-    : selectedStep.settings.triggerName
-    ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
-    : null;
+  const actionOrTriggerDisplayName = extractActionOrTriggerDisplayName(
+    selectedStep,
+    piecesModels,
+  );
 
   // Watch changes in form execluding actionName or triggerName from watching //
   const inputChanges = useWatch({

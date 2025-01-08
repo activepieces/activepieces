@@ -6,7 +6,6 @@ import {
   CustomAuthProperty,
   OAuth2Props,
   PieceAuthProperty,
-  PieceMetadata,
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PiecePropertyMap,
@@ -37,7 +36,11 @@ import {
   UpsertCustomAuthRequest,
   UpsertBasicAuthRequest,
   UpsertSecretTextRequest,
+  Step,
 } from '@activepieces/shared';
+import { codePropsUtils } from './code-props-utils';
+
+const DEFAULT_AUTH_PROPERTY_NAME = 'auth';
 
 function addAuthToPieceProps(
   props: PiecePropertyMap,
@@ -46,7 +49,7 @@ function addAuthToPieceProps(
 ): PiecePropertyMap {
   if (!requireAuth || isNil(auth)) {
     const newProps = Object.keys(props).reduce((acc, key) => {
-      if (key !== 'auth') {
+      if (key !== DEFAULT_AUTH_PROPERTY_NAME) {
         acc[key] = props[key];
       }
       return acc;
@@ -55,50 +58,62 @@ function addAuthToPieceProps(
   }
   return {
     ...props,
-    ...spreadIfDefined('auth', auth),
+    ...spreadIfDefined(DEFAULT_AUTH_PROPERTY_NAME, auth),
   };
 }
 
 function buildInputSchemaForStep(
-  type: ActionType | TriggerType,
-  piece: PieceMetadata | null,
-  actionNameOrTriggerName: string,
+  step: Step,
+  piecesModels: Record<string, PieceMetadataModel | undefined>,
 ): TSchema {
-  switch (type) {
+  switch (step.type) {
     case ActionType.PIECE: {
+      const piece = piecesModels[step.settings.pieceName];
       if (
         piece &&
-        actionNameOrTriggerName &&
-        piece.actions[actionNameOrTriggerName]
+        step.settings.actionName &&
+        piece.actions[step.settings.actionName]
       ) {
         return formUtils.buildSchema(
           addAuthToPieceProps(
-            piece.actions[actionNameOrTriggerName].props,
+            piece.actions[step.settings.actionName].props,
             piece.auth,
-            piece.actions[actionNameOrTriggerName].requireAuth,
+            piece.actions[step.settings.actionName].requireAuth,
           ),
         );
       }
       return Type.Object({});
     }
     case TriggerType.PIECE: {
+      const piece = piecesModels[step.settings.pieceName];
       if (
         piece &&
-        actionNameOrTriggerName &&
-        piece.triggers[actionNameOrTriggerName]
+        step.settings.triggerName &&
+        piece.triggers[step.settings.triggerName]
       ) {
         return formUtils.buildSchema(
           addAuthToPieceProps(
-            piece.triggers[actionNameOrTriggerName].props,
+            piece.triggers[step.settings.triggerName].props,
             piece.auth,
-            piece.triggers[actionNameOrTriggerName].requireAuth ?? true,
+            piece.triggers[step.settings.triggerName].requireAuth ?? true,
           ),
         );
       }
       return Type.Object({});
     }
+    case ActionType.CODE: {
+      const props = codePropsUtils.extractPropsFromCode(step.settings.sourceCode.code);
+      if (props) {
+        const convertedProps = codePropsUtils.convertCodePropertyMapToPiecePropertyMap(
+          props,
+          piecesModels,
+        );
+        return formUtils.buildSchema(convertedProps);
+      }
+      return Type.Record(Type.String(), Type.Any());
+    }
     default:
-      throw new Error('Unsupported type: ' + type);
+      throw new Error('Unsupported type: ' + step.type);
   }
 }
 
@@ -180,11 +195,30 @@ function buildConnectionSchema(
       });
   }
 }
-
+const extractPiecesNamesUsedInStep = (step: Action | Trigger) => {
+  switch (step.type) {
+    case ActionType.CODE: {
+      const props = codePropsUtils.extractPropsFromCode(step.settings.sourceCode.code);
+      if (props) {
+        return codePropsUtils.extractPiecesNameFromCodeProps(props);
+      }
+      return [];
+    }
+    case ActionType.PIECE:
+    case TriggerType.PIECE:
+      return [step.settings.pieceName];
+    case ActionType.LOOP_ON_ITEMS:
+    case ActionType.ROUTER:
+    case TriggerType.EMPTY:
+      return [];
+  }
+};
 export const formUtils = {
+  DEFAULT_AUTH_PROPERTY_NAME,
+  extractPiecesNamesUsedInStep,
   buildPieceDefaultValue: (
     selectedStep: Action | Trigger,
-    piece: PieceMetadata | null | undefined,
+    piecesModels: Record<string, PieceMetadataModel | undefined>,
     includeCurrentInput: boolean,
   ): Action | Trigger => {
     const { type } = selectedStep;
@@ -215,8 +249,8 @@ export const formUtils = {
         };
       case ActionType.CODE: {
         const defaultCode = `export const code = async (inputs) => {
-  return true;
-};`;
+        return true;
+      };`;
         return {
           ...selectedStep,
           settings: {
@@ -231,6 +265,7 @@ export const formUtils = {
       }
       case ActionType.PIECE: {
         const actionName = selectedStep?.settings?.actionName;
+        const piece = piecesModels[selectedStep.settings.pieceName];
         const requireAuth = isNil(actionName)
           ? false
           : piece?.actions?.[actionName]?.requireAuth ?? true;
@@ -262,6 +297,7 @@ export const formUtils = {
       }
       case TriggerType.PIECE: {
         const triggerName = selectedStep?.settings?.triggerName;
+        const piece = piecesModels[selectedStep.settings.pieceName];
         const requireAuth = isNil(triggerName)
           ? false
           : piece?.triggers?.[triggerName]?.requireAuth ?? true;
@@ -296,10 +332,10 @@ export const formUtils = {
     }
   },
   buildPieceSchema: (
-    type: ActionType | TriggerType,
-    actionNameOrTriggerName: string,
-    piece: PieceMetadataModel | null,
+    step: Step,
+    piecesModels: Record<string, PieceMetadataModel | undefined>,
   ) => {
+    const { type } = step;
     switch (type) {
       case ActionType.LOOP_ON_ITEMS:
         return Type.Composite([
@@ -324,7 +360,24 @@ export const formUtils = {
           }),
         ]);
       case ActionType.CODE:
+        {
+        const props = codePropsUtils.extractPropsFromCode(step.settings.sourceCode.code);
+        if(props) {
+          const convertedProps = codePropsUtils.convertCodePropertyMapToPiecePropertyMap(
+            props,
+            piecesModels,
+          );
+          return Type.Composite([
+            CodeActionSchema,
+            Type.Object({
+              settings: Type.Object({
+                input: formUtils.buildSchema(convertedProps),
+              }),
+            }),
+          ]);
+        }
         return CodeActionSchema;
+        }
       case ActionType.PIECE: {
         return Type.Composite([
           Type.Omit(PieceActionSchema, ['settings']),
@@ -335,11 +388,7 @@ export const formUtils = {
                 actionName: Type.String({
                   minLength: 1,
                 }),
-                input: buildInputSchemaForStep(
-                  type,
-                  piece,
-                  actionNameOrTriggerName,
-                ),
+                input: buildInputSchemaForStep(step, piecesModels),
               }),
             ]),
           }),
@@ -355,11 +404,7 @@ export const formUtils = {
                 triggerName: Type.String({
                   minLength: 1,
                 }),
-                input: buildInputSchemaForStep(
-                  type,
-                  piece,
-                  actionNameOrTriggerName,
-                ),
+                input: buildInputSchemaForStep(step, piecesModels),
               }),
             ]),
           }),

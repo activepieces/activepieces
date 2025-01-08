@@ -37,6 +37,7 @@ import { BuilderHeader } from './builder-header';
 import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
+import { formUtils } from './piece-properties/form-utils';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
@@ -124,7 +125,11 @@ const BuilderPage = () => {
   const leftHandleRef = useAnimateSidebar(leftSidebar);
   const leftSidePanelRef = useRef<HTMLDivElement>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
-
+  const piecesNamesUsedInStep = memorizedSelectedStep
+    ? formUtils.extractPiecesNamesUsedInStep(memorizedSelectedStep)
+    : [];
+  const { data: piecesUsedInStep, refetch: refetchPiecesUsedInStep } =
+    piecesHooks.useMultiplePieces({ names: piecesNamesUsedInStep });
   const { versions, refetch: refetchPiece } =
     piecesHooks.useMostRecentAndExactPieceVersion({
       name: memorizedSelectedStep?.settings.pieceName,
@@ -134,9 +139,14 @@ const BuilderPage = () => {
         memorizedSelectedStep?.type === TriggerType.PIECE,
     });
 
-  const pieceModel = versions
-    ? versions[memorizedSelectedStep?.settings.pieceVersion || '']
-    : undefined;
+  if (
+    versions &&
+    (memorizedSelectedStep?.type === ActionType.PIECE ||
+      memorizedSelectedStep?.type === TriggerType.PIECE)
+  ) {
+    piecesUsedInStep[memorizedSelectedStep?.settings.pieceName] =
+      versions[memorizedSelectedStep.settings.pieceVersion];
+  }
   const socket = useSocket();
 
   const { mutate: fetchAndUpdateRun } = useMutation({
@@ -145,6 +155,7 @@ const BuilderPage = () => {
   useEffect(() => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
+      refetchPiecesUsedInStep();
     });
     socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (runId) => {
       if (run && run?.id === runId) {
@@ -164,7 +175,9 @@ const BuilderPage = () => {
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
-
+  const stepSettingsProviderKey = `${containerKey ?? ''}-${
+    memorizedSelectedStep?.type ?? ''
+  }-${Object.entries(piecesUsedInStep).map(([key, value]) => `${key}-${value?.version}`).join('-')}`;
   return (
     <div className="flex h-screen w-screen flex-col relative">
       {run && (
@@ -259,13 +272,9 @@ const BuilderPage = () => {
               {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
                 memorizedSelectedStep && (
                   <StepSettingsProvider
-                    pieceModel={pieceModel}
+                    piecesModels={piecesUsedInStep}
                     selectedStep={memorizedSelectedStep}
-                    key={
-                      containerKey +
-                      (pieceModel?.name ?? '') +
-                      memorizedSelectedStep.type
-                    }
+                    key={stepSettingsProviderKey}
                   >
                     <StepSettingsContainer />
                   </StepSettingsProvider>

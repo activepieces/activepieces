@@ -30,7 +30,10 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const [propertyMap, setPropertyMap] = useState<PiecePropertyMap | undefined>(
     undefined,
   );
-  const newRefreshers = [...props.refreshers, 'auth'];
+  const newRefreshers = [
+    ...props.refreshers,
+    formUtils.DEFAULT_AUTH_PROPERTY_NAME,
+  ];
 
   const { mutate, isPending } = useMutation<
     PiecePropertyMap,

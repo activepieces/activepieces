@@ -1,14 +1,14 @@
-import { InputProperty } from './input';
+import { CodeProperty, InputProperty } from './input';
 import { PieceAuthProperty } from './authentication';
 import { Type } from '@sinclair/typebox';
-
+import { CodePieceAuthProperty } from './authentication/code-piece-auth-prop';
 // EXPORTED
 export { ApFile } from './input/file-property';
 export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/dropdown-prop';
 export { DropdownState } from './input/dropdown/common';
 export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
 export { PropertyType } from './input/property-type';
-export { Property } from './input';
+export { Property,CodeProperty } from './input';
 export { PieceAuth } from './authentication';
 export { DynamicPropsValue } from './input/dynamic-prop';
 export { DropdownOption } from './input/dropdown/common';
@@ -33,6 +33,7 @@ export { FileProperty } from './input/file-property';
 export { BasicAuthProperty } from './authentication/basic-auth-prop';
 export { SecretTextProperty } from './authentication/secret-text-property'
 export { CustomAuthProperty } from './authentication/custom-auth-prop';
+export { CodePieceAuthProperty } from './authentication/code-piece-auth-prop';
 export { JsonProperty } from './input/json-property'
 export const PieceProperty = Type.Union([InputProperty, PieceAuthProperty])
 export type PieceProperty = InputProperty | PieceAuthProperty;
@@ -42,9 +43,15 @@ export interface PiecePropertyMap {
   [name: string]: PieceProperty;
 }
 
+
 export const InputPropertyMap = Type.Record(Type.String(), InputProperty)
 export interface InputPropertyMap {
   [name: string]: InputProperty;
+}
+
+export const CodePropertyMap = Type.Record(Type.String(), CodeProperty);
+export interface CodePropertyMap {
+  [name: string]: CodeProperty;
 }
 
 export type PiecePropValueSchema<T extends PieceProperty> =
