@@ -8,6 +8,7 @@ import {
 import {
 	fetchOrganizationOptions,
 	fetchOwnersOptions,
+	fetchPersonsOptions,
 	retriveObjectCustomProperties,
 } from '../common/props';
 import {
@@ -18,15 +19,36 @@ import {
 import { GetField, PersonCreateResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-export const createPersonAction = createAction({
+export const updatePersonAction = createAction({
 	auth: pipedriveAuth,
-	name: 'create-person',
-	displayName: 'Create Person',
-	description: 'Creates a new person.',
+	name: 'update-person',
+	displayName: 'Update Person',
+	description: 'Updates an existing person.',
 	props: {
+		personId: Property.Dropdown({
+			displayName: 'Person',
+			refreshers: [],
+			required: true,
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						options: [],
+						placeholder: 'Please connect your account.',
+					};
+				}
+				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+				const options = await fetchPersonsOptions(authValue);
+
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
 		name: Property.ShortText({
 			displayName: 'Name',
-			required: true,
+			required: false,
 		}),
 		ownerId: Property.Dropdown({
 			displayName: 'Owner',
@@ -108,7 +130,6 @@ export const createPersonAction = createAction({
 						});
 					}
 				}
-
 				return {
 					disabled: false,
 					options,
@@ -179,11 +200,19 @@ export const createPersonAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { name, ownerId, organizationId, marketing_status, visibleTo, firstName, lastName } =
-			context.propsValue;
+		const {
+			name,
+			ownerId,
+			personId,
+			organizationId,
+			marketing_status,
+			visibleTo,
+			firstName,
+			lastName,
+		} = context.propsValue;
 		const phone = (context.propsValue.phone as string[]) ?? [];
 		const email = (context.propsValue.email as string[]) ?? [];
-		const labelIds = (context.propsValue.labelIds as number[]) ?? [];
+        const labelIds = (context.propsValue.labelIds as number[]) ?? [];
 		const customFields = context.propsValue.customfields ?? {};
 
 		const personDefaultFields: Record<string, any> = {
@@ -212,14 +241,14 @@ export const createPersonAction = createAction({
 
 		Object.entries(customFields).forEach(([key, value]) => {
 			// Format values if they are arrays
-			personCustomFiels[key] = Array.isArray(value) ? value.join(',') : value;
+			personCustomFiels[key] = Array.isArray(value) && value.length > 0 ? value.join(',') : value;
 		});
 
-		const createdPersonResponse = await pipedriveApiCall<PersonCreateResponse>({
+		const updatedPersonResponse = await pipedriveApiCall<PersonCreateResponse>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.POST,
-			resourceUri: '/persons',
+			method: HttpMethod.PUT,
+			resourceUri: `/persons/${personId}`,
 			body: {
 				...personDefaultFields,
 				...personCustomFiels,
@@ -235,11 +264,11 @@ export const createPersonAction = createAction({
 
 		const updatedPersonProperties = pipedriveTransformCustomFields(
 			customFieldsResponse,
-			createdPersonResponse.data,
+			updatedPersonResponse.data,
 		);
 
 		return {
-			...createdPersonResponse,
+			...updatedPersonResponse,
 			data: updatedPersonProperties,
 		};
 	},

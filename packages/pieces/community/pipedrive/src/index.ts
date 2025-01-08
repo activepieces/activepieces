@@ -12,6 +12,7 @@ import { newOrganizationTrigger } from './lib/trigger/new-organization';
 import { updatedOrganizationTrigger } from './lib/trigger/updated-organization';
 import { updatedDealStageTrigger } from './lib/trigger/updated-deal-stage';
 import { createPersonAction } from './lib/actions/create-person';
+import { updatePersonAction } from './lib/actions/update-person';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -23,7 +24,7 @@ export const pipedriveAuth = PieceAuth.OAuth2({
 
 export const pipedrive = createPiece({
 	displayName: 'Pipedrive',
-	description: 'Sales CRM and pipeline management software',
+	description: 'Sales CRM and pipeline management software',  
 
 	minimumSupportedRelease: '0.30.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
@@ -32,6 +33,7 @@ export const pipedrive = createPiece({
 	actions: [
 		addPerson,
 		createPersonAction,
+		updatePersonAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.pipedrive.com/v1',
 			auth: pipedriveAuth,

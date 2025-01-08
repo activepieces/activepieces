@@ -58,7 +58,7 @@ export type PersonListResponse =
 	data: Record<string, unknown>[];
 	additional_data: AdditionalData;
 }
-
+ 
 export type PersonCreateResponse =
 {
 	success: boolean;

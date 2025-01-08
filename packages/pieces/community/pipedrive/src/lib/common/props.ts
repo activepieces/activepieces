@@ -1,11 +1,42 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { pipedriveApiCall, pipedrivePaginatedApiCall } from '.';
 import { pipedriveAuth } from '../../index';
-import { DropdownOption, DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import {
+	DropdownOption,
+	DynamicPropsValue,
+	PiecePropValueSchema,
+	Property,
+} from '@activepieces/pieces-framework';
 import { GetField } from './types';
 
-export async function fetchOwnersOptions(auth: PiecePropValueSchema<typeof pipedriveAuth>):Promise<DropdownOption<number>[]>{
-	const users = await pipedriveApiCall<{data:Array<{id:number,email:string}>}>({
+export async function fetchPersonsOptions(
+	auth: PiecePropValueSchema<typeof pipedriveAuth>,
+): Promise<DropdownOption<number>[]> {
+	const persons = await pipedriveApiCall<{ data: Array<{ id: number; name: string }> }>({
+		accessToken: auth.access_token,
+		apiDomain: auth.data['api_domain'],
+		method: HttpMethod.GET,
+		resourceUri: '/persons:(id,name)',
+		query: {
+			sort: 'update_time DESC',
+		},
+	});
+
+	const options: DropdownOption<number>[] = [];
+	for (const person of persons.data) {
+		options.push({
+			label: person.name,
+			value: person.id,
+		});
+	}
+
+	return options;
+}
+
+export async function fetchOwnersOptions(
+	auth: PiecePropValueSchema<typeof pipedriveAuth>,
+): Promise<DropdownOption<number>[]> {
+	const users = await pipedriveApiCall<{ data: Array<{ id: number; email: string }> }>({
 		accessToken: auth.access_token,
 		apiDomain: auth.data['api_domain'],
 		method: HttpMethod.GET,
@@ -26,8 +57,10 @@ export async function fetchOwnersOptions(auth: PiecePropValueSchema<typeof piped
 	return options;
 }
 
-export async function fetchOrganizationOptions(auth: PiecePropValueSchema<typeof pipedriveAuth>):Promise<DropdownOption<number>[]>{
-	const organizations = await pipedrivePaginatedApiCall<{id:number,name:string}>({
+export async function fetchOrganizationOptions(
+	auth: PiecePropValueSchema<typeof pipedriveAuth>,
+): Promise<DropdownOption<number>[]> {
+	const organizations = await pipedrivePaginatedApiCall<{ id: number; name: string }>({
 		accessToken: auth.access_token,
 		apiDomain: auth.data['api_domain'],
 		method: HttpMethod.GET,
@@ -168,7 +201,7 @@ function createPropertyDefinition(property: GetField) {
 export async function retriveObjectCustomProperties(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 	objectType: string,
-){
+) {
 	let endpoint = '';
 
 	switch (objectType) {
@@ -185,7 +218,6 @@ export async function retriveObjectCustomProperties(
 		case 'product':
 			endpoint = '/productFields';
 			break;
-	
 	}
 
 	const customFields = await pipedrivePaginatedApiCall<GetField>({
@@ -195,15 +227,13 @@ export async function retriveObjectCustomProperties(
 		resourceUri: endpoint,
 	});
 
-	const props:DynamicPropsValue = {};
+	const props: DynamicPropsValue = {};
 
 	for (const field of customFields) {
 		if (!field.edit_flag) {
 			continue;
 		}
-		console.log(field.name, field.field_type)
 		const propertyDefinition = createPropertyDefinition(field);
-		console.log(JSON.stringify(propertyDefinition,null,2))
 		if (propertyDefinition) {
 			props[field.key] = propertyDefinition;
 		}
