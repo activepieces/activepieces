@@ -12,6 +12,8 @@ export type DiffResult = z.infer<typeof DiffResultSchema>;
 export const diffAnalyzer = {
     analyze: async (oldWorkflow: any, newWorkflow: any): Promise<DiffResult> => {
         try {
+            console.log('oldWorkflow', oldWorkflow)
+            console.log('newWorkflow', newWorkflow)
             const { object } = await generateObject({
                 model: anthropic('claude-3-5-sonnet-20241022', {
                     cacheControl: true,

@@ -1,6 +1,6 @@
 import { generateObject } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
-import { AskCopilotResponse, isNil } from '@activepieces/shared';
+import { AskCopilotResponse, isNil, CopilotFlowOutline } from '@activepieces/shared';
 import { plannerUtils } from './planner-utils';
 import { WORKFLOW_EXAMPLES } from './tools';
 import { z } from 'zod';
@@ -27,7 +27,7 @@ const WorkflowSchema = z.object({
         description: z.string(),
         trigger: z.object({
             title: z.string(),
-            description: z.string()
+            description: z.string(),
         }),
         steps: z.array(z.union([ActionStepSchema, RouterStepSchema]))
     }),
@@ -35,7 +35,7 @@ const WorkflowSchema = z.object({
 });
 
 export const plannerAgent = {
-    run: async (id: string, prompts: string[]): Promise<AskCopilotResponse> => {
+    run: async (id: string, prompts: string[], currentWorkflow?: CopilotFlowOutline): Promise<AskCopilotResponse> => {
         console.log({ prompts });
 
         try {
@@ -58,6 +58,15 @@ export const plannerAgent = {
                     - The workflow must have single trigger, If the user wants to add multiple triggers, inform them they can't do that.
                     - Keep steps focused and consolidated for the business output - combine data preparation with related actions rather than creating separate steps
                 </system_constraints>
+
+                ${currentWorkflow ? `
+                <current_workflow>
+                ${JSON.stringify(currentWorkflow, null, 2)}
+                </current_workflow>
+
+                Your task is to generate a new version of this workflow incorporating the requested changes.
+                Maintain the same structure and naming where possible, only modify what's necessary.
+                ` : ''}
 
                 <examples>
                     ${WORKFLOW_EXAMPLES.map(example => `

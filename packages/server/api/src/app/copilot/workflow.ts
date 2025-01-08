@@ -17,8 +17,9 @@ export const workflow = {
                 }
             }
 
-            // Generate a new workflow based on the modification request
-            const newWorkflowResponse = await plannerAgent.run(id, prompts);
+            // For modifications, only use the last prompt and pass the current workflow
+            const lastPrompt = prompts[0]; // prompts are already in reverse order
+            const newWorkflowResponse = await plannerAgent.run(id, [lastPrompt], currentWorkflow);
             if (newWorkflowResponse.type === 'error') {
                 return newWorkflowResponse;
             }
